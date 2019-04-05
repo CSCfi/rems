@@ -337,91 +337,119 @@
                                            :optional true}])
         field-id (-> (form/get-form form-id) :fields first :id)
         cat-id (create-catalogue-item form-id workflow-id)
-        app-id (create-application [cat-id] user-id)]
+        app-id (create-application [cat-id] user-id)
+        upload-request (fn [file]
+                         (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
+                             (assoc :params {"file" file})
+                             (assoc :multipart-params {"file" file})))
+        read-request (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})]
     (testing "uploading attachment for a draft"
-      (let [body (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
-                     (assoc :params {"file" filecontent})
-                     (assoc :multipart-params {"file" filecontent})
+      (let [body (-> (upload-request filecontent)
                      (authenticate api-key user-id)
                      handler
                      read-ok-body)]
         (is (= {:success true} body))))
     (testing "uploading malicious file for a draft"
-      (let [response (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
-                         (assoc :params {"file" malicious-content})
-                         (assoc :multipart-params {"file" malicious-content})
+      (let [response (-> (upload-request malicious-content)
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-bad-request? response))))
     (testing "retrieving attachment for a draft"
-      (let [response (-> (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})
+      (let [response (-> read-request
                          (authenticate api-key user-id)
                          handler
                          assert-response-is-ok)]
         (is (= (slurp testfile) (slurp (:body response))))))
+    (testing "uploading attachment without authentication"
+      (let [response (-> (upload-request filecontent)
+                         handler)]
+        (is (response-is-unauthorized? response))))
+    (testing "uploading attachment with wrong API key"
+      (let [response (-> (upload-request filecontent)
+                         (authenticate api-key user-id)
+                         (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                         handler)]
+        (is (response-is-unauthorized? response))))
     (testing "uploading attachment as non-applicant"
-      (let [response (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
-                         (assoc :params {"file" filecontent})
-                         (assoc :multipart-params {"file" filecontent})
+      (let [response (-> (upload-request filecontent)
                          (authenticate api-key "carl")
                          handler)]
         (is (response-is-forbidden? response))))
     (testing "retrieving attachment as non-applicant"
-      (let [response (-> (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})
+      (let [response (-> read-request
                          (authenticate api-key "carl")
                          handler)]
         (is (response-is-forbidden? response))))
-    (testing "submit application"
-      (is (= {:success true} (send-command user-id {:type :application.command/submit
-                                                    :application-id app-id}))))
     (testing "uploading attachment for a submitted application"
-      (let [response (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
-                         (assoc :params {"file" filecontent})
-                         (assoc :multipart-params {"file" filecontent})
+      (assert (= {:success true} (send-command user-id {:type :application.command/submit
+                                                        :application-id app-id})))
+      (let [response (-> (upload-request filecontent)
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-forbidden? response))))))
 
 (deftest test-applications-api-security
-  (let [cat-id (create-dymmy-catalogue-item)
-        app-id (create-application [cat-id] "alice")]
+  (let [api-key "42"
+        applicant "alice"
+        cat-id (create-dymmy-catalogue-item)
+        app-id (create-application [cat-id] applicant)]
+
     (testing "fetch application without authentication"
-      (is (response-is-unauthorized? (-> (request :get (str "/api/v2/applications/" app-id))
-                                         handler))))
-    (testing "fetch deciders without authentication"
-      (is (response-is-unauthorized? (-> (request :get "/api/applications/deciders")
-                                         handler))))
+      (let [req (request :get (str "/api/v2/applications/" app-id))]
+        (assert-response-is-ok (-> req
+                                   (authenticate api-key applicant)
+                                   handler))
+        (is (response-is-unauthorized? (-> req
+                                           handler)))))
+
+    (testing "fetch deciders without authentication or as non-handler"
+      (let [req (request :get "/api/applications/deciders")]
+        (assert-response-is-ok (-> req
+                                   (authenticate api-key "developer")
+                                   handler))
+        (is (response-is-forbidden? (-> req
+                                        (authenticate api-key applicant)
+                                        handler)))
+        (is (response-is-unauthorized? (-> req
+                                           handler)))))
+
     (testing "create without authentication"
-      (is (response-is-unauthorized? (-> (request :post "/api/v2/applications/create")
-                                         (json-body {:catalogue-item-ids [cat-id]})
-                                         handler))))
-    (testing "create with wrong API-Key"
-      (is (response-is-unauthorized? (-> (request :post "/api/v2/applications/create")
-                                         (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-                                         (json-body {:catalogue-item-ids [cat-id]})
-                                         handler))))
+      (let [req (-> (request :post "/api/v2/applications/create")
+                    (json-body {:catalogue-item-ids [cat-id]}))]
+        (assert-response-is-ok (-> req
+                                   (authenticate api-key applicant)
+                                   handler))
+        (is (response-is-unauthorized? (-> req
+                                           handler)))))
+
+    (testing "create with wrong API key"
+      (let [req (-> (request :post "/api/v2/applications/create")
+                    (authenticate api-key applicant)
+                    (json-body {:catalogue-item-ids [cat-id]}))]
+        (assert-response-is-ok (-> req
+                                   handler))
+        (is (response-is-unauthorized? (-> req
+                                           (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                                           handler)))))
+
     (testing "send command without authentication"
-      (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
-                                         (json-body {:type :application.command/submit
-                                                     :application-id app-id})
-                                         handler))))
-    (testing "send command with wrong api-key"
-      (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
-                                         (authenticate "invalid-api-key" "alice")
-                                         (json-body {:type :application.command/submit
-                                                     :application-id app-id})
-                                         handler))))
-    (testing "upload attachment without authentication"
-      (is (response-is-unauthorized? (-> (request :post "/api/applications/add_attachment")
-                                         (assoc :params {"file" filecontent})
-                                         (assoc :multipart-params {"file" filecontent})
-                                         handler))))
-    (testing "upload attachment with wrong API-Key"
-      (is (response-is-unauthorized? (-> (request :post "/api/applications/add_attachment")
-                                         (assoc :params {"file" filecontent})
-                                         (assoc :multipart-params {"file" filecontent})
-                                         (authenticate "invalid-api-key" "developer")
-                                         handler))))))
+      (let [req (-> (request :post "/api/applications/submit")
+                    (json-body {:application-id app-id}))]
+        (assert-response-is-ok (-> req
+                                   (authenticate api-key applicant)
+                                   handler))
+        (is (response-is-unauthorized? (-> req
+                                           handler)))))
+
+    (testing "send command with wrong API key"
+      (let [req (-> (request :post "/api/applications/submit")
+                    (authenticate api-key applicant)
+                    (json-body {:application-id app-id}))]
+        (assert-response-is-ok (-> req
+                                   handler))
+        (is (response-is-unauthorized? (-> req
+                                           (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                                           handler)))))))
 
 (deftest test-application-listing
   (let [app-id (create-dummy-application "alice")]
