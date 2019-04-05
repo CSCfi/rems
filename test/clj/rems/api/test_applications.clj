@@ -52,9 +52,9 @@
     (create-catalogue-item form-id workflow-id)))
 
 (defn- send-dynamic-command [actor cmd]
-  (-> (request :post "/api/applications/command")
+  (-> (request :post (str "/api/applications/" (name (:type cmd))))
       (authenticate "42" actor)
-      (json-body cmd)
+      (json-body (dissoc cmd :type))
       handler
       read-body))
 
@@ -340,7 +340,7 @@
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-v2-application [cat-id] user-id)]
     (testing "uploading attachment for a draft"
-      (let [body (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+      (let [body (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
                      (assoc :params {"file" filecontent})
                      (assoc :multipart-params {"file" filecontent})
                      (authenticate api-key user-id)
@@ -348,7 +348,7 @@
                      read-ok-body)]
         (is (= {:success true} body))))
     (testing "uploading malicious file for a draft"
-      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+      (let [response (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
                          (assoc :params {"file" malicious-content})
                          (assoc :multipart-params {"file" malicious-content})
                          (authenticate api-key user-id)
@@ -361,7 +361,7 @@
                          assert-response-is-ok)]
         (is (= (slurp testfile) (slurp (:body response))))))
     (testing "uploading attachment as non-applicant"
-      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+      (let [response (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
                          (assoc :params {"file" filecontent})
                          (assoc :multipart-params {"file" filecontent})
                          (authenticate api-key "carl")
@@ -376,7 +376,7 @@
       (is (= {:success true} (send-dynamic-command user-id {:type :application.command/submit
                                                             :application-id app-id}))))
     (testing "uploading attachment for a submitted application"
-      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+      (let [response (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
                          (assoc :params {"file" filecontent})
                          (assoc :multipart-params {"file" filecontent})
                          (authenticate api-key user-id)

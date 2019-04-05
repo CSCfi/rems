@@ -41,9 +41,8 @@
  ::send-add-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/add-member))
-   (post! "/api/applications/command"
+   (post! "/api/applications/add-member"
           {:params {:application-id application-id
-                    :type :application.command/add-member
                     :member (select-keys member [:userid])}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})

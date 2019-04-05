@@ -22,9 +22,8 @@
  ::send-invite-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/invite-member))
-   (post! "/api/applications/command"
+   (post! "/api/applications/invite-member"
           {:params {:application-id application-id
-                    :type :application.command/invite-member
                     :member member}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})

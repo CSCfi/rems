@@ -17,11 +17,10 @@
  ::send-remove-member
  (fn [_ [_ {:keys [application-id member comment on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/remove-member))
-   (post! "/api/applications/command"
+   (post! (if (:userid member)
+            "/api/applications/remove-member"
+            "/api/applications/uninvite-member")
           {:params {:application-id application-id
-                    :type (if (:userid member)
-                            :application.command/remove-member
-                            :application.command/uninvite-member)
                     :member (if (:userid member)
                               (select-keys member [:userid])
                               (select-keys member [:name :email]))

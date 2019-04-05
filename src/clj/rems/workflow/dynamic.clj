@@ -258,8 +258,8 @@
                                         :workflow.dynamic/handlers #{"assistant"}}])
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
-                 :field-values []
-                 :accepted-licenses []
+                 :field-values {}
+                 :accepted-licenses #{}
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
       (is (:success (handle-command command application {}))))
