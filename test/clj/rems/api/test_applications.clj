@@ -51,14 +51,14 @@
         workflow-id (create-dynamic-workflow)]
     (create-catalogue-item form-id workflow-id)))
 
-(defn- send-dynamic-command [actor cmd]
+(defn- send-command [actor cmd]
   (-> (request :post (str "/api/applications/" (name (:type cmd))))
       (authenticate "42" actor)
       (json-body (dissoc cmd :type))
       handler
       read-body))
 
-(defn- create-v2-application [catalogue-item-ids user-id]
+(defn- create-application [catalogue-item-ids user-id]
   (-> (request :post "/api/v2/applications/create")
       (authenticate "42" user-id)
       (json-body {:catalogue-item-ids catalogue-item-ids})
@@ -66,31 +66,31 @@
       read-ok-body
       :application-id))
 
-(defn- create-dynamic-application [user-id]
-  (create-v2-application [(create-dymmy-catalogue-item)] user-id))
+(defn- create-dummy-application [user-id]
+  (create-application [(create-dymmy-catalogue-item)] user-id))
 
 (defn- get-ids [applications]
   (set (map :application/id applications)))
 
-(defn- get-v2-applications [user-id]
+(defn- get-applications [user-id]
   (-> (request :get "/api/v2/applications")
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
-(defn- get-v2-application [app-id user-id]
+(defn- get-application [app-id user-id]
   (-> (request :get (str "/api/v2/applications/" app-id))
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
-(defn- get-v2-open-reviews [user-id]
+(defn- get-open-reviews [user-id]
   (-> (request :get "/api/v2/reviews/open")
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
-(defn- get-v2-handled-reviews [user-id]
+(defn- get-handled-reviews [user-id]
   (-> (request :get "/api/v2/reviews/handled")
       (authenticate "42" user-id)
       handler
@@ -106,7 +106,7 @@
         [_ token] (re-find token-regex (:body response))]
     token))
 
-(deftest application-api-session-test
+(deftest test-application-api-session
   (let [username "alice"
         login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
                           handler
@@ -166,7 +166,7 @@
       (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
       (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
 
-(deftest dynamic-applications-test
+(deftest test-application-commands
   (let [user-id "alice"
         handler-id "developer"
         commenter-id "carl"
@@ -174,7 +174,7 @@
         application-id 11] ;; submitted dynamic application from test data
 
     (testing "getting dynamic application as applicant"
-      (let [application (get-v2-application application-id user-id)]
+      (let [application (get-application application-id user-id)]
         (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= ["application.event/created"
                 "application.event/draft-saved"
@@ -185,7 +185,7 @@
                (set (get application :application/permissions))))))
 
     (testing "getting dynamic application as handler"
-      (let [application (get-v2-application application-id handler-id)]
+      (let [application (get-application application-id handler-id)]
         (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
@@ -202,63 +202,63 @@
     (testing "send command without user"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-dynamic-command "" {:type :application.command/approve
-                                       :comment "" :application-id application-id}))
+             (send-command "" {:type :application.command/approve
+                               :comment "" :application-id application-id}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-dynamic-command user-id {:type :application.command/approve
-                                            :application-id application-id
-                                            :comment ""}))
+             (send-command user-id {:type :application.command/approve
+                                    :application-id application-id
+                                    :comment ""}))
           "user should be forbidden to send command"))
 
     (testing "send commands with authorized user"
       (testing "even handler cannot comment without request"
         (is (= {:errors [{:type "forbidden"}], :success false}
-               (send-dynamic-command handler-id
-                                     {:type :application.command/comment
-                                      :application-id application-id
-                                      :comment "What am I commenting on?"}))))
+               (send-command handler-id
+                             {:type :application.command/comment
+                              :application-id application-id
+                              :comment "What am I commenting on?"}))))
       (testing "comment with request"
-        (let [eventcount (count (get (get-v2-application application-id handler-id) :events))]
+        (let [eventcount (count (get (get-application application-id handler-id) :events))]
           (testing "requesting comment"
-            (is (= {:success true} (send-dynamic-command handler-id
-                                                         {:type :application.command/request-comment
-                                                          :application-id application-id
-                                                          :commenters [decider-id commenter-id]
-                                                          :comment "What say you?"}))))
+            (is (= {:success true} (send-command handler-id
+                                                 {:type :application.command/request-comment
+                                                  :application-id application-id
+                                                  :commenters [decider-id commenter-id]
+                                                  :comment "What say you?"}))))
           (testing "commenter can now comment"
-            (is (= {:success true} (send-dynamic-command commenter-id
-                                                         {:type :application.command/comment
-                                                          :application-id application-id
-                                                          :comment "Yeah, I dunno"}))))
+            (is (= {:success true} (send-command commenter-id
+                                                 {:type :application.command/comment
+                                                  :application-id application-id
+                                                  :comment "Yeah, I dunno"}))))
           (testing "comment was linked to request"
-            (let [application (get-v2-application application-id handler-id)
+            (let [application (get-application application-id handler-id)
                   request-event (get-in application [:application/events eventcount])
                   comment-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
                      (:application/request-id comment-event)))))))
       (testing "request-decision"
-        (is (= {:success true} (send-dynamic-command handler-id
-                                                     {:type :application.command/request-decision
-                                                      :application-id application-id
-                                                      :deciders [decider-id]
-                                                      :comment ""}))))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/request-decision
+                                              :application-id application-id
+                                              :deciders [decider-id]
+                                              :comment ""}))))
       (testing "decide"
-        (is (= {:success true} (send-dynamic-command decider-id
-                                                     {:type :application.command/decide
-                                                      :application-id application-id
-                                                      :decision :approved
-                                                      :comment ""}))))
+        (is (= {:success true} (send-command decider-id
+                                             {:type :application.command/decide
+                                              :application-id application-id
+                                              :decision :approved
+                                              :comment ""}))))
       (testing "approve"
-        (is (= {:success true} (send-dynamic-command handler-id {:type :application.command/approve
-                                                                 :application-id application-id
-                                                                 :comment ""})))
-        (let [handler-data (get-v2-application application-id handler-id)
+        (is (= {:success true} (send-command handler-id {:type :application.command/approve
+                                                         :application-id application-id
+                                                         :comment ""})))
+        (let [handler-data (get-application application-id handler-id)
               handler-event-types (map :event/type (get handler-data :application/events))
-              applicant-data (get-v2-application application-id user-id)
+              applicant-data (get-application application-id user-id)
               applicant-event-types (map :event/type (get applicant-data :application/events))]
           (testing "handler can see all events"
             (is (= {:application/id application-id
@@ -280,14 +280,14 @@
                     "application.event/approved"]
                    applicant-event-types))))))))
 
-(deftest dynamic-application-create-test
+(deftest test-application-create
   (let [api-key "42"
         user-id "alice"
-        application-id (create-dynamic-application user-id)]
+        application-id (create-dummy-application user-id)]
 
     (testing "creating"
       (is (some? application-id))
-      (let [created (get-v2-application application-id user-id)]
+      (let [created (get-application application-id user-id)]
         (is (= "application.state/draft" (get created :application/state)))))
 
     (testing "getting application as other user is forbidden"
@@ -299,16 +299,16 @@
     (testing "modifying application as other user is forbidden"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-dynamic-command "bob" {:type :application.command/save-draft
-                                          :application-id application-id
-                                          :field-values {}
-                                          :accepted-licenses #{}}))))
+             (send-command "bob" {:type :application.command/save-draft
+                                  :application-id application-id
+                                  :field-values {}
+                                  :accepted-licenses #{}}))))
 
     (testing "submitting"
       (is (= {:success true}
-             (send-dynamic-command user-id {:type :application.command/submit
-                                            :application-id application-id})))
-      (let [submitted (get-v2-application application-id user-id)]
+             (send-command user-id {:type :application.command/submit
+                                    :application-id application-id})))
+      (let [submitted (get-application application-id user-id)]
         (is (= "application.state/submitted" (get submitted :application/state)))
         (is (= ["application.event/created"
                 "application.event/submitted"]
@@ -328,7 +328,7 @@
                         :filename "malicious_test.html"
                         :size (.length malicious-file)})
 
-(deftest application-api-attachments-test
+(deftest test-application-api-attachments
   (let [api-key "42"
         user-id "alice"
         workflow-id (create-dynamic-workflow)
@@ -337,7 +337,7 @@
                                            :optional true}])
         field-id (-> (form/get-form form-id) :fields first :id)
         cat-id (create-catalogue-item form-id workflow-id)
-        app-id (create-v2-application [cat-id] user-id)]
+        app-id (create-application [cat-id] user-id)]
     (testing "uploading attachment for a draft"
       (let [body (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
                      (assoc :params {"file" filecontent})
@@ -372,8 +372,8 @@
                          handler)]
         (is (response-is-forbidden? response))))
     (testing "submit application"
-      (is (= {:success true} (send-dynamic-command user-id {:type :application.command/submit
-                                                            :application-id app-id}))))
+      (is (= {:success true} (send-command user-id {:type :application.command/submit
+                                                    :application-id app-id}))))
     (testing "uploading attachment for a submitted application"
       (let [response (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
                          (assoc :params {"file" filecontent})
@@ -382,9 +382,9 @@
                          handler)]
         (is (response-is-forbidden? response))))))
 
-(deftest applications-api-security-test
+(deftest test-applications-api-security
   (let [cat-id (create-dymmy-catalogue-item)
-        app-id (create-v2-application [cat-id] "alice")]
+        app-id (create-application [cat-id] "alice")]
     (testing "fetch application without authentication"
       (is (response-is-unauthorized? (-> (request :get (str "/api/v2/applications/" app-id))
                                          handler))))
@@ -423,37 +423,33 @@
                                          (authenticate "invalid-api-key" "developer")
                                          handler))))))
 
-(deftest test-v2-application-api
-  (let [app-id (create-dynamic-application "alice")]
+(deftest test-application-listing
+  (let [app-id (create-dummy-application "alice")]
 
     (testing "list user applications"
-      (is (contains? (get-ids (get-v2-applications "alice"))
-                     app-id)))
+      (is (contains? (get-ids (get-applications "alice"))
+                     app-id)))))
 
-    (testing "get single application"
-      (is (= app-id
-             (:application/id (get-v2-application app-id "alice")))))))
-
-(deftest test-v2-review-api
-  (let [app-id (create-dynamic-application "alice")]
+(deftest test-reviews
+  (let [app-id (create-dummy-application "alice")]
 
     (testing "does not list drafts"
-      (is (not (contains? (get-ids (get-v2-open-reviews "developer"))
+      (is (not (contains? (get-ids (get-open-reviews "developer"))
                           app-id))))
 
     (testing "lists submitted in open reviews"
-      (is (= {:success true} (send-dynamic-command "alice" {:type :application.command/submit
-                                                            :application-id app-id})))
-      (is (contains? (get-ids (get-v2-open-reviews "developer"))
+      (is (= {:success true} (send-command "alice" {:type :application.command/submit
+                                                    :application-id app-id})))
+      (is (contains? (get-ids (get-open-reviews "developer"))
                      app-id))
-      (is (not (contains? (get-ids (get-v2-handled-reviews "developer"))
+      (is (not (contains? (get-ids (get-handled-reviews "developer"))
                           app-id))))
 
     (testing "lists handled in handled reviews"
-      (is (= {:success true} (send-dynamic-command "developer" {:type :application.command/approve
-                                                                :application-id app-id
-                                                                :comment ""})))
-      (is (not (contains? (get-ids (get-v2-open-reviews "developer"))
+      (is (= {:success true} (send-command "developer" {:type :application.command/approve
+                                                        :application-id app-id
+                                                        :comment ""})))
+      (is (not (contains? (get-ids (get-open-reviews "developer"))
                           app-id)))
-      (is (contains? (get-ids (get-v2-handled-reviews "developer"))
+      (is (contains? (get-ids (get-handled-reviews "developer"))
                      app-id)))))
