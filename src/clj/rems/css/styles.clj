@@ -565,8 +565,8 @@
                       :white-space "pre-wrap"}]
     [:.license-title {;; hax for opening misalignment
                       :margin-top (u/px 3)
-                      :line-height (u/rem 1.25)
-                      :font-size (u/rem 1.25)}]]
+                      :line-height (u/rem 1)
+                      :font-size (u/rem 1)}]]
    [:.collapsing {:-webkit-transition "height 0.1s linear"
                   :-o-transition "height 0.1s linear"
                   :transition "height 0.1s linear"}]
