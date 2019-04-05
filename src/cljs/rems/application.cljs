@@ -123,13 +123,12 @@
 
 (defn- save-application! [description application-id field-values accepted-licenses]
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command"
-         {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
-          :error-handler status-modal/common-error-handler!
-          :params {:type :application.command/save-draft
-                   :application-id application-id
+  (post! "/api/applications/save-draft"
+         {:params {:application-id application-id
                    :field-values field-values
-                   :accepted-licenses accepted-licenses}}))
+                   :accepted-licenses accepted-licenses}
+          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
+          :error-handler status-modal/common-error-handler!}))
 
 (rf/reg-event-fx
  ::save-application
@@ -145,26 +144,24 @@
 (defn- submit-application! [application description application-id field-values accepted-licenses]
   ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command"
-         {:handler (fn [response]
+  (post! "/api/applications/save-draft"
+         {:params {:application-id application-id
+                   :field-values field-values
+                   :accepted-licenses accepted-licenses}
+          :handler (fn [response]
                      (if (:success response)
-                       (post! "/api/applications/command"
-                              {:handler (fn [response]
+                       (post! "/api/applications/submit"
+                              {:params {:application-id application-id}
+                               :handler (fn [response]
                                           (if (:success response)
                                             (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id])})
                                             (do
                                               (status-modal/set-error! {:result response
                                                                         :error-content (format-validation-errors application (:errors response))})
                                               (rf/dispatch [::set-validation-errors (:errors response)]))))
-                               :error-handler status-modal/common-error-handler!
-                               :params {:type :application.command/submit
-                                        :application-id application-id}})
+                               :error-handler status-modal/common-error-handler!})
                        (status-modal/common-error-handler! response)))
-          :error-handler status-modal/common-error-handler!
-          :params {:type :application.command/save-draft
-                   :application-id application-id
-                   :field-values field-values
-                   :accepted-licenses accepted-licenses}}))
+          :error-handler status-modal/common-error-handler!}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -181,7 +178,7 @@
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
     (status-modal/common-pending-handler! description)
-    (post! "/api/applications/add_attachment"
+    (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id
                          :field-id field-id}
             :body file
@@ -196,7 +193,7 @@
 
 (defn- remove-attachment [_ [_ application-id field-id description]]
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/remove_attachment"
+  (post! "/api/applications/remove-attachment"
          {:url-params {:application-id application-id
                        :field-id field-id}
           :body {}

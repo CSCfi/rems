@@ -4,7 +4,7 @@
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
-            [rems.api.applications :refer [applications-api v2-applications-api]]
+            [rems.api.applications :refer [applications-api application-commands-api v2-applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
@@ -110,6 +110,7 @@
      reviews-api
      applications-api
      v2-applications-api
+     application-commands-api
      catalogue-api
      catalogue-items-api
      entitlements-api

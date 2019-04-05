@@ -7,7 +7,8 @@
 (def UserId s/Str)
 
 (s/defschema CommandInternal
-  {:actor UserId
+  {:type s/Keyword
+   :actor UserId
    :time DateTime})
 
 (s/defschema CommandBase
@@ -15,82 +16,67 @@
 
 (s/defschema SaveDraftCommand
   (assoc CommandBase
-         :type (s/enum :application.command/save-draft) ;; single-value enums are supported by swagger, unlike s/eq
-         :field-values s/Any
-         :accepted-licenses s/Any))
+         :field-values {s/Num s/Str}
+         :accepted-licenses #{s/Num}))
 
 (s/defschema SubmitCommand
-  (assoc CommandBase
-         :type (s/enum :application.command/submit)))
+  CommandBase)
 
 (s/defschema ApproveCommand
   (assoc CommandBase
-         :type (s/enum :application.command/approve)
          :comment s/Str))
 
 (s/defschema RejectCommand
   (assoc CommandBase
-         :type (s/enum :application.command/reject)
          :comment s/Str))
 
 (s/defschema ReturnCommand
   (assoc CommandBase
-         :type (s/enum :application.command/return)
          :comment s/Str))
 
 (s/defschema CloseCommand
   (assoc CommandBase
-         :type (s/enum :application.command/close)
          :comment s/Str))
 
 (s/defschema RequestDecisionCommand
   (assoc CommandBase
-         :type (s/enum :application.command/request-decision)
          :deciders [UserId]
          :comment s/Str))
 
 (s/defschema DecideCommand
   (assoc CommandBase
-         :type (s/enum :application.command/decide)
          :decision (s/enum :approved :rejected)
          :comment s/Str))
 
 (s/defschema RequestCommentCommand
   (assoc CommandBase
-         :type (s/enum :application.command/request-comment)
          :commenters [UserId]
          :comment s/Str))
 
 (s/defschema CommentCommand
   (assoc CommandBase
-         :type (s/enum :application.command/comment)
          :comment s/Str))
 
 (s/defschema AddMemberCommand
   (assoc CommandBase
-         :type (s/enum :application.command/add-member)
          :member {:userid UserId}))
 
 (s/defschema InviteMemberCommand
   (assoc CommandBase
-         :type (s/enum :application.command/invite-member)
          :member {:name s/Str
                   :email s/Str}))
 
 (s/defschema AcceptInvitationCommand
   (assoc CommandBase
-         :type (s/enum :application.command/accept-invitation)
          :token s/Str))
 
 (s/defschema RemoveMemberCommand
   (assoc CommandBase
-         :type (s/enum :application.command/remove-member)
          :member {:userid UserId}
          :comment s/Str))
 
 (s/defschema UninviteMemberCommand
   (assoc CommandBase
-         :type (s/enum :application.command/uninvite-member)
          :member {:name s/Str
                   :email s/Str}
          :comment s/Str))
@@ -116,6 +102,7 @@
    #_:application.command/withdraw})
 
 (defn validate-command [cmd]
-  (s/validate (merge CommandInternal
-                     (getx command-schemas (:type cmd)))
-              cmd))
+  (let [type (:type cmd)
+        schema (merge CommandInternal
+                      (getx command-schemas type))]
+    (s/validate schema cmd)))

@@ -55,11 +55,8 @@
   [Decider])
 
 (s/defschema Command
-  ;; luckily dispatch-on compiles into a x-oneOf swagger definition, which is exactly what we want
-  (apply r/dispatch-on
-         ;; we need to manually coerce :type to keyword since the schema coercion hasn't happened yet
-         (fn [v] (keyword (:type v)))
-         (flatten (seq commands/command-schemas))))
+  {:type s/Keyword
+   s/Any s/Any})
 
 (s/defschema AcceptInvitationResult
   {:success s/Bool
@@ -148,7 +145,7 @@
         (not-found! "not found")))
 
     ;; TODO: think about size limit
-    (POST "/add_attachment" []
+    (POST "/add-attachment" []
       :summary "Add an attachment file related to an application field"
       :roles #{:applicant}
       :multipart-params [file :- upload/TempFileUpload]
@@ -159,29 +156,54 @@
       (attachments/save-attachment! file (getx-user-id) application-id field-id)
       (ok {:success true}))
 
-    (POST "/remove_attachment" []
+    (POST "/remove-attachment" []
       :summary "Remove an attachment file related to an application field"
       :roles #{:applicant}
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       :return SuccessResponse
       (attachments/remove-attachment! (getx-user-id) application-id field-id)
-      (ok {:success true}))
+      (ok {:success true}))))
 
-    (POST "/command" []
-      :summary "Submit a command for an application"
-      :roles #{:logged-in}
-      :body [request Command]
-      :return SuccessResponse
-      (let [command (-> request
-                        (fix-command-from-api)
-                        (assoc :actor (getx-user-id))
-                        (assoc :time (time/now)))
-            errors (applications/command! command)]
-        (if errors
-          (ok {:success false
-               :errors (:errors errors)})
-          (ok {:success true}))))))
+(defn api-command [command-type request]
+  (let [command (-> request
+                    (assoc :type command-type)
+                    (assoc :actor (getx-user-id))
+                    (assoc :time (time/now))
+                    (fix-command-from-api))
+        errors (applications/command! command)]
+    (if errors
+      (ok {:success false
+           :errors (:errors errors)})
+      (ok {:success true}))))
+
+(defmacro command-endpoint [command schema]
+  (let [path (str "/" (name command))]
+    `(POST ~path []
+       :summary ~(str "Submit a `" (name command) "` command for an application.")
+       :roles #{:logged-in}
+       :body [request# ~schema]
+       :return SuccessResponse
+       (api-command ~command request#))))
+
+(def application-commands-api
+  (context "/applications" []
+    :tags ["applications"]
+    (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
+    (command-endpoint :application.command/add-member commands/AddMemberCommand)
+    (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
+    (command-endpoint :application.command/approve commands/ApproveCommand)
+    (command-endpoint :application.command/close commands/CloseCommand)
+    (command-endpoint :application.command/comment commands/CommentCommand)
+    (command-endpoint :application.command/decide commands/DecideCommand)
+    (command-endpoint :application.command/reject commands/RejectCommand)
+    (command-endpoint :application.command/request-comment commands/RequestCommentCommand)
+    (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
+    (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
+    (command-endpoint :application.command/return commands/ReturnCommand)
+    (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
+    (command-endpoint :application.command/submit commands/SubmitCommand)
+    (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)))
 
 (def v2-applications-api
   (context "/v2/applications" []
