@@ -25,7 +25,8 @@
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
             [schema.utils])
-  (:import [org.joda.time DateTime]))
+  (:import [org.joda.time DateTime]
+           rems.InvalidRequestException))
 
 (declare get-dynamic-application-state)
 (declare get-dynamic-application-state-for-user)
@@ -640,7 +641,9 @@
   (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
 (defn get-dynamic-application-state [application-id]
-  (let [application (first (db/get-applications {:id application-id}))
+  (let [application (or (first (db/get-applications {:id application-id}))
+                        (throw (rems.InvalidRequestException.
+                                (str "Application " application-id " not found"))))
         events (get-dynamic-application-events application-id)
         application (assoc application
                            :state :application.state/draft
