@@ -72,21 +72,10 @@
   [user-ids injections]
   (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
-(defn- validate-licenses [application]
-  (let [all-licenses (set (map :license/id (:application/licenses application)))
-        user-id (:application/applicant application)
-        accepted-licenses (get-in application [:application/accepted-licenses user-id])
-        missing-licenses (set/difference all-licenses accepted-licenses)]
-    (->> (sort missing-licenses)
-         (map (fn [license-id]
-                {:type :t.form.validation/required
-                 :license-id license-id})))))
-
 (defn- validation-error [application {:keys [validate-form-answers]}]
   (let [form-id (:form/id application)
         answers (:rems.application.model/draft-answers application)
-        errors (concat (validate-form-answers form-id {:items answers})
-                       (validate-licenses application))]
+        errors (validate-form-answers form-id {:items answers})]
     (when (seq errors)
       {:errors errors})))
 

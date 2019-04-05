@@ -34,7 +34,9 @@
                                   :everyone-else [:application.command/accept-invitation]})
 
 (def ^:private submitted-permissions {:applicant [:application.command/remove-member
-                                                  :application.command/uninvite-member]
+                                                  :application.command/uninvite-member
+                                                  :application.command/accept-licenses]
+                                      :member [:application.command/accept-licenses]
                                       :handler [:see-everything
                                                 :application.command/add-member
                                                 :application.command/remove-member
@@ -51,6 +53,7 @@
                                                 :application.command/decide]})
 
 (def ^:private closed-permissions {:applicant []
+                                   :member []
                                    :handler [:see-everything]
                                    :commenter [:see-everything]
                                    :decider [:see-everything]

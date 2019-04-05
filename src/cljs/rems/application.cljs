@@ -76,20 +76,14 @@
 (defn- format-validation-errors
   [application errors]
   (let [fields-by-id (->> (get-in application [:application/form :form/fields])
-                          (index-by [:field/id]))
-        licenses-by-id (->> (get-in application [:application/licenses])
-                            (index-by [:license/id]))]
+                          (index-by [:field/id]))]
     [:div (text :t.form.validation/errors)
      (into [:ul]
            (concat
             (for [{:keys [type field-id]} errors
                   :when field-id]
               (let [field (get fields-by-id field-id)]
-                (format-validation-error type (:field/title field))))
-            (for [{:keys [type license-id]} errors
-                  :when license-id]
-              (let [license (get licenses-by-id license-id)]
-                (format-validation-error type (:license/title license))))))]))
+                (format-validation-error type (:field/title field))))))]))
 
 
 ;;;; State
@@ -524,14 +518,7 @@
 (defn- license [id title approved readonly validation content]
   [:div.license
    [field-validation-message validation title]
-   [:div.form-check
-    [:input.form-check-input {:type "checkbox"
-                              :name (str "license" id)
-                              :disabled readonly
-                              :class (when validation "is-invalid")
-                              :checked (boolean approved)
-                              :on-change (set-license-accepted id)}]
-    [:span.form-check-label content]]])
+   [:div.form-check content]])
 
 (defn- link-license
   [{:keys [accepted readonly validation] :as opts}]
