@@ -29,12 +29,9 @@
 (defn db-once-fixture [f]
   (fake-tempura-fixture
    (fn []
-     (-> (mount/only #{#'rems.config/env #'rems.db.core/*db*})
-         ;; TODO try to use args instead
-         (mount/swap-states {#'rems.db.core/*db* {:start #(conman/connect! {:jdbc-url (:test-database-url rems.config/env)})
-                                                  :stop #(conman/disconnect! rems.db.core/*db*)}})
-         (mount/start))
-     (prn :DB rems.db.core/*db*)
+     (mount/start-with-args {:test true}
+                            #'rems.config/env
+                            #'rems.db.core/*db*)
      (db/assert-test-database!)
      (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
      (f)
