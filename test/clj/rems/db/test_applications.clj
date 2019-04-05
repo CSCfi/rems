@@ -12,23 +12,18 @@
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
-            [rems.db.test-data :as test-data]
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.db.workflow :as workflow]
+            [rems.test-db :as test-db]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
            (clojure.lang ExceptionInfo)))
 
 (use-fixtures
   :once
-  (fn [f]
-    (mount/start
-     #'rems.config/env
-     #'rems.db.core/*db*)
-    (db/assert-test-database!)
-    (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (test-data/create-test-data!)
-    (f)
-    (mount/stop)))
+  test-db-fixture
+  rollback-db-fixture
+  test-data-fixture)
 
 (deftest can-act-as?-test
   (is (can-act-as? "developer" (get-application-state 10) "approver"))

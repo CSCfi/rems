@@ -2,15 +2,11 @@
   "Namespace for tests that use an actual database."
   (:require [cheshire.core :as cheshire]
             [clj-time.core :as time]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [split-lines]]
             [clojure.test :refer :all]
-            [conman.core :as conman]
-            [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
             [rems.api.applications-v2 :as applications-v2]
             [rems.auth.ForbiddenException]
-            [rems.config :refer [env]]
+            [rems.config]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
@@ -18,6 +14,7 @@
             [rems.db.entitlements :as entitlements]
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.poller.entitlements]
@@ -26,24 +23,8 @@
             [stub-http.core :as stub])
   (:import (rems.auth ForbiddenException)))
 
-(defn db-once-fixture [f]
-  (fake-tempura-fixture
-   (fn []
-     (mount/start-with-args {:test true}
-                            #'rems.config/env
-                            #'rems.db.core/*db*)
-     (db/assert-test-database!)
-     (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
-     (f)
-     (mount/stop))))
-
-(defn db-each-fixture [f]
-  (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
-    (jdbc/db-set-rollback-only! rems.db.core/*db*)
-    (f)))
-
-(use-fixtures :once db-once-fixture)
-(use-fixtures :each db-each-fixture)
+(use-fixtures :once fake-tempura-fixture test-db-fixture)
+(use-fixtures :each rollback-db-fixture)
 
 (deftest test-get-catalogue-items
   (testing "without catalogue items"
