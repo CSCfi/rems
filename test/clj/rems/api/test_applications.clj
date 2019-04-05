@@ -59,7 +59,7 @@
       read-body))
 
 (defn- create-application [catalogue-item-ids user-id]
-  (-> (request :post "/api/v2/applications/create")
+  (-> (request :post "/api/applications/create")
       (authenticate "42" user-id)
       (json-body {:catalogue-item-ids catalogue-item-ids})
       handler
@@ -73,13 +73,13 @@
   (set (map :application/id applications)))
 
 (defn- get-applications [user-id]
-  (-> (request :get "/api/v2/applications")
+  (-> (request :get "/api/applications")
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
 (defn- get-application [app-id user-id]
-  (-> (request :get (str "/api/v2/applications/" app-id))
+  (-> (request :get (str "/api/applications/" app-id))
       (authenticate "42" user-id)
       handler
       read-ok-body))
@@ -122,7 +122,7 @@
     (is cookie)
     (is csrf)
     (testing "save with session"
-      (let [body (-> (request :post "/api/v2/applications/create")
+      (let [body (-> (request :post "/api/applications/create")
                      (header "Cookie" cookie)
                      (header "x-csrf-token" csrf)
                      (json-body {:catalogue-item-ids [cat-id]})
@@ -131,13 +131,13 @@
                      read-body)]
         (is (:success body))))
     (testing "save with session but without csrf"
-      (let [response (-> (request :post "/api/v2/applications/create")
+      (let [response (-> (request :post "/api/applications/create")
                          (header "Cookie" cookie)
                          (json-body {:catalogue-item-ids [cat-id]})
                          handler)]
         (is (response-is-unauthorized? response))))
     (testing "save with session and csrf and wrong api-key"
-      (let [response (-> (request :post "/api/v2/applications/create")
+      (let [response (-> (request :post "/api/applications/create")
                          (header "Cookie" cookie)
                          (header "x-csrf-token" csrf)
                          (header "x-rems-api-key" "WRONG")
@@ -292,7 +292,7 @@
 
     (testing "getting application as other user is forbidden"
       (is (response-is-forbidden?
-           (-> (request :get (str "/api/v2/applications/" application-id))
+           (-> (request :get (str "/api/applications/" application-id))
                (authenticate api-key "bob")
                handler))))
 
@@ -395,7 +395,7 @@
         app-id (create-application [cat-id] applicant)]
 
     (testing "fetch application without authentication"
-      (let [req (request :get (str "/api/v2/applications/" app-id))]
+      (let [req (request :get (str "/api/applications/" app-id))]
         (assert-response-is-ok (-> req
                                    (authenticate api-key applicant)
                                    handler))
@@ -414,7 +414,7 @@
                                            handler)))))
 
     (testing "create without authentication"
-      (let [req (-> (request :post "/api/v2/applications/create")
+      (let [req (-> (request :post "/api/applications/create")
                     (json-body {:catalogue-item-ids [cat-id]}))]
         (assert-response-is-ok (-> req
                                    (authenticate api-key applicant)
@@ -423,7 +423,7 @@
                                            handler)))))
 
     (testing "create with wrong API key"
-      (let [req (-> (request :post "/api/v2/applications/create")
+      (let [req (-> (request :post "/api/applications/create")
                     (authenticate api-key applicant)
                     (json-body {:catalogue-item-ids [cat-id]}))]
         (assert-response-is-ok (-> req
