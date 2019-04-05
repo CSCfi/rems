@@ -17,8 +17,10 @@
   (mount/stop))
 
 (defn test-data-fixture [f]
+  ;; no specific teardown for test-data-fixture. tests rely on the
+  ;; setup of test-db-fixture or the teardown of rollback-db-fixture
+  ;; to keep a clean db
   (test-data/create-test-data!)
-  ;; XXX no teardown!
   (f))
 
 (defn rollback-db-fixture [f]
