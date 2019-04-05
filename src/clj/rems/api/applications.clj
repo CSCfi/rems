@@ -202,7 +202,7 @@
        (api-command ~command request#))))
 
 (def application-commands-api
-  (context "/application/command" []
+  (context "/applications/command" []
     :tags ["applications"]
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/add-member commands/AddMemberCommand)
