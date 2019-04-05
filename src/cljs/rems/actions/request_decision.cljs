@@ -44,9 +44,8 @@
  ::send-request-decision
  (fn [_ [_ {:keys [deciders application-id comment on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/request-decision))
-   (post! "/api/applications/command"
+   (post! "/api/applications/command/request-decision"
           {:params {:application-id application-id
-                    :type :application.command/request-decision
                     :comment comment
                     :deciders (map :userid deciders)}
            :handler (partial status-modal/common-success-handler! on-finished)
