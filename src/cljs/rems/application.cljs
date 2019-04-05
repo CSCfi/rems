@@ -41,6 +41,12 @@
                     :application.state/closed}
                   (:application/state application))))
 
+(defn- accepted-licenses? [application userid]
+  (every? (or (get (:application/accepted-licenses application)
+                   userid)
+              #{})
+          (map :license/id (:application/licenses application))))
+
 (defn- disabled-items-warning [application]
   (when (in-processing? application)
     (when-some [resources (->> (:application/resources application)
@@ -618,16 +624,19 @@
        {:id "form"
         :title (text :t.form/licenses)
         :always
-        [:div.form-group.field
+        [:div
+         [:p (text :t.form/must-accept-licenses)]
          (into [:div#licenses]
                (for [license licenses]
                  [license-field (assoc license
                                        :accepted (contains? accepted-licenses (:license/id license))
                                        :readonly readonly?
                                        :validation (license-validations (:license/id license)))]))
-         (when (contains? possible-commands :application.command/accept-licenses)
-           [:div.commands
-            [accept-licenses-action-button application-id (mapv :license/id licenses) reload!]])]}])))
+         (if (accepted-licenses? application userid)
+           (text :t.form/has-accepted-licenses)
+           (when (contains? possible-commands :application.command/accept-licenses)
+             [:div.commands
+              [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
 
 (defn- format-event [event]
@@ -772,12 +781,7 @@
         can-add? (contains? possible-commands :application.command/add-member)
         can-remove? (contains? possible-commands :application.command/remove-member)
         can-invite? (contains? possible-commands :application.command/invite-member)
-        can-uninvite? (contains? possible-commands :application.command/uninvite-member)
-        accepted-licenses? (fn [member]
-                             (every? (or (get (:application/accepted-licenses application)
-                                              member)
-                                         #{})
-                                     (map :license/id (:application/licenses application))))]
+        can-uninvite? (contains? possible-commands :application.command/uninvite-member)]
     [collapsible/component
      {:id id
       :title (text :t.applicant-info/applicants)
@@ -789,7 +793,7 @@
                            :group? (or (seq members)
                                        (seq invited-members))
                            :can-remove? false
-                           :accepted-licenses? (accepted-licenses? (:userid applicant))}]]
+                           :accepted-licenses? (accepted-licenses? application (:userid applicant))}]]
             (concat
              (for [member members]
                [member-info {:element-id id
@@ -797,7 +801,7 @@
                              :application application
                              :group? true
                              :can-remove? can-remove?
-                             :accepted-licenses? (accepted-licenses? (:userid member))}])
+                             :accepted-licenses? (accepted-licenses? application (:userid member))}])
              (for [invited-member invited-members]
                [member-info {:element-id id
                              :attributes invited-member
