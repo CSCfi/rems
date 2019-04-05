@@ -193,13 +193,6 @@
                  (apply-events [(assoc-in draft-saved-event [:application/field-values 41] "")])
                  (fail-command submit-command injections)))))
 
-    (testing "cannot submit when not all licenses are accepted"
-      (is (= {:errors [{:type :t.form.validation/required
-                        :license-id 31}]}
-             (-> application
-                 (apply-events [(update-in draft-saved-event [:application/accepted-licenses] disj 31)])
-                 (fail-command submit-command injections)))))
-
     (testing "non-applicant cannot submit"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
