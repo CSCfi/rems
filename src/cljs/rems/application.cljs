@@ -620,7 +620,8 @@
            (text :t.form/has-accepted-licenses)
            (when (contains? possible-commands :application.command/accept-licenses)
              [:div.commands
-              [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
+              ;; TODO consider saving the application data also, same as attachment and submit
+              [accept-licenses-action-button application-id (mapv :license/id licenses) (fn [])]]))]}])))
 
 
 (defn- format-event [event]
