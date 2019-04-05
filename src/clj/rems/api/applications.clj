@@ -195,26 +195,33 @@
            :errors (:errors errors)})
       (ok {:success true}))))
 
-(defmacro command-endpoints [schemas]
-  `(context "/applications/command" []
-     :tags ["applications"]
-     ~@(for [[command schema] schemas]
-         (let [path (str "/" (name command))]
-           `(POST ~path []
-              :summary ~(str "Submit a `" (name command) "` command for an application.")
-              :roles #{:logged-in}
-              :body [request# ~schema]
-              :return SuccessResponse
-              (api-command ~command request#))))))
-
-(comment
-  (macroexpand-1
-   '(command-endpoints {:application.command/submit SubmitCommand
-                        :application.command/decide DecideCommand})))
+(defmacro command-endpoint [command schema]
+  (let [path (str "/" (name command))]
+    `(POST ~path []
+       :summary ~(str "Submit a `" (name command) "` command for an application.")
+       :roles #{:logged-in}
+       :body [request# ~schema]
+       :return SuccessResponse
+       (api-command ~command request#))))
 
 (def application-commands-api
-  (command-endpoints {:application.command/submit commands/SubmitCommand
-                      :application.command/decide commands/DecideCommand}))
+  (context "/application/command" []
+    :tags ["applications"]
+    (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
+    (command-endpoint :application.command/add-member commands/AddMemberCommand)
+    (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
+    (command-endpoint :application.command/approve commands/ApproveCommand)
+    (command-endpoint :application.command/close commands/CloseCommand)
+    (command-endpoint :application.command/comment commands/CommentCommand)
+    (command-endpoint :application.command/decide commands/DecideCommand)
+    (command-endpoint :application.command/reject commands/RejectCommand)
+    (command-endpoint :application.command/request-comment commands/RequestCommentCommand)
+    (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
+    (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
+    (command-endpoint :application.command/return commands/ReturnCommand)
+    (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
+    (command-endpoint :application.command/submit commands/SubmitCommand)
+    (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)))
 
 (def v2-applications-api
   (context "/v2/applications" []
