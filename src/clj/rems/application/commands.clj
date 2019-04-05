@@ -16,8 +16,8 @@
 
 (s/defschema SaveDraftCommand
   (assoc CommandBase
-         :field-values s/Any
-         :accepted-licenses s/Any))
+         :field-values {s/Num s/Str}
+         :accepted-licenses #{s/Num}))
 
 (s/defschema SubmitCommand
   CommandBase)
