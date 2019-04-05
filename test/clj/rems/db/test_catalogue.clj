@@ -2,10 +2,10 @@
   (:require [clojure.test :refer :all]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.test-db :refer [db-each-fixture db-once-fixture]]))
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
 
-(use-fixtures :once db-once-fixture)
-(use-fixtures :each db-each-fixture)
+(use-fixtures :once test-db-fixture)
+(use-fixtures :each rollback-db-fixture)
 
 (defn- status-flags [item-id]
   (-> (catalogue/get-localized-catalogue-item item-id)

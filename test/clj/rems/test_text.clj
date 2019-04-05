@@ -1,23 +1,15 @@
-(ns ^:integration rems.test-db-localization
+(ns rems.test-text
   (:require [clojure.test :refer :all]
-            [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.config :refer [env]]
-            [rems.db.core :as db]
             [rems.test-locales :refer [loc-en]]
             [rems.text :refer [with-language localize-event localize-state]]))
 
-(use-fixtures
-  :once
+(use-fixtures :once
   (fn [f]
-    (mount/start
-     #'rems.config/env
-     #'rems.db.core/*db*
-     #'rems.locales/translations)
-    (db/assert-test-database!)
-    (migrations/migrate ["reset"] (select-keys env [:database-url]))
+    (mount/start #'rems.config/env #'rems.locales/translations)
     (f)
     (mount/stop)))
 
