@@ -123,11 +123,10 @@
 
 (defn- save-application! [description application-id field-values accepted-licenses]
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command"
+  (post! "/api/applications/command/save-draft"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!
-          :params {:type :application.command/save-draft
-                   :application-id application-id
+          :params {:application-id application-id
                    :field-values field-values
                    :accepted-licenses accepted-licenses}}))
 
@@ -145,10 +144,10 @@
 (defn- submit-application! [application description application-id field-values accepted-licenses]
   ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command"
+  (post! "/api/applications/command/save-draft"
          {:handler (fn [response]
                      (if (:success response)
-                       (post! "/api/applications/command"
+                       (post! "/api/applications/command/submit"
                               {:handler (fn [response]
                                           (if (:success response)
                                             (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id])})
@@ -157,12 +156,10 @@
                                                                         :error-content (format-validation-errors application (:errors response))})
                                               (rf/dispatch [::set-validation-errors (:errors response)]))))
                                :error-handler status-modal/common-error-handler!
-                               :params {:type :application.command/submit
-                                        :application-id application-id}})
+                               :params {:application-id application-id}})
                        (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!
-          :params {:type :application.command/save-draft
-                   :application-id application-id
+          :params {:application-id application-id
                    :field-values field-values
                    :accepted-licenses accepted-licenses}}))
 
