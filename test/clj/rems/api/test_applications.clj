@@ -52,9 +52,9 @@
     (create-catalogue-item form-id workflow-id)))
 
 (defn- send-dynamic-command [actor cmd]
-  (-> (request :post "/api/applications/command")
+  (-> (request :post (str "/api/applications/command/" (name (:type cmd))))
       (authenticate "42" actor)
-      (json-body cmd)
+      (json-body (dissoc cmd :type))
       handler
       read-body))
 
