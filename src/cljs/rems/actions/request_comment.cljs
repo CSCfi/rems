@@ -45,9 +45,8 @@
  ::send-request-comment
  (fn [_ [_ {:keys [application-id commenters comment on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/request-comment))
-   (post! "/api/applications/command"
+   (post! "/api/applications/command/request-comment"
           {:params {:application-id application-id
-                    :type :application.command/request-comment
                     :comment comment
                     :commenters (map :userid commenters)}
            :handler (partial status-modal/common-success-handler! on-finished)
