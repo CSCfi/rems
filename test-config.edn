@@ -2,5 +2,6 @@
  :port 3001
  :nrepl-port 7001
  :database-url "postgresql://localhost/rems_test?user=rems_test"
+ :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :authentication :fake-shibboleth
  :public-url "http://localhost:3001/"}

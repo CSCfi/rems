@@ -1,6 +1,7 @@
 {:dev true
  :nrepl-port 7000
  :database-url "postgresql://localhost/rems?user=rems"
+ :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :theme-path "example-theme/theme.edn"
  :authentication :fake-shibboleth
  :public-url "http://localhost:3000/"
