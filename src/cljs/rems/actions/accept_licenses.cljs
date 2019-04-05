@@ -9,9 +9,8 @@
  ::send-accept-licenses
  (fn [_ [_ {:keys [application-id licenses on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/accept-licenses))
-   (post! "/api/applications/command"
+   (post! "/api/applications/accept-licenses"
           {:params {:application-id application-id
-                    :type :application.command/accept-licenses
                     :accepted-licenses licenses}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})

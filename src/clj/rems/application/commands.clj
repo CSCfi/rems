@@ -21,7 +21,6 @@
 
 (s/defschema AcceptLicensesCommand
   (assoc CommandBase
-         :type (s/enum :application.command/accept-licenses)
          :accepted-licenses s/Any))
 
 (s/defschema SubmitCommand
