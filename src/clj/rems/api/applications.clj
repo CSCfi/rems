@@ -55,11 +55,8 @@
   [Decider])
 
 (s/defschema Command
-  ;; luckily dispatch-on compiles into a x-oneOf swagger definition, which is exactly what we want
-  (apply r/dispatch-on
-         ;; we need to manually coerce :type to keyword since the schema coercion hasn't happened yet
-         (fn [v] (keyword (:type v)))
-         (flatten (seq commands/command-schemas))))
+  {:type s/Keyword
+   s/Any s/Any})
 
 (s/defschema AcceptInvitationResult
   {:success s/Bool
