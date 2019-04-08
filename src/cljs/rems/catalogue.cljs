@@ -91,8 +91,9 @@
 
 (defn- catalogue-item-visible? [item]
   ;; archived items are not returned from the API
+  ;; TODO move filtering to backend
   (and (:enabled item)
-       (:active item)))
+       (not (:expired item))))
 
 (defn- catalogue-list
   "Renders the catalogue using table.

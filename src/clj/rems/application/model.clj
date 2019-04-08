@@ -402,7 +402,7 @@
                :catalogue-item/start (:start item)
                :catalogue-item/end (:end item)
                :catalogue-item/enabled (:enabled item)
-               :catalogue-item/active (:active item)
+               :catalogue-item/expired (:expired item)
                :catalogue-item/archived (:archived item)}))
        (sort-by :catalogue-item/id)))
 

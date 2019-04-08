@@ -63,7 +63,7 @@
                                                                        (:form-name catalogue-item)]]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
-                     [inline-info-field (text :t.administration/active) [readonly-checkbox (:active catalogue-item)]]]))}]
+                     [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired catalogue-item))]]]))}]
    [:div.col.commands [back-button]]])
 
 (defn catalogue-item-page []

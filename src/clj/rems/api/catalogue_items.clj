@@ -45,7 +45,7 @@
                      {expired :- (describe s/Bool "whether to include expired items") false}]
       :return GetCatalogueItemsResponse
       (ok (db/apply-filters
-           (merge (when-not expired {:active true})
+           (merge (when-not expired {:expired false})
                   (when-not disabled {:enabled true})
                   (when-not archived {:archived false}))
            (catalogue/get-localized-catalogue-items {:resource resource

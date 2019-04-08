@@ -99,8 +99,9 @@
              :value (comp localize-time :start)}
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
+   ;; TODO: active means not-expired currently. it should maybe mean (and not-expired enabled not-archived)
    :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox :enabled)}
+            :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
                          [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %])]
