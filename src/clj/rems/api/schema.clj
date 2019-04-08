@@ -29,7 +29,7 @@
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
-   :active s/Bool
+   :expired s/Bool
    :title s/Str
    :textcontent s/Str
    (s/optional-key :attachment-id) (s/maybe s/Num)
@@ -105,7 +105,7 @@
    :license/start DateTime
    :license/end (s/maybe DateTime)
    :license/enabled s/Bool
-   :license/active s/Bool
+   :license/expired s/Bool
    :license/archived s/Bool})
 
 (s/defschema Field
