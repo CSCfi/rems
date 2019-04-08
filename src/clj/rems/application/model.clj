@@ -165,10 +165,9 @@
                                             :resource/ext-id (:resource/ext-id resource)})
                                          (:application/resources event))
              :application/licenses (map (fn [license]
-                                          {:license/id (:license/id license)
-                                           :license/accepted false})
+                                          {:license/id (:license/id license)})
                                         (:application/licenses event))
-             :application/accepted-licenses {}
+             :application/accepted-licenses {"applicant" #{}}
              :application/events []
              :application/form {:form/id (:form/id event)}
              :application/workflow {:workflow/id (:workflow/id event)

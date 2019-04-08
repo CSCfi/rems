@@ -95,7 +95,6 @@
 
 (s/defschema License
   {:license/id s/Int
-   :license/accepted s/Bool
    :license/type (s/enum :text :link :attachment)
    :license/title LocalizedString
    (s/optional-key :license/link) LocalizedString

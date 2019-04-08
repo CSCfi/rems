@@ -147,8 +147,13 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "draft application"
                                                            6 "draft application"
                                                            7 "draft appl"
-                                                           8 "draft application"}
-                                :application/accepted-licenses #{1 2}}]
+                                                           8 "draft application"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "developer"
+                                :application/id 1
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}]
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
@@ -184,11 +189,16 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "applied application"
                                                            6 "applied application"
                                                            7 "applied ap"
-                                                           8 "applied application"}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 "applied application"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "developer"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}]
               :workflow {:type :workflow/dynamic
@@ -226,16 +236,21 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "rejected application"
                                                            6 "rejected application"
                                                            7 "rejected a"
-                                                           8 "rejected application"}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 "rejected application"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "developer"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/rejected
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for rejection"}]
@@ -274,16 +289,21 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "accepted application"
                                                            6 "accepted application"
                                                            7 "accepted a"
-                                                           8 "accepted application"}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 "accepted application"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "developer"
+                                :application/id 4
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/approved
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for approval"}]
@@ -322,16 +342,21 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "returned application"
                                                            6 "returned application"
                                                            7 "returned a"
-                                                           8 "returned application"}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 "returned application"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "developer"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/returned
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for return"}]
@@ -373,22 +398,27 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "bundled application"
                                                            6 "bundled application"
                                                            7 "bundled ap"
-                                                           8 "bundled application"}
-                                :application/accepted-licenses #{1 2 3}}
+                                                           8 "bundled application"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "alice"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2 3}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/returned
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for return"}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 4) :event/time)
+                                :event/time (-> application :dynamic-events (nth 5) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}]
               :workflow {:type :workflow/dynamic
@@ -426,23 +456,28 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "application with review"
                                                            6 "application with review"
                                                            7 "applicatio"
-                                                           8 "application with review"}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 "application with review"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "alice"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/commented
                                 :event/actor "carl"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/request-id (UUID/fromString "00000000-0000-0000-0000-000000000000")
                                 :application/comment "comment for review"}
                                {:event/type :application.event/approved
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 4) :event/time)
+                                :event/time (-> application :dynamic-events (nth 5) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for approval"}]
@@ -481,11 +516,16 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 "application in review"
                                                            6 "application in review"
                                                            7 "applicatio"
-                                                           8 "application in review"}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 "application in review"}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time test-data/creation-time
+                                :event/actor "alice"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}]
               :workflow {:type :workflow/dynamic
@@ -523,16 +563,21 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 ""}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/actor "alice"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/approved
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment ""}]
@@ -542,7 +587,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
 
     (let [app-id 21
           application (applications/get-application-state app-id)
-          request-id (-> application :dynamic-events (nth 3) :application/request-id)]
+          request-id (-> application :dynamic-events (nth 4) :application/request-id)]
       (is request-id)
       (is (= {:id app-id
               :description "third party review"
@@ -573,16 +618,21 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 ""}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/actor "alice"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/comment-requested
                                 :event/actor "carl" ;; TODO: should really be "developer" but the old event doesn't tell it
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/request-id request-id
@@ -590,7 +640,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :application/comment "plz comment"}
                                {:event/type :application.event/commented
                                 :event/actor "carl"
-                                :event/time (-> application :dynamic-events (nth 4) :event/time)
+                                :event/time (-> application :dynamic-events (nth 5) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/request-id request-id
@@ -630,16 +680,21 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 ""}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/actor "alice"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/returned
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "nope nope nope"}]
@@ -678,22 +733,27 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}
-                                :application/accepted-licenses #{1 2}}
+                                                           8 ""}}
+                               {:event/type :application.event/accepted-licenses
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/actor "alice"
+                                :application/id app-id
+                                :application/accepted-licenses #{1 2}
+                                :event/id (next-event-id)}
                                {:event/type :application.event/submitted
                                 :event/actor "alice"
-                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}
                                {:event/type :application.event/approved
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment ""}
                                {:event/type :application.event/closed
                                 :event/actor "developer"
-                                :event/time (-> application :dynamic-events (nth 4) :event/time)
+                                :event/time (-> application :dynamic-events (nth 5) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "no more"}]

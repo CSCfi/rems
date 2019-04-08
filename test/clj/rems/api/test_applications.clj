@@ -302,8 +302,7 @@
               :errors [{:type "forbidden"}]}
              (send-dynamic-command "bob" {:type :application.command/save-draft
                                           :application-id application-id
-                                          :field-values {}
-                                          :accepted-licenses #{}}))))
+                                          :field-values {}}))))
 
     (testing "submitting"
       (is (= {:success true}
