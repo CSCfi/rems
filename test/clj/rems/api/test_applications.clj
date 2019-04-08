@@ -85,13 +85,13 @@
       read-ok-body))
 
 (defn- get-open-reviews [user-id]
-  (-> (request :get "/api/v2/reviews/open")
+  (-> (request :get "/api/reviews/open")
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
 (defn- get-handled-reviews [user-id]
-  (-> (request :get "/api/v2/reviews/handled")
+  (-> (request :get "/api/reviews/handled")
       (authenticate "42" user-id)
       handler
       read-ok-body))
