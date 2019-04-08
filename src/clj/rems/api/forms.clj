@@ -38,12 +38,12 @@
   [Form])
 
 (defn- format-form
-  [{:keys [id organization title start endt expired enabled archived]}]
+  [{:keys [id organization title start end expired enabled archived]}]
   {:id id
    :organization organization
    :title title
    :start start
-   :end endt
+   :end end
    :expired expired
    :enabled enabled
    :archived archived})

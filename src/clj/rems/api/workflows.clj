@@ -40,7 +40,7 @@
   (-> license
       (select-keys [:type :textcontent :localizations])
       (assoc :start (parse-db-time (:start license)))
-      (assoc :end (parse-db-time (:endt license)))))
+      (assoc :end (parse-db-time (:end license)))))
 
 (s/defschema Workflow
   {:id s/Num
@@ -62,7 +62,7 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt expired enabled archived licenses]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -71,7 +71,7 @@
    :final-round fnlround
    :workflow workflow
    :start start
-   :end endt
+   :end end
    :expired expired
    :enabled enabled
    :archived archived

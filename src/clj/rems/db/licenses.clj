@@ -10,7 +10,7 @@
   {:id (:id license)
    :licensetype (:type license)
    :start (:start license)
-   :end (:endt license)
+   :end (:end license)
    :enabled (:enabled license)
    :archived (:archived license)
    :expired (:expired license)
