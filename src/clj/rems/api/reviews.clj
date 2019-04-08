@@ -33,7 +33,7 @@
        (remove open-review?)))
 
 (def reviews-api
-  (context "/v2/reviews" []
+  (context "/reviews" []
     :tags ["reviews"]
 
     (GET "/open" []

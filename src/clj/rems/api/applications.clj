@@ -15,7 +15,6 @@
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [schema-refined.core :as r]
             [schema.core :as s])
   (:import [java.io ByteArrayInputStream]))
 
@@ -87,14 +86,47 @@
 
 (def get-deciders get-users)
 
-(defn- fix-command-from-api
-  [cmd]
-  ;; schema could do these coercions for us...
+(defn- coerce-command-from-api [cmd]
+  ;; TODO: schema could do these coercions for us
   (update-present cmd :decision keyword))
+
+(defn api-command [command-type request]
+  (let [command (-> request
+                    (coerce-command-from-api)
+                    (assoc :type command-type
+                           :actor (getx-user-id)
+                           :time (time/now)))
+        errors (applications/command! command)]
+    (if errors
+      (ok {:success false
+           :errors (:errors errors)})
+      (ok {:success true}))))
+
+(defmacro command-endpoint [command schema]
+  (let [path (str "/" (name command))]
+    `(POST ~path []
+       :summary ~(str "Submit a `" (name command) "` command for an application.")
+       :roles #{:logged-in}
+       :body [request# ~schema]
+       :return SuccessResponse
+       (api-command ~command request#))))
 
 (def applications-api
   (context "/applications" []
     :tags ["applications"]
+
+    (GET "/" []
+      :summary "Get current user's all applications"
+      :roles #{:logged-in}
+      :return [ApplicationOverview]
+      (ok (applications-v2/get-own-applications (getx-user-id))))
+
+    (POST "/create" []
+      :summary "Create a new application"
+      :roles #{:logged-in}
+      :body [request CreateApplicationCommand]
+      :return CreateApplicationResponse
+      (ok (applications/create-application! (getx-user-id) (:catalogue-item-ids request))))
 
     (GET "/commenters" []
       :summary "Available third party commenters"
@@ -124,26 +156,6 @@
             (content-type (:content-type attachment)))
         (not-found! "not found")))
 
-    (POST "/accept-invitation" []
-      :summary "Accept an invitation by token"
-      :roles #{:logged-in}
-      :query-params [invitation-token :- (describe s/Str "invitation token")]
-      :return AcceptInvitationResult
-      (ok (applications/accept-invitation (getx-user-id) invitation-token)))
-
-    (GET "/:application-id/pdf" []
-      :summary "Get a pdf version of an application"
-      :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
-      :produces ["application/pdf"]
-      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
-        (-> app
-            (pdf/application-to-pdf-bytes)
-            (ByteArrayInputStream.)
-            (ok)
-            (content-type "application/pdf"))
-        (not-found! "not found")))
-
     ;; TODO: think about size limit
     (POST "/add-attachment" []
       :summary "Add an attachment file related to an application field"
@@ -163,33 +175,15 @@
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       :return SuccessResponse
       (attachments/remove-attachment! (getx-user-id) application-id field-id)
-      (ok {:success true}))))
+      (ok {:success true}))
 
-(defn api-command [command-type request]
-  (let [command (-> request
-                    (assoc :type command-type)
-                    (assoc :actor (getx-user-id))
-                    (assoc :time (time/now))
-                    (fix-command-from-api))
-        errors (applications/command! command)]
-    (if errors
-      (ok {:success false
-           :errors (:errors errors)})
-      (ok {:success true}))))
+    (POST "/accept-invitation" []
+      :summary "Accept an invitation by token"
+      :roles #{:logged-in}
+      :query-params [invitation-token :- (describe s/Str "invitation token")]
+      :return AcceptInvitationResult
+      (ok (applications/accept-invitation (getx-user-id) invitation-token)))
 
-(defmacro command-endpoint [command schema]
-  (let [path (str "/" (name command))]
-    `(POST ~path []
-       :summary ~(str "Submit a `" (name command) "` command for an application.")
-       :roles #{:logged-in}
-       :body [request# ~schema]
-       :return SuccessResponse
-       (api-command ~command request#))))
-
-(def application-commands-api
-  (context "/applications" []
-    :tags ["applications"]
-    (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/add-member commands/AddMemberCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/approve commands/ApproveCommand)
@@ -203,25 +197,9 @@
     (command-endpoint :application.command/return commands/ReturnCommand)
     (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
     (command-endpoint :application.command/submit commands/SubmitCommand)
-    (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)))
+    (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
 
-(def v2-applications-api
-  (context "/v2/applications" []
-    :tags ["applications"]
-
-    (GET "/" []
-      :summary "Get current user's all applications"
-      :roles #{:logged-in}
-      :return [ApplicationOverview]
-      (ok (applications-v2/get-own-applications (getx-user-id))))
-
-    (POST "/create" []
-      :summary "Create a new application"
-      :roles #{:logged-in}
-      :body [request CreateApplicationCommand]
-      :return CreateApplicationResponse
-      (ok (applications/create-application! (getx-user-id) (:catalogue-item-ids request))))
-
+    ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :roles #{:logged-in}
@@ -230,4 +208,18 @@
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
         (ok app)
+        (not-found! "not found")))
+
+    (GET "/:application-id/pdf" []
+      :summary "Get a pdf version of an application"
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Num "application id")]
+      :produces ["application/pdf"]
+      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
+        (-> app
+            (pdf/application-to-pdf-bytes)
+            (ByteArrayInputStream.)
+            (ok)
+            (content-type "application/pdf"))
         (not-found! "not found")))))
+

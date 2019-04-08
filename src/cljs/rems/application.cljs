@@ -100,7 +100,7 @@
 (rf/reg-fx
  ::fetch-application
  (fn [id]
-   (fetch (str "/api/v2/applications/" id)
+   (fetch (str "/api/applications/" id)
           {:handler #(rf/dispatch [::fetch-application-result %])})))
 
 (rf/reg-event-db
