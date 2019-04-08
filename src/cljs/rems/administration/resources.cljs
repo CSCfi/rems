@@ -20,6 +20,7 @@
  ::fetch-resources
  (fn [{:keys [db]}]
    (fetch "/api/resources" {:url-params {:disabled true
+                                         :inactive (::display-archived? db)
                                          :archived (::display-archived? db)}
                             :handler #(rf/dispatch [::fetch-resources-result %])
                             :error-handler status-modal/common-error-handler!})
