@@ -8,17 +8,17 @@
 
 (defn get-forms [filters]
   (->> (db/get-forms)
-       (map db/assoc-active)
+       (map db/assoc-expired)
        (db/apply-filters filters)))
 
 (defn get-form [id]
   (-> (db/get-form {:id id})
-      (db/assoc-active)
+      (db/assoc-expired)
       (update :fields json/parse-string)))
 
 (defn get-form-template [id]
   (-> (db/get-form-template {:id id})
-      (db/assoc-active)
+      (db/assoc-expired)
       (update :fields json/parse-string)))
 
 (defn- create-form-item! [user-id form-id item-index {:keys [title optional type input-prompt maxlength options]}]

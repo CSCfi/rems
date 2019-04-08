@@ -15,7 +15,7 @@
    :title s/Str
    :start DateTime
    :end (s/maybe DateTime)
-   :active s/Bool
+   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool})
 
@@ -38,13 +38,13 @@
   [Form])
 
 (defn- format-form
-  [{:keys [id organization title start endt active enabled archived]}]
+  [{:keys [id organization title start endt expired enabled archived]}]
   {:id id
    :organization organization
    :title title
    :start start
    :end endt
-   :active active
+   :expired expired
    :enabled enabled
    :archived archived})
 
@@ -73,7 +73,7 @@
                      {expired :- (describe s/Bool "whether to include expired forms") false}
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return Forms
-      (ok (get-forms (merge (when-not expired {:active true})
+      (ok (get-forms (merge (when-not expired {:expired false})
                             (when-not disabled {:enabled true})
                             (when-not archived {:archived false})))))
 

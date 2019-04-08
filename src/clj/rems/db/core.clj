@@ -47,3 +47,13 @@
    ;; TODO: rename endt to end in all places
    (assoc x :active (now-active? now (:start x) (or (:endt x)
                                                     (:end x))))))
+
+(defn assoc-expired
+  "Calculates and assocs :expired attribute based on current time and :start and :endt attributes.
+
+   Current time can be passed in optionally."
+  ([x]
+   (assoc-expired (time/now) x))
+  ([now x]
+   ;; TODO: rename endt to end in all places
+   (assoc x :expired (not (now-active? now (:start x) (or (:endt x) (:end x)))))))

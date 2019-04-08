@@ -74,7 +74,7 @@
               [inline-info-field (text :t.administration/title) (:title form)]
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
-              [inline-info-field (text :t.administration/active) (str (:active form))]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
    [form-fields (:fields form) language]
    [:div.col.commands [back-button]]])
    ;; TODO Do we support form licenses?
