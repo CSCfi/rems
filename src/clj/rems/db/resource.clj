@@ -6,11 +6,11 @@
 (defn get-resource [id]
   (-> {:id id}
       db/get-resource
-      db/assoc-active))
+      db/assoc-expired))
 
 (defn get-resources [filters]
   (->> (db/get-resources)
-       (map db/assoc-active)
+       (map db/assoc-expired)
        (db/apply-filters filters)))
 
 (defn duplicate-resid? [^Exception e]

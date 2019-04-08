@@ -48,7 +48,7 @@
                                              :end nil
                                              :enabled true
                                              :archived false
-                                             :active true
+                                             :expired false
                                              :state "enabled"}
                                          20 {:id 20
                                              :resource-id 21
@@ -66,7 +66,7 @@
                                              :end nil
                                              :enabled true
                                              :archived false
-                                             :active true
+                                             :expired false
                                              :state "enabled"}}
 
                     :get-license {30 {:id 30
@@ -80,7 +80,7 @@
                                       :start (DateTime. 100)
                                       :end nil
                                       :enabled true
-                                      :active true
+                                      :expired false
                                       :archived false}
                                   31 {:id 31
                                       :licensetype "text"
@@ -93,7 +93,7 @@
                                       :start (DateTime. 100)
                                       :end nil
                                       :enabled true
-                                      :active true
+                                      :expired false
                                       :archived false}
                                   32 {:id 32
                                       :licensetype "attachment"
@@ -109,7 +109,7 @@
                                       :start (DateTime. 100)
                                       :end nil
                                       :enabled true
-                                      :active true
+                                      :expired false
                                       :archived false}}
 
                     :get-user {"applicant" {:eppn "applicant"
@@ -162,7 +162,7 @@
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
-                                                           :catalogue-item/active true
+                                                           :catalogue-item/expired false
                                                            :catalogue-item/archived false}
                                                           {:catalogue-item/id 20
                                                            :resource/id 21
@@ -173,7 +173,7 @@
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
-                                                           :catalogue-item/active true
+                                                           :catalogue-item/expired false
                                                            :catalogue-item/archived false}]
                                   :application/licenses [{:license/id 30
                                                           :license/accepted false
@@ -186,7 +186,7 @@
                                                                          :default "http://non-localized-license-link"}
                                                           :license/start (DateTime. 100)
                                                           :license/end nil
-                                                          :license/active true
+                                                          :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 31
@@ -200,7 +200,7 @@
                                                                          :default "non-localized license text"}
                                                           :license/start (DateTime. 100)
                                                           :license/end nil
-                                                          :license/active true
+                                                          :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 32
@@ -217,7 +217,7 @@
                                                                                         :default "non-localized filename"}
                                                           :license/start (DateTime. 100)
                                                           :license/end nil
-                                                          :license/active true
+                                                          :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}]
                                   :application/accepted-licenses {"applicant" #{}}

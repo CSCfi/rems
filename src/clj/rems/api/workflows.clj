@@ -52,7 +52,7 @@
    :workflow s/Any
    :start DateTime
    :end (s/maybe DateTime)
-   :active s/Bool
+   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool
    :actors [Actor]
@@ -62,7 +62,7 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt active enabled archived licenses]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt expired enabled archived licenses]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -72,7 +72,7 @@
    :workflow workflow
    :start start
    :end endt
-   :active active
+   :expired expired
    :enabled enabled
    :archived archived
    :licenses licenses})
@@ -117,7 +117,7 @@
                      {expired :- (describe s/Bool "whether to include expired workflows") false}
                      {archived :- (describe s/Bool "whether to include archived workflows") false}]
       :return Workflows
-      (ok (get-workflows (merge (when-not expired {:active true})
+      (ok (get-workflows (merge (when-not expired {:expired false})
                                 (when-not disabled {:enabled true})
                                 (when-not archived {:archived false})))))
 

@@ -14,12 +14,12 @@
       db/get-workflow
       (update :workflow parse-workflow-body)
       (update :licenses parse-licenses)
-      db/assoc-active))
+      db/assoc-expired))
 
 (defn get-workflows [filters]
   (->> (db/get-workflows)
        (map #(update % :workflow parse-workflow-body))
-       (map db/assoc-active)
+       (map db/assoc-expired)
        (db/apply-filters filters)))
 
 (defn- create-auto-approve-workflow! [{:keys [user-id organization title]}]

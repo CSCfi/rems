@@ -83,7 +83,7 @@
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox :active)}
+            :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [workflow]
                         [[to-view-workflow (:id workflow)]
                          [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %])]

@@ -21,14 +21,17 @@
     (is (now-active? nil tomorrow) "still active")
     (is (not (now-active? nil yesterday)) "already expired")))
 
-(deftest test-assoc-active
-  (is (= {:active true} (assoc-active nil)))
-  (is (= {:active true :start nil :endt nil :foobar 42} (assoc-active {:start nil :endt nil :foobar 42})))
+(deftest test-assoc-expired
+  (is (= {:expired false} (assoc-expired nil)))
+  (is (= {:expired false :start nil :endt nil :foobar 42} (assoc-expired {:start nil :endt nil :foobar 42})))
   (let [today (time/now)
         yesterday (time/minus today (time/days 1))
         tomorrow (time/plus today (time/days 1))]
-    (is (= {:active false :start tomorrow :endt nil} (assoc-active {:start tomorrow :endt nil})))
-    (is (= {:active false :start nil :endt yesterday} (assoc-active {:start nil :endt yesterday})))))
+    (is (= {:expired true :start tomorrow :endt nil} (assoc-expired {:start tomorrow :endt nil})))
+    (is (= {:expired true :start nil :endt yesterday} (assoc-expired {:start nil :endt yesterday})))
+    (is (= {:expired false :start yesterday :endt tomorrow} (assoc-expired {:start yesterday :endt tomorrow})))
+    (is (= {:expired false :start yesterday :endt nil} (assoc-expired {:start yesterday :endt nil})))
+    (is (= {:expired false :start nil :endt tomorrow} (assoc-expired {:start nil :endt tomorrow})))))
 
 (defn- take-ids [items]
   (map :id items))
@@ -46,7 +49,7 @@
         ; the following idiom can be used when reading database entries with 'endt' field
         get-items (fn [filters]
                     (->> all-items
-                         (map assoc-active)
+                         (map assoc-expired)
                          (apply-filters filters)))]
 
     (testing "find all items"
@@ -54,10 +57,10 @@
       (is (= [:normal :expired] (take-ids (get-items nil)))))
 
     (testing "find active items"
-      (is (= [:normal] (take-ids (get-items {:active true})))))
+      (is (= [:normal] (take-ids (get-items {:expired false})))))
 
     (testing "find expired items"
-      (is (= [:expired] (take-ids (get-items {:active false})))))
+      (is (= [:expired] (take-ids (get-items {:expired true})))))
 
     (testing "calculates :active property"
-      (is (every? #(contains? % :active) (get-items {}))))))
+      (is (every? #(contains? % :expired) (get-items {}))))))
