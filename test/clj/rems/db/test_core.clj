@@ -28,7 +28,10 @@
         yesterday (time/minus today (time/days 1))
         tomorrow (time/plus today (time/days 1))]
     (is (= {:expired true :start tomorrow :endt nil} (assoc-expired {:start tomorrow :endt nil})))
-    (is (= {:expired true :start nil :endt yesterday} (assoc-expired {:start nil :endt yesterday})))))
+    (is (= {:expired true :start nil :endt yesterday} (assoc-expired {:start nil :endt yesterday})))
+    (is (= {:expired false :start yesterday :endt tomorrow} (assoc-expired {:start yesterday :endt tomorrow})))
+    (is (= {:expired false :start yesterday :endt nil} (assoc-expired {:start yesterday :endt nil})))
+    (is (= {:expired false :start nil :endt tomorrow} (assoc-expired {:start nil :endt tomorrow})))))
 
 (defn- take-ids [items]
   (map :id items))
