@@ -79,7 +79,7 @@
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox :active)}
+            :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [resource]
                         [[to-view-resource (:id resource)]
                          [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %])]
