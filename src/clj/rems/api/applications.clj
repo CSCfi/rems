@@ -199,7 +199,7 @@
     (command-endpoint :application.command/submit commands/SubmitCommand)
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
 
-    ;; this route must be last - otherwise the path parameter will conflict with the other routes
+    ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :roles #{:logged-in}

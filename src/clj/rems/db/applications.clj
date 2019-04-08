@@ -25,8 +25,7 @@
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
             [schema.utils])
-  (:import [org.joda.time DateTime]
-           rems.InvalidRequestException))
+  (:import [org.joda.time DateTime]))
 
 (declare get-dynamic-application-state)
 (declare get-dynamic-application-state-for-user)
@@ -605,6 +604,7 @@
   (or (datestring-coercion-matcher schema)
       (coerce/string-coercion-matcher schema)))
 
+;; TODO: remove "dynamic" from names
 (def ^:private coerce-dynamic-event-commons
   (coerce/coercer (st/open-schema events/EventBase) coercion-matcher))
 
@@ -634,6 +634,7 @@
   (assoc (-> event :eventdata json->event)
          :event/id (:id event)))
 
+;; TODO: remove "dynamic" from names
 (defn get-dynamic-application-events [application-id]
   (map fix-event-from-db (db/get-application-events {:application application-id})))
 
