@@ -124,12 +124,12 @@
               assert-response-is-ok))))))
 
 (deftest resources-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/resources")
+  (let [unfiltered (-> (request :get "/api/resources" {:expired true})
                        (authenticate "42" "owner")
                        handler
                        assert-response-is-ok
                        read-body)
-        filtered (-> (request :get "/api/resources" {:active true})
+        filtered (-> (request :get "/api/resources")
                      (authenticate "42" "owner")
                      handler
                      assert-response-is-ok

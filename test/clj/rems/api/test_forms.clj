@@ -178,12 +178,12 @@
                    (:fields (form/get-form-template (:id form)))))))))))
 
 (deftest forms-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/forms")
+  (let [unfiltered (-> (request :get "/api/forms" {:expired true})
                        (authenticate "42" "owner")
                        handler
                        assert-response-is-ok
                        read-body)
-        filtered (-> (request :get "/api/forms" {:active true})
+        filtered (-> (request :get "/api/forms")
                      (authenticate "42" "owner")
                      handler
                      assert-response-is-ok
