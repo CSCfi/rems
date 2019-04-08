@@ -84,25 +84,21 @@
                :event/time test-time
                :event/actor applicant-user-id
                :application/id 123
-               :application/field-values {1 "foo" 2 "bar"}
-               :application/accepted-licenses #{1 2}}]
+               :application/field-values {1 "foo" 2 "bar"}}]
              (ok-command application
                          {:type :application.command/save-draft
                           :actor applicant-user-id
-                          :field-values {1 "foo" 2 "bar"}
-                          :accepted-licenses #{1 2}}))))
+                          :field-values {1 "foo" 2 "bar"}}))))
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/save-draft
                             :actor "non-applicant"
-                            :field-values {1 "foo" 2 "bar"}
-                            :accepted-licenses #{1 2}})
+                            :field-values {1 "foo" 2 "bar"}})
              (fail-command application
                            {:type :application.command/save-draft
                             :actor handler-user-id
-                            :field-values {1 "foo" 2 "bar"}
-                            :accepted-licenses #{1 2}}))))
+                            :field-values {1 "foo" 2 "bar"}}))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -113,8 +109,7 @@
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
-                              :field-values {1 "updated"}
-                              :accepted-licenses #{3}})))))
+                              :field-values {1 "updated"}})))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -171,8 +166,7 @@
                            :event/actor applicant-user-id
                            :application/id 123
                            :application/field-values {41 "foo"
-                                                      42 "bar"}
-                           :application/accepted-licenses #{30 31}}
+                                                      42 "bar"}}
         submit-command {:type :application.command/submit
                         :actor applicant-user-id}
         application (apply-events nil [created-event draft-saved-event])]
