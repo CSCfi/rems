@@ -45,13 +45,13 @@
                    assert-response-is-ok
                    read-body
                    :id)]
+        (is id)
         (testing "and fetch"
           (let [license (-> (request :get (str "/api/licenses/" id))
                             (authenticate api-key user-id)
                             handler
                             assert-response-is-ok
                             read-body)]
-            (is id)
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -70,15 +70,14 @@
                    (authenticate api-key user-id)
                    (json-body command)
                    handler
-                   assert-response-is-ok
-                   read-body
+                   read-ok-body
                    :id)]
+        (is id)
         (testing "and fetch"
           (let [license (-> (request :get (str "/api/licenses/" id))
                             (authenticate api-key user-id)
                             handler
-                            assert-response-is-ok
-                            read-body)]
+                            read-ok-body)]
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -119,9 +118,8 @@
                               (assoc :multipart-params {"file" filecontent})
                               (authenticate api-key user-id)
                               handler
-                              assert-response-is-ok
-                              read-body
-                              (get :id))
+                              read-ok-body
+                              :id)
             command {:title (str "license title " (UUID/randomUUID))
                      :licensetype "text"
                      :textcontent "license text"
@@ -136,16 +134,14 @@
                            (authenticate api-key user-id)
                            (json-body command)
                            handler
-                           assert-response-is-ok
-                           read-body
+                           read-ok-body
                            :id)]
 
         (testing "and fetch"
           (let [license (-> (request :get (str "/api/licenses/" license-id))
                             (authenticate api-key user-id)
                             handler
-                            assert-response-is-ok
-                            read-body)]
+                            read-ok-body)]
             (is license)
             (is (= command (select-keys license (keys command))))))
 
