@@ -15,7 +15,7 @@
   (let [api-key "42"
         user-id "owner"]
 
-    (testing "get"
+    (testing "get all"
       (let [data (-> (request :get "/api/forms")
                      (authenticate api-key user-id)
                      handler

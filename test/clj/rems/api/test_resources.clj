@@ -26,7 +26,7 @@
 (deftest resources-api-test
   (let [api-key "42"
         user-id "owner"]
-    (testing "get"
+    (testing "get all"
       (testing "returns stuff"
         (let [data (-> (request :get "/api/resources")
                        (authenticate api-key user-id)
