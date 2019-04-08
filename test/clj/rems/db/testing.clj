@@ -8,6 +8,7 @@
             [rems.db.test-data :as test-data]))
 
 (defn test-db-fixture [f]
+  (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down
   (mount/start-with-args {:test true}
                          #'rems.config/env
                          #'rems.db.core/*db*)
