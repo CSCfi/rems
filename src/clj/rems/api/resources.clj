@@ -68,11 +68,11 @@
     (GET "/" []
       :summary "Get resources"
       :roles #{:owner}
-      :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}
-                     {disabled :- (describe s/Bool "whether to include disabled resources") false}
+      :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
+                     {expired :- (describe s/Bool "whether to include expired resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
-      (ok (get-resources (merge (when active {:active active})
+      (ok (get-resources (merge (when-not expired {:active true})
                                 (when-not disabled {:enabled true})
                                 (when-not archived {:archived false})))))
 

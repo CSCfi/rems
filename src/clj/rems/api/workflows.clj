@@ -113,10 +113,12 @@
     (GET "/" []
       :summary "Get workflows"
       :roles #{:owner}
-      :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}
-                     {archived :- (describe s/Bool "whether to include archived resources") false}]
+      :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
+                     {expired :- (describe s/Bool "whether to include expired workflows") false}
+                     {archived :- (describe s/Bool "whether to include archived workflows") false}]
       :return Workflows
-      (ok (get-workflows (merge (when active {:active active})
+      (ok (get-workflows (merge (when-not expired {:active true})
+                                (when-not disabled {:enabled true})
                                 (when-not archived {:archived false})))))
 
     (POST "/create" []

@@ -97,7 +97,7 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :disable "Poista käytöstä"
-                   :display-archived "Näytä arkistoidut"
+                   :display-old "Näytä vanhat"
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
