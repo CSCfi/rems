@@ -33,7 +33,7 @@
   (.setTimeout js/window #(.scrollTo js/window 0 0) 500)) ;; wait until faded out
 
 (defn reload! [application-id]
-  (rf/dispatch [:rems.application/enter-application-page application-id]))
+  (rf/dispatch [:rems.application/reload-application-page application-id]))
 
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
@@ -112,9 +112,24 @@
                                                  (map (juxt :field/id :field/value))
                                                  (into {}))
                               :show-diff {}
-                              :validation-errors nil
-                              :accepted-licenses (set (get (:application/accepted-licenses application)
-                                                           (:application/applicant application)))})))
+                              :validation-errors nil})))
+
+(rf/reg-event-fx
+ ::reload-application-page
+ (fn [{:keys [db]} [_ id]]
+   {::reload-application id}))
+
+(rf/reg-fx
+ ::reload-application
+ (fn [id]
+   (fetch (str "/api/v2/applications/" id)
+          {:handler #(rf/dispatch [::reload-application-result %])})))
+
+(rf/reg-event-db
+ ::reload-application-result
+ (fn [db [_ application]]
+   (assoc db
+          ::application application)))
 
 (rf/reg-event-db
  ::set-validation-errors
@@ -348,7 +363,7 @@
                            :placeholder placeholder
                            :max-length max-length
                            :class (when validation "is-invalid")
-                           :value value
+                           :defaultValue value
                            :on-change (set-field-value id)}]]))
 
 (defn- texta-field
@@ -363,7 +378,7 @@
                 :placeholder placeholder
                 :max-length max-length
                 :class (if validation "form-control is-invalid" "form-control")
-                :value value
+                :defaultValue value
                 :on-change (set-field-value id)}]]))
 
 ;; TODO: custom :diff-component, for example link to both old and new attachment
