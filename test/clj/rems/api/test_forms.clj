@@ -53,39 +53,32 @@
             (is (= 500 (:status response)))))
 
         (testing "valid create"
-          (-> (request :post "/api/forms/create")
-              (authenticate api-key user-id)
-              (json-body command)
-              handler
-              assert-response-is-ok))
-
-        (testing "and fetch"
-          (let [body (-> (request :get "/api/forms")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                forms (->> body
-                           (filter #(= (:title %) (:title command))))
-                form (first forms)
-                form-template (-> (request :get (str "/api/forms/v2/" (:id form)))
-                                  (authenticate api-key user-id)
-                                  handler
-                                  assert-response-is-ok
-                                  read-body)]
-            (is (= 1 (count forms))
-                "only one form got created")
-
-            (testing "v2 result matches input"
-              (is (= (select-keys command [:title :organization])
-                     (select-keys form-template [:title :organization])))
-              (is (= (:items command)
-                     (:fields form-template))))
-            (testing "v1 result matches input"
-              (is (= (select-keys command [:title :organization])
-                     (select-keys form [:title :organization])))
-              (is (= (:items command)
-                     (:fields (form/get-form-template (:id form))))))))))))
+          (let [id (-> (request :post "/api/forms/create")
+                       (authenticate api-key user-id)
+                       (json-body command)
+                       handler
+                       read-ok-body
+                       :id)]
+            (is id)
+            (testing "and fetch"
+              (let [form (-> (request :get (str "/api/forms/" id))
+                             (authenticate api-key user-id)
+                             handler
+                             read-ok-body)
+                    form-template (-> (request :get (str "/api/forms/v2/" id))
+                                      (authenticate api-key user-id)
+                                      handler
+                                      read-ok-body)]
+                (testing "v2 result matches input"
+                  (is (= (select-keys command [:title :organization])
+                         (select-keys form-template [:title :organization])))
+                  (is (= (:items command)
+                         (:fields form-template))))
+                (testing "v1 result matches input"
+                  (is (= (select-keys command [:title :organization])
+                         (select-keys form [:title :organization])))
+                  (is (= (:items command)
+                         (:fields (form/get-form-template (:id form))))))))))))))
 
 (deftest form-update-test
   (let [api-key "42"
