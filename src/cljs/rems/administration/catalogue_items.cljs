@@ -13,7 +13,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-archived? false)
+   {:db (assoc db ::display-old? false)
     :dispatch [::fetch-catalogue]}))
 
 (rf/reg-event-fx
@@ -21,8 +21,8 @@
  (fn [{:keys [db]}]
    (fetch "/api/catalogue-items/" {:url-params {:expand :names
                                                 :disabled true
-                                                :expired (::display-archived? db)
-                                                :archived (::display-archived? db)}
+                                                :expired (::display-old? db)
+                                                :archived (::display-old? db)}
                                    :handler #(rf/dispatch [::fetch-catalogue-result %])
                                    :error-handler status-modal/common-error-handler!})
    {:db (assoc db ::loading? true)}))
@@ -58,11 +58,11 @@
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (rf/reg-event-fx
- ::set-display-archived?
- (fn [{:keys [db]} [_ display-archived?]]
-   {:db (assoc db ::display-archived? display-archived?)
+ ::set-display-old?
+ (fn [{:keys [db]} [_ display-old?]]
+   {:db (assoc db ::display-old? display-old?)
     :dispatch [::fetch-catalogue]}))
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
 (defn- to-create-catalogue-item []
   [:a.btn.btn-primary
@@ -126,9 +126,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
-           [status-flags/display-archived-toggle
-            @(rf/subscribe [::display-archived?])
-            #(rf/dispatch [::set-display-archived? %])]
+           [status-flags/display-old-toggle
+            @(rf/subscribe [::display-old?])
+            #(rf/dispatch [::set-display-old? %])]
            [catalogue-list
             @(rf/subscribe [::catalogue])
             @(rf/subscribe [:language])

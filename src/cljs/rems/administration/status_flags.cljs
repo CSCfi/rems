@@ -40,14 +40,14 @@
     [archive-button item on-change]))
 
 
-(defn display-archived-toggle [display-archived? on-change]
+(defn display-old-toggle [display-old? on-change]
   [:div.form-check.form-check-inline {:style {:float "right"}}
    [:input.form-check-input {:type "checkbox"
-                             :id "display-archived"
-                             :checked display-archived?
-                             :on-change #(on-change (not display-archived?))}]
-   [:label.form-check-label {:for "display-archived"}
-    (text :t.administration/display-archived)]])
+                             :id "display-old"
+                             :checked display-old?
+                             :on-change #(on-change (not display-old?))}]
+   [:label.form-check-label {:for "display-old"}
+    (text :t.administration/display-old)]])
 
 (defn- format-update-error [{:keys [type catalogue-items resources workflows]}]
   (let [language @(rf/subscribe [:language])]

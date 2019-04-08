@@ -97,7 +97,7 @@
                    :create-workflow "Create workflow"
                    :created "Created"
                    :disable "Disable"
-                   :display-archived "Display archived"
+                   :display-old "Display old"
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."
