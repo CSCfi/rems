@@ -122,12 +122,11 @@
    (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
-(defn- save-application! [description application-id field-values accepted-licenses]
+(defn- save-application! [description application-id field-values]
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
-                   :field-values field-values
-                   :accepted-licenses accepted-licenses}
+                   :field-values field-values}
           :handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!}))
 
@@ -138,17 +137,15 @@
          edit-application (::edit-application db)]
      (save-application! description
                         (:application/id application)
-                        (:field-values edit-application)
-                        (:accepted-licenses edit-application)))
+                        (:field-values edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application! [application description application-id field-values accepted-licenses]
+(defn- submit-application! [application description application-id field-values]
   ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
-                   :field-values field-values
-                   :accepted-licenses accepted-licenses}
+                   :field-values field-values}
           :handler (fn [response]
                      (if (:success response)
                        (post! "/api/applications/submit"
@@ -172,8 +169,7 @@
      (submit-application! application
                           description
                           (:application/id application)
-                          (:field-values edit-application)
-                          (:accepted-licenses edit-application)))
+                          (:field-values edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
@@ -232,13 +228,6 @@
  ::toggle-diff
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
-
-(rf/reg-event-db
- ::set-license-accepted
- (fn [db [_ license-id accepted]]
-   (update-in db [::edit-application :accepted-licenses] (if accepted
-                                                           #(conj % license-id)
-                                                           #(disj % license-id)))))
 
 (defn- id-to-name [id]
   (str "field" id))
@@ -507,11 +496,6 @@
     [:div.form-group
      [:label (localized title)]]))
 
-(defn- set-license-accepted
-  [id]
-  (fn [event]
-    (rf/dispatch [::set-license-accepted id (.. event -target -checked)])))
-
 (defn- license [id title approved readonly validation content]
   [:div.license
    [field-validation-message validation title]
@@ -598,7 +582,6 @@
 (defn- application-licenses [application edit-application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
     (let [application-id (:application/id application)
-          ;;accepted-licenses (:accepted-licenses edit-application)
           accepted-licenses (get (:application/accepted-licenses application) userid)
           possible-commands (:application/permissions application)
           license-validations (index-by [:license-id] (:validation-errors edit-application))

@@ -130,13 +130,11 @@
                  :event/time test-time
                  :event/actor applicant-user-id
                  :application/id 123
-                 :application/field-values {1 "updated"}
-                 :application/accepted-licenses #{3}}]
+                 :application/field-values {1 "updated"}}]
                (ok-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values {1 "updated"}
-                            :accepted-licenses #{3}})))))))
+                            :field-values {1 "updated"}})))))))
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]

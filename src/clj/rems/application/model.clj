@@ -168,7 +168,7 @@
                                           {:license/id (:license/id license)
                                            :license/accepted false})
                                         (:application/licenses event))
-             :application/accepted-licenses {(:event/actor event) #{}}
+             :application/accepted-licenses {}
              :application/events []
              :application/form {:form/id (:form/id event)}
              :application/workflow {:workflow/id (:workflow/id event)
@@ -179,18 +179,11 @@
                                     :workflow.dynamic/awaiting-commenters #{}
                                     :workflow.dynamic/awaiting-deciders #{}})))
 
-(defn- set-accepted-licences [licenses accepted-licenses]
-  (map (fn [license]
-         (assoc license :license/accepted (contains? accepted-licenses (:license/id license))))
-       licenses))
-
 (defmethod event-type-specific-application-view :application.event/draft-saved
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
-      (assoc ::draft-answers (:application/field-values event))
-      (update :application/licenses set-accepted-licences (:application/accepted-licenses event))
-      (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
+      (assoc ::draft-answers (:application/field-values event))))
 
 (defmethod event-type-specific-application-view :application.event/accepted-licenses
   [application event]

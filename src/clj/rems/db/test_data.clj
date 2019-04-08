@@ -469,8 +469,7 @@
                                   :actor user-id
                                   :application-id app-id
                                   :time (get-in form [:application :start])
-                                  :field-values {}
-                                  :accepted-licenses #{}})]
+                                  :field-values {}})]
     (when dynamic-workflow?
       (applications/add-application-created-event! {:application-id app-id
                                                     :catalogue-item-ids catids
@@ -489,10 +488,7 @@
                                   :round 0
                                   :licid license-id
                                   :actoruserid user-id
-                                  :state "approved"})
-      (swap! save-draft-command
-             update :accepted-licenses
-             conj license-id))
+                                  :state "approved"}))
     (when dynamic-workflow?
       (let [error (applications/command! @save-draft-command)]
         (assert (nil? error) error)))

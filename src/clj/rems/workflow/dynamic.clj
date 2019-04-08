@@ -101,8 +101,7 @@
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
-       :application/field-values (:field-values cmd)
-       :application/accepted-licenses (set (:accepted-licenses cmd))}))
+       :application/field-values (:field-values cmd)}))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
@@ -259,7 +258,6 @@
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values {}
-                 :accepted-licenses #{}
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
       (is (:success (handle-command command application {}))))
