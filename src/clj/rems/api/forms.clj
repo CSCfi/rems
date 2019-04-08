@@ -74,8 +74,8 @@
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return Forms
       (ok (get-forms (merge (when-not expired {:active true})
-                                (when-not disabled {:enabled true})
-                                (when-not archived {:archived false})))))
+                            (when-not disabled {:enabled true})
+                            (when-not archived {:archived false})))))
 
     (GET "/:form-id" []
       :summary "Get form by id"
