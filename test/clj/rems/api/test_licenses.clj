@@ -37,21 +37,21 @@
                                           :attachment-id nil}
                                      :fi {:title "fi title"
                                           :textcontent "http://example.com/license/fi"
-                                          :attachment-id nil}}}]
-        (-> (request :post "/api/licenses/create")
-            (authenticate api-key user-id)
-            (json-body command)
-            handler
-            assert-response-is-ok)
+                                          :attachment-id nil}}}
+            id (-> (request :post "/api/licenses/create")
+                   (authenticate api-key user-id)
+                   (json-body command)
+                   handler
+                   assert-response-is-ok
+                   read-body
+                   :id)]
         (testing "and fetch"
-          (let [body (-> (request :get "/api/licenses")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                license (->> body
-                             (filter #(= (:title %) (:title command)))
-                             first)]
+          (let [license (-> (request :get (str "/api/licenses/" id))
+                            (authenticate api-key user-id)
+                            handler
+                            assert-response-is-ok
+                            read-body)]
+            (is id)
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -65,21 +65,20 @@
                                           :attachment-id nil}
                                      :fi {:title "fi title"
                                           :textcontent "fi text"
-                                          :attachment-id nil}}}]
-        (-> (request :post "/api/licenses/create")
-            (authenticate api-key user-id)
-            (json-body command)
-            handler
-            assert-response-is-ok)
+                                          :attachment-id nil}}}
+            id (-> (request :post "/api/licenses/create")
+                   (authenticate api-key user-id)
+                   (json-body command)
+                   handler
+                   assert-response-is-ok
+                   read-body
+                   :id)]
         (testing "and fetch"
-          (let [body (-> (request :get "/api/licenses")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                license (->> body
-                             (filter #(= (:title %) (:title command)))
-                             first)]
+          (let [license (-> (request :get (str "/api/licenses/" id))
+                            (authenticate api-key user-id)
+                            handler
+                            assert-response-is-ok
+                            read-body)]
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -132,22 +131,21 @@
                                           :attachment-id attachment-id}
                                      :fi {:title "fi title"
                                           :textcontent "fi text"
-                                          :attachment-id attachment-id}}}]
-        (-> (request :post "/api/licenses/create")
-            (authenticate api-key user-id)
-            (json-body command)
-            handler
-            assert-response-is-ok)
+                                          :attachment-id attachment-id}}}
+            license-id (-> (request :post "/api/licenses/create")
+                           (authenticate api-key user-id)
+                           (json-body command)
+                           handler
+                           assert-response-is-ok
+                           read-body
+                           :id)]
 
         (testing "and fetch"
-          (let [body (-> (request :get "/api/licenses")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                license (->> body
-                             (filter #(= (:title %) (:title command)))
-                             first)]
+          (let [license (-> (request :get (str "/api/licenses/" license-id))
+                            (authenticate api-key user-id)
+                            handler
+                            assert-response-is-ok
+                            read-body)]
             (is license)
             (is (= command (select-keys license (keys command))))))
 

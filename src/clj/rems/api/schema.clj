@@ -93,7 +93,7 @@
    :catalogue-item/active s/Bool
    :catalogue-item/archived s/Bool})
 
-(s/defschema License
+(s/defschema V2License
   {:license/id s/Int
    :license/accepted s/Bool
    :license/type (s/enum :text :link :attachment)
@@ -138,7 +138,7 @@
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    :application/resources [V2Resource]
-   :application/licenses [License]
+   :application/licenses [V2License]
    :application/accepted-licenses (s/maybe {s/Str #{s/Num}})
    :application/events [Event]
    :application/description s/Str
