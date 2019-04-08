@@ -18,7 +18,9 @@
 (rf/reg-event-db
  ::fetch-forms
  (fn [db]
-   (fetch "/api/forms/" {:url-params {:archived (::display-archived? db)}
+   (fetch "/api/forms/" {:url-params {:disabled true
+                                      :inactive (::display-archived? db)
+                                      :archived (::display-archived? db)}
                          :handler #(rf/dispatch [::fetch-forms-result %])})
    (assoc db ::loading? true)))
 
