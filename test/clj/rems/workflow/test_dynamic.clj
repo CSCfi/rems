@@ -134,7 +134,7 @@
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
     (testing "accepts licenses"
-      (is (= [{:event/type :application.event/accepted-licenses
+      (is (= [{:event/type :application.event/licenses-accepted
                :event/time test-time
                :event/actor applicant-user-id
                :application/id 123

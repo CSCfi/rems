@@ -263,7 +263,7 @@
             (is (= expected-application (apply-events events)))
 
             (testing "> accepted licenses"
-              (let [events (conj events {:event/type :application.event/accepted-licenses
+              (let [events (conj events {:event/type :application.event/licenses-accepted
                                          :event/time (DateTime. 2500)
                                          :event/actor "applicant"
                                          :application/id 1

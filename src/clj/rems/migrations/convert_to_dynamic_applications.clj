@@ -40,7 +40,7 @@
                                                                      (map (fn [item]
                                                                             [(:id item) (:value item)]))
                                                                      (into {}))})
-    (applications/add-dynamic-event! {:event/type :application.event/accepted-licenses
+    (applications/add-dynamic-event! {:event/type :application.event/licenses-accepted
                                       :event/time (:start application)
                                       :event/actor (:applicantuserid application)
                                       :application/id (:id application)

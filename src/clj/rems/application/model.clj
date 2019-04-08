@@ -184,7 +184,7 @@
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))))
 
-(defmethod event-type-specific-application-view :application.event/accepted-licenses
+(defmethod event-type-specific-application-view :application.event/licenses-accepted
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))

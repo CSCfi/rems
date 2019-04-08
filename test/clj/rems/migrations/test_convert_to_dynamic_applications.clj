@@ -148,7 +148,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "draft application"
                                                            7 "draft appl"
                                                            8 "draft application"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
                                 :application/id 1
@@ -190,7 +190,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "applied application"
                                                            7 "applied ap"
                                                            8 "applied application"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
                                 :application/id app-id
@@ -237,7 +237,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "rejected application"
                                                            7 "rejected a"
                                                            8 "rejected application"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
                                 :application/id app-id
@@ -290,7 +290,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "accepted application"
                                                            7 "accepted a"
                                                            8 "accepted application"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
                                 :application/id 4
@@ -343,7 +343,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "returned application"
                                                            7 "returned a"
                                                            8 "returned application"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
                                 :application/id app-id
@@ -399,7 +399,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "bundled application"
                                                            7 "bundled ap"
                                                            8 "bundled application"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "alice"
                                 :application/id app-id
@@ -457,7 +457,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "application with review"
                                                            7 "applicatio"
                                                            8 "application with review"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "alice"
                                 :application/id app-id
@@ -517,7 +517,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 "application in review"
                                                            7 "applicatio"
                                                            8 "application in review"}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "alice"
                                 :application/id app-id
@@ -564,7 +564,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 ""
                                                            7 ""
                                                            8 ""}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"
                                 :application/id app-id
@@ -619,7 +619,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 ""
                                                            7 ""
                                                            8 ""}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"
                                 :application/id app-id
@@ -681,7 +681,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 ""
                                                            7 ""
                                                            8 ""}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"
                                 :application/id app-id
@@ -734,7 +734,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            6 ""
                                                            7 ""
                                                            8 ""}}
-                               {:event/type :application.event/accepted-licenses
+                               {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"
                                 :application/id app-id

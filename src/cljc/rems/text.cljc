@@ -60,8 +60,7 @@
   (text (get states state :t.applications.states/unknown)))
 
 (def ^:private event-types
-  {:application.event/accepted-licenses :t.applications.events/accepted-licenses
-   :application.event/approved :t.applications.events/approved
+  {:application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
    :application.event/comment-requested :t.applications.events/comment-requested
    :application.event/commented :t.applications.events/commented
@@ -69,6 +68,7 @@
    :application.event/decided :t.applications.events/decided
    :application.event/decision-requested :t.applications.events/decision-requested
    :application.event/draft-saved :t.applications.events/draft-saved
+   :application.event/licenses-accepted :t.applications.events/licenses-accepted
    :application.event/member-added :t.applications.events/member-added
    :application.event/member-invited :t.applications.events/member-invited
    :application.event/member-joined :t.applications.events/member-joined

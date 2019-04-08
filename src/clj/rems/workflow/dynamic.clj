@@ -105,7 +105,7 @@
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
-  (ok {:event/type :application.event/accepted-licenses
+  (ok {:event/type :application.event/licenses-accepted
        :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
 (defmethod command-handler :application.command/submit
