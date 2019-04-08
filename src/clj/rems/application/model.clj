@@ -437,6 +437,17 @@
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
+(defn enrich-user-attributes [application get-user]
+  (letfn [(enrich-members [members]
+            (->> members
+                 (map (fn [member]
+                        (merge member
+                               (get-user (:userid member)))))
+                 set))]
+    (update application
+            :application/members
+            enrich-members)))
+
 (defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
@@ -458,7 +469,8 @@
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
-        (assoc :application/applicant-attributes (get-user (:application/applicant application))))))
+        (assoc :application/applicant-attributes (get-user (:application/applicant application)))
+        (enrich-user-attributes get-user))))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)

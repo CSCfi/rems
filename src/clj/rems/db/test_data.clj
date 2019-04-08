@@ -29,7 +29,7 @@
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
    "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant"}
-   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant"}
+   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "bob" {:eppn "bob" :mail "bob@example.com" :commonName "Bob Approver"}
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
