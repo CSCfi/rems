@@ -129,7 +129,7 @@
                 [inline-info-field (text :t.create-workflow/handlers) (str/join ", " (get-in workflow [:workflow :handlers]))])
               [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (:active workflow)]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired workflow))]]]}]
    [rounds-view (:actors workflow) language]
    [licenses-view (:licenses workflow) language]
    [:div.col.commands [back-button]]])

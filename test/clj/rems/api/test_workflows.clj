@@ -109,8 +109,8 @@
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
     (is (coll-is-not-empty? filtered))
-    (is (every? #(contains? % :active) unfiltered))
-    (is (every? :active filtered))
+    (is (every? #(contains? % :expired) unfiltered))
+    (is (not-any? :expired filtered))
     (is (< (count filtered) (count unfiltered)))))
 
 (deftest workflows-api-security-test
