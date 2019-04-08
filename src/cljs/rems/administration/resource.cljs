@@ -94,7 +94,7 @@
               [inline-info-field (text :t.administration/resource) (:resid resource)]
               [inline-info-field (text :t.administration/start) (localize-time (:start resource))]
               [inline-info-field (text :t.administration/end) (localize-time (:end resource))]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (:active resource)]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired resource))]]]}]
    [licenses-view (:licenses resource) language]
    [:div.col.commands [back-button]]])
 

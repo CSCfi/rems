@@ -12,13 +12,15 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-archived? false)
+   {:db (assoc db ::display-old? false)
     :dispatch [::fetch-workflows]}))
 
 (rf/reg-event-db
  ::fetch-workflows
  (fn [db]
-   (fetch "/api/workflows/" {:url-params {:archived (::display-archived? db)}
+   (fetch "/api/workflows/" {:url-params {:disabled true
+                                          :archived (::display-old? db)
+                                          :expired (::display-old? db)}
                              :handler #(rf/dispatch [::fetch-workflows-result %])})
    (assoc db ::loading? true)))
 
@@ -54,11 +56,11 @@
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (rf/reg-event-fx
- ::set-display-archived?
- (fn [{:keys [db]} [_ display-archived?]]
-   {:db (assoc db ::display-archived? display-archived?)
+ ::set-display-old?
+ (fn [{:keys [db]} [_ display-old?]]
+   {:db (assoc db ::display-old? display-old?)
     :dispatch [::fetch-workflows]}))
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
 
 (defn- to-create-workflow []
@@ -81,7 +83,7 @@
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox :active)}
+            :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [workflow]
                         [[to-view-workflow (:id workflow)]
                          [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %])]
@@ -108,9 +110,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-workflow]
-           [status-flags/display-archived-toggle
-            @(rf/subscribe [::display-archived?])
-            #(rf/dispatch [::set-display-archived? %])]
+           [status-flags/display-old-toggle
+            @(rf/subscribe [::display-old?])
+            #(rf/dispatch [::set-display-old? %])]
            [workflows-list
             @(rf/subscribe [::workflows])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))

@@ -1,26 +1,24 @@
 (ns rems.api.testing
   "Shared code for API testing"
-  (:require [cheshire.core :refer [parse-stream]]
-            [luminus-migrations.core :as migrations]
+  (:require [clojure.test :refer :all]
+            [cheshire.core :refer [parse-stream]]
             [mount.core :as mount]
-            [rems.config :refer [env]]
-            [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
+            [rems.db.testing :refer [test-data-fixture test-db-fixture]]
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]))
 
-(defn api-fixture [f]
+(defn handler-fixture [f]
   (mount/start
-   #'rems.config/env
    #'rems.locales/translations
-   #'rems.db.core/*db*
    #'rems.handler/handler)
   ;; TODO: silence logging somehow?
-  (db/assert-test-database!)
-  (migrations/migrate ["reset"] (select-keys env [:database-url]))
-  (test-data/create-test-data!)
   (f)
   (mount/stop))
+
+(def api-fixture
+  (join-fixtures [test-db-fixture
+                  test-data-fixture
+                  handler-fixture]))
 
 (defn authenticate [request api-key user-id]
   (-> request

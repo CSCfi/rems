@@ -40,11 +40,17 @@
       :roles #{:logged-in}
       :query-params [{resource :- (describe s/Str "resource id (optional)") nil}
                      {expand :- (describe s/Str "expanded additional attributes (optional), can be \"names\"") nil}
-                     {archived :- (describe s/Bool "'true' to include archived items, defaults to 'false'") false}]
+                     {archived :- (describe s/Bool "whether to include archived items") false}
+                     {disabled :- (describe s/Bool "whether to include disabled items") false}
+                     {expired :- (describe s/Bool "whether to include expired items") false}]
       :return GetCatalogueItemsResponse
-      (ok (catalogue/get-localized-catalogue-items {:resource resource
-                                                    :expand-names? (str/includes? (or expand "") "names")
-                                                    :archived archived})))
+      (ok (db/apply-filters
+           (merge (when-not expired {:expired false})
+                  (when-not disabled {:enabled true})
+                  (when-not archived {:archived false}))
+           (catalogue/get-localized-catalogue-items {:resource resource
+                                                     :expand-names? (str/includes? (or expand "") "names")
+                                                     :archived archived}))))
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"

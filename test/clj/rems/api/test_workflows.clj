@@ -87,7 +87,7 @@
             (authenticate "42" "owner")
             handler
             assert-response-is-ok)
-        (let [workflows (-> (request :get "/api/workflows" {:archived true})
+        (let [workflows (-> (request :get "/api/workflows" {:disabled true :archived true})
                             (authenticate "42" "owner")
                             handler
                             assert-response-is-ok
@@ -97,20 +97,20 @@
                  (select-keys workflow [:id :enabled :archived]))))))))
 
 (deftest workflows-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/workflows")
+  (let [unfiltered (-> (request :get "/api/workflows" {:expired true})
                        (authenticate "42" "owner")
                        handler
                        assert-response-is-ok
                        read-body)
-        filtered (-> (request :get "/api/workflows" {:active true})
+        filtered (-> (request :get "/api/workflows")
                      (authenticate "42" "owner")
                      handler
                      assert-response-is-ok
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
     (is (coll-is-not-empty? filtered))
-    (is (every? #(contains? % :active) unfiltered))
-    (is (every? :active filtered))
+    (is (every? #(contains? % :expired) unfiltered))
+    (is (not-any? :expired filtered))
     (is (< (count filtered) (count unfiltered)))))
 
 (deftest workflows-api-security-test

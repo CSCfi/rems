@@ -4,7 +4,7 @@
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
-            [rems.api.applications :refer [applications-api application-commands-api v2-applications-api]]
+            [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
@@ -54,8 +54,8 @@
      (log/log log-level e (str (.getMessage e)
                                "\n"
                                (with-out-str
-                                (clojure.pprint/pprint
-                                 (select-keys data [:schema :errors :response])))))
+                                 (clojure.pprint/pprint
+                                  (select-keys data [:schema :errors :response])))))
      (handler e data req))))
 
 (def cors-middleware
@@ -81,41 +81,39 @@
 (def api-routes
   (api
     {;; TODO: should this be in rems.middleware?
-     :formats    muuntaja
+     :formats muuntaja
      :middleware [cors-middleware
                   transaction-middleware]
-     :exceptions {:handlers {NotAuthorizedException   unauthorized-handler
-                             ForbiddenException       forbidden-handler
-                             InvalidRequestException  invalid-handler
+     :exceptions {:handlers {NotAuthorizedException unauthorized-handler
+                             ForbiddenException forbidden-handler
+                             InvalidRequestException invalid-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                              ;; add logging to validation handlers
-                             ::ex/request-validation  (with-logging ex/request-validation-handler)
-                             ::ex/request-parsing     (with-logging ex/request-parsing-handler)
+                             ::ex/request-validation (with-logging ex/request-validation-handler)
+                             ::ex/request-parsing (with-logging ex/request-parsing-handler)
                              ::ex/response-validation (with-logging ex/response-validation-handler)}}
-     :swagger    {:ui   "/swagger-ui"
-                  :spec "/swagger.json"
-                  :data {:info {:version     "1.0.0"
-                                :title       "REMS API"
-                                :description "REMS API Services"}}}}
+     :swagger {:ui "/swagger-ui"
+               :spec "/swagger.json"
+               :data {:info {:version "1.0.0"
+                             :title "REMS API"
+                             :description "REMS API Services"}}}}
 
     (context "/api" []
-     ;; :middleware [slow-middleware]
-     :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
-                     {x-rems-user-id :- (describe s/Str "user id (optional for UI, required for API)") nil}]
+      ;; :middleware [slow-middleware]
+      :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
+                      {x-rems-user-id :- (describe s/Str "user id (optional for UI, required for API)") nil}]
 
-     public/translations-api
-     public/theme-api
-     public/config-api
+      public/translations-api
+      public/theme-api
+      public/config-api
 
-     reviews-api
-     applications-api
-     v2-applications-api
-     application-commands-api
-     catalogue-api
-     catalogue-items-api
-     entitlements-api
-     forms-api
-     licenses-api
-     resources-api
-     users-api
-     workflows-api)))
+      reviews-api
+      applications-api
+      catalogue-api
+      catalogue-items-api
+      entitlements-api
+      forms-api
+      licenses-api
+      resources-api
+      users-api
+      workflows-api)))

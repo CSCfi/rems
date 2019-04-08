@@ -19,7 +19,7 @@
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
-   :active s/Bool
+   :expired s/Bool
    :localizations (s/maybe {s/Any s/Any})})
 
 (s/defschema License
@@ -29,7 +29,7 @@
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
-   :active s/Bool
+   :expired s/Bool
    :title s/Str
    :textcontent s/Str
    (s/optional-key :attachment-id) (s/maybe s/Num)
@@ -90,10 +90,10 @@
    :catalogue-item/start DateTime
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
-   :catalogue-item/active s/Bool
+   :catalogue-item/expired s/Bool
    :catalogue-item/archived s/Bool})
 
-(s/defschema License
+(s/defschema V2License
   {:license/id s/Int
    :license/type (s/enum :text :link :attachment)
    :license/title LocalizedString
@@ -104,7 +104,7 @@
    :license/start DateTime
    :license/end (s/maybe DateTime)
    :license/enabled s/Bool
-   :license/active s/Bool
+   :license/expired s/Bool
    :license/archived s/Bool})
 
 (s/defschema Field
@@ -137,7 +137,7 @@
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    :application/resources [V2Resource]
-   :application/licenses [License]
+   :application/licenses [V2License]
    :application/accepted-licenses (s/maybe {s/Str #{s/Num}})
    :application/events [Event]
    :application/description s/Str

@@ -56,7 +56,7 @@
 (rf/reg-event-fx
  ::fetch-drafts
  (fn [{:keys [db]} _]
-   (fetch "/api/v2/applications"
+   (fetch "/api/applications"
           {:handler #(rf/dispatch [::fetch-drafts-result %])})
    {:db (assoc db ::loading-drafts? true)}))
 
@@ -89,11 +89,6 @@
               :sortable? false
               :filterable? false}})
 
-(defn- catalogue-item-visible? [item]
-  ;; archived items are not returned from the API
-  (and (:enabled item)
-       (:active item)))
-
 (defn- catalogue-list
   "Renders the catalogue using table.
 
@@ -103,7 +98,7 @@
    (merge {:column-definitions (catalogue-columns language config)
            :visible-columns [:name :commands]
            :id-function :id
-           :items (filter catalogue-item-visible? items)
+           :items items
            :class "catalogue"}
           (when sorting {:sorting sorting})
           (when filtering {:filtering filtering}))])

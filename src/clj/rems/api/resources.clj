@@ -18,7 +18,7 @@
    :resid s/Str
    :start DateTime
    :end (s/maybe DateTime)
-   :active s/Bool
+   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool
    :licenses [ResourceLicense]})
@@ -37,15 +37,15 @@
    (s/optional-key :errors) [s/Any]})
 
 (defn- format-resource
-  [{:keys [id owneruserid modifieruserid organization resid start endt active enabled archived]}]
+  [{:keys [id owneruserid modifieruserid organization resid start end expired enabled archived]}]
   {:id id
    :owneruserid owneruserid
    :modifieruserid modifieruserid
    :organization organization
    :resid resid
    :start start
-   :end endt
-   :active active
+   :end end
+   :expired expired
    :enabled enabled
    :archived archived})
 
@@ -68,11 +68,11 @@
     (GET "/" []
       :summary "Get resources"
       :roles #{:owner}
-      :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}
-                     {disabled :- (describe s/Bool "whether to include disabled resources") false}
+      :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
+                     {expired :- (describe s/Bool "whether to include expired resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
-      (ok (get-resources (merge (when active {:active active})
+      (ok (get-resources (merge (when-not expired {:expired false})
                                 (when-not disabled {:enabled true})
                                 (when-not archived {:archived false})))))
 

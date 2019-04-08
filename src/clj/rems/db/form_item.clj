@@ -3,5 +3,5 @@
 
 (defn get-form-items [filters]
   (->> (db/get-all-form-items)
-       (map db/assoc-active)
+       (map db/assoc-expired)
        (db/apply-filters filters)))

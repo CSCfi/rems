@@ -81,7 +81,7 @@
                            {:no-box? true}])))
                     [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]
-                     [inline-info-field (text :t.administration/active) [readonly-checkbox (:active license)]]]))}]
+                     [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired license))]]]))}]
    [:div.col.commands [back-button]]])
 
 (defn license-page []

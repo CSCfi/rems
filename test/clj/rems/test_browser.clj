@@ -1,4 +1,5 @@
 (ns ^:browser rems.test-browser
+  "You need to run these tests in the :test profile to get the right :database-url and :port"
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [clojure.string :as str]

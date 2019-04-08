@@ -84,12 +84,12 @@
 (defn- create-expired-form! []
   (let [yesterday (time/minus (time/now) (time/days 1))]
     ;; only used from create-test-data!
-    (db/create-form! {:organization "nbn" :title "Expired form, should not be seen by applicants" :user (+fake-users+ :owner) :endt yesterday})))
+    (db/create-form! {:organization "nbn" :title "Expired form, should not be seen by applicants" :user (+fake-users+ :owner) :end yesterday})))
 
 (defn- create-expired-license! []
   (let [owner (+fake-users+ :owner) ; only used from create-test-data!
         yesterday (time/minus (time/now) (time/days 1))]
-    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :endt yesterday})))
+    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :end yesterday})))
 
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
@@ -377,7 +377,7 @@
         with-review (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
         two-round (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
-        expired (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))
+        expired (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :end (time/minus (time/now) (time/years 1))}))
         dynamic (:id (workflow/create-workflow! {:user-id owner
                                                  :organization "nbn"
                                                  :title "dynamic workflow"
@@ -628,7 +628,7 @@
     (create-users-and-roles!)
     (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
           res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-          _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :endt (time/minus (time/now) (time/years 1))}))
+          _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :end (time/minus (time/now) (time/years 1))}))
           form (create-basic-form! +fake-users+)
           _ (create-expired-form!)
           workflows (create-workflows! +fake-users+)
@@ -672,7 +672,7 @@
       (let [dynamic-expired (create-catalogue-item! res1 (:dynamic workflows) form
                                                     {"en" "Dynamic workflow (expired)"
                                                      "fi" "Dynaaminen työvuo (vanhentunut)"})]
-        (db/set-catalogue-item-state! {:id dynamic-expired :endt (time/now)})))
+        (db/set-catalogue-item-state! {:id dynamic-expired :end (time/now)})))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 

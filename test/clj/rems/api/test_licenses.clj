@@ -19,7 +19,7 @@
 (deftest licenses-api-test
   (let [api-key "42"
         user-id "owner"]
-    (testing "get"
+    (testing "get all"
       (let [data (-> (request :get "/api/licenses")
                      (authenticate api-key user-id)
                      handler
@@ -37,21 +37,21 @@
                                           :attachment-id nil}
                                      :fi {:title "fi title"
                                           :textcontent "http://example.com/license/fi"
-                                          :attachment-id nil}}}]
-        (-> (request :post "/api/licenses/create")
-            (authenticate api-key user-id)
-            (json-body command)
-            handler
-            assert-response-is-ok)
+                                          :attachment-id nil}}}
+            id (-> (request :post "/api/licenses/create")
+                   (authenticate api-key user-id)
+                   (json-body command)
+                   handler
+                   assert-response-is-ok
+                   read-body
+                   :id)]
+        (is id)
         (testing "and fetch"
-          (let [body (-> (request :get "/api/licenses")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                license (->> body
-                             (filter #(= (:title %) (:title command)))
-                             first)]
+          (let [license (-> (request :get (str "/api/licenses/" id))
+                            (authenticate api-key user-id)
+                            handler
+                            assert-response-is-ok
+                            read-body)]
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -65,21 +65,19 @@
                                           :attachment-id nil}
                                      :fi {:title "fi title"
                                           :textcontent "fi text"
-                                          :attachment-id nil}}}]
-        (-> (request :post "/api/licenses/create")
-            (authenticate api-key user-id)
-            (json-body command)
-            handler
-            assert-response-is-ok)
+                                          :attachment-id nil}}}
+            id (-> (request :post "/api/licenses/create")
+                   (authenticate api-key user-id)
+                   (json-body command)
+                   handler
+                   read-ok-body
+                   :id)]
+        (is id)
         (testing "and fetch"
-          (let [body (-> (request :get "/api/licenses")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                license (->> body
-                             (filter #(= (:title %) (:title command)))
-                             first)]
+          (let [license (-> (request :get (str "/api/licenses/" id))
+                            (authenticate api-key user-id)
+                            handler
+                            read-ok-body)]
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -120,9 +118,8 @@
                               (assoc :multipart-params {"file" filecontent})
                               (authenticate api-key user-id)
                               handler
-                              assert-response-is-ok
-                              read-body
-                              (get :id))
+                              read-ok-body
+                              :id)
             command {:title (str "license title " (UUID/randomUUID))
                      :licensetype "text"
                      :textcontent "license text"
@@ -132,22 +129,19 @@
                                           :attachment-id attachment-id}
                                      :fi {:title "fi title"
                                           :textcontent "fi text"
-                                          :attachment-id attachment-id}}}]
-        (-> (request :post "/api/licenses/create")
-            (authenticate api-key user-id)
-            (json-body command)
-            handler
-            assert-response-is-ok)
+                                          :attachment-id attachment-id}}}
+            license-id (-> (request :post "/api/licenses/create")
+                           (authenticate api-key user-id)
+                           (json-body command)
+                           handler
+                           read-ok-body
+                           :id)]
 
         (testing "and fetch"
-          (let [body (-> (request :get "/api/licenses")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                license (->> body
-                             (filter #(= (:title %) (:title command)))
-                             first)]
+          (let [license (-> (request :get (str "/api/licenses/" license-id))
+                            (authenticate api-key user-id)
+                            handler
+                            read-ok-body)]
             (is license)
             (is (= command (select-keys license (keys command))))))
 
@@ -159,12 +153,12 @@
               assert-response-is-server-error?))))))
 
 (deftest licenses-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/licenses")
+  (let [unfiltered (-> (request :get "/api/licenses" {:expired true})
                        (authenticate "42" "owner")
                        handler
                        assert-response-is-ok
                        read-body)
-        filtered (-> (request :get "/api/licenses" {:active true})
+        filtered (-> (request :get "/api/licenses")
                      (authenticate "42" "owner")
                      handler
                      assert-response-is-ok

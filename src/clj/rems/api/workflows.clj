@@ -40,7 +40,7 @@
   (-> license
       (select-keys [:type :textcontent :localizations])
       (assoc :start (parse-db-time (:start license)))
-      (assoc :end (parse-db-time (:endt license)))))
+      (assoc :end (parse-db-time (:end license)))))
 
 (s/defschema Workflow
   {:id s/Num
@@ -52,7 +52,7 @@
    :workflow s/Any
    :start DateTime
    :end (s/maybe DateTime)
-   :active s/Bool
+   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool
    :actors [Actor]
@@ -62,7 +62,7 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt active enabled archived licenses]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -71,8 +71,8 @@
    :final-round fnlround
    :workflow workflow
    :start start
-   :end endt
-   :active active
+   :end end
+   :expired expired
    :enabled enabled
    :archived archived
    :licenses licenses})
@@ -113,10 +113,12 @@
     (GET "/" []
       :summary "Get workflows"
       :roles #{:owner}
-      :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}
-                     {archived :- (describe s/Bool "whether to include archived resources") false}]
+      :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
+                     {expired :- (describe s/Bool "whether to include expired workflows") false}
+                     {archived :- (describe s/Bool "whether to include archived workflows") false}]
       :return Workflows
-      (ok (get-workflows (merge (when active {:active active})
+      (ok (get-workflows (merge (when-not expired {:expired false})
+                                (when-not disabled {:enabled true})
                                 (when-not archived {:archived false})))))
 
     (POST "/create" []

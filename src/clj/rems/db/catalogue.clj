@@ -30,7 +30,7 @@
   ([query-params]
    (->> (db/get-catalogue-items query-params)
         (map localize-catalogue-item)
-        (map db/assoc-active))))
+        (map db/assoc-expired))))
 
 (defn get-localized-catalogue-item [id]
   (first (get-localized-catalogue-items {:ids [id] :archived true})))

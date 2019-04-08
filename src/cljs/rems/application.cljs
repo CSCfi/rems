@@ -51,6 +51,7 @@
   (when (in-processing? application)
     (when-some [resources (->> (:application/resources application)
                                (filter #(or (not (:catalogue-item/enabled %))
+                                            (not (:catalogue-item/active %))
                                             (:catalogue-item/archived %)))
                                seq)]
       [:div.alert.alert-danger
@@ -100,7 +101,7 @@
 (rf/reg-fx
  ::fetch-application
  (fn [id]
-   (fetch (str "/api/v2/applications/" id)
+   (fetch (str "/api/applications/" id)
           {:handler #(rf/dispatch [::fetch-application-result %])})))
 
 (rf/reg-event-db

@@ -404,7 +404,7 @@
                :catalogue-item/start (:start item)
                :catalogue-item/end (:end item)
                :catalogue-item/enabled (:enabled item)
-               :catalogue-item/active (:active item)
+               :catalogue-item/expired (:expired item)
                :catalogue-item/archived (:archived item)}))
        (sort-by :catalogue-item/id)))
 
@@ -422,7 +422,7 @@
                                             :license/start (:start license)
                                             :license/end (:end license)
                                             :license/enabled (:enabled license)
-                                            :license/active (:active license)
+                                            :license/expired (:expired license)
                                             :license/archived (:archived license)}
                                            (case license-type
                                              :text {:license/text (assoc (localization-for :textcontent license)

@@ -12,7 +12,7 @@
 (rf/reg-event-fx
  ::enter-new-application-page
  (fn [{:keys [db]} [_ catalogue-item-ids]]
-   (post! "/api/v2/applications/create"
+   (post! "/api/applications/create"
           {:params {:catalogue-item-ids catalogue-item-ids}
            :handler (fn [response]
                       (remove-catalogue-items-from-cart! catalogue-item-ids)
