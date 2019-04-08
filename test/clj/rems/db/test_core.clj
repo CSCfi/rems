@@ -23,15 +23,15 @@
 
 (deftest test-assoc-expired
   (is (= {:expired false} (assoc-expired nil)))
-  (is (= {:expired false :start nil :endt nil :foobar 42} (assoc-expired {:start nil :endt nil :foobar 42})))
+  (is (= {:expired false :start nil :end nil :foobar 42} (assoc-expired {:start nil :end nil :foobar 42})))
   (let [today (time/now)
         yesterday (time/minus today (time/days 1))
         tomorrow (time/plus today (time/days 1))]
-    (is (= {:expired true :start tomorrow :endt nil} (assoc-expired {:start tomorrow :endt nil})))
-    (is (= {:expired true :start nil :endt yesterday} (assoc-expired {:start nil :endt yesterday})))
-    (is (= {:expired false :start yesterday :endt tomorrow} (assoc-expired {:start yesterday :endt tomorrow})))
-    (is (= {:expired false :start yesterday :endt nil} (assoc-expired {:start yesterday :endt nil})))
-    (is (= {:expired false :start nil :endt tomorrow} (assoc-expired {:start nil :endt tomorrow})))))
+    (is (= {:expired true :start tomorrow :end nil} (assoc-expired {:start tomorrow :end nil})))
+    (is (= {:expired true :start nil :end yesterday} (assoc-expired {:start nil :end yesterday})))
+    (is (= {:expired false :start yesterday :end tomorrow} (assoc-expired {:start yesterday :end tomorrow})))
+    (is (= {:expired false :start yesterday :end nil} (assoc-expired {:start yesterday :end nil})))
+    (is (= {:expired false :start nil :end tomorrow} (assoc-expired {:start nil :end tomorrow})))))
 
 (defn- take-ids [items]
   (map :id items))
@@ -41,12 +41,12 @@
         yesterday (time/minus today (time/days 1))
         all-items [{:id :normal
                     :start nil
-                    :endt nil}
+                    :end nil}
                    {:id :expired
                     :start nil
-                    :endt yesterday}]
+                    :end yesterday}]
 
-        ; the following idiom can be used when reading database entries with 'endt' field
+        ; the following idiom can be used when reading database entries with 'end' field
         get-items (fn [filters]
                     (->> all-items
                          (map assoc-expired)

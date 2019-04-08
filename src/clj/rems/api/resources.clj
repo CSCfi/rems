@@ -37,14 +37,14 @@
    (s/optional-key :errors) [s/Any]})
 
 (defn- format-resource
-  [{:keys [id owneruserid modifieruserid organization resid start endt expired enabled archived]}]
+  [{:keys [id owneruserid modifieruserid organization resid start end expired enabled archived]}]
   {:id id
    :owneruserid owneruserid
    :modifieruserid modifieruserid
    :organization organization
    :resid resid
    :start start
-   :end endt
+   :end end
    :expired expired
    :enabled enabled
    :archived archived})
