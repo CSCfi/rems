@@ -26,7 +26,7 @@
 (deftest resources-api-test
   (let [api-key "42"
         user-id "owner"]
-    (testing "get"
+    (testing "get all"
       (testing "returns stuff"
         (let [data (-> (request :get "/api/resources")
                        (authenticate api-key user-id)
@@ -86,21 +86,22 @@
             (is (contains? app-ids archived-id))))))
     (testing "create"
       (let [licid 1
-            resid "RESOURCE-API-TEST"]
-        (-> (request :post "/api/resources/create")
-            (authenticate api-key user-id)
-            (json-body {:resid resid
-                        :organization "TEST-ORGANIZATION"
-                        :licenses [licid]})
-            handler
-            assert-response-is-ok)
+            resid "RESOURCE-API-TEST"
+            id (-> (request :post "/api/resources/create")
+                   (authenticate api-key user-id)
+                   (json-body {:resid resid
+                               :organization "TEST-ORGANIZATION"
+                               :licenses [licid]})
+                   handler
+                   read-ok-body
+                   :id)]
+        (is id)
         (testing "and fetch"
-          (let [data (-> (request :get "/api/resources")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)
-                resource (some #(when (= resid (:resid %)) %) data)]
+          (let [resource (-> (request :get (str "/api/resources/" id))
+                             (authenticate api-key user-id)
+                             handler
+                             assert-response-is-ok
+                             read-body)]
             (is resource)
             (is (= [licid] (map :id (:licenses resource))))))
         (testing "duplicate resource ID is not allowed within one organization"
