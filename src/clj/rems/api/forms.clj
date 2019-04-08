@@ -69,11 +69,11 @@
     (GET "/" []
       :summary "Get forms"
       :roles #{:owner}
-      :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
-                     {inactive :- (describe s/Bool "whether to include active resources") false}
-                     {archived :- (describe s/Bool "whether to include archived resources") false}]
+      :query-params [{disabled :- (describe s/Bool "whether to include disabled forms") false}
+                     {expired :- (describe s/Bool "whether to include expired forms") false}
+                     {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return Forms
-      (ok (get-forms (merge (when-not inactive {:active true})
+      (ok (get-forms (merge (when-not expired {:active true})
                                 (when-not disabled {:enabled true})
                                 (when-not archived {:archived false})))))
 

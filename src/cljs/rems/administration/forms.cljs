@@ -19,7 +19,7 @@
  ::fetch-forms
  (fn [db]
    (fetch "/api/forms/" {:url-params {:disabled true
-                                      :inactive (::display-archived? db)
+                                      :expired (::display-archived? db)
                                       :archived (::display-archived? db)}
                          :handler #(rf/dispatch [::fetch-forms-result %])})
    (assoc db ::loading? true)))

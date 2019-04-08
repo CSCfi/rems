@@ -19,7 +19,7 @@
  ::fetch-licenses
  (fn [db]
    (fetch "/api/licenses/" {:url-params {:disabled true
-                                         :inactive (::display-archived? db)
+                                         :expired (::display-archived? db)
                                          :archived (::display-archived? db)}
                             :handler #(rf/dispatch [::fetch-licenses-result %])})
    (assoc db ::loading? true)))

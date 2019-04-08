@@ -20,7 +20,7 @@
  (fn [db]
    (fetch "/api/workflows/" {:url-params {:disabled true
                                           :archived (::display-archived? db)
-                                          :inactive (::display-archived? db)}
+                                          :expired (::display-archived? db)}
                              :handler #(rf/dispatch [::fetch-workflows-result %])})
    (assoc db ::loading? true)))
 

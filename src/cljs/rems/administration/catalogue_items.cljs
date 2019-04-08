@@ -21,7 +21,7 @@
  (fn [{:keys [db]}]
    (fetch "/api/catalogue-items/" {:url-params {:expand :names
                                                 :disabled true
-                                                :inactive (::display-archived? db)
+                                                :expired (::display-archived? db)
                                                 :archived (::display-archived? db)}
                                    :handler #(rf/dispatch [::fetch-catalogue-result %])
                                    :error-handler status-modal/common-error-handler!})

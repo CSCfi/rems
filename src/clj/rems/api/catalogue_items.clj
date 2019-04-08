@@ -41,11 +41,11 @@
       :query-params [{resource :- (describe s/Str "resource id (optional)") nil}
                      {expand :- (describe s/Str "expanded additional attributes (optional), can be \"names\"") nil}
                      {archived :- (describe s/Bool "whether to include archived items") false}
-                     {disabled :- (describe s/Bool "whether to include disabled resources") false}
-                     {inactive :- (describe s/Bool "whether to include active resources") false}]
+                     {disabled :- (describe s/Bool "whether to include disabled items") false}
+                     {expired :- (describe s/Bool "whether to include expired items") false}]
       :return GetCatalogueItemsResponse
       (ok (db/apply-filters
-           (merge (when-not inactive {:active true})
+           (merge (when-not expired {:active true})
                   (when-not disabled {:enabled true})
                   (when-not archived {:archived false}))
            (catalogue/get-localized-catalogue-items {:resource resource
