@@ -176,7 +176,6 @@
                                                            :catalogue-item/expired false
                                                            :catalogue-item/archived false}]
                                   :application/licenses [{:license/id 30
-                                                          :license/accepted false
                                                           :license/type :link
                                                           :license/title {:en "en title"
                                                                           :fi "fi title"
@@ -190,7 +189,6 @@
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 31
-                                                          :license/accepted false
                                                           :license/type :text
                                                           :license/title {:en "en title"
                                                                           :fi "fi title"
@@ -204,7 +202,6 @@
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 32
-                                                          :license/accepted false
                                                           :license/type :attachment
                                                           :license/title {:en "en title"
                                                                           :fi "fi title"
@@ -254,276 +251,283 @@
                                      :event/actor "applicant"
                                      :application/id 1
                                      :application/field-values {41 "foo"
-                                                                42 "bar"}
-                                     :application/accepted-licenses #{30 31 32}})
+                                                                42 "bar"}})
                 expected-application (deep-merge expected-application
                                                  {:application/modified (DateTime. 2000)
                                                   :application/last-activity (DateTime. 2000)
                                                   :application/events events
-                                                  :application/licenses [{:license/accepted true}
-                                                                         {:license/accepted true}
-                                                                         {:license/accepted true}]
                                                   :application/description "foo"
-                                                  :application/accepted-licenses {"applicant" #{30 31 32}}
+                                                  :application/accepted-licenses {"applicant" #{}}
                                                   :application/form {:form/fields [{:field/value "foo"}
                                                                                    {:field/value "bar"}]}})]
             (is (= expected-application (apply-events events)))
 
-            (testing "> submitted"
-              (let [events (conj events {:event/type :application.event/submitted
-                                         :event/time (DateTime. 3000)
+            (testing "> accepted licenses"
+              (let [events (conj events {:event/type :application.event/licenses-accepted
+                                         :event/time (DateTime. 2500)
                                          :event/actor "applicant"
-                                         :application/id 1})
-                    expected-application (merge expected-application
-                                                {:application/last-activity (DateTime. 3000)
-                                                 :application/events events
-                                                 :application/state :application.state/submitted})]
-                (is (= expected-application (apply-events events)))
+                                         :application/id 1
+                                         :application/accepted-licenses #{30 31 32}})
+                    expected-application (deep-merge expected-application
+                                                     {:application/modified (DateTime. 2500)
+                                                      :application/last-activity (DateTime. 2500)
+                                                      :application/events events
+                                                      :application/accepted-licenses {"applicant" #{30 31 32}}})]
+                (is (= expected-application (apply-events events))))
 
-                (testing "> returned"
-                  (let [events (conj events {:event/type :application.event/returned
-                                             :event/time (DateTime. 4000)
-                                             :event/actor "handler"
-                                             :application/id 1
-                                             :application/comment "fix stuff"})
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 4000)
-                                                          :application/events events
-                                                          :application/state :application.state/returned
-                                                          :application/form {:form/fields [{:field/previous-value "foo"}
-                                                                                           {:field/previous-value "bar"}]}})]
-                    (is (= expected-application (apply-events events)))
+              (testing "> submitted"
+                (let [events (conj events {:event/type :application.event/submitted
+                                           :event/time (DateTime. 3000)
+                                           :event/actor "applicant"
+                                           :application/id 1})
+                      expected-application (merge expected-application
+                                                  {:application/last-activity (DateTime. 3000)
+                                                   :application/events events
+                                                   :application/state :application.state/submitted})]
+                  (is (= expected-application (apply-events events)))
 
-                    (testing "> draft saved x2"
-                      (let [events (conj events
-                                         {:event/type :application.event/draft-saved
-                                          :event/time (DateTime. 5000)
-                                          :event/actor "applicant"
-                                          :application/id 1
-                                          ;; non-submitted versions should not show up as the previous value
-                                          :application/field-values {41 "intermediate draft"
-                                                                     42 "intermediate draft"}
-                                          :application/accepted-licenses #{30 31 32}}
-                                         {:event/type :application.event/draft-saved
-                                          :event/time (DateTime. 6000)
-                                          :event/actor "applicant"
-                                          :application/id 1
-                                          :application/field-values {41 "new foo"
-                                                                     42 "new bar"}
-                                          :application/accepted-licenses #{30 31 32}})
-                            expected-application (deep-merge expected-application
-                                                             {:application/modified (DateTime. 6000)
-                                                              :application/last-activity (DateTime. 6000)
-                                                              :application/events events
-                                                              :application/description "new foo"
-                                                              :application/form {:form/fields [{:field/value "new foo"
-                                                                                                :field/previous-value "foo"}
-                                                                                               {:field/value "new bar"
-                                                                                                :field/previous-value "bar"}]}})]
-                        (is (= expected-application (apply-events events)))
+                  (testing "> returned"
+                    (let [events (conj events {:event/type :application.event/returned
+                                               :event/time (DateTime. 4000)
+                                               :event/actor "handler"
+                                               :application/id 1
+                                               :application/comment "fix stuff"})
+                          expected-application (deep-merge expected-application
+                                                           {:application/last-activity (DateTime. 4000)
+                                                            :application/events events
+                                                            :application/state :application.state/returned
+                                                            :application/form {:form/fields [{:field/previous-value "foo"}
+                                                                                             {:field/previous-value "bar"}]}})]
+                      (is (= expected-application (apply-events events)))
 
-                        (testing "> submitted"
-                          (let [events (conj events
-                                             {:event/type :application.event/submitted
-                                              :event/time (DateTime. 7000)
-                                              :event/actor "applicant"
-                                              :application/id 1})
-                                expected-application (merge expected-application
-                                                            {:application/last-activity (DateTime. 7000)
-                                                             :application/events events
-                                                             :application/state :application.state/submitted})]
-                            (is (= expected-application (apply-events events)))))))
+                      (testing "> draft saved x2"
+                        (let [events (conj events
+                                           {:event/type :application.event/draft-saved
+                                            :event/time (DateTime. 5000)
+                                            :event/actor "applicant"
+                                            :application/id 1
+                                            ;; non-submitted versions should not show up as the previous value
+                                            :application/field-values {41 "intermediate draft"
+                                                                       42 "intermediate draft"}}
+                                           {:event/type :application.event/draft-saved
+                                            :event/time (DateTime. 6000)
+                                            :event/actor "applicant"
+                                            :application/id 1
+                                            :application/field-values {41 "new foo"
+                                                                       42 "new bar"}})
+                              expected-application (deep-merge expected-application
+                                                               {:application/modified (DateTime. 6000)
+                                                                :application/last-activity (DateTime. 6000)
+                                                                :application/events events
+                                                                :application/description "new foo"
+                                                                :application/form {:form/fields [{:field/value "new foo"
+                                                                                                  :field/previous-value "foo"}
+                                                                                                 {:field/value "new bar"
+                                                                                                  :field/previous-value "bar"}]}})]
+                          (is (= expected-application (apply-events events)))
 
-                    (testing "> submitted (no draft saved)"
-                      (let [events (conj events
-                                         {:event/type :application.event/submitted
-                                          :event/time (DateTime. 7000)
-                                          :event/actor "applicant"
-                                          :application/id 1})
-                            expected-application (deep-merge expected-application
-                                                             {:application/last-activity (DateTime. 7000)
-                                                              :application/events events
-                                                              :application/state :application.state/submitted
-                                                              ;; when there was no draft-saved event, the current and
-                                                              ;; previous submitted answers must be the same
-                                                              :application/form {:form/fields [{:field/value "foo"
-                                                                                                :field/previous-value "foo"}
-                                                                                               {:field/value "bar"
-                                                                                                :field/previous-value "bar"}]}})]
-                        (is (= expected-application (apply-events events)))))))
+                          (testing "> submitted"
+                            (let [events (conj events
+                                               {:event/type :application.event/submitted
+                                                :event/time (DateTime. 7000)
+                                                :event/actor "applicant"
+                                                :application/id 1})
+                                  expected-application (merge expected-application
+                                                              {:application/last-activity (DateTime. 7000)
+                                                               :application/events events
+                                                               :application/state :application.state/submitted})]
+                              (is (= expected-application (apply-events events)))))))
 
-                (testing "> approved"
-                  (let [events (conj events
-                                     {:event/type :application.event/approved
-                                      :event/time (DateTime. 4000)
-                                      :event/actor "handler"
-                                      :application/id 1
-                                      :application/comment "looks good"})
-                        expected-application (merge expected-application
-                                                    {:application/last-activity (DateTime. 4000)
-                                                     :application/events events
-                                                     :application/state :application.state/approved})]
-                    (is (= expected-application (apply-events events)))
+                      (testing "> submitted (no draft saved)"
+                        (let [events (conj events
+                                           {:event/type :application.event/submitted
+                                            :event/time (DateTime. 7000)
+                                            :event/actor "applicant"
+                                            :application/id 1})
+                              expected-application (deep-merge expected-application
+                                                               {:application/last-activity (DateTime. 7000)
+                                                                :application/events events
+                                                                :application/state :application.state/submitted
+                                                                ;; when there was no draft-saved event, the current and
+                                                                ;; previous submitted answers must be the same
+                                                                :application/form {:form/fields [{:field/value "foo"
+                                                                                                  :field/previous-value "foo"}
+                                                                                                 {:field/value "bar"
+                                                                                                  :field/previous-value "bar"}]}})]
+                          (is (= expected-application (apply-events events)))))))
 
-                    (testing "> closed"
-                      (let [events (conj events
-                                         {:event/type :application.event/closed
-                                          :event/time (DateTime. 5000)
-                                          :event/actor "handler"
-                                          :application/id 1
-                                          :application/comment "the project is finished"})
-                            expected-application (merge expected-application
-                                                        {:application/last-activity (DateTime. 5000)
-                                                         :application/events events
-                                                         :application/state :application.state/closed})]
-                        (is (= expected-application (apply-events events)))))))
+                  (testing "> approved"
+                    (let [events (conj events
+                                       {:event/type :application.event/approved
+                                        :event/time (DateTime. 4000)
+                                        :event/actor "handler"
+                                        :application/id 1
+                                        :application/comment "looks good"})
+                          expected-application (merge expected-application
+                                                      {:application/last-activity (DateTime. 4000)
+                                                       :application/events events
+                                                       :application/state :application.state/approved})]
+                      (is (= expected-application (apply-events events)))
 
-                (testing "> rejected"
-                  (let [events (conj events
-                                     {:event/type :application.event/rejected
-                                      :event/time (DateTime. 4000)
-                                      :event/actor "handler"
-                                      :application/id 1
-                                      :application/comment "never gonna happen"})
-                        expected-application (merge expected-application
-                                                    {:application/last-activity (DateTime. 4000)
-                                                     :application/events events
-                                                     :application/state :application.state/rejected})]
-                    (is (= expected-application (apply-events events)))))
+                      (testing "> closed"
+                        (let [events (conj events
+                                           {:event/type :application.event/closed
+                                            :event/time (DateTime. 5000)
+                                            :event/actor "handler"
+                                            :application/id 1
+                                            :application/comment "the project is finished"})
+                              expected-application (merge expected-application
+                                                          {:application/last-activity (DateTime. 5000)
+                                                           :application/events events
+                                                           :application/state :application.state/closed})]
+                          (is (= expected-application (apply-events events)))))))
 
-                (testing "> comment requested"
-                  (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
-                        events (conj events
-                                     {:event/type :application.event/comment-requested
-                                      :event/time (DateTime. 4000)
-                                      :event/actor "handler"
-                                      :application/id 1
-                                      :application/request-id request-id
-                                      :application/commenters ["commenter"]
-                                      :application/comment "please comment"})
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 4000)
-                                                          :application/events events
-                                                          :application/workflow {:workflow.dynamic/awaiting-commenters #{"commenter"}}})]
-                    (is (= expected-application (apply-events events)))
+                  (testing "> rejected"
+                    (let [events (conj events
+                                       {:event/type :application.event/rejected
+                                        :event/time (DateTime. 4000)
+                                        :event/actor "handler"
+                                        :application/id 1
+                                        :application/comment "never gonna happen"})
+                          expected-application (merge expected-application
+                                                      {:application/last-activity (DateTime. 4000)
+                                                       :application/events events
+                                                       :application/state :application.state/rejected})]
+                      (is (= expected-application (apply-events events)))))
 
-                    (testing "> commented"
-                      (let [events (conj events
-                                         {:event/type :application.event/commented
-                                          :event/time (DateTime. 5000)
-                                          :event/actor "commenter"
-                                          :application/id 1
-                                          :application/request-id request-id
-                                          :application/comment "looks good"})
-                            expected-application (deep-merge expected-application
-                                                             {:application/last-activity (DateTime. 5000)
-                                                              :application/events events
-                                                              :application/workflow {:workflow.dynamic/awaiting-commenters #{}}})]
-                        (is (= expected-application (apply-events events)))))))
+                  (testing "> comment requested"
+                    (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
+                          events (conj events
+                                       {:event/type :application.event/comment-requested
+                                        :event/time (DateTime. 4000)
+                                        :event/actor "handler"
+                                        :application/id 1
+                                        :application/request-id request-id
+                                        :application/commenters ["commenter"]
+                                        :application/comment "please comment"})
+                          expected-application (deep-merge expected-application
+                                                           {:application/last-activity (DateTime. 4000)
+                                                            :application/events events
+                                                            :application/workflow {:workflow.dynamic/awaiting-commenters #{"commenter"}}})]
+                      (is (= expected-application (apply-events events)))
 
-                (testing "> decision requested"
-                  (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
-                        events (conj events
-                                     {:event/type :application.event/decision-requested
-                                      :event/time (DateTime. 4000)
-                                      :event/actor "handler"
-                                      :application/id 1
-                                      :application/request-id request-id
-                                      :application/deciders ["decider"]
-                                      :application/comment "please decide"})
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 4000)
-                                                          :application/events events
-                                                          :application/workflow {:workflow.dynamic/awaiting-deciders #{"decider"}}})]
-                    (is (= expected-application (apply-events events)))
+                      (testing "> commented"
+                        (let [events (conj events
+                                           {:event/type :application.event/commented
+                                            :event/time (DateTime. 5000)
+                                            :event/actor "commenter"
+                                            :application/id 1
+                                            :application/request-id request-id
+                                            :application/comment "looks good"})
+                              expected-application (deep-merge expected-application
+                                                               {:application/last-activity (DateTime. 5000)
+                                                                :application/events events
+                                                                :application/workflow {:workflow.dynamic/awaiting-commenters #{}}})]
+                          (is (= expected-application (apply-events events)))))))
 
-                    (testing "> decided"
-                      (let [events (conj events
-                                         {:event/type :application.event/decided
-                                          :event/time (DateTime. 5000)
-                                          :event/actor "decider"
-                                          :application/id 1
-                                          :application/request-id request-id
-                                          :application/decision :approved
-                                          :application/comment "I approve this"})
-                            expected-application (deep-merge expected-application
-                                                             {:application/last-activity (DateTime. 5000)
-                                                              :application/events events
-                                                              :application/workflow {:workflow.dynamic/awaiting-deciders #{}}})]
-                        (is (= expected-application (apply-events events)))))))
+                  (testing "> decision requested"
+                    (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
+                          events (conj events
+                                       {:event/type :application.event/decision-requested
+                                        :event/time (DateTime. 4000)
+                                        :event/actor "handler"
+                                        :application/id 1
+                                        :application/request-id request-id
+                                        :application/deciders ["decider"]
+                                        :application/comment "please decide"})
+                          expected-application (deep-merge expected-application
+                                                           {:application/last-activity (DateTime. 4000)
+                                                            :application/events events
+                                                            :application/workflow {:workflow.dynamic/awaiting-deciders #{"decider"}}})]
+                      (is (= expected-application (apply-events events)))
 
-                (testing "> member invited"
-                  (let [token "b187bda7b9da9053a5d8b815b029e4ba"
-                        events (conj events
-                                     {:event/type :application.event/member-invited
-                                      :event/time (DateTime. 4000)
-                                      :event/actor "applicant"
-                                      :application/id 1
-                                      :application/member {:name "Mr. Member"
-                                                           :email "member@example.com"}
-                                      :invitation/token token})
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 4000)
-                                                          :application/events events
-                                                          :application/invitation-tokens {token {:name "Mr. Member"
-                                                                                                 :email "member@example.com"}}})]
-                    (is (= expected-application (apply-events events)))
+                      (testing "> decided"
+                        (let [events (conj events
+                                           {:event/type :application.event/decided
+                                            :event/time (DateTime. 5000)
+                                            :event/actor "decider"
+                                            :application/id 1
+                                            :application/request-id request-id
+                                            :application/decision :approved
+                                            :application/comment "I approve this"})
+                              expected-application (deep-merge expected-application
+                                                               {:application/last-activity (DateTime. 5000)
+                                                                :application/events events
+                                                                :application/workflow {:workflow.dynamic/awaiting-deciders #{}}})]
+                          (is (= expected-application (apply-events events)))))))
 
-                    (testing "> member uninvited"
-                      (let [events (conj events
-                                         {:event/type :application.event/member-uninvited
-                                          :event/time (DateTime. 5000)
-                                          :event/actor "applicant"
-                                          :application/id 1
-                                          :application/member {:name "Mr. Member"
-                                                               :email "member@example.com"}
-                                          :application/comment "he left the project"})
-                            expected-application (merge expected-application
-                                                        {:application/last-activity (DateTime. 5000)
-                                                         :application/events events
-                                                         :application/invitation-tokens {}})]
-                        (is (= expected-application (apply-events events)))))
+                  (testing "> member invited"
+                    (let [token "b187bda7b9da9053a5d8b815b029e4ba"
+                          events (conj events
+                                       {:event/type :application.event/member-invited
+                                        :event/time (DateTime. 4000)
+                                        :event/actor "applicant"
+                                        :application/id 1
+                                        :application/member {:name "Mr. Member"
+                                                             :email "member@example.com"}
+                                        :invitation/token token})
+                          expected-application (deep-merge expected-application
+                                                           {:application/last-activity (DateTime. 4000)
+                                                            :application/events events
+                                                            :application/invitation-tokens {token {:name "Mr. Member"
+                                                                                                   :email "member@example.com"}}})]
+                      (is (= expected-application (apply-events events)))
 
-                    (testing "> member joined"
-                      (let [events (conj events
-                                         {:event/type :application.event/member-joined
-                                          :event/time (DateTime. 5000)
-                                          :event/actor "member"
-                                          :application/id 1
-                                          :invitation/token token})
-                            expected-application (merge expected-application
-                                                        {:application/last-activity (DateTime. 5000)
-                                                         :application/events events
-                                                         :application/members #{{:userid "member"}}
-                                                         :application/invitation-tokens {}})]
-                        (is (= expected-application (apply-events events)))))))
+                      (testing "> member uninvited"
+                        (let [events (conj events
+                                           {:event/type :application.event/member-uninvited
+                                            :event/time (DateTime. 5000)
+                                            :event/actor "applicant"
+                                            :application/id 1
+                                            :application/member {:name "Mr. Member"
+                                                                 :email "member@example.com"}
+                                            :application/comment "he left the project"})
+                              expected-application (merge expected-application
+                                                          {:application/last-activity (DateTime. 5000)
+                                                           :application/events events
+                                                           :application/invitation-tokens {}})]
+                          (is (= expected-application (apply-events events)))))
 
-                (testing "> member added"
-                  (let [events (conj events
-                                     {:event/type :application.event/member-added
-                                      :event/time (DateTime. 4000)
-                                      :event/actor "handler"
-                                      :application/id 1
-                                      :application/member {:userid "member"}})
-                        expected-application (merge expected-application
-                                                    {:application/last-activity (DateTime. 4000)
-                                                     :application/events events
-                                                     :application/members #{{:userid "member"}}})]
-                    (is (= expected-application (apply-events events)))
+                      (testing "> member joined"
+                        (let [events (conj events
+                                           {:event/type :application.event/member-joined
+                                            :event/time (DateTime. 5000)
+                                            :event/actor "member"
+                                            :application/id 1
+                                            :invitation/token token})
+                              expected-application (merge expected-application
+                                                          {:application/last-activity (DateTime. 5000)
+                                                           :application/events events
+                                                           :application/members #{{:userid "member"}}
+                                                           :application/invitation-tokens {}})]
+                          (is (= expected-application (apply-events events)))))))
 
-                    (testing "> member removed"
-                      (let [events (conj events
-                                         {:event/type :application.event/member-removed
-                                          :event/time (DateTime. 5000)
-                                          :event/actor "applicant"
-                                          :application/id 1
-                                          :application/member {:userid "member"}
-                                          :application/comment "he left the project"})
-                            expected-application (merge expected-application
-                                                        {:application/last-activity (DateTime. 5000)
-                                                         :application/events events
-                                                         :application/members #{}})]
-                        (is (= expected-application (apply-events events)))))))))))))))
+                  (testing "> member added"
+                    (let [events (conj events
+                                       {:event/type :application.event/member-added
+                                        :event/time (DateTime. 4000)
+                                        :event/actor "handler"
+                                        :application/id 1
+                                        :application/member {:userid "member"}})
+                          expected-application (merge expected-application
+                                                      {:application/last-activity (DateTime. 4000)
+                                                       :application/events events
+                                                       :application/members #{{:userid "member"}}})]
+                      (is (= expected-application (apply-events events)))
+
+                      (testing "> member removed"
+                        (let [events (conj events
+                                           {:event/type :application.event/member-removed
+                                            :event/time (DateTime. 5000)
+                                            :event/actor "applicant"
+                                            :application/id 1
+                                            :application/member {:userid "member"}
+                                            :application/comment "he left the project"})
+                              expected-application (merge expected-application
+                                                          {:application/last-activity (DateTime. 5000)
+                                                           :application/events events
+                                                           :application/members #{}})]
+                          (is (= expected-application (apply-events events))))))))))))))))
 
 (deftest test-calculate-permissions
   ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?

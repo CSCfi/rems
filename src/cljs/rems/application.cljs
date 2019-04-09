@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
+            [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
@@ -32,13 +33,19 @@
   (.setTimeout js/window #(.scrollTo js/window 0 0) 500)) ;; wait until faded out
 
 (defn reload! [application-id]
-  (rf/dispatch [:rems.application/enter-application-page application-id]))
+  (rf/dispatch [:rems.application/reload-application-page application-id]))
 
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
                     :application.state/rejected
                     :application.state/closed}
                   (:application/state application))))
+
+(defn- accepted-licenses? [application userid]
+  (every? (or (get (:application/accepted-licenses application)
+                   userid)
+              #{})
+          (map :license/id (:application/licenses application))))
 
 (defn- disabled-items-warning [application]
   (when (in-processing? application)
@@ -70,20 +77,14 @@
 (defn- format-validation-errors
   [application errors]
   (let [fields-by-id (->> (get-in application [:application/form :form/fields])
-                          (index-by [:field/id]))
-        licenses-by-id (->> (get-in application [:application/licenses])
-                            (index-by [:license/id]))]
+                          (index-by [:field/id]))]
     [:div (text :t.form.validation/errors)
      (into [:ul]
            (concat
             (for [{:keys [type field-id]} errors
                   :when field-id]
               (let [field (get fields-by-id field-id)]
-                (format-validation-error type (:field/title field))))
-            (for [{:keys [type license-id]} errors
-                  :when license-id]
-              (let [license (get licenses-by-id license-id)]
-                (format-validation-error type (:license/title license))))))]))
+                (format-validation-error type (:field/title field))))))]))
 
 
 ;;;; State
@@ -112,9 +113,24 @@
                                                  (map (juxt :field/id :field/value))
                                                  (into {}))
                               :show-diff {}
-                              :validation-errors nil
-                              :accepted-licenses (set (get (:application/accepted-licenses application)
-                                                           (:application/applicant application)))})))
+                              :validation-errors nil})))
+
+(rf/reg-event-fx
+ ::reload-application-page
+ (fn [{:keys [db]} [_ id]]
+   {::reload-application id}))
+
+(rf/reg-fx
+ ::reload-application
+ (fn [id]
+   (fetch (str "/api/applications/" id)
+          {:handler #(rf/dispatch [::reload-application-result %])})))
+
+(rf/reg-event-db
+ ::reload-application-result
+ (fn [db [_ application]]
+   (assoc db
+          ::application application)))
 
 (rf/reg-event-db
  ::set-validation-errors
@@ -122,12 +138,11 @@
    (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
-(defn- save-application! [description application-id field-values accepted-licenses]
+(defn- save-application! [description application-id field-values]
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
-                   :field-values field-values
-                   :accepted-licenses accepted-licenses}
+                   :field-values field-values}
           :handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!}))
 
@@ -138,17 +153,15 @@
          edit-application (::edit-application db)]
      (save-application! description
                         (:application/id application)
-                        (:field-values edit-application)
-                        (:accepted-licenses edit-application)))
+                        (:field-values edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application! [application description application-id field-values accepted-licenses]
+(defn- submit-application! [application description application-id field-values]
   ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
-                   :field-values field-values
-                   :accepted-licenses accepted-licenses}
+                   :field-values field-values}
           :handler (fn [response]
                      (if (:success response)
                        (post! "/api/applications/submit"
@@ -172,8 +185,7 @@
      (submit-application! application
                           description
                           (:application/id application)
-                          (:field-values edit-application)
-                          (:accepted-licenses edit-application)))
+                          (:field-values edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
@@ -232,13 +244,6 @@
  ::toggle-diff
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
-
-(rf/reg-event-db
- ::set-license-accepted
- (fn [db [_ license-id accepted]]
-   (update-in db [::edit-application :accepted-licenses] (if accepted
-                                                           #(conj % license-id)
-                                                           #(disj % license-id)))))
 
 (defn- id-to-name [id]
   (str "field" id))
@@ -359,7 +364,7 @@
                            :placeholder placeholder
                            :max-length max-length
                            :class (when validation "is-invalid")
-                           :value value
+                           :defaultValue value
                            :on-change (set-field-value id)}]]))
 
 (defn- texta-field
@@ -374,7 +379,7 @@
                 :placeholder placeholder
                 :max-length max-length
                 :class (if validation "form-control is-invalid" "form-control")
-                :value value
+                :defaultValue value
                 :on-change (set-field-value id)}]]))
 
 ;; TODO: custom :diff-component, for example link to both old and new attachment
@@ -507,38 +512,21 @@
     [:div.form-group
      [:label (localized title)]]))
 
-(defn- set-license-accepted
-  [id]
-  (fn [event]
-    (rf/dispatch [::set-license-accepted id (.. event -target -checked)])))
-
-(defn- license [id title approved readonly validation content]
-  [:div.license
-   [field-validation-message validation title]
-   [:div.form-check
-    [:input.form-check-input {:type "checkbox"
-                              :name (str "license" id)
-                              :disabled readonly
-                              :class (when validation "is-invalid")
-                              :checked (boolean approved)
-                              :on-change (set-license-accepted id)}]
-    [:span.form-check-label content]]])
-
 (defn- link-license
-  [{:keys [accepted readonly validation] :as opts}]
+  [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         link (localized (:license/link opts))]
-    [license id title accepted readonly validation
+    [:div.license
      [:a.license-title {:href link :target "_blank"}
       title " " (external-link)]]))
 
 (defn- text-license
-  [{:keys [accepted readonly validation] :as opts}]
+  [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         text (localized (:license/text opts))]
-    [license id title accepted readonly validation
+    [:div.license
      [:div.license-panel
       [:span.license-title
        [:a.license-header.collapsed {:data-toggle "collapse"
@@ -602,23 +590,30 @@
                              :readonly readonly?
                              :app-id (:application/id application))]))]}]))
 
-(defn- application-licenses [application edit-application]
+(defn- application-licenses [application edit-application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
-    (let [accepted-licenses (:accepted-licenses edit-application)
-          license-validations (index-by [:license-id] (:validation-errors edit-application))
+    (let [application-id (:application/id application)
+          accepted-licenses (get (:application/accepted-licenses application) userid)
+          possible-commands (:application/permissions application)
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
       [collapsible/component
        {:id "form"
         :title (text :t.form/licenses)
         :always
-        [:div.form-group.field
+        [:div
+         [:p (text :t.form/must-accept-licenses)]
          (into [:div#licenses]
                (for [license licenses]
                  [license-field (assoc license
                                        :accepted (contains? accepted-licenses (:license/id license))
-                                       :readonly readonly?
-                                       :validation (license-validations (:license/id license)))]))]}])))
+                                       :readonly readonly?)]))
+         (if (accepted-licenses? application userid)
+           (text :t.form/has-accepted-licenses)
+           (when (contains? possible-commands :application.command/accept-licenses)
+             [:div.commands
+              ;; TODO consider saving the form first so that no data is lost for the applicant
+              [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
 
 (defn- format-event [event]
@@ -775,17 +770,15 @@
                            :group? (or (seq members)
                                        (seq invited-members))
                            :can-remove? false
-                           :accepted-licenses? (every? (or (get (:application/accepted-licenses application)
-                                                                (:application/applicant application))
-                                                           #{})
-                                                       (map :license/id (:application/licenses application)))}]]
+                           :accepted-licenses? (accepted-licenses? application (:userid applicant))}]]
             (concat
              (for [member members]
                [member-info {:element-id id
                              :attributes member
                              :application application
                              :group? true
-                             :can-remove? can-remove?}])
+                             :can-remove? can-remove?
+                             :accepted-licenses? (accepted-licenses? application (:userid member))}])
              (for [invited-member invited-members]
                [member-info {:element-id id
                              :attributes invited-member
@@ -845,7 +838,7 @@
                      ^{:key (:resource/id resource)}
                      [:li (localized (:catalogue-item/title resource))]))]}])
 
-(defn- render-application [application edit-application]
+(defn- render-application [application edit-application userid]
   (let [messages (remove nil?
                          [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
                           (when-let [errors (:validation-errors edit-application)]
@@ -860,7 +853,7 @@
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application]]
      [:div.my-3 [application-fields application edit-application]]
-     [:div.my-3 [application-licenses application edit-application]]
+     [:div.my-3 [application-licenses application edit-application userid]]
      [:div.mb-3 [actions-form application]]]))
 
 ;;;; Entrypoint
@@ -868,12 +861,13 @@
 (defn application-page []
   (let [application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
+        userid (get-in @(rf/subscribe [:identity]) [:user :eppn])
         loading? (not application)]
     (if loading?
       [:div
        [:h2 (text :t.applications/application)]
        [spinner/big]]
-      [render-application application edit-application])))
+      [render-application application edit-application userid])))
 
 
 ;;;; Guide

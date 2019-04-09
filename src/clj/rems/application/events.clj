@@ -63,7 +63,10 @@
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
-         :application/field-values {s/Int s/Str}
+         :application/field-values {s/Int s/Str}))
+(s/defschema LicensesAcceptedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/licenses-accepted)
          :application/accepted-licenses #{s/Int}))
 (s/defschema MemberAddedEvent
   (assoc EventBase
@@ -111,6 +114,7 @@
    :application.event/decided DecidedEvent
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
+   :application.event/licenses-accepted LicensesAcceptedEvent
    :application.event/member-added MemberAddedEvent
    :application.event/member-invited MemberInvitedEvent
    :application.event/member-joined MemberJoinedEvent

@@ -49,6 +49,7 @@
   :actions {:accept-invitation "Accept invitation"
             :accept-invitation-success [:div [:p "Joining the application was successful."] [:p "Next you will be taken to the application."]]
             :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Next you will be taken to the application."]]
+            :accept-licenses "Accept terms of use"
             :add-member "Add member"
             :applicant "Applicant"
             :application "Application"
@@ -144,6 +145,7 @@
                           :decided "Decided"
                           :decision-requested "Decision requested"
                           :draft-saved "Saved"
+                          :licenses-accepted "Accepted terms of use"
                           :member-added "Member added"
                           :member-invited "Member invited"
                           :member-joined "Member joined"
@@ -256,8 +258,10 @@
          :event "Event"
          :events "Events"
          :failed "Failed"
+         :has-accepted-licenses "You have accepted the terms of use."
          :licenses "Terms of Use"
          :maxlength "(max %1 characters)"
+         :must-accept-licenses "To be eligible to the resources of this application, each member must accept the following terms of use."
          :optional "(optional)"
          :resources "Resources"
          :save "Save as draft"

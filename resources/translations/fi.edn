@@ -49,6 +49,7 @@
   :actions {:accept-invitation "Hyväksy kutsu"
             :accept-invitation-success [:div [:p "Liittyminen hakemukseen onnistui."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
             :accept-invitation-already-member [:div. [:p "Olet jo jäsen."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
+            :accept-licenses "Hyväksy käyttöehdot"
             :add-member "Lisää jäsen"
             :applicant "Hakija"
             :application "Hakemus"
@@ -144,6 +145,7 @@
                           :decided "Päätetty"
                           :decision-requested "Pyydetty päätöstä"
                           :draft-saved "Tallennettu"
+                          :licenses-accepted "Käyttöehdot hyväksytty"
                           :member-added "Lisätty jäsen"
                           :member-invited "Kutsuttu jäsen"
                           :member-joined "Jäsen liittyi"
@@ -256,8 +258,10 @@
          :event "Tapahtuma"
          :events "Tapahtumat"
          :failed "Epäonnistui"
+         :has-accepted-licenses "Olet hyväksynyt käyttöehdot."
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
+         :must-accept-licenses "Saadakseen oikeudet haettuihin resursseihin, jokaisen hakijan pitää hyväksyä seuraavat käyttöehdot."
          :optional "(ei pakollinen)"
          :resources "Resurssit"
          :save "Tallenna luonnos"

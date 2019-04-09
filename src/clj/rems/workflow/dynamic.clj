@@ -72,21 +72,10 @@
   [user-ids injections]
   (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
-(defn- validate-licenses [application]
-  (let [all-licenses (set (map :license/id (:application/licenses application)))
-        user-id (:application/applicant application)
-        accepted-licenses (get-in application [:application/accepted-licenses user-id])
-        missing-licenses (set/difference all-licenses accepted-licenses)]
-    (->> (sort missing-licenses)
-         (map (fn [license-id]
-                {:type :t.form.validation/required
-                 :license-id license-id})))))
-
 (defn- validation-error [application {:keys [validate-form-answers]}]
   (let [form-id (:form/id application)
         answers (:rems.application.model/draft-answers application)
-        errors (concat (validate-form-answers form-id {:items answers})
-                       (validate-licenses application))]
+        errors (validate-form-answers form-id {:items answers})]
     (when (seq errors)
       {:errors errors})))
 
@@ -112,7 +101,11 @@
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
-       :application/field-values (:field-values cmd)
+       :application/field-values (:field-values cmd)}))
+
+(defmethod command-handler :application.command/accept-licenses
+  [cmd _application _injections]
+  (ok {:event/type :application.event/licenses-accepted
        :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
 (defmethod command-handler :application.command/submit
@@ -249,7 +242,7 @@
     result))
 
 (defn handle-command [cmd application injections]
-  (commands/validate-command cmd) ;; this is here mostly for tests, commands via the api are validated by compojure-api
+  (commands/validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
   (let [permissions (permissions/user-permissions application (:actor cmd))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
@@ -265,7 +258,6 @@
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values {}
-                 :accepted-licenses #{}
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
       (is (:success (handle-command command application {}))))

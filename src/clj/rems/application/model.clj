@@ -21,8 +21,9 @@
                                               :application.command/submit
                                               :application.command/remove-member
                                               :application.command/invite-member
-                                              :application.command/uninvite-member]
-                                  :member []
+                                              :application.command/uninvite-member
+                                              :application.command/accept-licenses]
+                                  :member [:application.command/accept-licenses]
                                   :handler [:see-everything
                                             :application.command/remove-member
                                             :application.command/uninvite-member]
@@ -33,7 +34,9 @@
                                   :everyone-else [:application.command/accept-invitation]})
 
 (def ^:private submitted-permissions {:applicant [:application.command/remove-member
-                                                  :application.command/uninvite-member]
+                                                  :application.command/uninvite-member
+                                                  :application.command/accept-licenses]
+                                      :member [:application.command/accept-licenses]
                                       :handler [:see-everything
                                                 :application.command/add-member
                                                 :application.command/remove-member
@@ -50,6 +53,7 @@
                                                 :application.command/decide]})
 
 (def ^:private closed-permissions {:applicant []
+                                   :member []
                                    :handler [:see-everything]
                                    :commenter [:see-everything]
                                    :decider [:see-everything]
@@ -161,10 +165,9 @@
                                             :resource/ext-id (:resource/ext-id resource)})
                                          (:application/resources event))
              :application/licenses (map (fn [license]
-                                          {:license/id (:license/id license)
-                                           :license/accepted false})
+                                          {:license/id (:license/id license)})
                                         (:application/licenses event))
-             :application/accepted-licenses {(:event/actor event) #{}}
+             :application/accepted-licenses {"applicant" #{}}
              :application/events []
              :application/form {:form/id (:form/id event)}
              :application/workflow {:workflow/id (:workflow/id event)
@@ -175,17 +178,16 @@
                                     :workflow.dynamic/awaiting-commenters #{}
                                     :workflow.dynamic/awaiting-deciders #{}})))
 
-(defn- set-accepted-licences [licenses accepted-licenses]
-  (map (fn [license]
-         (assoc license :license/accepted (contains? accepted-licenses (:license/id license))))
-       licenses))
-
 (defmethod event-type-specific-application-view :application.event/draft-saved
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
-      (assoc ::draft-answers (:application/field-values event))
-      (update :application/licenses set-accepted-licences (:application/accepted-licenses event))
+      (assoc ::draft-answers (:application/field-values event))))
+
+(defmethod event-type-specific-application-view :application.event/licenses-accepted
+  [application event]
+  (-> application
+      (assoc :application/modified (:event/time event))
       (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
@@ -435,6 +437,17 @@
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
+(defn enrich-user-attributes [application get-user]
+  (letfn [(enrich-members [members]
+            (->> members
+                 (map (fn [member]
+                        (merge member
+                               (get-user (:userid member)))))
+                 set))]
+    (update application
+            :application/members
+            enrich-members)))
+
 (defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
@@ -456,7 +469,8 @@
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
-        (assoc :application/applicant-attributes (get-user (:application/applicant application))))))
+        (assoc :application/applicant-attributes (get-user (:application/applicant application)))
+        (enrich-user-attributes get-user))))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)

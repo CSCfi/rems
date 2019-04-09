@@ -181,7 +181,8 @@
                 "application.event/submitted"]
                (map :event/type (get application :application/events))))
         (is (= #{"application.command/remove-member"
-                 "application.command/uninvite-member"}
+                 "application.command/uninvite-member"
+                 "application.command/accept-licenses"}
                (set (get application :application/permissions))))))
 
     (testing "getting dynamic application as handler"
@@ -301,9 +302,7 @@
               :errors [{:type "forbidden"}]}
              (send-command "bob" {:type :application.command/save-draft
                                   :application-id application-id
-                                  :field-values {}
-                                  :accepted-licenses #{}}))))
-
+                                  :field-values {}}))))
     (testing "submitting"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit

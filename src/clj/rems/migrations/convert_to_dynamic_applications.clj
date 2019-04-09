@@ -39,7 +39,11 @@
                                       :application/field-values (->> (:items form)
                                                                      (map (fn [item]
                                                                             [(:id item) (:value item)]))
-                                                                     (into {}))
+                                                                     (into {}))})
+    (applications/add-dynamic-event! {:event/type :application.event/licenses-accepted
+                                      :event/time (:start application)
+                                      :event/actor (:applicantuserid application)
+                                      :application/id (:id application)
                                       :application/accepted-licenses (->> (:licenses form)
                                                                           (filter :approved)
                                                                           (map :id)

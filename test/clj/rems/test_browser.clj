@@ -152,12 +152,11 @@
   ;; XXX: assumes that the checkbox is unchecked
   (click-visible *driver* [{:css (str "input[value='" value "']")}]))
 
-(defn accept-license [label]
-  ;; XXX: assumes that the checkbox is unchecked
-  (click-visible *driver* [:licenses
-                           {:tag :a, :fn/text label}
-                           {:xpath "./ancestor::div[@class='license']"}
-                           {:css "input[type='checkbox']"}]))
+(defn accept-licenses []
+  (doto *driver*
+    (click-visible :accept-licenses-button)
+    (wait-visible :status-success)
+    (click-visible :modal-ok)))
 
 (defn send-application []
   (doto *driver*
@@ -184,7 +183,7 @@
 
 (deftest test-new-application
   (with-postmortem *driver* {:dir reporting-dir}
-    (login-as "developer")
+    (login-as "alice")
 
     (go-to-catalogue)
     (add-to-cart "THL catalogue item")
@@ -210,17 +209,17 @@
     (fill-form-field "21. Funding information" "Test")
     (fill-form-field "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)" "Test")
     (check-box "disease_prevention")
-    (accept-license "CC Attribution 4.0")
-    (accept-license "General Terms of Use")
 
     (send-application)
     (is (= "State: Applied" (get-element-text *driver* :application-state)))
+
+    (accept-licenses)
 
     (let [application-id (get-application-id)]
       (go-to-applications)
       (let [summary (get-application-summary application-id)]
         (is (= "THL catalogue item" (:resource summary)))
-        (is (= "developer" (:applicant summary)))
+        (is (= "alice" (:applicant summary)))
         (is (= "Applied" (:state summary)))
         ;; don't bother trying to predict the external id:
         (is (.contains (:description summary) "Test name"))))))

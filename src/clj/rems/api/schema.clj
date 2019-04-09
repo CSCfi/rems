@@ -95,7 +95,6 @@
 
 (s/defschema V2License
   {:license/id s/Int
-   :license/accepted s/Bool
    :license/type (s/enum :text :link :attachment)
    :license/title LocalizedString
    (s/optional-key :license/link) LocalizedString
@@ -134,7 +133,8 @@
    :application/last-activity DateTime
    :application/applicant s/Str
    :application/applicant-attributes {s/Keyword s/Str}
-   :application/members #{{:userid s/Str}}
+   :application/members #{{:userid s/Str
+                           s/Keyword s/Str}}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    :application/resources [V2Resource]

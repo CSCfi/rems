@@ -16,8 +16,11 @@
 
 (s/defschema SaveDraftCommand
   (assoc CommandBase
-         :field-values {s/Num s/Str}
-         :accepted-licenses #{s/Num}))
+         :field-values {s/Num s/Str}))
+
+(s/defschema AcceptLicensesCommand
+  (assoc CommandBase
+         :accepted-licenses s/Any))
 
 (s/defschema SubmitCommand
   CommandBase)
@@ -82,9 +85,9 @@
          :comment s/Str))
 
 (def command-schemas
-  {#_:application.command/accept-license
-   #_:application.command/require-license
+  {#_:application.command/require-license
    :application.command/accept-invitation AcceptInvitationCommand
+   :application.command/accept-licenses AcceptLicensesCommand
    :application.command/add-member AddMemberCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/approve ApproveCommand

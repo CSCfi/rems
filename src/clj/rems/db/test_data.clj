@@ -29,7 +29,7 @@
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
    "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant"}
-   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant"}
+   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
    "bob" {:eppn "bob" :mail "bob@example.com" :commonName "Bob Approver"}
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
@@ -469,8 +469,7 @@
                                   :actor user-id
                                   :application-id app-id
                                   :time (get-in form [:application :start])
-                                  :field-values {}
-                                  :accepted-licenses #{}})]
+                                  :field-values {}})]
     (when dynamic-workflow?
       (applications/add-application-created-event! {:application-id app-id
                                                     :catalogue-item-ids catids
@@ -489,10 +488,7 @@
                                   :round 0
                                   :licid license-id
                                   :actoruserid user-id
-                                  :state "approved"})
-      (swap! save-draft-command
-             update :accepted-licenses
-             conj license-id))
+                                  :state "approved"}))
     (when dynamic-workflow?
       (let [error (applications/command! @save-draft-command)]
         (assert (nil? error) error)))
