@@ -44,7 +44,7 @@
   (when (in-processing? application)
     (when-some [resources (->> (:application/resources application)
                                (filter #(or (not (:catalogue-item/enabled %))
-                                            (not (:catalogue-item/active %))
+                                            (:catalogue-item/expired %)
                                             (:catalogue-item/archived %)))
                                seq)]
       [:div.alert.alert-danger
