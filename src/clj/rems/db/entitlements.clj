@@ -97,7 +97,8 @@
     (let [app-id (:application/id application)
           members (conj (map :userid (:application/members application))
                         (:application/applicant application))]
-      (log/info "ending entitlements on application" app-id "to" members)
+      (doseq [user-id members]
+        (log/info "ending entitlements on application" app-id "to" user-id))
       (db/end-entitlement! {:application app-id})
       (post-entitlements :remove (db/get-entitlements {:application app-id})))))
 
