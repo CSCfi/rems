@@ -261,7 +261,7 @@
          :has-accepted-licenses "Olet hyväksynyt käyttöehdot."
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
-         :must-accept-licenses "Saadaksesi oikeudet hakemiisi resursseihin, sinun pitää hyväksyä seuraavat käyttöehdot."
+         :must-accept-licenses "Saadakseen oikeudet haettuihin resursseihin, jokaisen hakijan pitää hyväksyä seuraavat käyttöehdot."
          :optional "(ei pakollinen)"
          :resources "Resurssit"
          :save "Tallenna luonnos"
