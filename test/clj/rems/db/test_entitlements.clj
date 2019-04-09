@@ -134,21 +134,21 @@
           (is (nil? (applications/command! {:type :application.command/accept-licenses
                                             :actor memberid
                                             :application-id app-id
-                                            :accepted-licenses [lic-id1 lic-id2]
+                                            :accepted-licenses [lic-id1] ; only accept some licenses
                                             :time (time/now)})))
 
           (is (= {uid #{lic-id1 lic-id2}
-                  memberid #{lic-id1 lic-id2}}
+                  memberid #{lic-id1}}
                  (:application/accepted-licenses (applications/get-application-state app-id))))
 
-          (testing "approved application and licenses accepted generated entitlements"
+          (testing "approved application, licenses accepted by one user generates entitlements for that user"
             (rems.poller.entitlements/run)
             (rems.poller.entitlements/run) ;; run twice to check idempotence
             (testing "db"
               (= [1 2]
                  (db/get-entitlements {:application app-id})))
             (testing "POST"
-              (let [data (take 4 (stub/recorded-requests server))
+              (let [data (take 2 (stub/recorded-requests server))
                     targets (map :path data)
                     bodies (->> data
                                 (map #(get-in % [:body "postData"]))
@@ -156,8 +156,29 @@
                                 (apply concat))]
                 (is (every? #{"/add"} targets))
                 (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
+                       bodies)))))
+
+          (is (nil? (applications/command! {:type :application.command/accept-licenses
+                                            :actor memberid
+                                            :application-id app-id
+                                            :accepted-licenses [lic-id1 lic-id2] ; now accept all licenses
+                                            :time (time/now)})))
+
+          (testing "approved application, more accepted licenses generates more entitlements"
+            (rems.poller.entitlements/run)
+            (testing "db"
+              (= [1 2]
+                 (db/get-entitlements {:application app-id})))
+            (testing "POST"
+              (let [data (take 2 (drop 2 (stub/recorded-requests server)))
+                    targets (map :path data)
+                    bodies (->> data
+                                (map #(get-in % [:body "postData"]))
+                                (map #(cheshire/parse-string % keyword))
+                                (apply concat))]
+                (is (every? #{"/add"} targets))
+                (is (= [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
                         {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
                        bodies)))))
 
