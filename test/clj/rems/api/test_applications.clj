@@ -178,6 +178,7 @@
       (let [application (get-application application-id user-id)]
         (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= ["application.event/created"
+                "application.event/licenses-accepted"
                 "application.event/draft-saved"
                 "application.event/submitted"]
                (map :event/type (get application :application/events))))
@@ -267,6 +268,7 @@
                     :application/state "application.state/approved"}
                    (select-keys handler-data [:application/id :application/state])))
             (is (= ["application.event/created"
+                    "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
                     "application.event/comment-requested"
@@ -277,6 +279,7 @@
                    handler-event-types)))
           (testing "applicant cannot see all events"
             (is (= ["application.event/created"
+                    "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
                     "application.event/approved"]
