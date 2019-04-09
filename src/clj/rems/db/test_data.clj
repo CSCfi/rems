@@ -469,7 +469,7 @@
                                   :actor user-id
                                   :application-id app-id
                                   :time (get-in form [:application :start])
-                                  :field-values {}})]
+                                  :field-values []})]
     (when dynamic-workflow?
       (applications/add-application-created-event! {:application-id app-id
                                                     :catalogue-item-ids catids
@@ -481,7 +481,7 @@
                              :item item-id :user user-id :value trimmed-value})
       (swap! save-draft-command
              update :field-values
-             conj [item-id trimmed-value]))
+             conj {:field item-id :value trimmed-value}))
     (db/update-application-description! {:id app-id :description field-value})
     (doseq [{license-id :id} (:licenses form)]
       (db/save-license-approval! {:catappid app-id

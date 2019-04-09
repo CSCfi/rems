@@ -303,7 +303,7 @@
               :errors [{:type "forbidden"}]}
              (send-command "bob" {:type :application.command/save-draft
                                   :application-id application-id
-                                  :field-values {}}))))
+                                  :field-values []}))))
     (testing "submitting"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit

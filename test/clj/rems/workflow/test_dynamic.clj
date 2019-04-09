@@ -88,17 +88,20 @@
              (ok-command application
                          {:type :application.command/save-draft
                           :actor applicant-user-id
-                          :field-values {1 "foo" 2 "bar"}}))))
+                          :field-values [{:field 1 :value "foo"}
+                                         {:field 2 :value "bar"}]}))))
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/save-draft
                             :actor "non-applicant"
-                            :field-values {1 "foo" 2 "bar"}})
+                            :field-values [{:field 1 :value "foo"}
+                                           {:field 2 :value "bar"}]})
              (fail-command application
                            {:type :application.command/save-draft
                             :actor handler-user-id
-                            :field-values {1 "foo" 2 "bar"}}))))
+                            :field-values [{:field 1 :value "foo"}
+                                           {:field 2 :value "bar"}]}))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -109,7 +112,7 @@
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
-                              :field-values {1 "updated"}})))))
+                              :field-values [{:field 1 :value "updated"}]})))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -129,7 +132,7 @@
                (ok-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values {1 "updated"}})))))))
+                            :field-values [{:field 1 :value "updated"}]})))))))
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]

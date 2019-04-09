@@ -101,7 +101,9 @@
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
-       :application/field-values (:field-values cmd)}))
+       :application/field-values (into {}
+                                       (for [{:keys [field value]} (:field-values cmd)]
+                                         [field value]))}))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
@@ -257,7 +259,7 @@
                                         :workflow.dynamic/handlers #{"assistant"}}])
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
-                 :field-values {}
+                 :field-values []
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
       (is (:success (handle-command command application {}))))

@@ -138,11 +138,15 @@
    (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
+(defn- field-values-to-api [field-values]
+  (for [[field value] field-values]
+    {:field field :value value}))
+
 (defn- save-application! [description application-id field-values]
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
-                   :field-values field-values}
+                   :field-values (field-values-to-api field-values)}
           :handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!}))
 
@@ -161,7 +165,7 @@
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
-                   :field-values field-values}
+                   :field-values (field-values-to-api field-values)}
           :handler (fn [response]
                      (if (:success response)
                        (post! "/api/applications/submit"
