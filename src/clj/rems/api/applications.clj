@@ -4,7 +4,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
-            [rems.api.util]
+            [rems.api.util :as api-util]
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
@@ -154,7 +154,7 @@
       (if-let [attachment (attachments/get-attachment (getx-user-id) application-id field-id)]
         (-> (ok (:data attachment))
             (content-type (:content-type attachment)))
-        (not-found! "not found")))
+        (api-util/not-found-json-response)))
 
     ;; TODO: think about size limit
     (POST "/add-attachment" []
@@ -210,7 +210,7 @@
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
         (ok app)
-        (not-found! "not found")))
+        (api-util/not-found-json-response)))
 
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"
@@ -223,5 +223,4 @@
             (ByteArrayInputStream.)
             (ok)
             (content-type "application/pdf"))
-        (not-found! "not found")))))
-
+        (api-util/not-found-json-response)))))
