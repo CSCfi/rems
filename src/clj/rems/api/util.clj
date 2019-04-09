@@ -1,6 +1,7 @@
 (ns rems.api.util
   (:require [clojure.string :as str]
             [compojure.api.meta :refer [restructure-param]]
+            [ring.util.http-response :as http-response]
             [rems.auth.util :refer [throw-unauthorized throw-forbidden]]
             [rems.roles :refer [has-roles?]]
             [rems.util :refer [get-user-id]]))
@@ -29,3 +30,7 @@
       (update-in [:info :public :summary] add-roles-documentation roles)
       (update-in [:lets] into ['_ `(do (check-user)
                                        (check-roles ~@roles))])))
+
+(defn not-found-json-response []
+  (-> (http-response/not-found "{\"error\": \"not found\"}")
+      (http-response/content-type "application/json")))

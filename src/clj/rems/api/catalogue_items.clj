@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-user]]
+            [rems.api.util :refer [not-found-json-response check-user]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [ring.util.http-response :refer :all]
@@ -56,12 +56,12 @@
       :summary "Get a single catalogue item"
       :path-params [item-id :- (describe s/Num "catalogue item")]
       :responses {200 {:schema CatalogueItem}
-                  404 {:schema s/Str :description "Not found"}}
+                  404 {:schema s/Any :description "Not found"}}
 
       (check-user)
       (if-let [it (catalogue/get-localized-catalogue-item item-id)]
         (ok it)
-        (not-found! "not found")))
+        (not-found-json-response)))
 
     (POST "/create" []
       :summary "Create a new catalogue item"

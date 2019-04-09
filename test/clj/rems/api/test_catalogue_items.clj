@@ -32,7 +32,13 @@
                    (authenticate api-key user-id)
                    handler
                    read-body)]
-      (is (= 7 (:id data))))))
+      (is (= 7 (:id data))))
+    (testing "not found"
+      (let [response (-> (request :get "/api/catalogue-items/777777777")
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (response-is-not-found? response))
+        (is (= "application/json" (get-in response [:headers "Content-Type"])))))))
 
 (deftest catalogue-items-api-security-test
   (testing "listing without authentication"

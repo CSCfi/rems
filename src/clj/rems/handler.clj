@@ -33,7 +33,7 @@
   (shutdown-agents)
   (log/info "Rems has shut down!"))
 
-(defn not-found [req]
+(defn not-found-handler [req]
   (error-page {:status 404
                :title "Page not found"}))
 
@@ -67,7 +67,7 @@
    (if-let [path (:theme-static-resources env)]
      (route/files "/" {:root path})
      never-match-route)
-   not-found))
+   not-found-handler))
 
 ;; we use mount to construct the app so that middleware can access mount state
 (mount/defstate handler

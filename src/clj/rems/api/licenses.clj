@@ -1,6 +1,6 @@
 (ns rems.api.licenses
   (:require [rems.api.schema :refer :all]
-            [rems.api.util]
+            [rems.api.util :as api-util]
             [rems.db.licenses :as licenses]
             [rems.util :refer [getx-user-id]]
             [rems.db.core :as db]
@@ -104,4 +104,4 @@
                 (java.io.ByteArrayInputStream.)
                 (ok)
                 (content-type (:type attachment))))
-        (not-found! "not found")))))
+        (api-util/not-found-json-response)))))

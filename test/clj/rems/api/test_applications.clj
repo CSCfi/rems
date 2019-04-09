@@ -3,6 +3,7 @@
             [rems.api.testing :refer :all]
             [rems.db.form :as form]
             [rems.handler :refer [handler]]
+            [rems.json]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -400,6 +401,14 @@
                                    handler))
         (is (response-is-unauthorized? (-> req
                                            handler)))))
+
+    (testing "fetch nonexistent application"
+      (let [response (-> (request :get "/api/applications/9999999999")
+                         (authenticate api-key applicant)
+                         handler)]
+        (is (response-is-not-found? response))
+        (is (= "application/json" (get-in response [:headers "Content-Type"])))
+        (is (= {:error "not found"} (rems.json/parse-string (read-body response))))))
 
     (testing "fetch deciders without authentication or as non-handler"
       (let [req (request :get "/api/applications/deciders")]
