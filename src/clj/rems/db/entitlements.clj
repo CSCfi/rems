@@ -62,6 +62,12 @@
           (log/warnf "Post failed: %s", response))
         (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
 
+(defn- accepted-licenses? [application user-id]
+  (every? (or (get (:application/accepted-licenses application)
+                   user-id)
+              #{})
+          (map :license/id (:application/licenses application))))
+
 (defn- add-entitlements-for
   "If the given application is approved, add an entitlement to the db
   and call the entitlement REST callback (if defined)."
@@ -70,10 +76,10 @@
     (let [app-id (:application/id application)
           members (conj (map :userid (:application/members application))
                         (:application/applicant application))
-          has-entitlement? (set (map :user-id (db/get-entitlements {:application app-id})))
+          has-entitlement? (set (map :userid (db/get-entitlements {:application app-id})))
           members-to-update (->> members
+                                 (filter #(accepted-licenses? application %))
                                  (remove has-entitlement?))]
-
       (when (seq members-to-update)
         (doseq [user-id members-to-update]
           (log/info "granting entitlements on application" app-id "to" user-id)

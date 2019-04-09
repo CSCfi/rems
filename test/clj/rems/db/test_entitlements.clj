@@ -5,6 +5,8 @@
             [rems.db.core :as db]
             [rems.db.applications :as applications]
             [rems.db.entitlements :as entitlements]
+            [rems.db.licenses :as licenses]
+            [rems.db.resource :as resource]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.testing-util :refer [suppress-logging]]
             [stub-http.core :as stub]))
@@ -67,6 +69,7 @@
             (is (= +expected-payload+ (cheshire/parse-string payload)))))))))
 
 (deftest test-entitlement-granting
+  (rems.poller.entitlements/run) ; clear previous entitlements
   (with-open [server (stub/start! {"/add" {:status 200}
                                    "/remove" {:status 200}})]
     (with-redefs [rems.config/env {:entitlements-target
@@ -79,8 +82,18 @@
             workflow {:type :workflow/dynamic :handlers [admin]}
             wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
             formid (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
-            res1 (:id (db/create-resource! {:resid "resource1" :organization organization :owneruserid admin :modifieruserid admin}))
-            res2 (:id (db/create-resource! {:resid "resource2" :organization organization :owneruserid admin :modifieruserid admin}))
+            lic-id1 (:id (licenses/create-license! {:licensetype "text"
+                                                    :title "license1"
+                                                    :textcontent "license1 text"
+                                                    :localizations {}}
+                                                   "owner"))
+            lic-id2 (:id (licenses/create-license! {:licensetype "text"
+                                                    :title "license2"
+                                                    :textcontent "license2 text"
+                                                    :localizations {}}
+                                                   "owner"))
+            res1 (:id (resource/create-resource! {:resid "resource1" :organization organization :licenses [lic-id1]} "owner"))
+            res2 (:id (resource/create-resource! {:resid "resource2" :organization organization :licenses [lic-id2]} "owner"))
             item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wfid}))
             item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
@@ -107,14 +120,35 @@
                                             :comment ""
                                             :time (time/now)})))
 
-          (testing "approved application generated entitlements"
+          (testing "approved application should not yet cause entitlements"
+            (rems.poller.entitlements/run)
+            (is (empty? (db/get-entitlements {:application app-id})))
+            (is (empty? (stub/recorded-requests server))))
+
+          (is (nil? (applications/command! {:type :application.command/accept-licenses
+                                            :actor uid
+                                            :application-id app-id
+                                            :accepted-licenses [lic-id1 lic-id2]
+                                            :time (time/now)})))
+
+          (is (nil? (applications/command! {:type :application.command/accept-licenses
+                                            :actor memberid
+                                            :application-id app-id
+                                            :accepted-licenses [lic-id1 lic-id2]
+                                            :time (time/now)})))
+
+          (is (= {uid #{lic-id1 lic-id2}
+                  memberid #{lic-id1 lic-id2}}
+                 (:application/accepted-licenses (applications/get-application-state app-id))))
+
+          (testing "approved application and licenses accepted generated entitlements"
             (rems.poller.entitlements/run)
             (rems.poller.entitlements/run) ;; run twice to check idempotence
             (testing "db"
               (= [1 2]
                  (db/get-entitlements {:application app-id})))
             (testing "POST"
-              (let [data (take 5 (stub/recorded-requests server))
+              (let [data (take 4 (stub/recorded-requests server))
                     targets (map :path data)
                     bodies (->> data
                                 (map #(get-in % [:body "postData"]))
