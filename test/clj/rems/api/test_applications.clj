@@ -314,6 +314,42 @@
                 "application.event/submitted"]
                (map :event/type (get submitted :application/events))))))))
 
+(deftest test-application-validation
+  (let [api-key "42"
+        user-id "alice"
+        workflow-id (create-dynamic-workflow)
+        form-id (create-form-with-fields [{:title {:en "req"}
+                                           :type "text"
+                                           :optional false}
+                                          {:title {:en "opt"}
+                                           :type "text"
+                                           :optional true}])
+        [req-id opt-id] (->> (form/get-form form-id)
+                             :fields
+                             (map :id))
+        cat-id (create-catalogue-item form-id workflow-id)
+        app-id (create-application [cat-id] user-id)]
+    (testing "set value of optional field"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:field opt-id :value "opt"}]}))))
+    (testing "can't submit without required field"
+      (is (= {:success false
+              :errors [{:field-id req-id, :type "t.form.validation/required"}]}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
+    (testing "set value of required field"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:field opt-id :value "opt"}
+                                                   {:field req-id :value "req"}]})))
+    (testing "can submit with required field"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id})))))))
+
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
 (def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
