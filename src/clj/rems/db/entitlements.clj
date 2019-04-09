@@ -66,17 +66,24 @@
   "If the given application is approved, add an entitlement to the db
   and call the entitlement REST callback (if defined)."
   [application]
-  ;; TODO this is not idempotent
   (when (= :application.state/approved (:application/state application))
     (let [app-id (:application/id application)
-          user-id (:application/applicant application)]
-      (log/info "granting entitlements on application" app-id "to" user-id)
-      (doseq [resource-id (->> (:application/resources application)
-                               (map :resource/id))]
-        (db/add-entitlement! {:application app-id
-                              :user user-id
-                              :resource resource-id}))
-      (post-entitlements :add (db/get-entitlements {:application app-id})))))
+          members (conj (map :userid (:application/members application))
+                        (:application/applicant application))
+          has-entitlement? (set (map :user-id (db/get-entitlements {:application app-id})))
+          members-to-update (->> members
+                                 (remove has-entitlement?))]
+
+      (when (seq members-to-update)
+        (doseq [user-id members-to-update]
+          (log/info "granting entitlements on application" app-id "to" user-id)
+          (doseq [[resource-id ext-id] (->> (:application/resources application)
+                                            (map (juxt :resource/id :resource/ext-id)))]
+            (db/add-entitlement! {:application app-id
+                                  :user user-id
+                                  :resource resource-id})
+            (post-entitlements :add (db/get-entitlements {:application app-id :user user-id :resource ext-id})))))
+      members-to-update)))
 
 (defn- end-entitlements-for
   [application]

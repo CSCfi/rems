@@ -73,6 +73,7 @@
                                    {:add (str (:uri server) "/add")
                                     :remove (str (:uri server) "/remove")}}]
       (let [uid "bob"
+            memberid "elsa"
             admin "owner"
             organization "foo"
             workflow {:type :workflow/dynamic :handlers [admin]}
@@ -83,11 +84,17 @@
             item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wfid}))
             item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
+        (db/add-user! {:user memberid :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
         (db/add-user! {:user admin :userattrs nil})
         (let [app-id (:application-id (applications/create-application! uid [item1 item2]))]
           (is (nil? (applications/command! {:type :application.command/submit
                                             :actor uid
                                             :application-id app-id
+                                            :time (time/now)})))
+          (is (nil? (applications/command! {:type :application.command/add-member
+                                            :actor admin
+                                            :application-id app-id
+                                            :member {:userid memberid}
                                             :time (time/now)})))
           (testing "submitted application should not yet cause entitlements"
             (rems.poller.entitlements/run)
@@ -107,13 +114,18 @@
               (= [1 2]
                  (db/get-entitlements {:application app-id})))
             (testing "POST"
-              (let [data (first (stub/recorded-requests server))
-                    target (:path data)
-                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
-                (is (= "/add" target))
+              (let [data (take 5 (stub/recorded-requests server))
+                    targets (map :path data)
+                    bodies (->> data
+                                (map #(get-in % [:body "postData"]))
+                                (map #(cheshire/parse-string % keyword))
+                                (apply concat))]
+                (is (every? #{"/add"} targets))
                 (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
-                       body)))))
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}
+                        {:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
+                        {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
+                       bodies)))))
 
           (is (nil? (applications/command! {:type :application.command/close
                                             :actor admin
@@ -127,10 +139,12 @@
               (= [1 2]
                  (db/get-entitlements {:application app-id})))
             (testing "POST"
-              (let [data (second (stub/recorded-requests server))
+              (let [data (nth (stub/recorded-requests server) 4)
                     target (:path data)
                     body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
                 (is (= "/remove" target))
                 (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}
+                        {:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
+                        {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
                        body))))))))))
