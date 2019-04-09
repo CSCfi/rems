@@ -144,6 +144,7 @@
           (testing "approved application, licenses accepted by one user generates entitlements for that user"
             (rems.poller.entitlements/run)
             (rems.poller.entitlements/run) ;; run twice to check idempotence
+            (is (= 2 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= [[uid "resource1"] [uid "resource2"]]
                      (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
@@ -167,6 +168,7 @@
 
           (testing "approved application, more accepted licenses generates more entitlements"
             (rems.poller.entitlements/run)
+            (is (= 4 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= [[uid "resource1"] [uid "resource2"]
                       [memberid "resource1"] [memberid "resource2"]]
@@ -183,6 +185,28 @@
                         {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
                        bodies)))))
 
+          (is (nil? (applications/command! {:type :application.command/remove-member
+                                            :actor admin
+                                            :application-id app-id
+                                            :member {:userid memberid}
+                                            :comment "Left team"
+                                            :time (time/now)})))
+
+          (testing "removing a member ends entitlements"
+            (rems.poller.entitlements/run)
+            (is (= 5 (count (stub/recorded-requests server))))
+            (testing "db"
+              (is (= [[uid "resource1"] [uid "resource2"]]
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
+            (testing "POST"
+              (let [data (nth (stub/recorded-requests server) 4)
+                    target (:path data)
+                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
+                (is (= "/remove" target))
+                (is (= [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
+                        {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
+                       body)))))
+
           (is (nil? (applications/command! {:type :application.command/close
                                             :actor admin
                                             :application-id app-id
@@ -191,16 +215,15 @@
 
           (testing "closed application should end entitlements"
             (rems.poller.entitlements/run)
+            (is (= 6 (count (stub/recorded-requests server))))
             (testing "db"
-              (= [1 2]
-                 (db/get-entitlements {:application app-id})))
+              (is (= []
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
             (testing "POST"
-              (let [data (nth (stub/recorded-requests server) 4)
+              (let [data (nth (stub/recorded-requests server) 5)
                     target (:path data)
                     body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
                 (is (= "/remove" target))
                 (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
-                        {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
                        body))))))))))

@@ -93,14 +93,25 @@
 
 (defn- end-entitlements-for
   [application]
-  (when (= :application.state/closed (:application/state application))
-    (let [app-id (:application/id application)
-          members (conj (map :userid (:application/members application))
-                        (:application/applicant application))]
-      (doseq [user-id members]
-        (log/info "ending entitlements on application" app-id "to" user-id))
-      (db/end-entitlement! {:application app-id})
-      (post-entitlements :remove (db/get-entitlements {:application app-id})))))
+  (let [app-id (:application/id application)
+        members (case (:application/state application)
+                    :application.state/closed
+                    (conj (map :userid (:application/members application))
+                          (:application/applicant application))
+
+                    :application.state/approved
+                    (map :userid (:application/past-members application)) ; someone was removed
+
+                    []) ; by default don't do anything
+        has-entitlement? (set (map :userid (db/get-entitlements {:application app-id})))
+        members-to-update (->> members
+                               (filter has-entitlement?))]
+    (when (seq members-to-update)
+      (doseq [user-id members-to-update]
+        (log/info "ending entitlements on application" app-id "to" user-id)
+        (db/end-entitlement! {:application app-id :user user-id})
+        (post-entitlements :remove (db/get-entitlements {:application app-id :user user-id}))))
+    members-to-update))
 
 (defn update-entitlements-for
   [application]

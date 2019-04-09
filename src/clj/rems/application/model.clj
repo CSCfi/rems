@@ -169,6 +169,7 @@
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
              :application/members #{}
+             :application/past-members #{}
              :application/invitation-tokens {}
              :application/resources (map (fn [resource]
                                            {:catalogue-item/id (:catalogue-item/id resource)
@@ -228,7 +229,8 @@
 (defmethod event-type-specific-application-view :application.event/member-removed
   [application event]
   (-> application
-      (update :application/members disj (:application/member event))))
+      (update :application/members disj (:application/member event))
+      (update :application/past-members conj (:application/member event))))
 
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
