@@ -600,7 +600,6 @@
     (let [application-id (:application/id application)
           accepted-licenses (get (:application/accepted-licenses application) userid)
           possible-commands (:application/permissions application)
-          license-validations (index-by [:license-id] (:validation-errors edit-application))
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
       [collapsible/component
@@ -613,8 +612,7 @@
                (for [license licenses]
                  [license-field (assoc license
                                        :accepted (contains? accepted-licenses (:license/id license))
-                                       :readonly readonly?
-                                       :validation (license-validations (:license/id license)))]))
+                                       :readonly readonly?)]))
          (if (accepted-licenses? application userid)
            (text :t.form/has-accepted-licenses)
            (when (contains? possible-commands :application.command/accept-licenses)
