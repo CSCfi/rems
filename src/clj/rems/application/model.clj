@@ -52,6 +52,21 @@
                                       :decider [:see-everything
                                                 :application.command/decide]})
 
+(def ^:private approved-permissions {:applicant [:application.command/remove-member
+                                                 :application.command/uninvite-member
+                                                 :application.command/accept-licenses]
+                                     :member [:application.command/accept-licenses]
+                                     :handler [:see-everything
+                                               :application.command/add-member
+                                               :application.command/remove-member
+                                               :application.command/invite-member
+                                               :application.command/uninvite-member
+                                               :application.command/close]
+                                     :commenter [:see-everything
+                                                 :application.command/comment]
+                                     :decider [:see-everything
+                                               :application.command/decide]})
+
 (def ^:private closed-permissions {:applicant []
                                    :member []
                                    :handler [:see-everything]
@@ -116,12 +131,7 @@
 (defmethod calculate-permissions :application.event/approved
   [application _event]
   (-> application
-      (permissions/set-role-permissions (update closed-permissions
-                                                :handler set/union #{:application.command/add-member
-                                                                     :application.command/remove-member
-                                                                     :application.command/invite-member
-                                                                     :application.command/uninvite-member
-                                                                     :application.command/close}))))
+      (permissions/set-role-permissions approved-permissions)))
 
 (defmethod calculate-permissions :application.event/rejected
   [application _event]
