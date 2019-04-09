@@ -95,8 +95,9 @@
   [application]
   (when (= :application.state/closed (:application/state application))
     (let [app-id (:application/id application)
-          user-id (:application/applicant application)]
-      (log/info "ending entitlements on application" app-id "to" user-id)
+          members (conj (map :userid (:application/members application))
+                        (:application/applicant application))]
+      (log/info "ending entitlements on application" app-id "to" members)
       (db/end-entitlement! {:application app-id})
       (post-entitlements :remove (db/get-entitlements {:application app-id})))))
 
