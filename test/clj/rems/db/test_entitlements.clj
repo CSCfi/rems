@@ -145,8 +145,8 @@
             (rems.poller.entitlements/run)
             (rems.poller.entitlements/run) ;; run twice to check idempotence
             (testing "db"
-              (= [1 2]
-                 (db/get-entitlements {:application app-id})))
+              (is (= [[uid "resource1"] [uid "resource2"]]
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
             (testing "POST"
               (let [data (take 2 (stub/recorded-requests server))
                     targets (map :path data)
@@ -168,8 +168,9 @@
           (testing "approved application, more accepted licenses generates more entitlements"
             (rems.poller.entitlements/run)
             (testing "db"
-              (= [1 2]
-                 (db/get-entitlements {:application app-id})))
+              (is (= [[uid "resource1"] [uid "resource2"]
+                      [memberid "resource1"] [memberid "resource2"]]
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
             (testing "POST"
               (let [data (take 2 (drop 2 (stub/recorded-requests server)))
                     targets (map :path data)
