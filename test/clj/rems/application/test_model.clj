@@ -217,7 +217,7 @@
                                                           :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}]
-                                  :application/accepted-licenses {"applicant" #{}}
+                                  :application/accepted-licenses {}
                                   :application/events events
                                   :application/description ""
                                   :application/form {:form/id 40
@@ -257,7 +257,7 @@
                                                   :application/last-activity (DateTime. 2000)
                                                   :application/events events
                                                   :application/description "foo"
-                                                  :application/accepted-licenses {"applicant" #{}}
+                                                  :application/accepted-licenses {}
                                                   :application/form {:form/fields [{:field/value "foo"}
                                                                                    {:field/value "bar"}]}})]
             (is (= expected-application (apply-events events)))

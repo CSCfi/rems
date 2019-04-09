@@ -167,7 +167,7 @@
              :application/licenses (map (fn [license]
                                           {:license/id (:license/id license)})
                                         (:application/licenses event))
-             :application/accepted-licenses {"applicant" #{}}
+             :application/accepted-licenses {}
              :application/events []
              :application/form {:form/id (:form/id event)}
              :application/workflow {:workflow/id (:workflow/id event)
