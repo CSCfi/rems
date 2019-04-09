@@ -109,10 +109,10 @@
             (testing "POST"
               (let [data (first (stub/recorded-requests server))
                     target (:path data)
-                    body (cheshire/parse-string (get-in data [:body "postData"]))]
+                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
                 (is (= "/add" target))
-                (is (= [{"resource" "resource1" "application" app-id "user" "bob" "mail" "b@o.b"}
-                        {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
+                (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
                        body)))))
 
           (is (nil? (applications/command! {:type :application.command/close
@@ -129,8 +129,8 @@
             (testing "POST"
               (let [data (second (stub/recorded-requests server))
                     target (:path data)
-                    body (cheshire/parse-string (get-in data [:body "postData"]))]
+                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
                 (is (= "/remove" target))
-                (is (= [{"resource" "resource1" "application" app-id "user" "bob" "mail" "b@o.b"}
-                        {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
+                (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
                        body))))))))))
