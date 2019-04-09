@@ -512,26 +512,21 @@
     [:div.form-group
      [:label (localized title)]]))
 
-(defn- license [id title approved readonly validation content]
-  [:div.license
-   [field-validation-message validation title]
-   [:div.form-check content]])
-
 (defn- link-license
-  [{:keys [accepted readonly validation] :as opts}]
+  [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         link (localized (:license/link opts))]
-    [license id title accepted readonly validation
+    [:div.license
      [:a.license-title {:href link :target "_blank"}
       title " " (external-link)]]))
 
 (defn- text-license
-  [{:keys [accepted readonly validation] :as opts}]
+  [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         text (localized (:license/text opts))]
-    [license id title accepted readonly validation
+    [:div.license
      [:div.license-panel
       [:span.license-title
        [:a.license-header.collapsed {:data-toggle "collapse"
