@@ -1,6 +1,6 @@
 (ns rems.actions.request-comment
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.atoms :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :as status-modal]
@@ -41,6 +41,8 @@
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
+(def ^:private action-form-id "request-comment")
+
 (rf/reg-event-fx
  ::send-request-comment
  (fn [_ [_ {:keys [application-id commenters comment on-finished]}]]
@@ -49,11 +51,11 @@
           {:params {:application-id application-id
                     :comment comment
                     :commenters (map :userid commenters)}
-           :handler (partial status-modal/common-success-handler! on-finished)
+           :handler (partial status-modal/common-success-handler! (fn [_]
+                                                                    (collapse-action-form action-form-id)
+                                                                    (on-finished)))
            :error-handler status-modal/common-error-handler!})
    {}))
-
-(def ^:private action-form-id "request-comment")
 
 (defn request-comment-action-button []
   [action-button {:id action-form-id

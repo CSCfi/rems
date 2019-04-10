@@ -711,7 +711,7 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (or (:eppn attributes) (:userid attributes))
-        sanitized-user-id (-> (or user-id "")
+        sanitized-user-id (-> (or user-id (:email attributes) "") ;; use email for invited members
                               str/lower-case
                               (str/replace #"[^a-z]" ""))
         other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
