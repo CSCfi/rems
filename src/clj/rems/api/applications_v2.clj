@@ -1,5 +1,6 @@
 (ns rems.api.applications-v2
   (:require [clojure.tools.logging :as log]
+            [medley.core :refer [map-vals]]
             [mount.core :as mount]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
@@ -74,7 +75,9 @@
 (defn get-all-applications [user-id]
   (let [cache @all-applications-cache
         events (applications/get-dynamic-application-events-since (:last-processed-event-id cache))
-        applications (reduce all-applications-view (:applications cache) events)]
+        applications (reduce all-applications-view (:applications cache) events)
+        ;; TODO: for a shared cache it may be necessary to make assoc-injections idempotent and consider cache invalidation
+        cached-injections (map-vals memoize injections)]
     (when-let [event-id (:event/id (last events))]
       (when (compare-and-set! all-applications-cache
                               cache
@@ -84,8 +87,7 @@
     (->> (vals applications)
          (map #(model/apply-user-permissions % user-id))
          (remove nil?)
-         ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
-         (map #(model/enrich-with-injections % injections))
+         (map #(model/enrich-with-injections % cached-injections))
          (map exclude-unnecessary-keys-from-overview))))
 
 (defn- own-application? [application]
