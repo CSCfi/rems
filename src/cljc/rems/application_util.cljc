@@ -1,5 +1,11 @@
 (ns rems.application-util)
 
+(defn accepted-licenses? [application userid]
+  (every? (or (get (:application/accepted-licenses application)
+                   userid)
+              #{})
+          (map :license/id (:application/licenses application))))
+
 (defn form-fields-editable? [application]
   (contains? (or (:possible-commands application) ;; TODO: remove v1 api usage
                  (:application/permissions application))

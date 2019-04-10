@@ -4,6 +4,7 @@
             [clojure.string :refer [join]]
             [clojure.tools.logging :as log]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.application-util :refer [accepted-licenses?]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -61,12 +62,6 @@
         (when-not (= 200 status)
           (log/warnf "Post failed: %s", response))
         (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
-
-(defn- accepted-licenses? [application user-id]
-  (every? (or (get (:application/accepted-licenses application)
-                   user-id)
-              #{})
-          (map :license/id (:application/licenses application))))
 
 (defn- add-entitlements-for
   "If the given application is approved, add an entitlement to the db
