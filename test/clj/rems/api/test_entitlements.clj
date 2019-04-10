@@ -31,7 +31,12 @@
                      (authenticate api-key "developer")
                      handler
                      read-body)]
-        (is (= 1 (count data)))))
+        (is (= 1 (count data)))
+        ;; sanity check the data
+        (is (= {:resource "urn:nbn:fi:lb-201403262"
+                :application-id 12
+                :mail "alice@example.com"}
+               (-> data first (dissoc :start))))))
 
     (testing "listing as applicant"
       (testing "with entitlements"
