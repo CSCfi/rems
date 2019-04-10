@@ -1,6 +1,6 @@
 (ns rems.actions.add-member
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
             [rems.atoms :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :as status-modal]
@@ -21,7 +21,7 @@
  (fn [{:keys [db]} _]
    {:db (assoc db
                ::potential-members #{}
-               ::selected-members #{})
+               ::selected-member nil)
     ::fetch-potential-members [(get-in db [:identity :user])
                                #(rf/dispatch [::set-potential-members %])]}))
 
@@ -31,11 +31,13 @@
  (fn [db [_ members]]
    (assoc db
           ::potential-members (set (map enrich-user members))
-          ::selected-members #{})))
+          ::selected-member nil)))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
 (rf/reg-event-db ::remove-selected-member (fn [db [_ member]] (dissoc db ::selected-member)))
 (rf/reg-sub ::selected-member (fn [db _] (::selected-member db)))
+
+(def ^:private action-form-id "add-member")
 
 (rf/reg-event-fx
  ::send-add-member
@@ -44,11 +46,11 @@
    (post! "/api/applications/add-member"
           {:params {:application-id application-id
                     :member (select-keys member [:userid])}
-           :handler (partial status-modal/common-success-handler! on-finished)
+           :handler (partial status-modal/common-success-handler! (fn [_]
+                                                                    (collapse-action-form action-form-id)
+                                                                    (on-finished)))
            :error-handler status-modal/common-error-handler!})
    {}))
-
-(def ^:private action-form-id "add-member")
 
 (defn add-member-action-button []
   [action-button {:id action-form-id
@@ -59,7 +61,7 @@
   [{:keys [selected-member potential-members on-add-member on-remove-member on-send]}]
   [action-form-view action-form-id
    (text :t.actions/add-member)
-   [[button-wrapper {:id "add-member"
+   [[button-wrapper {:id "add-member-submit"
                      :text (text :t.actions/add-member)
                      :class "btn-primary"
                      :on-click on-send}]]
