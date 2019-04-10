@@ -524,7 +524,7 @@
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
-(defn- hide-very-sensitive-information [application]
+(defn- hide-non-public-information [application]
   (-> application
       ;; the keys are invitation tokens and must be kept secret
       (dissoc :application/invitation-tokens)
@@ -532,7 +532,8 @@
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (update-in [:application/workflow] dissoc
                  :workflow.dynamic/awaiting-commenters
-                 :workflow.dynamic/awaiting-deciders)))
+                 :workflow.dynamic/awaiting-deciders)
+      (dissoc :application/past-members)))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
@@ -543,7 +544,7 @@
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
-          (hide-very-sensitive-information)
+          (hide-non-public-information)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))
