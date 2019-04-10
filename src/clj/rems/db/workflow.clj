@@ -34,6 +34,9 @@
 
 (defn- create-dynamic-workflow! [{:keys [user-id organization title handlers]}]
   (assert user-id)
+  (assert organization)
+  (assert title)
+  (assert (every? string? handlers) {:handlers handlers})
   (let [wfid (:id (db/create-workflow! {:organization organization,
                                         :owneruserid user-id,
                                         :modifieruserid user-id,
