@@ -152,6 +152,7 @@
                                                                      :mail "applicant@example.com"
                                                                      :commonName "Applicant"}
                                   :application/members #{}
+                                  :application/past-members #{}
                                   :application/invitation-tokens {}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
@@ -526,7 +527,8 @@
                               expected-application (merge expected-application
                                                           {:application/last-activity (DateTime. 5000)
                                                            :application/events events
-                                                           :application/members #{}})]
+                                                           :application/members #{}
+                                                           :application/past-members #{{:userid "member"}}})]
                           (is (= expected-application (apply-events events))))))))))))))))
 
 (deftest test-calculate-permissions
