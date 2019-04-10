@@ -91,7 +91,8 @@
     (= "test-data" (first args))
     (do
       (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (test-data/create-test-data!))
+      (test-data/create-test-data!)
+      (test-data/create-performance-test-data!))
     (= "demo-data" (first args))
     (do
       (mount/start #'rems.config/env #'rems.db.core/*db*)

@@ -631,13 +631,13 @@
       (let [application (create-draft! applicant item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
         (applications/submit-application applicant application)))))
 
-(defn- create-performance-test-data! [users]
+(defn create-performance-test-data! []
   (let [resource-count 1000
         application-count 1000
         user-count 1000
-        handlers [(users :approver1)
-                  (users :approver2)]
-        owner (users :owner)
+        handlers [(+fake-users+ :approver1)
+                  (+fake-users+ :approver2)]
+        owner (+fake-users+ :owner)
         workflow-id (:id (workflow/create-workflow! {:user-id owner
                                                      :organization "perf"
                                                      :title "Performance tests"
@@ -768,7 +768,6 @@
                                                     {"en" "Dynamic workflow (expired)"
                                                      "fi" "Dynaaminen työvuo (vanhentunut)"})]
         (db/set-catalogue-item-state! {:id dynamic-expired :end (time/now)})))
-    (create-performance-test-data! +fake-users+)
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
