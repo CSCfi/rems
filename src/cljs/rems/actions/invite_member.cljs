@@ -1,22 +1,24 @@
 (ns rems.actions.invite-member
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 
-(rf/reg-event-fx
+(rf/reg-event-db
  ::open-form
- (fn [{:keys [db]} _]
-   {:db (assoc db
-               ::name ""
-               ::email "")}))
+ (fn [db _]
+   (assoc db
+          ::name ""
+          ::email "")))
 
 (rf/reg-event-db ::set-name (fn [db [_ name]] (assoc db ::name name)))
 (rf/reg-sub ::name (fn [db _] (::name db)))
 
 (rf/reg-event-db ::set-email (fn [db [_ email]] (assoc db ::email email)))
 (rf/reg-sub ::email (fn [db _] (::email db)))
+
+(def ^:private action-form-id "invite-member")
 
 (rf/reg-event-fx
  ::send-invite-member
@@ -25,11 +27,11 @@
    (post! "/api/applications/invite-member"
           {:params {:application-id application-id
                     :member member}
-           :handler (partial status-modal/common-success-handler! on-finished)
+           :handler (partial status-modal/common-success-handler! (fn [_]
+                                                                    (collapse-action-form action-form-id)
+                                                                    (on-finished)))
            :error-handler status-modal/common-error-handler!})
    {}))
-
-(def ^:private action-form-id "invite-member")
 
 (defn invite-member-action-button []
   [action-button {:id action-form-id

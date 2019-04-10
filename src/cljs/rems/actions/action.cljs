@@ -12,6 +12,9 @@
     (dissoc props :class :text))
    text])
 
+(defn collapse-action-form [id]
+  (.collapse (js/$ (str "#" (action-collapse-id id))) "hide"))
+
 (defn cancel-action-button [id]
   [:button.btn.btn-secondary
    {:id (str "cancel-" id)
