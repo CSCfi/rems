@@ -10,6 +10,7 @@
  (fn [{:keys [db]} _]
    {:db (assoc db ::comment "")}))
 
+;; TODO all remove-member forms share the comment, but multiple remove-member forms can be open at once
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
