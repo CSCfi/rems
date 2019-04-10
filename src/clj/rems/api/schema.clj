@@ -135,8 +135,6 @@
    :application/applicant-attributes {s/Keyword s/Str}
    :application/members #{{:userid s/Str
                            s/Keyword s/Str}}
-   :application/past-members #{{:userid s/Str
-                                s/Keyword s/Str}}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    :application/resources [V2Resource]

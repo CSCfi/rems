@@ -532,7 +532,8 @@
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (update-in [:application/workflow] dissoc
                  :workflow.dynamic/awaiting-commenters
-                 :workflow.dynamic/awaiting-deciders)))
+                 :workflow.dynamic/awaiting-deciders)
+      (dissoc :application/past-members)))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
