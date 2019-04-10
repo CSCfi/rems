@@ -1,6 +1,6 @@
 -- :disable-transaction
-ALTER TYPE itemtype
-  ADD VALUE 'option';
+-- ALTER TYPE itemtype
+-- ADD VALUE 'option';
 --;;
 CREATE TABLE application_form_item_options
 (

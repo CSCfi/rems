@@ -1,3 +1,3 @@
 -- :disable-transaction
-ALTER TYPE itemtype
-  ADD VALUE 'multiselect';
+-- ALTER TYPE itemtype
+-- ADD VALUE 'multiselect';

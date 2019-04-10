@@ -1,3 +1,3 @@
 -- :disable-transaction
-ALTER TYPE itemtype
-  ADD VALUE 'description';
+-- ALTER TYPE itemtype
+--  ADD VALUE 'description';
