@@ -524,7 +524,7 @@
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
-(defn- hide-very-sensitive-information [application]
+(defn- hide-non-public-information [application]
   (-> application
       ;; the keys are invitation tokens and must be kept secret
       (dissoc :application/invitation-tokens)
@@ -543,7 +543,7 @@
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
-          (hide-very-sensitive-information)
+          (hide-non-public-information)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))
