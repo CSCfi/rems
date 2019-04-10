@@ -14,7 +14,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [form-fields-editable?]]
+            [rems.application-util :refer [accepted-licenses? form-fields-editable?]]
             [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
@@ -40,12 +40,6 @@
                     :application.state/rejected
                     :application.state/closed}
                   (:application/state application))))
-
-(defn- accepted-licenses? [application userid]
-  (every? (or (get (:application/accepted-licenses application)
-                   userid)
-              #{})
-          (map :license/id (:application/licenses application))))
 
 (defn- disabled-items-warning [application]
   (when (in-processing? application)

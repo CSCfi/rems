@@ -152,6 +152,7 @@
                                                                      :mail "applicant@example.com"
                                                                      :commonName "Applicant"}
                                   :application/members #{}
+                                  :application/past-members #{}
                                   :application/invitation-tokens {}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
@@ -217,7 +218,7 @@
                                                           :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}]
-                                  :application/accepted-licenses {"applicant" #{}}
+                                  :application/accepted-licenses {}
                                   :application/events events
                                   :application/description ""
                                   :application/form {:form/id 40
@@ -257,7 +258,7 @@
                                                   :application/last-activity (DateTime. 2000)
                                                   :application/events events
                                                   :application/description "foo"
-                                                  :application/accepted-licenses {"applicant" #{}}
+                                                  :application/accepted-licenses {}
                                                   :application/form {:form/fields [{:field/value "foo"}
                                                                                    {:field/value "bar"}]}})]
             (is (= expected-application (apply-events events)))
@@ -526,7 +527,8 @@
                               expected-application (merge expected-application
                                                           {:application/last-activity (DateTime. 5000)
                                                            :application/events events
-                                                           :application/members #{}})]
+                                                           :application/members #{}
+                                                           :application/past-members #{{:userid "member"}}})]
                           (is (= expected-application (apply-events events))))))))))))))))
 
 (deftest test-calculate-permissions

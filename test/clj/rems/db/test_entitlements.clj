@@ -1,14 +1,22 @@
-(ns rems.db.test-entitlements
+(ns ^:integration rems.db.test-entitlements
   (:require [cheshire.core :as cheshire]
             [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.core :as db]
+            [rems.db.applications :as applications]
             [rems.db.entitlements :as entitlements]
+            [rems.db.licenses :as licenses]
+            [rems.db.resource :as resource]
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.testing-util :refer [suppress-logging]]
             [stub-http.core :as stub]))
 
-(use-fixtures :once
-  (suppress-logging "rems.db.entitlements"))
+(use-fixtures
+  :once
+  (suppress-logging "rems.db.entitlements")
+  test-db-fixture
+  rollback-db-fixture
+  test-data-fixture)
 
 (def +entitlements+
   [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11) :mail "user1@tes.t"}
@@ -59,3 +67,163 @@
           (let [[{payload :payload status :status}] @log]
             (is (= "exception" status))
             (is (= +expected-payload+ (cheshire/parse-string payload)))))))))
+
+(deftest test-entitlement-granting
+  (rems.poller.entitlements/run) ; clear previous entitlements
+  (with-open [server (stub/start! {"/add" {:status 200}
+                                   "/remove" {:status 200}})]
+    (with-redefs [rems.config/env {:entitlements-target
+                                   {:add (str (:uri server) "/add")
+                                    :remove (str (:uri server) "/remove")}}]
+      (let [uid "bob"
+            memberid "elsa"
+            admin "owner"
+            organization "foo"
+            workflow {:type :workflow/dynamic :handlers [admin]}
+            wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
+            formid (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
+            lic-id1 (:id (licenses/create-license! {:licensetype "text"
+                                                    :title "license1"
+                                                    :textcontent "license1 text"
+                                                    :localizations {}}
+                                                   "owner"))
+            lic-id2 (:id (licenses/create-license! {:licensetype "text"
+                                                    :title "license2"
+                                                    :textcontent "license2 text"
+                                                    :localizations {}}
+                                                   "owner"))
+            res1 (:id (resource/create-resource! {:resid "resource1" :organization organization :licenses [lic-id1]} "owner"))
+            res2 (:id (resource/create-resource! {:resid "resource2" :organization organization :licenses [lic-id2]} "owner"))
+            item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wfid}))
+            item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))]
+        (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
+        (db/add-user! {:user memberid :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
+        (db/add-user! {:user admin :userattrs nil})
+        (let [app-id (:application-id (applications/create-application! uid [item1 item2]))]
+          (is (nil? (applications/command! {:type :application.command/submit
+                                            :actor uid
+                                            :application-id app-id
+                                            :time (time/now)})))
+          (is (nil? (applications/command! {:type :application.command/add-member
+                                            :actor admin
+                                            :application-id app-id
+                                            :member {:userid memberid}
+                                            :time (time/now)})))
+          (testing "submitted application should not yet cause entitlements"
+            (rems.poller.entitlements/run)
+            (is (empty? (db/get-entitlements {:application app-id})))
+            (is (empty? (stub/recorded-requests server))))
+
+          (is (nil? (applications/command! {:type :application.command/approve
+                                            :actor admin
+                                            :application-id app-id
+                                            :comment ""
+                                            :time (time/now)})))
+
+          (testing "approved application should not yet cause entitlements"
+            (rems.poller.entitlements/run)
+            (is (empty? (db/get-entitlements {:application app-id})))
+            (is (empty? (stub/recorded-requests server))))
+
+          (is (nil? (applications/command! {:type :application.command/accept-licenses
+                                            :actor uid
+                                            :application-id app-id
+                                            :accepted-licenses [lic-id1 lic-id2]
+                                            :time (time/now)})))
+
+          (is (nil? (applications/command! {:type :application.command/accept-licenses
+                                            :actor memberid
+                                            :application-id app-id
+                                            :accepted-licenses [lic-id1] ; only accept some licenses
+                                            :time (time/now)})))
+
+          (is (= {uid #{lic-id1 lic-id2}
+                  memberid #{lic-id1}}
+                 (:application/accepted-licenses (applications/get-application-state app-id))))
+
+          (testing "approved application, licenses accepted by one user generates entitlements for that user"
+            (rems.poller.entitlements/run)
+            (rems.poller.entitlements/run) ;; run twice to check idempotence
+            (is (= 2 (count (stub/recorded-requests server))))
+            (testing "db"
+              (is (= [[uid "resource1"] [uid "resource2"]]
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
+            (testing "POST"
+              (let [data (take 2 (stub/recorded-requests server))
+                    targets (map :path data)
+                    bodies (->> data
+                                (map #(get-in % [:body "postData"]))
+                                (map #(cheshire/parse-string % keyword))
+                                (apply concat))]
+                (is (every? #{"/add"} targets))
+                (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
+                       bodies)))))
+
+          (is (nil? (applications/command! {:type :application.command/accept-licenses
+                                            :actor memberid
+                                            :application-id app-id
+                                            :accepted-licenses [lic-id1 lic-id2] ; now accept all licenses
+                                            :time (time/now)})))
+
+          (testing "approved application, more accepted licenses generates more entitlements"
+            (rems.poller.entitlements/run)
+            (is (= 4 (count (stub/recorded-requests server))))
+            (testing "db"
+              (is (= [[uid "resource1"] [uid "resource2"]
+                      [memberid "resource1"] [memberid "resource2"]]
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
+            (testing "POST"
+              (let [data (take 2 (drop 2 (stub/recorded-requests server)))
+                    targets (map :path data)
+                    bodies (->> data
+                                (map #(get-in % [:body "postData"]))
+                                (map #(cheshire/parse-string % keyword))
+                                (apply concat))]
+                (is (every? #{"/add"} targets))
+                (is (= [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
+                        {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
+                       bodies)))))
+
+          (is (nil? (applications/command! {:type :application.command/remove-member
+                                            :actor admin
+                                            :application-id app-id
+                                            :member {:userid memberid}
+                                            :comment "Left team"
+                                            :time (time/now)})))
+
+          (testing "removing a member ends entitlements"
+            (rems.poller.entitlements/run)
+            (is (= 5 (count (stub/recorded-requests server))))
+            (testing "db"
+              (is (= [[uid "resource1"] [uid "resource2"]]
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
+            (testing "POST"
+              (let [data (nth (stub/recorded-requests server) 4)
+                    target (:path data)
+                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
+                (is (= "/remove" target))
+                (is (= [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
+                        {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
+                       body)))))
+
+          (is (nil? (applications/command! {:type :application.command/close
+                                            :actor admin
+                                            :application-id app-id
+                                            :comment ""
+                                            :time (time/now)})))
+
+          (testing "closed application should end entitlements"
+            (rems.poller.entitlements/run)
+            (is (= 6 (count (stub/recorded-requests server))))
+            (testing "db"
+              (is (= []
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
+            (testing "POST"
+              (let [data (nth (stub/recorded-requests server) 5)
+                    target (:path data)
+                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
+                (is (= "/remove" target))
+                (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
+                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
+                       body))))))))))

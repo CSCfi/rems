@@ -342,7 +342,11 @@ VALUES (:application, :user, :resource);
 -- :name end-entitlement! :!
 UPDATE entitlement
 SET endt = current_timestamp
-WHERE catAppId = :application;
+WHERE catAppId = :application
+/*~ (when (:user params) */
+  AND entitlement.userId = :user
+/*~ ) ~*/
+;
 
 -- :name get-entitlements :?
 -- :doc
@@ -350,6 +354,7 @@ WHERE catAppId = :application;
 --   :application -- application id to limit select to
 --   :user -- user id to limit select to
 --   :resource -- resid to limit select to
+--   :is-active? -- entitlement is without end date
 SELECT res.resId, catAppId, entitlement.userId, entitlement.start, users.userAttrs->>'mail' AS mail FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
 LEFT OUTER JOIN users on entitlement.userId = users.userId
@@ -362,6 +367,9 @@ WHERE 1=1
 /*~ ) ~*/
 /*~ (when (:resource params) */
   AND res.resId = :resource
+/*~ ) ~*/
+/*~ (when (:is-active? params) */
+  AND entitlement.endt IS NULL
 /*~ ) ~*/
 ;
 

@@ -483,13 +483,20 @@
              update :field-values
              conj [item-id trimmed-value]))
     (db/update-application-description! {:id app-id :description field-value})
-    (doseq [{license-id :id} (:licenses form)]
-      (db/save-license-approval! {:catappid app-id
-                                  :round 0
-                                  :licid license-id
-                                  :actoruserid user-id
-                                  :state "approved"}))
+    (when-not dynamic-workflow?
+      (doseq [{license-id :id} (:licenses form)]
+        (db/save-license-approval! {:catappid app-id
+                                    :round 0
+                                    :licid license-id
+                                    :actoruserid user-id
+                                    :state "approved"})))
     (when dynamic-workflow?
+      (let [error (applications/command! {:type :application.command/accept-licenses
+                                          :actor user-id
+                                          :application-id app-id
+                                          :accepted-licenses (map :id (:licenses form))
+                                          :time (time/now)})]
+        (assert (nil? error) error))
       (let [error (applications/command! @save-draft-command)]
         (assert (nil? error) error)))
     app-id))

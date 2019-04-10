@@ -10,9 +10,12 @@
 
 (defn- entitlements-for-event [event]
   ;; we filter by event here, and by state in update-entitlements-for.
-  ;; this is because update-entitlements-for is not actually
-  ;; idempotent.
-  (when (contains? #{:application.event/approved :application.event/closed} (:event/type event))
+  ;; this is for performance reasons only
+  (when (contains? #{:application.event/approved
+                     :application.event/licenses-accepted
+                     :application.event/member-removed
+                     :application.event/closed}
+                   (:event/type event))
     (let [application (applications-v2/get-unrestricted-application (:application/id event))]
       (entitlements/update-entitlements-for application))))
 
