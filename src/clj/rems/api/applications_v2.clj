@@ -72,16 +72,24 @@
   :start (events-cache/new))
 
 (defn get-all-applications [user-id]
-  ;; TODO: for a shared cache it may be necessary to make assoc-injections idempotent and consider cache invalidation
-  (let [cached-injections (map-vals memoize injections)]
-    (->> (events-cache/refresh! all-applications-cache
-                                (fn [applications events]
-                                  (reduce all-applications-view applications events)))
-         (vals)
-         (map #(model/apply-user-permissions % user-id))
-         (remove nil?)
-         (map #(model/enrich-with-injections % cached-injections))
-         (map exclude-unnecessary-keys-from-overview))))
+  (->> (events-cache/refresh!
+        all-applications-cache
+        (fn [state events]
+          ;; Because enrich-with-injections is not idempotent,
+          ;; it's necessary to hold on to the "raw" applications.
+          (let [raw-apps (reduce all-applications-view (:raw-apps state) events)
+                updated-app-ids (distinct (map :application/id events))
+                cached-injections (map-vals memoize injections)
+                enriched-apps (->> (select-keys raw-apps updated-app-ids)
+                                   (map-vals #(model/enrich-with-injections % cached-injections))
+                                   (merge (:enriched-apps state)))]
+            {:raw-apps raw-apps
+             :enriched-apps enriched-apps})))
+       :enriched-apps
+       (vals)
+       (map #(model/apply-user-permissions % user-id))
+       (remove nil?)
+       (map exclude-unnecessary-keys-from-overview)))
 
 (defn- own-application? [application]
   (some #{:applicant :member} (:application/roles application)))
