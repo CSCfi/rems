@@ -189,6 +189,13 @@
              :application/request-id last-request-for-actor
              :application/comment (:comment cmd)}))))
 
+(defmethod command-handler :application.command/add-licenses
+  [cmd _application injections]
+  (or (must-not-be-empty cmd :licenses)
+      (ok {:event/type :application.event/licenses-added
+           :application/licenses (set (:licenses cmd))
+           :application/comment (:comment cmd)})))
+
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
   (or (invalid-user-error (:userid (:member cmd)) injections)

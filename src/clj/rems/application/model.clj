@@ -38,6 +38,7 @@
                                                   :application.command/accept-licenses]
                                       :member [:application.command/accept-licenses]
                                       :handler [:see-everything
+                                                :application.command/add-licenses
                                                 :application.command/add-member
                                                 :application.command/remove-member
                                                 :application.command/invite-member
@@ -200,6 +201,16 @@
   (-> application
       (assoc :application/modified (:event/time event))
       (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
+
+(defmethod event-type-specific-application-view :application.event/licenses-added
+  [application event]
+  (-> application
+      (update :application/licenses
+              (fn [licenses]
+                (->> (:application/licenses event)
+                     (map (fn [license-id] {:license/id license-id}))
+                     (concat licenses)
+                     distinct)))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]

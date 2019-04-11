@@ -195,6 +195,7 @@
                  "application.command/reject"
                  "application.command/approve"
                  "application.command/return"
+                 "application.command/add-licenses"
                  "application.command/add-member"
                  "application.command/remove-member"
                  "application.command/invite-member"
