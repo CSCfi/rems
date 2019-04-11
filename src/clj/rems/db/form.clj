@@ -44,7 +44,7 @@
                                :title (get title lang)
                                :inputprompt (get input-prompt lang)}))))
 
-(defn create-form! [user-id {:keys [organization title items] :as form}]
+(defn create-form! [user-id {:keys [organization title fields] :as form}]
   ;; FIXME Remove saving old style forms only when we have a db migration.
   ;;       Otherwise it will get reeealy tricky to return both versions in get-api.
   (let [form-id (:id (db/create-form! {:organization organization
@@ -53,8 +53,8 @@
     (db/save-form-template! (assoc form
                                    :id form-id
                                    :user user-id
-                                   :fields (json/generate-string (:items form))))
-    (doseq [[index item] (map-indexed vector items)]
+                                   :fields (json/generate-string fields)))
+    (doseq [[index item] (map-indexed vector fields)]
       (create-form-item! user-id form-id index item))
     {:success (not (nil? form-id))
      :id form-id}))

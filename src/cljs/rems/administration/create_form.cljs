@@ -17,37 +17,38 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::form {:items []})}))
+   {:db (assoc db ::form {:fields []})}))
 
 ;;;; form state
 
+;; TODO rename item->field
 (rf/reg-sub ::form (fn [db _] (::form db)))
-(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
+(rf/reg-event-db ::set-form-item (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db ::add-form-item (fn [db [_]] (update-in db [::form :items] items/add {:type "text"})))
-(rf/reg-event-db ::remove-form-item (fn [db [_ item-index]] (update-in db [::form :items] items/remove item-index)))
-(rf/reg-event-db ::move-form-item-up (fn [db [_ item-index]] (update-in db [::form :items] items/move-up item-index)))
-(rf/reg-event-db ::move-form-item-down (fn [db [_ item-index]] (update-in db [::form :items] items/move-down item-index)))
+(rf/reg-event-db ::add-form-item (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
+(rf/reg-event-db ::remove-form-item (fn [db [_ item-index]] (update-in db [::form :fields] items/remove item-index)))
+(rf/reg-event-db ::move-form-item-up (fn [db [_ item-index]] (update-in db [::form :fields] items/move-up item-index)))
+(rf/reg-event-db ::move-form-item-down (fn [db [_ item-index]] (update-in db [::form :fields] items/move-down item-index)))
 
 (rf/reg-event-db
  ::add-form-item-option
  (fn [db [_ item-index]]
-   (update-in db [::form :items item-index :options] items/add {})))
+   (update-in db [::form :fields item-index :options] items/add {})))
 
 (rf/reg-event-db
  ::remove-form-item-option
  (fn [db [_ item-index option-index]]
-   (update-in db [::form :items item-index :options] items/remove option-index)))
+   (update-in db [::form :fields item-index :options] items/remove option-index)))
 
 (rf/reg-event-db
  ::move-form-item-option-up
  (fn [db [_ item-index option-index]]
-   (update-in db [::form :items item-index :options] items/move-up option-index)))
+   (update-in db [::form :fields item-index :options] items/move-up option-index)))
 
 (rf/reg-event-db
  ::move-form-item-option-down
  (fn [db [_ item-index option-index]]
-   (update-in db [::form :items item-index :options] items/move-down option-index)))
+   (update-in db [::form :fields item-index :options] items/move-down option-index)))
 
 
 ;;;; form submit
@@ -100,7 +101,7 @@
 (defn- valid-request? [request languages]
   (and (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))
-       (every? #(valid-request-item? % languages) (:items request))))
+       (every? #(valid-request-item? % languages) (:fields request))))
 
 (defn build-localized-string [lstr languages]
   (into {} (for [language languages]
@@ -123,7 +124,7 @@
 (defn build-request [form languages]
   (let [request {:organization (:organization form)
                  :title (:title form)
-                 :items (mapv #(build-request-item % languages) (:items form))}]
+                 :fields (mapv #(build-request-item % languages) (:fields form))}]
     (when (valid-request? request languages)
       request)))
 
@@ -153,15 +154,15 @@
                        :label (text :t.create-form/title)}])
 
 (defn- form-item-title-field [item-index]
-  [localized-text-field context {:keys [:items item-index :title]
+  [localized-text-field context {:keys [:fields item-index :title]
                                  :label (text :t.create-form/item-title)}])
 
 (defn- form-item-input-prompt-field [item-index]
-  [localized-text-field context {:keys [:items item-index :input-prompt]
+  [localized-text-field context {:keys [:fields item-index :input-prompt]
                                  :label (text :t.create-form/input-prompt)}])
 
 (defn- form-item-maxlength-field [item-index]
-  [number-field context {:keys [:items item-index :maxlength]
+  [number-field context {:keys [:fields item-index :maxlength]
                          :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-item-option-button [item-index]
@@ -188,23 +189,23 @@
      [move-form-item-option-up-button item-index option-index]
      [move-form-item-option-down-button item-index option-index]
      [remove-form-item-option-button item-index option-index]]]
-   [text-field context {:keys [:items item-index :options option-index :key]
+   [text-field context {:keys [:fields item-index :options option-index :key]
                         :label (text :t.create-form/option-key)
                         :normalizer fields/normalize-option-key}]
-   [localized-text-field context {:keys [:items item-index :options option-index :label]
+   [localized-text-field context {:keys [:fields item-index :options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
 (defn- form-item-option-fields [item-index]
   (let [form @(rf/subscribe [::form])]
     (into (into [:div]
-                (for [option-index (range (count (get-in form [:items item-index :options])))]
+                (for [option-index (range (count (get-in form [:fields item-index :options])))]
                   [form-item-option-field item-index option-index]))
           [[:div.form-item-option.new-form-item-option
             [add-form-item-option-button item-index]]])))
 
 (defn- form-item-type-radio-group [item-index]
   [radio-button-group context {:id (str "radio-group-" item-index)
-                               :keys [:items item-index :type]
+                               :keys [:fields item-index :type]
                                :orientation :vertical
                                :options [{:value "text", :label (text :t.create-form/type-text)}
                                          {:value "texta", :label (text :t.create-form/type-texta)}
@@ -216,7 +217,7 @@
                                          {:value "label", :label (text :t.create-form/type-label)}]}])
 
 (defn- form-item-optional-checkbox [item-index]
-  [checkbox context {:keys [:items item-index :optional]
+  [checkbox context {:keys [:fields item-index :optional]
                      :label (text :t.create-form/optional)}])
 
 (defn- add-form-item-button []
@@ -290,7 +291,7 @@
    {:id "preview-form"
     :title (text :t.administration/preview)
     :always (into [:div]
-                  (for [field (or (:fields form) (:items form))] ;; TODO get rid of :items
+                  (for [field (:fields form)]
                     [field-preview field]))}])
 
 (defn create-form-page []
@@ -304,7 +305,7 @@
        :always [:div
                 [form-organization-field]
                 [form-title-field]
-                [form-items (:items form)]
+                [form-items (:fields form)]
 
                 [:div.form-item.new-form-item
                  [add-form-item-button]]

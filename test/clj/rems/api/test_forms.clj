@@ -26,16 +26,16 @@
     (testing "create"
       (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
-                     :items [{:title {:en "en title"
-                                      :fi "fi title"}
-                              :optional true
-                              :type "text"
-                              :input-prompt {:en "en prompt"
-                                             :fi "fi prompt"}}]}]
+                     :fields [{:title {:en "en title"
+                                       :fi "fi title"}
+                               :optional true
+                               :type "text"
+                               :input-prompt {:en "en prompt"
+                                              :fi "fi prompt"}}]}]
 
         (testing "invalid create"
           ;; TODO: silence the logging for this expected error
-          (let [command-with-invalid-maxlength (assoc-in command [:items 0 :maxlength] -1)
+          (let [command-with-invalid-maxlength (assoc-in command [:fields 0 :maxlength] -1)
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
                              (json-body command-with-invalid-maxlength)
@@ -44,7 +44,7 @@
                 "can't send negative maxlength")))
 
         (testing "invalid create: field too long"
-          (let [command-with-long-prompt (assoc-in command [:items 0 :input-prompt :en]
+          (let [command-with-long-prompt (assoc-in command [:fields 0 :input-prompt :en]
                                                    (apply str (repeat 10000 "x")))
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
@@ -68,7 +68,7 @@
                 (testing "result matches input"
                   (is (= (select-keys command [:title :organization])
                          (select-keys form-template [:title :organization])))
-                  (is (= (:items command)
+                  (is (= (:fields command)
                          (:fields form-template))))))))))))
 
 (deftest form-update-test
@@ -77,7 +77,7 @@
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
                     (json-body {:organization "abc" :title "form update test"
-                                :items []})
+                                :fields []})
                     handler
                     read-ok-body
                     :id)]
@@ -119,16 +119,16 @@
     (testing "create"
       (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
-                     :items [{:title {:en "en title"
-                                      :fi "fi title"}
-                              :optional true
-                              :type "option"
-                              :options [{:key "yes"
-                                         :label {:en "Yes"
-                                                 :fi "Kyllä"}}
-                                        {:key "no"
-                                         :label {:en "No"
-                                                 :fi "Ei"}}]}]}
+                     :fields [{:title {:en "en title"
+                                       :fi "fi title"}
+                               :optional true
+                               :type "option"
+                               :options [{:key "yes"
+                                          :label {:en "Yes"
+                                                  :fi "Kyllä"}}
+                                         {:key "no"
+                                          :label {:en "No"
+                                                  :fi "Ei"}}]}]}
             id (-> (request :post "/api/forms/create")
                    (authenticate api-key user-id)
                    (json-body command)
@@ -141,7 +141,7 @@
                          (authenticate api-key user-id)
                          handler
                          read-ok-body)]
-            (is (= (:items command)
+            (is (= (:fields command)
                    (:fields form)))))))))
 
 (deftest forms-api-filtering-test
@@ -173,7 +173,7 @@
       (let [response (-> (request :post "/api/forms/create")
                          (json-body {:organization "abc"
                                      :title "the title"
-                                     :items []})
+                                     :fields []})
                          handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
@@ -191,7 +191,7 @@
                          (authenticate "42" "alice")
                          (json-body {:organization "abc"
                                      :title "the title"
-                                     :items []})
+                                     :fields []})
                          handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

@@ -32,7 +32,7 @@
 
 (s/defschema FullForm
   (merge Form
-         {:fields [s/Any]}))
+         {:fields [s/Any]})) ;; TODO FormField?
 
 (s/defschema Forms
   [Form])
@@ -56,7 +56,7 @@
 (s/defschema CreateFormCommand
   {:organization s/Str
    :title s/Str
-   :items [FormField]})
+   :fields [FormField]})
 
 (s/defschema CreateFormResponse
   {:success s/Bool
