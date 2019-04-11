@@ -146,6 +146,29 @@
                         :actor applicant-user-id
                         :accepted-licenses #{1 2}})))))
 
+(deftest test-add-licenses
+  (let [application (apply-events nil [dummy-created-event
+                                       {:event/type :application.event/submitted
+                                        :event/time test-time
+                                        :event/actor applicant-user-id
+                                        :application/id 123}])]
+    (is (= [{:event/type :application.event/licenses-added
+             :event/time test-time
+             :event/actor handler-user-id
+             :application/id 123
+             :application/comment "comment"
+             :application/licenses #{1 2}}]
+           (ok-command application
+                       {:type :application.command/add-licenses
+                        :actor handler-user-id
+                        :comment "comment"
+                        :licenses [1 2]})))
+    (is (= {:errors [{:type :must-not-be-empty :key :licenses}]}
+           (fail-command application
+                         {:type :application.command/add-licenses
+                          :actor handler-user-id
+                          :comment "comment"
+                          :licenses []})))))
 
 (deftest test-submit
   (let [injections {:validate-form-answers fake-validate-form-answers}
