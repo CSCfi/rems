@@ -38,33 +38,6 @@
    {:on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/back)])
 
-(defn get-localized-value [field key language]
-  (key (first (filter (comp #{(name language)} :langcode)
-                      (:localizations field)))))
-
-(defn form-field [field language]
-  (into [:div.form-item
-         [:h4 (text-format :t.administration/field (get-localized-value field :title language))]]
-        (concat
-         (for [localization (:localizations field)]
-           [inline-info-field (str (text :t.administration/title)
-                                   " "
-                                   (str/upper-case (name (:langcode localization)))) (:title localization)])
-         [[inline-info-field (text :t.create-form/type) (text (keyword (str "t.create-form/type-" (:type field))))]
-          [inline-info-field (text :t.create-form/input-prompt) (get-localized-value field :inputprompt language)]
-          [inline-info-field (text :t.create-form/optional) [readonly-checkbox (:formitemoptional field)]]
-          [inline-info-field (text :t.create-form/maxlength) (:maxlength field)]])))
-
-(defn form-fields [fields language]
-  [collapsible/component
-   {:id "fields"
-    :title [:span (text :t.administration/fields)]
-    :top-less-button? (> (count fields) 5)
-    :open? (<= (count fields) 5)
-    :collapse (into [:div]
-                    (for [field (sort-by :itemorder fields)]
-                      [form-field field language]))}])
-
 (defn form-view [form language]
   [:div.spaced-vertically-3
    [collapsible/component

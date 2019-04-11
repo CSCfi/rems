@@ -106,8 +106,6 @@
                             :license-in-use "Lisenssi käytössä täällä:"
                             :resource-in-use "Resurssi on käytössä täällä:"
                             :workflow-in-use "Työvuo on käytössä täällä:"}
-                   :field "Kenttä \"%1\""
-                   :fields "Kentät"
                    :form "Lomake"
                    :forms "Lomakkeet"
                    :license "Lisenssi"
@@ -196,7 +194,6 @@
                 :option-n "Vaihtoehto %1"
                 :optional "Ei pakollinen"
                 :title "Lomakkeen nimi"
-                :type "Tyyppi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
                 :type-description "Kuvaus"
