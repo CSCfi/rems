@@ -79,7 +79,7 @@
             :remove-member "Poista jäsen"
             :request-comment "Pyydä kommenttia"
             :request-decision "Pyydä päätöstä"
-            :request-selection "Lähetä pyyntö henkilölle/henkilöille:"
+            :request-selection "Lähetä pyyntö seuraaville henkilöille"
             :resource "Resurssi"
             :return "Palauta hakijalle"
             :show-publications "Näytä julkaisut"

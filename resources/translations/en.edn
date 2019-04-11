@@ -79,7 +79,7 @@
             :remove-member "Remove member"
             :request-comment "Request comment"
             :request-decision "Request decision"
-            :request-selection "Send request to user(s):"
+            :request-selection "Send request to users"
             :resource "Resource"
             :return "Return to applicant"
             :show-publications "Show publications"
