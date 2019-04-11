@@ -15,7 +15,7 @@
                          #'rems.config/env
                          #'rems.db.core/*db*
                          #'rems.api.applications-v2/all-applications-cache
-                         #'rems.db.dynamic-roles/roles-cache)
+                         #'rems.db.dynamic-roles/dynamic-roles-cache)
   (db/assert-test-database!)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
   (f)

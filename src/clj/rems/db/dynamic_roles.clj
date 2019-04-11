@@ -1,10 +1,9 @@
 (ns rems.db.dynamic-roles
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
-            [clojure.tools.logging :as log]
             [mount.core :as mount]
+            [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
-            [rems.db.applications :as applications]
             [rems.permissions :as permissions]))
 
 (defn- permissions-of-all-applications [applications event]
@@ -35,18 +34,11 @@
     (is (= #{:applicant :handler}
            (roles-from-all-applications "applicant-and-handler" events)))))
 
-(mount/defstate roles-cache
-  :start (atom {:last-processed-event-id 0
-                :applications nil}))
+(mount/defstate dynamic-roles-cache
+  :start (events-cache/new))
 
 (defn get-roles [user]
-  (let [cache @roles-cache
-        events (applications/get-dynamic-application-events-since (:last-processed-event-id cache))
-        applications (reduce permissions-of-all-applications (:applications cache) events)]
-    (when-let [event-id (:event/id (last events))]
-      (when (compare-and-set! roles-cache
-                              cache
-                              {:last-processed-event-id event-id
-                               :applications applications})
-        (log/info "Updated roles-cache from" (:last-processed-event-id cache) "to" event-id)))
-    (roles-of-user user applications)))
+  (->> (events-cache/refresh! dynamic-roles-cache
+                              (fn [applications events]
+                                (reduce permissions-of-all-applications applications events)))
+       (roles-of-user user)))
