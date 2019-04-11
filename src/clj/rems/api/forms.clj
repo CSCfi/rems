@@ -32,7 +32,7 @@
 
 (s/defschema FullForm
   (merge Form
-         {:fields [s/Any]})) ;; TODO FormField?
+         {:fields [FormField]}))
 
 (s/defschema Forms
   [Form])
