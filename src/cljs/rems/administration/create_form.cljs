@@ -24,7 +24,7 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db ::add-form-item (fn [db [_]] (update-in db [::form :items] items/add {})))
+(rf/reg-event-db ::add-form-item (fn [db [_]] (update-in db [::form :items] items/add {:type "text"})))
 (rf/reg-event-db ::remove-form-item (fn [db [_ item-index]] (update-in db [::form :items] items/remove item-index)))
 (rf/reg-event-db ::move-form-item-up (fn [db [_ item-index]] (update-in db [::form :items] items/move-up item-index)))
 (rf/reg-event-db ::move-form-item-down (fn [db [_ item-index]] (update-in db [::form :items] items/move-down item-index)))
