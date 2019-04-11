@@ -116,6 +116,7 @@
                    :no-licenses "No licenses"
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
+                   :preview "Preview"
                    :resource "Resource"
                    :resources "Resources"
                    :rounds "Rounds"
