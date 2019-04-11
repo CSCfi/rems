@@ -203,22 +203,23 @@
 
 (rf/reg-event-fx ::save-attachment save-attachment)
 
-(defn- remove-attachment [_ [_ application-id field-id description]]
-  (status-modal/common-pending-handler! description)
-  (post! "/api/applications/remove-attachment"
-         {:url-params {:application-id application-id
-                       :field-id field-id}
-          :body {}
-          :handler (fn [response]
-                     ;; if we just remove the attachment from the backend but
-                     ;; don't save the field, the application will be left in an
-                     ;; inconsistent state (referring to a nonexistant attachment)
-                     ;; TODO: save only the value for the attachment field
-                     (if (:success response)
-                       (rf/dispatch [::save-application (text :t.form/save)])
-                       (status-modal/common-error-handler! response)))
-          :error-handler status-modal/common-error-handler!})
-  {})
+(defn- remove-attachment [{:keys [db]} [_ field-id description]]
+  (let [application-id (get-in db [::application :application/id])]
+    (status-modal/common-pending-handler! description)
+    (post! "/api/applications/remove-attachment"
+           {:url-params {:application-id application-id
+                         :field-id field-id}
+            :body {}
+            :handler (fn [response]
+                       ;; if we just remove the attachment from the backend but
+                       ;; don't save the field, the application will be left in an
+                       ;; inconsistent state (referring to a nonexistant attachment)
+                       ;; TODO: save only the value for the attachment field
+                       (if (:success response)
+                         (rf/dispatch [::save-application (text :t.form/save)])
+                         (status-modal/common-error-handler! response)))
+            :error-handler status-modal/common-error-handler!})
+    {}))
 
 (rf/reg-event-fx ::remove-attachment remove-attachment)
 
@@ -247,28 +248,9 @@
 (defn- id-to-name [id]
   (str "field" id))
 
-(defn- set-attachment
-  [field-id description]
-  (fn [event]
-    (let [filecontent (aget (.. event -target -files) 0)
-          form-data (doto (js/FormData.)
-                      (.append "file" filecontent))]
-      (rf/dispatch [::set-field-value field-id (.-name filecontent)])
-      (rf/dispatch [::save-attachment field-id form-data description]))))
-
-(defn- remove-attachment-action
-  [app-id field-id description]
-  (fn [event]
-    (rf/dispatch [::set-field-value field-id ""])
-    (rf/dispatch [::remove-attachment app-id field-id description])))
-
-(defn- set-field-value [field-id]
-  (fn [event]
-    (rf/dispatch [::set-field-value field-id (.. event -target -value)])))
-
 ;; TODO: custom :diff-component, for example link to both old and new attachment
 (defn attachment-field
-  [{:keys [validation app-id] :as opts}]
+  [{:keys [validation app-id on-change on-set-attachment on-remove-attachment] :as opts}]
   (let [id (:field/id opts)
         title (localized (:field/title opts))
         value (:field/value opts)
@@ -285,11 +267,19 @@
                                :name (id-to-name id)
                                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                                :class (when validation "is-invalid")
-                               :on-change (set-attachment id title)}]
+                               :on-change (fn [event]
+                                            (let [filecontent (aget (.. event -target -files) 0)
+                                                  filename (.-name filecontent)
+                                                  form-data (doto (js/FormData.)
+                                                              (.append "file" filecontent))]
+                                              (on-change filename)
+                                              (on-set-attachment form-data title)))}]
                       [:button.btn.btn-secondary {:on-click click-upload}
                        (text :t.form/upload)]]
         remove-button [:button.btn.btn-secondary.mr-2
-                       {:on-click (remove-attachment-action app-id id (text :t.form/attachment-remove))}
+                       {:on-click (fn [event]
+                                    (on-change "")
+                                    (on-remove-attachment (text :t.form/attachment-remove)))}
                        (text :t.form/attachment-remove)]]
     [fields/basic-field (assoc opts :readonly-component (if (empty? value)
                                                    [:span]
@@ -373,6 +363,8 @@
              (for [fld (get-in application [:application/form :form/fields])]
                [field (assoc fld
                              :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
+                             :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
+                             :on-remove-attachment #(rf/dispatch [::remove-attachment (:field/id fld) %1 %2])
                              :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
                              :field/value (get field-values (:field/id fld))
                              :diff (get show-diff (:field/id fld))
