@@ -116,6 +116,7 @@
                    :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
+                   :preview "Esikatselu"
                    :resource "Resurssi"
                    :resources "Resurssit"
                    :rounds "Rounds"

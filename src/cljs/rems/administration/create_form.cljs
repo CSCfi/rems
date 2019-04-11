@@ -8,7 +8,7 @@
             [rems.atoms :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.config :refer [dev-environment?]]
-            [rems.fields :refer [normalize-option-key]]
+            [rems.fields :as fields]
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! post!]]
             [rems.status-modal :as status-modal]
@@ -190,7 +190,7 @@
      [remove-form-item-option-button item-index option-index]]]
    [text-field context {:keys [:items item-index :options option-index :key]
                         :label (text :t.create-form/option-key)
-                        :normalizer normalize-option-key}]
+                        :normalizer fields/normalize-option-key}]
    [localized-text-field context {:keys [:items item-index :options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
@@ -272,6 +272,24 @@
                           [form-item-option-fields item-index])])
                      items)))
 
+(defn- form-field-to-application-field
+  "Convert a field from the form create model to the application view model."
+  [field]
+  {:field/type (keyword (:type field))
+   :field/title (:title field)
+   :field/placeholder (:input-prompt field)
+   :field/max-length (:maxlength field)
+   :field/optional (:optional field)
+   :field/options (:options field)})
+
+(defn- field-preview [field]
+  [fields/field (form-field-to-application-field field)])
+
+(defn- form-preview [form]
+  (into [:div]
+        (for [field (:items form)]
+          [field-preview field])))
+
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])]
     [:div
@@ -290,4 +308,8 @@
 
                 [:div.col.commands
                  [cancel-button]
-                 [save-form-button #(rf/dispatch [::create-form %])]]]}]]))
+                 [save-form-button #(rf/dispatch [::create-form %])]]]}]
+     [collapsible/component
+      {:id "create-form"
+       :title (text :t.administration/preview)
+       :always [form-preview form]}]]))
