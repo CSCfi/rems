@@ -248,48 +248,6 @@
 (defn- id-to-name [id]
   (str "field" id))
 
-;; TODO: custom :diff-component, for example link to both old and new attachment
-(defn attachment-field
-  [{:keys [validation app-id on-change on-set-attachment on-remove-attachment] :as opts}]
-  (let [id (:field/id opts)
-        title (localized (:field/title opts))
-        value (:field/value opts)
-        click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
-        filename-field [:div.field
-                        [:a.btn.btn-secondary.mr-2
-                         {:href (str "/api/applications/attachments?application-id=" app-id "&field-id=" id)
-                          :target :_new}
-                         value " " (external-link)]]
-        upload-field [:div.upload-file.mr-2
-                      [:input {:style {:display "none"}
-                               :type "file"
-                               :id (id-to-name id)
-                               :name (id-to-name id)
-                               :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                               :class (when validation "is-invalid")
-                               :on-change (fn [event]
-                                            (let [filecontent (aget (.. event -target -files) 0)
-                                                  filename (.-name filecontent)
-                                                  form-data (doto (js/FormData.)
-                                                              (.append "file" filecontent))]
-                                              (on-change filename)
-                                              (on-set-attachment form-data title)))}]
-                      [:button.btn.btn-secondary {:on-click click-upload}
-                       (text :t.form/upload)]]
-        remove-button [:button.btn.btn-secondary.mr-2
-                       {:on-click (fn [event]
-                                    (on-change "")
-                                    (on-remove-attachment (text :t.form/attachment-remove)))}
-                       (text :t.form/attachment-remove)]]
-    [fields/basic-field (assoc opts :readonly-component (if (empty? value)
-                                                   [:span]
-                                                   filename-field))
-     (if (empty? value)
-       upload-field
-       [:div {:style {:display :flex :justify-content :flex-start}}
-        filename-field
-        remove-button])]))
-
 (defn- link-license
   [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
@@ -327,7 +285,7 @@
 
 (defn- field [f]
   (case (:field/type f)
-    :attachment [attachment-field f]
+    :attachment [fields/attachment-field f]
     :date [fields/date-field f]
     :description [fields/text-field f]
     :label [fields/label f]
