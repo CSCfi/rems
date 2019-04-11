@@ -82,13 +82,6 @@
       :roles #{:owner}
       :path-params [form-id :- (describe s/Num "form-id")]
       :return FullForm
-      (ok (form/get-form form-id)))
-
-    (GET "/v2/:form-id" []
-      :summary "Get form by id"
-      :roles #{:owner}
-      :path-params [form-id :- (describe s/Num "form-id")]
-      :return FullForm
       (ok (form/get-form-template form-id)))
 
     (POST "/create" []

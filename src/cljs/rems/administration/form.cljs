@@ -18,7 +18,7 @@
     ::fetch-form [form-id]}))
 
 (defn- fetch-form [form-id]
-  (fetch (str "/api/forms/v2/" form-id)
+  (fetch (str "/api/forms/" form-id)
          {:handler #(rf/dispatch [::fetch-form-result %])}))
 
 (rf/reg-fx ::fetch-form (fn [[form-id]] (fetch-form form-id)))

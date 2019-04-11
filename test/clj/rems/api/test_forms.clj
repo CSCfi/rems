@@ -61,24 +61,15 @@
                        :id)]
             (is id)
             (testing "and fetch"
-              (let [form (-> (request :get (str "/api/forms/" id))
-                             (authenticate api-key user-id)
-                             handler
-                             read-ok-body)
-                    form-template (-> (request :get (str "/api/forms/v2/" id))
+              (let [form-template (-> (request :get (str "/api/forms/" id))
                                       (authenticate api-key user-id)
                                       handler
                                       read-ok-body)]
-                (testing "v2 result matches input"
+                (testing "result matches input"
                   (is (= (select-keys command [:title :organization])
                          (select-keys form-template [:title :organization])))
                   (is (= (:items command)
-                         (:fields form-template))))
-                (testing "v1 result matches input"
-                  (is (= (select-keys command [:title :organization])
-                         (select-keys form [:title :organization])))
-                  (is (= (:items command)
-                         (:fields (form/get-form-template (:id form))))))))))))))
+                         (:fields form-template))))))))))))
 
 (deftest form-update-test
   (let [api-key "42"
@@ -106,13 +97,6 @@
                      read-ok-body)]
         (is (false? (:enabled form)))
         (is (true? (:archived form)))))
-    (testing "fetch v2"
-      (let [form (-> (request :get (str "/api/forms/v2/" form-id))
-                     (authenticate api-key user-id)
-                     handler
-                     read-ok-body)]
-        (is (false? (:enabled form)))
-        (is (true? (:archived form)))))
     (testing "update again"
       (is (:success (-> (request :put "/api/forms/update")
                         (authenticate api-key user-id)
@@ -123,13 +107,6 @@
                         read-ok-body))))
     (testing "fetch again"
       (let [form (-> (request :get (str "/api/forms/" form-id))
-                     (authenticate api-key user-id)
-                     handler
-                     read-ok-body)]
-        (is (true? (:enabled form)))
-        (is (false? (:archived form)))))
-    (testing "fetch v2 again"
-      (let [form (-> (request :get (str "/api/forms/v2/" form-id))
                      (authenticate api-key user-id)
                      handler
                      read-ok-body)]
@@ -151,24 +128,21 @@
                                                  :fi "Kyllä"}}
                                         {:key "no"
                                          :label {:en "No"
-                                                 :fi "Ei"}}]}]}]
-        (-> (request :post "/api/forms/create")
-            (authenticate api-key user-id)
-            (json-body command)
-            handler
-            assert-response-is-ok)
+                                                 :fi "Ei"}}]}]}
+            id (-> (request :post "/api/forms/create")
+                   (authenticate api-key user-id)
+                   (json-body command)
+                   handler
+                   read-ok-body
+                   :id)]
 
         (testing "and fetch"
-          (let [body (-> (request :get "/api/forms")
+          (let [form (-> (request :get (str "/api/forms/" id))
                          (authenticate api-key user-id)
                          handler
-                         assert-response-is-ok
-                         read-body)
-                form (->> body
-                          (filter #(= (:title %) (:title command)))
-                          first)]
+                         read-ok-body)]
             (is (= (:items command)
-                   (:fields (form/get-form-template (:id form)))))))))))
+                   (:fields form)))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:expired true})
