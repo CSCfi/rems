@@ -71,7 +71,7 @@
 (mount/defstate all-applications-cache
   :start (events-cache/new))
 
-(defn get-all-applications [user-id]
+(defn get-all-unrestricted-applications []
   (->> (events-cache/refresh!
         all-applications-cache
         (fn [state events]
@@ -86,7 +86,10 @@
             {:raw-apps raw-apps
              :enriched-apps enriched-apps})))
        :enriched-apps
-       (vals)
+       (vals)))
+
+(defn get-all-applications [user-id]
+  (->> (get-all-unrestricted-applications)
        (map #(model/apply-user-permissions % user-id))
        (remove nil?)
        (map exclude-unnecessary-keys-from-overview)))
