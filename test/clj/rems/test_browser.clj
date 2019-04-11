@@ -40,6 +40,7 @@
   (mount/start)
   (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
   (test-data/create-test-data!)
+  (test-data/create-performance-test-data!)
   (f)
   (mount/stop))
 

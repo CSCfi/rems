@@ -1,5 +1,8 @@
 (ns rems.api.applications-v2
-  (:require [rems.application.model :as model]
+  (:require [clojure.tools.logging :as log]
+            [medley.core :refer [map-vals]]
+            [mount.core :as mount]
+            [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
@@ -65,15 +68,26 @@
           :application/form
           :application/licenses))
 
+(mount/defstate all-applications-cache
+  :start (atom {:last-processed-event-id 0
+                :applications nil}))
+
 (defn get-all-applications [user-id]
-  ;; TODO: cache the applications and build the projection incrementally as new events are published
-  (let [events (applications/get-dynamic-application-events-since 0)
-        applications (reduce all-applications-view nil events)]
+  (let [cache @all-applications-cache
+        events (applications/get-dynamic-application-events-since (:last-processed-event-id cache))
+        applications (reduce all-applications-view (:applications cache) events)
+        ;; TODO: for a shared cache it may be necessary to make assoc-injections idempotent and consider cache invalidation
+        cached-injections (map-vals memoize injections)]
+    (when-let [event-id (:event/id (last events))]
+      (when (compare-and-set! all-applications-cache
+                              cache
+                              {:last-processed-event-id event-id
+                               :applications applications})
+        (log/info "Updated all-applications-cache from" (:last-processed-event-id cache) "to" event-id)))
     (->> (vals applications)
          (map #(model/apply-user-permissions % user-id))
          (remove nil?)
-         ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
-         (map #(model/enrich-with-injections % injections))
+         (map #(model/enrich-with-injections % cached-injections))
          (map exclude-unnecessary-keys-from-overview))))
 
 (defn- own-application? [application]

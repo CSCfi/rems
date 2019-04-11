@@ -17,10 +17,9 @@
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
-            [rems.poller.entitlements]
+            [rems.poller.entitlements :as entitlements-poller]
             [rems.testing-tempura :refer [fake-tempura-fixture]]
-            [rems.util :refer [get-user-id]]
-            [stub-http.core :as stub])
+            [rems.util :refer [get-user-id]])
   (:import (rems.auth ForbiddenException)))
 
 (use-fixtures :once fake-tempura-fixture test-db-fixture)
@@ -200,7 +199,7 @@
                                       :comment ""})))
     (is (= :application.state/approved (:application/state (applications-v2/get-application uid app-id))))
 
-    (rems.poller.entitlements/run)
+    (entitlements-poller/run)
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
         "should create entitlements for both resources")))
 
@@ -648,7 +647,7 @@
                                           :actor "handler"
                                           :application-id jill-app
                                           :comment ""})))
-    (rems.poller.entitlements/run)
+    (entitlements-poller/run)
 
     (binding [context/*roles* #{:handler}]
       (let [lines (split-lines (entitlements/get-entitlements-for-export))]

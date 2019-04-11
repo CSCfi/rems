@@ -1,12 +1,12 @@
 (ns rems.auth.fake-shibboleth
-  (:require [compojure.core :refer [GET defroutes]]
+  (:require [clojure.string :as str]
+            [compojure.core :refer [GET defroutes]]
             [hiccup.page :refer [html5]]
             [hiccup.util :refer [url]]
             [rems.db.core :as db]
             [rems.db.test-data :refer [+fake-user-data+]]
             [rems.json :as json]
-            [ring.util.response :refer [content-type redirect
-                                        response]]))
+            [ring.util.response :refer [content-type redirect response]]))
 
 (def ^{:private true
        :doc "Inlined CSS declaration for fake login."}
@@ -63,6 +63,7 @@ a:visited { color: #fff; }
                 [:div.login
                  [:h1 "Development Login"]
                  [:div.users (->> (map :userid (db/get-users))
+                                  (remove #(str/starts-with? % "perftester"))
                                   (sort)
                                   (distinct)
                                   (map user-selection))]]])

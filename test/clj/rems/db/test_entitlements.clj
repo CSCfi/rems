@@ -2,12 +2,13 @@
   (:require [cheshire.core :as cheshire]
             [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.db.core :as db]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
+            [rems.poller.entitlements :as entitlements-poller]
             [rems.testing-util :refer [suppress-logging]]
             [stub-http.core :as stub]))
 
@@ -69,7 +70,7 @@
             (is (= +expected-payload+ (cheshire/parse-string payload)))))))))
 
 (deftest test-entitlement-granting
-  (rems.poller.entitlements/run) ; clear previous entitlements
+  (entitlements-poller/run) ; clear previous entitlements
   (with-open [server (stub/start! {"/add" {:status 200}
                                    "/remove" {:status 200}})]
     (with-redefs [rems.config/env {:entitlements-target
@@ -110,7 +111,7 @@
                                             :member {:userid memberid}
                                             :time (time/now)})))
           (testing "submitted application should not yet cause entitlements"
-            (rems.poller.entitlements/run)
+            (entitlements-poller/run)
             (is (empty? (db/get-entitlements {:application app-id})))
             (is (empty? (stub/recorded-requests server))))
 
@@ -121,7 +122,7 @@
                                             :time (time/now)})))
 
           (testing "approved application should not yet cause entitlements"
-            (rems.poller.entitlements/run)
+            (entitlements-poller/run)
             (is (empty? (db/get-entitlements {:application app-id})))
             (is (empty? (stub/recorded-requests server))))
 
@@ -142,8 +143,8 @@
                  (:application/accepted-licenses (applications/get-application-state app-id))))
 
           (testing "approved application, licenses accepted by one user generates entitlements for that user"
-            (rems.poller.entitlements/run)
-            (rems.poller.entitlements/run) ;; run twice to check idempotence
+            (entitlements-poller/run)
+            (entitlements-poller/run) ;; run twice to check idempotence
             (is (= 2 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= [[uid "resource1"] [uid "resource2"]]
@@ -167,7 +168,7 @@
                                             :time (time/now)})))
 
           (testing "approved application, more accepted licenses generates more entitlements"
-            (rems.poller.entitlements/run)
+            (entitlements-poller/run)
             (is (= 4 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= [[uid "resource1"] [uid "resource2"]
@@ -193,7 +194,7 @@
                                             :time (time/now)})))
 
           (testing "removing a member ends entitlements"
-            (rems.poller.entitlements/run)
+            (entitlements-poller/run)
             (is (= 5 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= [[uid "resource1"] [uid "resource2"]]
@@ -214,7 +215,7 @@
                                             :time (time/now)})))
 
           (testing "closed application should end entitlements"
-            (rems.poller.entitlements/run)
+            (entitlements-poller/run)
             (is (= 6 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= []

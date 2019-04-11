@@ -1,8 +1,9 @@
 (ns ^:integration rems.api.test-entitlements
   (:require [clojure.test :refer :all]
-            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [rems.db.users :as users]
+            [rems.handler :refer [handler]]
+            [rems.poller.entitlements :as entitlements-poller]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -17,7 +18,7 @@
       (is (= "unauthorized" body)))))
 
 (deftest entitlements-test
-  (rems.poller.entitlements/run)
+  (entitlements-poller/run)
   (let [api-key "42"]
     (testing "all"
       (let [data (-> (request :get "/api/entitlements")
