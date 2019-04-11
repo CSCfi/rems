@@ -87,14 +87,15 @@
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"
-            id (-> (request :post "/api/resources/create")
-                   (authenticate api-key user-id)
-                   (json-body {:resid resid
-                               :organization "TEST-ORGANIZATION"
-                               :licenses [licid]})
-                   handler
-                   read-ok-body
-                   :id)]
+            result (-> (request :post "/api/resources/create")
+                       (authenticate api-key user-id)
+                       (json-body {:resid resid
+                                   :organization "TEST-ORGANIZATION"
+                                   :licenses [licid]})
+                       handler
+                       read-ok-body)
+            id (:id result)]
+        (is (true? (:success result)))
         (is id)
         (testing "and fetch"
           (let [resource (-> (request :get (str "/api/resources/" id))
@@ -105,16 +106,15 @@
             (is resource)
             (is (= [licid] (map :id (:licenses resource))))))
         (testing "duplicate resource ID is not allowed within one organization"
-          (let [response (-> (request :post "/api/resources/create")
-                             (authenticate api-key user-id)
-                             (json-body {:resid resid
-                                         :organization "TEST-ORGANIZATION"
-                                         :licenses [licid]})
-                             handler)
-                body (read-body response)]
-            (is (= 200 (:status response)))
-            (is (= false (:success body)))
-            (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors body)))))
+          (let [result (-> (request :post "/api/resources/create")
+                           (authenticate api-key user-id)
+                           (json-body {:resid resid
+                                       :organization "TEST-ORGANIZATION"
+                                       :licenses [licid]})
+                           handler
+                           read-ok-body)]
+            (is (false? (:success result)))
+            (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result)))))
         (testing "duplicate resource ID is allowed between organizations"
           (let [result (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
@@ -129,13 +129,11 @@
   (let [unfiltered (-> (request :get "/api/resources" {:expired true})
                        (authenticate "42" "owner")
                        handler
-                       assert-response-is-ok
-                       read-body)
+                       read-ok-body)
         filtered (-> (request :get "/api/resources")
                      (authenticate "42" "owner")
                      handler
-                     assert-response-is-ok
-                     read-body)]
+                     read-ok-body)]
     (is (coll-is-not-empty? unfiltered))
     (is (coll-is-not-empty? filtered))
     (is (every? #(contains? % :expired) unfiltered))
