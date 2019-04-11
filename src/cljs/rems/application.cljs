@@ -245,9 +245,6 @@
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
 
-(defn- id-to-name [id]
-  (str "field" id))
-
 (defn- link-license
   [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
