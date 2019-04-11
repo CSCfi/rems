@@ -6,7 +6,7 @@
             rems.administration.test-create-resource
             rems.administration.test-create-workflow
             rems.administration.test-items
-            rems.test-application
+            rems.test-fields
             rems.test-util))
 
 (doo-tests 'rems.administration.test-create-catalogue-item
@@ -15,5 +15,5 @@
            'rems.administration.test-create-resource
            'rems.administration.test-create-workflow
            'rems.administration.test-items
-           'rems.test-application
+           'rems.test-fields
            'rems.test-util)

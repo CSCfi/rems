@@ -300,58 +300,6 @@
         filename-field
         remove-button])]))
 
-(defn normalize-option-key
-  "Strips disallowed characters from an option key"
-  [key]
-  (str/replace key #"\s+" ""))
-
-(defn encode-option-keys
-  "Encodes a set of option keys to a string"
-  [keys]
-  (->> keys
-       sort
-       (str/join " ")))
-
-(defn decode-option-keys
-  "Decodes a set of option keys from a string"
-  [value]
-  (-> value
-      (str/split #"\s+")
-      set
-      (disj "")))
-
-(defn multiselect-field [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
-        value (:field/value opts)
-        options (:field/options opts)
-        selected-keys (decode-option-keys value)]
-    ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
-    [fields/basic-field
-     (assoc opts :readonly-component [fields/readonly-field {:id (id-to-name id)
-                                                             :value (->> options
-                                                                         (filter #(contains? selected-keys (:key %)))
-                                                                         (map #(localized (:label %)))
-                                                                         (str/join ", "))}])
-     (into [:div]
-           (for [{:keys [key label]} options]
-             (let [option-id (str (id-to-name id) "-" key)
-                   on-change (fn [event]
-                               (let [checked (.. event -target -checked)
-                                     selected-keys (if checked
-                                                     (conj selected-keys key)
-                                                     (disj selected-keys key))]
-                                 (on-change (encode-option-keys selected-keys))))]
-               [:div.form-check
-                [:input.form-check-input {:type "checkbox"
-                                          :id option-id
-                                          :name option-id
-                                          :class (when validation "is-invalid")
-                                          :value key
-                                          :checked (contains? selected-keys key)
-                                          :on-change on-change}]
-                [:label.form-check-label {:for option-id}
-                 (localized label)]])))]))
-
 (defn- link-license
   [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
@@ -393,7 +341,7 @@
     :date [fields/date-field f]
     :description [fields/text-field f]
     :label [fields/label f]
-    :multiselect [multiselect-field f]
+    :multiselect [fields/multiselect-field f]
     :option [fields/option-field f]
     :text [fields/text-field f]
     :texta [fields/texta-field f]

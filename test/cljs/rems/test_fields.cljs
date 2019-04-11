@@ -1,7 +1,7 @@
-(ns rems.test-application
+(ns rems.test-fields
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
-            [rems.application :refer [basic-field text-field texta-field toggle-diff-button decode-option-keys encode-option-keys normalize-option-key]]
+            [rems.fields :refer [basic-field toggle-diff-button decode-option-keys encode-option-keys normalize-option-key]]
             [rems.atoms :refer [textarea]]
             [rems.spa]
             [rems.text :refer [text]]))
