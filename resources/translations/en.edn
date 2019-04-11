@@ -50,6 +50,7 @@
             :accept-invitation-success [:div [:p "Joining the application was successful."] [:p "Next you will be taken to the application."]]
             :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Next you will be taken to the application."]]
             :accept-licenses "Accept terms of use"
+            :add-licenses "Add terms of use"
             :add-member "Add member"
             :applicant "Applicant"
             :application "Application"
@@ -68,6 +69,7 @@
             :handled-approvals "Handled applications"
             :invite-member "Invite member"
             :last-activity "Last activity"
+            :licenses-selection "Require following additional terms of use"
             :load-application-states "Load application states"
             :member "Member"
             :member-name "Name"
@@ -145,6 +147,7 @@
                           :decided "Decided"
                           :decision-requested "Decision requested"
                           :draft-saved "Saved"
+                          :licenses-added "Added tems of use"
                           :licenses-accepted "Accepted terms of use"
                           :member-added "Member added"
                           :member-invited "Member invited"

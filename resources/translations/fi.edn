@@ -50,6 +50,7 @@
             :accept-invitation-success [:div [:p "Liittyminen hakemukseen onnistui."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
             :accept-invitation-already-member [:div. [:p "Olet jo jäsen."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
             :accept-licenses "Hyväksy käyttöehdot"
+            :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
             :applicant "Hakija"
             :application "Hakemus"
@@ -68,6 +69,7 @@
             :handled-approvals "Käsitellyt hakemukset"
             :invite-member "Kutsu jäsen"
             :last-activity "Muokattu"
+            :licenses-selection "Lisää seuraavat käyttöehdot"
             :load-application-states "Lataa hakemusten tilat"
             :member "Jäsen"
             :member-name "Nimi"
@@ -145,6 +147,7 @@
                           :decided "Päätetty"
                           :decision-requested "Pyydetty päätöstä"
                           :draft-saved "Tallennettu"
+                          :licenses-added "Käyttöehtoja lisätty"
                           :licenses-accepted "Käyttöehdot hyväksytty"
                           :member-added "Lisätty jäsen"
                           :member-invited "Kutsuttu jäsen"
