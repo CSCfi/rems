@@ -136,16 +136,16 @@
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
-    (testing "accepts licenses"
-      (is (= [{:event/type :application.event/licenses-accepted
-               :event/time test-time
-               :event/actor applicant-user-id
-               :application/id 123
-               :application/accepted-licenses #{1 2}}]
-             (ok-command application
-                         {:type :application.command/accept-licenses
-                          :actor applicant-user-id
-                          :accepted-licenses #{1 2}}))))))
+    (is (= [{:event/type :application.event/licenses-accepted
+             :event/time test-time
+             :event/actor applicant-user-id
+             :application/id 123
+             :application/accepted-licenses #{1 2}}]
+           (ok-command application
+                       {:type :application.command/accept-licenses
+                        :actor applicant-user-id
+                        :accepted-licenses #{1 2}})))))
+
 
 (deftest test-submit
   (let [injections {:validate-form-answers fake-validate-form-answers}
