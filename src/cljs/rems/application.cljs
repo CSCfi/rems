@@ -320,7 +320,7 @@
       set
       (disj "")))
 
-(defn multiselect-field [{:keys [validation] :as opts}]
+(defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
         value (:field/value opts)
         options (:field/options opts)
@@ -340,7 +340,7 @@
                                      selected-keys (if checked
                                                      (conj selected-keys key)
                                                      (disj selected-keys key))]
-                                 (rf/dispatch [::set-field-value id (encode-option-keys selected-keys)])))]
+                                 (on-change (encode-option-keys selected-keys))))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
                                           :id option-id
