@@ -22,7 +22,7 @@
     (try
       (doseq [e events]
         (try
-          (log/info name-kw "processing event" (:event/id e))
+          (log/debug name-kw "processing event" (:event/id e))
           (process-event! e)
           (set-poller-state! name-kw {:last-processed-event-id (:event/id e)})
           (catch Throwable t
