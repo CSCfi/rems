@@ -7,114 +7,123 @@
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
+(def ^:private get-form
+  {40 {:id 40
+       :organization "org"
+       :title "form title"
+       :items [{:id 41
+                :localizations {:en {:title "en title"
+                                     :inputprompt "en placeholder"}
+                                :fi {:title "fi title"
+                                     :inputprompt "fi placeholder"}}
+                :optional false
+                :options []
+                :maxlength 100
+                :type "description"}
+               {:id 42
+                :localizations {:en {:title "en title"
+                                     :inputprompt "en placeholder"}
+                                :fi {:title "fi title"
+                                     :inputprompt "fi placeholder"}}
+                :optional false
+                :options []
+                :maxlength 100
+                :type "text"}]
+       :start (DateTime. 100)
+       :end nil}})
+
+(def ^:private get-catalogue-item
+  {10 {:id 10
+       :resource-id 11
+       :resid "urn:11"
+       :wfid 50
+       :formid 40
+       :title "non-localized title"
+       :localizations {:en {:id 10
+                            :langcode :en
+                            :title "en title"}
+                       :fi {:id 10
+                            :langcode :fi
+                            :title "fi title"}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :archived false
+       :expired false
+       :state "enabled"}
+   20 {:id 20
+       :resource-id 21
+       :resid "urn:21"
+       :wfid 50
+       :formid 40
+       :title "non-localized title"
+       :localizations {:en {:id 20
+                            :langcode :en
+                            :title "en title"}
+                       :fi {:id 20
+                            :langcode :fi
+                            :title "fi title"}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :archived false
+       :expired false
+       :state "enabled"}})
+
+(def ^:private get-license
+  {30 {:id 30
+       :licensetype "link"
+       :title "non-localized title"
+       :textcontent "http://non-localized-license-link"
+       :localizations {:en {:title "en title"
+                            :textcontent "http://en-license-link"}
+                       :fi {:title "fi title"
+                            :textcontent "http://fi-license-link"}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :expired false
+       :archived false}
+   31 {:id 31
+       :licensetype "text"
+       :title "non-localized title"
+       :textcontent "non-localized license text"
+       :localizations {:en {:title "en title"
+                            :textcontent "en license text"}
+                       :fi {:title "fi title"
+                            :textcontent "fi license text"}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :expired false
+       :archived false}
+   32 {:id 32
+       :licensetype "attachment"
+       :title "non-localized title"
+       :textcontent "non-localized filename"
+       :attachment-id 3200
+       :localizations {:en {:title "en title"
+                            :textcontent "en filename"
+                            :attachment-id 3201}
+                       :fi {:title "fi title"
+                            :textcontent "fi filename"
+                            :attachment-id 3202}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :expired false
+       :archived false}})
+
+(def ^:private get-user
+  {"applicant" {:eppn "applicant"
+                :mail "applicant@example.com"
+                :commonName "Applicant"}})
+
 (deftest test-application-view
-  (let [injections {:get-form {40 {:id 40
-                                   :organization "org"
-                                   :title "form title"
-                                   :items [{:id 41
-                                            :localizations {:en {:title "en title"
-                                                                 :inputprompt "en placeholder"}
-                                                            :fi {:title "fi title"
-                                                                 :inputprompt "fi placeholder"}}
-                                            :optional false
-                                            :options []
-                                            :maxlength 100
-                                            :type "description"}
-                                           {:id 42
-                                            :localizations {:en {:title "en title"
-                                                                 :inputprompt "en placeholder"}
-                                                            :fi {:title "fi title"
-                                                                 :inputprompt "fi placeholder"}}
-                                            :optional false
-                                            :options []
-                                            :maxlength 100
-                                            :type "text"}]
-                                   :start (DateTime. 100)
-                                   :end nil}}
-
-                    :get-catalogue-item {10 {:id 10
-                                             :resource-id 11
-                                             :resid "urn:11"
-                                             :wfid 50
-                                             :formid 40
-                                             :title "non-localized title"
-                                             :localizations {:en {:id 10
-                                                                  :langcode :en
-                                                                  :title "en title"}
-                                                             :fi {:id 10
-                                                                  :langcode :fi
-                                                                  :title "fi title"}}
-                                             :start (DateTime. 100)
-                                             :end nil
-                                             :enabled true
-                                             :archived false
-                                             :expired false
-                                             :state "enabled"}
-                                         20 {:id 20
-                                             :resource-id 21
-                                             :resid "urn:21"
-                                             :wfid 50
-                                             :formid 40
-                                             :title "non-localized title"
-                                             :localizations {:en {:id 20
-                                                                  :langcode :en
-                                                                  :title "en title"}
-                                                             :fi {:id 20
-                                                                  :langcode :fi
-                                                                  :title "fi title"}}
-                                             :start (DateTime. 100)
-                                             :end nil
-                                             :enabled true
-                                             :archived false
-                                             :expired false
-                                             :state "enabled"}}
-
-                    :get-license {30 {:id 30
-                                      :licensetype "link"
-                                      :title "non-localized title"
-                                      :textcontent "http://non-localized-license-link"
-                                      :localizations {:en {:title "en title"
-                                                           :textcontent "http://en-license-link"}
-                                                      :fi {:title "fi title"
-                                                           :textcontent "http://fi-license-link"}}
-                                      :start (DateTime. 100)
-                                      :end nil
-                                      :enabled true
-                                      :expired false
-                                      :archived false}
-                                  31 {:id 31
-                                      :licensetype "text"
-                                      :title "non-localized title"
-                                      :textcontent "non-localized license text"
-                                      :localizations {:en {:title "en title"
-                                                           :textcontent "en license text"}
-                                                      :fi {:title "fi title"
-                                                           :textcontent "fi license text"}}
-                                      :start (DateTime. 100)
-                                      :end nil
-                                      :enabled true
-                                      :expired false
-                                      :archived false}
-                                  32 {:id 32
-                                      :licensetype "attachment"
-                                      :title "non-localized title"
-                                      :textcontent "non-localized filename"
-                                      :attachment-id 3200
-                                      :localizations {:en {:title "en title"
-                                                           :textcontent "en filename"
-                                                           :attachment-id 3201}
-                                                      :fi {:title "fi title"
-                                                           :textcontent "fi filename"
-                                                           :attachment-id 3202}}
-                                      :start (DateTime. 100)
-                                      :end nil
-                                      :enabled true
-                                      :expired false
-                                      :archived false}}
-
-                    :get-user {"applicant" {:eppn "applicant"
-                                            :mail "applicant@example.com"
-                                            :commonName "Applicant"}}}
+  (let [injections {:get-form get-form
+                    :get-catalogue-item get-catalogue-item
+                    :get-license get-license
+                    :get-user get-user}
         apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events
