@@ -48,7 +48,7 @@
 (defn readonly-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
 
-(defn basic-field
+(defn field-wrapper
   "Common parts of a form field.
 
   :field/id - number (required), field id
@@ -102,7 +102,7 @@
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         max-length (:field/max-length opts)]
-    [basic-field opts
+    [field-wrapper opts
      [:input.form-control {:type "text"
                            :id (id-to-name id)
                            :name (id-to-name id)
@@ -118,7 +118,7 @@
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         max-length (:field/max-length opts)]
-    [basic-field opts
+    [field-wrapper opts
      [textarea {:id (id-to-name id)
                 :name (id-to-name id)
                 :placeholder placeholder
@@ -131,8 +131,8 @@
   [{:keys [min max validation on-change] :as opts}]
   (let [id (:field/id opts)
         value (:field/value opts)]
-    ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
-    [basic-field opts
+    ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
+    [field-wrapper opts
      [:input.form-control {:type "date"
                            :id (id-to-name id)
                            :name (id-to-name id)
@@ -153,7 +153,7 @@
   (let [id (:field/id opts)
         value (:field/value opts)
         options (:field/options opts)]
-    [basic-field
+    [field-wrapper
      (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
                                                       :value (option-label value options)}])
      (into [:select.form-control {:id (id-to-name id)
@@ -198,7 +198,7 @@
         options (:field/options opts)
         selected-keys (decode-option-keys value)]
     ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
-    [basic-field
+    [field-wrapper
      (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
                                                       :value (->> options
                                                                   (filter #(contains? selected-keys (:key %)))
@@ -257,9 +257,9 @@
                                     (on-change "")
                                     (on-remove-attachment (text :t.form/attachment-remove)))}
                        (text :t.form/attachment-remove)]]
-    [basic-field (assoc opts :readonly-component (if (empty? value)
-                                                   [:span]
-                                                   filename-field))
+    [field-wrapper (assoc opts :readonly-component (if (empty? value)
+                                                     [:span]
+                                                     filename-field))
      (if (empty? value)
        upload-field
        [:div {:style {:display :flex :justify-content :flex-start}}
