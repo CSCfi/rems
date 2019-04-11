@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.create-form :refer [form-preview]]
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
@@ -17,7 +18,7 @@
     ::fetch-form [form-id]}))
 
 (defn- fetch-form [form-id]
-  (fetch (str "/api/forms/" form-id)
+  (fetch (str "/api/forms/v2/" form-id)
          {:handler #(rf/dispatch [::fetch-form-result %])}))
 
 (rf/reg-fx ::fetch-form (fn [[form-id]] (fetch-form form-id)))
@@ -75,8 +76,8 @@
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
-   [form-fields (:fields form) language]
-   [:div.col.commands [back-button]]])
+   [:div.col.commands [back-button]]
+   [form-preview form]])
    ;; TODO Do we support form licenses?
 
 (defn form-page []

@@ -285,10 +285,13 @@
 (defn- field-preview [field]
   [fields/field (form-field-to-application-field field)])
 
-(defn- form-preview [form]
-  (into [:div]
-        (for [field (:items form)]
-          [field-preview field])))
+(defn form-preview [form]
+  [collapsible/component
+   {:id "preview-form"
+    :title (text :t.administration/preview)
+    :always (into [:div]
+                  (for [field (or (:fields form) (:items form))] ;; TODO get rid of :items
+                    [field-preview field]))}])
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])]
@@ -309,7 +312,4 @@
                 [:div.col.commands
                  [cancel-button]
                  [save-form-button #(rf/dispatch [::create-form %])]]]}]
-     [collapsible/component
-      {:id "create-form"
-       :title (text :t.administration/preview)
-       :always [form-preview form]}]]))
+     [form-preview form]]))
