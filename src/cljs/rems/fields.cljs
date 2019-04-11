@@ -1,6 +1,7 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
+            [rems.atoms :refer [textarea]]
             [rems.text :refer [localized text text-format]]))
 
 (defn- id-to-name [id]
@@ -89,3 +90,81 @@
                                      :value value}])
        :else editor-component)
      [field-validation-message validation title]]))
+
+(defn- event-value [event]
+  (.. event -target -value))
+
+(defn text-field
+  [{:keys [validation on-change] :as opts}]
+  (let [id (:field/id opts)
+        placeholder (localized (:field/placeholder opts))
+        value (:field/value opts)
+        max-length (:field/max-length opts)]
+    [basic-field opts
+     [:input.form-control {:type "text"
+                           :id (id-to-name id)
+                           :name (id-to-name id)
+                           :placeholder placeholder
+                           :max-length max-length
+                           :class (when validation "is-invalid")
+                           :defaultValue value
+                           :on-change (comp on-change event-value)}]]))
+
+(defn texta-field
+  [{:keys [validation on-change] :as opts}]
+  (let [id (:field/id opts)
+        placeholder (localized (:field/placeholder opts))
+        value (:field/value opts)
+        max-length (:field/max-length opts)]
+    [basic-field opts
+     [textarea {:id (id-to-name id)
+                :name (id-to-name id)
+                :placeholder placeholder
+                :max-length max-length
+                :class (if validation "form-control is-invalid" "form-control")
+                :defaultValue value
+                :on-change (comp on-change event-value)}]]))
+
+(defn date-field
+  [{:keys [min max validation on-change] :as opts}]
+  (let [id (:field/id opts)
+        value (:field/value opts)]
+    ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
+    [basic-field opts
+     [:input.form-control {:type "date"
+                           :id (id-to-name id)
+                           :name (id-to-name id)
+                           :class (when validation "is-invalid")
+                           :defaultValue value
+                           :min min
+                           :max max
+                           :on-change (comp on-change event-value)}]]))
+
+(defn- option-label [value options]
+  (let [label (->> options
+                   (filter #(= value (:key %)))
+                   first
+                   :label)]
+    (localized label)))
+
+(defn option-field [{:keys [validation on-change] :as opts}]
+  (let [id (:field/id opts)
+        value (:field/value opts)
+        options (:field/options opts)]
+    [basic-field
+     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
+                                                      :value (option-label value options)}])
+     (into [:select.form-control {:id (id-to-name id)
+                                  :name (id-to-name id)
+                                  :class (when validation "is-invalid")
+                                  :defaultValue value
+                                  :on-change (comp on-change event-value)}
+            [:option {:value ""}]]
+           (for [{:keys [key label]} options]
+             [:option {:value key}
+              (localized label)]))]))
+
+(defn label [opts]
+  (let [title (:field/title opts)]
+    [:div.form-group
+     [:label (localized title)]]))

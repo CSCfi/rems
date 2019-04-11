@@ -262,43 +262,9 @@
     (rf/dispatch [::set-field-value field-id ""])
     (rf/dispatch [::remove-attachment app-id field-id description])))
 
-(defn- event-value [event]
-  (.. event -target -value))
-
 (defn- set-field-value [field-id]
   (fn [event]
     (rf/dispatch [::set-field-value field-id (.. event -target -value)])))
-
-(defn- text-field
-  [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
-        placeholder (localized (:field/placeholder opts))
-        value (:field/value opts)
-        max-length (:field/max-length opts)]
-    [fields/basic-field opts
-     [:input.form-control {:type "text"
-                           :id (id-to-name id)
-                           :name (id-to-name id)
-                           :placeholder placeholder
-                           :max-length max-length
-                           :class (when validation "is-invalid")
-                           :defaultValue value
-                           :on-change (comp on-change event-value)}]]))
-
-(defn- texta-field
-  [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
-        placeholder (localized (:field/placeholder opts))
-        value (:field/value opts)
-        max-length (:field/max-length opts)]
-    [fields/basic-field opts
-     [textarea {:id (id-to-name id)
-                :name (id-to-name id)
-                :placeholder placeholder
-                :max-length max-length
-                :class (if validation "form-control is-invalid" "form-control")
-                :defaultValue value
-                :on-change (comp on-change event-value)}]]))
 
 ;; TODO: custom :diff-component, for example link to both old and new attachment
 (defn attachment-field
@@ -333,45 +299,6 @@
        [:div {:style {:display :flex :justify-content :flex-start}}
         filename-field
         remove-button])]))
-
-(defn- date-field
-  [{:keys [min max validation on-change] :as opts}]
-  (let [id (:field/id opts)
-        value (:field/value opts)]
-    ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
-    [fields/basic-field opts
-     [:input.form-control {:type "date"
-                           :id (id-to-name id)
-                           :name (id-to-name id)
-                           :class (when validation "is-invalid")
-                           :defaultValue value
-                           :min min
-                           :max max
-                           :on-change (comp on-change event-value)}]]))
-
-(defn- option-label [value options]
-  (let [label (->> options
-                   (filter #(= value (:key %)))
-                   first
-                   :label)]
-    (localized label)))
-
-(defn option-field [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
-        value (:field/value opts)
-        options (:field/options opts)]
-    [fields/basic-field
-     (assoc opts :readonly-component [fields/readonly-field {:id (id-to-name id)
-                                                             :value (option-label value options)}])
-     (into [:select.form-control {:id (id-to-name id)
-                                  :name (id-to-name id)
-                                  :class (when validation "is-invalid")
-                                  :defaultValue value
-                                  :on-change (comp on-change event-value)}
-            [:option {:value ""}]]
-           (for [{:keys [key label]} options]
-             [:option {:value key}
-              (localized label)]))]))
 
 (defn normalize-option-key
   "Strips disallowed characters from an option key"
@@ -425,11 +352,6 @@
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
-(defn- label [opts]
-  (let [title (:field/title opts)]
-    [:div.form-group
-     [:label (localized title)]]))
-
 (defn- link-license
   [{:keys [accepted readonly] :as opts}]
   (let [id (:license/id opts)
@@ -468,13 +390,13 @@
 (defn- field [f]
   (case (:field/type f)
     :attachment [attachment-field f]
-    :date [date-field f]
-    :description [text-field f]
-    :label [label f]
+    :date [fields/date-field f]
+    :description [fields/text-field f]
+    :label [fields/label f]
     :multiselect [multiselect-field f]
-    :option [option-field f]
-    :text [text-field f]
-    :texta [texta-field f]
+    :option [fields/option-field f]
+    :text [fields/text-field f]
+    :texta [fields/texta-field f]
     [unsupported-field f]))
 
 (defn- save-button []
