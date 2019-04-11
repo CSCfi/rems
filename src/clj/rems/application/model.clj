@@ -205,6 +205,7 @@
 (defmethod event-type-specific-application-view :application.event/licenses-added
   [application event]
   (-> application
+      (assoc :application/modified (:event/time event))
       (update :application/licenses
               (fn [licenses]
                 (->> (:application/licenses event)
