@@ -289,11 +289,11 @@
     [:div {:class "text-danger"}
      (text-format (:type validation) title)]))
 
-(defn- toggle-diff-button [item-id diff-visible]
+(defn- toggle-diff-button [item-id diff-visible on-toggle-diff]
   [:a.toggle-diff {:href "#"
                    :on-click (fn [event]
                                (.preventDefault event)
-                               (rf/dispatch [::toggle-diff item-id]))}
+                               (on-toggle-diff))}
    [:i.fas.fa-exclamation-circle]
    " "
    (if diff-visible
@@ -316,7 +316,7 @@
   :validation - validation errors
 
   editor-component - HTML, form component for editing the field"
-  [{:keys [readonly readonly-component diff diff-component validation] :as opts} editor-component]
+  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff] :as opts} editor-component]
   (let [id (:field/id opts)
         title (localized (:field/title opts))
         optional (:field/optional opts)
@@ -333,7 +333,7 @@
         (text :t.form/optional))]
      (when (and previous-value
                 (not= value previous-value))
-       [toggle-diff-button id diff])
+       [toggle-diff-button id diff on-toggle-diff])
      (cond
        diff (or diff-component
                 [diff-field {:id (id-to-name id)
@@ -582,6 +582,7 @@
        (into [:div]
              (for [fld (get-in application [:application/form :form/fields])]
                [field (assoc fld
+                             :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
                              :field/value (get field-values (:field/id fld))
                              :diff (get show-diff (:field/id fld))
                              :validation (field-validations (:field/id fld))
