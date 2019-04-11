@@ -20,7 +20,7 @@
 
       (rf/dispatch-sync [::f/add-form-item])
 
-      (is (= {:items [{}]}
+      (is (= {:items [{:type "text"}]}
              @form)
           "after"))
 
@@ -28,13 +28,13 @@
       (reset-form)
       (rf/dispatch-sync [::f/add-form-item])
       (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "old item"])
-      (is (= {:items [{:foo "old item"}]}
+      (is (= {:items [{:type "text" :foo "old item"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/add-form-item])
 
-      (is (= {:items [{:foo "old item"} {}]}
+      (is (= {:items [{:type "text" :foo "old item"} {:type "text"}]}
              @form)
           "after"))))
 
@@ -43,7 +43,7 @@
     (testing "removes items"
       (reset-form)
       (rf/dispatch-sync [::f/add-form-item])
-      (is (= {:items [{}]}
+      (is (= {:items [{:type "text"}]}
              @form)
           "before")
 
@@ -61,16 +61,16 @@
       (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "item 0"])
       (rf/dispatch-sync [::f/set-form-field [:items 1 :foo] "item 1"])
       (rf/dispatch-sync [::f/set-form-field [:items 2 :foo] "item 2"])
-      (is (= {:items [{:foo "item 0"}
-                      {:foo "item 1"}
-                      {:foo "item 2"}]}
+      (is (= {:items [{:type "text" :foo "item 0"}
+                      {:type "text" :foo "item 1"}
+                      {:type "text" :foo "item 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/remove-form-item 1])
 
-      (is (= {:items [{:foo "item 0"}
-                      {:foo "item 2"}]}
+      (is (= {:items [{:type "text" :foo "item 0"}
+                      {:type "text" :foo "item 2"}]}
              @form)
           "after"))))
 
@@ -84,34 +84,34 @@
       (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "item 0"])
       (rf/dispatch-sync [::f/set-form-field [:items 1 :foo] "item 1"])
       (rf/dispatch-sync [::f/set-form-field [:items 2 :foo] "item X"])
-      (is (= {:items [{:foo "item 0"}
-                      {:foo "item 1"}
-                      {:foo "item X"}]}
+      (is (= {:items [{:type "text" :foo "item 0"}
+                      {:type "text" :foo "item 1"}
+                      {:type "text" :foo "item X"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-item-up 2])
 
-      (is (= {:items [{:foo "item 0"}
-                      {:foo "item X"}
-                      {:foo "item 1"}]}
+      (is (= {:items [{:type "text" :foo "item 0"}
+                      {:type "text" :foo "item X"}
+                      {:type "text" :foo "item 1"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-item-up 1])
 
-      (is (= {:items [{:foo "item X"}
-                      {:foo "item 0"}
-                      {:foo "item 1"}]}
+      (is (= {:items [{:type "text" :foo "item X"}
+                      {:type "text" :foo "item 0"}
+                      {:type "text" :foo "item 1"}]}
              @form)
           "after move 2")
 
       (testing "unless already first"
         (rf/dispatch-sync [::f/move-form-item-up 0])
 
-        (is (= {:items [{:foo "item X"}
-                        {:foo "item 0"}
-                        {:foo "item 1"}]}
+        (is (= {:items [{:type "text" :foo "item X"}
+                        {:type "text" :foo "item 0"}
+                        {:type "text" :foo "item 1"}]}
                @form)
             "after move 3")))))
 
@@ -125,34 +125,34 @@
       (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "item X"])
       (rf/dispatch-sync [::f/set-form-field [:items 1 :foo] "item 1"])
       (rf/dispatch-sync [::f/set-form-field [:items 2 :foo] "item 2"])
-      (is (= {:items [{:foo "item X"}
-                      {:foo "item 1"}
-                      {:foo "item 2"}]}
+      (is (= {:items [{:type "text" :foo "item X"}
+                      {:type "text" :foo "item 1"}
+                      {:type "text" :foo "item 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-item-down 0])
 
-      (is (= {:items [{:foo "item 1"}
-                      {:foo "item X"}
-                      {:foo "item 2"}]}
+      (is (= {:items [{:type "text" :foo "item 1"}
+                      {:type "text" :foo "item X"}
+                      {:type "text" :foo "item 2"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-item-down 1])
 
-      (is (= {:items [{:foo "item 1"}
-                      {:foo "item 2"}
-                      {:foo "item X"}]}
+      (is (= {:items [{:type "text" :foo "item 1"}
+                      {:type "text" :foo "item 2"}
+                      {:type "text" :foo "item X"}]}
              @form)
           "after move 2")
 
       (testing "unless already last"
         (rf/dispatch-sync [::f/move-form-item-down 2])
 
-        (is (= {:items [{:foo "item 1"}
-                        {:foo "item 2"}
-                        {:foo "item X"}]}
+        (is (= {:items [{:type "text" :foo "item 1"}
+                        {:type "text" :foo "item 2"}
+                        {:type "text" :foo "item X"}]}
                @form)
             "after move 3")))))
 
