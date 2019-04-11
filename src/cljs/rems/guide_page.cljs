@@ -10,6 +10,7 @@
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
+            [rems.fields :as fields]
             [rems.language-switcher :as language-switcher]
             [rems.modal :as modal]
             [rems.navbar :as nav]
@@ -118,6 +119,9 @@
 
     [:h2 "Applications"]
     [application/guide]
+
+    [:h2 "Form fields"]
+    [fields/guide]
 
     [:h2 "Administration"]
     [administration/guide]
