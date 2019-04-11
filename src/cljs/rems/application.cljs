@@ -273,27 +273,11 @@
       [:div.collapse {:id (str "collapse" id)}
        [:div.license-block (str/trim (str text))]]]]))
 
-(defn- unsupported-field
-  [f]
-  [:p.alert.alert-warning "Unsupported field " (pr-str f)])
-
 (defn license-field [f]
   (case (:license/type f)
     :link [link-license f]
     :text [text-license f]
-    [unsupported-field f]))
-
-(defn- field [f]
-  (case (:field/type f)
-    :attachment [fields/attachment-field f]
-    :date [fields/date-field f]
-    :description [fields/text-field f]
-    :label [fields/label f]
-    :multiselect [fields/multiselect-field f]
-    :option [fields/option-field f]
-    :text [fields/text-field f]
-    :texta [fields/texta-field f]
-    [unsupported-field f]))
+    [fields/unsupported-field f]))
 
 (defn- save-button []
   [button-wrapper {:id "save"
@@ -319,16 +303,16 @@
       [:div
        (into [:div]
              (for [fld (get-in application [:application/form :form/fields])]
-               [field (assoc fld
-                             :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
-                             :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
-                             :on-remove-attachment #(rf/dispatch [::remove-attachment (:field/id fld) %1 %2])
-                             :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
-                             :field/value (get field-values (:field/id fld))
-                             :diff (get show-diff (:field/id fld))
-                             :validation (field-validations (:field/id fld))
-                             :readonly readonly?
-                             :app-id (:application/id application))]))]}]))
+               [fields/field (assoc fld
+                                    :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
+                                    :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
+                                    :on-remove-attachment #(rf/dispatch [::remove-attachment (:field/id fld) %1 %2])
+                                    :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
+                                    :field/value (get field-values (:field/id fld))
+                                    :diff (get show-diff (:field/id fld))
+                                    :validation (field-validations (:field/id fld))
+                                    :readonly readonly?
+                                    :app-id (:application/id application))]))]}]))
 
 (defn- application-licenses [application edit-application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
@@ -677,202 +661,6 @@
                                        :catalogue-item/title {:default "Catalogue item 2"}}
                                       {:catalogue-item/enabled true :catalogue-item/archived false
                                        :catalogue-item/title {:default "Catalogue item 3"}}]}])
-
-   (component-info field)
-   (example "field of type \"text\""
-            [:form
-             [field {:field/type :text
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])
-   (example "field of type \"text\" with maximum length"
-            [:form
-             [field {:field/type :text
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
-                     :field/max-length 10}]])
-   (example "field of type \"text\" with validation error"
-            [:form
-             [field {:field/type :text
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
-                     :validation {:type :t.form.validation/required}}]])
-   (example "non-editable field of type \"text\" without text"
-            [:form
-             [field {:field/type :text
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
-                     :readonly true}]])
-   (example "non-editable field of type \"text\" with text"
-            [:form
-             [field {:field/type :text
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
-                     :readonly true
-                     :field/value lipsum-short}]])
-   (example "field of type \"texta\""
-            [:form
-             [field {:field/type :texta
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])
-   (example "field of type \"texta\" with maximum length"
-            [:form
-             [field {:field/type :texta
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
-                     :field/max-length 10}]])
-   (example "field of type \"texta\" with validation error"
-            [:form
-             [field {:field/type :texta
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
-                     :validation {:type :t.form.validation/required}}]])
-   (example "non-editable field of type \"texta\""
-            [:form
-             [field {:field/type :texta
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
-                     :readonly true
-                     :field/value lipsum-paragraphs}]])
-   (let [previous-lipsum-paragraphs (-> lipsum-paragraphs
-                                        (str/replace "ipsum primis in faucibus orci luctus" "eu mattis purus mi eu turpis")
-                                        (str/replace "per inceptos himenaeos" "justo erat hendrerit magna"))]
-     [:div
-      (example "editable field of type \"texta\" with previous value, diff hidden"
-               [:form
-                [field {:field/type :texta
-                        :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
-                        :field/value lipsum-paragraphs
-                        :field/previous-value previous-lipsum-paragraphs}]])
-      (example "editable field of type \"texta\" with previous value, diff shown"
-               [:form
-                [field {:field/type :texta
-                        :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
-                        :field/value lipsum-paragraphs
-                        :field/previous-value previous-lipsum-paragraphs
-                        :diff true}]])
-      (example "non-editable field of type \"texta\" with previous value, diff hidden"
-               [:form
-                [field {:field/type :texta
-                        :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
-                        :readonly true
-                        :field/value lipsum-paragraphs
-                        :field/previous-value previous-lipsum-paragraphs}]])
-      (example "non-editable field of type \"texta\" with previous value, diff shown"
-               [:form
-                [field {:field/type :texta
-                        :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
-                        :readonly true
-                        :field/value lipsum-paragraphs
-                        :field/previous-value previous-lipsum-paragraphs
-                        :diff true}]])
-      (example "non-editable field of type \"texta\" with previous value equal to current value"
-               [:form
-                [field {:field/type :texta
-                        :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
-                        :readonly true
-                        :field/value lipsum-paragraphs
-                        :field/previous-value lipsum-paragraphs}]])])
-   (example "field of type \"attachment\""
-            [:form
-             [field {:app-id 5
-                     :field/id 6
-                     :field/type :attachment
-                     :field/title {:en "Title"}}]])
-   (example "field of type \"attachment\", file uploaded"
-            [:form
-             [field {:app-id 5
-                     :field/id 6
-                     :field/type :attachment
-                     :field/title {:en "Title"}
-                     :field/value "test.txt"}]])
-   (example "non-editable field of type \"attachment\""
-            [:form
-             [field {:app-id 5
-                     :field/id 6
-                     :field/type :attachment
-                     :field/title {:en "Title"}
-                     :readonly true}]])
-   (example "non-editable field of type \"attachment\", file uploaded"
-            [:form
-             [field {:app-id 5
-                     :field/id 6
-                     :field/type :attachment
-                     :field/title {:en "Title"}
-                     :readonly true
-                     :field/value "test.txt"}]])
-   (example "field of type \"date\""
-            [:form
-             [field {:field/type :date
-                     :field/title {:en "Title"}}]])
-   (example "field of type \"date\" with value"
-            [:form
-             [field {:field/type :date
-                     :field/title {:en "Title"}
-                     :field/value "2000-12-31"}]])
-   (example "non-editable field of type \"date\""
-            [:form
-             [field {:field/type :date
-                     :field/title {:en "Title"}
-                     :readonly true
-                     :field/value ""}]])
-   (example "non-editable field of type \"date\" with value"
-            [:form
-             [field {:field/type :date
-                     :field/title {:en "Title"}
-                     :readonly true
-                     :field/value "2000-12-31"}]])
-   (example "field of type \"option\""
-            [:form
-             [field {:field/type :option
-                     :field/title {:en "Title"}
-                     :field/value "y"
-                     :field/options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
-                                     {:key "n" :label {:en "No" :fi "Ei"}}]}]])
-   (example "non-editable field of type \"option\""
-            [:form
-             [field {:field/type :option
-                     :field/title {:en "Title"}
-                     :field/value "y"
-                     :readonly true
-                     :field/options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
-                                     {:key "n" :label {:en "No" :fi "Ei"}}]}]])
-   (example "field of type \"multiselect\""
-            [:form
-             [field {:field/type :multiselect
-                     :field/title {:en "Title"}
-                     :field/value "egg bacon"
-                     :field/options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
-                                     {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
-                                     {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
-   (example "non-editable field of type \"multiselect\""
-            [:form
-             [field {:field/type :multiselect
-                     :field/title {:en "Title"}
-                     :field/value "egg bacon"
-                     :readonly true
-                     :field/options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
-                                     {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
-                                     {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
-   (example "optional field"
-            [:form
-             [field {:field/type :texta
-                     :field/optional true
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])
-   (example "field of type \"label\""
-            [:form
-             [field {:field/type :label
-                     :field/title {:en "Lorem ipsum dolor sit amet"}}]])
-   (example "field of type \"description\""
-            [:form
-             [field {:field/type :description
-                     :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])
 
    (example "link license"
             [:form
