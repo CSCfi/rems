@@ -3,6 +3,7 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.api.applications-v2]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]))
