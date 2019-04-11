@@ -262,12 +262,15 @@
     (rf/dispatch [::set-field-value field-id ""])
     (rf/dispatch [::remove-attachment app-id field-id description])))
 
+(defn- event-value [event]
+  (.. event -target -value))
+
 (defn- set-field-value [field-id]
   (fn [event]
     (rf/dispatch [::set-field-value field-id (.. event -target -value)])))
 
 (defn- text-field
-  [{:keys [validation] :as opts}]
+  [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
@@ -280,10 +283,10 @@
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :defaultValue value
-                           :on-change (set-field-value id)}]]))
+                           :on-change (comp on-change event-value)}]]))
 
 (defn- texta-field
-  [{:keys [validation] :as opts}]
+  [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
@@ -295,7 +298,7 @@
                 :max-length max-length
                 :class (if validation "form-control is-invalid" "form-control")
                 :defaultValue value
-                :on-change (set-field-value id)}]]))
+                :on-change (comp on-change event-value)}]]))
 
 ;; TODO: custom :diff-component, for example link to both old and new attachment
 (defn attachment-field
@@ -332,7 +335,7 @@
         remove-button])]))
 
 (defn- date-field
-  [{:keys [min max validation] :as opts}]
+  [{:keys [min max validation on-change] :as opts}]
   (let [id (:field/id opts)
         value (:field/value opts)]
     ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
@@ -344,7 +347,7 @@
                            :defaultValue value
                            :min min
                            :max max
-                           :on-change (set-field-value id)}]]))
+                           :on-change (comp on-change event-value)}]]))
 
 (defn- option-label [value options]
   (let [label (->> options
@@ -353,7 +356,7 @@
                    :label)]
     (localized label)))
 
-(defn option-field [{:keys [validation] :as opts}]
+(defn option-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
         value (:field/value opts)
         options (:field/options opts)]
@@ -364,7 +367,7 @@
                                   :name (id-to-name id)
                                   :class (when validation "is-invalid")
                                   :defaultValue value
-                                  :on-change (set-field-value id)}
+                                  :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
              [:option {:value key}
@@ -499,6 +502,7 @@
        (into [:div]
              (for [fld (get-in application [:application/form :form/fields])]
                [field (assoc fld
+                             :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
                              :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
                              :field/value (get field-values (:field/id fld))
                              :diff (get show-diff (:field/id fld))
