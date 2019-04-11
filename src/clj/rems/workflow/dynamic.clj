@@ -211,8 +211,7 @@
 
 (defmethod command-handler :application.command/accept-invitation
   [cmd application injections]
-  (or (invalid-user-error (:actor cmd) injections)
-      (already-member-error application (:actor cmd))
+  (or (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
       (ok {:event/type :application.event/member-joined
            :application/id (:application-id cmd)
