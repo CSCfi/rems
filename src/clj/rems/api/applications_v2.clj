@@ -71,6 +71,9 @@
 (mount/defstate all-applications-cache
   :start (events-cache/new))
 
+(defn empty-cache! []
+  (events-cache/empty! all-applications-cache))
+
 (defn get-all-unrestricted-applications []
   (->> (events-cache/refresh!
         all-applications-cache
@@ -80,7 +83,6 @@
           (let [raw-apps (reduce all-applications-view (:raw-apps state) events)
                 updated-app-ids (distinct (map :application/id events))
                 cached-injections (map-vals memoize injections)
-                ;; TODO: reset the cache if the injected entities are modified?
                 enriched-apps (->> (select-keys raw-apps updated-app-ids)
                                    (map-vals #(model/enrich-with-injections % cached-injections))
                                    (merge (:enriched-apps state)))]

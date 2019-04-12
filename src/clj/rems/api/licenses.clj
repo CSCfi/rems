@@ -1,14 +1,15 @@
 (ns rems.api.licenses
-  (:require [rems.api.schema :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [rems.api.applications-v2 :as applications-v2]
+            [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
+            [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.util :refer [getx-user-id]]
-            [rems.db.core :as db]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
             [ring.middleware.multipart-params :as multipart]
-            [ring.swagger.upload :as upload]))
+            [ring.swagger.upload :as upload]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")
@@ -74,7 +75,9 @@
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (ok (licenses/update-license! command)))
+      (let [result (licenses/update-license! command)]
+        (applications-v2/empty-cache!)
+        (ok result)))
 
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"
