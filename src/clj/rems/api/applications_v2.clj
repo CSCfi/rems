@@ -11,7 +11,8 @@
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.util :refer [getx atom?]]))
+            [rems.util :refer [getx atom?]])
+  (:import [java.util.concurrent TimeUnit ScheduledThreadPoolExecutor]))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -80,9 +81,6 @@
 (mount/defstate all-applications-cache
   :start (events-cache/new))
 
-(defn empty-cache! []
-  (events-cache/empty! all-applications-cache))
-
 (defn get-all-unrestricted-applications []
   (->> (events-cache/refresh!
         all-applications-cache
@@ -112,3 +110,15 @@
 (defn get-own-applications [user-id]
   (->> (get-all-applications user-id)
        (filter own-application?)))
+
+(defn reload-cache! []
+  (events-cache/empty! all-applications-cache)
+  (get-all-unrestricted-applications)) ; refill the cache
+
+;; empty the cache occasionally in case some of the injected entities are changed
+(mount/defstate all-applications-cache-reloader
+  :start (doto (ScheduledThreadPoolExecutor. 1)
+           (.scheduleWithFixedDelay reload-cache! 1 1 TimeUnit/HOURS))
+  :stop (doto all-applications-cache-reloader
+          (.shutdown)
+          (.awaitTermination 60 TimeUnit/SECONDS)))

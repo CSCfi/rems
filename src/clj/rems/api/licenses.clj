@@ -1,6 +1,5 @@
 (ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
             [rems.db.core :as db]
@@ -75,9 +74,7 @@
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (let [result (licenses/update-license! command)]
-        (applications-v2/empty-cache!)
-        (ok result)))
+      (ok (licenses/update-license! command)))
 
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"

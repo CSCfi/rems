@@ -1,6 +1,5 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer [SuccessResponse UpdateStateCommand]]
             [rems.api.util]
             [rems.db.form :as form]
@@ -103,6 +102,4 @@
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (let [result (form/update-form! command)]
-        (applications-v2/empty-cache!)
-        (ok result)))))
+      (ok (form/update-form! command)))))

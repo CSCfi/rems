@@ -1,7 +1,6 @@
 (ns rems.api.catalogue-items
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [not-found-json-response check-user]]
             [rems.db.catalogue :as catalogue]
@@ -76,9 +75,7 @@
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (let [result (catalogue/update-catalogue-item! command)]
-        (applications-v2/empty-cache!)
-        (ok result)))
+      (ok (catalogue/update-catalogue-item! command)))
 
     (POST "/create-localization" []
       :summary "Create a new catalogue item localization"
