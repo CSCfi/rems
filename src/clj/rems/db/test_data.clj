@@ -13,6 +13,7 @@
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
             [rems.locales :as locales]
+            [rems.poller.email :as email]
             [ring.util.http-response :refer [bad-request!]])
   (:import [java.util UUID]
            [org.joda.time DateTimeUtils DateTime]))
@@ -715,7 +716,9 @@
                         :actor handler
                         :time (time/now)
                         :application-id app-id
-                        :comment "Looks fine."})))))))
+                        :comment "Looks fine."}))))))
+  ;; TODO: make the poller faster so we don't need to skip this
+  (email/mark-all-emails-as-sent!))
 
 (defn create-test-data! []
   (DateTimeUtils/setCurrentMillisFixed (.getMillis creation-time))

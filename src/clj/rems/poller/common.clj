@@ -22,7 +22,8 @@
     (try
       (doseq [e events]
         (try
-          (log/debug name-kw "processing event" (:event/id e))
+          ;; TODO: add proper monitoring for pollers and caches
+          (log/info name-kw "processing event" (:event/id e))
           (process-event! e)
           (set-poller-state! name-kw {:last-processed-event-id (:event/id e)})
           (catch Throwable t
