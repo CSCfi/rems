@@ -87,15 +87,15 @@
         (fn [state events]
           ;; Because enrich-with-injections is not idempotent,
           ;; it's necessary to hold on to the "raw" applications.
-          (let [raw-apps (reduce all-applications-view (:raw-apps state) events)
+          (let [raw-apps (reduce all-applications-view (::raw-apps state) events)
                 updated-app-ids (distinct (map :application/id events))
                 cached-injections (map-vals memoize injections)
                 enriched-apps (->> (select-keys raw-apps updated-app-ids)
                                    (map-vals #(model/enrich-with-injections % cached-injections))
-                                   (merge (:enriched-apps state)))]
-            {:raw-apps raw-apps
-             :enriched-apps enriched-apps})))
-       :enriched-apps
+                                   (merge (::enriched-apps state)))]
+            {::raw-apps raw-apps
+             ::enriched-apps enriched-apps})))
+       ::enriched-apps
        (vals)))
 
 (defn get-all-applications [user-id]

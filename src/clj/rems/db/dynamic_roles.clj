@@ -11,15 +11,21 @@
     (update applications app-id model/calculate-permissions event)
     applications))
 
-(defn- roles-of-user [user applications-by-id]
+(defn- group-roles-by-user [applications-by-id]
   (->> applications-by-id
        (vals)
-       (map #(permissions/user-roles % user))
-       (apply set/union)))
+       (mapcat (fn [app] (::permissions/user-roles app)))
+       (reduce (fn [roles-by-user [user roles]]
+                 (update roles-by-user user set/union roles))
+               {})))
+
+(defn- get-user-roles [user roles-by-user]
+  (get roles-by-user user #{}))
 
 (defn- roles-from-all-applications [user events]
   (->> (reduce permissions-of-all-applications nil events)
-       (roles-of-user user)))
+       (group-roles-by-user)
+       (get-user-roles user)))
 
 (deftest test-roles-from-all-applications
   (let [events [{:event/type :application.event/created
@@ -29,16 +35,22 @@
                 {:event/type :application.event/created
                  :event/actor "applicant-and-handler"
                  :application/id 2}]]
-    (is (= #{:applicant :everyone-else}
+    (is (= #{:applicant}
            (roles-from-all-applications "applicant-only" events)))
     (is (= #{:applicant :handler}
-           (roles-from-all-applications "applicant-and-handler" events)))))
+           (roles-from-all-applications "applicant-and-handler" events)))
+    (is (= #{}
+           (roles-from-all-applications "unknown" events)))))
 
 (mount/defstate dynamic-roles-cache
   :start (events-cache/new))
 
 (defn get-roles [user]
-  (->> (events-cache/refresh! dynamic-roles-cache
-                              (fn [applications events]
-                                (reduce permissions-of-all-applications applications events)))
-       (roles-of-user user)))
+  (->> (events-cache/refresh!
+        dynamic-roles-cache
+        (fn [state events]
+          (let [apps (reduce permissions-of-all-applications (::apps state) events)]
+            {::apps apps
+             ::roles-by-user (group-roles-by-user apps)})))
+       ::roles-by-user
+       (get-user-roles user)))
