@@ -1,5 +1,6 @@
 (ns rems.api.applications-v2
-  (:require [medley.core :refer [map-vals]]
+  (:require [clojure.core.cache :as cache]
+            [medley.core :refer [map-vals]]
             [mount.core :as mount]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
@@ -9,7 +10,8 @@
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
-            [rems.db.users :as users]))
+            [rems.db.users :as users]
+            [rems.util :refer [getx atom?]]))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -33,14 +35,24 @@
                            :get-license get-license
                            :get-user get-user})
 
+;; short-lived cache to speed up pollers which get the application
+;; repeatedly for each event instead of building their own projection
+(mount/defstate application-cache
+  :start (atom (cache/ttl-cache-factory {} :ttl 10000)))
+
 (defn get-unrestricted-application
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (applications/get-dynamic-application-events application-id)]
+  (let [events (applications/get-dynamic-application-events application-id)
+        cache-key [application-id (count events)]
+        build-app (fn [_] (model/build-application-view events injections))]
     (if (empty? events)
-      nil
-      (model/build-application-view events injections))))
+      nil ; application not found
+      (if (atom? application-cache) ; guard against not started cache
+        (-> (swap! application-cache cache/through-cache cache-key build-app)
+            (getx cache-key))
+        (build-app nil)))))
 
 (defn get-application
   "Returns the part of application state which the specified user

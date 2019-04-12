@@ -716,9 +716,7 @@
                         :actor handler
                         :time (time/now)
                         :application-id app-id
-                        :comment "Looks fine."}))))))
-  ;; TODO: make the poller faster so we don't need to skip this
-  (email/mark-all-emails-as-sent!))
+                        :comment "Looks fine."})))))))
 
 (defn create-test-data! []
   (DateTimeUtils/setCurrentMillisFixed (.getMillis creation-time))

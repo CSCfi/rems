@@ -38,6 +38,7 @@
                  [org.clojars.runa/conjure "2.2.0"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/clojurescript "1.10.520" :exclusions [com.fasterxml.jackson.core/jackson-core]]
+                 [org.clojure/core.cache "0.7.2"]
                  [org.clojure/core.memoize "0.7.1"]
                  [org.clojure/tools.cli "0.4.1"]
                  [org.clojure/tools.logging "0.4.1"]
