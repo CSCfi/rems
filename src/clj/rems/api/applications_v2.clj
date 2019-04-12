@@ -46,12 +46,9 @@
   "Returns the part of application state which the specified user
    is allowed to see. Suitable for returning from public APIs as-is."
   [user-id application-id]
-  (let [events (applications/get-dynamic-application-events application-id)]
-    (if (empty? events)
-      nil ;; will result in a 404
-      (or (-> (model/build-application-view events injections)
-              (model/apply-user-permissions user-id))
-          (throw-forbidden)))))
+  (when-let [application (get-unrestricted-application application-id)]
+    (or (model/apply-user-permissions application user-id)
+        (throw-forbidden))))
 
 ;;; Listing all applications
 
