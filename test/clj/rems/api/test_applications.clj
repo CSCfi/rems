@@ -347,11 +347,11 @@
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
                                     :field-values [{:field opt-id :value "opt"}
-                                                   {:field req-id :value "req"}]})))
+                                                   {:field req-id :value "req"}]}))))
     (testing "can submit with required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
-                                    :application-id app-id})))))))
+                                    :application-id app-id}))))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
