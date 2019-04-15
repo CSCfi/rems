@@ -13,7 +13,7 @@
             [rems.db.users :as users]
             [rems.permissions :as permissions]
             [rems.util :refer [getx atom?]])
-  (:import [java.util.concurrent TimeUnit ScheduledThreadPoolExecutor]))
+  (:import [java.util.concurrent TimeUnit ScheduledThreadPoolExecutor ExecutorService]))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -149,6 +149,7 @@
 (mount/defstate all-applications-cache-reloader
   :start (doto (ScheduledThreadPoolExecutor. 1)
            (.scheduleWithFixedDelay reload-cache! 1 1 TimeUnit/HOURS))
-  :stop (doto all-applications-cache-reloader
-          (.shutdown)
-          (.awaitTermination 60 TimeUnit/SECONDS)))
+  :stop (let [executor (doto ^ExecutorService all-applications-cache-reloader
+                         (.shutdownNow))]
+          (when-not (.awaitTermination executor 1 TimeUnit/MINUTES)
+            (throw (IllegalStateException. "did not terminate")))))
