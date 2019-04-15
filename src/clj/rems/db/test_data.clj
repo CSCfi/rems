@@ -188,10 +188,10 @@
                            :fi "2. Hakemus täydentää edellistä hakemusta"}
                    :optional false
                    :type "option"
-                   :options [{:key false
+                   :options [{:key "false"
                               :label {:en "no"
                                       :fi "ei"}}
-                             {:key true
+                             {:key "true"
                               :label {:en "yes"
                                       :fi "kyllä"}}]}
                   {:title {:en "If yes, what were the previous project permit code/s?"
@@ -272,10 +272,10 @@
                            :fi "16. Pyydetäänkö biologisia näytteitä?"}
                    :optional false
                    :type "option"
-                   :options [{:key false
+                   :options [{:key "false"
                               :label {:en "no"
                                       :fi "ei"}}
-                             {:key true
+                             {:key "true"
                               :label {:en "yes"
                                       :fi "kyllä"}}]}
                   {:title {:en "The type and amount of biological samples requested"
