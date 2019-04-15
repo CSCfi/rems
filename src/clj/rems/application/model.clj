@@ -172,12 +172,9 @@
              :application/members #{}
              :application/past-members #{}
              :application/invitation-tokens {}
-             :application/resources (map (fn [resource]
-                                           {:catalogue-item/id (:catalogue-item/id resource)
-                                            :resource/ext-id (:resource/ext-id resource)})
+             :application/resources (map #(select-keys % [:catalogue-item/id :resource/ext-id])
                                          (:application/resources event))
-             :application/licenses (map (fn [license]
-                                          {:license/id (:license/id license)})
+             :application/licenses (map #(select-keys % [:license/id])
                                         (:application/licenses event))
              :application/accepted-licenses {}
              :application/events []
