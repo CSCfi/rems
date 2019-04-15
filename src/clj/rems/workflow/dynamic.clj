@@ -193,7 +193,7 @@
   [cmd _application injections]
   (or (must-not-be-empty cmd :licenses)
       (ok {:event/type :application.event/licenses-added
-           :application/licenses (set (:licenses cmd))
+           :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/add-member

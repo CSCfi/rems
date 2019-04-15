@@ -205,9 +205,8 @@
       (assoc :application/modified (:event/time event))
       (update :application/licenses
               (fn [licenses]
-                (->> (:application/licenses event)
-                     (map (fn [license-id] {:license/id license-id}))
-                     (into licenses)
+                (-> licenses
+                    (into (:application/licenses event))
                      distinct
                      vec)))))
 

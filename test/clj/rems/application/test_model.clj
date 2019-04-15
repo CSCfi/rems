@@ -388,7 +388,7 @@
                                           :event/time (DateTime. 3500)
                                           :event/actor "handler"
                                           :application/id 1
-                                          :application/licenses #{33}
+                                          :application/licenses [{:license/id 33}]
                                           :application/comment "Please sign these terms also"})
                             expected-application (merge expected-application
                                                         {:application/last-activity (DateTime. 3500)

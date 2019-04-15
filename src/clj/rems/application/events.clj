@@ -72,7 +72,7 @@
   (assoc EventBase
          :event/type (s/enum :application.event/licenses-added)
          :application/comment s/Str
-         :application/licenses #{s/Int}))
+         :application/licenses [{:license/id s/Int}]))
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/member-added)

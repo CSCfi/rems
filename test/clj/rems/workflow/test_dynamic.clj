@@ -157,7 +157,7 @@
              :event/actor handler-user-id
              :application/id 123
              :application/comment "comment"
-             :application/licenses #{1 2}}]
+             :application/licenses [{:license/id 1} {:license/id 2}]}]
            (ok-command application
                        {:type :application.command/add-licenses
                         :actor handler-user-id
