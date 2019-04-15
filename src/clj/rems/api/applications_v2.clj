@@ -111,6 +111,7 @@
    (fn [state events]
      ;; Because enrich-with-injections is not idempotent,
      ;; it's necessary to hold on to the "raw" applications.
+     ;; TODO: consider making enrich-with-injections idempotent (move dissocs to hide-non-public-information and other small refactorings)
      (let [raw-apps (reduce all-applications-view (::raw-apps state) events)
            updated-app-ids (distinct (map :application/id events))
            ;; TODO: batched injections: only one DB query to fetch all catalogue items etc.
@@ -142,11 +143,13 @@
        (filter own-application?)))
 
 (defn reload-cache! []
+  ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!))
 
 ;; empty the cache occasionally in case some of the injected entities are changed
 (mount/defstate all-applications-cache-reloader
+  ;; TODO: consider refactoring this mount-cron-thing which is duplicated in a few places
   :start (doto (ScheduledThreadPoolExecutor. 1)
            (.scheduleWithFixedDelay reload-cache! 1 1 TimeUnit/HOURS))
   :stop (let [executor (doto ^ExecutorService all-applications-cache-reloader
