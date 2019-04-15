@@ -210,8 +210,9 @@
               (fn [licenses]
                 (->> (:application/licenses event)
                      (map (fn [license-id] {:license/id license-id}))
-                     (concat licenses)
-                     distinct)))))
+                     (into licenses)
+                     distinct
+                     vec)))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
