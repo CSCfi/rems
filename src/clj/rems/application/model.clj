@@ -207,8 +207,8 @@
               (fn [licenses]
                 (-> licenses
                     (into (:application/licenses event))
-                     distinct
-                     vec)))))
+                    distinct
+                    vec)))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]

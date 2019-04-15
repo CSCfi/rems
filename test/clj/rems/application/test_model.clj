@@ -395,21 +395,21 @@
                                                          :application/modified (DateTime. 3500)
                                                          :application/events events
                                                          :application/licenses (conj (:application/licenses expected-application)
-                                                                                {:license/id 33
-                                                                                 :license/type :attachment
-                                                                                 :license/title {:en "en title"
-                                                                                                 :fi "fi title"
-                                                                                                 :default "non-localized title"}
-                                                                                 :license/attachment-id {:en 3301
-                                                                                                         :fi 3302
-                                                                                                         :default 3300}
-                                                                                 :license/attachment-filename {:en "en filename"
-                                                                                                               :fi "fi filename"
-                                                                                                               :default "non-localized filename"}
-                                                                                 :license/start (DateTime. 100)
-                                                                                 :license/end nil
-                                                                                 :license/expired false
-                                                                                 :license/enabled true
+                                                                                     {:license/id 33
+                                                                                      :license/type :attachment
+                                                                                      :license/title {:en "en title"
+                                                                                                      :fi "fi title"
+                                                                                                      :default "non-localized title"}
+                                                                                      :license/attachment-id {:en 3301
+                                                                                                              :fi 3302
+                                                                                                              :default 3300}
+                                                                                      :license/attachment-filename {:en "en filename"
+                                                                                                                    :fi "fi filename"
+                                                                                                                    :default "non-localized filename"}
+                                                                                      :license/start (DateTime. 100)
+                                                                                      :license/end nil
+                                                                                      :license/expired false
+                                                                                      :license/enabled true
                                                                                       :license/archived false})})]
                         (is (= expected-application (apply-events events)))
 

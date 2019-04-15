@@ -29,7 +29,7 @@
   "Prepopulate `:all-titles` property to facilitate searching with localized names and unlocalized title"
   [license]
   (assoc license :all-titles (str/join "" (conj (mapcat :title (vals (:localizations license)))
-                                                 (:title license)))))
+                                                (:title license)))))
 
 (rf/reg-sub ::potential-licenses (fn [db _] (::potential-licenses db)))
 (rf/reg-event-db
