@@ -10,156 +10,156 @@
 (defn reset-form []
   (rf/dispatch-sync [::f/enter-page]))
 
-(deftest add-form-item-test
+(deftest add-form-field-test
   (let [form (rf/subscribe [::f/form])]
-    (testing "adds items"
+    (testing "adds fields"
       (reset-form)
-      (is (= {:items []}
+      (is (= {:fields []}
              @form)
           "before")
 
-      (rf/dispatch-sync [::f/add-form-item])
+      (rf/dispatch-sync [::f/add-form-field])
 
-      (is (= {:items [{:type "text"}]}
+      (is (= {:fields [{:type "text"}]}
              @form)
           "after"))
 
-    (testing "adds items to the end"
+    (testing "adds fields to the end"
       (reset-form)
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "old item"])
-      (is (= {:items [{:type "text" :foo "old item"}]}
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "old field"])
+      (is (= {:fields [{:type "text" :foo "old field"}]}
              @form)
           "before")
 
-      (rf/dispatch-sync [::f/add-form-item])
+      (rf/dispatch-sync [::f/add-form-field])
 
-      (is (= {:items [{:type "text" :foo "old item"} {:type "text"}]}
+      (is (= {:fields [{:type "text" :foo "old field"} {:type "text"}]}
              @form)
           "after"))))
 
-(deftest remove-form-item-test
+(deftest remove-form-field-test
   (let [form (rf/subscribe [::f/form])]
-    (testing "removes items"
+    (testing "removes fields"
       (reset-form)
-      (rf/dispatch-sync [::f/add-form-item])
-      (is (= {:items [{:type "text"}]}
+      (rf/dispatch-sync [::f/add-form-field])
+      (is (= {:fields [{:type "text"}]}
              @form)
           "before")
 
-      (rf/dispatch-sync [::f/remove-form-item 0])
+      (rf/dispatch-sync [::f/remove-form-field 0])
 
-      (is (= {:items []}
+      (is (= {:fields []}
              @form)
           "after"))
 
-    (testing "removes only the item at the specified index"
+    (testing "removes only the field at the specified index"
       (reset-form)
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "item 0"])
-      (rf/dispatch-sync [::f/set-form-field [:items 1 :foo] "item 1"])
-      (rf/dispatch-sync [::f/set-form-field [:items 2 :foo] "item 2"])
-      (is (= {:items [{:type "text" :foo "item 0"}
-                      {:type "text" :foo "item 1"}
-                      {:type "text" :foo "item 2"}]}
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "field 0"])
+      (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
+      (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field 2"])
+      (is (= {:fields [{:type "text" :foo "field 0"}
+                      {:type "text" :foo "field 1"}
+                      {:type "text" :foo "field 2"}]}
              @form)
           "before")
 
-      (rf/dispatch-sync [::f/remove-form-item 1])
+      (rf/dispatch-sync [::f/remove-form-field 1])
 
-      (is (= {:items [{:type "text" :foo "item 0"}
-                      {:type "text" :foo "item 2"}]}
+      (is (= {:fields [{:type "text" :foo "field 0"}
+                      {:type "text" :foo "field 2"}]}
              @form)
           "after"))))
 
-(deftest move-form-item-up-test
+(deftest move-form-field-up-test
   (let [form (rf/subscribe [::f/form])]
-    (testing "moves items up"
+    (testing "moves fields up"
       (reset-form)
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "item 0"])
-      (rf/dispatch-sync [::f/set-form-field [:items 1 :foo] "item 1"])
-      (rf/dispatch-sync [::f/set-form-field [:items 2 :foo] "item X"])
-      (is (= {:items [{:type "text" :foo "item 0"}
-                      {:type "text" :foo "item 1"}
-                      {:type "text" :foo "item X"}]}
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "field 0"])
+      (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
+      (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field X"])
+      (is (= {:fields [{:type "text" :foo "field 0"}
+                      {:type "text" :foo "field 1"}
+                      {:type "text" :foo "field X"}]}
              @form)
           "before")
 
-      (rf/dispatch-sync [::f/move-form-item-up 2])
+      (rf/dispatch-sync [::f/move-form-field-up 2])
 
-      (is (= {:items [{:type "text" :foo "item 0"}
-                      {:type "text" :foo "item X"}
-                      {:type "text" :foo "item 1"}]}
+      (is (= {:fields [{:type "text" :foo "field 0"}
+                      {:type "text" :foo "field X"}
+                      {:type "text" :foo "field 1"}]}
              @form)
           "after move 1")
 
-      (rf/dispatch-sync [::f/move-form-item-up 1])
+      (rf/dispatch-sync [::f/move-form-field-up 1])
 
-      (is (= {:items [{:type "text" :foo "item X"}
-                      {:type "text" :foo "item 0"}
-                      {:type "text" :foo "item 1"}]}
+      (is (= {:fields [{:type "text" :foo "field X"}
+                      {:type "text" :foo "field 0"}
+                      {:type "text" :foo "field 1"}]}
              @form)
           "after move 2")
 
       (testing "unless already first"
-        (rf/dispatch-sync [::f/move-form-item-up 0])
+        (rf/dispatch-sync [::f/move-form-field-up 0])
 
-        (is (= {:items [{:type "text" :foo "item X"}
-                        {:type "text" :foo "item 0"}
-                        {:type "text" :foo "item 1"}]}
+        (is (= {:fields [{:type "text" :foo "field X"}
+                        {:type "text" :foo "field 0"}
+                        {:type "text" :foo "field 1"}]}
                @form)
             "after move 3")))))
 
-(deftest move-form-item-down-test
+(deftest move-form-field-down-test
   (let [form (rf/subscribe [::f/form])]
-    (testing "moves items down"
+    (testing "moves fields down"
       (reset-form)
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/add-form-item])
-      (rf/dispatch-sync [::f/set-form-field [:items 0 :foo] "item X"])
-      (rf/dispatch-sync [::f/set-form-field [:items 1 :foo] "item 1"])
-      (rf/dispatch-sync [::f/set-form-field [:items 2 :foo] "item 2"])
-      (is (= {:items [{:type "text" :foo "item X"}
-                      {:type "text" :foo "item 1"}
-                      {:type "text" :foo "item 2"}]}
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/add-form-field])
+      (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "field X"])
+      (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
+      (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field 2"])
+      (is (= {:fields [{:type "text" :foo "field X"}
+                      {:type "text" :foo "field 1"}
+                      {:type "text" :foo "field 2"}]}
              @form)
           "before")
 
-      (rf/dispatch-sync [::f/move-form-item-down 0])
+      (rf/dispatch-sync [::f/move-form-field-down 0])
 
-      (is (= {:items [{:type "text" :foo "item 1"}
-                      {:type "text" :foo "item X"}
-                      {:type "text" :foo "item 2"}]}
+      (is (= {:fields [{:type "text" :foo "field 1"}
+                      {:type "text" :foo "field X"}
+                      {:type "text" :foo "field 2"}]}
              @form)
           "after move 1")
 
-      (rf/dispatch-sync [::f/move-form-item-down 1])
+      (rf/dispatch-sync [::f/move-form-field-down 1])
 
-      (is (= {:items [{:type "text" :foo "item 1"}
-                      {:type "text" :foo "item 2"}
-                      {:type "text" :foo "item X"}]}
+      (is (= {:fields [{:type "text" :foo "field 1"}
+                      {:type "text" :foo "field 2"}
+                      {:type "text" :foo "field X"}]}
              @form)
           "after move 2")
 
       (testing "unless already last"
-        (rf/dispatch-sync [::f/move-form-item-down 2])
+        (rf/dispatch-sync [::f/move-form-field-down 2])
 
-        (is (= {:items [{:type "text" :foo "item 1"}
-                        {:type "text" :foo "item 2"}
-                        {:type "text" :foo "item X"}]}
+        (is (= {:fields [{:type "text" :foo "field 1"}
+                        {:type "text" :foo "field 2"}
+                        {:type "text" :foo "field X"}]}
                @form)
             "after move 3")))))
 
 (deftest build-request-test
   (let [form {:organization "abc"
               :title "the title"
-              :items [{:title {:en "en title"
+              :fields [{:title {:en "en title"
                                :fi "fi title"}
                        :optional true
                        :type "text"
@@ -170,7 +170,7 @@
     (testing "valid form"
       (is (= {:organization "abc"
               :title "the title"
-              :items [{:title {:en "en title"
+              :fields [{:title {:en "en title"
                                :fi "fi title"}
                        :optional true
                        :type "text"
@@ -185,52 +185,52 @@
     (testing "missing title"
       (is (nil? (build-request (assoc-in form [:title] "") languages))))
 
-    (testing "zero items is ok"
+    (testing "zero fields is ok"
       (is (= {:organization "abc"
               :title "the title"
-              :items []}
-             (build-request (assoc-in form [:items] []) languages))))
+              :fields []}
+             (build-request (assoc-in form [:fields] []) languages))))
 
-    (testing "missing item title"
+    (testing "missing field title"
       (is (= nil
-             (build-request (assoc-in form [:items 0 :title :en] "") languages)
-             (build-request (update-in form [:items 0 :title] dissoc :en) languages)
-             (build-request (assoc-in form [:items 0 :title] nil) languages))))
+             (build-request (assoc-in form [:fields 0 :title :en] "") languages)
+             (build-request (update-in form [:fields 0 :title] dissoc :en) languages)
+             (build-request (assoc-in form [:fields 0 :title] nil) languages))))
 
     (testing "missing optional implies false"
-      (is (false? (getx-in (build-request (assoc-in form [:items 0 :optional] nil) languages)
-                           [:items 0 :optional]))))
+      (is (false? (getx-in (build-request (assoc-in form [:fields 0 :optional] nil) languages)
+                           [:fields 0 :optional]))))
 
-    (testing "missing item type"
-      (is (nil? (build-request (assoc-in form [:items 0 :type] nil) languages))))
+    (testing "missing field type"
+      (is (nil? (build-request (assoc-in form [:fields 0 :type] nil) languages))))
 
     (testing "input prompt is optional"
       (is (= {:en "" :fi ""}
-             (getx-in (build-request (assoc-in form [:items 0 :input-prompt] nil) languages)
-                      [:items 0 :input-prompt])
-             (getx-in (build-request (assoc-in form [:items 0 :input-prompt] {:en ""}) languages)
-                      [:items 0 :input-prompt])
-             (getx-in (build-request (assoc-in form [:items 0 :input-prompt] {:en "" :fi ""}) languages)
-                      [:items 0 :input-prompt]))))
+             (getx-in (build-request (assoc-in form [:fields 0 :input-prompt] nil) languages)
+                      [:fields 0 :input-prompt])
+             (getx-in (build-request (assoc-in form [:fields 0 :input-prompt] {:en ""}) languages)
+                      [:fields 0 :input-prompt])
+             (getx-in (build-request (assoc-in form [:fields 0 :input-prompt] {:en "" :fi ""}) languages)
+                      [:fields 0 :input-prompt]))))
 
     (testing "maxlength is optional"
-      (is (nil? (getx-in (build-request (assoc-in form [:items 0 :maxlength] "") languages)
-                         [:items 0 :maxlength])))
-      (is (nil? (getx-in (build-request (assoc-in form [:items 0 :maxlength] nil) languages)
-                         [:items 0 :maxlength]))))
+      (is (nil? (getx-in (build-request (assoc-in form [:fields 0 :maxlength] "") languages)
+                         [:fields 0 :maxlength])))
+      (is (nil? (getx-in (build-request (assoc-in form [:fields 0 :maxlength] nil) languages)
+                         [:fields 0 :maxlength]))))
 
     (testing "if you use input prompt, you must fill in all the languages"
       (is (= nil
-             (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt" :fi ""}) languages)
-             (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt"}) languages))))
+             (build-request (assoc-in form [:fields 0 :input-prompt] {:en "en prompt" :fi ""}) languages)
+             (build-request (assoc-in form [:fields 0 :input-prompt] {:en "en prompt"}) languages))))
 
     (testing "date fields"
-      (let [form (assoc-in form [:items 0 :type] "date")]
+      (let [form (assoc-in form [:fields 0 :type] "date")]
 
         (testing "valid form"
           (is (= {:organization "abc"
                   :title "the title"
-                  :items [{:title {:en "en title"
+                  :fields [{:title {:en "en title"
                                    :fi "fi title"}
                            :optional true
                            :type "date"}]}
@@ -238,8 +238,8 @@
 
     (testing "option fields"
       (let [form (-> form
-                     (assoc-in [:items 0 :type] "option")
-                     (assoc-in [:items 0 :options] [{:key "yes"
+                     (assoc-in [:fields 0 :type] "option")
+                     (assoc-in [:fields 0 :options] [{:key "yes"
                                                      :label {:en "en yes"
                                                              :fi "fi yes"}}
                                                     {:key "no"
@@ -249,7 +249,7 @@
         (testing "valid form"
           (is (= {:organization "abc"
                   :title "the title"
-                  :items [{:title {:en "en title"
+                  :fields [{:title {:en "en title"
                                    :fi "fi title"}
                            :optional true
                            :type "option"
@@ -263,18 +263,18 @@
 
         (testing "missing option key"
           (is (= nil
-                 (build-request (assoc-in form [:items 0 :options 0 :key] "") languages)
-                 (build-request (assoc-in form [:items 0 :options 0 :key] nil) languages))))
+                 (build-request (assoc-in form [:fields 0 :options 0 :key] "") languages)
+                 (build-request (assoc-in form [:fields 0 :options 0 :key] nil) languages))))
 
         (testing "missing option label"
           (is (= nil
-                 (build-request (assoc-in form [:items 0 :options 0 :label] {:en "" :fi ""}) languages)
-                 (build-request (assoc-in form [:items 0 :options 0 :label] nil) languages))))))
+                 (build-request (assoc-in form [:fields 0 :options 0 :label] {:en "" :fi ""}) languages)
+                 (build-request (assoc-in form [:fields 0 :options 0 :label] nil) languages))))))
 
     (testing "multiselect fields"
       (let [form (-> form
-                     (assoc-in [:items 0 :type] "multiselect")
-                     (assoc-in [:items 0 :options] [{:key "egg"
+                     (assoc-in [:fields 0 :type] "multiselect")
+                     (assoc-in [:fields 0 :options] [{:key "egg"
                                                      :label {:en "Egg"
                                                              :fi "Munaa"}}
                                                     {:key "bacon"
@@ -284,7 +284,7 @@
         (testing "valid form"
           (is (= {:organization "abc"
                   :title "the title"
-                  :items [{:title {:en "en title"
+                  :fields [{:title {:en "en title"
                                    :fi "fi title"}
                            :optional true
                            :type "multiselect"
@@ -298,13 +298,13 @@
 
         (testing "missing option key"
           (is (= nil
-                 (build-request (assoc-in form [:items 0 :options 0 :key] "") languages)
-                 (build-request (assoc-in form [:items 0 :options 0 :key] nil) languages))))
+                 (build-request (assoc-in form [:fields 0 :options 0 :key] "") languages)
+                 (build-request (assoc-in form [:fields 0 :options 0 :key] nil) languages))))
 
         (testing "missing option label"
           (is (= nil
-                 (build-request (assoc-in form [:items 0 :options 0 :label] {:en "" :fi ""}) languages)
-                 (build-request (assoc-in form [:items 0 :options 0 :label] nil) languages))))))))
+                 (build-request (assoc-in form [:fields 0 :options 0 :label] {:en "" :fi ""}) languages)
+                 (build-request (assoc-in form [:fields 0 :options 0 :label] nil) languages))))))))
 
 (deftest build-localized-string-test
   (let [languages [:en :fi]]

@@ -23,12 +23,12 @@
       read-ok-body
       :id))
 
-(defn- create-form-with-fields [form-items]
+(defn- create-form-with-fields [form-fields]
   (-> (request :post "/api/forms/create")
       (authenticate "42" "owner")
       (json-body {:organization "abc"
                   :title ""
-                  :items form-items})
+                  :fields form-fields})
       handler
       read-ok-body
       :id))
