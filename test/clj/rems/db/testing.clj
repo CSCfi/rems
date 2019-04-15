@@ -6,6 +6,7 @@
             [rems.api.applications-v2]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.db.dynamic-roles]
             [rems.db.test-data :as test-data]))
 
 (defn test-db-fixture [f]
@@ -13,7 +14,8 @@
   (mount/start-with-args {:test true}
                          #'rems.config/env
                          #'rems.db.core/*db*
-                         #'rems.api.applications-v2/all-applications-cache)
+                         #'rems.api.applications-v2/all-applications-cache
+                         #'rems.db.dynamic-roles/dynamic-roles-cache)
   (db/assert-test-database!)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
   (f)

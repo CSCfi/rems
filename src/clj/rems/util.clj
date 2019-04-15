@@ -3,7 +3,8 @@
             [buddy.core.nonce :as buddy-nonce]
             [buddy.core.codecs :as buddy-codecs]
             [rems.config :refer [env]]
-            [rems.context :as context]))
+            [rems.context :as context])
+  (:import [clojure.lang Atom]))
 
 (defn errorf
   "Throw a RuntimeException, args passed to `clojure.core/format`."
@@ -78,3 +79,6 @@
   []
   (let [randomdata (buddy-nonce/random-bytes 16)]
     (buddy-codecs/bytes->hex randomdata)))
+
+(defn atom? [x]
+  (instance? Atom x))

@@ -38,6 +38,7 @@
                  [org.clojars.runa/conjure "2.2.0"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/clojurescript "1.10.520" :exclusions [com.fasterxml.jackson.core/jackson-core]]
+                 [org.clojure/core.cache "0.7.2"]
                  [org.clojure/core.memoize "0.7.1"]
                  [org.clojure/tools.cli "0.4.1"]
                  [org.clojure/tools.logging "0.4.1"]
@@ -140,14 +141,15 @@
 
    :project/dev {:dependencies [[binaryage/devtools "0.9.10"]
                                 [cider/piggieback "0.3.10"]
-                                [org.clojure/core.rrb-vector "0.0.14"] ;; the version doo pulls in is broken on fresh cljs
+                                [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
                                 [doo "0.1.11"]
                                 [eftest "0.5.4"]
+                                [etaoin "0.3.1"]
                                 [figwheel-sidecar "0.5.18" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
+                                [org.clojure/core.rrb-vector "0.0.14"] ;; the version doo pulls in is broken on fresh cljs
                                 [re-frisk "0.5.4"]
                                 [ring/ring-mock "0.3.2" :exclusions [cheshire]]
-                                [se.haleby/stub-http "0.2.5"]
-                                [etaoin "0.3.1"]]
+                                [se.haleby/stub-http "0.2.5"]]
 
                  :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
                            [lein-ancient "0.6.15"]
@@ -156,7 +158,8 @@
                            [lein-figwheel "0.5.18"]]
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
-                 :jvm-opts ["-Drems.config=dev-config.edn"]
+                 :jvm-opts ["-Drems.config=dev-config.edn"
+                            "-Djdk.attach.allowAttachSelf"]
                  :source-paths ["env/dev/clj"]
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems.standalone

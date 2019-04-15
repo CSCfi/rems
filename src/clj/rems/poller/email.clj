@@ -182,7 +182,7 @@
   :start (doto (ScheduledThreadPoolExecutor. 1)
            (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
   :stop (doto email-poller
-          (.shutdown)
+          (.shutdownNow)
           (.awaitTermination 60 TimeUnit/SECONDS)))
 
 (comment

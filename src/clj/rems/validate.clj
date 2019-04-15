@@ -1,27 +1,20 @@
 (ns rems.validate
   "Validating data in the database."
-  (:require [clojure.tools.logging :as log]
-            [rems.db.applications :as applications]
-            [rems.db.core :as db]))
-
-(defn- validate-application [id]
-  (try
-    (applications/get-application-state id)
-    nil
-    (catch Throwable e
-      (log/errorf "Application %s failed" id)
-      (log/error e)
-      [{:invalid-application id}])))
-
-(defn- validate-applications []
-  (let [applications (db/get-applications {})]
-    (log/infof "Validating %s applications" (count applications))
-    (mapcat validate-application (map :id applications))))
+  (:require [clojure.pprint :as pprint]
+            [clojure.tools.logging :as log]
+            [rems.api.applications-v2 :as applications-v2]))
 
 (defn validate []
   (log/info "Validating data")
-  (let [application-errors (validate-applications)]
-    (if (empty? application-errors)
-      (log/infof "Validations passed")
-      (log/errorf "Validations failed"))
-    application-errors))
+  (try
+    ;; will throw an exception if there are non-valid events
+    (applications-v2/get-all-unrestricted-applications)
+    (log/info "Validations passed")
+    (catch Throwable e
+      (log/error "Validations failed"
+                 (when-let [data (ex-data e)]
+                   (with-out-str
+                     (println)
+                     (pprint/pprint data))))
+      (log/error e)
+      e)))

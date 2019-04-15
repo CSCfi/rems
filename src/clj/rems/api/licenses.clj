@@ -1,14 +1,14 @@
 (ns rems.api.licenses
-  (:require [rems.api.schema :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
+            [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.util :refer [getx-user-id]]
-            [rems.db.core :as db]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
             [ring.middleware.multipart-params :as multipart]
-            [ring.swagger.upload :as upload]))
+            [ring.swagger.upload :as upload]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")

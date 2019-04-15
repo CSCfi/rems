@@ -26,5 +26,5 @@
   :start (doto (ScheduledThreadPoolExecutor. 1)
            (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
   :stop (doto entitlements-poller
-          (.shutdown)
+          (.shutdownNow)
           (.awaitTermination 60 TimeUnit/SECONDS)))

@@ -114,7 +114,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
         (migrate-application! 22 (:id new-workflow))
         (migrate-application! 23 (:id new-workflow)))
       ;; validation already happens when the events are written, but just in case...
-      (is (empty? (validate/validate))))
+      (is (nil? (validate/validate))))
 
     (let [app-id 1
           application (applications/get-application-state app-id)]

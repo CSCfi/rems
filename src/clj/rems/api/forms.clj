@@ -2,7 +2,6 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer [SuccessResponse UpdateStateCommand]]
             [rems.api.util]
-            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]

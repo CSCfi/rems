@@ -21,7 +21,10 @@
     (log/debug name-kw "running with state" (pr-str prev-state))
     (try
       (doseq [e events]
+        (when (Thread/interrupted)
+          (throw (InterruptedException.)))
         (try
+          ;; TODO: add proper monitoring for pollers and caches
           (log/info name-kw "processing event" (:event/id e))
           (process-event! e)
           (set-poller-state! name-kw {:last-processed-event-id (:event/id e)})
