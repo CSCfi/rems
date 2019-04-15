@@ -68,6 +68,11 @@
   (assoc EventBase
          :event/type (s/enum :application.event/licenses-accepted)
          :application/accepted-licenses #{s/Int}))
+(s/defschema LicensesAddedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/licenses-added)
+         :application/comment s/Str
+         :application/licenses [{:license/id s/Int}]))
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/member-added)
@@ -115,6 +120,7 @@
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
    :application.event/licenses-accepted LicensesAcceptedEvent
+   :application.event/licenses-added LicensesAddedEvent
    :application.event/member-added MemberAddedEvent
    :application.event/member-invited MemberInvitedEvent
    :application.event/member-joined MemberJoinedEvent

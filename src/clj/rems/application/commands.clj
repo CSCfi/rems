@@ -62,6 +62,11 @@
   (assoc CommandBase
          :comment s/Str))
 
+(s/defschema AddLicensesCommand
+  (assoc CommandBase
+         :comment s/Str
+         :licenses [s/Num]))
+
 (s/defschema AddMemberCommand
   (assoc CommandBase
          :member {:userid UserId}))
@@ -90,6 +95,7 @@
   {#_:application.command/require-license
    :application.command/accept-invitation AcceptInvitationCommand
    :application.command/accept-licenses AcceptLicensesCommand
+   :application.command/add-licenses AddLicensesCommand
    :application.command/add-member AddMemberCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/approve ApproveCommand

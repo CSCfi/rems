@@ -172,6 +172,7 @@
         handler-id "developer"
         commenter-id "carl"
         decider-id "bob"
+        license-id 5 ;; additional licenses from test data
         application-id 11] ;; submitted dynamic application from test data
 
     (testing "getting dynamic application as applicant"
@@ -195,6 +196,7 @@
                  "application.command/reject"
                  "application.command/approve"
                  "application.command/return"
+                 "application.command/add-licenses"
                  "application.command/add-member"
                  "application.command/remove-member"
                  "application.command/invite-member"
@@ -243,6 +245,21 @@
                   comment-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
                      (:application/request-id comment-event)))))))
+
+      (testing "adding and then accepting additonal licenses"
+        (let [eventcount (count (get (get-application application-id handler-id) :events))]
+          (testing "add licenses"
+            (is (= {:success true} (send-command handler-id
+                                                 {:type :application.command/add-licenses
+                                                  :application-id application-id
+                                                  :licenses [license-id]
+                                                  :comment "Please approve these new terms"}))))
+          (testing "applicant can now accept licenses"
+            (is (= {:success true} (send-command user-id
+                                                 {:type :application.command/accept-licenses
+                                                  :application-id application-id
+                                                  :accepted-licenses [license-id]}))))))
+
       (testing "request-decision"
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/request-decision
@@ -273,6 +290,8 @@
                     "application.event/submitted"
                     "application.event/comment-requested"
                     "application.event/commented"
+                    "application.event/licenses-added"
+                    "application.event/licenses-accepted"
                     "application.event/decision-requested"
                     "application.event/decided"
                     "application.event/approved"]
@@ -282,6 +301,8 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/licenses-added"
+                    "application.event/licenses-accepted"
                     "application.event/approved"]
                    applicant-event-types))))))))
 

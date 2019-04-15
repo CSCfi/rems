@@ -38,6 +38,7 @@
                                                   :application.command/accept-licenses]
                                       :member [:application.command/accept-licenses]
                                       :handler [:see-everything
+                                                :application.command/add-licenses
                                                 :application.command/add-member
                                                 :application.command/remove-member
                                                 :application.command/invite-member
@@ -171,12 +172,9 @@
              :application/members #{}
              :application/past-members #{}
              :application/invitation-tokens {}
-             :application/resources (map (fn [resource]
-                                           {:catalogue-item/id (:catalogue-item/id resource)
-                                            :resource/ext-id (:resource/ext-id resource)})
+             :application/resources (map #(select-keys % [:catalogue-item/id :resource/ext-id])
                                          (:application/resources event))
-             :application/licenses (map (fn [license]
-                                          {:license/id (:license/id license)})
+             :application/licenses (map #(select-keys % [:license/id])
                                         (:application/licenses event))
              :application/accepted-licenses {}
              :application/events []
@@ -200,6 +198,17 @@
   (-> application
       (assoc :application/modified (:event/time event))
       (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
+
+(defmethod event-type-specific-application-view :application.event/licenses-added
+  [application event]
+  (-> application
+      (assoc :application/modified (:event/time event))
+      (update :application/licenses
+              (fn [licenses]
+                (-> licenses
+                    (into (:application/licenses event))
+                     distinct
+                     vec)))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]

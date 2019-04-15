@@ -4,6 +4,7 @@
             [re-frame.core :as rf]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
+            [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.close :refer [close-action-button close-form]]
@@ -522,6 +523,7 @@
                               :application.command/decide [decide-action-button]
                               :application.command/request-comment [request-comment-action-button]
                               :application.command/comment [comment-action-button]
+                              :application.command/add-licenses [add-licenses-action-button]
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
                               :application.command/close [close-action-button]]]
@@ -540,6 +542,7 @@
                 [close-form app-id reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
+                [add-licenses-form app-id reload]
                 [approve-reject-form app-id reload]]]]
     (when (seq actions)
       [collapsible/component
