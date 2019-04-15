@@ -295,8 +295,7 @@
                                          :application/id 1
                                          :application/accepted-licenses #{30 31 32}})
                     expected-application (deep-merge expected-application
-                                                     {:application/modified (DateTime. 2500)
-                                                      :application/last-activity (DateTime. 2500)
+                                                     {:application/last-activity (DateTime. 2500)
                                                       :application/events events
                                                       :application/accepted-licenses {"applicant" #{30 31 32}}})]
                 (is (= expected-application (apply-events events)))
@@ -434,8 +433,7 @@
                                                   :application/id 1
                                                   :application/accepted-licenses #{30 31 32 33}})
                                     expected-application (merge expected-application
-                                                                {:application/modified (DateTime. 4500)
-                                                                 :application/last-activity (DateTime. 4500)
+                                                                {:application/last-activity (DateTime. 4500)
                                                                  :application/events events
                                                                  :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
                                 (is (= expected-application (apply-events events)))
@@ -460,8 +458,7 @@
                                                           :application/id 1
                                                           :application/accepted-licenses #{30 33}})
                                             expected-application (merge expected-application
-                                                                        {:application/modified (DateTime. 4500)
-                                                                         :application/last-activity (DateTime. 4500)
+                                                                        {:application/last-activity (DateTime. 4500)
                                                                          :application/events events
                                                                          :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                          "member" #{30 33}}})]
@@ -474,8 +471,7 @@
                                                               :application/id 1
                                                               :application/accepted-licenses #{31 32}})
                                                 expected-application (merge expected-application
-                                                                            {:application/modified (DateTime. 4500)
-                                                                             :application/last-activity (DateTime. 4500)
+                                                                            {:application/last-activity (DateTime. 4500)
                                                                              :application/events events
                                                                              :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                              "member" #{31 32}}})]
