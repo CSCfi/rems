@@ -71,6 +71,58 @@
                   (is (= (:fields command)
                          (:fields form-template))))))))))))
 
+(deftest forms-api-all-field-types-test
+  (let [api-key "42"
+        user-id "owner"
+        ;;"attachment" "date" "description" "label" "multiselect" "option" "text" "texta"
+        localized {:en "en" :fi "fi"}
+        form-spec {:organization "abc" :title "all field types test"
+                   :fields [{:type "text"
+                             :title localized
+                             :optional false}
+                            {:type "texta"
+                             :title localized
+                             :optional true
+                             :maxlength 300
+                             :input-prompt localized}
+                            {:type "description"
+                             :title localized
+                             :optional false}
+                            {:type "option"
+                             :title localized
+                             :optional true
+                             :options [{:key "true" :label localized}
+                                       {:key "false" :label localized}]}
+                            {:type "multiselect"
+                             :title localized
+                             :optional false
+                             :options [{:key "a" :label localized}
+                                       {:key "b" :label localized}
+                                       {:key "c" :label localized}]}
+                            {:type "label"
+                             :title localized
+                             :optional true}
+                            {:type "date"
+                             :title localized
+                             :optional true}
+                            {:type "attachment"
+                             :title localized
+                             :optional false}]}]
+    (testing "creating"
+      (let [form-id (-> (request :post "/api/forms/create")
+                        (authenticate api-key user-id)
+                        (json-body form-spec)
+                        handler
+                        read-ok-body
+                        :id)]
+        (is form-id)
+        (testing "and fetching"
+          (let [form (-> (request :get (str "/api/forms/" form-id))
+                         (authenticate api-key user-id)
+                         handler
+                         read-ok-body)]
+            (is (= form-spec (select-keys form [:organization :title :fields])))))))))
+
 (deftest form-update-test
   (let [api-key "42"
         user-id "owner"
