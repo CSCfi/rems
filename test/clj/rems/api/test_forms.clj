@@ -91,14 +91,16 @@
                             {:type "option"
                              :title localized
                              :optional true
-                             :options [{:key "true" :label localized}
-                                       {:key "false" :label localized}]}
+                             :options [{:key "a" :label localized}
+                                       {:key "b" :label localized}
+                                       {:key "c" :label localized}]}
                             {:type "multiselect"
                              :title localized
                              :optional false
                              :options [{:key "a" :label localized}
                                        {:key "b" :label localized}
-                                       {:key "c" :label localized}]}
+                                       {:key "c" :label localized}
+                                       {:key "d" :label localized}]}
                             {:type "label"
                              :title localized
                              :optional true}
