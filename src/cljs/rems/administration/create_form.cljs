@@ -299,18 +299,22 @@
     [:div
      [administration-navigator-container]
      [:h2 (text :t.administration/create-form)]
-     [collapsible/component
-      {:id "create-form"
-       :title (text :t.administration/create-form)
-       :always [:div
-                [form-organization-field]
-                [form-title-field]
-                [form-fields (:fields form)]
+     [:div.container-fluid.editor-content
+      [:div.row
+       [:div.col-lg
+        [collapsible/component
+         {:id "create-form"
+          :title (text :t.administration/create-form)
+          :always [:div
+                   [form-organization-field]
+                   [form-title-field]
+                   [form-fields (:fields form)]
 
-                [:div.form-field.new-form-field
-                 [add-form-field-button]]
+                   [:div.form-field.new-form-field
+                    [add-form-field-button]]
 
-                [:div.col.commands
-                 [cancel-button]
-                 [save-form-button #(rf/dispatch [::create-form %])]]]}]
-     [form-preview form]]))
+                   [:div.col.commands
+                    [cancel-button]
+                    [save-form-button #(rf/dispatch [::create-form %])]]]}]]
+       [:div.col-lg
+        [form-preview form]]]]]))

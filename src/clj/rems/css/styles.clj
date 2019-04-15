@@ -295,6 +295,7 @@
                     :min-height (u/px 300)
                     :max-width (u/px 1200)
                     :flex-grow 1}]
+   [:.main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap}]
    [:.btn-primary
@@ -385,6 +386,7 @@
     {:color (util/get-theme-attribute :nav-color :link-color :color3)
      :border 0}] ; for button links
    [:.navbar
+    {:max-width (u/px 1200)}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
    [:.navbar-top-bar {:width (u/percent 100)
