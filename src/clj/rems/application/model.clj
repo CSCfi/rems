@@ -196,7 +196,6 @@
 (defmethod event-type-specific-application-view :application.event/licenses-accepted
   [application event]
   (-> application
-      (assoc :application/modified (:event/time event))
       (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/licenses-added
@@ -207,8 +206,8 @@
               (fn [licenses]
                 (-> licenses
                     (into (:application/licenses event))
-                     distinct
-                     vec)))))
+                    distinct
+                    vec)))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]

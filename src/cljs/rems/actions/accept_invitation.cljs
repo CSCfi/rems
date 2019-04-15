@@ -10,7 +10,7 @@
  (fn [{:keys [db]} [_ token]]
    (status-modal/common-pending-handler! (text :t.actions/accept-invitation))
    {:db (assoc db ::token token)
-    ::accept-invitation [(get-in db [:identity :user]) token]}))
+    ::accept-invitation token}))
 
 (rf/reg-sub ::token (fn [db] (::token db "")))
 
@@ -41,12 +41,11 @@
 
 (rf/reg-fx
  ::accept-invitation
- (fn [[user token]]
+ (fn [token]
    (post! "/api/applications/accept-invitation"
           {:url-params {:invitation-token token}
            :handler success-handler
-           :error-handler error-handler
-           :headers {"x-rems-user-id" (:eppn user)}})))
+           :error-handler error-handler})))
 
 (defn accept-invitation-page []
   (let [token @(rf/subscribe [::token])]

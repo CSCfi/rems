@@ -295,8 +295,7 @@
                                          :application/id 1
                                          :application/accepted-licenses #{30 31 32}})
                     expected-application (deep-merge expected-application
-                                                     {:application/modified (DateTime. 2500)
-                                                      :application/last-activity (DateTime. 2500)
+                                                     {:application/last-activity (DateTime. 2500)
                                                       :application/events events
                                                       :application/accepted-licenses {"applicant" #{30 31 32}}})]
                 (is (= expected-application (apply-events events)))
@@ -395,21 +394,21 @@
                                                          :application/modified (DateTime. 3500)
                                                          :application/events events
                                                          :application/licenses (conj (:application/licenses expected-application)
-                                                                                {:license/id 33
-                                                                                 :license/type :attachment
-                                                                                 :license/title {:en "en title"
-                                                                                                 :fi "fi title"
-                                                                                                 :default "non-localized title"}
-                                                                                 :license/attachment-id {:en 3301
-                                                                                                         :fi 3302
-                                                                                                         :default 3300}
-                                                                                 :license/attachment-filename {:en "en filename"
-                                                                                                               :fi "fi filename"
-                                                                                                               :default "non-localized filename"}
-                                                                                 :license/start (DateTime. 100)
-                                                                                 :license/end nil
-                                                                                 :license/expired false
-                                                                                 :license/enabled true
+                                                                                     {:license/id 33
+                                                                                      :license/type :attachment
+                                                                                      :license/title {:en "en title"
+                                                                                                      :fi "fi title"
+                                                                                                      :default "non-localized title"}
+                                                                                      :license/attachment-id {:en 3301
+                                                                                                              :fi 3302
+                                                                                                              :default 3300}
+                                                                                      :license/attachment-filename {:en "en filename"
+                                                                                                                    :fi "fi filename"
+                                                                                                                    :default "non-localized filename"}
+                                                                                      :license/start (DateTime. 100)
+                                                                                      :license/end nil
+                                                                                      :license/expired false
+                                                                                      :license/enabled true
                                                                                       :license/archived false})})]
                         (is (= expected-application (apply-events events)))
 
@@ -434,8 +433,7 @@
                                                   :application/id 1
                                                   :application/accepted-licenses #{30 31 32 33}})
                                     expected-application (merge expected-application
-                                                                {:application/modified (DateTime. 4500)
-                                                                 :application/last-activity (DateTime. 4500)
+                                                                {:application/last-activity (DateTime. 4500)
                                                                  :application/events events
                                                                  :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
                                 (is (= expected-application (apply-events events)))
@@ -443,25 +441,24 @@
                                 (testing "> member added"
                                   (let [events (conj events
                                                      {:event/type :application.event/member-added
-                                                      :event/time (DateTime. 4000)
+                                                      :event/time (DateTime. 4600)
                                                       :event/actor "handler"
                                                       :application/id 1
                                                       :application/member {:userid "member"}})
                                         expected-application (merge expected-application
-                                                                    {:application/last-activity (DateTime. 4000)
+                                                                    {:application/last-activity (DateTime. 4600)
                                                                      :application/events events
                                                                      :application/members #{{:userid "member"}}})]
                                     (is (= expected-application (apply-events events)))
                                     (testing "> licenses accepted for new member"
                                       (let [events (conj events
                                                          {:event/type :application.event/licenses-accepted
-                                                          :event/time (DateTime. 4500)
+                                                          :event/time (DateTime. 4700)
                                                           :event/actor "member"
                                                           :application/id 1
                                                           :application/accepted-licenses #{30 33}})
                                             expected-application (merge expected-application
-                                                                        {:application/modified (DateTime. 4500)
-                                                                         :application/last-activity (DateTime. 4500)
+                                                                        {:application/last-activity (DateTime. 4700)
                                                                          :application/events events
                                                                          :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                          "member" #{30 33}}})]
@@ -469,13 +466,12 @@
                                         (testing "> licenses accepted overwrites previous"
                                           (let [events (conj events
                                                              {:event/type :application.event/licenses-accepted
-                                                              :event/time (DateTime. 4500)
+                                                              :event/time (DateTime. 4800)
                                                               :event/actor "member"
                                                               :application/id 1
                                                               :application/accepted-licenses #{31 32}})
                                                 expected-application (merge expected-application
-                                                                            {:application/modified (DateTime. 4500)
-                                                                             :application/last-activity (DateTime. 4500)
+                                                                            {:application/last-activity (DateTime. 4800)
                                                                              :application/events events
                                                                              :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                              "member" #{31 32}}})]

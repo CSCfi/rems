@@ -11,10 +11,8 @@
 
 (rf/reg-fx
  ::fetch-potential-members
- (fn [[user on-success]]
-   (fetch "/api/applications/members"
-          {:handler on-success
-           :headers {"x-rems-user-id" (:eppn user)}})))
+ (fn [on-success]
+   (fetch "/api/applications/members" {:handler on-success})))
 
 (rf/reg-event-fx
  ::open-form
@@ -22,8 +20,7 @@
    {:db (assoc db
                ::potential-members #{}
                ::selected-member nil)
-    ::fetch-potential-members [(get-in db [:identity :user])
-                               #(rf/dispatch [::set-potential-members %])]}))
+    ::fetch-potential-members #(rf/dispatch [::set-potential-members %])}))
 
 (rf/reg-sub ::potential-members (fn [db _] (::potential-members db)))
 (rf/reg-event-db

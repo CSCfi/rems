@@ -9,10 +9,8 @@
 
 (rf/reg-fx
  ::fetch-potential-commenters
- (fn [[user on-success]]
-   (fetch "/api/applications/commenters"
-          {:handler on-success
-           :headers {"x-rems-user-id" (:eppn user)}})))
+ (fn [on-success]
+   (fetch "/api/applications/commenters" {:handler on-success})))
 
 (rf/reg-event-fx
  ::open-form
@@ -22,8 +20,7 @@
                ::comment ""
                ::potential-commenters #{}
                ::selected-commenters #{})
-    ::fetch-potential-commenters [(get-in db [:identity :user])
-                                  #(rf/dispatch [::set-potential-commenters %])]}))
+    ::fetch-potential-commenters #(rf/dispatch [::set-potential-commenters %])}))
 
 (rf/reg-sub ::potential-commenters (fn [db _] (::potential-commenters db)))
 (rf/reg-event-db
