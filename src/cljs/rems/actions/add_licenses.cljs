@@ -25,10 +25,10 @@
     ::fetch-licenses [(get-in db [:identity :user])
                       #(rf/dispatch [::set-potential-licenses %])]}))
 
-(defn- assoc-search-term
-  "Prepopulate a search term with localized names and unlocalized title"
+(defn- assoc-all-titles
+  "Prepopulate `:all-titles` property to facilitate searching with localized names and unlocalized title"
   [license]
-  (assoc license :search-term (str/join "" (conj (mapcat :title (vals (:localizations license)))
+  (assoc license :all-titles (str/join "" (conj (mapcat :title (vals (:localizations license)))
                                                  (:title license)))))
 
 (rf/reg-sub ::potential-licenses (fn [db _] (::potential-licenses db)))
@@ -36,7 +36,7 @@
  ::set-potential-licenses
  (fn [db [_ licenses]]
    (assoc db
-          ::potential-licenses (set (map assoc-search-term licenses))
+          ::potential-licenses (set (map assoc-all-titles licenses))
           ::selected-licenses #{})))
 
 (rf/reg-sub ::selected-licenses (fn [db _] (::selected-licenses db)))
@@ -94,7 +94,7 @@
        :item->key :id
        :item->text #(title-of-license % language)
        :item->value identity
-       :search-fields [:search-term]
+       :search-fields [:all-titles]
        :add-fn on-add-licenses
        :remove-fn on-remove-license}]]]])
 
