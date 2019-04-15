@@ -9,10 +9,8 @@
 
 (rf/reg-fx
  ::fetch-licenses
- (fn [[user on-success]]
-   (fetch "/api/licenses"
-          {:handler on-success
-           :headers {"x-rems-user-id" (:eppn user)}})))
+ (fn [on-success]
+   (fetch "/api/licenses" {:handler on-success})))
 
 (rf/reg-event-fx
  ::open-form
@@ -22,8 +20,7 @@
                ::comment ""
                ::potential-licenses #{}
                ::selected-licenses #{})
-    ::fetch-licenses [(get-in db [:identity :user])
-                      #(rf/dispatch [::set-potential-licenses %])]}))
+    ::fetch-licenses #(rf/dispatch [::set-potential-licenses %])}))
 
 (defn- assoc-all-titles
   "Prepopulate `:all-titles` property to facilitate searching with localized names and unlocalized title"
