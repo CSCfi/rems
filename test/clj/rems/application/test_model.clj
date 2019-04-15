@@ -394,48 +394,7 @@
                                                         {:application/last-activity (DateTime. 3500)
                                                          :application/modified (DateTime. 3500)
                                                          :application/events events
-                                                         :application/licenses [{:license/id 30
-                                                                                 :license/type :link
-                                                                                 :license/title {:en "en title"
-                                                                                                 :fi "fi title"
-                                                                                                 :default "non-localized title"}
-                                                                                 :license/link {:en "http://en-license-link"
-                                                                                                :fi "http://fi-license-link"
-                                                                                                :default "http://non-localized-license-link"}
-                                                                                 :license/start (DateTime. 100)
-                                                                                 :license/end nil
-                                                                                 :license/expired false
-                                                                                 :license/enabled true
-                                                                                 :license/archived false}
-                                                                                {:license/id 31
-                                                                                 :license/type :text
-                                                                                 :license/title {:en "en title"
-                                                                                                 :fi "fi title"
-                                                                                                 :default "non-localized title"}
-                                                                                 :license/text {:en "en license text"
-                                                                                                :fi "fi license text"
-                                                                                                :default "non-localized license text"}
-                                                                                 :license/start (DateTime. 100)
-                                                                                 :license/end nil
-                                                                                 :license/expired false
-                                                                                 :license/enabled true
-                                                                                 :license/archived false}
-                                                                                {:license/id 32
-                                                                                 :license/type :attachment
-                                                                                 :license/title {:en "en title"
-                                                                                                 :fi "fi title"
-                                                                                                 :default "non-localized title"}
-                                                                                 :license/attachment-id {:en 3201
-                                                                                                         :fi 3202
-                                                                                                         :default 3200}
-                                                                                 :license/attachment-filename {:en "en filename"
-                                                                                                               :fi "fi filename"
-                                                                                                               :default "non-localized filename"}
-                                                                                 :license/start (DateTime. 100)
-                                                                                 :license/end nil
-                                                                                 :license/expired false
-                                                                                 :license/enabled true
-                                                                                 :license/archived false}
+                                                         :application/licenses (conj (:application/licenses expected-application)
                                                                                 {:license/id 33
                                                                                  :license/type :attachment
                                                                                  :license/title {:en "en title"
@@ -451,7 +410,7 @@
                                                                                  :license/end nil
                                                                                  :license/expired false
                                                                                  :license/enabled true
-                                                                                 :license/archived false}]})]
+                                                                                      :license/archived false})})]
                         (is (= expected-application (apply-events events)))
 
                         (testing "> approved"
