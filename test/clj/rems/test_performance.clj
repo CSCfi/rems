@@ -34,7 +34,7 @@
                (->> (statistics measurements)
                     (map-vals #(format "%.3fms" %)))))))
 
-(comment
+(defn benchmark-get-all-applications []
   (let [test-get-all-unrestricted-applications #(doall (applications-v2/get-all-unrestricted-applications))
         test-get-all-applications #(doall (applications-v2/get-all-applications "alice"))
         test-get-own-applications #(doall (applications-v2/get-own-applications "alice"))
@@ -61,8 +61,9 @@
                        {:name "get-open-reviews, cached"
                         :setup cached
                         :benchmark test-get-open-reviews}])
-    (println "cache size" (mm/measure applications-v2/all-applications-cache)))
+    (println "cache size" (mm/measure applications-v2/all-applications-cache))))
 
+(defn benchmark-get-application []
   (let [test-get-application #(applications-v2/get-application "developer" 12)
         no-cache (fn []
                    (mount/stop #'applications-v2/application-cache))
@@ -76,8 +77,9 @@
                          {:name "get-application, cached"
                           :setup cached
                           :benchmark test-get-application}])
-    (println "cache size" (mm/measure applications-v2/application-cache)))
+    (println "cache size" (mm/measure applications-v2/application-cache))))
 
+(defn benchmark-get-dynamic-roles []
   (let [test-get-roles #(doall (dynamic-roles/get-roles "developer"))
         no-cache (fn []
                    (mount/stop #'dynamic-roles/dynamic-roles-cache))
@@ -92,3 +94,8 @@
                         :setup cached
                         :benchmark test-get-roles}])
     (println "cache size" (mm/measure dynamic-roles/dynamic-roles-cache))))
+
+(comment
+  (benchmark-get-all-applications)
+  (benchmark-get-application)
+  (benchmark-get-dynamic-roles))
