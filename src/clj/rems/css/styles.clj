@@ -20,6 +20,8 @@
             [rems.util :as util]
             [rems.context :as context]))
 
+(def content-width (u/px 1200))
+
 (defn resolve-image [path]
   (when path
     (let [url (if (str/starts-with? path "http")
@@ -293,7 +295,7 @@
                     :flex-direction :column
                     :flex-wrap :none
                     :min-height (u/px 300)
-                    :max-width (u/px 1200)
+                    :max-width content-width
                     :flex-grow 1}]
    [:.main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
@@ -386,7 +388,7 @@
     {:color (util/get-theme-attribute :nav-color :link-color :color3)
      :border 0}] ; for button links
    [:.navbar
-    {:max-width (u/px 1200)}
+    {:max-width content-width}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
    [:.navbar-top-bar {:width (u/percent 100)
