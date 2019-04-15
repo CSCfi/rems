@@ -51,6 +51,7 @@
         build-app (fn [_] (model/build-application-view events injections))]
     (if (empty? events)
       nil ; application not found
+      ;; TODO: this caching could be removed by refactoring the pollers to build their own projection
       (if (atom? application-cache) ; guard against not started cache
         (-> (swap! application-cache cache/through-cache cache-key build-app)
             (getx cache-key))
@@ -79,7 +80,19 @@
           :application/form
           :application/licenses))
 
-(mount/defstate all-applications-cache
+(mount/defstate
+  ^{:doc "The cached state will contain the following keys:
+          ::raw-apps
+          - Map from application ID to the pure projected state of an application.
+          ::enriched-apps
+          - Map from application ID to the enriched version of an application.
+            Built from the raw apps by calling `enrich-with-injections`.
+            Since the injected entities (resources, forms etc.) are mutable,
+            it creates a cache invalidation problem here.
+          ::apps-by-user
+          - Map from user ID to a list of applications which the user can see.
+            Built from the enriched apps by calling `apply-user-permissions`."}
+  all-applications-cache
   :start (events-cache/new))
 
 (defn- group-apps-by-user [apps]
