@@ -1,4 +1,4 @@
-(ns ^:integration rems.test-performance
+(ns rems.test-performance
   (:require [clj-memory-meter.core :as mm]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
