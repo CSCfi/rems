@@ -270,17 +270,21 @@
   [f]
   [:p.alert.alert-warning "Unsupported field " (pr-str f)])
 
-(defn field [f]
-  (case (:field/type f)
-    :attachment [attachment-field f]
-    :date [date-field f]
-    :description [text-field f]
-    :label [label f]
-    :multiselect [multiselect-field f]
-    :option [option-field f]
-    :text [text-field f]
-    :texta [texta-field f]
-    [unsupported-field f]))
+(def ^:private field-defaults
+  {:on-change (fn [_] nil)})
+
+(defn field [field]
+  (let [f (merge field-defaults field)]
+    (case (:field/type f)
+      :attachment [attachment-field f]
+      :date [date-field f]
+      :description [text-field f]
+      :label [label f]
+      :multiselect [multiselect-field f]
+      :option [option-field f]
+      :text [text-field f]
+      :texta [texta-field f]
+      [unsupported-field f])))
 
 ;;;; Guide
 
