@@ -441,24 +441,24 @@
                                 (testing "> member added"
                                   (let [events (conj events
                                                      {:event/type :application.event/member-added
-                                                      :event/time (DateTime. 4000)
+                                                      :event/time (DateTime. 4600)
                                                       :event/actor "handler"
                                                       :application/id 1
                                                       :application/member {:userid "member"}})
                                         expected-application (merge expected-application
-                                                                    {:application/last-activity (DateTime. 4000)
+                                                                    {:application/last-activity (DateTime. 4600)
                                                                      :application/events events
                                                                      :application/members #{{:userid "member"}}})]
                                     (is (= expected-application (apply-events events)))
                                     (testing "> licenses accepted for new member"
                                       (let [events (conj events
                                                          {:event/type :application.event/licenses-accepted
-                                                          :event/time (DateTime. 4500)
+                                                          :event/time (DateTime. 4700)
                                                           :event/actor "member"
                                                           :application/id 1
                                                           :application/accepted-licenses #{30 33}})
                                             expected-application (merge expected-application
-                                                                        {:application/last-activity (DateTime. 4500)
+                                                                        {:application/last-activity (DateTime. 4700)
                                                                          :application/events events
                                                                          :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                          "member" #{30 33}}})]
@@ -466,12 +466,12 @@
                                         (testing "> licenses accepted overwrites previous"
                                           (let [events (conj events
                                                              {:event/type :application.event/licenses-accepted
-                                                              :event/time (DateTime. 4500)
+                                                              :event/time (DateTime. 4800)
                                                               :event/actor "member"
                                                               :application/id 1
                                                               :application/accepted-licenses #{31 32}})
                                                 expected-application (merge expected-application
-                                                                            {:application/last-activity (DateTime. 4500)
+                                                                            {:application/last-activity (DateTime. 4800)
                                                                              :application/events events
                                                                              :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                              "member" #{31 32}}})]
