@@ -135,11 +135,16 @@
                 :mail "applicant@example.com"
                 :commonName "Applicant"}})
 
+(def ^:private get-users-with-role
+  {:owner ["owner1"]
+   :reporter ["reporter1"]})
+
 (deftest test-application-view
   (let [injections {:get-form get-form
                     :get-catalogue-item get-catalogue-item
                     :get-license get-license
-                    :get-user get-user}
+                    :get-user get-user
+                    :get-users-with-role get-users-with-role}
         apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events

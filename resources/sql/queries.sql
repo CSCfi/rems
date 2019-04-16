@@ -657,6 +657,11 @@ DO UPDATE SET userAttrs = :userattrs::jsonb;
 SELECT userId
 FROM users;
 
+-- :name get-users-with-role :? :*
+SELECT userid
+FROM roles
+WHERE role = :role;
+
 -- :name get-user-attributes :? :1
 SELECT userAttrs::TEXT
 FROM users

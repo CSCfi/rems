@@ -21,9 +21,13 @@
   [userid]
   (json/parse-string (:userattrs (db/get-user-attributes {:user userid}))))
 
-(defn get-all-users
-  []
+(defn get-all-users []
   (->> (db/get-users)
        (map :userid)
        (map get-user-attributes)
+       (doall)))
+
+(defn get-users-with-role [role]
+  (->> (db/get-users-with-role {:role (name role)})
+       (map :userid)
        (doall)))
