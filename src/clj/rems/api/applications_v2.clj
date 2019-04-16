@@ -46,7 +46,7 @@
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (applications/get-dynamic-application-events application-id)
+  (let [events (applications/get-application-events application-id)
         cache-key [application-id (count events)]
         build-app (fn [_] (model/build-application-view events injections))]
     (if (empty? events)

@@ -634,18 +634,18 @@
   (assoc (-> event :eventdata json->event)
          :event/id (:id event)))
 
-;; TODO: remove "dynamic" from names
-(defn get-dynamic-application-events [application-id]
+(defn get-application-events [application-id]
   (map fix-event-from-db (db/get-application-events {:application application-id})))
 
-(defn get-dynamic-application-events-since [event-id]
+(defn get-all-events-since [event-id]
   (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
+;; TODO: remove "dynamic" from names
 (defn get-dynamic-application-state [application-id]
   (let [application (or (first (db/get-applications {:id application-id}))
                         (throw (rems.InvalidRequestException.
                                 (str "Application " application-id " not found"))))
-        events (get-dynamic-application-events application-id)
+        events (get-application-events application-id)
         application (assoc application
                            :state :application.state/draft
                            :dynamic-events events
@@ -662,7 +662,7 @@
       (throw-forbidden))
     application))
 
-(defn add-dynamic-event! [event]
+(defn add-event! [event]
   (db/add-application-event! {:application (:application/id event)
                               :user (:event/actor event)
                               :comment nil
@@ -719,7 +719,7 @@
        :workflow.dynamic/handlers (set (:handlers workflow))})))
 
 (defn add-application-created-event! [opts]
-  (add-dynamic-event! (application-created-event (assoc opts :allocate-external-id? true))))
+  (add-event! (application-created-event (assoc opts :allocate-external-id? true))))
 
 (defn- get-workflow-id-for-catalogue-items [catalogue-item-ids]
   (:workflow/id (application-created-event {:catalogue-item-ids catalogue-item-ids})))
@@ -763,7 +763,7 @@
   (let [app (get-dynamic-application-state (:application-id cmd))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
-      (add-dynamic-event! (:result result))
+      (add-event! (:result result))
       result)))
 
 (defn is-dynamic-handler? [user-id application]
