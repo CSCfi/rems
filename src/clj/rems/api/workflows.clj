@@ -3,7 +3,7 @@
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
             [rems.api.applications :refer [User get-users]]
-            [rems.api.schema :refer [SuccessResponse UpdateStateCommand]]
+            [rems.api.schema :refer [SuccessResponse]]
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
@@ -83,6 +83,14 @@
    :type s/Keyword
    (s/optional-key :handlers) [UserId]})
 
+(s/defschema UpdateWorkflowCommand
+  {:id s/Num
+   (s/optional-key :title) s/Str
+   (s/optional-key :handlers) [UserId]
+   ;; type can't change
+   (s/optional-key :enabled) s/Bool
+   (s/optional-key :archived) s/Bool})
+
 (s/defschema CreateWorkflowResponse
   {:success s/Bool
    :id s/Num})
@@ -131,7 +139,7 @@
     (PUT "/update" []
       :summary "Update workflow"
       :roles #{:owner}
-      :body [command UpdateStateCommand]
+      :body [command UpdateWorkflowCommand]
       :return SuccessResponse
       (ok (workflow/update-workflow! command)))
 

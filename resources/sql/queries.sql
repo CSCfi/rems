@@ -477,7 +477,10 @@ VALUES
 
 -- :name set-workflow-state! :!
 UPDATE workflow
-SET (enabled, archived) = (:enabled, :archived)
+SET
+  id = :id
+  --~(when (contains? params :enabled) ", enabled = :enabled")
+  --~(when (contains? params :archived) ", archived = :archived")
 WHERE id = :id
 
 -- :name create-workflow-license! :insert

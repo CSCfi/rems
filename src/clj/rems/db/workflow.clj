@@ -62,5 +62,5 @@
       {:success false
        :errors [{:type :t.administration.errors/workflow-in-use :catalogue-items catalogue-items}]}
       (do
-        (db/set-workflow-state! command)
+        (db/set-workflow-state! (select-keys command [:enabled :archived]))
         {:success true}))))
