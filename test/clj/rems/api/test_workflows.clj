@@ -80,21 +80,7 @@
                              :handlers ["bob" "carl"]}
                   :enabled true
                   :archived false}
-                 (select-keys workflow [:id :organization :title :workflow :enabled :archived])))))
-      (testing "and update"
-        (-> (request :put "/api/workflows/update")
-            (json-body {:id id :enabled false :archived true})
-            (authenticate "42" "owner")
-            handler
-            assert-response-is-ok)
-        (let [workflows (-> (request :get "/api/workflows" {:disabled true :archived true})
-                            (authenticate "42" "owner")
-                            handler
-                            assert-response-is-ok
-                            read-body)
-              workflow (first (filter #(= id (:id %)) workflows))]
-          (is (= {:id id :enabled false :archived true}
-                 (select-keys workflow [:id :enabled :archived]))))))))
+                 (select-keys workflow [:id :organization :title :workflow :enabled :archived]))))))))
 
 (deftest workflows-update-test
   (let [api-key "42"
