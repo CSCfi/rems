@@ -47,9 +47,9 @@
    :applicant2 "RDapplicant2@funet.fi"
    :approver1 "RDapprover1@funet.fi"
    :approver2 "RDapprover2@funet.fi"
+   :reviewer "RDreview@funet.fi"
    :owner "RDowner@funet.fi"
-   :reporter "RDreporter@funet.fi"
-   :reviewer "RDreview@funet.fi"})
+   :reporter "RDreporter@funet.fi"})
 
 (def +demo-user-data+
   {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
@@ -57,45 +57,40 @@
    "RDapprover1@funet.fi" {:eppn "RDapprover1@funet.fi" :mail "RDapprover1.test@rems_example.org" :commonName "RDapprover1 REMSDEMO"}
    "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
-   "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}})
+   "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
+   "RDreporter@funet.fi" {:eppn "RDreporter@funet.fi" :mail "RDreporter.test@test_example.org" :commonName "RDreporter REMSDEMO"}})
+
+(defn- create-user! [user-attributes & roles]
+  (let [user (:eppn user-attributes)]
+    (users/add-user! user user-attributes)
+    (doseq [role roles]
+      (roles/add-role! user role))))
 
 (defn- create-users-and-roles! []
   ;; users provided by the fake login
-  (users/add-user! (+fake-users+ :approver1) (+fake-user-data+ (+fake-users+ :approver1)))
-  (users/add-user! (+fake-users+ :applicant1) (+fake-user-data+ (+fake-users+ :applicant1)))
-  (users/add-user! (+fake-users+ :applicant2) (+fake-user-data+ (+fake-users+ :applicant2)))
-  (users/add-user! (+fake-users+ :approver2) (+fake-user-data+ (+fake-users+ :approver2)))
-  (users/add-user! (+fake-users+ :reviewer) (+fake-user-data+ (+fake-users+ :reviewer)))
-  ;; users without roles
-  (users/add-user! (+fake-users+ :roleless1) (+fake-user-data+ (+fake-users+ :roleless1)))
-  (users/add-user! (+fake-users+ :roleless2) (+fake-user-data+ (+fake-users+ :roleless2)))
-  ;; domain owner
-  (let [owner (+fake-users+ :owner)]
-    (users/add-user! owner (+fake-user-data+ owner))
-    (roles/add-role! owner :owner))
-  ;; domain reporter
-  (let [reporter (+fake-users+ :reporter)]
-    (users/add-user! reporter (+fake-user-data+ reporter))
-    (roles/add-role! reporter :reporter))
+  (let [users (comp +fake-user-data+ +fake-users+)]
+    (create-user! (users :applicant1))
+    (create-user! (users :applicant2))
+    (create-user! (users :approver1))
+    (create-user! (users :approver2))
+    (create-user! (users :reviewer))
+    (create-user! (users :roleless1))
+    (create-user! (users :roleless2))
+    (create-user! (users :owner) :owner)
+    (create-user! (users :reporter) :reporter))
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
 
 (defn- create-demo-users-and-roles! []
   ;; users used on remsdemo
-  (doseq [applicant [(+demo-users+ :applicant1) (+demo-users+ :applicant2)]]
-    (users/add-user! applicant (+demo-user-data+ applicant)))
-  (doseq [approver [(+demo-users+ :approver1) (+demo-users+ :approver2)]]
-    (users/add-user! approver (+demo-user-data+ approver)))
-  (let [reviewer (+demo-users+ :reviewer)]
-    (users/add-user! reviewer (+demo-user-data+ reviewer)))
-  ;; domain owner
-  (let [owner (+demo-users+ :owner)]
-    (users/add-user! owner (+demo-user-data+ owner))
-    (roles/add-role! owner :owner))
-  ;; domain reporter
-  (let [reporter (+demo-users+ :reporter)]
-    (users/add-user! reporter (+demo-user-data+ reporter))
-    (roles/add-role! reporter :reporter)))
+  (let [users (comp +demo-user-data+ +demo-users+)]
+    (create-user! (users :applicant1))
+    (create-user! (users :applicant2))
+    (create-user! (users :approver1))
+    (create-user! (users :approver2))
+    (create-user! (users :reviewer))
+    (create-user! (users :owner) :owner)
+    (create-user! (users :reporter) :reporter)))
 
 (defn- create-expired-form! []
   (let [yesterday (time/minus (time/now) (time/days 1))]
