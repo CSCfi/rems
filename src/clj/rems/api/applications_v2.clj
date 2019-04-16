@@ -12,8 +12,9 @@
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.permissions :as permissions]
+            [rems.scheduler :as scheduler]
             [rems.util :refer [getx atom?]])
-  (:import [java.util.concurrent TimeUnit ScheduledThreadPoolExecutor ExecutorService]))
+  (:import [org.joda.time Duration]))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -149,10 +150,5 @@
 
 ;; empty the cache occasionally in case some of the injected entities are changed
 (mount/defstate all-applications-cache-reloader
-  ;; TODO: consider refactoring this mount-cron-thing which is duplicated in a few places
-  :start (doto (ScheduledThreadPoolExecutor. 1)
-           (.scheduleWithFixedDelay reload-cache! 1 1 TimeUnit/HOURS))
-  :stop (let [executor (doto ^ExecutorService all-applications-cache-reloader
-                         (.shutdownNow))]
-          (when-not (.awaitTermination executor 1 TimeUnit/MINUTES)
-            (throw (IllegalStateException. "did not terminate")))))
+  :start (scheduler/start! reload-cache! (Duration/standardHours 1))
+  :stop (scheduler/stop! all-applications-cache-reloader))
