@@ -475,12 +475,14 @@ VALUES
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
 
--- :name set-workflow-state! :!
+-- :name update-workflow! :!
 UPDATE workflow
 SET
   id = :id
   --~(when (contains? params :enabled) ", enabled = :enabled")
   --~(when (contains? params :archived) ", archived = :archived")
+  --~(when (contains? params :title) ", title = :title")
+  --~(when (contains? params :workflow) ", workflowBody = :workflow::jsonb")
 WHERE id = :id
 
 -- :name create-workflow-license! :insert

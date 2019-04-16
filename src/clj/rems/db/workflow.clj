@@ -62,5 +62,8 @@
       {:success false
        :errors [{:type :t.administration.errors/workflow-in-use :catalogue-items catalogue-items}]}
       (do
-        (db/set-workflow-state! (select-keys command [:enabled :archived]))
+        (db/update-workflow! (merge (select-keys command [:id :enabled :archived :title])
+                                    (when-let [handlers (:handlers command)]
+                                      {:workflow (json/generate-string {:type :workflow/dynamic
+                                                                        :handlers handlers})})))
         {:success true}))))
