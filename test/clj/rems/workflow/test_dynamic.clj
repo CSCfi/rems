@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.util :refer [getx]]
+            [rems.util :refer [assert-ex getx]]
             [rems.workflow.dynamic :as dynamic])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
@@ -28,13 +28,6 @@
 (defn apply-events [application events]
   (events/validate-events events)
   (dynamic/apply-events application events))
-
-(defmacro assert-ex
-  "Like assert but throw the result with ex-info and not as string. "
-  ([x message]
-   `(when-not ~x
-      (throw (ex-info (str "Assert failed: " ~message "\n" (pr-str '~x))
-                      (merge ~message {:expression '~x}))))))
 
 (defn- fail-command
   ([application cmd]

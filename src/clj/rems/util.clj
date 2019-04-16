@@ -82,3 +82,10 @@
 
 (defn atom? [x]
   (instance? Atom x))
+
+(defmacro assert-ex
+  "Like assert but throw the result with ex-info and not as string. "
+  ([x message]
+   `(when-not ~x
+      (throw (ex-info (str "Assert failed: " ~message "\n" (pr-str '~x))
+                      (merge ~message {:expression '~x}))))))
