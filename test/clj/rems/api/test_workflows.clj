@@ -144,16 +144,18 @@
       (is (= (assoc expected
                     :archived true)
              (fetch))))
+    (testing "unarchive"
+      (is (:success (update {:archived false})))
+      (is (= expected
+             (fetch))))
     (testing "change title"
       (is (:success (update {:title "x"})))
       (is (= (assoc expected
-                    :archived true
                     :title "x")
              (fetch))))
     (testing "change handlers"
       (is (:success (update {:handlers ["owner" "alice"]})))
       (is (= (assoc expected
-                    :archived true
                     :title "x"
                     :workflow {:type "workflow/dynamic"
                                :handlers ["owner" "alice"]})
