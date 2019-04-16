@@ -12,8 +12,9 @@
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.permissions :as permissions]
+            [rems.scheduler :as scheduler]
             [rems.util :refer [getx atom?]])
-  (:import [java.util.concurrent TimeUnit ScheduledThreadPoolExecutor ExecutorService]))
+  (:import [org.joda.time Duration]))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -46,7 +47,7 @@
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (applications/get-dynamic-application-events application-id)
+  (let [events (applications/get-application-events application-id)
         cache-key [application-id (count events)]
         build-app (fn [_] (model/build-application-view events injections))]
     (if (empty? events)
@@ -149,10 +150,5 @@
 
 ;; empty the cache occasionally in case some of the injected entities are changed
 (mount/defstate all-applications-cache-reloader
-  ;; TODO: consider refactoring this mount-cron-thing which is duplicated in a few places
-  :start (doto (ScheduledThreadPoolExecutor. 1)
-           (.scheduleWithFixedDelay reload-cache! 1 1 TimeUnit/HOURS))
-  :stop (let [executor (doto ^ExecutorService all-applications-cache-reloader
-                         (.shutdownNow))]
-          (when-not (.awaitTermination executor 1 TimeUnit/MINUTES)
-            (throw (IllegalStateException. "did not terminate")))))
+  :start (scheduler/start! reload-cache! (Duration/standardHours 1))
+  :stop (scheduler/stop! all-applications-cache-reloader))

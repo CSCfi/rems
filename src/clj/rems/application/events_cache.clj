@@ -17,7 +17,7 @@
   [cache update-fn]
   (let [cache-enabled? (atom? cache)
         cached (if cache-enabled? @cache empty-cache)
-        new-events (applications/get-dynamic-application-events-since (:last-processed-event-id cached))]
+        new-events (applications/get-all-events-since (:last-processed-event-id cached))]
     (if (empty? new-events)
       (:state cached)
       (let [updated {:state (update-fn (:state cached) new-events)

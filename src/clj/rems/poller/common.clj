@@ -17,7 +17,7 @@
 (defn run-event-poller [name-kw process-event!]
   ;; This isn't thread-safe but ScheduledThreadPoolExecutor guarantees exclusion
   (let [prev-state (get-poller-state name-kw)
-        events (applications/get-dynamic-application-events-since (:last-processed-event-id prev-state))]
+        events (applications/get-all-events-since (:last-processed-event-id prev-state))]
     (log/debug name-kw "running with state" (pr-str prev-state))
     (try
       (doseq [e events]
@@ -45,7 +45,7 @@
                          (swap! processed conj event))
         poller-state (atom {:last-processed-event-id 0})
         run #(run-event-poller :test process-event!)]
-    (with-redefs [applications/get-dynamic-application-events-since (fn [id] (filterv #(< id (:event/id %)) @events))
+    (with-redefs [applications/get-all-events-since (fn [id] (filterv #(< id (:event/id %)) @events))
                   get-poller-state (fn [_] @poller-state)
                   set-poller-state! (fn [_ state] (reset! poller-state state))]
       (testing "no events, nothing should happen"
