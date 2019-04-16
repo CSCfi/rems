@@ -15,6 +15,7 @@
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.db.workflow :as workflow]
             [rems.test-db :as test-db]
+            [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
            (clojure.lang ExceptionInfo)))
@@ -38,7 +39,9 @@
         (is (= event (-> event event->json json->event))))))
 
   (testing "event->json validates events"
-    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (event->json {}))))
+    (is (not
+         (:rems.event/validate-event
+          (try-catch-ex (event->json {}))))))
 
   (testing "json->event validates events"
     (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (json->event "{}"))))
