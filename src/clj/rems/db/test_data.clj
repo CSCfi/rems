@@ -26,6 +26,7 @@
    :approver1 "developer"
    :approver2 "bob"
    :owner "owner"
+   :reporter "reporter"
    :reviewer "carl"
    :roleless1 "elsa"
    :roleless2 "frank"})
@@ -38,7 +39,8 @@
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
-   "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}})
+   "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
+   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -46,6 +48,7 @@
    :approver1 "RDapprover1@funet.fi"
    :approver2 "RDapprover2@funet.fi"
    :owner "RDowner@funet.fi"
+   :reporter "RDreporter@funet.fi"
    :reviewer "RDreview@funet.fi"})
 
 (def +demo-user-data+
@@ -66,9 +69,14 @@
   ;; users without roles
   (users/add-user! (+fake-users+ :roleless1) (+fake-user-data+ (+fake-users+ :roleless1)))
   (users/add-user! (+fake-users+ :roleless2) (+fake-user-data+ (+fake-users+ :roleless2)))
-  ;; a user to own things
-  (users/add-user! (+fake-users+ :owner) (+fake-user-data+ (+fake-users+ :owner)))
-  (roles/add-role! (+fake-users+ :owner) :owner)
+  ;; domain owner
+  (let [owner (+fake-users+ :owner)]
+    (users/add-user! owner (+fake-user-data+ owner))
+    (roles/add-role! owner :owner))
+  ;; domain reporter
+  (let [reporter (+fake-users+ :reporter)]
+    (users/add-user! reporter (+fake-user-data+ reporter))
+    (roles/add-role! reporter :reporter))
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
 
@@ -80,10 +88,14 @@
     (users/add-user! approver (+demo-user-data+ approver)))
   (let [reviewer (+demo-users+ :reviewer)]
     (users/add-user! reviewer (+demo-user-data+ reviewer)))
-  ;; a user to own things
+  ;; domain owner
   (let [owner (+demo-users+ :owner)]
     (users/add-user! owner (+demo-user-data+ owner))
-    (roles/add-role! owner :owner)))
+    (roles/add-role! owner :owner))
+  ;; domain reporter
+  (let [reporter (+demo-users+ :reporter)]
+    (users/add-user! reporter (+demo-user-data+ reporter))
+    (roles/add-role! reporter :reporter)))
 
 (defn- create-expired-form! []
   (let [yesterday (time/minus (time/now) (time/days 1))]
