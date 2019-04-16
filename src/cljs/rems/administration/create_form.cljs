@@ -3,7 +3,7 @@
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
-            [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.administration.items :as items]
             [rems.atoms :refer [enrich-user]]
             [rems.collapsible :as collapsible]
@@ -86,6 +86,10 @@
   (and (not (str/blank? (:key option)))
        (valid-required-localized-string? (:label option) languages)))
 
+(defn- parse-maxlength [maxlength]
+  (let [parsed (parseInt maxlength)]
+    (when-not (js/isNaN parsed) parsed)))
+
 (defn- valid-request-item? [item languages]
   (and (valid-required-localized-string? (:title item) languages)
        (boolean? (:optional item))
@@ -93,6 +97,8 @@
        (if (supports-input-prompt? item)
          (valid-optional-localized-string? (:input-prompt item) languages)
          (nil? (:input-prompt item)))
+       (if (supports-maxlength? item)
+         (not (neg? (:maxlength item))))
        (if (supports-options? item)
          (every? #(valid-option? % languages) (:options item))
          (nil? (:options item)))))
@@ -113,8 +119,7 @@
          (when (supports-input-prompt? item)
            {:input-prompt (build-localized-string (:input-prompt item) languages)})
          (when (supports-maxlength? item)
-           {:maxlength (when-not (str/blank? (:maxlength item))
-                         (parseInt (:maxlength item)))})
+           {:maxlength (parse-maxlength (:maxlength item))})
          (when (supports-options? item)
            {:options (for [{:keys [key label]} (:options item)]
                        {:key key
@@ -161,8 +166,8 @@
                                  :label (text :t.create-form/input-prompt)}])
 
 (defn- form-item-maxlength-field [item-index]
-  [number-field context {:keys [:items item-index :maxlength]
-                         :label (text :t.create-form/maxlength)}])
+  [text-field context {:keys [:items item-index :maxlength]
+                       :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-item-option-button [item-index]
   [:a {:href "#"
@@ -278,7 +283,7 @@
   {:field/type (keyword (:type field))
    :field/title (:title field)
    :field/placeholder (:input-prompt field)
-   :field/max-length (:maxlength field)
+   :field/max-length (parse-maxlength (:maxlength field))
    :field/optional (:optional field)
    :field/options (:options field)})
 
