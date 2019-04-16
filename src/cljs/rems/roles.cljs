@@ -7,12 +7,7 @@
   (some #{:applicant :member} roles))
 
 (defn is-reviewer? [roles]
-  (some #{:handler
-          :commenter
-          :past-commenter
-          :decider
-          :past-decider}
-        roles))
+  (some #{:handler :commenter :decider :past-commenter :past-decider :reporter} roles))
 
 (defn is-admin? [roles]
   ;; TODO: add admin role (owner is a business user; admin is a technical user)

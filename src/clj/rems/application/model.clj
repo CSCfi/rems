@@ -28,9 +28,12 @@
                                             :application.command/remove-member
                                             :application.command/uninvite-member]
                                   :commenter [:see-everything]
-                                  :past-commenter [:see-everything]
                                   :decider [:see-everything]
+                                  ;; roles whose permissions don't change
+                                  :reporter [:see-everything]
+                                  :past-commenter [:see-everything]
                                   :past-decider [:see-everything]
+                                  ;; member before accepting an invitation
                                   :everyone-else [:application.command/accept-invitation]})
 
 (def ^:private submitted-permissions {:applicant [:application.command/remove-member
@@ -458,7 +461,7 @@
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
-(defn enrich-user-attributes [application get-user]
+(defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
             (->> members
                  (map (fn [member]
@@ -469,7 +472,11 @@
             :application/members
             enrich-members)))
 
-(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
+(defn- enrich-super-users [application get-users-with-role]
+  (-> application
+      (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
+
+(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user get-users-with-role]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
@@ -491,7 +498,8 @@
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
         (assoc :application/applicant-attributes (get-user (:application/applicant application)))
-        (enrich-user-attributes get-user))))
+        (enrich-user-attributes get-user)
+        (enrich-super-users get-users-with-role))))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
