@@ -332,7 +332,7 @@
         orphans-in-order (filter (fn [item2]
                                    (not (contains? list1-keys (f item2))))
                                  list2)]
-    (concat merged-in-order orphans-in-order)))
+    (vec (concat merged-in-order orphans-in-order))))
 
 (deftest test-merge-lists-by
   (testing "merges objects with the same key"
@@ -426,7 +426,8 @@
                :catalogue-item/enabled (:enabled item)
                :catalogue-item/expired (:expired item)
                :catalogue-item/archived (:archived item)}))
-       (sort-by :catalogue-item/id)))
+       (sort-by :catalogue-item/id)
+       vec))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
@@ -525,7 +526,7 @@
                        :application.event/decided
                        :application.event/decision-requested}
                      :event/type))
-       (map hide-sensitive-event-content)))
+       (mapv hide-sensitive-event-content)))
 
 (defn- hide-sensitive-information [application]
   (-> application

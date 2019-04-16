@@ -142,6 +142,7 @@
    :project/dev {:dependencies [[binaryage/devtools "0.9.10"]
                                 [cider/piggieback "0.3.10"]
                                 [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
+                                [criterium "0.4.4"]
                                 [doo "0.1.11"]
                                 [eftest "0.5.4"]
                                 [etaoin "0.3.1"]
@@ -159,7 +160,7 @@
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
-                            "-Djdk.attach.allowAttachSelf"]
+                            "-Djdk.attach.allowAttachSelf"] ; needed by clj-memory-meter on Java 9+
                  :source-paths ["env/dev/clj"]
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems.standalone

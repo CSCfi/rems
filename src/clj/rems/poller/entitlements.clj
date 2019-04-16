@@ -6,7 +6,7 @@
             [rems.api.applications-v2 :as applications-v2]
             [rems.db.entitlements :as entitlements]
             [rems.poller.common :as common])
-  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]))
+  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit ExecutorService]))
 
 (defn- entitlements-for-event [event]
   ;; we filter by event here, and by state in update-entitlements-for.
@@ -25,6 +25,7 @@
 (mount/defstate entitlements-poller
   :start (doto (ScheduledThreadPoolExecutor. 1)
            (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
-  :stop (doto entitlements-poller
-          (.shutdownNow)
-          (.awaitTermination 60 TimeUnit/SECONDS)))
+  :stop (let [executor (doto ^ExecutorService entitlements-poller
+                         (.shutdownNow))]
+          (when-not (.awaitTermination executor 1 TimeUnit/MINUTES)
+            (throw (IllegalStateException. "did not terminate")))))

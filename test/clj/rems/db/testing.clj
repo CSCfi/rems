@@ -13,13 +13,18 @@
   (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down
   (mount/start-with-args {:test true}
                          #'rems.config/env
-                         #'rems.db.core/*db*
-                         #'rems.api.applications-v2/all-applications-cache
-                         #'rems.db.dynamic-roles/dynamic-roles-cache)
+                         #'rems.db.core/*db*)
   (db/assert-test-database!)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
   (f)
   (mount/stop))
+
+(defn caches-fixture [f]
+  ;; no specific teardown. relies on the teardown of test-db-fixture.
+  (mount/start #'rems.api.applications-v2/application-cache
+               #'rems.api.applications-v2/all-applications-cache
+               #'rems.db.dynamic-roles/dynamic-roles-cache)
+  (f))
 
 (defn test-data-fixture [f]
   ;; no specific teardown for test-data-fixture. tests rely on the

@@ -3,6 +3,7 @@
             [rems.util :refer [atom?]]))
 
 (def ^:private empty-cache
+  ;; TODO: consider refactoring opportunities with pollers
   {:last-processed-event-id 0
    :state nil})
 

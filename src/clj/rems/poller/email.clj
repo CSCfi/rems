@@ -11,7 +11,7 @@
             [rems.poller.common :as common]
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])
-  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]))
+  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit ExecutorService]))
 
 ;;; Mapping events to emails
 
@@ -181,9 +181,10 @@
 (mount/defstate email-poller
   :start (doto (ScheduledThreadPoolExecutor. 1)
            (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
-  :stop (doto email-poller
-          (.shutdownNow)
-          (.awaitTermination 60 TimeUnit/SECONDS)))
+  :stop (let [executor (doto ^ExecutorService email-poller
+                         (.shutdownNow))]
+          (when-not (.awaitTermination executor 1 TimeUnit/MINUTES)
+            (throw (IllegalStateException. "did not terminate")))))
 
 (comment
   (mount/start #{#'email-poller})
