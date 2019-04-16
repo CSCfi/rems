@@ -5,12 +5,14 @@
             [mount.core :as mount]
             [rems.api.applications-v2 :as applications-v2]
             [rems.api.reviews :as reviews]
+            [rems.db.applications :as applications]
             [rems.db.dynamic-roles :as dynamic-roles])
   (:import [java.util Locale]))
 
 (defn run-benchmark [benchmark]
   (println "\n=====" (:name benchmark) "=====")
-  ((:setup benchmark))
+  (when-let [setup (:setup benchmark)]
+    (setup))
   (let [result (criterium/with-progress-reporting
                  (criterium/quick-benchmark ((:benchmark benchmark)) {}))]
     (criterium/report-result result)
@@ -31,6 +33,18 @@
       (println (right-pad (:name result) longest-name)
                (->> (select-keys result [:low :mean :high])
                     (map-vals #(String/format Locale/ENGLISH "%.3f ms" (to-array [(* 1000 %)]))))))))
+
+(defn benchmark-get-events []
+  (let [last-event-id (:event/id (last (applications/get-all-events-since 0)))
+        test-get-all-events-since-beginning #(doall (applications/get-all-events-since 0))
+        test-get-all-events-since-end #(doall (applications/get-all-events-since last-event-id))
+        test-get-application-events #(doall (applications/get-application-events 12))]
+    (run-benchmarks [{:name "get-all-events-since, all events"
+                      :benchmark test-get-all-events-since-beginning}
+                     {:name "get-all-events-since, zero new events"
+                      :benchmark test-get-all-events-since-end}
+                     {:name "get-application-events"
+                      :benchmark test-get-application-events}])))
 
 (defn benchmark-get-all-applications []
   (let [test-get-all-unrestricted-applications #(doall (applications-v2/get-all-unrestricted-applications))
@@ -98,6 +112,7 @@
   ;;       you *could* work around it by adding `--add-opens` JVM options, but
   ;;       the root cause is probably that there is a lazy sequence that could
   ;;       easily be avoided.
+  (benchmark-get-events)
   (benchmark-get-all-applications)
   (benchmark-get-application)
   (benchmark-get-dynamic-roles))
