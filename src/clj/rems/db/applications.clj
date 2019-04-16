@@ -447,7 +447,7 @@
 
 ;;; Public event api
 
-(defn get-application-state
+(defn get-application-state ; TODO: legacy code; remove me
   ([application-id]
    (get-application-state (first (db/get-applications {:id application-id}))
                           (map #(dissoc % :id :appid) ; remove keys not in v1 API
@@ -639,8 +639,7 @@
 (defn get-all-events-since [event-id]
   (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
-;; TODO: remove "dynamic" from names
-(defn get-dynamic-application-state [application-id]
+(defn get-dynamic-application-state [application-id] ; TODO: legacy code; remove me
   (let [application (or (first (db/get-applications {:id application-id}))
                         (throw (rems.InvalidRequestException.
                                 (str "Application " application-id " not found"))))
@@ -752,7 +751,8 @@
 
 (defn command! [cmd]
   (assert (:application-id cmd))
-  (let [app (get-dynamic-application-state (:application-id cmd))
+  (let [events (get-application-events (:application-id cmd))
+        app (dynamic/apply-events nil events)
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
       (add-event! (:result result))
