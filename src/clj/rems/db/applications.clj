@@ -28,7 +28,6 @@
   (:import [org.joda.time DateTime]))
 
 (declare get-dynamic-application-state)
-(declare get-dynamic-application-state-for-user)
 
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
@@ -654,13 +653,6 @@
                                               (:start application)))]
     (assert (is-dynamic-application? application) (pr-str application))
     (dynamic/apply-events application events)))
-
-(defn get-dynamic-application-state-for-user [user-id application-id]
-  (let [application (->> (get-dynamic-application-state application-id)
-                         (dynamic/assoc-possible-commands user-id))]
-    (when-not (may-see-application? user-id application)
-      (throw-forbidden))
-    application))
 
 (defn add-event! [event]
   (db/add-application-event! {:application (:application/id event)
