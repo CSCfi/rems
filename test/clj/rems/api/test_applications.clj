@@ -208,7 +208,8 @@
       (is (= {:success false
               :errors [{:type "forbidden"}]}
              (send-command "" {:type :application.command/approve
-                               :comment "" :application-id application-id}))
+                               :application-id application-id
+                               :comment ""}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
