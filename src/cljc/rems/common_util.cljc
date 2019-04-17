@@ -63,7 +63,7 @@
                                      (partition 2)
                                      (map (fn [[x y]] (deep-merge x y)))))
         (map? a) (merge-with deep-merge a b)
-        :else (merge-with deep-merge b)))
+        :else b))
 
 (deftest test-deep-merge
   (testing "merge nil"
@@ -76,6 +76,10 @@
     (is (= {:a 1}
            (deep-merge {:a 1}
                        nil))))
+  (testing "preserve false"
+    (is (= {:b false}
+           (deep-merge {:b :anything}
+                       {:b false}))))
   (testing "merge maps"
     (is (= {:a 2}
            (deep-merge {:a 1}

@@ -1,7 +1,8 @@
 (ns rems.application.events
   (:require [clojure.test :refer :all]
             [schema-refined.core :as r]
-            [schema.core :as s])
+            [schema.core :as s]
+            [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
@@ -68,6 +69,11 @@
   (assoc EventBase
          :event/type (s/enum :application.event/licenses-accepted)
          :application/accepted-licenses #{s/Int}))
+(s/defschema LicensesAddedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/licenses-added)
+         :application/comment s/Str
+         :application/licenses [{:license/id s/Int}]))
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/member-added)
@@ -115,6 +121,7 @@
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
    :application.event/licenses-accepted LicensesAcceptedEvent
+   :application.event/licenses-added LicensesAddedEvent
    :application.event/member-added MemberAddedEvent
    :application.event/member-invited MemberInvitedEvent
    :application.event/member-joined MemberJoinedEvent
@@ -128,6 +135,8 @@
   (apply r/dispatch-on :event/type (flatten (seq event-schemas))))
 
 (defn validate-event [event]
+  (assert-ex (contains? event-schemas (:event/type event)) {:error {:event/type ::unknown-type}
+                                                            :value event})
   (s/validate Event event))
 
 (defn validate-events [events]
@@ -161,10 +170,33 @@
                      :event/actor "foo"
                      :application/id 123}))))
   (testing "unknown event type"
-    ;; TODO: improve error message to show the actual and expected event types
     (is (= "(not (some-matching-condition? a-clojure.lang.PersistentArrayMap))"
            (pr-str (s/check Event
                             {:event/type :foo
                              :event/time (DateTime.)
                              :event/actor "foo"
                              :application/id 123}))))))
+
+(deftest test-validate-event
+  (testing "check specific event schema"
+    (is (validate-event {:event/type :application.event/submitted
+                         :event/time (DateTime.)
+                         :event/actor "foo"
+                         :application/id 123})))
+  (testing "missing event specific key"
+    (is (= {:application/comment 'missing-required-key}
+           (:error
+            (try-catch-ex
+             (validate-event {:event/type :application.event/approved
+                              :event/time (DateTime.)
+                              :event/actor "foo"
+                              :application/id 123}))))))
+  (testing "unknown event type"
+    (is (= {:event/type ::unknown-type}
+           (:error
+            (try-catch-ex
+             (validate-event
+              {:event/type :does-not-exist
+               :event/time (DateTime.)
+               :event/actor "foo"
+               :application/id 123})))))))

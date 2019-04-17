@@ -42,15 +42,22 @@
     (is (= #{}
            (roles-from-all-applications "unknown" events)))))
 
-(mount/defstate dynamic-roles-cache
+(mount/defstate
+  ^{:doc "The cached state will contain the following keys:
+          ::permissions
+          - Map from application ID to the roles and permissions of an application.
+          ::roles-by-user
+          - Map from user ID to a set of all application roles which the user has,
+            a union of roles from all applications."}
+  dynamic-roles-cache
   :start (events-cache/new))
 
 (defn get-roles [user]
   (->> (events-cache/refresh!
         dynamic-roles-cache
         (fn [state events]
-          (let [apps (reduce permissions-of-all-applications (::apps state) events)]
-            {::apps apps
-             ::roles-by-user (group-roles-by-user apps)})))
+          (let [permissions (reduce permissions-of-all-applications (::permissions state) events)]
+            {::permissions permissions
+             ::roles-by-user (group-roles-by-user permissions)})))
        ::roles-by-user
        (get-user-roles user)))

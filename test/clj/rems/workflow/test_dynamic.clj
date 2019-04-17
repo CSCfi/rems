@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.util :refer [getx]]
+            [rems.util :refer [assert-ex getx]]
             [rems.workflow.dynamic :as dynamic])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
@@ -28,13 +28,6 @@
 (defn apply-events [application events]
   (events/validate-events events)
   (dynamic/apply-events application events))
-
-(defmacro assert-ex
-  "Like assert but throw the result with ex-info and not as string. "
-  ([x message]
-   `(when-not ~x
-      (throw (ex-info (str "Assert failed: " ~message "\n" (pr-str '~x))
-                      (merge ~message {:expression '~x}))))))
 
 (defn- fail-command
   ([application cmd]
@@ -136,16 +129,39 @@
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
-    (testing "accepts licenses"
-      (is (= [{:event/type :application.event/licenses-accepted
-               :event/time test-time
-               :event/actor applicant-user-id
-               :application/id 123
-               :application/accepted-licenses #{1 2}}]
-             (ok-command application
-                         {:type :application.command/accept-licenses
-                          :actor applicant-user-id
-                          :accepted-licenses #{1 2}}))))))
+    (is (= [{:event/type :application.event/licenses-accepted
+             :event/time test-time
+             :event/actor applicant-user-id
+             :application/id 123
+             :application/accepted-licenses #{1 2}}]
+           (ok-command application
+                       {:type :application.command/accept-licenses
+                        :actor applicant-user-id
+                        :accepted-licenses #{1 2}})))))
+
+(deftest test-add-licenses
+  (let [application (apply-events nil [dummy-created-event
+                                       {:event/type :application.event/submitted
+                                        :event/time test-time
+                                        :event/actor applicant-user-id
+                                        :application/id 123}])]
+    (is (= [{:event/type :application.event/licenses-added
+             :event/time test-time
+             :event/actor handler-user-id
+             :application/id 123
+             :application/comment "comment"
+             :application/licenses [{:license/id 1} {:license/id 2}]}]
+           (ok-command application
+                       {:type :application.command/add-licenses
+                        :actor handler-user-id
+                        :comment "comment"
+                        :licenses [1 2]})))
+    (is (= {:errors [{:type :must-not-be-empty :key :licenses}]}
+           (fail-command application
+                         {:type :application.command/add-licenses
+                          :actor handler-user-id
+                          :comment "comment"
+                          :licenses []})))))
 
 (deftest test-submit
   (let [injections {:validate-form-answers fake-validate-form-answers}

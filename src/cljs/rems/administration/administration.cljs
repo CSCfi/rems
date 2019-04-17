@@ -46,7 +46,7 @@
    (text :t.administration/licenses)])
 
 (defn administration-navigator [selected]
-  [:div.navbar.mb-4
+  [:div.navbar.mb-4.mr-auto.ml-auto
    [to-administration [:nav-item :nav-link (when (contains? #{:rems.administration/administration}
                                                             selected)
                                              :active)]]

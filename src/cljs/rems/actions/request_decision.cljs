@@ -9,10 +9,8 @@
 
 (rf/reg-fx
  ::fetch-potential-deciders
- (fn [[user on-success]]
-   (fetch "/api/applications/deciders"
-          {:handler on-success
-           :headers {"x-rems-user-id" (:eppn user)}})))
+ (fn [on-success]
+   (fetch "/api/applications/deciders" {:handler on-success})))
 
 (rf/reg-event-fx
  ::open-form
@@ -21,8 +19,7 @@
                ::comment ""
                ::potential-deciders #{}
                ::selected-deciders #{})
-    ::fetch-potential-deciders [(get-in db [:identity :user])
-                                #(rf/dispatch [::set-potential-deciders %])]}))
+    ::fetch-potential-deciders #(rf/dispatch [::set-potential-deciders %])}))
 
 (rf/reg-sub ::potential-deciders (fn [db _] (::potential-deciders db)))
 (rf/reg-event-db

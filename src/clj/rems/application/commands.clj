@@ -1,6 +1,9 @@
 (ns rems.application.commands
-  (:require [rems.util :refer [getx]]
-            [schema.core :as s])
+  (:require [clojure.test :refer :all]
+            [rems.util :refer [getx]]
+            [schema.core :as s]
+            [schema-refined.core :as r]
+            [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
@@ -62,6 +65,11 @@
   (assoc CommandBase
          :comment s/Str))
 
+(s/defschema AddLicensesCommand
+  (assoc CommandBase
+         :comment s/Str
+         :licenses [s/Num]))
+
 (s/defschema AddMemberCommand
   (assoc CommandBase
          :member {:userid UserId}))
@@ -90,6 +98,7 @@
   {#_:application.command/require-license
    :application.command/accept-invitation AcceptInvitationCommand
    :application.command/accept-licenses AcceptLicensesCommand
+   :application.command/add-licenses AddLicensesCommand
    :application.command/add-member AddMemberCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/approve ApproveCommand
@@ -106,8 +115,31 @@
    :application.command/uninvite-member UninviteMemberCommand
    #_:application.command/withdraw})
 
+(s/defschema Command
+  (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
+         CommandInternal))
+
 (defn validate-command [cmd]
-  (let [type (:type cmd)
-        schema (merge CommandInternal
-                      (getx command-schemas type))]
-    (s/validate schema cmd)))
+  (assert-ex (contains? command-schemas (:type cmd)) {:error {:type ::unknown-type}
+                                                      :value cmd})
+  (s/validate Command cmd))
+
+(deftest test-validate-command
+  (testing "check specific command schema"
+    (is (validate-command {:application-id 42
+                           :type :application.command/submit
+                           :time (DateTime.)
+                           :actor "applicant"})))
+  (testing "missing event specific key"
+    (is (= {:actor 'missing-required-key}
+           (:error
+            (try-catch-ex
+             (validate-command {:application-id 42
+                                :type :application.command/submit
+                                :time (DateTime.)}))))))
+  (testing "unknown event type"
+    (is (= {:type ::unknown-type}
+           (:error
+            (try-catch-ex
+             (validate-command
+              {:type :does-not-exist})))))))

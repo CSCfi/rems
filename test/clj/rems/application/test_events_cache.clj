@@ -36,7 +36,7 @@
                :event/time (time/now)
                :event/actor user-id
                :application/id app-id}]
-    (applications/add-dynamic-event! event)
+    (applications/add-event! event)
     event))
 
 ;; in case the cache uses mount and somebody forgets to start it

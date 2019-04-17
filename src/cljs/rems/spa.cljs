@@ -245,6 +245,7 @@
      [status-modal/status-modal]
      [logo]
      [:div.container-fluid.main-content
+      {:class (str "page-" (name page-id))}
       [content]]
      [footer]]))
 

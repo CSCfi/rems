@@ -12,8 +12,9 @@
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.permissions :as permissions]
+            [rems.scheduler :as scheduler]
             [rems.util :refer [getx atom?]])
-  (:import [java.util.concurrent TimeUnit ScheduledThreadPoolExecutor]))
+  (:import [org.joda.time Duration]))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -46,11 +47,12 @@
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (applications/get-dynamic-application-events application-id)
+  (let [events (applications/get-application-events application-id)
         cache-key [application-id (count events)]
         build-app (fn [_] (model/build-application-view events injections))]
     (if (empty? events)
       nil ; application not found
+      ;; TODO: this caching could be removed by refactoring the pollers to build their own projection
       (if (atom? application-cache) ; guard against not started cache
         (-> (swap! application-cache cache/through-cache cache-key build-app)
             (getx cache-key))
@@ -79,7 +81,19 @@
           :application/form
           :application/licenses))
 
-(mount/defstate all-applications-cache
+(mount/defstate
+  ^{:doc "The cached state will contain the following keys:
+          ::raw-apps
+          - Map from application ID to the pure projected state of an application.
+          ::enriched-apps
+          - Map from application ID to the enriched version of an application.
+            Built from the raw apps by calling `enrich-with-injections`.
+            Since the injected entities (resources, forms etc.) are mutable,
+            it creates a cache invalidation problem here.
+          ::apps-by-user
+          - Map from user ID to a list of applications which the user can see.
+            Built from the enriched apps by calling `apply-user-permissions`."}
+  all-applications-cache
   :start (events-cache/new))
 
 (defn- group-apps-by-user [apps]
@@ -98,6 +112,7 @@
    (fn [state events]
      ;; Because enrich-with-injections is not idempotent,
      ;; it's necessary to hold on to the "raw" applications.
+     ;; TODO: consider making enrich-with-injections idempotent (move dissocs to hide-non-public-information and other small refactorings)
      (let [raw-apps (reduce all-applications-view (::raw-apps state) events)
            updated-app-ids (distinct (map :application/id events))
            ;; TODO: batched injections: only one DB query to fetch all catalogue items etc.
@@ -129,13 +144,11 @@
        (filter own-application?)))
 
 (defn reload-cache! []
+  ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!))
 
 ;; empty the cache occasionally in case some of the injected entities are changed
 (mount/defstate all-applications-cache-reloader
-  :start (doto (ScheduledThreadPoolExecutor. 1)
-           (.scheduleWithFixedDelay reload-cache! 1 1 TimeUnit/HOURS))
-  :stop (doto all-applications-cache-reloader
-          (.shutdown)
-          (.awaitTermination 60 TimeUnit/SECONDS)))
+  :start (scheduler/start! reload-cache! (Duration/standardHours 1))
+  :stop (scheduler/stop! all-applications-cache-reloader))

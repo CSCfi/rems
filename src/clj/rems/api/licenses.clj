@@ -46,7 +46,7 @@
 
     (GET "/" []
       :summary "Get licenses"
-      :roles #{:owner}
+      :roles #{:handler :owner}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled licenses") false}
                      {expired :- (describe s/Bool "whether to include expired licenses") false}
                      {archived :- (describe s/Bool "whether to include archived licenses") false}]

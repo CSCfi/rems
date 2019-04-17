@@ -23,12 +23,12 @@
       read-ok-body
       :id))
 
-(defn- create-form-with-fields [form-items]
+(defn- create-form-with-fields [form-fields]
   (-> (request :post "/api/forms/create")
       (authenticate "42" "owner")
       (json-body {:organization "abc"
                   :title ""
-                  :items form-items})
+                  :fields form-fields})
       handler
       read-ok-body
       :id))
@@ -172,6 +172,7 @@
         handler-id "developer"
         commenter-id "carl"
         decider-id "bob"
+        license-id 5 ;; additional licenses from test data
         application-id 11] ;; submitted dynamic application from test data
 
     (testing "getting dynamic application as applicant"
@@ -195,6 +196,7 @@
                  "application.command/reject"
                  "application.command/approve"
                  "application.command/return"
+                 "application.command/add-licenses"
                  "application.command/add-member"
                  "application.command/remove-member"
                  "application.command/invite-member"
@@ -206,7 +208,8 @@
       (is (= {:success false
               :errors [{:type "forbidden"}]}
              (send-command "" {:type :application.command/approve
-                               :comment "" :application-id application-id}))
+                               :application-id application-id
+                               :comment ""}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
@@ -243,6 +246,21 @@
                   comment-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
                      (:application/request-id comment-event)))))))
+
+      (testing "adding and then accepting additonal licenses"
+        (let [eventcount (count (get (get-application application-id handler-id) :events))]
+          (testing "add licenses"
+            (is (= {:success true} (send-command handler-id
+                                                 {:type :application.command/add-licenses
+                                                  :application-id application-id
+                                                  :licenses [license-id]
+                                                  :comment "Please approve these new terms"}))))
+          (testing "applicant can now accept licenses"
+            (is (= {:success true} (send-command user-id
+                                                 {:type :application.command/accept-licenses
+                                                  :application-id application-id
+                                                  :accepted-licenses [license-id]}))))))
+
       (testing "request-decision"
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/request-decision
@@ -273,6 +291,8 @@
                     "application.event/submitted"
                     "application.event/comment-requested"
                     "application.event/commented"
+                    "application.event/licenses-added"
+                    "application.event/licenses-accepted"
                     "application.event/decision-requested"
                     "application.event/decided"
                     "application.event/approved"]
@@ -282,6 +302,8 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/licenses-added"
+                    "application.event/licenses-accepted"
                     "application.event/approved"]
                    applicant-event-types))))))))
 

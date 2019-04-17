@@ -20,6 +20,8 @@
             [rems.util :as util]
             [rems.context :as context]))
 
+(def content-width (u/px 1200))
+
 (defn resolve-image [path]
   (when path
     (let [url (if (str/starts-with? path "http")
@@ -293,8 +295,9 @@
                     :flex-direction :column
                     :flex-wrap :none
                     :min-height (u/px 300)
-                    :max-width (u/px 1200)
+                    :max-width content-width
                     :flex-grow 1}]
+   [:.main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap}]
    [:.btn-primary
@@ -385,6 +388,7 @@
     {:color (util/get-theme-attribute :nav-color :link-color :color3)
      :border 0}] ; for button links
    [:.navbar
+    {:max-width content-width}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
    [:.navbar-top-bar {:width (u/percent 100)
@@ -526,19 +530,19 @@
    [:.remove-workflow-round {:float "right"}]
 
    ;; form editor
-   [:.form-item dashed-form-group]
-   [:.form-item-header {:margin-bottom (u/rem 0.5)}
+   [:.form-field dashed-form-group]
+   [:.form-field-header {:margin-bottom (u/rem 0.5)}
     [:h4 {:display "inline"
           :font-weight "bold"
           :font-size (u/rem 1.1)}]]
-   [:.form-item-controls {:float "right"}
+   [:.form-field-controls {:float "right"}
     [:* {:margin-left (u/em 0.25)}]]
-   [:.new-form-item {:text-align "center"}]
+   [:.new-form-field {:text-align "center"}]
 
-   [:.form-item-option (assoc dashed-form-group
+   [:.form-field-option (assoc dashed-form-group
                               :margin-left 0
                               :margin-right 0)]
-   [:.new-form-item-option {:text-align "center"}]
+   [:.new-form-field-option {:text-align "center"}]
 
    [:.full {:width "100%"}]
    [:.rectangle {:width (u/px 50)

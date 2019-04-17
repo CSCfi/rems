@@ -9,9 +9,10 @@
             [rems.db.applications :as applications]
             [rems.db.users :as users]
             [rems.poller.common :as common]
+            [rems.scheduler :as scheduler]
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])
-  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]))
+  (:import [org.joda.time Duration]))
 
 ;;; Mapping events to emails
 
@@ -151,7 +152,7 @@
 ;; 4. open http://localhost:8025 in your browser to view the emails
 
 (defn mark-all-emails-as-sent! []
-  (let [events (applications/get-dynamic-application-events-since 0)
+  (let [events (applications/get-all-events-since 0)
         last-id (:event/id (last events))]
     (common/set-poller-state! ::poller {:last-processed-event-id last-id})))
 
@@ -179,11 +180,8 @@
                                            (send-email! mail))))))
 
 (mount/defstate email-poller
-  :start (doto (ScheduledThreadPoolExecutor. 1)
-           (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
-  :stop (doto email-poller
-          (.shutdownNow)
-          (.awaitTermination 60 TimeUnit/SECONDS)))
+  :start (scheduler/start! run (Duration/standardSeconds 10))
+  :stop (scheduler/stop! email-poller))
 
 (comment
   (mount/start #{#'email-poller})

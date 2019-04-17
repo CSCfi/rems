@@ -5,8 +5,9 @@
             [mount.core :as mount]
             [rems.api.applications-v2 :as applications-v2]
             [rems.db.entitlements :as entitlements]
-            [rems.poller.common :as common])
-  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]))
+            [rems.poller.common :as common]
+            [rems.scheduler :as scheduler])
+  (:import [org.joda.time Duration]))
 
 (defn- entitlements-for-event [event]
   ;; we filter by event here, and by state in update-entitlements-for.
@@ -23,8 +24,5 @@
   (common/run-event-poller ::poller entitlements-for-event))
 
 (mount/defstate entitlements-poller
-  :start (doto (ScheduledThreadPoolExecutor. 1)
-           (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
-  :stop (doto entitlements-poller
-          (.shutdownNow)
-          (.awaitTermination 60 TimeUnit/SECONDS)))
+  :start (scheduler/start! run (Duration/standardSeconds 10))
+  :stop (scheduler/stop! entitlements-poller))

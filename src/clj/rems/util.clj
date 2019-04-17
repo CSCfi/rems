@@ -82,3 +82,18 @@
 
 (defn atom? [x]
   (instance? Atom x))
+
+(defmacro assert-ex
+  "Like assert but throw the result with ex-info and not as string. "
+  ([x message]
+   `(when-not ~x
+      (throw (ex-info (str "Assert failed: " ~message "\n" (pr-str '~x))
+                      (merge ~message {:expression '~x}))))))
+
+(defmacro try-catch-ex
+  "Wraps the code in `try` and `catch` and automatically unwraps the possible exception `ex-data` into regular result."
+  [& body]
+  `(try
+     ~@body
+     (catch clojure.lang.ExceptionInfo e#
+       (ex-data e#))))

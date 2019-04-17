@@ -31,7 +31,7 @@
 
 (s/defschema FullForm
   (merge Form
-         {:fields [s/Any]}))
+         {:fields [FormField]}))
 
 (s/defschema Forms
   [Form])
@@ -55,7 +55,7 @@
 (s/defschema CreateFormCommand
   {:organization s/Str
    :title s/Str
-   :items [FormField]})
+   :fields [FormField]})
 
 (s/defschema CreateFormResponse
   {:success s/Bool
@@ -77,13 +77,6 @@
                             (when-not archived {:archived false})))))
 
     (GET "/:form-id" []
-      :summary "Get form by id"
-      :roles #{:owner}
-      :path-params [form-id :- (describe s/Num "form-id")]
-      :return FullForm
-      (ok (form/get-form form-id)))
-
-    (GET "/v2/:form-id" []
       :summary "Get form by id"
       :roles #{:owner}
       :path-params [form-id :- (describe s/Num "form-id")]

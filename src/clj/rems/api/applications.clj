@@ -186,6 +186,7 @@
 
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
+    (command-endpoint :application.command/add-licenses commands/AddLicensesCommand)
     (command-endpoint :application.command/add-member commands/AddMemberCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/approve commands/ApproveCommand)

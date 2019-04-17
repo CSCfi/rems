@@ -38,6 +38,7 @@
                                                   :application.command/accept-licenses]
                                       :member [:application.command/accept-licenses]
                                       :handler [:see-everything
+                                                :application.command/add-licenses
                                                 :application.command/add-member
                                                 :application.command/remove-member
                                                 :application.command/invite-member
@@ -171,12 +172,9 @@
              :application/members #{}
              :application/past-members #{}
              :application/invitation-tokens {}
-             :application/resources (map (fn [resource]
-                                           {:catalogue-item/id (:catalogue-item/id resource)
-                                            :resource/ext-id (:resource/ext-id resource)})
+             :application/resources (map #(select-keys % [:catalogue-item/id :resource/ext-id])
                                          (:application/resources event))
-             :application/licenses (map (fn [license]
-                                          {:license/id (:license/id license)})
+             :application/licenses (map #(select-keys % [:license/id])
                                         (:application/licenses event))
              :application/accepted-licenses {}
              :application/events []
@@ -198,8 +196,18 @@
 (defmethod event-type-specific-application-view :application.event/licenses-accepted
   [application event]
   (-> application
-      (assoc :application/modified (:event/time event))
       (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
+
+(defmethod event-type-specific-application-view :application.event/licenses-added
+  [application event]
+  (-> application
+      (assoc :application/modified (:event/time event))
+      (update :application/licenses
+              (fn [licenses]
+                (-> licenses
+                    (into (:application/licenses event))
+                    distinct
+                    vec)))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
@@ -324,7 +332,7 @@
         orphans-in-order (filter (fn [item2]
                                    (not (contains? list1-keys (f item2))))
                                  list2)]
-    (concat merged-in-order orphans-in-order)))
+    (vec (concat merged-in-order orphans-in-order))))
 
 (deftest test-merge-lists-by
   (testing "merges objects with the same key"
@@ -418,7 +426,8 @@
                :catalogue-item/enabled (:enabled item)
                :catalogue-item/expired (:expired item)
                :catalogue-item/archived (:archived item)}))
-       (sort-by :catalogue-item/id)))
+       (sort-by :catalogue-item/id)
+       vec))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [rich-licenses (->> app-licenses
@@ -517,7 +526,7 @@
                        :application.event/decided
                        :application.event/decision-requested}
                      :event/type))
-       (map hide-sensitive-event-content)))
+       (mapv hide-sensitive-event-content)))
 
 (defn- hide-sensitive-information [application]
   (-> application
