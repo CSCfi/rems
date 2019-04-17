@@ -752,7 +752,9 @@
 (defn command! [cmd]
   (assert (:application-id cmd))
   (let [events (get-application-events (:application-id cmd))
-        app (dynamic/apply-events nil events)
+        app (-> nil
+                (dynamic/apply-events events)
+                (model/enrich-workflow-handlers workflow/get-workflow))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
       (add-event! (:result result))

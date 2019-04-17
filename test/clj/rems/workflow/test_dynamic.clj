@@ -27,7 +27,8 @@
 
 (defn apply-events [application events]
   (events/validate-events events)
-  (dynamic/apply-events application events))
+  (-> (dynamic/apply-events application events)
+      (model/enrich-workflow-handlers {1 {:workflow {:handlers [handler-user-id]}}})))
 
 (defn- fail-command
   ([application cmd]

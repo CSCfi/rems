@@ -139,12 +139,30 @@
   {:owner ["owner1"]
    :reporter ["reporter1"]})
 
+(def ^:private get-workflow
+  {50 {:id 50
+       :organization "org"
+       :title "workflow title"
+       :workflow {:type "workflow/dynamic"
+                  :handlers ["handler"]}
+       :licenses nil
+       :visibility "private"
+       :fnlround 0
+       :owneruserid "owner"
+       :modifieruserid "owner"
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :archived false
+       :expired false}})
+
 (deftest test-application-view
   (let [injections {:get-form get-form
                     :get-catalogue-item get-catalogue-item
                     :get-license get-license
                     :get-user get-user
-                    :get-users-with-role get-users-with-role}
+                    :get-users-with-role get-users-with-role
+                    :get-workflow get-workflow}
         apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events
@@ -698,8 +716,9 @@
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
-                                                     :event/actor "applicant"
-                                                     :workflow.dynamic/handlers #{"handler"}})
+                                                     :event/actor "applicant"})
+                        (assoc-in [:application/workflow :workflow.dynamic/handlers] #{"handler"})
+                        (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/set-role-permissions {:role-1 []

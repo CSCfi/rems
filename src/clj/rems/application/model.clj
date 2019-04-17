@@ -472,11 +472,21 @@
             :application/members
             enrich-members)))
 
+(defn enrich-workflow-handlers [application get-workflow]
+  (if (= :workflow/dynamic (get-in application [:application/workflow :workflow/type]))
+    (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
+          handlers (set (get-in workflow [:workflow :handlers]))]
+      (-> application
+          (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
+          (permissions/give-role-to-users :handler handlers)))
+    application))
+
 (defn- enrich-super-users [application get-users-with-role]
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user get-users-with-role]}]
+(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license
+                                                  get-user get-users-with-role get-workflow]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
@@ -499,6 +509,7 @@
         (update :application/licenses enrich-licenses get-license)
         (assoc :application/applicant-attributes (get-user (:application/applicant application)))
         (enrich-user-attributes get-user)
+        (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))
 
 (defn build-application-view [events injections]
