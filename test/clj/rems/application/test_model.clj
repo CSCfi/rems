@@ -186,8 +186,7 @@
                                             {:license/id 32}]
                      :form/id 40
                      :workflow/id 50
-                     :workflow/type :workflow/dynamic
-                     :workflow.dynamic/handlers #{"handler"}}]
+                     :workflow/type :workflow/dynamic}]
             expected-application {:application/id 1
                                   :application/external-id "extid"
                                   :application/state :application.state/draft
@@ -666,8 +665,7 @@
   ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
   (testing "commenter may comment only once"
     (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"
-                                                              :workflow.dynamic/handlers ["handler"]}
+                                                              :event/actor "applicant"}
                                                              {:event/type :application.event/submitted
                                                               :event/actor "applicant"}
                                                              {:event/type :application.event/comment-requested
@@ -684,8 +682,7 @@
 
   (testing "decider may decide only once"
     (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"
-                                                              :workflow.dynamic/handlers ["handler"]}
+                                                              :event/actor "applicant"}
                                                              {:event/type :application.event/submitted
                                                               :event/actor "applicant"}
                                                              {:event/type :application.event/decision-requested
@@ -700,14 +697,12 @@
 
   (testing "everyone can accept invitation"
     (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                            :event/actor "applicant"
-                                                            :workflow.dynamic/handlers ["handler"]}])]
+                                                            :event/actor "applicant"}])]
       (is (= #{:application.command/accept-invitation}
              (permissions/user-permissions created "joe")))))
   (testing "nobody can accept invitation for closed application"
     (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                           :event/actor "applicant"
-                                                           :workflow.dynamic/handlers ["handler"]}
+                                                           :event/actor "applicant"}
                                                           {:event/type :application.event/closed
                                                            :event/actor "applicant"}])]
       (is (= #{}

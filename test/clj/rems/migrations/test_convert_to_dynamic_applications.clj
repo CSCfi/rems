@@ -133,8 +133,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
                                 :event/time test-data/creation-time
@@ -175,8 +174,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
                                 :event/time test-data/creation-time
@@ -222,8 +220,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
                                 :event/time test-data/creation-time
@@ -275,8 +272,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
                                 :event/time test-data/creation-time
@@ -328,8 +324,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
                                 :event/time test-data/creation-time
@@ -384,8 +379,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 3}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
                                 :event/time test-data/creation-time
@@ -442,8 +436,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
                                 :event/time test-data/creation-time
@@ -502,8 +495,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
                                 :event/time test-data/creation-time
@@ -549,8 +541,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)
@@ -604,8 +595,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)
@@ -666,8 +656,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)
@@ -719,8 +708,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                        {:license/id 2}]
                                 :form/id 1
                                 :workflow/id 7
-                                :workflow/type :workflow/dynamic
-                                :workflow.dynamic/handlers #{"developer"}}
+                                :workflow/type :workflow/dynamic}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)

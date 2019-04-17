@@ -706,8 +706,7 @@
                                   licenses)
        :form/id form-id
        :workflow/id workflow-id
-       :workflow/type (:type workflow)
-       :workflow.dynamic/handlers (set (:handlers workflow))})))
+       :workflow/type (:type workflow)})))
 
 (defn add-application-created-event! [opts]
   (add-event! (application-created-event (assoc opts :allocate-external-id? true))))

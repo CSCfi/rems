@@ -82,7 +82,6 @@
   [application event]
   (-> application
       (permissions/give-role-to-users :applicant [(:event/actor event)])
-      (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
       (permissions/set-role-permissions draft-permissions)))
 
 (defmethod calculate-permissions :application.event/member-added
@@ -186,7 +185,6 @@
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
                                     ;; TODO: extract an event handler for dynamic workflow specific stuff
-                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
                                     :workflow.dynamic/awaiting-commenters #{}
                                     :workflow.dynamic/awaiting-deciders #{}})))
 
@@ -525,10 +523,6 @@
 (defmethod hide-sensitive-event-content :default
   [event]
   event)
-
-(defmethod hide-sensitive-event-content :application.event/created
-  [event]
-  (dissoc event :workflow.dynamic/handlers))
 
 (defmethod hide-sensitive-event-content :application.event/member-invited
   [event]

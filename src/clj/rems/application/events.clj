@@ -40,15 +40,13 @@
 (s/defschema CreatedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/created)
+         :application/external-id (s/maybe s/Str)
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]
          :form/id s/Int
          :workflow/id s/Int
-         :workflow/type s/Keyword
-         :application/external-id (s/maybe s/Str)
-         ;; workflow-specific data
-         (s/optional-key :workflow.dynamic/handlers) #{s/Str}))
+         :workflow/type s/Keyword))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/decided)
