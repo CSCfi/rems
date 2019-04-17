@@ -706,8 +706,7 @@
                                   licenses)
        :form/id form-id
        :workflow/id workflow-id
-       :workflow/type (:type workflow)
-       :workflow.dynamic/handlers (set (:handlers workflow))})))
+       :workflow/type (:type workflow)})))
 
 (defn add-application-created-event! [opts]
   (add-event! (application-created-event (assoc opts :allocate-external-id? true))))
@@ -731,7 +730,7 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn- get-form [form-id]
+(defn get-form [form-id]
   (-> (form/get-form form-id)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
@@ -752,7 +751,9 @@
 (defn command! [cmd]
   (assert (:application-id cmd))
   (let [events (get-application-events (:application-id cmd))
-        app (dynamic/apply-events nil events)
+        app (-> nil
+                (dynamic/apply-events events)
+                (model/enrich-workflow-handlers workflow/get-workflow))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
       (add-event! (:result result))

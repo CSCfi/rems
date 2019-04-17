@@ -261,8 +261,7 @@
 (deftest test-handle-command
   (let [application (apply-events nil [{:event/type :application.event/created
                                         :event/actor "applicant"
-                                        :workflow/type :workflow/dynamic
-                                        :workflow.dynamic/handlers #{"assistant"}}])
+                                        :workflow/type :workflow/dynamic}])
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values []

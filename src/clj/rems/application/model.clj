@@ -82,7 +82,6 @@
   [application event]
   (-> application
       (permissions/give-role-to-users :applicant [(:event/actor event)])
-      (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
       (permissions/set-role-permissions draft-permissions)))
 
 (defmethod calculate-permissions :application.event/member-added
@@ -186,7 +185,6 @@
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
                                     ;; TODO: extract an event handler for dynamic workflow specific stuff
-                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
                                     :workflow.dynamic/awaiting-commenters #{}
                                     :workflow.dynamic/awaiting-deciders #{}})))
 
@@ -472,11 +470,21 @@
             :application/members
             enrich-members)))
 
+(defn enrich-workflow-handlers [application get-workflow]
+  (if (= :workflow/dynamic (get-in application [:application/workflow :workflow/type]))
+    (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
+          handlers (set (get-in workflow [:workflow :handlers]))]
+      (-> application
+          (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
+          (permissions/give-role-to-users :handler handlers)))
+    application))
+
 (defn- enrich-super-users [application get-users-with-role]
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user get-users-with-role]}]
+(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license
+                                                  get-user get-users-with-role get-workflow]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
@@ -499,6 +507,7 @@
         (update :application/licenses enrich-licenses get-license)
         (assoc :application/applicant-attributes (get-user (:application/applicant application)))
         (enrich-user-attributes get-user)
+        (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))
 
 (defn build-application-view [events injections]
@@ -514,10 +523,6 @@
 (defmethod hide-sensitive-event-content :default
   [event]
   event)
-
-(defmethod hide-sensitive-event-content :application.event/created
-  [event]
-  (dissoc event :workflow.dynamic/handlers))
 
 (defmethod hide-sensitive-event-content :application.event/member-invited
   [event]

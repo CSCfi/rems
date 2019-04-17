@@ -1,8 +1,9 @@
 (ns rems.poller.test-email
   (:require [clojure.test :refer :all]
             [mount.core :as mount]
-            rems.config
-            rems.locales
+            [rems.application.model :as model]
+            [rems.config]
+            [rems.locales]
             [rems.poller.email :refer :all]
             [rems.text :as text]
             [rems.workflow.dynamic :as dynamic]))
@@ -10,12 +11,14 @@
 (use-fixtures
   :once
   (fn [f]
-    (mount/start #'rems.config/env #'rems.locales/translations)
+    (mount/start #'rems.config/env
+                 #'rems.locales/translations)
     (f)
     (mount/stop)))
 
 (defn events-to-emails [events]
-  (let [application (dynamic/apply-events nil events)]
+  (let [application (-> (dynamic/apply-events nil events)
+                        (model/enrich-workflow-handlers {5 {:workflow {:handlers ["handler" "assistant"]}}}))]
     (text/with-language :en
       (fn [] (mapv #(#'rems.poller.email/event-to-emails-impl % application) events)))))
 
@@ -24,8 +27,8 @@
                       :application/external-id "2001/3"
                       :event/type :application.event/created
                       :event/actor "applicant"
-                      :workflow/type :workflow/dynamic
-                      :workflow.dynamic/handlers #{"handler" "assistant"}}
+                      :workflow/id 5
+                      :workflow/type :workflow/dynamic}
                      {:application/id 7
                       :event/type :application.event/submitted
                       :event/actor "applicant"}]]
@@ -118,9 +121,9 @@
                 :body "Dear member,\nYour application 2001/3 has been closed.\nView your application: http://localhost:3001/#/application/7"}]]
              (events-to-emails events))))
     (let [events (conj base-events
-                      {:application/id 7
-                       :event/type :application.event/rejected
-                       :event/actor "handler"})]
+                       {:application/id 7
+                        :event/type :application.event/rejected
+                        :event/actor "handler"})]
       (is (= [[]
               []
               [{:subject "Your application has been rejected",

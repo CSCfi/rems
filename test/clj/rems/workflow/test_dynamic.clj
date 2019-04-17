@@ -17,17 +17,18 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id 123
+                                    :application/external-id nil
                                     :application/resources []
                                     :application/licenses []
                                     :form/id 1
                                     :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{handler-user-id}})
+                                    :workflow/type :workflow/dynamic})
+(def ^:private dummy-workflows {1 {:workflow {:handlers [handler-user-id]}}})
 
 (defn apply-events [application events]
   (events/validate-events events)
-  (dynamic/apply-events application events))
+  (-> (dynamic/apply-events application events)
+      (model/enrich-workflow-handlers dummy-workflows)))
 
 (defn- fail-command
   ([application cmd]
@@ -169,6 +170,7 @@
                        :event/time test-time
                        :event/actor applicant-user-id
                        :application/id 123
+                       :application/external-id nil
                        :application/resources [{:catalogue-item/id 10
                                                 :resource/ext-id "urn:11"}
                                                {:catalogue-item/id 20
@@ -177,9 +179,7 @@
                                               {:license/id 31}]
                        :form/id 40
                        :workflow/id 50
-                       :workflow/type :workflow/dynamic
-                       :application/external-id nil
-                       :workflow.dynamic/handlers #{handler-user-id}}
+                       :workflow/type :workflow/dynamic}
         draft-saved-event {:event/type :application.event/draft-saved
                            :event/time test-time
                            :event/actor applicant-user-id

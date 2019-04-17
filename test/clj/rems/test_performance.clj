@@ -5,8 +5,7 @@
             [mount.core :as mount]
             [rems.api.applications-v2 :as applications-v2]
             [rems.api.reviews :as reviews]
-            [rems.db.applications :as applications]
-            [rems.db.dynamic-roles :as dynamic-roles])
+            [rems.db.applications :as applications])
   (:import [java.util Locale]))
 
 (defn run-benchmark [benchmark]
@@ -49,6 +48,7 @@
 (defn benchmark-get-all-applications []
   (let [test-get-all-unrestricted-applications #(doall (applications-v2/get-all-unrestricted-applications))
         test-get-all-applications #(doall (applications-v2/get-all-applications "alice"))
+        test-get-all-application-roles #(doall (applications-v2/get-all-application-roles "developer"))
         test-get-own-applications #(doall (applications-v2/get-own-applications "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-open-reviews #(doall (reviews/get-open-reviews "developer"))
@@ -59,20 +59,23 @@
                  (mount/start #'applications-v2/all-applications-cache)
                  (test-get-all-unrestricted-applications))]
     (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
-                      :setup no-cache
-                      :benchmark test-get-all-unrestricted-applications}
+                      :benchmark test-get-all-unrestricted-applications
+                      :setup no-cache}
                      {:name "get-all-unrestricted-applications, cached"
-                      :setup cached
-                      :benchmark test-get-all-unrestricted-applications}
+                      :benchmark test-get-all-unrestricted-applications
+                      :setup cached}
                      {:name "get-all-applications, cached"
-                      :setup cached
-                      :benchmark test-get-all-applications}
+                      :benchmark test-get-all-applications
+                      :setup cached}
+                     {:name "get-all-application-roles, cached"
+                      :benchmark test-get-all-application-roles
+                      :setup cached}
                      {:name "get-own-applications, cached"
-                      :setup cached
-                      :benchmark test-get-own-applications}
+                      :benchmark test-get-own-applications
+                      :setup cached}
                      {:name "get-open-reviews, cached"
-                      :setup cached
-                      :benchmark test-get-open-reviews}])
+                      :benchmark test-get-open-reviews
+                      :setup cached}])
     (println "cache size" (mm/measure applications-v2/all-applications-cache))))
 
 (defn benchmark-get-application []
@@ -84,28 +87,12 @@
                  (mount/start #'applications-v2/application-cache)
                  (test-get-application))]
     (run-benchmarks [{:name "get-application, no cache"
-                      :setup no-cache
-                      :benchmark test-get-application}
+                      :benchmark test-get-application
+                      :setup no-cache}
                      {:name "get-application, cached"
-                      :setup cached
-                      :benchmark test-get-application}])
+                      :benchmark test-get-application
+                      :setup cached}])
     (println "cache size" (mm/measure applications-v2/application-cache))))
-
-(defn benchmark-get-dynamic-roles []
-  (let [test-get-roles #(doall (dynamic-roles/get-roles "developer"))
-        no-cache (fn []
-                   (mount/stop #'dynamic-roles/dynamic-roles-cache))
-        cached (fn []
-                 (mount/stop #'dynamic-roles/dynamic-roles-cache)
-                 (mount/start #'dynamic-roles/dynamic-roles-cache)
-                 (test-get-roles))]
-    (run-benchmarks [{:name "get-roles, no cache"
-                      :setup no-cache
-                      :benchmark test-get-roles}
-                     {:name "get-roles, cached"
-                      :setup cached
-                      :benchmark test-get-roles}])
-    (println "cache size" (mm/measure dynamic-roles/dynamic-roles-cache))))
 
 (comment
   ;; Note: If clj-memory-meter throws InaccessibleObjectException on Java 9+,
@@ -114,5 +101,4 @@
   ;;       easily be avoided.
   (benchmark-get-events)
   (benchmark-get-all-applications)
-  (benchmark-get-application)
-  (benchmark-get-dynamic-roles))
+  (benchmark-get-application))
