@@ -282,7 +282,7 @@
 
 ;;; Possible commands
 
-(defn possible-commands
+(defn possible-commands ; TODO: legacy code; remove me
   "Returns the commands which the user is authorized to execute."
   [actor application-state]
   (permissions/user-permissions application-state actor))

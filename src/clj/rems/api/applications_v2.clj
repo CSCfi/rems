@@ -33,10 +33,14 @@
 (defn- get-user [user-id]
   (users/get-user-attributes user-id))
 
+(defn- get-users-with-role [role]
+  (users/get-users-with-role role))
+
 (def ^:private injections {:get-form get-form
                            :get-catalogue-item get-catalogue-item
                            :get-license get-license
-                           :get-user get-user})
+                           :get-user get-user
+                           :get-users-with-role get-users-with-role})
 
 ;; short-lived cache to speed up pollers which get the application
 ;; repeatedly for each event instead of building their own projection

@@ -2,16 +2,16 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
+            [rems.db.roles :as roles]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]))
 
+;; TODO: now reporter can see all apps on the review page, but should there be a separate reporting page?
+(def ^:private reviewer-roles
+  #{:handler :commenter :decider :past-commenter :past-decider :reporter})
+
 (defn- review? [application]
-  (and (some #{:handler
-               :commenter
-               :past-commenter
-               :decider
-               :past-decider}
-             (:application/roles application))
+  (and (some reviewer-roles (:application/roles application))
        (not= :application.state/draft (:application/state application))))
 
 (defn get-all-reviews [user-id]
@@ -38,12 +38,12 @@
 
     (GET "/open" []
       :summary "Lists applications which the user needs to review"
-      :roles #{:handler :commenter :decider :past-commenter :past-decider}
+      :roles #{:handler :commenter :decider :past-commenter :past-decider :reporter}
       :return [ApplicationOverview]
       (ok (get-open-reviews (getx-user-id))))
 
     (GET "/handled" []
       :summary "Lists applications which the user has already reviewed"
-      :roles #{:handler :commenter :decider :past-commenter :past-decider}
+      :roles #{:handler :commenter :decider :past-commenter :past-decider :reporter}
       :return [ApplicationOverview]
       (ok (get-handled-reviews (getx-user-id))))))
