@@ -46,11 +46,6 @@
   [context keys]
   (input-field (merge keys {:context context :type "text"})))
 
-(defn number-field
-  "A basic number field, full page width."
-  [context keys]
-  (input-field (merge keys {:context context :type "number"})))
-
 (defn textarea-autosize
   "A basic textarea, full page width."
   [context {:keys [keys label placeholder]}]
