@@ -99,7 +99,20 @@
     (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
                                                    :theme-path "example-theme/theme.edn"})]
-      (is (= "Active" (getx-in translations [:en :t :administration :active]))))))
+      (is (= "Active" (getx-in translations [:en :t :administration :active])))))
+  ;; TODO: This should rather be part of validation of all custom themes, but
+  ;;   it's probably better to at least have it here than not at all.
+  (testing "extra translations don't add keys that are not defined in original"
+    (doseq [lang [:en :fi]]
+      (let [translations
+            (locales/load-translations {:languages [lang]
+                                        :translations-directory "translations/"
+                                        :theme-path "example-theme/theme.edn"})
+            translations-without-extras
+            (locales/load-translations {:languages [lang]
+                                        :translations-directory "translations/"})]
+        (is (= (map-structure translations)
+               (map-structure translations-without-extras)))))))
 
 (deftest theme-path-given-no-extra-translations
   (testing "translations work with theme-path in config and no extra-translations"
