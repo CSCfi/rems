@@ -9,8 +9,6 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
-            [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
@@ -19,35 +17,13 @@
             [rems.util :refer [getx atom?]])
   (:import [org.joda.time Duration]))
 
-(defn- get-form [form-id]
-  (-> (form/get-form form-id)
-      (select-keys [:id :organization :title :start :end])
-      (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv #(applications/process-field nil form-id %))))))
-
-(defn- get-catalogue-item [catalogue-item-id]
-  (assert (int? catalogue-item-id)
-          (pr-str catalogue-item-id))
-  (catalogue/get-localized-catalogue-item catalogue-item-id))
-
-(defn- get-license [license-id]
-  (licenses/get-license license-id))
-
-(defn- get-user [user-id]
-  (users/get-user-attributes user-id))
-
-(defn- get-users-with-role [role]
-  (users/get-users-with-role role))
-
-(defn- get-workflow [workflow-id]
-  (workflow/get-workflow workflow-id))
-
-(def ^:private injections {:get-form get-form
-                           :get-catalogue-item get-catalogue-item
-                           :get-license get-license
-                           :get-user get-user
-                           :get-users-with-role get-users-with-role
-                           :get-workflow get-workflow})
+(def ^:private injections
+  {:get-form applications/get-form
+   :get-catalogue-item catalogue/get-localized-catalogue-item
+   :get-license licenses/get-license
+   :get-user users/get-user-attributes
+   :get-users-with-role users/get-users-with-role
+   :get-workflow workflow/get-workflow})
 
 ;; short-lived cache to speed up pollers which get the application
 ;; repeatedly for each event instead of building their own projection

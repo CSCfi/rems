@@ -730,7 +730,7 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn- get-form [form-id]
+(defn get-form [form-id]
   (-> (form/get-form form-id)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
