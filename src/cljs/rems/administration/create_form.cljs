@@ -100,7 +100,7 @@
          (nil? (:input-prompt field)))
        (if (supports-maxlength? field)
          (not (neg? (:maxlength field)))
-	 (nil? (:maxlength field)))
+         (nil? (:maxlength field)))
        (if (supports-options? field)
          (every? #(valid-option? % languages) (:options field))
          (nil? (:options field)))))
