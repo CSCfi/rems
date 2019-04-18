@@ -19,7 +19,7 @@
 (rf/reg-event-fx
  ::fetch-my-applications
  (fn [{:keys [db]} _]
-   (fetch "/api/applications"
+   (fetch "/api/my-applications"
           {:handler #(rf/dispatch [::fetch-my-applications-result %])})
    {:db (assoc db ::loading-my-applications? true)}))
 
@@ -45,7 +45,7 @@
 (rf/reg-event-fx
  ::fetch-all-applications
  (fn [{:keys [db]} _]
-   (fetch "/api/applications/all"
+   (fetch "/api/applications"
           {:handler #(rf/dispatch [::fetch-all-applications-result %])})
    {:db (assoc db ::loading-all-applications? true)}))
 

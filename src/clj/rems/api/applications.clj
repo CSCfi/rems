@@ -111,20 +111,22 @@
        :return SuccessResponse
        (api-command ~command request#))))
 
-(def applications-api
-  (context "/applications" []
+(def my-applications-api
+  (context "/my-applications" []
     :tags ["applications"]
 
-    ;; TODO: rename to /api/my-applications
     (GET "/" []
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications-v2/get-own-applications (getx-user-id))))
+      (ok (applications-v2/get-own-applications (getx-user-id))))))
 
-    ;; TODO: rename to /api/applications
-    (GET "/all" []
-      :summary "Get all applications"
+(def applications-api
+  (context "/applications" []
+    :tags ["applications"]
+
+    (GET "/" []
+      :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
       :return [ApplicationOverview]
       (ok (applications-v2/get-all-applications (getx-user-id))))
