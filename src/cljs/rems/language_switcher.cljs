@@ -6,8 +6,8 @@
 
 (defn lang-link-classes [current-language language]
   (if (= current-language language)
-    "btn-link active"
-    "btn-link"))
+    "btn btn-link active"
+    "btn btn-link"))
 
 (defn language-switcher
   "Language switcher widget"
