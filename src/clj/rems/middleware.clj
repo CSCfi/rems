@@ -1,6 +1,7 @@
 (ns rems.middleware
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
+            [clojure.pprint :refer [pprint]]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
@@ -110,7 +111,8 @@
     (try
       (handler req)
       (catch Throwable t
-        (log/error t)
+        (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
+                                                      (pprint data))))
         (error-page {:status 500
                      :title "System error occurred!"
                      :message "We are working on fixing the issue."})))))
