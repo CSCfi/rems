@@ -7,7 +7,7 @@
                   [:p [:a {:href "http://www.csc.fi/rems"} "More information on the REMS tool."]]
                   [:p "REMS support: rems@csc.fi"]
                   [:h3 "User Accounts and Roles"]
-                  [:p "Following test user accounts (roles) can be used when singing in using Haka test IdP:"]
+                  [:p "Following test user accounts (roles) can be used when signing in using Haka test IdP:"]
                   [:p [:strong "1. Applicant 1"] [:br]
                    "Username: RDapplicant1" [:br]
                    "Password: RDapplicant1" [:br]
@@ -146,7 +146,7 @@
                           :decided "Decided"
                           :decision-requested "Decision requested"
                           :draft-saved "Saved"
-                          :licenses-added "Added tems of use"
+                          :licenses-added "Added terms of use"
                           :licenses-accepted "Accepted terms of use"
                           :member-added "Member added"
                           :member-invited "Member invited"
