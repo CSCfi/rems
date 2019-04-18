@@ -177,8 +177,8 @@
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
               :more-info "More info"
-              :continue-existing-application "Continue Existing Application"
-              :apply-resources "Apply for Resources"}
+              :continue-existing-application "Continue existing application"
+              :apply-resources "Apply for resources"}
   :collapse {:show-less "Show less"
              :show-more "Show more"}
   :create-catalogue-item {:form-selection "Form"
