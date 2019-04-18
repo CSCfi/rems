@@ -549,8 +549,4 @@
       (is (not (contains? (get-ids (get-open-reviews "developer"))
                           app-id)))
       (is (contains? (get-ids (get-handled-reviews "developer"))
-                     app-id)))
-
-    (testing "domain reporter can see all applications"
-      (is (contains? (get-ids (get-handled-reviews "reporter"))
                      app-id)))))

@@ -115,11 +115,19 @@
   (context "/applications" []
     :tags ["applications"]
 
+    ;; TODO: rename to /api/my-applications
     (GET "/" []
-      :summary "Get current user's all applications"
+      :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
       (ok (applications-v2/get-own-applications (getx-user-id))))
+
+    ;; TODO: rename to /api/applications
+    (GET "/all" []
+      :summary "Get all applications"
+      :roles #{:logged-in}
+      :return [ApplicationOverview]
+      (ok (applications-v2/get-all-applications (getx-user-id))))
 
     (POST "/create" []
       :summary "Create a new application"

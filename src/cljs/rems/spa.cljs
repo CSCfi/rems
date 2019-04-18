@@ -153,8 +153,8 @@
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
-         (roles/is-admin? roles) (dispatch! "/#/administration")
-         (roles/is-reviewer? roles) (dispatch! "/#/actions")
+         (roles/show-admin-pages? roles) (dispatch! "/#/administration")
+         (roles/show-reviews? roles) (dispatch! "/#/actions")
          :else (dispatch! "/#/catalogue"))
        {})
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)

@@ -3,15 +3,18 @@
             [rems.application-list :as application-list]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-state localize-time text]]
-            [rems.util :refer [fetch]]))
+            [rems.util :refer [fetch]]
+            [rems.roles :as roles]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (dissoc db ::my-applications)
-    :dispatch [::fetch-my-applications]}))
+    :dispatch-n [[::fetch-my-applications]
+                 (when (roles/show-all-applications? (:roles (:identity db)))
+                   [::fetch-all-applications])]}))
 
-;;;; applications
+;;;; my applications
 
 (rf/reg-event-fx
  ::fetch-my-applications
@@ -37,6 +40,32 @@
  (fn [db _]
    (::loading-my-applications? db)))
 
+;;;; all applications
+
+(rf/reg-event-fx
+ ::fetch-all-applications
+ (fn [{:keys [db]} _]
+   (fetch "/api/applications/all"
+          {:handler #(rf/dispatch [::fetch-all-applications-result %])})
+   {:db (assoc db ::loading-all-applications? true)}))
+
+(rf/reg-event-db
+ ::fetch-all-applications-result
+ (fn [db [_ applications]]
+   (-> db
+       (assoc ::all-applications applications)
+       (dissoc ::loading-all-applications?))))
+
+(rf/reg-sub
+ ::all-applications
+ (fn [db _]
+   (::all-applications db)))
+
+(rf/reg-sub
+ ::loading-all-applications?
+ (fn [db _]
+   (::loading-all-applications? db)))
+
 ;;;; table sorting
 
 (rf/reg-sub
@@ -54,20 +83,34 @@
 
 ;;;; UI
 
+;; XXX: the application lists share sorting and filtering state
+(defn- application-list [apps loading?]
+  (cond loading?
+        [spinner/big]
+
+        (empty? apps)
+        [:div.applications.alert.alert-success (text :t.applications/empty)]
+
+        :else
+        [application-list/component
+         {:visible-columns application-list/+all-columns+
+          :sorting (assoc @(rf/subscribe [::sorting])
+                          :set-sorting #(rf/dispatch [::set-sorting %]))
+          :filtering (assoc @(rf/subscribe [::filtering])
+                            :set-filtering #(rf/dispatch [::set-filtering %]))
+          :items apps}]))
+
 (defn applications-page []
   (let [apps @(rf/subscribe [::my-applications])
         loading? @(rf/subscribe [::loading-my-applications?])]
     [:div
-     [:h2 (text :t.applications/applications)]
-     (cond loading?
-           [spinner/big]
+     [:h2 (text :t.applications/my-applications)]
+     [application-list apps loading?]
 
-           (empty? apps)
-           [:div.applications.alert.alert-success (text :t.applications/empty)]
-
-           :else
-           [application-list/component
-            {:visible-columns application-list/+all-columns+
-             :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
-             :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
-             :items apps}])]))
+     (let [identity @(rf/subscribe [:identity])
+           apps @(rf/subscribe [::all-applications])
+           loading? @(rf/subscribe [::loading-all-applications?])]
+       (when (roles/show-all-applications? (:roles identity))
+         [:div
+          [:h2 (text :t.applications/all-applications)]
+          [application-list apps loading?]]))]))

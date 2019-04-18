@@ -135,8 +135,8 @@
                    :member "Jäsen"
                    :name "Nimi"
                    :username "Käyttäjätunnus"}
-  :applications {:application "Hakemus"
-                 :applications "Hakemukset"
+  :applications {:all-applications "Kaikki hakemukset"
+                 :application "Hakemus"
                  :empty "Sinulla ei ole hakemuksia."
                  :events {:approved "Hyväksytty"
                           :closed "Poistettu"
@@ -157,6 +157,7 @@
                           :returned "Palautettu muokattavaksi"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
+                 :my-applications "Omat hakemukset"
                  :state "Tila"
                  :states {:approved "Hyväksytty"
                           :closed "Poistettu"
