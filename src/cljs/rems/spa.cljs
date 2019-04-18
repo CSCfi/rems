@@ -123,6 +123,7 @@
  (fn [language]
    (let [localized-css (str "/css/" (name language) "/screen.css")]
      (set! (.. js/document -documentElement -lang) language)
+     (set! (.. js/document -title) (text :t.header/title))
      ;; Figwheel replaces the linked stylesheet
      ;; so we need to search dynamically
      (doseq [element (array-seq (.getElementsByTagName js/document "link"))]
