@@ -267,7 +267,7 @@
    [:a
     :button
     {:cursor :pointer}
-    ["&:not([href]):not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
+    ["&:not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
      [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]]
    [:html {:position :relative
            :min-width (u/px 320)
@@ -313,17 +313,29 @@
      :color (util/get-theme-attribute :primary-button-color "#fff")
      :outline-color :transparent}]
    [:.btn-secondary
+    ;; Only override bootstrap's default if the key is defined in the theme
     [:&:hover
      :&:focus
      :&:active:hover
-     {:outline-color :transparent}]]
+     (into {}
+       (filter val
+        {:background-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
+         :border-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
+         :color (util/get-theme-attribute :secondary-button-hover-color)
+         :outline-color :transparent}))]
+    (into {}
+      (filter val
+       {:background-color (util/get-theme-attribute :secondary-button-bgcolor)
+        :border-color (util/get-theme-attribute :secondary-button-bgcolor)
+        :color (util/get-theme-attribute :secondary-button-color)
+        :outline-color :transparent}))]
    [:.btn-primary.disabled :.btn-primary:disabled
     :.btn-secondary.disabled :.btn-secondary:disabled
     {:color "#fff"
      :background-color "#aaa"
      :border-color "#aaa"}]
    [:.button-min-width {:min-width (u/rem 5)}]
-   [:.icon-link {:color "#6c757d"      ; same colors as .btn-secondary
+   [:.icon-link {:color "#6c757d"  ; same color as bootstrap's default for .btn-secondary
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
    [:.modal--title [:.link

@@ -7,7 +7,7 @@
                   [:p [:a {:href "http://www.csc.fi/rems"} "More information on the REMS tool."]]
                   [:p "REMS support: rems@csc.fi"]
                   [:h3 "User Accounts and Roles"]
-                  [:p "Following test user accounts (roles) can be used when singing in using Haka test IdP:"]
+                  [:p "Following test user accounts (roles) can be used when signing in using Haka test IdP:"]
                   [:p [:strong "1. Applicant 1"] [:br]
                    "Username: RDapplicant1" [:br]
                    "Password: RDapplicant1" [:br]
@@ -66,7 +66,7 @@
             :empty "You don't have any applications to process."
             :errors {:invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]}
             :export-entitlements "Export entitlements as csv"
-            :handled-approvals "Handled applications"
+            :handled-approvals "Processed applications"
             :invite-member "Invite member"
             :last-activity "Last activity"
             :licenses-selection "Require following additional terms of use"
@@ -74,7 +74,7 @@
             :member "Member"
             :member-name "Name"
             :member-email "Email"
-            :no-handled-yet "You have not handled any applications yet."
+            :no-handled-yet "You have not processed any applications yet."
             :ok "Ok"
             :open-approvals "Open applications"
             :reject "Reject"
@@ -146,7 +146,7 @@
                           :decided "Decided"
                           :decision-requested "Decision requested"
                           :draft-saved "Saved"
-                          :licenses-added "Added tems of use"
+                          :licenses-added "Added terms of use"
                           :licenses-accepted "Accepted terms of use"
                           :member-added "Member added"
                           :member-invited "Member invited"
@@ -177,8 +177,8 @@
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
               :more-info "More info"
-              :continue-existing-application "Continue Existing Application"
-              :apply-resources "Apply for Resources"}
+              :continue-existing-application "Continue existing application"
+              :apply-resources "Apply for resources"}
   :collapse {:show-less "Show less"
              :show-more "Show more"}
   :create-catalogue-item {:form-selection "Form"
@@ -293,7 +293,7 @@
                :applications "Applications"
                :catalogue "Catalogue"
                :home "Home"
-               :logout "Sign Out"}
+               :logout "Sign out"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "Page was not found."}
   :phases {:apply "Apply"
