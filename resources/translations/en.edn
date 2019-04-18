@@ -293,7 +293,7 @@
                :applications "Applications"
                :catalogue "Catalogue"
                :home "Home"
-               :logout "Sign Out"}
+               :logout "Sign out"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "Page was not found."}
   :phases {:apply "Apply"
