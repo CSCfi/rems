@@ -49,7 +49,7 @@
   (let [test-get-all-unrestricted-applications #(doall (applications-v2/get-all-unrestricted-applications))
         test-get-all-applications #(doall (applications-v2/get-all-applications "alice"))
         test-get-all-application-roles #(doall (applications-v2/get-all-application-roles "developer"))
-        test-get-own-applications #(doall (applications-v2/get-own-applications "alice"))
+        test-get-my-applications #(doall (applications-v2/get-my-applications "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-open-reviews #(doall (reviews/get-open-reviews "developer"))
         no-cache (fn []
@@ -70,8 +70,8 @@
                      {:name "get-all-application-roles, cached"
                       :benchmark test-get-all-application-roles
                       :setup cached}
-                     {:name "get-own-applications, cached"
-                      :benchmark test-get-own-applications
+                     {:name "get-my-applications, cached"
+                      :benchmark test-get-my-applications
                       :setup cached}
                      {:name "get-open-reviews, cached"
                       :benchmark test-get-open-reviews

@@ -119,7 +119,7 @@
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications-v2/get-own-applications (getx-user-id))))))
+      (ok (applications-v2/get-my-applications (getx-user-id))))))
 
 (def applications-api
   (context "/applications" []
