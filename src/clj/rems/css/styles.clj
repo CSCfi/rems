@@ -267,7 +267,7 @@
    [:a
     :button
     {:cursor :pointer}
-    ["&:not([href]):not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
+    ["&:not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
      [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]]
    [:html {:position :relative
            :min-width (u/px 320)
