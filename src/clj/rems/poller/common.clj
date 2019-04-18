@@ -1,6 +1,7 @@
 (ns rems.poller.common
   "Generic infrastructure for event pollers"
-  (:require [clojure.test :refer :all]
+  (:require [clojure.pprint :refer [pprint]]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -19,19 +20,20 @@
   (let [prev-state (get-poller-state name-kw)
         events (applications/get-all-events-since (:last-processed-event-id prev-state))]
     (log/debug name-kw "running with state" (pr-str prev-state))
-    (try
-      (doseq [e events]
-        (when (Thread/interrupted)
-          (throw (InterruptedException.)))
-        (try
-          ;; TODO: add proper monitoring for pollers and caches
-          (log/info name-kw "processing event" (:event/id e))
-          (process-event! e)
-          (set-poller-state! name-kw {:last-processed-event-id (:event/id e)})
-          (catch Throwable t
-            (throw (Exception. (str name-kw " processing event " (pr-str e)) t)))))
-      (catch Throwable t
-        (log/error t)))
+    (doseq [event events]
+      (when (Thread/interrupted)
+        (throw (InterruptedException.)))
+      (try
+        ;; TODO: add proper monitoring for pollers and caches
+        (log/info name-kw "processing event" (:event/id event))
+        (process-event! event)
+        (set-poller-state! name-kw {:last-processed-event-id (:event/id event)})
+        (catch Throwable t
+          (throw (ex-info (str name-kw " failed to process event " (pr-str event))
+                          (assoc (ex-data t)
+                                 :poller name-kw
+                                 :event event)
+                          t)))))
     (log/debug name-kw "finished")))
 
 (deftest test-run-event-poller-error-handling
@@ -64,12 +66,12 @@
         (add-event! {:event/id 9})
         (reset! ids-to-fail #{7})
         (reset! processed [])
-        (run)
+        (is (thrown-with-msg? Exception #"^\Q:test failed to process event #:event{:id 7}\E$" (run)))
         (is (= {:last-processed-event-id 5} @poller-state))
         (is (= [{:event/id 5}] @processed)))
       (testing "run again after failure, nothing should happen"
         (reset! processed [])
-        (run)
+        (is (thrown-with-msg? Exception #"^\Q:test failed to process event #:event{:id 7}\E$" (run)))
         (is (= {:last-processed-event-id 5} @poller-state))
         (is (= [] @processed)))
       (testing "fix failure, run"
