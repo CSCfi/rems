@@ -27,7 +27,8 @@
 ;;;; table sorting
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-(rf/reg-sub ::sorting (fn [db _] (::sorting db)))
+(rf/reg-sub ::sorting (fn [db _] (::sorting db {:sort-order :asc
+                                                :sort-column :name})))
 
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
