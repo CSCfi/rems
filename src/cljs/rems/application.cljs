@@ -6,6 +6,7 @@
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
+            [rems.actions.add-resources :refer [add-resources-action-button add-resources-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.comment :refer [comment-action-button comment-form]]
@@ -553,6 +554,10 @@
                       forms)}])))
 
 (defn- applied-resources [application]
+  (let [application-id (:application/id application)
+        possible-commands (:application/permissions application)
+        can-add? (contains? possible-commands :application.command/add-resources)
+        can-comment? false]
   [collapsible/component
    {:id "resources"
     :title (text :t.form/resources)
@@ -560,7 +565,12 @@
              (into [:ul]
                    (for [resource (:application/resources application)]
                      ^{:key (:resource/id resource)}
-                     [:li (localized (:catalogue-item/title resource))]))]}])
+                       [:li (localized (:catalogue-item/title resource))]))]
+      :footer [:div
+               [:div.commands
+                (when can-add? [add-resources-action-button])]
+               [:div#resource-action-forms
+                [add-resources-form application-id can-comment? (partial reload! application-id)]]]}]))
 
 (defn- render-application [application edit-application userid]
   (let [messages (remove nil?
