@@ -100,6 +100,7 @@
                            {:css "button.add-to-cart"}]))
 
 (defn apply-for-resource [resource-name]
+  (scroll-top *driver*) ; otherwise the button may be under the navbar and not clickable
   (click-visible *driver* [{:css "table.cart"}
                            {:fn/text resource-name}
                            {:xpath "./ancestor::tr"}
