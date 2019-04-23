@@ -93,8 +93,10 @@
 
 (defn- valid-request-field? [field languages]
   (and (valid-required-localized-string? (:title field) languages)
-       (boolean? (:optional field))
        (not (str/blank? (:type field)))
+       (if (supports-optional? field)
+         (boolean? (:optional field))
+         (nil? (:optional field)))
        (if (supports-input-prompt? field)
          (valid-optional-localized-string? (:input-prompt field) languages)
          (nil? (:input-prompt field)))
@@ -116,8 +118,9 @@
 
 (defn- build-request-field [field languages]
   (merge {:title (build-localized-string (:title field) languages)
-          :optional (boolean (:optional field))
           :type (:type field)}
+         (when (supports-optional? field)
+           {:optional (boolean (:optional field))})
          (when (supports-input-prompt? field)
            {:input-prompt (build-localized-string (:input-prompt field) languages)})
          (when (supports-maxlength? field)
@@ -282,12 +285,16 @@
 (defn- form-field-to-application-field
   "Convert a field from the form create model to the application view model."
   [field]
-  {:field/type (keyword (:type field))
-   :field/title (:title field)
-   :field/placeholder (:input-prompt field)
-   :field/max-length (parse-maxlength (:maxlength field))
-   :field/optional (:optional field)
-   :field/options (:options field)})
+  (merge {:field/type (keyword (:type field))
+          :field/title (:title field)}
+         (when (supports-optional? field)
+           {:field/optional (:optional field)})
+         (when (supports-input-prompt? field)
+           {:field/placeholder (:input-prompt field)})
+         (when (supports-maxlength? field)
+           {:field/max-length (parse-maxlength (:maxlength field))})
+         (when (supports-options? field)
+           {:field/options (:options field)})))
 
 (defn- field-preview [field]
   [fields/field (form-field-to-application-field field)])
