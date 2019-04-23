@@ -63,13 +63,14 @@
 
 (defn login-as [username]
   (doto *driver*
-    (set-window-size 1400 7000) ;; big enough to show the whole page without scrolling
+    (set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
     (go +test-url+)
     (screenshot (io/file reporting-dir "landing-page.png"))
     (click-visible {:class "login-btn"})
     (screenshot (io/file reporting-dir "login-page.png"))
     (click-visible [{:class "users"} {:tag :a, :fn/text username}])
-    (wait-visible :logout)))
+    (wait-visible :logout)
+    (screenshot (io/file reporting-dir "logged-in.png"))))
 
 (defn- wait-page-loaded []
   (wait-invisible *driver* {:css ".fa-spinner"}))
@@ -80,30 +81,33 @@
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (wait-visible *driver* {:tag :h2, :fn/text "Catalogue"})
-  (wait-page-loaded))
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "catalogue-page.png")))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
   (wait-visible *driver* {:tag :h2, :fn/text "My Applications"})
   (wait-visible *driver* [{:css "i.fa-search"}])
-  (wait-page-loaded))
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "applications-page.png")))
 
 ;;; catalogue page
 
 (defn add-to-cart [resource-name]
-  (with-wait 30
-    (click-visible *driver* [{:css "table.catalogue"}
-                             {:fn/text resource-name}
-                             {:xpath "./ancestor::tr"}
-                             {:css "button.add-to-cart"}])))
+  (click-visible *driver* [{:css "table.catalogue"}
+                           {:fn/text resource-name}
+                           {:xpath "./ancestor::tr"}
+                           {:css "button.add-to-cart"}]))
 
 (defn apply-for-resource [resource-name]
+  (scroll-top *driver*) ; otherwise the button may be under the navbar and not clickable
   (click-visible *driver* [{:css "table.cart"}
                            {:fn/text resource-name}
                            {:xpath "./ancestor::tr"}
                            {:css "button.apply-for-catalogue-items"}])
   (wait-visible *driver* {:tag :h2, :fn/text "Application"})
-  (wait-page-loaded))
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "application-page.png")))
 
 ;;; application page
 
