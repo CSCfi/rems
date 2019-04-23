@@ -9,7 +9,8 @@
             [rems.db.resource :as resource]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.db.users :as users]
-            [rems.db.workflow :as workflow])
+            [rems.db.workflow :as workflow]
+            [rems.workflow.dynamic :as dynamic])
   (:import [java.sql SQLException]
            [java.util UUID]
            [java.util.concurrent Executors Future TimeUnit ExecutorService]
@@ -81,16 +82,24 @@
         user-id (create-dummy-user)
         app-ids (vec (for [_ (range applications-count)]
                        (create-dummy-application user-id)))
+        observed-event-count-marker 999
+        mark-observed-event-count (fn [result _cmd application]
+                                    (if (and (:success result)
+                                             (= :application.event/draft-saved (:event/type (:result result))))
+                                      (assoc-in result [:result :application/field-values observed-event-count-marker]
+                                                (str (count (:application/events application))))
+                                      result))
         write-event (fn [app-id]
                       (try
                         ;; Note: currently these tests pass only with serializable isolation
                         (conman/with-transaction [db/*db* {:isolation :serializable}]
-                          (applications/command!
-                           {:type :application.command/save-draft
-                            :time (time/now)
-                            :actor user-id
-                            :application-id app-id
-                            :field-values []}))
+                          (binding [dynamic/postprocess-command-result-for-tests mark-observed-event-count]
+                            (applications/command!
+                             {:type :application.command/save-draft
+                              :time (time/now)
+                              :actor user-id
+                              :application-id app-id
+                              :field-values []})))
                         (catch Exception e
                           (if (transaction-conflict? e)
                             ::transaction-conflict
@@ -152,6 +161,14 @@
                       (map :event/id))
                  (->> (::events observed)
                       (map :event/id))))))
+
+      (testing "commands are executed serially"
+        (doseq [[_ events] final-events-by-app-id]
+          (is (= (->> (range 1 (count events))
+                      (map str))
+                 (->> events
+                      (filter #(= :application.event/draft-saved (:event/type %)))
+                      (map #(get-in % [:application/field-values observed-event-count-marker])))))))
 
       ;; TODO?
       #_(testing "there are not gaps in event IDs"
