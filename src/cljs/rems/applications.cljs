@@ -1,15 +1,15 @@
 (ns rems.applications
   (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-state localize-time text]]
-            [rems.util :refer [fetch]]
-            [rems.roles :as roles]))
+            [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (dissoc db ::my-applications)
+   {:db (dissoc db ::my-applications ::all-applications)
     :dispatch-n [[::fetch-my-applications]
                  (when (roles/show-all-applications? (:roles (:identity db)))
                    [::fetch-all-applications])]}))
