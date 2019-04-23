@@ -91,11 +91,10 @@
 ;;; catalogue page
 
 (defn add-to-cart [resource-name]
-  (with-wait 30
-    (click-visible *driver* [{:css "table.catalogue"}
-                             {:fn/text resource-name}
-                             {:xpath "./ancestor::tr"}
-                             {:css "button.add-to-cart"}])))
+  (click-visible *driver* [{:css "table.catalogue"}
+                           {:fn/text resource-name}
+                           {:xpath "./ancestor::tr"}
+                           {:css "button.add-to-cart"}]))
 
 (defn apply-for-resource [resource-name]
   (click-visible *driver* [{:css "table.cart"}
@@ -162,7 +161,7 @@
 (defn send-application []
   (doto *driver*
     (click-visible :submit)
-    (wait-visible  :status-success)
+    (wait-visible :status-success)
     (click-visible :modal-ok)
     (wait-has-class :apply-phase "completed")))
 
