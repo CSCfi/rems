@@ -3,12 +3,14 @@
 (defn is-logged-in? [roles]
   (some #{:logged-in} roles))
 
-(defn is-applicant-or-member? [roles]
-  (some #{:applicant :member} roles))
+(defn show-applications? [roles]
+  (some #{:applicant :member :reporter} roles))
 
-(defn is-reviewer? [roles]
-  (some #{:handler :commenter :decider :past-commenter :past-decider :reporter} roles))
+(defn show-all-applications? [roles]
+  (some #{:reporter} roles))
 
-(defn is-admin? [roles]
-  ;; TODO: add admin role (owner is a business user; admin is a technical user)
+(defn show-reviews? [roles]
+  (some #{:handler :commenter :decider :past-commenter :past-decider} roles))
+
+(defn show-admin-pages? [roles]
   (some #{:owner} roles))

@@ -161,12 +161,12 @@
       (get-in [::roles-by-user user-id])
       (set)))
 
-(defn- own-application? [application]
+(defn- my-application? [application]
   (some #{:applicant :member} (:application/roles application)))
 
-(defn get-own-applications [user-id]
+(defn get-my-applications [user-id]
   (->> (get-all-applications user-id)
-       (filter own-application?)))
+       (filter my-application?)))
 
 (defn reload-cache! []
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.

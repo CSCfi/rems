@@ -56,7 +56,7 @@
 (rf/reg-event-fx
  ::fetch-drafts
  (fn [{:keys [db]} _]
-   (fetch "/api/applications"
+   (fetch "/api/my-applications"
           {:handler #(rf/dispatch [::fetch-drafts-result %])})
    {:db (assoc db ::loading-drafts? true)}))
 

@@ -30,13 +30,13 @@
     [e [:div.navbar-nav.mr-auto
         (when (roles/is-logged-in? roles)
           [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)])
-        (when (roles/is-applicant-or-member? roles)
+        (when (roles/show-applications? roles)
           [nav-link "#/applications" (text :t.navigation/applications) (contains? #{:application
                                                                                     :applications}
                                                                                   page-id)])
-        (when (roles/is-reviewer? roles)
+        (when (roles/show-reviews? roles)
           [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
-        (when (roles/is-admin? roles)
+        (when (roles/show-admin-pages? roles)
           [nav-link "#/administration"
            (text :t.navigation/administration)
            (and page-id (namespace page-id) (str/starts-with? (namespace page-id) "rems.administration"))])

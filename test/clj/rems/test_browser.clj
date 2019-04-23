@@ -84,7 +84,7 @@
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
-  (wait-visible *driver* {:tag :h2, :fn/text "Applications"})
+  (wait-visible *driver* {:tag :h2, :fn/text "My Applications"})
   (wait-visible *driver* [{:css "i.fa-search"}])
   (wait-page-loaded))
 
@@ -162,7 +162,7 @@
 (defn send-application []
   (doto *driver*
     (click-visible :submit)
-    (wait-visible  :status-success)
+    (wait-visible :status-success)
     (click-visible :modal-ok)
     (wait-has-class :apply-phase "completed")))
 
