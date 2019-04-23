@@ -82,18 +82,18 @@
         user-id (create-dummy-user)
         app-ids (vec (for [_ (range applications-count)]
                        (create-dummy-application user-id)))
-        observed-event-count-marker 999
-        mark-observed-event-count (fn [result _cmd application]
+        observed-app-version-marker 999
+        mark-observed-app-version (fn [result _cmd application]
                                     (if (and (:success result)
                                              (= :application.event/draft-saved (:event/type (:result result))))
-                                      (assoc-in result [:result :application/field-values observed-event-count-marker]
+                                      (assoc-in result [:result :application/field-values observed-app-version-marker]
                                                 (str (count (:application/events application))))
                                       result))
         write-event (fn [app-id]
                       (try
                         ;; Note: currently these tests pass only with serializable isolation
                         (conman/with-transaction [db/*db* {:isolation :serializable}]
-                          (binding [dynamic/postprocess-command-result-for-tests mark-observed-event-count]
+                          (binding [dynamic/postprocess-command-result-for-tests mark-observed-app-version]
                             (applications/command!
                              {:type :application.command/save-draft
                               :time (time/now)
@@ -168,7 +168,7 @@
                       (map str))
                  (->> events
                       (filter #(= :application.event/draft-saved (:event/type %)))
-                      (map #(get-in % [:application/field-values observed-event-count-marker])))))))
+                      (map #(get-in % [:application/field-values observed-app-version-marker])))))))
 
       ;; TODO?
       #_(testing "there are not gaps in event IDs"
