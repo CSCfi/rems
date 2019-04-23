@@ -154,6 +154,7 @@
                           :member-removed "Poistettu jäsen"
                           :member-uninvited "Poistettu jäsen"
                           :rejected "Hylätty"
+                          :resources-added "Resursseja lisätty"
                           :returned "Palautettu muokattavaksi"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}

@@ -22,7 +22,8 @@
                                               :application.command/remove-member
                                               :application.command/invite-member
                                               :application.command/uninvite-member
-                                              :application.command/accept-licenses]
+                                              :application.command/accept-licenses
+                                              :application.command/add-resources]
                                   :member [:application.command/accept-licenses]
                                   :handler [:see-everything
                                             :application.command/remove-member
@@ -283,6 +284,17 @@
   [application event]
   (-> application
       (assoc :application/state :application.state/rejected)))
+
+(defmethod event-type-specific-application-view :application.event/resources-added
+  [application event]
+  (-> application
+      (assoc :application/modified (:event/time event))
+      (update :application/resources
+              (fn [resources]
+                (-> resources
+                    (into (:application/resources event))
+                    distinct
+                    vec)))))
 
 (defmethod event-type-specific-application-view :application.event/closed
   [application event]

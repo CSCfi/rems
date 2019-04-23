@@ -154,6 +154,7 @@
                           :member-removed "Member removed"
                           :member-uninvited "Member uninvited"
                           :rejected "Rejected"
+                          :resources-added "Resources added"
                           :returned "Changes requested"
                           :submitted "Applied"
                           :unknown "Unknown"}

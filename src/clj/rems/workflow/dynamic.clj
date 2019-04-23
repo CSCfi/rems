@@ -72,6 +72,16 @@
   [user-ids injections]
   (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
+(defn- invalid-catalogue-item-error [catalogue-item-id injections]
+  (cond
+    (not (:get-catalogue-item injections)) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
+    (not ((:get-catalogue-item injections) catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
+
+(defn- invalid-catalogue-items
+  "Checks the given users for validity and merges the errors"
+  [catalogue-item-ids injections]
+  (apply merge-with into (keep #(invalid-catalogue-item-error % injections) catalogue-item-ids)))
+
 (defn- validation-error [application {:keys [validate-form-answers]}]
   (let [form-id (getx-in application [:application/form :form/id])
         answers (get application :rems.application.model/draft-answers {}) ;; the key does not exist before the first save
@@ -195,6 +205,17 @@
       (ok {:event/type :application.event/licenses-added
            :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))
            :application/comment (:comment cmd)})))
+
+(defmethod command-handler :application.command/add-resources
+  [cmd _application injections]
+  (or (must-not-be-empty cmd :catalogue-item-ids)
+      (invalid-catalogue-items (:catalogue-item-ids cmd) injections)
+      (ok {:event/type :application.event/resources-added
+           :application/resources (->> (:catalogue-item-ids cmd)
+                                       (mapv (:get-catalogue-item injections))
+                                       (mapv (fn [catalogue-item]
+                                               {:catalogue-item/id (:id catalogue-item)
+                                                :resource/ext-id (:resid catalogue-item)})))})))
 
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
