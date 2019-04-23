@@ -69,7 +69,8 @@
     (click-visible {:class "login-btn"})
     (screenshot (io/file reporting-dir "login-page.png"))
     (click-visible [{:class "users"} {:tag :a, :fn/text username}])
-    (wait-visible :logout)))
+    (wait-visible :logout)
+    (screenshot (io/file reporting-dir "logged-in.png"))))
 
 (defn- wait-page-loaded []
   (wait-invisible *driver* {:css ".fa-spinner"}))
@@ -80,13 +81,15 @@
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (wait-visible *driver* {:tag :h2, :fn/text "Catalogue"})
-  (wait-page-loaded))
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "catalogue-page.png")))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
   (wait-visible *driver* {:tag :h2, :fn/text "Applications"})
   (wait-visible *driver* [{:css "i.fa-search"}])
-  (wait-page-loaded))
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "applications-page.png")))
 
 ;;; catalogue page
 
@@ -102,7 +105,8 @@
                            {:xpath "./ancestor::tr"}
                            {:css "button.apply-for-catalogue-items"}])
   (wait-visible *driver* {:tag :h2, :fn/text "Application"})
-  (wait-page-loaded))
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "application-page.png")))
 
 ;;; application page
 
