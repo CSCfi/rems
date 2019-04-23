@@ -6,8 +6,8 @@
 
 (defn component
   "Multiple selectable, searchable list"
-  [{:keys [value items add-fn remove-fn item->key item->text item->value value->text search-fields term-match-fn]
-    :or {item->key :key item->value :value item->text :value value->text get search-fields [:value]}}]
+  [{:keys [value items add-fn remove-fn item->key item->text item->value value->text search-fields term-match-fn max-results]
+    :or {item->key :key item->value :value item->text :value value->text get search-fields [:value] max-results 25}}]
   [autocomplete/multiple-autocomplete
    (merge {:value value
            :on-change add-fn
@@ -16,6 +16,7 @@
            :item->text item->text
            :item->value item->value
            :value->text value->text
+           :max-results max-results
            :placeholder (text :t.autocomplete/placeholder)
            :no-results-text (text :t.autocomplete/no-results)
            :ctrl-class "autocomplete"
