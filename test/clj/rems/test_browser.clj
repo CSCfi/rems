@@ -63,7 +63,7 @@
 
 (defn login-as [username]
   (doto *driver*
-    (set-window-size 1400 7000) ;; big enough to show the whole page without scrolling
+    (set-window-size 1400 60000) ;; big enough to show the whole page without scrolling
     (go +test-url+)
     (screenshot (io/file reporting-dir "landing-page.png"))
     (click-visible {:class "login-btn"})
