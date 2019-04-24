@@ -84,7 +84,7 @@
 ;;;; UI
 
 ;; XXX: the application lists share sorting and filtering state
-(defn- application-list [apps loading?]
+(defn- application-list [apps application-id-column loading?]
   (cond loading?
         [spinner/big]
 
@@ -93,7 +93,7 @@
 
         :else
         [application-list/component
-         {:visible-columns application-list/+all-columns+
+         {:visible-columns (application-list/open-application-visible-columns application-id-column)
           :sorting (assoc @(rf/subscribe [::sorting])
                           :set-sorting #(rf/dispatch [::set-sorting %]))
           :filtering (assoc @(rf/subscribe [::filtering])
@@ -102,11 +102,12 @@
 
 (defn applications-page []
   (let [apps @(rf/subscribe [::my-applications])
-        loading? @(rf/subscribe [::loading-my-applications?])]
+        loading? @(rf/subscribe [::loading-my-applications?])
+        config @(rf/subscribe [:rems.config/config])
+        application-id-column (get config :application-id-column :id)]
     [:div
      [:h2 (text :t.applications/my-applications)]
-     [application-list apps loading?]
-
+     [application-list apps application-id-column loading?]
      (let [identity @(rf/subscribe [:identity])
            apps @(rf/subscribe [::all-applications])
            loading? @(rf/subscribe [::loading-all-applications?])]

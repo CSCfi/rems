@@ -115,11 +115,11 @@
    [show-throughput-times-button]])
 
 (defn- open-applications
-  [apps]
+  [apps application-id-column]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
-     {:visible-columns application-list/+all-columns+
+     {:visible-columns (application-list/open-application-visible-columns application-id-column)
       :sorting (assoc @(rf/subscribe [::sorting ::open-applications])
                       :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
       :filtering (assoc @(rf/subscribe [::filtering ::open-applications])
@@ -133,7 +133,7 @@
   key:         key to use for table ordering in re-frame
   apps:        collection of apps to be shown
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
-  [apps top-buttons loading?]
+  [apps application-id-column top-buttons loading?]
   (if loading?
     [spinner/big]
     (if (empty? apps)
@@ -141,7 +141,7 @@
       [:div
        top-buttons
        [application-list/component
-        {:visible-columns [:id :description :resource :applicant :state :last-activity :view]
+        {:visible-columns (application-list/handled-application-visible-columns application-id-column)
          :sorting (assoc @(rf/subscribe [::sorting ::handled-applications])
                          :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
          :filtering (assoc @(rf/subscribe [::filtering ::handled-applications])
@@ -150,7 +150,9 @@
 
 (defn actions-page []
   (let [actions @(rf/subscribe [::actions])
-        handled-actions @(rf/subscribe [::handled-actions])]
+        handled-actions @(rf/subscribe [::handled-actions])
+        config @(rf/subscribe [:rems.config/config])
+        application-id-column (get config :application-id-column :id)]
     (if @(rf/subscribe [::loading-actions?])
       [spinner/big]
       [:div.spaced-sections
@@ -158,9 +160,9 @@
         {:id "open-approvals"
          :open? true
          :title (text :t.actions/open-approvals)
-         :collapse [open-applications actions]}]
+         :collapse [open-applications actions application-id-column]}]
        [collapsible/component
         {:id "handled-approvals"
          :on-open #(rf/dispatch [::fetch-handled-actions])
          :title (text :t.actions/handled-approvals)
-         :collapse [handled-applications handled-actions nil @(rf/subscribe [::loading-handled-actions?])]}]])))
+         :collapse [handled-applications handled-actions application-id-column nil @(rf/subscribe [::loading-handled-actions?])]}]])))

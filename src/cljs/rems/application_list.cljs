@@ -17,19 +17,33 @@
        (map localized)
        (str/join ", ")))
 
-(def +all-columns+
+(def ^:private +open-application-base-columns+
   [:description :resource :applicant :state :created :last-activity :view])
 
-(def +default-columns+
-  [:description :resource :applicant :state :created :view])
+(def ^:private +handled-application-base-columns+
+  [:description :resource :applicant :state :last-activity :view])
 
 (def +draft-columns+
   [:resource :last-activity :view])
 
+(defn open-application-visible-columns
+  "Given the database column name shown as id, return a vector of columns
+  visible in the application list for open applications."
+  [id-column]
+  (vec (cons id-column +open-application-base-columns+)))
+
+(defn handled-application-visible-columns
+  "Given the database column name shown as id, return a vector of columns
+  visible in the application list for handled applications."
+  [id-column]
+  (vec (cons id-column +handled-application-base-columns+)))
+
 (def ^:private +columns+
-  {:id {:value :application/id
-        :header #(text :t.actions/application)}
-   :description {:value application-util/format-description
+  {:external-id {:value :application/external-id
+                 :header #(text :t.actions/id)}
+   :id {:value :application/id
+        :header #(text :t.actions/id)}
+   :description {:value :application/description
                  :header #(text :t.actions/description)}
    :resource {:value format-catalogue-items
               :header #(text :t.actions/resource)}
@@ -99,19 +113,19 @@
   [:div
    (component-info component)
    (example "empty list"
-            [component {:visible-columns +default-columns+
+            [component {:visible-columns (open-application-visible-columns :id)
                         :sorting {:sort-column :id :sort-order :asc}
                         :items []}])
    (example "applications, default order"
-            [component {:visible-columns +default-columns+
+            [component {:visible-columns (open-application-visible-columns :id)
                         :sorting {:sort-column :id :sort-order :asc}
                         :items +example-applications+}])
    (example "applications, descending date, all columns"
-            [component {:visible-columns +all-columns+
+            [component {:visible-columns (open-application-visible-columns :id)
                         :sorting {:sort-column :created :sort-order :desc}
                         :items +example-applications+}])
    (example "applications, initially sorted by id descending, then resource descending"
-            [component {:visible-columns +all-columns+
+            [component {:visible-columns (open-application-visible-columns :id)
                         :sorting {:initial-sort [{:sort-column :id :sort-order :desc}
                                                  {:sort-column :resource :sort-order :desc}]}
                         :items +example-applications+}])])
