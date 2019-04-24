@@ -26,7 +26,6 @@
   [f]
   ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
   (let [run #(with-chrome-headless {:args ["--lang=en-US"]
-                                    :path-driver "/usr/lib/chromium-browser/chromedriver"
                                     :prefs {"intl.accept_languages" "en-US"}}
                                    driver
                (binding [*driver* driver]
