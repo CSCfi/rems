@@ -3,7 +3,7 @@
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
-            [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.administration.items :as items]
             [rems.atoms :refer [enrich-user]]
             [rems.collapsible :as collapsible]
@@ -87,13 +87,22 @@
   (and (not (str/blank? (:key option)))
        (valid-required-localized-string? (:label option) languages)))
 
+(defn- parse-maxlength [maxlength]
+  (let [parsed (parseInt maxlength)]
+    (when-not (js/isNaN parsed) parsed)))
+
 (defn- valid-request-field? [field languages]
   (and (valid-required-localized-string? (:title field) languages)
-       (boolean? (:optional field))
        (not (str/blank? (:type field)))
+       (if (supports-optional? field)
+         (boolean? (:optional field))
+         (nil? (:optional field)))
        (if (supports-input-prompt? field)
          (valid-optional-localized-string? (:input-prompt field) languages)
          (nil? (:input-prompt field)))
+       (if (supports-maxlength? field)
+         (not (neg? (:maxlength field)))
+         (nil? (:maxlength field)))
        (if (supports-options? field)
          (every? #(valid-option? % languages) (:options field))
          (nil? (:options field)))))
@@ -109,13 +118,13 @@
 
 (defn- build-request-field [field languages]
   (merge {:title (build-localized-string (:title field) languages)
-          :optional (boolean (:optional field))
           :type (:type field)}
+         (when (supports-optional? field)
+           {:optional (boolean (:optional field))})
          (when (supports-input-prompt? field)
            {:input-prompt (build-localized-string (:input-prompt field) languages)})
          (when (supports-maxlength? field)
-           {:maxlength (when-not (str/blank? (:maxlength field))
-                         (parseInt (:maxlength field)))})
+           {:maxlength (parse-maxlength (:maxlength field))})
          (when (supports-options? field)
            {:options (for [{:keys [key label]} (:options field)]
                        {:key key
@@ -162,8 +171,8 @@
                                  :label (text :t.create-form/input-prompt)}])
 
 (defn- form-field-maxlength-field [field-index]
-  [number-field context {:keys [:fields field-index :maxlength]
-                         :label (text :t.create-form/maxlength)}])
+  [text-field context {:keys [:fields field-index :maxlength]
+                       :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-field-option-button [field-index]
   [:a {:href "#"
@@ -276,12 +285,16 @@
 (defn- form-field-to-application-field
   "Convert a field from the form create model to the application view model."
   [field]
-  {:field/type (keyword (:type field))
-   :field/title (:title field)
-   :field/placeholder (:input-prompt field)
-   :field/max-length (:maxlength field)
-   :field/optional (:optional field)
-   :field/options (:options field)})
+  (merge {:field/type (keyword (:type field))
+          :field/title (:title field)}
+         (when (supports-optional? field)
+           {:field/optional (:optional field)})
+         (when (supports-input-prompt? field)
+           {:field/placeholder (:input-prompt field)})
+         (when (supports-maxlength? field)
+           {:field/max-length (parse-maxlength (:maxlength field))})
+         (when (supports-options? field)
+           {:field/options (:options field)})))
 
 (defn- field-preview [field]
   [fields/field (form-field-to-application-field field)])

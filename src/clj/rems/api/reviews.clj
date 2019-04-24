@@ -5,13 +5,11 @@
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]))
 
+(def ^:private reviewer-roles
+  #{:handler :commenter :decider :past-commenter :past-decider})
+
 (defn- review? [application]
-  (and (some #{:handler
-               :commenter
-               :past-commenter
-               :decider
-               :past-decider}
-             (:application/roles application))
+  (and (some reviewer-roles (:application/roles application))
        (not= :application.state/draft (:application/state application))))
 
 (defn get-all-reviews [user-id]

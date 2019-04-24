@@ -282,8 +282,7 @@
 (deftest test-handle-command
   (let [application (apply-events nil [{:event/type :application.event/created
                                         :event/actor "applicant"
-                                        :workflow/type :workflow/dynamic
-                                        :workflow.dynamic/handlers #{"assistant"}}])
+                                        :workflow/type :workflow/dynamic}])
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values []
@@ -303,7 +302,7 @@
 
 ;;; Possible commands
 
-(defn possible-commands
+(defn possible-commands ; TODO: legacy code; remove me
   "Returns the commands which the user is authorized to execute."
   [actor application-state]
   (permissions/user-permissions application-state actor))

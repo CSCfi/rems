@@ -153,11 +153,34 @@
                 :mail "applicant@example.com"
                 :commonName "Applicant"}})
 
+(def ^:private get-users-with-role
+  {:owner ["owner1"]
+   :reporter ["reporter1"]})
+
+(def ^:private get-workflow
+  {50 {:id 50
+       :organization "org"
+       :title "workflow title"
+       :workflow {:type "workflow/dynamic"
+                  :handlers ["handler"]}
+       :licenses nil
+       :visibility "private"
+       :fnlround 0
+       :owneruserid "owner"
+       :modifieruserid "owner"
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :archived false
+       :expired false}})
+
 (deftest test-application-view
   (let [injections {:get-form get-form
                     :get-catalogue-item get-catalogue-item
                     :get-license get-license
-                    :get-user get-user}
+                    :get-user get-user
+                    :get-users-with-role get-users-with-role
+                    :get-workflow get-workflow}
         apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events
@@ -181,8 +204,7 @@
                                             {:license/id 32}]
                      :form/id 40
                      :workflow/id 50
-                     :workflow/type :workflow/dynamic
-                     :workflow.dynamic/handlers #{"handler"}}]
+                     :workflow/type :workflow/dynamic}]
             expected-application {:application/id 1
                                   :application/external-id "extid"
                                   :application/state :application.state/draft
@@ -686,8 +708,7 @@
   ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
   (testing "commenter may comment only once"
     (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"
-                                                              :workflow.dynamic/handlers ["handler"]}
+                                                              :event/actor "applicant"}
                                                              {:event/type :application.event/submitted
                                                               :event/actor "applicant"}
                                                              {:event/type :application.event/comment-requested
@@ -704,8 +725,7 @@
 
   (testing "decider may decide only once"
     (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"
-                                                              :workflow.dynamic/handlers ["handler"]}
+                                                              :event/actor "applicant"}
                                                              {:event/type :application.event/submitted
                                                               :event/actor "applicant"}
                                                              {:event/type :application.event/decision-requested
@@ -720,14 +740,12 @@
 
   (testing "everyone can accept invitation"
     (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                            :event/actor "applicant"
-                                                            :workflow.dynamic/handlers ["handler"]}])]
+                                                            :event/actor "applicant"}])]
       (is (= #{:application.command/accept-invitation}
              (permissions/user-permissions created "joe")))))
   (testing "nobody can accept invitation for closed application"
     (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                           :event/actor "applicant"
-                                                           :workflow.dynamic/handlers ["handler"]}
+                                                           :event/actor "applicant"}
                                                           {:event/type :application.event/closed
                                                            :event/actor "applicant"}])]
       (is (= #{}
@@ -736,8 +754,9 @@
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
-                                                     :event/actor "applicant"
-                                                     :workflow.dynamic/handlers #{"handler"}})
+                                                     :event/actor "applicant"})
+                        (assoc-in [:application/workflow :workflow.dynamic/handlers] #{"handler"})
+                        (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/set-role-permissions {:role-1 []

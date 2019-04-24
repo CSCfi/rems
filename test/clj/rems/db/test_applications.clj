@@ -87,8 +87,7 @@
               :application/licenses []
               :form/id form-id
               :workflow/id wf-id
-              :workflow/type :workflow/dynamic
-              :workflow.dynamic/handlers #{}}
+              :workflow/type :workflow/dynamic}
              (application-created-event {:application-id 42
                                          :catalogue-item-ids [cat-id]
                                          :time (DateTime. 1000)
@@ -117,8 +116,7 @@
                 :application/licenses []
                 :form/id form-id
                 :workflow/id wf-id
-                :workflow/type :workflow/dynamic
-                :workflow.dynamic/handlers #{}}
+                :workflow/type :workflow/dynamic}
                (application-created-event {:application-id 42
                                            :catalogue-item-ids [cat-id cat-id2]
                                            :time (DateTime. 1000)
@@ -209,8 +207,7 @@
                 :application/licenses [{:license/id lic-id}]
                 :form/id form-id
                 :workflow/id wf-id
-                :workflow/type :workflow/dynamic
-                :workflow.dynamic/handlers #{}}
+                :workflow/type :workflow/dynamic}
                (application-created-event {:application-id 42
                                            :catalogue-item-ids [cat-id2]
                                            :time (DateTime. 1000)
@@ -245,37 +242,7 @@
                 :application/licenses [{:license/id lic-id}]
                 :form/id form-id
                 :workflow/id wf-id2
-                :workflow/type :workflow/dynamic
-                :workflow.dynamic/handlers #{}}
-               (application-created-event {:application-id 42
-                                           :catalogue-item-ids [cat-id2]
-                                           :time (DateTime. 1000)
-                                           :actor "alice"})))))
-
-    (testing "workflow handlers"
-      (let [wf-id2 (:id (workflow/create-workflow! {:type :dynamic
-                                                    :organization "abc"
-                                                    :title ""
-                                                    :handlers ["handler1" "handler2"]
-                                                    :user-id "owner"}))
-            _ (assert wf-id2)
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id
-                                                            :form form-id
-                                                            :wfid wf-id2}))
-            _ (assert cat-id2)]
-        (is (= {:event/type :application.event/created
-                :event/actor "alice"
-                :event/time (DateTime. 1000)
-                :application/id 42
-                :application/external-id nil
-                :application/resources [{:catalogue-item/id cat-id2
-                                         :resource/ext-id "res1"}]
-                :application/licenses []
-                :form/id form-id
-                :workflow/id wf-id2
-                :workflow/type :workflow/dynamic
-                :workflow.dynamic/handlers #{"handler1" "handler2"}}
+                :workflow/type :workflow/dynamic}
                (application-created-event {:application-id 42
                                            :catalogue-item-ids [cat-id2]
                                            :time (DateTime. 1000)

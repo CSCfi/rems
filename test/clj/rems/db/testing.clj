@@ -6,7 +6,6 @@
             [rems.api.applications-v2]
             [rems.config :refer [env]]
             [rems.db.core :as db]
-            [rems.db.dynamic-roles]
             [rems.db.test-data :as test-data]))
 
 (defn test-db-fixture [f]
@@ -22,8 +21,7 @@
 (defn caches-fixture [f]
   ;; no specific teardown. relies on the teardown of test-db-fixture.
   (mount/start #'rems.api.applications-v2/application-cache
-               #'rems.api.applications-v2/all-applications-cache
-               #'rems.db.dynamic-roles/dynamic-roles-cache)
+               #'rems.api.applications-v2/all-applications-cache)
   (f))
 
 (defn test-data-fixture [f]

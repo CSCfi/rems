@@ -28,7 +28,6 @@
   (:import [org.joda.time DateTime]))
 
 (declare get-dynamic-application-state)
-(declare get-dynamic-application-state-for-user)
 
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
@@ -448,7 +447,7 @@
 
 ;;; Public event api
 
-(defn get-application-state
+(defn get-application-state ; TODO: legacy code; remove me
   ([application-id]
    (get-application-state (first (db/get-applications {:id application-id}))
                           (map #(dissoc % :id :appid) ; remove keys not in v1 API
@@ -640,8 +639,7 @@
 (defn get-all-events-since [event-id]
   (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
-;; TODO: remove "dynamic" from names
-(defn get-dynamic-application-state [application-id]
+(defn get-dynamic-application-state [application-id] ; TODO: legacy code; remove me
   (let [application (or (first (db/get-applications {:id application-id}))
                         (throw (rems.InvalidRequestException.
                                 (str "Application " application-id " not found"))))
@@ -654,13 +652,6 @@
                                               (:start application)))]
     (assert (is-dynamic-application? application) (pr-str application))
     (dynamic/apply-events application events)))
-
-(defn get-dynamic-application-state-for-user [user-id application-id]
-  (let [application (->> (get-dynamic-application-state application-id)
-                         (dynamic/assoc-possible-commands user-id))]
-    (when-not (may-see-application? user-id application)
-      (throw-forbidden))
-    application))
 
 (defn add-event! [event]
   (db/add-application-event! {:application (:application/id event)
@@ -715,8 +706,7 @@
                                   licenses)
        :form/id form-id
        :workflow/id workflow-id
-       :workflow/type (:type workflow)
-       :workflow.dynamic/handlers (set (:handlers workflow))})))
+       :workflow/type (:type workflow)})))
 
 (defn add-application-created-event! [opts]
   (add-event! (application-created-event (assoc opts :allocate-external-id? true))))
@@ -740,7 +730,7 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn- get-form [form-id]
+(defn get-form [form-id]
   (-> (form/get-form form-id)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
@@ -761,7 +751,10 @@
 
 (defn command! [cmd]
   (assert (:application-id cmd))
-  (let [app (get-dynamic-application-state (:application-id cmd))
+  (let [events (get-application-events (:application-id cmd))
+        app (-> nil
+                (dynamic/apply-events events)
+                (model/enrich-workflow-handlers workflow/get-workflow))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
       (add-event! (:result result))

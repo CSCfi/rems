@@ -111,15 +111,25 @@
        :return SuccessResponse
        (api-command ~command request#))))
 
+(def my-applications-api
+  (context "/my-applications" []
+    :tags ["applications"]
+
+    (GET "/" []
+      :summary "Get the current user's own applications"
+      :roles #{:logged-in}
+      :return [ApplicationOverview]
+      (ok (applications-v2/get-my-applications (getx-user-id))))))
+
 (def applications-api
   (context "/applications" []
     :tags ["applications"]
 
     (GET "/" []
-      :summary "Get current user's all applications"
+      :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications-v2/get-own-applications (getx-user-id))))
+      (ok (applications-v2/get-all-applications (getx-user-id))))
 
     (POST "/create" []
       :summary "Create a new application"

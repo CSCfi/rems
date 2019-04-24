@@ -73,7 +73,13 @@
 (defn- get-ids [applications]
   (set (map :application/id applications)))
 
-(defn- get-applications [user-id]
+(defn- get-my-applications [user-id]
+  (-> (request :get "/api/my-applications")
+      (authenticate "42" user-id)
+      handler
+      read-ok-body))
+
+(defn- get-all-applications [user-id]
   (-> (request :get "/api/applications")
       (authenticate "42" user-id)
       handler
@@ -524,7 +530,11 @@
   (let [app-id (create-dummy-application "alice")]
 
     (testing "list user applications"
-      (is (contains? (get-ids (get-applications "alice"))
+      (is (contains? (get-ids (get-my-applications "alice"))
+                     app-id)))
+
+    (testing "list all applications"
+      (is (contains? (get-ids (get-all-applications "alice"))
                      app-id)))))
 
 (deftest test-reviews

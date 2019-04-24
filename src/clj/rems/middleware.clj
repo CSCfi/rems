@@ -1,16 +1,17 @@
 (ns rems.middleware
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
+            [clojure.pprint :refer [pprint]]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
+            [rems.api.applications-v2 :as applications-v2]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.api-key :as api-key]
-            [rems.db.dynamic-roles :as dynamic-roles]
             [rems.db.roles :as roles]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
@@ -82,7 +83,7 @@
               context/*flash* (:flash request)
               context/*roles* (when context/*user*
                                 (set/union (roles/get-roles (getx-user-id))
-                                           (dynamic-roles/get-roles (getx-user-id))))]
+                                           (applications-v2/get-all-application-roles (getx-user-id))))]
       (with-mdc {:roles (str/join " " (sort context/*roles*))}
         (handler request)))))
 
@@ -110,7 +111,8 @@
     (try
       (handler req)
       (catch Throwable t
-        (log/error t)
+        (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
+                                                      (pprint data))))
         (error-page {:status 500
                      :title "System error occurred!"
                      :message "We are working on fixing the issue."})))))
