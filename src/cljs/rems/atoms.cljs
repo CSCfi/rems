@@ -21,6 +21,9 @@
 (defn search-symbol []
   [:i.fa {:class "fa-search"}])
 
+(defn close-symbol []
+  [:i.fa {:class "fa-times"}])
+
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])

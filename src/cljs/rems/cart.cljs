@@ -26,14 +26,10 @@
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
-  (let [cart @(rf/subscribe [::cart])
-        disabled? (and cart (contains? (set (map :id cart)) (:id item)))]
     [:button.btn.btn-primary.add-to-cart
      {:type "submit"
-      :disabled disabled?
-      :class (if disabled? " disabled" "")
       :on-click #(rf/dispatch [::add-item item])}
-     (text :t.cart/add)]))
+   (text :t.cart/add)])
 
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
