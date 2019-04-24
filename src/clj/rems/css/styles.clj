@@ -473,6 +473,7 @@
               :padding-right 0
               :letter-spacing (u/rem 0.015)
               :color (util/get-theme-attribute :navbar-color "#111")}]
+   [:#big-navbar {:text-transform (util/get-theme-attribute :big-navbar-text-transform "none")}]
    [(s/descendant :.navbar-text :.language-switcher)
     {:margin-right (u/rem 1)}]
    [:.example-page {:margin (u/rem 2)}]
