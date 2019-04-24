@@ -111,7 +111,7 @@
   (-> workflow-id
       workflow/get-workflow
       format-workflow
-      (update :licenses #(map format-license %))
+      (update :licenses #(mapv format-license %))
       (assoc :actors (db/get-workflow-actors {:wfid workflow-id}))))
 
 (def workflows-api
