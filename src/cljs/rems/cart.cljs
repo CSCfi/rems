@@ -23,7 +23,7 @@
 (rf/reg-event-db
  ::remove-item
  (fn [db [_ item-id]]
-   (update db ::cart #(remove (comp (partial = item-id) :id) %))))
+   (update db ::cart #(remove (comp #{item-id} :id) %))))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
