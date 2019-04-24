@@ -558,12 +558,12 @@
         possible-commands (:application/permissions application)
         can-change? (contains? possible-commands :application.command/change-resources)
         can-comment? false]
-  [collapsible/component
-   {:id "resources"
-    :title (text :t.form/resources)
-    :always [:div.form-items.form-group
-             (into [:ul]
-                   (for [resource (:application/resources application)]
+    [collapsible/component
+     {:id "resources"
+      :title (text :t.form/resources)
+      :always [:div.form-items.form-group
+               (into [:ul]
+                     (for [resource (:application/resources application)]
                        ^{:key (:catalogue-item/id resource)}
                        [:li (localized (:catalogue-item/title resource))]))]
       :footer [:div
