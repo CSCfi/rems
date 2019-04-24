@@ -61,14 +61,23 @@
 
 ;;; basic navigation
 
+(defn scroll-and-click
+ "Wait a button to become visible, scroll it to middle
+ (to make sure it's not hidden under navigation) and click."
+ [driver q & [opt]]
+ (doto driver
+   (wait-visible q opt)
+   (scroll-query q {"block" "center"})
+   (click q)))
+
 (defn login-as [username]
   (doto *driver*
     (set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
     (go +test-url+)
     (screenshot (io/file reporting-dir "landing-page.png"))
-    (click-visible {:class "login-btn"})
+    (scroll-and-click {:class "login-btn"})
     (screenshot (io/file reporting-dir "login-page.png"))
-    (click-visible [{:class "users"} {:tag :a, :fn/text username}])
+    (scroll-and-click [{:class "users"} {:tag :a, :fn/text username}])
     (wait-visible :logout)
     (screenshot (io/file reporting-dir "logged-in.png"))))
 
@@ -76,7 +85,7 @@
   (wait-invisible *driver* {:css ".fa-spinner"}))
 
 (defn click-navigation-menu [link-text]
-  (click-visible *driver* [:big-navbar {:tag :a, :fn/text link-text}]))
+  (scroll-and-click *driver* [:big-navbar {:tag :a, :fn/text link-text}]))
 
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
@@ -94,17 +103,16 @@
 ;;; catalogue page
 
 (defn add-to-cart [resource-name]
-  (click-visible *driver* [{:css "table.catalogue"}
-                           {:fn/text resource-name}
-                           {:xpath "./ancestor::tr"}
-                           {:css "button.add-to-cart"}]))
+  (scroll-and-click *driver* [{:css "table.catalogue"}
+                              {:fn/text resource-name}
+                              {:xpath "./ancestor::tr"}
+                              {:css "button.add-to-cart"}]))
 
 (defn apply-for-resource [resource-name]
-  (scroll-top *driver*) ; otherwise the button may be under the navbar and not clickable
-  (click-visible *driver* [{:css "table.cart"}
-                           {:fn/text resource-name}
-                           {:xpath "./ancestor::tr"}
-                           {:css "button.apply-for-catalogue-items"}])
+  (scroll-and-click *driver* [{:css "table.cart"}
+                              {:fn/text resource-name}
+                              {:xpath "./ancestor::tr"}
+                              {:css "button.apply-for-catalogue-items"}])
   (wait-visible *driver* {:tag :h2, :fn/text "Application"})
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "application-page.png")))
@@ -155,19 +163,19 @@
 
 (defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked
-  (click-visible *driver* [{:css (str "input[value='" value "']")}]))
+  (scroll-and-click *driver* [{:css (str "input[value='" value "']")}]))
 
 (defn accept-licenses []
   (doto *driver*
-    (click-visible :accept-licenses-button)
+    (scroll-and-click :accept-licenses-button)
     (wait-visible :status-success)
-    (click-visible :modal-ok)))
+    (scroll-and-click :modal-ok)))
 
 (defn send-application []
   (doto *driver*
-    (click-visible :submit)
+    (scroll-and-click :submit)
     (wait-visible :status-success)
-    (click-visible :modal-ok)
+    (scroll-and-click :modal-ok)
     (wait-has-class :apply-phase "completed")))
 
 (defn get-application-id []
