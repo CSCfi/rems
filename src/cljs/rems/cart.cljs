@@ -16,7 +16,9 @@
 (rf/reg-event-db
  ::add-item
  (fn [db [_ item]]
-   (update db ::cart conj item)))
+   (if (contains? (set (map :id (::cart db))) (:id item))
+     db
+     (update db ::cart conj item))))
 
 (rf/reg-event-db
  ::remove-item
