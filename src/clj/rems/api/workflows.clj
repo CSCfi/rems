@@ -1,5 +1,5 @@
 (ns rems.api.workflows
-  (:require [clj-time.format :as time-format]
+  (:require [clj-time.core :as time-core]
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
             [rems.api.applications :refer [User get-users]]
@@ -9,9 +9,8 @@
             [rems.db.workflow :as workflow]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [clj-time.core :as time-core])
-  (:import (org.joda.time DateTime)))
+            [schema.core :as s])
+  (:import [org.joda.time DateTime DateTimeZone]))
 
 (def UserId s/Str)
 
@@ -27,14 +26,15 @@
    :localizations [s/Any]
    :end (s/maybe DateTime)})
 
-(def db-formatter (time-format/formatter "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZ"))
-
 (defn parse-db-time [s]
-  (when s (time-format/parse db-formatter s)))
+  (when s
+    (-> (DateTime/parse s)
+        (.withZone DateTimeZone/UTC))))
 
 (deftest test-parse-db-time
   (is (= nil (parse-db-time nil)))
-  (is (= (time-core/date-time 2019 1 30 7 56 38 627) (parse-db-time "2019-01-30T09:56:38.627616+02:00"))))
+  (is (= (time-core/date-time 2019 1 30 7 56 38 627) (parse-db-time "2019-01-30T09:56:38.627616+02:00")))
+  (is (= (time-core/date-time 2015 2 13 12 47 26) (parse-db-time "2015-02-13T14:47:26+02:00"))))
 
 (defn format-license [license]
   (-> license
@@ -111,7 +111,7 @@
   (-> workflow-id
       workflow/get-workflow
       format-workflow
-      (update :licenses #(map format-license %))
+      (update :licenses #(mapv format-license %))
       (assoc :actors (db/get-workflow-actors {:wfid workflow-id}))))
 
 (def workflows-api
