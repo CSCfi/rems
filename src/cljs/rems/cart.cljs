@@ -67,7 +67,7 @@
   "List of shopping cart items"
   [items language]
   (when-not (empty? items)
-    [:div.outer-cart
+    [:div.outer-cart.mb-3
      [:div.inner-cart
       [:div.cart-title
        [:i.fa.fa-shopping-cart]
