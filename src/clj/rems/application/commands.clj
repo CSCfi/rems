@@ -74,7 +74,7 @@
   (assoc CommandBase
          :member {:userid UserId}))
 
-(s/defschema AddResourcesCommand
+(s/defschema ChangeResourcesCommand
   (assoc CommandBase
          (s/optional-key :comment) s/Str
          :catalogue-item-ids [s/Num]))
@@ -105,7 +105,7 @@
    :application.command/accept-licenses AcceptLicensesCommand
    :application.command/add-licenses AddLicensesCommand
    :application.command/add-member AddMemberCommand
-   :application.command/add-resources AddResourcesCommand
+   :application.command/change-resources ChangeResourcesCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/approve ApproveCommand
    :application.command/close CloseCommand

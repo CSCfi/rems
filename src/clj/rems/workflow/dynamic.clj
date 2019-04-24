@@ -206,11 +206,11 @@
            :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))
            :application/comment (:comment cmd)})))
 
-(defmethod command-handler :application.command/add-resources
+(defmethod command-handler :application.command/change-resources
   [cmd _application injections]
   (or (must-not-be-empty cmd :catalogue-item-ids)
       (invalid-catalogue-items (:catalogue-item-ids cmd) injections)
-      (ok {:event/type :application.event/resources-added
+      (ok {:event/type :application.event/resources-changed
            :application/resources (->> (:catalogue-item-ids cmd)
                                        (mapv (:get-catalogue-item injections))
                                        (mapv (fn [catalogue-item]

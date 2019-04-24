@@ -101,9 +101,9 @@
   (assoc EventBase
          :event/type (s/enum :application.event/rejected)
          :application/comment s/Str))
-(s/defschema ResourcesAddedEvent
+(s/defschema ResourcesChangedEvent
   (assoc EventBase
-         :event/type (s/enum :application.event/resources-added)
+         :event/type (s/enum :application.event/resources-changed)
          (s/optional-key :application/comment) s/Str
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]))
@@ -132,7 +132,7 @@
    :application.event/member-removed MemberRemovedEvent
    :application.event/member-uninvited MemberUninvitedEvent
    :application.event/rejected RejectedEvent
-   :application.event/resources-added ResourcesAddedEvent
+   :application.event/resources-changed ResourcesChangedEvent
    :application.event/returned ReturnedEvent
    :application.event/submitted SubmittedEvent})
 

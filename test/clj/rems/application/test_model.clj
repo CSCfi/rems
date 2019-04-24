@@ -342,7 +342,7 @@
 
                 (testing "> resources added by applicant"
                   (let [events (conj events
-                                     {:event/type :application.event/resources-added
+                                     {:event/type :application.event/resources-changed
                                       :event/time (DateTime. 2600)
                                       :event/actor "applicant"
                                       :application/id 1
