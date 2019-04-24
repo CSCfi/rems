@@ -564,7 +564,7 @@
     :always [:div.form-items.form-group
              (into [:ul]
                    (for [resource (:application/resources application)]
-                     ^{:key (:resource/id resource)}
+                       ^{:key (:catalogue-item/id resource)}
                        [:li (localized (:catalogue-item/title resource))]))]
       :footer [:div
                [:div.commands
