@@ -10,7 +10,8 @@ version: 2
 # publish it on docker hub. Maybe some day.
 
 defaults: &defaults
-  machine: true
+  machine:
+    image: ubuntu-1604:201903-01
   working_directory: ~/repo
   environment:
     LEIN_ROOT: "true"
@@ -58,15 +59,8 @@ jobs:
       - restore_cache:
           keys:
           - v2-dependencies-{{ checksum "project.clj" }}
-      - run: # CircleCI's chromedriver is from 2017
-          name: Install Chromedriver latest stable version
-          command: |
-            sudo apt-get update
-            sudo apt-get install lsb-release libappindicator3-1
-            curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-            sudo dpkg -i google-chrome.deb
-            sudo sed -i 's|HERE/chrome"|HERE/chrome" --no-sandbox|g' /opt/google/chrome/google-chrome
-            rm google-chrome.deb
+      - run: sudo apt remove google-chrome-stable
+      - run: sudo apt install chromium-chromedriver
       - run: FOR_TESTS=1 ./dev_db.sh
       - run: lein cljtests
       - store_artifacts:
