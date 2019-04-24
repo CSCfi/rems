@@ -2,12 +2,13 @@
   "Query functions for forms and applications."
   (:require [clj-time.core :as time]
             [clj-time.format :as time-format]
+            [clojure.java.jdbc :as jdbc]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
             [cprop.tools :refer [merge-maps]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
@@ -750,6 +751,11 @@
 
 (defn command! [cmd]
   (assert (:application-id cmd))
+  ;; Use locks to prevent multiple commands being executed in parallel.
+  ;; Serializable isolation level will already avoid anomalies, but produces
+  ;; lots of transaction conflicts when there is contention. This lock
+  ;; roughly doubles the throughput for rems.db.test-transactions tests.
+  (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
   (let [events (get-application-events (:application-id cmd))
         app (-> nil
                 (dynamic/apply-events events)

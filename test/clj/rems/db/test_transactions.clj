@@ -91,7 +91,6 @@
                                       result))
         write-event (fn [app-id]
                       (try
-                        ;; Note: currently these tests pass only with serializable isolation
                         (conman/with-transaction [db/*db* {:isolation :serializable}]
                           (binding [dynamic/postprocess-command-result-for-tests mark-observed-app-version]
                             (applications/command!
@@ -105,12 +104,12 @@
                             ::transaction-conflict
                             (throw e)))))
         read-app-events (fn [app-id]
-                          (conman/with-transaction [db/*db* {:isolation :read-committed
+                          (conman/with-transaction [db/*db* {:isolation :serializable
                                                              :read-only? true}]
                             {::app-id app-id
                              ::events (applications/get-application-events app-id)}))
         read-all-events (fn []
-                          (conman/with-transaction [db/*db* {:isolation :read-committed
+                          (conman/with-transaction [db/*db* {:isolation :serializable
                                                              :read-only? true}]
                             {::events (applications/get-all-events-since 0)}))
         thread-pool (Executors/newCachedThreadPool)
@@ -129,16 +128,24 @@
       (.shutdownNow)
       (.awaitTermination 30 TimeUnit/SECONDS))
 
-    (let [writer-results (->> (flatten (map #(.get ^Future %) writers))
-                              (remove #{::transaction-conflict}))
+    (let [writer-attempts (flatten (map #(.get ^Future %) writers))
+          writer-results (remove #{::transaction-conflict} writer-attempts)
           app-events-reader-results (flatten (map #(.get ^Future %) app-events-readers))
           all-events-reader-results (flatten (map #(.get ^Future %) all-events-readers))
           final-events (applications/get-all-events-since 0)
           final-events-by-app-id (group-by :application/id final-events)]
+      (comment
+        (prn 'writer-attempts (count writer-attempts))
+        (prn 'writer-results (count writer-results))
+        (prn 'app-events-reader-results (count app-events-reader-results))
+        (prn 'all-events-reader-results (count all-events-reader-results)))
 
       (testing "all commands succeeded"
         (is (not (empty? writer-results)))
-        (is (every? nil? writer-results))) ; successful commands return nil
+        (is (every? nil? writer-results)) ; successful commands return nil
+        (is (= (count writer-results)
+               (count writer-attempts))
+            "should have no transaction conflicts"))
 
       (testing "all events were written"
         (is (= (+ (count app-ids) ; one application created event per application
@@ -170,8 +177,7 @@
                       (filter #(= :application.event/draft-saved (:event/type %)))
                       (map #(get-in % [:application/field-values observed-app-version-marker])))))))
 
-      ;; TODO?
-      #_(testing "there are not gaps in event IDs"
-          (is (every? (fn [[a b]] (= (inc a) b))
-                      (->> (map :event/id final-events)
-                           (partition 2 1))))))))
+      (testing "there are not gaps in event IDs"
+        (is (every? (fn [[a b]] (= (inc a) b))
+                    (->> (map :event/id final-events)
+                         (partition 2 1))))))))
