@@ -82,6 +82,9 @@
         user-id (create-dummy-user)
         app-ids (vec (for [_ (range applications-count)]
                        (create-dummy-application user-id)))
+        ;; Currently we only test that commands are not executed concurrently
+        ;; for a single application. To guarantee that, we could add an app version
+        ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
         observed-app-version-marker 999
         mark-observed-app-version (fn [result _cmd application]
                                     (if (and (:success result)
@@ -178,6 +181,9 @@
                       (map #(get-in % [:application/field-values observed-app-version-marker])))))))
 
       (testing "there are not gaps in event IDs"
+        ;; There might still be gaps in the IDs if the transaction is rolled back
+        ;; for an unrelated reason after the command is executed. To guarantee no gaps,
+        ;; the event IDs could be generated with `max(id) + 1`.
         (is (every? (fn [[a b]] (= (inc a) b))
                     (->> (map :event/id final-events)
                          (partition 2 1))))))))
