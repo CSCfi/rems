@@ -63,7 +63,7 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses actors]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -76,7 +76,8 @@
    :expired expired
    :enabled enabled
    :archived archived
-   :licenses licenses})
+   :licenses (mapv format-license licenses)
+   :actors actors})
 
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
@@ -103,24 +104,20 @@
 
 (def ^:private get-user (comp format-user users/get-user-attributes))
 
-(defn- get-handler-attributes [wf]
-  (update-present wf :workflow update :handlers #(mapv get-user %)))
+(defn- enrich-and-format-workflow [wf]
+  (-> wf
+      (update-present :workflow update :handlers #(mapv get-user %))
+      ;; TODO should this be in db.workflow?
+      (assoc :actors (db/get-workflow-actors {:wfid (:id wf)}))
+      format-workflow))
 
 (defn- get-workflows [filters]
-  (doall
-   (for [wf (workflow/get-workflows filters)]
-     (assoc (format-workflow wf)
-            ;; TODO doesn't update :licenses or handlers
-            ;; TODO should this be in db.workflow?
-            :actors (db/get-workflow-actors {:wfid (:id wf)})))))
+  (mapv enrich-and-format-workflow (workflow/get-workflows filters)))
 
 (defn- get-workflow [workflow-id]
   (-> workflow-id
       workflow/get-workflow
-      format-workflow
-      get-handler-attributes
-      (update :licenses #(mapv format-license %))
-      (assoc :actors (db/get-workflow-actors {:wfid workflow-id}))))
+      enrich-and-format-workflow))
 
 (def workflows-api
   (context "/workflows" []
