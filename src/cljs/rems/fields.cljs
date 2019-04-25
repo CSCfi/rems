@@ -3,7 +3,8 @@
   (:require [clojure.string :as str]
             [rems.atoms :refer [external-link textarea]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
-            [rems.text :refer [localized text text-format]])
+            [rems.text :refer [localized text text-format]]
+            [rems.util :refer [encode-option-keys decode-option-keys linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- id-to-name [id]
@@ -46,7 +47,7 @@
      (text :t.form/diff-show))])
 
 (defn readonly-field [{:keys [id value]}]
-  [:div.form-control {:id id} (str/trim (str value))])
+  [:div.form-control {:id id} (linkify (str/trim (str value)))])
 
 (defn field-wrapper
   "Common parts of a form field.
@@ -170,27 +171,6 @@
   (let [title (:field/title opts)]
     [:div.form-group
      [:label (localized title)]]))
-
-;; TODO move to util?
-(defn normalize-option-key
-  "Strips disallowed characters from an option key"
-  [key]
-  (str/replace key #"\s+" ""))
-
-(defn encode-option-keys
-  "Encodes a set of option keys to a string"
-  [keys]
-  (->> keys
-       sort
-       (str/join " ")))
-
-(defn decode-option-keys
-  "Decodes a set of option keys from a string"
-  [value]
-  (-> value
-      (str/split #"\s+")
-      set
-      (disj "")))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
