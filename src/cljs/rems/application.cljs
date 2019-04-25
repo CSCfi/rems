@@ -553,13 +553,11 @@
                                   actions)]
                       forms)}])))
 
-(defn- applied-resources [application userid]
+(defn- applied-resources [application]
   (let [application-id (:application/id application)
         possible-commands (:application/permissions application)
-        applicant? (= (:application/applicant application) userid)
-        can-see-full-catalogue? (not applicant?)
         can-change? (contains? possible-commands :application.command/change-resources)
-        can-comment? (not applicant?)]
+        can-comment? false]
     [collapsible/component
      {:id "resources"
       :title (text :t.form/resources)
@@ -572,7 +570,7 @@
                [:div.commands
                 (when can-change? [change-resources-action-button (:application/resources application)])]
                [:div#resource-action-forms
-                [change-resources-form application-id can-see-full-catalogue? can-comment? (partial reload! application-id)]]]}]))
+                [change-resources-form application-id can-comment? (partial reload! application-id)]]]}]))
 
 (defn- render-application [application edit-application userid]
   (let [messages (remove nil?
@@ -587,7 +585,7 @@
      (into [:div] messages)
      [application-header application]
      [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources application userid]]
+     [:div.mt-3 [applied-resources application]]
      [:div.my-3 [application-fields application edit-application]]
      [:div.my-3 [application-licenses application edit-application userid]]
      [:div.mb-3 [actions-form application]]]))
