@@ -64,14 +64,13 @@
     :access-control-allow-origin #".*"
     :access-control-allow-methods [:get :put :post :delete]))
 
-(defn- should-wrap-transaction? [request]
-  (contains? #{:put :post} (:request-method request)))
+(defn- read-only? [request]
+  (not (contains? #{:put :post} (:request-method request))))
 
 (defn transaction-middleware [handler]
   (fn [request]
-    (if (should-wrap-transaction? request)
-      (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
-        (handler request))
+    (conman/with-transaction [rems.db.core/*db* {:isolation :serializable
+                                                 :read-only? (read-only? request)}]
       (handler request))))
 
 (defn slow-middleware [request]

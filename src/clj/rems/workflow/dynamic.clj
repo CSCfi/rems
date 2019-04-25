@@ -270,12 +270,16 @@
     (update result :result add-common-event-fields-from-command cmd)
     result))
 
+(defn ^:dynamic postprocess-command-result-for-tests [result _cmd _application]
+  result)
+
 (defn handle-command [cmd application injections]
   (commands/validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
   (let [permissions (permissions/user-permissions application (:actor cmd))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
-          (enrich-result cmd))
+          (enrich-result cmd)
+          (postprocess-command-result-for-tests cmd application))
       {:errors (or (:errors (command-handler cmd application injections)) ; prefer more specific error
                    [{:type :forbidden}])})))
 

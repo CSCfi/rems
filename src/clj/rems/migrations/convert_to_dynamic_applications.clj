@@ -122,4 +122,4 @@
         (migrate-application! (:id application) (:id new-workflow)))
       (println "Marking all pending emails as sent")
       (email/mark-all-emails-as-sent!)
-      (println "Done"))))
+      (println "Done. Next go to the administration pages and archive all non-dynamic workflows."))))

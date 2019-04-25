@@ -10,7 +10,7 @@
             [rems.config :refer [dev-environment?]]
             [rems.fields :as fields]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! post!]]
+            [rems.util :refer [dispatch! post! normalize-option-key]]
             [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
@@ -200,7 +200,7 @@
      [remove-form-field-option-button field-index option-index]]]
    [text-field context {:keys [:fields field-index :options option-index :key]
                         :label (text :t.create-form/option-key)
-                        :normalizer fields/normalize-option-key}]
+                        :normalizer normalize-option-key}]
    [localized-text-field context {:keys [:fields field-index :options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 

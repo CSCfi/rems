@@ -109,7 +109,7 @@
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
      [application-list/component
-      ;; TODO: use +all-columns+ like on other pages?
+      ;; TODO: use application-list/visible-columns like on other pages?
       {:visible-columns application-list/+draft-columns+
        :items drafts}]]))
 

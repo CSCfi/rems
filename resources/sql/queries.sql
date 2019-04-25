@@ -483,7 +483,7 @@ SET
   --~(when (contains? params :archived) ", archived = :archived")
   --~(when (contains? params :title) ", title = :title")
   --~(when (contains? params :workflow) ", workflowBody = :workflow::jsonb")
-WHERE id = :id
+WHERE id = :id;
 
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
@@ -727,7 +727,8 @@ SELECT prefix, suffix FROM external_application_id
 /*~ (when (:prefix params) */
 WHERE prefix = :prefix
 /*~ ) ~*/
+;
 
 -- :name add-external-id! :!
 INSERT INTO external_application_id (prefix, suffix)
-VALUES (:prefix, :suffix)
+VALUES (:prefix, :suffix);

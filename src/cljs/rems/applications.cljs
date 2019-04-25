@@ -93,7 +93,9 @@
 
         :else
         [application-list/component
-         {:visible-columns application-list/+all-columns+
+         {:visible-columns
+          (application-list/open-application-visible-columns
+           (get @(rf/subscribe [:rems.config/config]) :application-id-column :id))
           :sorting (assoc @(rf/subscribe [::sorting])
                           :set-sorting #(rf/dispatch [::set-sorting %]))
           :filtering (assoc @(rf/subscribe [::filtering])
@@ -106,7 +108,6 @@
     [:div
      [:h2 (text :t.applications/my-applications)]
      [application-list apps loading?]
-
      (let [identity @(rf/subscribe [:identity])
            apps @(rf/subscribe [::all-applications])
            loading? @(rf/subscribe [::loading-all-applications?])]

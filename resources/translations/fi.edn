@@ -54,7 +54,6 @@
             :add-member "Lisää jäsen"
             :change-resources "Muuta resursseja"
             :applicant "Hakija"
-            :application "Hakemus"
             :approve "Hyväksy"
             :approve-reject "Hyväksy tai hylkää"
             :cancel "Peruuta"
@@ -68,6 +67,7 @@
             :errors {:invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]}
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
             :handled-approvals "Käsitellyt hakemukset"
+            :id "Tunniste"
             :invite-member "Kutsu jäsen"
             :last-activity "Muokattu"
             :licenses-selection "Lisää seuraavat käyttöehdot"
