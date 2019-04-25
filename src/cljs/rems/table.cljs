@@ -76,27 +76,27 @@
         (keys column-definitions)))
 
 (deftest test-match-filter?
- (is (match-filter? {:id {:value :id}
-                     :description {:value :description}}
-                    "bar"
-                    {:id "foo"
-                     :description "bar"})
-     "matches")
- (is (not (match-filter? {:id {:value :id}
-                          :description {:value :its-a-trap
-                                        :filter-value :description}}
-                         "willnotmatch"
-                         {:id "foo"
-                          :its-a-trap "willnotmatch"
-                          :description "bar"}))
-     "doesn't match with value if filter-value is provided")
- (is (not (match-filter? {:id {:value :id}
-                          :description {:value :description
-                                        :filterable? false}}
-                         "shouldnotmatch"
-                         {:id "foo"
-                          :description "shouldnotmatch"}))
-     "doesn't match if filterable is false"))
+  (is (match-filter? {:id {:value :id}
+                      :description {:value :description}}
+                     "bar"
+                     {:id "foo"
+                      :description "bar"})
+      "matches")
+  (is (not (match-filter? {:id {:value :id}
+                           :description {:value :its-a-trap
+                                         :filter-value :description}}
+                          "willnotmatch"
+                          {:id "foo"
+                           :its-a-trap "willnotmatch"
+                           :description "bar"}))
+      "doesn't match with value if filter-value is provided")
+  (is (not (match-filter? {:id {:value :id}
+                           :description {:value :description
+                                         :filterable? false}}
+                          "shouldnotmatch"
+                          {:id "foo"
+                           :description "shouldnotmatch"}))
+      "doesn't match if filterable is false"))
 
 (defn match-filters? [column-definitions filters item]
   (every? (fn [filter-word]
@@ -137,11 +137,11 @@
         update-current-filters (fn [event]
                                  (set-filtering (assoc filtering :filters filters-new)))]
     [:div.flex-grow-1.d-flex
-    [:input.flex-grow-1
-     {:type "text"
-      :name "table-search"
+     [:input.flex-grow-1
+      {:type "text"
+       :name "table-search"
        :default-value filters-new
-      :placeholder ""
+       :placeholder ""
        :on-change (fn [event]
                     (set-filtering (assoc filtering :filters-new (-> event .-target .-value))))
        :on-blur update-current-filters
@@ -206,12 +206,12 @@
                                      (comparable-params new)))
     :reagent-render (fn [{:keys [column-definitions visible-columns sorting filtering id-function items class]}]
                       (let [{:keys [initial-sort sort-column sort-order]} sorting
-        {:keys [show-filters filters]} filtering]
-    [:tbody
-     (map (fn [item] ^{:key (id-function item)} [row (id-function item) column-definitions visible-columns item])
-          (cond->> items
-            (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
-            (and show-filters filters) (apply-filtering column-definitions filters)
+                            {:keys [show-filters filters]} filtering]
+                        [:tbody
+                         (map (fn [item] ^{:key (id-function item)} [row (id-function item) column-definitions visible-columns item])
+                              (cond->> items
+                                (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
+                                (and show-filters filters) (apply-filtering column-definitions filters)
                                 (and sorting sort-column) (apply-sorting column-definitions sort-column sort-order)))]))}))
 
 (defn component
