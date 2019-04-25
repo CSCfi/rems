@@ -49,7 +49,16 @@
        (assoc ::catalogue catalogue)
        (dissoc ::loading-catalogue?))))
 
-(rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
+(rf/reg-sub ::full-catalogue (fn [db _] (::catalogue db)))
+
+(rf/reg-sub
+ ::catalogue
+ (fn [db _]
+   (->> db
+        ::catalogue
+        (filter :enabled)
+        (remove :expired))))
+
 (rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
 
 ;;;; draft applications

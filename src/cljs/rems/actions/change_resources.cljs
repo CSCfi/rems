@@ -101,7 +101,7 @@
 (defn change-resources-form [application-id can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
-        catalogue @(rf/subscribe [:rems.catalogue/catalogue])
+        catalogue @(rf/subscribe [:rems.catalogue/full-catalogue])
         comment @(rf/subscribe [::comment])
         language @(rf/subscribe [:language])]
     [change-resources-view {:initial-resources initial-resources
