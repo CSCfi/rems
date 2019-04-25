@@ -48,8 +48,7 @@
  (fn [db [_ workflow]]
    (let [new-stuff {:title (:title workflow)
                     :organization (:organization workflow)
-                    :handlers (for [userid (get-in workflow [:workflow :handlers])]
-                                {:userid userid :display userid})}] ;; TODO broken
+                    :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}]
      (-> db
          (update ::form merge new-stuff)
          (dissoc ::loading-workflow?)))))

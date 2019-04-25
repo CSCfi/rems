@@ -2,12 +2,13 @@
   (:require [clj-time.core :as time-core]
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications :refer [User get-users]]
+            [rems.api.applications :refer [User get-users format-user]]
             [rems.api.schema :refer [SuccessResponse]]
             [rems.api.util]
             [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.util :refer [getx-user-id]]
+            [rems.util :refer [getx-user-id update-present]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime DateTimeZone]))
@@ -98,12 +99,18 @@
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableActor User)
 (s/defschema AvailableActors [AvailableActor])
-(def get-available-actors get-users)
+(def get-available-actors get-users) ;; TODO move get-users to rems.db.users
+
+(def ^:private get-user (comp format-user users/get-user-attributes))
+
+(defn- get-handler-attributes [wf]
+  (update-present wf :workflow update :handlers #(mapv get-user %)))
 
 (defn- get-workflows [filters]
   (doall
    (for [wf (workflow/get-workflows filters)]
      (assoc (format-workflow wf)
+            ;; TODO doesn't update :licenses or handlers
             ;; TODO should this be in db.workflow?
             :actors (db/get-workflow-actors {:wfid (:id wf)})))))
 
@@ -111,6 +118,7 @@
   (-> workflow-id
       workflow/get-workflow
       format-workflow
+      get-handler-attributes
       (update :licenses #(mapv format-license %))
       (assoc :actors (db/get-workflow-actors {:wfid workflow-id}))))
 

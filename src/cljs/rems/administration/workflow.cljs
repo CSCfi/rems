@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [attachment-link external-link info-field readonly-checkbox]]
+            [rems.atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -126,7 +126,10 @@
                      (seq (:actors workflow)) (text :t.create-workflow/rounds-workflow)
                      :else (text :t.create-workflow/auto-approve-workflow))]
               (when (:workflow workflow)
-                [inline-info-field (text :t.create-workflow/handlers) (str/join ", " (get-in workflow [:workflow :handlers]))])
+                [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
+                                                                           (map enrich-user)
+                                                                           (map :display)
+                                                                           (str/join ", "))])
               [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired workflow))]]]}]
