@@ -2,7 +2,8 @@
   (:require [cljs.test :refer-macros [deftest is testing]]
             [cljs-time.core :as time]
             [cljs-time.format :as format]
-            [rems.text :refer [time-format localize-time]]))
+            [rems.text :refer [time-format localize-time]]
+            [rems.util :refer [parse-int]]))
 
 (def test-time #inst "1980-01-02T13:45:00.000Z")
 
@@ -17,3 +18,9 @@
   (is (= nil (localize-time "")))
   (is (= (expected-time test-time) (localize-time #inst "1980-01-02T13:45:00.000Z")))
   (is (= nil (localize-time nil))))
+
+(deftest test-parse-int
+  (is (= nil (parse-int nil)))
+  (is (= nil (parse-int "")))
+  (is (= nil (parse-int "")))
+  (is (= 7 (parse-int "7"))))

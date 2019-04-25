@@ -10,13 +10,12 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post! put!]]))
+            [rems.util :refer [dispatch! fetch parse-int post! put!]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ workflow-id]]
-   (let [parsed-id (parseInt workflow-id)
-         parsed-id (when-not (js/isNaN parsed-id) parsed-id)]
+   (let [parsed-id (parse-int workflow-id)]
      {:db (assoc db
                  ::workflow-id parsed-id
                  ::loading-workflow? (not (nil? parsed-id))
