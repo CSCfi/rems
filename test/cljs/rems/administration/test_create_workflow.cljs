@@ -1,23 +1,23 @@
 (ns rems.administration.test-create-workflow
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [rems.administration.create-workflow :refer [build-request]]))
+            [rems.administration.create-workflow :refer [build-create-request build-update-request]]))
 
-(deftest build-request-test
+(deftest build-create-request-test
   (testing "all workflows"
     (let [form {:organization "abc"
                 :title "workflow title"
                 :type :auto-approve}]
-      (is (not (nil? (build-request form))))
+      (is (not (nil? (build-create-request form))))
       (testing "missing organization"
-        (is (nil? (build-request (assoc form :organization "")))))
+        (is (nil? (build-create-request (assoc form :organization "")))))
       (testing "missing title"
-        (is (nil? (build-request (assoc form :title "")))))
+        (is (nil? (build-create-request (assoc form :title "")))))
       (testing "missing workflow type"
         (is (thrown-with-msg? js/Error #"No matching clause"
-                              (build-request (assoc form :type nil)))))
+                              (build-create-request (assoc form :type nil)))))
       (testing "invalid workflow type"
         (is (thrown-with-msg? js/Error #"No matching clause"
-                              (build-request (assoc form :type :no-such-type)))))))
+                              (build-create-request (assoc form :type :no-such-type)))))))
 
   (testing "auto-approved workflow"
     (let [form {:organization "abc"
@@ -27,7 +27,7 @@
         (is (= {:organization "abc"
                 :title "workflow title"
                 :type :auto-approve}
-               (build-request form))))))
+               (build-create-request form))))))
 
   (testing "dynamic workflow"
     (let [form {:organization "abc"
@@ -39,6 +39,13 @@
                 :title "workflow title"
                 :type :dynamic
                 :handlers ["bob" "carl"]}
-               (build-request form))))
+               (build-create-request form))))
       (testing "missing handlers"
-        (is (nil? (build-request (assoc-in form [:handlers] []))))))))
+        (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
+
+(deftest build-update-request-test
+  (is (= {:id 3 :title "t" :handlers ["a" "b"]}
+         (build-update-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-update-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-update-request 3 {:title "" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-update-request 3 {:title "t" :handlers []}))))

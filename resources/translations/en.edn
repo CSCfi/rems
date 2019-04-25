@@ -125,6 +125,7 @@
                    :title "Title"
                    :type "Type"
                    :unarchive "Unarchive"
+                   :update-workflow "Update workflow"
                    :view "View"
                    :workflow "Workflow"
                    :workflows "Workflows"}

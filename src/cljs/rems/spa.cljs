@@ -362,6 +362,10 @@
   (rf/dispatch [:rems.administration.create-workflow/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
 
+(secretary/defroute "/administration/edit-workflow/:workflow-id" [workflow-id]
+  (rf/dispatch [:rems.administration.create-workflow/enter-page workflow-id])
+  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
+
 (secretary/defroute "/unauthorized" []
   (rf/dispatch [:set-active-page :unauthorized]))
 

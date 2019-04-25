@@ -125,6 +125,7 @@
                    :title "Nimi"
                    :type "Tyyppi"
                    :unarchive "Palauta arkistosta"
+                   :update-workflow "Muuta työvuota"
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
