@@ -22,6 +22,7 @@
    (merge
     {:db (assoc db
                 ::comment ""
+                ::initial-resources (into #{} (map :catalogue-item/id initial-resources))
                 ::selected-resources (into #{} (map :catalogue-item/id initial-resources)))}
     (when-not (:rems.catalogue/catalogue db)
       {:dispatch [:rems.catalogue/fetch-catalogue]}))))
@@ -38,6 +39,7 @@
       (.indexOf query)
       (not= -1)))
 
+(rf/reg-sub ::initial-resources (fn [db _] (::initial-resources db)))
 (rf/reg-sub ::selected-resources (fn [db _] (::selected-resources db)))
 (rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources resources)))
 (rf/reg-event-db ::add-selected-resources (fn [db [_ resource]] (update db ::selected-resources conj (:id resource))))
@@ -69,12 +71,13 @@
                   :on-click #(rf/dispatch [::open-form initial-resources])}])
 
 (defn change-resources-view
-  [{:keys [selected-resources catalogue comment can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
+  [{:keys [initial-resources selected-resources catalogue comment can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
   [action-form-view action-form-id
    (text :t.actions/change-resources)
    [[button-wrapper {:id "change-resources"
                      :text (text :t.actions/change-resources)
                      :class "btn-primary"
+                     :disabled (= selected-resources initial-resources)
                      :on-click on-send}]]
    (let [indexed-resources (index-by [:id] catalogue)]
      (if (empty? catalogue)
@@ -101,11 +104,13 @@
            :remove-fn on-remove-resource}]]]))])
 
 (defn change-resources-form [application-id can-comment? on-finished]
-  (let [selected-resources @(rf/subscribe [::selected-resources])
+  (let [initial-resources @(rf/subscribe [::initial-resources])
+        selected-resources @(rf/subscribe [::selected-resources])
         catalogue @(rf/subscribe [:rems.catalogue/catalogue])
         comment @(rf/subscribe [::comment])
         language @(rf/subscribe [:language])]
-    [change-resources-view {:selected-resources selected-resources
+    [change-resources-view {:initial-resources initial-resources
+                            :selected-resources selected-resources
                             :catalogue catalogue
                             :comment comment
                             :can-comment? can-comment?
