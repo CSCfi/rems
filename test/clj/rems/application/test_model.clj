@@ -340,13 +340,15 @@
                                                       :application/accepted-licenses {"applicant" #{30 31 32}}})]
                 (is (= expected-application (apply-events events)))
 
-                (testing "> resources added by applicant"
+                (testing "> resources changed by applicant"
                   (let [events (conj events
                                      {:event/type :application.event/resources-changed
                                       :event/time (DateTime. 2600)
                                       :event/actor "applicant"
                                       :application/id 1
-                                      :application/resources [{:catalogue-item/id 30 :resource/ext-id "urn:31"}]})
+                                      :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                                              {:catalogue-item/id 20 :resource/ext-id "urn:21"}
+                                                              {:catalogue-item/id 30 :resource/ext-id "urn:31"}]})
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 2600)
                                                           :application/modified (DateTime. 2600)
