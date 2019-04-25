@@ -562,10 +562,10 @@
      {:id "resources"
       :title (text :t.form/resources)
       :always [:div.form-items.form-group
-               (into [:ul]
+               (into [:div.application-resources]
                      (for [resource (:application/resources application)]
                        ^{:key (:catalogue-item/id resource)}
-                       [:li (localized (:catalogue-item/title resource))]))]
+                       [:div.application-resource (localized (:catalogue-item/title resource))]))]
       :footer [:div
                [:div.commands
                 (when can-change? [change-resources-action-button (:application/resources application)])]
