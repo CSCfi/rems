@@ -98,10 +98,12 @@
            :add-fn on-add-resources
            :remove-fn on-remove-resource}]]]))])
 
-(defn change-resources-form [application-id can-comment? on-finished]
+(defn change-resources-form [application-id can-see-full-catalogue? can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
-        catalogue @(rf/subscribe [:rems.catalogue/full-catalogue])
+        catalogue (if can-see-full-catalogue?
+                    @(rf/subscribe [:rems.catalogue/full-catalogue])
+                    @(rf/subscribe [:rems.catalogue/catalogue]))
         comment @(rf/subscribe [::comment])
         language @(rf/subscribe [:language])]
     [change-resources-view {:initial-resources initial-resources

@@ -44,6 +44,7 @@
                                       :handler [:see-everything
                                                 :application.command/add-licenses
                                                 :application.command/add-member
+                                                :application.command/change-resources
                                                 :application.command/remove-member
                                                 :application.command/invite-member
                                                 :application.command/uninvite-member

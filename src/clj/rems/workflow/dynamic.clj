@@ -210,12 +210,14 @@
   [cmd _application injections]
   (or (must-not-be-empty cmd :catalogue-item-ids)
       (invalid-catalogue-items (:catalogue-item-ids cmd) injections)
-      (ok {:event/type :application.event/resources-changed
-           :application/resources (->> (:catalogue-item-ids cmd)
-                                       (mapv (:get-catalogue-item injections))
-                                       (mapv (fn [catalogue-item]
-                                               {:catalogue-item/id (:id catalogue-item)
-                                                :resource/ext-id (:resid catalogue-item)})))})))
+      (ok (merge {:event/type :application.event/resources-changed
+                  :application/resources (->> (:catalogue-item-ids cmd)
+                                              (mapv (:get-catalogue-item injections))
+                                              (mapv (fn [catalogue-item]
+                                                      {:catalogue-item/id (:id catalogue-item)
+                                                       :resource/ext-id (:resid catalogue-item)})))}
+                 (when (:comment cmd)
+                   {:application/comment (:comment cmd)})))))
 
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
