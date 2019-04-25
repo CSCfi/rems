@@ -10,11 +10,6 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(rf/reg-fx
- ::fetch-resources
- (fn [on-success]
-   (fetch "/api/catalogue" {:handler on-success})))
-
 (rf/reg-event-fx
  ::open-form
  (fn
