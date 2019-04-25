@@ -448,6 +448,33 @@
                                                                                                     :field/previous-value "bar"}]}})]
                             (is (= expected-application (apply-events events)))))))
 
+                    (testing "> resources changed by handler"
+                      (let [events (conj events
+                                         {:event/type :application.event/resources-changed
+                                          :event/time (DateTime. 3400)
+                                          :event/actor "handler"
+                                          :application/id 1
+                                          :application/comment "You should include this resource."
+                                          :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                                                  {:catalogue-item/id 20 :resource/ext-id "urn:21"}
+                                                                  {:catalogue-item/id 30 :resource/ext-id "urn:31"}]})
+                            expected-application (deep-merge expected-application
+                                                             {:application/last-activity (DateTime. 3400)
+                                                              :application/modified (DateTime. 3400)
+                                                              :application/events events
+                                                              :application/resources (conj (:application/resources expected-application)
+                                                                                           {:catalogue-item/id 30
+                                                                                            :resource/id 31
+                                                                                            :resource/ext-id "urn:31"
+                                                                                            :catalogue-item/title {:en "en title"
+                                                                                                                   :fi "fi title"
+                                                                                                                   :default "non-localized title"}
+                                                                                            :catalogue-item/start (DateTime. 100)
+                                                                                            :catalogue-item/end nil
+                                                                                            :catalogue-item/enabled true
+                                                                                            :catalogue-item/expired false
+                                                                                            :catalogue-item/archived false})})]
+                        (is (= expected-application (apply-events events)))))
                     (testing "> licenses added"
                       (let [events (conj events
                                          {:event/type :application.event/licenses-added
