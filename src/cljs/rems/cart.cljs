@@ -28,9 +28,9 @@
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
-    [:button.btn.btn-primary.add-to-cart
-     {:type "submit"
-      :on-click #(rf/dispatch [::add-item item])}
+  [:button.btn.btn-primary.add-to-cart
+   {:type "submit"
+    :on-click #(rf/dispatch [::add-item item])}
    (text :t.cart/add)])
 
 (defn remove-from-cart-button
