@@ -22,7 +22,6 @@
    (merge
     {:db (assoc db
                 ::comment ""
-                ::potential-resources []
                 ::selected-resources (into #{} (map :catalogue-item/id initial-resources)))}
     (when-not (:rems.catalogue/catalogue db)
       {:dispatch [:rems.catalogue/fetch-catalogue]}))))
@@ -70,15 +69,14 @@
                   :on-click #(rf/dispatch [::open-form initial-resources])}])
 
 (defn change-resources-view
-  [{:keys [selected-resources potential-resources comment can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
+  [{:keys [selected-resources catalogue comment can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
   [action-form-view action-form-id
    (text :t.actions/change-resources)
    [[button-wrapper {:id "change-resources"
                      :text (text :t.actions/change-resources)
                      :class "btn-primary"
                      :on-click on-send}]]
-   (let [catalogue @(rf/subscribe [:rems.catalogue/catalogue])
-         indexed-resources (index-by [:id] potential-resources)]
+   (let [indexed-resources (index-by [:id] catalogue)]
      (if (empty? catalogue)
        [spinner/big]
        [:div
@@ -104,11 +102,11 @@
 
 (defn change-resources-form [application-id can-comment? on-finished]
   (let [selected-resources @(rf/subscribe [::selected-resources])
-        potential-resources @(rf/subscribe [:rems.catalogue/catalogue])
+        catalogue @(rf/subscribe [:rems.catalogue/catalogue])
         comment @(rf/subscribe [::comment])
         language @(rf/subscribe [:language])]
     [change-resources-view {:selected-resources selected-resources
-                            :potential-resources potential-resources
+                            :catalogue catalogue
                             :comment comment
                             :can-comment? can-comment?
                             :language language
