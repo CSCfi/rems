@@ -22,7 +22,7 @@
 (deftest test-parse-int
   (is (= nil (parse-int nil)))
   (is (= nil (parse-int "")))
-  (is (= nil (parse-int "")))
+  (is (= nil (parse-int "a")))
   (is (= 7 (parse-int "7"))))
 
 (deftest option-keys-test
