@@ -49,7 +49,7 @@
    :approver2 "RDapprover2@funet.fi"
    :reviewer "RDreview@funet.fi"
    :owner "RDowner@funet.fi"
-   :reporter "RDreporter@funet.fi"})
+   :reporter "RDdomainreporter@funet.fi"})
 
 (def +demo-user-data+
   {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
@@ -58,7 +58,7 @@
    "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
-   "RDreporter@funet.fi" {:eppn "RDreporter@funet.fi" :mail "RDreporter.test@test_example.org" :commonName "RDreporter REMSDEMO"}})
+   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
 
 (defn- create-user! [user-attributes & roles]
   (let [user (:eppn user-attributes)]
