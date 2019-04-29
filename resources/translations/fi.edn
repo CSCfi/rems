@@ -102,6 +102,7 @@
                    :disable "Poista käytöstä"
                    :display-old "Näytä vanhat"
                    :edit "Muokkaa"
+                   :edit-workflow "Muokkaa työvuota"
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
@@ -126,7 +127,6 @@
                    :title "Nimi"
                    :type "Tyyppi"
                    :unarchive "Palauta arkistosta"
-                   :update-workflow "Muuta työvuota"
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}

@@ -97,7 +97,7 @@
 (rf/reg-event-fx
  ::update-workflow
  (fn [_ [_ request]]
-   (status-modal/common-pending-handler! (text :t.administration/update-workflow))
+   (status-modal/common-pending-handler! (text :t.administration/edit-workflow))
    (put! "/api/workflows/update" {:params request
                                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/workflows/" (:id request))))
                                   :error-handler status-modal/common-error-handler!})
@@ -209,13 +209,17 @@
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
-        loading? @(rf/subscribe [::loading?])]
+        loading? @(rf/subscribe [::loading?])
+        editing? @(rf/subscribe [::editing?])
+        title (if editing?
+                (text :t.administration/edit-workflow)
+                (text :t.administration/create-workflow))]
     [:div
      [administration-navigator-container]
-     [:h2 (text :t.administration/create-workflow)]
+     [:h2 title]
      [collapsible/component
       {:id "create-workflow"
-       :title (text :t.administration/create-workflow)
+       :title title
        :always (if loading?
                  [:div#workflow-loader [spinner/big]]
                  [:div#workflow-editor

@@ -102,6 +102,7 @@
                    :disable "Disable"
                    :display-old "Display old"
                    :edit "Edit"
+                   :edit-workflow "Edit workflow"
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."
@@ -126,7 +127,6 @@
                    :title "Title"
                    :type "Type"
                    :unarchive "Unarchive"
-                   :update-workflow "Update workflow"
                    :view "View"
                    :workflow "Workflow"
                    :workflows "Workflows"}
