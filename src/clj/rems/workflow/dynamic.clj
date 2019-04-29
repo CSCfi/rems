@@ -78,9 +78,21 @@
     (not ((:get-catalogue-item injections) catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
 (defn- invalid-catalogue-items
-  "Checks the given users for validity and merges the errors"
+  "Checks the given catalogue items for validity and merges the errors"
   [catalogue-item-ids injections]
   (apply merge-with into (keep #(invalid-catalogue-item-error % injections) catalogue-item-ids)))
+
+(defn- unbundlable-catalogue-items
+  "Checks that the given catalogue items are bundlable by the given actor."
+  [application catalogue-item-ids actor injections]
+  (let [catalogue-items (map (:get-catalogue-item injections) catalogue-item-ids)
+        handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
+    (prn :kakka handlers actor)
+    (when (and (not (contains? handlers actor))
+               (not= 1
+                     (count (set (map :formid catalogue-items)))
+                     (count (set (map :wfid catalogue-items)))))
+      {:errors [{:type :unbundlable-catalogue-items :catalogue-item-ids catalogue-item-ids}]})))
 
 (defn- validation-error [application {:keys [validate-form-answers]}]
   (let [form-id (getx-in application [:application/form :form/id])
@@ -207,9 +219,10 @@
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/change-resources
-  [cmd _application injections]
+  [cmd application injections]
   (or (must-not-be-empty cmd :catalogue-item-ids)
       (invalid-catalogue-items (:catalogue-item-ids cmd) injections)
+      (unbundlable-catalogue-items application (:catalogue-item-ids cmd) (:actor cmd) injections)
       (ok (merge {:event/type :application.event/resources-changed
                   :application/resources (->> (:catalogue-item-ids cmd)
                                               (mapv (:get-catalogue-item injections))
