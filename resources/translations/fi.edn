@@ -47,6 +47,7 @@
             :accept-licenses "Hyväksy käyttöehdot"
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
+            :bundling-warning "Resursseja ei voi hakea samalla hakemuksella, koska niillä on eri lomake tai työvuo."
             :change-resources "Muuta resursseja"
             :applicant "Hakija"
             :approve "Hyväksy"

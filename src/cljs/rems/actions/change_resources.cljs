@@ -65,19 +65,37 @@
                   :text (text :t.actions/change-resources)
                   :on-click #(rf/dispatch [::open-form initial-resources])}])
 
+(defn- show-bundling-warning? [resources]
+  (let [workflows (set (map :wfid resources))
+        forms (set (map :formid resources))]
+    (not= 1 (count workflows) (count forms))))
+
+(defn- bundling-warning [can-bundle-all?]
+  [:div
+   [:div.alert {:class (if can-bundle-all? :alert-warning :alert-danger)}
+    (text :t.actions/bundling-warning)]])
+
 (defn change-resources-view
-  [{:keys [initial-resources selected-resources full-catalogue catalogue comment can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
-  [action-form-view action-form-id
-   (text :t.actions/change-resources)
-   [[button-wrapper {:id "change-resources"
-                     :text (text :t.actions/change-resources)
-                     :class "btn-primary"
-                     :disabled (= selected-resources initial-resources)
-                     :on-click on-send}]]
-   (let [indexed-resources (index-by [:id] full-catalogue)]
+  [{:keys [initial-resources selected-resources full-catalogue catalogue comment can-bundle-all? can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
+  (let [indexed-resources (index-by [:id] full-catalogue)
+        enriched-selected-resources (->> selected-resources
+                                         (select-keys indexed-resources)
+                                         vals
+                                         (sort-by #(get-catalogue-item-title % language)))]
+    [action-form-view action-form-id
+     (text :t.actions/change-resources)
+     [[button-wrapper {:id "change-resources"
+                       :text (text :t.actions/change-resources)
+                       :class "btn-primary"
+                       :disabled (or (and (not can-bundle-all?)
+                                          (show-bundling-warning? enriched-selected-resources) )
+                                     (= selected-resources initial-resources))
+                       :on-click on-send}]]
      (if (empty? catalogue)
        [spinner/big]
        [:div
+        (when (show-bundling-warning? enriched-selected-resources)
+          [bundling-warning can-bundle-all?])
         (when can-comment?
           [action-comment {:id action-form-id
                            :label (text :t.form/add-comments-shown-to-applicant)
@@ -86,10 +104,7 @@
         [:div.form-group
          [:label (text :t.actions/resources-selection)]
          [autocomplete/component
-          {:value (->> selected-resources
-                       (select-keys indexed-resources)
-                       vals
-                       (sort-by #(get-catalogue-item-title % language)))
+          {:value enriched-selected-resources
            :items catalogue
            :value->text #(get-catalogue-item-title %2 language)
            :item->key :id
@@ -97,9 +112,9 @@
            :item->value identity
            :term-match-fn (partial resource-matches? language)
            :add-fn on-add-resources
-           :remove-fn on-remove-resource}]]]))])
+           :remove-fn on-remove-resource}]]])]))
 
-(defn change-resources-form [application-id can-see-full-catalogue? can-comment? on-finished]
+(defn change-resources-form [application-id can-bundle-all? can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
         full-catalogue @(rf/subscribe [:rems.catalogue/full-catalogue])
@@ -111,6 +126,7 @@
                             :full-catalogue full-catalogue
                             :catalogue catalogue
                             :comment comment
+                            :can-bundle-all? can-bundle-all?
                             :can-comment? can-comment?
                             :language language
                             :on-set-comment #(rf/dispatch [::set-comment %])
