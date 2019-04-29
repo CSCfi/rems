@@ -66,7 +66,7 @@
                   :on-click #(rf/dispatch [::open-form initial-resources])}])
 
 (defn change-resources-view
-  [{:keys [initial-resources selected-resources catalogue comment can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
+  [{:keys [initial-resources selected-resources full-catalogue catalogue comment can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
   [action-form-view action-form-id
    (text :t.actions/change-resources)
    [[button-wrapper {:id "change-resources"
@@ -74,7 +74,7 @@
                      :class "btn-primary"
                      :disabled (= selected-resources initial-resources)
                      :on-click on-send}]]
-   (let [indexed-resources (index-by [:id] catalogue)]
+   (let [indexed-resources (index-by [:id] full-catalogue)]
      (if (empty? catalogue)
        [spinner/big]
        [:div
@@ -86,10 +86,11 @@
         [:div.form-group
          [:label (text :t.actions/resources-selection)]
          [autocomplete/component
-          {:value (sort-by #(get-catalogue-item-title % language)
-                           (vals (select-keys indexed-resources
-                                              selected-resources)))
-           :items (vals (apply dissoc indexed-resources selected-resources))
+          {:value (->> selected-resources
+                       (select-keys indexed-resources)
+                       vals
+                       (sort-by #(get-catalogue-item-title % language)))
+           :items catalogue
            :value->text #(get-catalogue-item-title %2 language)
            :item->key :id
            :item->text #(get-catalogue-item-title % language)
@@ -101,13 +102,13 @@
 (defn change-resources-form [application-id can-see-full-catalogue? can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
-        catalogue (if can-see-full-catalogue?
-                    @(rf/subscribe [:rems.catalogue/full-catalogue])
-                    @(rf/subscribe [:rems.catalogue/catalogue]))
+        full-catalogue @(rf/subscribe [:rems.catalogue/full-catalogue])
+        catalogue @(rf/subscribe [:rems.catalogue/catalogue])
         comment @(rf/subscribe [::comment])
         language @(rf/subscribe [:language])]
     [change-resources-view {:initial-resources initial-resources
                             :selected-resources selected-resources
+                            :full-catalogue full-catalogue
                             :catalogue catalogue
                             :comment comment
                             :can-comment? can-comment?
