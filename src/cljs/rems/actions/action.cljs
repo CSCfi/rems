@@ -50,7 +50,7 @@
   [:button.btn.mr-3
    {:id (str id "-action-button")
     :class (str (or class "btn-secondary")
-                " more-options")
+                " btn-opens-more")
     :type "button"
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))

@@ -526,14 +526,14 @@
    [(s/> :.form-actions "*:not(:first-child)")
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
-   [".more-options::after" {:display "inline-block"
-                            :font-style "normal"
-                            :font-variant "normal"
-                            :text-rendering "auto"
-                            :-webkit-font-smoothing "antialiased"
-                            :font-family "'Font Awesome 5 Free'"
-                            :font-weight 900
-                            :content "'\\a0\\f141'"}] ; nbsp and ellipsis-h
+   [".btn-opens-more::after" {:display "inline-block"
+                              :font-style "normal"
+                              :font-variant "normal"
+                              :text-rendering "auto"
+                              :-webkit-font-smoothing "antialiased"
+                              :font-family "'Font Awesome 5 Free'"
+                              :font-weight 900
+                              :content "'\\a0\\f141'"}] ; nbsp and ellipsis-h
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
