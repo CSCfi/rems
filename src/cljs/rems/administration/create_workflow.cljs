@@ -10,19 +10,18 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch parse-int post! put!]]))
+            [rems.util :refer [dispatch! fetch post! put!]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ workflow-id]]
-   (let [parsed-id (parse-int workflow-id)]
-     {:db (assoc db
-                 ::workflow-id parsed-id
-                 ::loading-workflow? (not (nil? parsed-id))
-                 ::actors nil
-                 ::form {:type :dynamic})
-      ::fetch-actors nil
-      ::fetch-workflow parsed-id})))
+   {:db (assoc db
+               ::workflow-id workflow-id
+               ::loading-workflow? (not (nil? workflow-id))
+               ::actors nil
+               ::form {:type :dynamic})
+    ::fetch-actors nil
+    ::fetch-workflow workflow-id}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
 (rf/reg-sub ::editing? (fn [db _] (not (nil? (::workflow-id db)))))
