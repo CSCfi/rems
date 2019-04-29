@@ -2,7 +2,8 @@
   (:require [ajax.core :refer [GET PUT POST]]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
-            [secretary.core :as secretary]))
+            [secretary.core :as secretary]
+            [clojure.string :as str]))
 
 ;; TODO move to cljc
 (defn getx
@@ -90,3 +91,34 @@
 (defn parse-int [string]
   (let [parsed (parseInt string)]
     (when-not (js/isNaN parsed) parsed)))
+
+;; String manipulation
+
+(defn normalize-option-key
+  "Strips disallowed characters from an option key"
+  [key]
+  (str/replace key #"\s+" ""))
+
+(defn encode-option-keys
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
+       sort
+       (str/join " ")))
+
+(defn decode-option-keys
+  "Decodes a set of option keys from a string"
+  [value]
+  (-> value
+      (str/split #"\s+")
+      set
+      (disj "")))
+
+(defn linkify
+  "Given a string, return a vector that, when concatenated, forms the
+  original string, except that all whitespace-separated substrings that
+  resemble a link have been changed to hiccup links."
+  [s]
+  (let [link? (fn [s] (re-matches #"^http[s]?://.*" s))]
+    (map #(if (link? %) [:a {:href %} %] %)
+      (interpose " " (str/split s " ")))))

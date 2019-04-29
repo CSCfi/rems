@@ -304,7 +304,7 @@
                [fields/field (assoc fld
                                     :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
-                                    :on-remove-attachment #(rf/dispatch [::remove-attachment (:field/id fld) %1 %2])
+                                    :on-remove-attachment #(rf/dispatch [::remove-attachment (:field/id fld) %])
                                     :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
                                     :field/value (get field-values (:field/id fld))
                                     :diff (get show-diff (:field/id fld))

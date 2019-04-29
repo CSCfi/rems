@@ -1,9 +1,11 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
+            [cljs-time.core :as time]
             [rems.atoms :refer [external-link textarea]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
-            [rems.text :refer [localized text text-format]])
+            [rems.text :refer [localized text text-format localize-time]]
+            [rems.util :refer [encode-option-keys decode-option-keys linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- id-to-name [id]
@@ -46,7 +48,7 @@
      (text :t.form/diff-show))])
 
 (defn readonly-field [{:keys [id value]}]
-  [:div.form-control {:id id} (str/trim (str value))])
+  [:div.form-control {:id id} (linkify (str/trim (str value)))])
 
 (defn field-wrapper
   "Common parts of a form field.
@@ -171,27 +173,6 @@
     [:div.form-group
      [:label (localized title)]]))
 
-;; TODO move to util?
-(defn normalize-option-key
-  "Strips disallowed characters from an option key"
-  [key]
-  (str/replace key #"\s+" ""))
-
-(defn encode-option-keys
-  "Encodes a set of option keys to a string"
-  [keys]
-  (->> keys
-       sort
-       (str/join " ")))
-
-(defn decode-option-keys
-  "Decodes a set of option keys from a string"
-  [value]
-  (-> value
-      (str/split #"\s+")
-      set
-      (disj "")))
-
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
         value (:field/value opts)
@@ -248,7 +229,7 @@
                                                   filename (.-name filecontent)
                                                   form-data (doto (js/FormData.)
                                                               (.append "file" filecontent))]
-                                              (on-change filename)
+                                              (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
                       [:button.btn.btn-secondary {:on-click click-upload}
                        (text :t.form/upload)]]
@@ -402,6 +383,38 @@
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "test.txt"}]])
+   (example "field of type \"attachment\", previous and new file uploaded, diff shown"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/value "new.txt"
+                     :field/previous-value "old.txt"
+                     :diff true}]])
+   (example "field of type \"attachment\", previous and new file uploaded, diff hidden"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/value "new.txt"
+                     :field/previous-value "old.txt"}]])
+   (example "field of type \"attachment\", previous file uploaded, new deleted, diff shown"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/previous-value "old.txt"
+                     :diff true}]])
+   (example "field of type \"attachment\", previous file uploaded, new deleted, diff hidden"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/previous-value "old.txt"}]])
    (example "non-editable field of type \"attachment\""
             [:form
              [field {:app-id 5

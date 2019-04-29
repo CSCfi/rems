@@ -162,7 +162,7 @@
         {:id "open-approvals"
          :open? true
          :title (text :t.actions/open-approvals)
-         :collapse [open-applications]}]
+         :collapse [open-applications actions]}]
        [collapsible/component
         {:id "handled-approvals"
          :on-open #(rf/dispatch [::fetch-handled-actions])
