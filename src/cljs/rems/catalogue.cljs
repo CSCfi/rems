@@ -53,9 +53,10 @@
 
 (rf/reg-sub
  ::catalogue
- (fn [db _]
-   (->> db
-        ::catalogue
+ (fn [_ _]
+   (rf/subscribe [::full-catalogue]))
+ (fn [catalogue _]
+   (->> catalogue
         (filter :enabled)
         (remove :expired))))
 
