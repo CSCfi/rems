@@ -101,6 +101,7 @@
                    :created "Luotu"
                    :disable "Poista käytöstä"
                    :display-old "Näytä vanhat"
+                   :edit "Muokkaa"
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."

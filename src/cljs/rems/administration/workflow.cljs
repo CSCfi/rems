@@ -37,6 +37,11 @@
    {:on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/back)])
 
+(defn- edit-button [id]
+  [:button.btn.btn-primary
+   {:on-click #(dispatch! (str "/#/administration/edit-workflow/" id))}
+   (text :t.administration/edit)])
+
 (defn get-localized-value [field key language]
   (key (first (filter (comp #{(name language)} :langcode)
                       (:localizations field)))))
@@ -130,7 +135,7 @@
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired workflow))]]]}]
    [rounds-view (:actors workflow) language]
    [licenses-view (:licenses workflow) language]
-   [:div.col.commands [back-button]]])
+   [:div.col.commands [back-button] [edit-button (:id workflow)]]])
 
 (defn workflow-page []
   (let [workflow (rf/subscribe [::workflow])
