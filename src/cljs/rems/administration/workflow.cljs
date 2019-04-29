@@ -37,11 +37,6 @@
    {:on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/back)])
 
-(defn- to-create-workflow []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-workflow"}
-   (text :t.administration/create-workflow)])
-
 (defn get-localized-value [field key language]
   (key (first (filter (comp #{(name language)} :langcode)
                       (:localizations field)))))
