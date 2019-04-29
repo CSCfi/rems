@@ -207,6 +207,7 @@
                  "application.command/remove-member"
                  "application.command/invite-member"
                  "application.command/uninvite-member"
+                 "application.command/change-resources"
                  "see-everything"}
                (set (get application :application/permissions))))))
 
@@ -225,6 +226,23 @@
                                     :application-id application-id
                                     :comment ""}))
           "user should be forbidden to send command"))
+
+    (testing "application can be returned"
+      (is (= {:success true} (send-command handler-id
+                                           {:type :application.command/return
+                                            :application-id application-id
+                                            :comment "Please check again"}))))
+
+    (testing "changing resources as applicant"
+      (is (= {:success true} (send-command user-id
+                                           {:type :application.command/change-resources
+                                            :application-id application-id
+                                            :catalogue-item-ids [9]}))))
+
+    (testing "submitting again"
+      (is (= {:success true} (send-command user-id
+                                           {:type :application.command/submit
+                                            :application-id application-id}))))
 
     (testing "send commands with authorized user"
       (testing "even handler cannot comment without request"
@@ -254,18 +272,24 @@
                      (:application/request-id comment-event)))))))
 
       (testing "adding and then accepting additonal licenses"
-        (let [eventcount (count (get (get-application application-id handler-id) :events))]
-          (testing "add licenses"
-            (is (= {:success true} (send-command handler-id
-                                                 {:type :application.command/add-licenses
-                                                  :application-id application-id
-                                                  :licenses [license-id]
-                                                  :comment "Please approve these new terms"}))))
-          (testing "applicant can now accept licenses"
-            (is (= {:success true} (send-command user-id
-                                                 {:type :application.command/accept-licenses
-                                                  :application-id application-id
-                                                  :accepted-licenses [license-id]}))))))
+        (testing "add licenses"
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/add-licenses
+                                                :application-id application-id
+                                                :licenses [license-id]
+                                                :comment "Please approve these new terms"}))))
+        (testing "applicant can now accept licenses"
+          (is (= {:success true} (send-command user-id
+                                               {:type :application.command/accept-licenses
+                                                :application-id application-id
+                                                :accepted-licenses [license-id]})))))
+
+      (testing "changing resources as handler"
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/change-resources
+                                              :application-id application-id
+                                              :catalogue-item-ids [9 10]
+                                              :comment "Here are the correct resources"}))))
 
       (testing "request-decision"
         (is (= {:success true} (send-command handler-id
@@ -295,10 +319,14 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/returned"
+                    "application.event/resources-changed"
+                    "application.event/submitted"
                     "application.event/comment-requested"
                     "application.event/commented"
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
+                    "application.event/resources-changed"
                     "application.event/decision-requested"
                     "application.event/decided"
                     "application.event/approved"]
@@ -308,8 +336,12 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/returned"
+                    "application.event/resources-changed"
+                    "application.event/submitted"
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
+                    "application.event/resources-changed"
                     "application.event/approved"]
                    applicant-event-types))))))))
 

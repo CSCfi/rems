@@ -318,17 +318,17 @@
      :&:focus
      :&:active:hover
      (into {}
-       (filter val
-        {:background-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
-         :border-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
-         :color (util/get-theme-attribute :secondary-button-hover-color)
-         :outline-color :transparent}))]
+           (filter val
+                   {:background-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
+                    :border-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
+                    :color (util/get-theme-attribute :secondary-button-hover-color)
+                    :outline-color :transparent}))]
     (into {}
-      (filter val
-       {:background-color (util/get-theme-attribute :secondary-button-bgcolor)
-        :border-color (util/get-theme-attribute :secondary-button-bgcolor)
-        :color (util/get-theme-attribute :secondary-button-color)
-        :outline-color :transparent}))]
+          (filter val
+                  {:background-color (util/get-theme-attribute :secondary-button-bgcolor)
+                   :border-color (util/get-theme-attribute :secondary-button-bgcolor)
+                   :color (util/get-theme-attribute :secondary-button-color)
+                   :outline-color :transparent}))]
    [:.btn-primary.disabled :.btn-primary:disabled
     :.btn-secondary.disabled :.btn-secondary:disabled
     {:color "#fff"
@@ -553,8 +553,8 @@
    [:.new-form-field {:text-align "center"}]
 
    [:.form-field-option (assoc dashed-form-group
-                              :margin-left 0
-                              :margin-right 0)]
+                               :margin-left 0
+                               :margin-right 0)]
    [:.new-form-field-option {:text-align "center"}]
 
    [:.full {:width "100%"}]
@@ -577,6 +577,10 @@
                         :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                         :margin (u/px -1)}] ; make sure header overlaps container border
    [(s/descendant :.card-header :a) {:color :inherit}]
+   [:.application-resources
+    [:.application-resource {:margin-bottom (u/rem 1)
+                             :line-height (u/rem 1)
+                             :font-size (u/rem 1)}]]
    [:.license {:margin-bottom (u/rem 1)}
     [:.license-block {:color "#000"
                       :white-space "pre-wrap"}]

@@ -164,6 +164,61 @@
                           :comment "comment"
                           :licenses []})))))
 
+(deftest test-change-resources
+  (let [application (apply-events nil [dummy-created-event])
+        submitted-application (apply-events nil [dummy-created-event
+                                                 {:event/type :application.event/submitted
+                                                  :event/time test-time
+                                                  :event/actor applicant-user-id
+                                                  :application/id 123}])
+        injections {:get-catalogue-item {1 {:id 1 :resid "abc"}
+                                         2 {:id 2 :resid "efg"}}}]
+    (testing "applicant can change draft resources"
+      (is (= [{:event/type :application.event/resources-changed
+               :event/time test-time
+               :event/actor applicant-user-id
+               :application/id 123
+               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
+                                       {:catalogue-item/id 2 :resource/ext-id "efg"}]}]
+             (ok-command application
+                         {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1 2]}
+                         injections)))
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command submitted-application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1 2]}
+                           injections))))
+
+    (testing "handler can change submitted resources"
+      (is (= [{:event/type :application.event/resources-changed
+               :event/time test-time
+               :event/actor handler-user-id
+               :application/id 123
+               :application/comment "Changed these for you"
+               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
+                                       {:catalogue-item/id 2 :resource/ext-id "efg"}]}]
+             (ok-command submitted-application
+                         {:type :application.command/change-resources
+                          :actor handler-user-id
+                          :comment "Changed these for you"
+                          :catalogue-item-ids [1 2]}
+                         injections))))
+
+    (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}
+           (fail-command application
+                         {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [42]}
+                         injections)))
+    (is (= {:errors [{:type :must-not-be-empty :key :catalogue-item-ids}]}
+           (fail-command application
+                         {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids []})))))
+
 (deftest test-submit
   (let [injections {:validate-form-answers fake-validate-form-answers}
         created-event {:event/type :application.event/created

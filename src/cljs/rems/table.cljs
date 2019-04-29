@@ -243,7 +243,7 @@
     `:set-filtering`    - callback that is called when filtering changes
 
   `:id-function`        - function for setting unique React key for row
-  `:items`              -  sequence of items to render
+  `:items`              - sequence of items to render
   `:class`              - class for the table
 
   See also `TableParams`."

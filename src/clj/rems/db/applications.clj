@@ -747,7 +747,8 @@
 (def ^:private db-injections
   {:valid-user? valid-user?
    :validate-form-answers validate-form-answers
-   :secure-token secure-token})
+   :secure-token secure-token
+   :get-catalogue-item catalogue/get-localized-catalogue-item})
 
 (defn command! [cmd]
   (assert (:application-id cmd))

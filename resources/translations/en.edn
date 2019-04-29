@@ -52,6 +52,7 @@
             :accept-licenses "Accept terms of use"
             :add-licenses "Add terms of use"
             :add-member "Add member"
+            :change-resources "Change resources"
             :applicant "Applicant"
             :approve "Approve"
             :approve-reject "Approve or reject"
@@ -83,6 +84,7 @@
             :request-decision "Request decision"
             :request-selection "Send request to users"
             :resource "Resource"
+            :resources-selection "Following resources will be included in the application"
             :return "Return to applicant"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
@@ -154,6 +156,7 @@
                           :member-removed "Member removed"
                           :member-uninvited "Member uninvited"
                           :rejected "Rejected"
+                          :resources-changed "Resources changed"
                           :returned "Changes requested"
                           :submitted "Applied"
                           :unknown "Unknown"}
