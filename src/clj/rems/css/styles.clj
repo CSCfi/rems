@@ -335,7 +335,7 @@
      :background-color "#aaa"
      :border-color "#aaa"}]
    [:.button-min-width {:min-width (u/rem 5)}]
-   [:.icon-link {:color "#6c757d"  ; same color as bootstrap's default for .btn-secondary
+   [:.icon-link {:color "#6c757d" ; same color as bootstrap's default for .btn-secondary
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
    [:.modal--title [:.link
@@ -526,6 +526,14 @@
    [(s/> :.form-actions "*:not(:first-child)")
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
+   [".more-options::after" {:display "inline-block"
+                            :font-style "normal"
+                            :font-variant "normal"
+                            :text-rendering "auto"
+                            :-webkit-font-smoothing "antialiased"
+                            :font-family "'Font Awesome 5 Free'"
+                            :font-weight 900
+                            :content "'\\a0\\f141'"}] ; nbsp and ellipsis-h
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]

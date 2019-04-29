@@ -49,9 +49,10 @@
 (defn action-button [{:keys [id text class on-click]}]
   [:button.btn.mr-3
    {:id (str id "-action-button")
-    :class (or class "btn-secondary")
+    :class (str (or class "btn-secondary")
+                " more-options")
     :type "button"
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))
     :on-click on-click}
-   (str text " ...")])
+   text])
