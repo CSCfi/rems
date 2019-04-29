@@ -27,7 +27,7 @@
        (map key-to-id)
        (str/join "-")))
 
-(defn input-field [{:keys [keys label placeholder context type normalizer]}]
+(defn input-field [{:keys [keys label placeholder context type normalizer readonly]}]
   (let [form @(rf/subscribe [(:get-form context)])
         id (keys-to-id keys)
         normalizer (or normalizer identity)]
@@ -35,6 +35,7 @@
      [:label {:for id} label]
      [:input.form-control {:type type
                            :id id
+                           :disabled readonly
                            :placeholder placeholder
                            :value (get-in form keys)
                            :on-change #(rf/dispatch [(:update-form context)
@@ -103,7 +104,7 @@
       [:label.form-check-label {:for id}
        label]]]))
 
-(defn- radio-button [context {:keys [keys value label orientation]}]
+(defn- radio-button [context {:keys [keys value label orientation readonly]}]
   (let [form @(rf/subscribe [(:get-form context)])
         name (keys-to-id keys)
         id (keys-to-id (conj keys value))]
@@ -112,6 +113,7 @@
        :horizontal :div.form-check.form-check-inline)
      [:input.form-check-input {:id id
                                :type "radio"
+                               :disabled readonly
                                :name name
                                :value value
                                :checked (= value (get-in form keys))
@@ -126,8 +128,9 @@
   `orientation`  - `:horizontal` or `:vertical`
   `keys`         - keys for options
   `label`        - optional label text for group
-  `options`      - list of `{:value \"...\", :label \"...\"}`"
-  [context {:keys [id keys label orientation options]}]
+  `options`      - list of `{:value \"...\", :label \"...\"}`
+  `readonly`     - boolean"
+  [context {:keys [id keys label orientation options readonly]}]
   [:div.form-group.field {:id id}
    (when label [:label {:for id} label])
    (into [:div.form-control]
@@ -135,6 +138,7 @@
                 [radio-button context {:keys keys
                                        :value value
                                        :label label
+                                       :readonly readonly
                                        :orientation orientation}])
               options))])
 

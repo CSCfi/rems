@@ -103,6 +103,8 @@
                    :created "Created"
                    :disable "Disable"
                    :display-old "Display old"
+                   :edit "Edit"
+                   :edit-workflow "Edit workflow"
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."

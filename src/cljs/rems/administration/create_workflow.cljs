@@ -1,5 +1,6 @@
 (ns rems.administration.create-workflow
   (:require [clojure.string :as str]
+            [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field]]
@@ -9,17 +10,22 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post! put!]]))
 
 (rf/reg-event-fx
  ::enter-page
- (fn [{:keys [db]}]
+ (fn [{:keys [db]} [_ workflow-id]]
    {:db (assoc db
-               ::form {:type :dynamic}
-               ::loading? true)
-    ::fetch-actors nil}))
+               ::workflow-id workflow-id
+               ::loading-workflow? (not (nil? workflow-id))
+               ::actors nil
+               ::form {:type :dynamic})
+    ::fetch-actors nil
+    ::fetch-workflow workflow-id}))
 
-(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+(rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
+(rf/reg-sub ::editing? (fn [db _] (not (nil? (::workflow-id db)))))
+(rf/reg-sub ::loading? (fn [db _] (or (::loading-workflow? db) (nil? (::actors db)))))
 
 ;;; form state
 
@@ -27,10 +33,28 @@
 
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
+;;; fetching workflow
+
+(rf/reg-fx
+ ::fetch-workflow
+ (fn [workflow-id]
+   (when workflow-id
+     (fetch (str "/api/workflows/" workflow-id)
+            {:handler #(rf/dispatch [::fetch-workflow-result %])}))))
+
+(rf/reg-event-db
+ ::fetch-workflow-result
+ (fn [db [_ workflow]]
+   (let [new-stuff {:title (:title workflow)
+                    :organization (:organization workflow)
+                    :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}]
+     (-> db
+         (update ::form merge new-stuff)
+         (dissoc ::loading-workflow?)))))
 
 ;;; form submit
 
-(defn- valid-request? [request]
+(defn- valid-create-request? [request]
   (and (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))
        (case (:type request)
@@ -38,23 +62,44 @@
          :dynamic (not (empty? (:handlers request)))
          nil false)))
 
-(defn build-request [form]
+(defn build-create-request [form]
   (let [request {:organization (:organization form)
                  :title (:title form)
                  :type (:type form)}
         request (case (:type form)
                   :auto-approve request
                   :dynamic (assoc request :handlers (map :userid (:handlers form))))]
-    (when (valid-request? request)
+    (when (valid-create-request? request)
+      request)))
+
+(defn- valid-update-request? [request]
+  (and (number? (:id request))
+       (not (empty? (:handlers request)))
+       (not (str/blank? (:title request)))))
+
+(defn build-update-request [id form]
+  (let [request {:id id
+                 :title (:title form)
+                 :handlers (map :userid (:handlers form))}]
+    (when (valid-update-request? request)
       request)))
 
 (rf/reg-event-fx
  ::create-workflow
- (fn [_ [_ request]]
+ (fn [{:keys [db]} [_ request]]
    (status-modal/common-pending-handler! (text :t.administration/create-workflow))
    (post! "/api/workflows/create" {:params request
                                    :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/workflows/" (:id %))))
                                    :error-handler status-modal/common-error-handler!})
+   {}))
+
+(rf/reg-event-fx
+ ::update-workflow
+ (fn [_ [_ request]]
+   (status-modal/common-pending-handler! (text :t.administration/edit-workflow))
+   (put! "/api/workflows/update" {:params request
+                                  :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/workflows/" (:id request))))
+                                  :error-handler status-modal/common-error-handler!})
    {}))
 
 (defn- remove-actor [actors actor]
@@ -94,6 +139,7 @@
 
 (defn- workflow-organization-field []
   [text-field context {:keys [:organization]
+                       :readonly @(rf/subscribe [::editing?])
                        :label (text :t.administration/organization)
                        :placeholder (text :t.administration/organization-placeholder)}])
 
@@ -104,6 +150,7 @@
 (defn- workflow-type-field []
   [radio-button-group context {:id :workflow-type
                                :keys [:type]
+                               :readonly @(rf/subscribe [::editing?])
                                :orientation :horizontal
                                :options [;; TODO: create a new auto-approve workflow in the style of dynamic workflows
                                          #_{:value :auto-approve
@@ -111,11 +158,16 @@
                                          {:value :dynamic
                                           :label (text :t.create-workflow/dynamic-workflow)}]}])
 
-(defn- save-workflow-button [on-click]
+(defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])
-        request (build-request form)]
+        id @(rf/subscribe [::workflow-id])
+        request (if id
+                  (build-update-request id form)
+                  (build-create-request form))]
     [:button.btn.btn-primary
-     {:on-click #(on-click request)
+     {:on-click #(if id
+                   (rf/dispatch [::update-workflow (build-update-request id form)])
+                   (rf/dispatch [::create-workflow (build-create-request form)]))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
@@ -156,13 +208,17 @@
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
-        loading? @(rf/subscribe [::loading?])]
+        loading? @(rf/subscribe [::loading?])
+        editing? @(rf/subscribe [::editing?])
+        title (if editing?
+                (text :t.administration/edit-workflow)
+                (text :t.administration/create-workflow))]
     [:div
      [administration-navigator-container]
-     [:h2 (text :t.administration/create-workflow)]
+     [:h2 title]
      [collapsible/component
       {:id "create-workflow"
-       :title (text :t.administration/create-workflow)
+       :title title
        :always (if loading?
                  [:div#workflow-loader [spinner/big]]
                  [:div#workflow-editor
@@ -176,4 +232,4 @@
 
                   [:div.col.commands
                    [cancel-button]
-                   [save-workflow-button #(rf/dispatch [::create-workflow %])]]])}]]))
+                   [save-workflow-button]]])}]]))

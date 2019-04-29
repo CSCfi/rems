@@ -2,12 +2,13 @@
   (:require [clj-time.core :as time-core]
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications :refer [User get-users]]
+            [rems.api.applications :refer [User get-users format-user]]
             [rems.api.schema :refer [SuccessResponse]]
             [rems.api.util]
             [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.util :refer [getx-user-id]]
+            [rems.util :refer [getx-user-id update-present]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime DateTimeZone]))
@@ -62,7 +63,7 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses actors]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -75,7 +76,8 @@
    :expired expired
    :enabled enabled
    :archived archived
-   :licenses licenses})
+   :licenses (mapv format-license licenses)
+   :actors actors})
 
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
@@ -98,21 +100,24 @@
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableActor User)
 (s/defschema AvailableActors [AvailableActor])
-(def get-available-actors get-users)
+(def get-available-actors get-users) ;; TODO move get-users to rems.db.users
+
+(def ^:private get-user (comp format-user users/get-user-attributes))
+
+(defn- enrich-and-format-workflow [wf]
+  (-> wf
+      (update-present :workflow update :handlers #(mapv get-user %))
+      ;; TODO should this be in db.workflow?
+      (assoc :actors (db/get-workflow-actors {:wfid (:id wf)}))
+      format-workflow))
 
 (defn- get-workflows [filters]
-  (doall
-   (for [wf (workflow/get-workflows filters)]
-     (assoc (format-workflow wf)
-            ;; TODO should this be in db.workflow?
-            :actors (db/get-workflow-actors {:wfid (:id wf)})))))
+  (mapv enrich-and-format-workflow (workflow/get-workflows filters)))
 
 (defn- get-workflow [workflow-id]
   (-> workflow-id
       workflow/get-workflow
-      format-workflow
-      (update :licenses #(mapv format-license %))
-      (assoc :actors (db/get-workflow-actors {:wfid workflow-id}))))
+      enrich-and-format-workflow))
 
 (def workflows-api
   (context "/workflows" []
