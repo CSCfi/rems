@@ -73,7 +73,9 @@
 (defn- bundling-warning [can-bundle-all?]
   [:div
    [:div.alert {:class (if can-bundle-all? :alert-warning :alert-danger)}
-    (text :t.actions/bundling-warning)]])
+    (if can-bundle-all?
+      (text :t.actions/bundling-warning)
+      (text :t.actions/bundling-error))]])
 
 (defn change-resources-view
   [{:keys [initial-resources selected-resources full-catalogue catalogue comment can-bundle-all? can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
