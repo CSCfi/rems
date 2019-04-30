@@ -199,14 +199,30 @@
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [1 2 3]}
-                           injections)))
+                           injections))
+          "can't bundle with different wfid")
       (is (= {:errors [{:type :unbundlable-catalogue-items
                         :catalogue-item-ids [1 2 4]}]}
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [1 2 4]}
-                           injections))))
+                           injections))
+          "can't bundle with different formid")
+      (is (= {:errors [{:type :changes-original-workflow :workflow/id 1 :ids [2]}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [3]}
+                           injections))
+          "can't change workflow from original")
+      (is (= {:errors [{:type :changes-original-form :form/id 1 :ids [2]}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [4]}
+                           injections))
+          "can't change formid from original"))
 
     (testing "handler can change submitted resources"
       (is (= [{:event/type :application.event/resources-changed
