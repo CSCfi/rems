@@ -17,7 +17,7 @@
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable?]]
-            [rems.atoms :refer [external-link more-options flash-message info-field readonly-checkbox textarea]]
+            [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
@@ -268,7 +268,7 @@
                                      :href (str "#collapse" id)
                                      :aria-expanded "false"
                                      :aria-controls (str "collapse" id)}
-        title " " (more-options)]]
+        title]]
       [:div.collapse {:id (str "collapse" id)}
        [:div.license-block (str/trim (str text))]]]]))
 

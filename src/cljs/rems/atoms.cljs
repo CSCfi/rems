@@ -7,9 +7,6 @@
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"}])
 
-(defn more-options []
-  [:i {:class "fa fa-ellipsis-h"}])
-
 (defn link-to [opts uri title]
   [:a (merge opts {:href uri}) title])
 
