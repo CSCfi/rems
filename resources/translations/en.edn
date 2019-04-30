@@ -47,7 +47,7 @@
             :accept-licenses "Accept terms of use"
             :add-licenses "Add terms of use"
             :add-member "Add member"
-            :bundling-error "The resources can't be bundled into one application because they have different forms or workflows."
+            :bundling-error "The resources can't be bundled into one application."
             :bundling-warning "The resources can't normally be bundled into one application because they have different forms or workflows."
             :change-resources "Change resources"
             :applicant "Applicant"

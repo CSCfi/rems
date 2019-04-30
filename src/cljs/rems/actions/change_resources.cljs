@@ -70,12 +70,15 @@
         forms (set (map :formid resources))]
     (not= 1 (count workflows) (count forms))))
 
-(defn- bundling-warning [can-bundle-all?]
+(defn- bundling-warning [resources can-bundle-all? language]
   [:div
    [:div.alert {:class (if can-bundle-all? :alert-warning :alert-danger)}
-    (if can-bundle-all?
-      (text :t.actions/bundling-warning)
-      (text :t.actions/bundling-error))]])
+    [:p (if can-bundle-all?
+          (text :t.actions/bundling-warning)
+          (text :t.actions/bundling-error))]
+    (into [:ul]
+          (for [group (vals (group-by (juxt :wfid :formid) resources))]
+            [:li (str/join ", " (map #(get-catalogue-item-title % language) group))]))]])
 
 (defn change-resources-view
   [{:keys [initial-resources selected-resources full-catalogue catalogue comment can-bundle-all? can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
@@ -97,7 +100,7 @@
        [spinner/big]
        [:div
         (when (show-bundling-warning? enriched-selected-resources)
-          [bundling-warning can-bundle-all?])
+          [bundling-warning enriched-selected-resources can-bundle-all? language])
         (when can-comment?
           [action-comment {:id action-form-id
                            :label (text :t.form/add-comments-shown-to-applicant)
