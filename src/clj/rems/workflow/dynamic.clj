@@ -87,7 +87,6 @@
   [application catalogue-item-ids actor injections]
   (let [catalogue-items (map (:get-catalogue-item injections) catalogue-item-ids)
         handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
-    (prn :kakka handlers actor)
     (when (and (not (contains? handlers actor))
                (not= 1
                      (count (set (map :formid catalogue-items)))

@@ -132,7 +132,6 @@
 (rf/reg-event-db
  ::set-validation-errors
  (fn [db [_ errors]]
-   (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
 (defn- field-values-to-api [field-values]
