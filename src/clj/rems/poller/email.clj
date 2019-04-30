@@ -35,9 +35,19 @@
 (defmethod event-to-emails-impl :default [_event _application]
   [])
 
+(defmethod event-to-emails-impl :application.event/submitted [_event application]
+  (vec
+   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
+     {:to-user handler
+      :subject (text :t.email.application-submitted/subject)
+      :body (text-format :t.email.application-submitted/message
+                         handler
+                         (:application/applicant application)
+                         (application-id-for-email application)
+                         (link-to-application (:application/id application)))})))
+
 (defn- applicant-and-members [application]
-  ;; XXX: the tests depend on the order of members
-  (conj (reverse (sort-by :userid (:application/members application)))
+  (conj (:application/members application)
         {:userid (:application/applicant application)}))
 
 ;; There's a slight inconsistency here: we look at current members, so
