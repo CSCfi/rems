@@ -51,7 +51,11 @@
       (ok (select-keys env [:authentication :alternative-login-url :application-id-column :extra-pages :languages :default-language :dev])))
 
     (GET "/full" []
-      :summary "Get full configuration"
+      :summary "Get (almost) full configuration"
       :roles #{:owner}
       :return s/Any
-      (ok env))))
+      (ok (assoc env
+                 :authentication "HIDDEN"
+                 :database-url "HIDDEN"
+                 :ldap "HIDDEN"
+                 :test-database-url "HIDDEN")))))
