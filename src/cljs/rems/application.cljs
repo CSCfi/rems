@@ -571,7 +571,7 @@
                [:div.commands
                 (when can-change? [change-resources-action-button (:application/resources application)])]
                [:div#resource-action-forms
-                [change-resources-form application-id can-bundle-all? can-comment? (partial reload! application-id)]]]}]))
+                [change-resources-form application can-bundle-all? can-comment? (partial reload! application-id)]]]}]))
 
 (defn- render-application [application edit-application userid]
   (let [messages (remove nil?
