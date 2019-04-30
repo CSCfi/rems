@@ -173,7 +173,8 @@
                                                   :application/id 123}])
         injections {:get-catalogue-item {1 {:id 1 :resid "abc" :formid 1 :wfid 1}
                                          2 {:id 2 :resid "efg" :formid 1 :wfid 1}
-                                         3 {:id 3 :resid "hij" :formid 2 :wfid 2}} }]
+                                         3 {:id 3 :resid "hij" :formid 1 :wfid 2}
+                                         4 {:id 4 :resid "klm" :formid 2 :wfid 1}} }]
     (testing "applicant can change draft resources"
       (is (= [{:event/type :application.event/resources-changed
                :event/time test-time
@@ -198,6 +199,13 @@
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [1 2 3]}
+                           injections)))
+      (is (= {:errors [{:type :unbundlable-catalogue-items
+                        :catalogue-item-ids [1 2 4]}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1 2 4]}
                            injections))))
 
     (testing "handler can change submitted resources"
@@ -222,12 +230,13 @@
                :application/comment "Changed these for you"
                :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
                                        {:catalogue-item/id 2 :resource/ext-id "efg"}
-                                       {:catalogue-item/id 3 :resource/ext-id "hij"}]}]
+                                       {:catalogue-item/id 3 :resource/ext-id "hij"}
+                                       {:catalogue-item/id 4 :resource/ext-id "klm"}]}]
              (ok-command submitted-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
                           :comment "Changed these for you"
-                          :catalogue-item-ids [1 2 3]}
+                          :catalogue-item-ids [1 2 3 4]}
                          injections))))
 
     (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}
