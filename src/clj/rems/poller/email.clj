@@ -46,8 +46,7 @@
                          (link-to-application (:application/id application)))})))
 
 (defn- applicant-and-members [application]
-  ;; XXX: the tests depend on the order of members
-  (conj (reverse (sort-by :userid (:application/members application)))
+  (conj (:application/members application)
         {:userid (:application/applicant application)}))
 
 ;; There's a slight inconsistency here: we look at current members, so
