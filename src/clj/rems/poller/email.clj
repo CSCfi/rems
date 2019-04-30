@@ -43,6 +43,7 @@
       :body (text-format :t.email.application-submitted/message
                          handler
                          (:application/applicant application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id application)))})))
 
 (defn- applicant-and-members [application]

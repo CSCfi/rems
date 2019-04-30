@@ -77,10 +77,10 @@
       (is (= [[]
               [{:to-user "assistant",
                 :subject "A new application has been submitted",
-                :body "Dear assistant,\nA new application has been submitted by user applicant.\nView the application: http://localhost:3001/#/application/7"}
+                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
                {:to-user "handler",
                 :subject "A new application has been submitted",
-                :body "Dear handler,\nA new application has been submitted by user applicant.\nView the application: http://localhost:3001/#/application/7"}]
+                :body "Dear handler,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
               [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
                 :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nParticipate with this link: http://localhost:3001/accept-invitation?token=abc"}]
@@ -135,10 +135,10 @@
       (is (= [[]
               [{:to-user "assistant",
                 :subject "A new application has been submitted",
-                :body "Dear assistant,\nA new application has been submitted by user applicant.\nView the application: http://localhost:3001/#/application/7"}
+                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
                {:to-user "handler",
                 :subject "A new application has been submitted",
-                :body "Dear handler,\nA new application has been submitted by user applicant.\nView the application: http://localhost:3001/#/application/7"}]
+                :body "Dear handler,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
               [{:subject "Your application has been rejected",
                 :body "Dear applicant,\nYour application 2001/3 has been rejected.\nView your application: http://localhost:3001/#/application/7",
                 :to-user "applicant"}]]
