@@ -146,8 +146,7 @@
    [:.table-border {:padding 0
                     :margin "1em 0"
                     :border (util/get-theme-attribute :table-border "1px solid #ccc")
-                    :border-radius (u/rem 0.4)
-                    :overflow :hidden}]
+                    :border-radius (u/rem 0.4)}]
    [:.rems-table {:min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor :color1)
                   :box-shadow (util/get-theme-attribute :table-shadow)
