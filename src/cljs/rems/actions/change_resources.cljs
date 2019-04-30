@@ -68,7 +68,8 @@
 (defn- show-bundling-warning? [resources]
   (let [workflows (set (map :wfid resources))
         forms (set (map :formid resources))]
-    (not= 1 (count workflows) (count forms))))
+    (and (seq resources)
+         (not= 1 (count workflows) (count forms)))))
 
 (defn- bundling-warning [resources can-bundle-all? language]
   [:div
