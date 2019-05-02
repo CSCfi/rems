@@ -86,6 +86,32 @@
 
 (def get-deciders get-users)
 
+(def ^:private todo-roles
+  #{:handler :commenter :decider :past-commenter :past-decider})
+
+(defn- potential-todo? [application]
+  (and (some todo-roles (:application/roles application))
+       (not= :application.state/draft (:application/state application))))
+
+(defn- get-potential-todos [user-id]
+  (->> (applications-v2/get-all-applications user-id)
+       (filter potential-todo?)))
+
+(defn- todo? [application]
+  (and (= :application.state/submitted (:application/state application))
+       (some #{:application.command/approve
+               :application.command/comment
+               :application.command/decide}
+             (:application/permissions application))))
+
+(defn get-todos [user-id]
+  (->> (get-potential-todos user-id)
+       (filter todo?)))
+
+(defn get-handled-todos [user-id]
+  (->> (get-potential-todos user-id)
+       (remove todo?)))
+
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
   (update-present cmd :decision keyword))
@@ -130,6 +156,18 @@
       :roles #{:logged-in}
       :return [ApplicationOverview]
       (ok (applications-v2/get-all-applications (getx-user-id))))
+
+    (GET "/todo" []
+      :summary "Get all applications that the current user needs to act on."
+      :roles #{:logged-in}
+      :return [ApplicationOverview]
+      (ok (get-todos (getx-user-id))))
+
+    (GET "/handled" []
+      :summary "Get all applications that the current user no more needs to act on."
+      :roles #{:logged-in}
+      :return [ApplicationOverview]
+      (ok (get-handled-todos (getx-user-id))))
 
     (POST "/create" []
       :summary "Create a new application"

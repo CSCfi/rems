@@ -4,7 +4,7 @@
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
             [rems.api.applications-v2 :as applications-v2]
-            [rems.api.reviews :as reviews]
+            [rems.api.applications :as applications-api]
             [rems.db.applications :as applications])
   (:import [java.util Locale]))
 
@@ -51,7 +51,7 @@
         test-get-all-application-roles #(doall (applications-v2/get-all-application-roles "developer"))
         test-get-my-applications #(doall (applications-v2/get-my-applications "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
-        test-get-open-reviews #(doall (reviews/get-open-reviews "developer"))
+        test-get-todos #(doall (applications-api/get-todos "developer"))
         no-cache (fn []
                    (mount/stop #'applications-v2/all-applications-cache))
         cached (fn []
@@ -73,8 +73,8 @@
                      {:name "get-my-applications, cached"
                       :benchmark test-get-my-applications
                       :setup cached}
-                     {:name "get-open-reviews, cached"
-                      :benchmark test-get-open-reviews
+                     {:name "get-todos, cached"
+                      :benchmark test-get-todos
                       :setup cached}])
     (println "cache size" (mm/measure applications-v2/all-applications-cache))))
 

@@ -91,14 +91,14 @@
       handler
       read-ok-body))
 
-(defn- get-open-reviews [user-id]
-  (-> (request :get "/api/reviews/open")
+(defn- get-todos [user-id]
+  (-> (request :get "/api/applications/todo")
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
-(defn- get-handled-reviews [user-id]
-  (-> (request :get "/api/reviews/handled")
+(defn- get-handled-todos [user-id]
+  (-> (request :get "/api/applications/handled")
       (authenticate "42" user-id)
       handler
       read-ok-body))
@@ -569,26 +569,42 @@
       (is (contains? (get-ids (get-all-applications "alice"))
                      app-id)))))
 
-(deftest test-reviews
+(deftest test-todos
   (let [app-id (create-dummy-application "alice")]
 
     (testing "does not list drafts"
-      (is (not (contains? (get-ids (get-open-reviews "developer"))
+      (is (not (contains? (get-ids (get-todos "developer"))
                           app-id))))
 
-    (testing "lists submitted in open reviews"
+    (testing "lists submitted in todos"
       (is (= {:success true} (send-command "alice" {:type :application.command/submit
                                                     :application-id app-id})))
-      (is (contains? (get-ids (get-open-reviews "developer"))
+      (is (contains? (get-ids (get-todos "developer"))
                      app-id))
-      (is (not (contains? (get-ids (get-handled-reviews "developer"))
+      (is (not (contains? (get-ids (get-handled-todos "developer"))
                           app-id))))
 
-    (testing "lists handled in handled reviews"
+    (testing "commenter sees application in todos"
+      (is (= {:success true} (send-command "developer" {:type :application.command/request-comment
+                                                        :application-id app-id
+                                                        :commenters ["bob"]
+                                                        :comment "x"})))
+      (is (contains? (get-ids (get-todos "bob"))
+                     app-id))
+      (is (not (contains? (get-ids (get-handled-todos "bob"))
+                          app-id))))
+
+    (testing "lists handled in handled"
       (is (= {:success true} (send-command "developer" {:type :application.command/approve
                                                         :application-id app-id
                                                         :comment ""})))
-      (is (not (contains? (get-ids (get-open-reviews "developer"))
+      (is (not (contains? (get-ids (get-todos "developer"))
                           app-id)))
-      (is (contains? (get-ids (get-handled-reviews "developer"))
+      (is (contains? (get-ids (get-handled-todos "developer"))
+                     app-id)))
+
+    (testing "commenter doesn't see accepted application in todos"
+      (is (not (contains? (get-ids (get-todos "bob"))
+                          app-id)))
+      (is (contains? (get-ids (get-handled-todos "bob"))
                      app-id)))))
