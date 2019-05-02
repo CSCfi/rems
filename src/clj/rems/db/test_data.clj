@@ -3,6 +3,7 @@
   (:require [clj-time.core :as time]
             [rems.context :as context]
             [rems.db.applications :as applications]
+            [rems.db.applications.legacy :as legacy]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -473,8 +474,9 @@
         catids (if (vector? catids) catids [catids])
         _ (doseq [catid catids]
             (db/add-application-item! {:application app-id :item catid}))
+        ;; TODO don't use legacy get-form-for
         form (binding [context/*lang* :en]
-               (applications/get-form-for user-id app-id))
+               (legacy/get-form-for user-id app-id))
         dynamic-workflow? (= :workflow/dynamic (get-in form [:application :workflow :type]))
         save-draft-command (atom {:type :application.command/save-draft
                                   :actor user-id

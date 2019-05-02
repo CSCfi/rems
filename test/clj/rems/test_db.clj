@@ -9,6 +9,7 @@
             [rems.config]
             [rems.context :as context]
             [rems.db.applications :as applications]
+            [rems.db.applications.legacy :as legacy]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
@@ -43,6 +44,7 @@
                                       :workflow-name))
             "should find same catalogue item by id")))))
 
+;; TODO port this test to look at get-form or build-application-view instead of legacy/get-form-for
 (deftest test-form
   (binding [context/*lang* :en]
     (let [uid "test-user"
@@ -82,7 +84,7 @@
       (testing "get form for catalogue item"
         (with-redefs [catalogue/cached
                       {:localizations (catalogue/load-catalogue-item-localizations!)}]
-          (let [form (applications/get-form-for "test-user" app-id)]
+          (let [form (legacy/get-form-for "test-user" app-id)]
             (is (= "internal-title" (:title form)) "title")
             (is (= ["A-en" "B-en" "C-en"] (map #(get-in % [:localizations :en :title]) (:items form))) "items should be in order")
             (is (= ["A-fi" "B-fi" "C-fi"] (map #(get-in % [:localizations :fi :title]) (:items form))) "items should be in order")
@@ -106,7 +108,7 @@
                                     :actoruserid uid
                                     :round 0
                                     :state "approved"})
-        (let [f (applications/get-form-for uid app-id)]
+        (let [f (legacy/get-form-for uid app-id)]
           (is (= app-id (:id (:application f))))
           (is (= "draft" (:state (:application f))))
           (is (= ["" "B" ""] (map :value (:items f))))
@@ -129,7 +131,7 @@
                                                             :licid license-id
                                                             :actoruserid uid}))
               "after deletion there should not be saved approvals")
-          (let [f (applications/get-form-for uid app-id)]
+          (let [f (legacy/get-form-for uid app-id)]
             (is (= [false] (map :approved (:licenses f))))))
         (testing "reset field value"
           (db/clear-field-value! {:application app-id
@@ -140,7 +142,7 @@
                                  :item (:id item-b)
                                  :user uid
                                  :value "X"})
-          (let [f (applications/get-form-for uid app-id)]
+          (let [f (legacy/get-form-for uid app-id)]
             (is (= ["" "X" ""] (map :value (:items f)))))))
 
       (testing "get submitted form as approver"
@@ -151,7 +153,7 @@
                                     :round 0
                                     :state "approved"})
         (applications/submit-application uid app-id)
-        (let [form (applications/get-form-for "approver" app-id)]
+        (let [form (legacy/get-form-for "approver" app-id)]
           (is (= "applied" (get-in form [:application :state])))
           (is (= ["" "X" ""] (map :value (:items form))))
           (is (get-in form [:licenses 0 :approved]))))
@@ -159,7 +161,7 @@
       (testing "get approved form as applicant"
         (db/add-user! {:user "approver" :userattrs nil})
         (applications/approve-application "approver" app-id 0 "comment")
-        (let [form (applications/get-form-for "approver" app-id)]
+        (let [form (legacy/get-form-for "approver" app-id)]
           (is (= "approved" (get-in form [:application :state])))
           (is (= ["" "X" ""] (map :value (:items form))))
           (is (= [nil "comment"]

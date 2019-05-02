@@ -30,7 +30,7 @@
        (seq)))
 
 (defn validate
-  "Validates a filled in form from (get-form-for application).
+  "Validates a filled in form from (see rems.db.form/get-form).
 
    Returns either :valid or a sequence of validation errors."
   [form]
