@@ -17,10 +17,11 @@
        (filter review?)))
 
 (defn- open-review? [application]
-  (some #{:application.command/approve
-          :application.command/comment
-          :application.command/decide}
-        (:application/permissions application)))
+  (and (= :application.state/submitted (:application/state application))
+       (some #{:application.command/approve
+               :application.command/comment
+               :application.command/decide}
+             (:application/permissions application))))
 
 (defn get-open-reviews [user-id]
   (->> (get-all-reviews user-id)
