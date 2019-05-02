@@ -268,7 +268,7 @@
                                      :href (str "#collapse" id)
                                      :aria-expanded "false"
                                      :aria-controls (str "collapse" id)}
-        title " " [:i {:class "fa fa-ellipsis-h"}]]]
+        title]]
       [:div.collapse {:id (str "collapse" id)}
        [:div.license-block (str/trim (str text))]]]]))
 
