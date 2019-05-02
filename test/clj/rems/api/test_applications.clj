@@ -584,6 +584,16 @@
       (is (not (contains? (get-ids (get-handled-todos "developer"))
                           app-id))))
 
+    (testing "commenter sees application in todos"
+      (is (= {:success true} (send-command "developer" {:type :application.command/request-comment
+                                                        :application-id app-id
+                                                        :commenters ["bob"]
+                                                        :comment "x"})))
+      (is (contains? (get-ids (get-todos "bob"))
+                     app-id))
+      (is (not (contains? (get-ids (get-handled-todos "bob"))
+                          app-id))))
+
     (testing "lists handled in handled"
       (is (= {:success true} (send-command "developer" {:type :application.command/approve
                                                         :application-id app-id
@@ -591,4 +601,10 @@
       (is (not (contains? (get-ids (get-todos "developer"))
                           app-id)))
       (is (contains? (get-ids (get-handled-todos "developer"))
+                     app-id)))
+
+    (testing "commenter doesn't see accepted application in todos"
+      (is (not (contains? (get-ids (get-todos "bob"))
+                          app-id)))
+      (is (contains? (get-ids (get-handled-todos "bob"))
                      app-id)))))
