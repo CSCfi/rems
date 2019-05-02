@@ -162,9 +162,8 @@
            :value->text #(get-catalogue-item-title %2 language)
            :item->key :id
            :item->text (fn [item]
-                         [:span (when-not (or can-bundle-all?
-                                              (compatible-item? item enriched-selected-resources original-workflow-id original-form-id))
-                                  {:class :text-danger})
+                         [:span (when-not (compatible-item? item enriched-selected-resources original-workflow-id original-form-id)
+                                  {:class (if can-bundle-all? :text-warning :text-danger)})
                           (get-catalogue-item-title item language)])
            :item->value identity
            :term-match-fn (partial resource-matches? language)

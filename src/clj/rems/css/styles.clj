@@ -350,7 +350,7 @@
    [:.text-secondary {:color (util/get-theme-attribute :text-secondary)}]
    [:.text-success {:color (util/get-theme-attribute :text-success)}]
    [:.text-danger {:color (util/get-theme-attribute :text-danger)}]
-   [:.text-warning {:color (util/get-theme-attribute :text-warning)}]
+   [:.text-warning {:color (util/get-theme-attribute :text-warning "#ffc107!important")}]
    [:.text-info {:color (util/get-theme-attribute :text-info)}]
    [:.text-light {:color (util/get-theme-attribute :text-light)}]
    [:.text-dark {:color (util/get-theme-attribute :text-dark)}]
@@ -652,10 +652,12 @@
     [:.autocomplete__control [:input {:display :inline-block}]]
     [:.autocomplete__item {:padding (u/px 10)}]
     [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "#fff")
-                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
+                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}
+     [:.text-warning :.text-danger {:color "inherit!important"}]]
     [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "#fff")
                                  :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
-                                 :cursor :pointer}]
+                                 :cursor :pointer}
+     [:.text-warning :.text-danger {:color "inherit!important"}]]
     [:.autocomplete__selected-item {:display :inline-block
                                     :padding [[0 (u/rem 0.5)]]
                                     :margin-right (u/px 10)}
