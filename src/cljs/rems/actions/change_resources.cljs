@@ -122,7 +122,12 @@
                                          vals
                                          (sort-by #(get-catalogue-item-title % language)))
         original-form-id (get-in application [:application/form :form/id])
-        original-workflow-id (get-in application [:application/workflow :workflow/id])]
+        original-workflow-id (get-in application [:application/workflow :workflow/id])
+        compatible-first-sort-fn #(if (compatible-item? % enriched-selected-resources original-workflow-id original-form-id ) -1 1)
+        sorted-selected-catalogue (->> catalogue
+                                       (remove (comp (set selected-resources) :id))
+                                       (sort-by #(get-catalogue-item-title % language))
+                                       (sort-by compatible-first-sort-fn))]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
      [[button-wrapper {:id "change-resources"
@@ -153,7 +158,7 @@
          [:label (text :t.actions/resources-selection)]
          [autocomplete/component
           {:value enriched-selected-resources
-           :items catalogue
+           :items sorted-selected-catalogue
            :value->text #(get-catalogue-item-title %2 language)
            :item->key :id
            :item->text (fn [item]
