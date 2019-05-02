@@ -21,7 +21,7 @@
 (rf/reg-event-fx
  ::fetch-actions
  (fn [{:keys [db]} _]
-   (fetch "/api/reviews/open"
+   (fetch "/api/applications/todo"
           {:handler #(rf/dispatch [::fetch-actions-result %])})
    {:db (assoc db ::loading-actions? true)}))
 
@@ -47,7 +47,7 @@
 (rf/reg-event-fx
  ::fetch-handled-actions
  (fn [{:keys [db]} _]
-   (fetch "/api/reviews/handled"
+   (fetch "/api/applications/handled"
           {:handler #(rf/dispatch [::fetch-handled-actions-result %])})
    {:db (assoc db ::loading-handled-actions? true)}))
 

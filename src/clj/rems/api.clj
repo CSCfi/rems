@@ -12,7 +12,6 @@
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
-            [rems.api.reviews :refer [reviews-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
             [rems.auth.ForbiddenException]
@@ -106,7 +105,6 @@
       public/theme-api
       public/config-api
 
-      reviews-api
       my-applications-api
       applications-api
       catalogue-api
