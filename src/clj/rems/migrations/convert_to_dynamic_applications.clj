@@ -16,7 +16,7 @@
   (let [read-user (or (first (actors/get-by-role application-id "approver"))
                       ;; auto-approved workflows do not have an approver,
                       ;; so the applicant is the only one who can see the application
-                      (:applicantuserid (applications/get-application-state application-id)))
+                      (:applicantuserid (legacy/get-application-state application-id)))
         form (legacy/get-form-for read-user application-id)
         application (:application form)
         workflow (workflow/get-workflow workflow-id)

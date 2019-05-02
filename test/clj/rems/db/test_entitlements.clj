@@ -140,7 +140,7 @@
 
           (is (= {uid #{lic-id1 lic-id2}
                   memberid #{lic-id1}}
-                 (:application/accepted-licenses (applications/get-application-state app-id))))
+                 (:application/accepted-licenses (applications/get-dynamic-application-state app-id))))
 
           (testing "approved application, licenses accepted by one user generates entitlements for that user"
             (entitlements-poller/run)

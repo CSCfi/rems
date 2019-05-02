@@ -518,16 +518,16 @@
   (binding [context/*tempura* (locales/tempura-config)]
     (create-draft! applicant catid wfid "draft application")
     (let [application (create-draft! applicant catid wfid "applied application")]
-      (applications/submit-application applicant application))
+      (legacy/submit-application applicant application))
     (let [application (create-draft! applicant catid wfid "rejected application")]
-      (applications/submit-application applicant application)
-      (applications/reject-application approver application 0 "comment for rejection"))
+      (legacy/submit-application applicant application)
+      (legacy/reject-application approver application 0 "comment for rejection"))
     (let [application (create-draft! applicant catid wfid "accepted application")]
-      (applications/submit-application applicant application)
-      (applications/approve-application approver application 0 "comment for approval"))
+      (legacy/submit-application applicant application)
+      (legacy/approve-application approver application 0 "comment for approval"))
     (let [application (create-draft! applicant catid wfid "returned application")]
-      (applications/submit-application applicant application)
-      (applications/return-application approver application 0 "comment for return"))))
+      (legacy/submit-application applicant application)
+      (legacy/return-application approver application 0 "comment for return"))))
 
 (defn- run-and-check-dynamic-command! [& args]
   (let [result (apply applications/command! args)]
@@ -556,9 +556,9 @@
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
   (binding [context/*tempura* (locales/tempura-config)]
     (let [app-id (create-draft! applicant [catid catid2] wfid "bundled application")]
-      (applications/submit-application applicant app-id)
-      (applications/return-application approver app-id 0 "comment for return")
-      (applications/submit-application applicant app-id))))
+      (legacy/submit-application applicant app-id)
+      (legacy/return-application approver app-id 0 "comment for return")
+      (legacy/submit-application applicant app-id))))
 
 (defn- create-member-applications! [catid wfid applicant approver members]
   (let [appid1 (create-draft! applicant catid wfid "draft with invited members")]
@@ -609,11 +609,11 @@
         reviewer (users :reviewer)]
     (binding [context/*tempura* (locales/tempura-config)]
       (let [app-id (create-draft! applicant catid wfid "application with review")]
-        (applications/submit-application applicant app-id)
-        (applications/review-application reviewer app-id 0 "comment for review")
-        (applications/approve-application approver app-id 1 "comment for approval")) ; already reviewed and approved
+        (legacy/submit-application applicant app-id)
+        (legacy/review-application reviewer app-id 0 "comment for review")
+        (legacy/approve-application approver app-id 1 "comment for approval")) ; already reviewed and approved
       (let [app-id (create-draft! applicant catid wfid "application in review")]
-        (applications/submit-application applicant app-id))))) ; still in review
+        (legacy/submit-application applicant app-id))))) ; still in review
 
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -627,7 +627,7 @@
                                                                                  "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
     (binding [context/*tempura* (locales/tempura-config)]
       (let [application (create-draft! applicant item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))]
-        (applications/submit-application applicant application)))))
+        (legacy/submit-application applicant application)))))
 
 (defn- create-application-before-new-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -639,7 +639,7 @@
                                                                                 "fi" "Resurssi jolla on uusi resurssilisenssi"})]
     (binding [context/*tempura* (locales/tempura-config)]
       (let [application (create-draft! applicant item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
-        (applications/submit-application applicant application)))))
+        (legacy/submit-application applicant application)))))
 
 (defn create-performance-test-data! []
   (let [resource-count 1000

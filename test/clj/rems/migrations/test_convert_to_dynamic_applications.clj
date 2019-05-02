@@ -4,6 +4,7 @@
             [clojure.test :refer :all]
             [conman.core :as conman]
             [rems.db.applications :as applications]
+            [rems.db.applications.legacy :as legacy]
             [rems.db.core :refer [*db*]]
             [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
@@ -117,7 +118,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
       (is (nil? (validate/validate))))
 
     (let [app-id 1
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "draft application"
               :applicantuserid "developer"
@@ -158,7 +159,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 2
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "applied application"
               :applicantuserid "developer"
@@ -204,7 +205,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 3
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "rejected application"
               :applicantuserid "developer"
@@ -256,7 +257,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 4
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "accepted application"
               :applicantuserid "developer"
@@ -308,7 +309,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 5
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "returned application"
               :applicantuserid "developer"
@@ -360,7 +361,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 6
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "bundled application"
               :applicantuserid "alice"
@@ -420,7 +421,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 7
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "application with review"
               :applicantuserid "alice"
@@ -479,7 +480,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 8
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "application in review"
               :applicantuserid "alice"
@@ -525,7 +526,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 20
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "direct approval"
               :applicantuserid "alice"
@@ -577,7 +578,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 21
-          application (applications/get-application-state app-id)
+          application (legacy/get-application-state app-id)
           request-id (-> application :dynamic-events (nth 4) :application/request-id)]
       (is request-id)
       (is (= {:id app-id
@@ -640,7 +641,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 22
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "withdraw"
               :applicantuserid "alice"
@@ -692,7 +693,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 23
-          application (applications/get-application-state app-id)]
+          application (legacy/get-application-state app-id)]
       (is (= {:id app-id
               :description "close"
               :applicantuserid "alice"
