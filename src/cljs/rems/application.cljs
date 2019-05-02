@@ -17,7 +17,7 @@
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable?]]
-            [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
+            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
@@ -247,35 +247,41 @@
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
 
-(defn- link-license
-  [{:keys [accepted readonly] :as opts}]
-  (let [id (:license/id opts)
-        title (localized (:license/title opts))
+(defn- link-license [opts]
+  (let [title (localized (:license/title opts))
         link (localized (:license/link opts))]
     [:div.license
      [:a.license-title {:href link :target "_blank"}
       title " " (external-link)]]))
 
-(defn- text-license
-  [{:keys [accepted readonly] :as opts}]
+(defn- text-license [opts]
   (let [id (:license/id opts)
+        collapse-id (str "collapse" id)
         title (localized (:license/title opts))
         text (localized (:license/text opts))]
     [:div.license
      [:div.license-panel
       [:span.license-title
        [:a.license-header.collapsed {:data-toggle "collapse"
-                                     :href (str "#collapse" id)
+                                     :href (str "#" collapse-id)
                                      :aria-expanded "false"
-                                     :aria-controls (str "collapse" id)}
+                                     :aria-controls collapse-id}
         title]]
-      [:div.collapse {:id (str "collapse" id)}
+      [:div.collapse {:id collapse-id}
        [:div.license-block (str/trim (str text))]]]]))
+
+(defn- attachment-license [opts]
+  (let [title (localized (:license/title opts))
+        link (str "/api/licenses/attachments/" (localized (:license/attachment-id opts)))]
+    [:div.license
+     [:a.license-title {:href link :target "_blank"}
+      title " " (file-download)]]))
 
 (defn license-field [f]
   (case (:license/type f)
     :link [link-license f]
     :text [text-license f]
+    :attachment [attachment-license f]
     [fields/unsupported-field f]))
 
 (defn- save-button []
