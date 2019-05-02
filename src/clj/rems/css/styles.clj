@@ -266,9 +266,9 @@
    [:* {:margin 0}]
    [:a
     :button
-    {:cursor :pointer}
-    ["&:not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
-     [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]]
+    {:cursor :pointer
+     :color (util/get-theme-attribute :link-color "#007bff")}
+    [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
@@ -394,11 +394,6 @@
    [:.alert-dark {:color (util/get-theme-attribute :alert-dark-color)
                   :background-color (util/get-theme-attribute :alert-dark-bgcolor)
                   :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
-   [:.nav-link
-    :.btn-link
-    (s/descendant :.nav-link :a)
-    {:color (util/get-theme-attribute :nav-color :link-color :color3)
-     :border 0}] ; for button links
    [:.navbar
     {:max-width content-width}
     [:.nav-link :.btn-link
@@ -414,6 +409,8 @@
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
+    {:color (util/get-theme-attribute :nav-color :link-color :color3)
+     :border 0} ; for button links
     [:&.active
      {:color (util/get-theme-attribute :nav-active-color :color4)}]
     [:&:hover
