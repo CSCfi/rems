@@ -7,6 +7,9 @@
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"}])
 
+(defn file-download []
+  [:i {:class "fa fa-file-download"}])
+
 (defn link-to [opts uri title]
   [:a (merge opts {:href uri}) title])
 
