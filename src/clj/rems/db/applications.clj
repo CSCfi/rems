@@ -92,20 +92,6 @@
 (defn get-all-events-since [event-id]
   (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
-(defn get-dynamic-application-state [application-id] ; TODO: legacy code; remove me
-  (let [application (or (first (db/get-applications {:id application-id}))
-                        (throw (rems.InvalidRequestException.
-                                (str "Application " application-id " not found"))))
-        events (get-application-events application-id)
-        application (assoc application
-                           :state :application.state/draft
-                           :dynamic-events events
-                           :workflow (fix-workflow-from-db (:workflow application))
-                           :last-modified (or (:event/time (last events))
-                                              (:start application)))]
-    (assert (is-dynamic-application? application) (pr-str application))
-    (dynamic/apply-events application events)))
-
 (defn add-event! [event]
   (db/add-application-event! {:application (:application/id event)
                               :user (:event/actor event)
@@ -114,6 +100,8 @@
                               :event (str (:event/type event))
                               :eventdata (event->json event)})
   nil)
+
+;;; Creating applications
 
 (defn allocate-external-id! [prefix]
   (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
@@ -179,6 +167,22 @@
                                      :actor user-id})
     {:success true
      :application-id app-id}))
+
+;;; Running commands
+
+(defn get-dynamic-application-state [application-id] ; TODO: legacy code; remove me
+  (let [application (or (first (db/get-applications {:id application-id}))
+                        (throw (rems.InvalidRequestException.
+                                (str "Application " application-id " not found"))))
+        events (get-application-events application-id)
+        application (assoc application
+                           :state :application.state/draft
+                           :dynamic-events events
+                           :workflow (fix-workflow-from-db (:workflow application))
+                           :last-modified (or (:event/time (last events))
+                                              (:start application)))]
+    (assert (is-dynamic-application? application) (pr-str application))
+    (dynamic/apply-events application events)))
 
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
