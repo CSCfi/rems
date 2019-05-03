@@ -106,25 +106,6 @@
 
 ;;; Running commands
 
-(defn- fix-workflow-from-db [wf]
-  ;; TODO could use a schema for this coercion
-  (update (json/parse-string wf)
-          :type keyword))
-
-(defn get-dynamic-application-state [application-id] ; TODO: legacy code; remove me
-  (let [application (or (first (db/get-applications {:id application-id}))
-                        (throw (rems.InvalidRequestException.
-                                (str "Application " application-id " not found"))))
-        events (events/get-application-events application-id)
-        application (assoc application
-                           :state :application.state/draft
-                           :dynamic-events events
-                           :workflow (fix-workflow-from-db (:workflow application))
-                           :last-modified (or (:event/time (last events))
-                                              (:start application)))]
-    (assert (is-dynamic-application? application) (pr-str application))
-    (dynamic/apply-events application events)))
-
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
