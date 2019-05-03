@@ -514,3 +514,13 @@
     (when-not (can-close? user-id application)
       (throw-forbidden))
     (unjudge-application user-id application "close" round msg)))
+
+;;; Creating drafts
+
+(defn create-new-draft [user-id wfid]
+  (assert user-id)
+  (assert wfid)
+  (:id (db/create-application! {:user user-id :wfid wfid})))
+
+(defn create-new-draft-at-time [user-id wfid time]
+  (:id (db/create-application! {:user user-id :wfid wfid :start time})))

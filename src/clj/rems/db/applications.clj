@@ -37,18 +37,7 @@
 (defn is-dynamic-handler? [user-id application]
   (contains? (set (get-in application [:workflow :handlers])) user-id))
 
-;;; Creating drafts
-
-(defn create-new-draft [user-id wfid]
-  (assert user-id)
-  (assert wfid)
-  (:id (db/create-application! {:user user-id :wfid wfid})))
-
-(defn create-new-draft-at-time [user-id wfid time]
-  (:id (db/create-application! {:user user-id :wfid wfid :start time})))
-
-;;; Dynamic workflows
-;; TODO these should be in their own namespace probably
+;;; Event storage
 
 (defn- fix-workflow-from-db [wf]
   ;; TODO could use a schema for this coercion
