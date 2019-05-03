@@ -523,6 +523,43 @@
                                                              :application/state :application.state/approved})]
                             (is (= expected-application (apply-events events)))
 
+                            (testing "> resources changed by handler"
+                              (let [events (conj events
+                                                 {:event/type :application.event/resources-changed
+                                                  :event/time (DateTime. 4500)
+                                                  :event/actor "handler"
+                                                  :application/id 1
+                                                  :application/comment "I changed the resources"
+                                                  :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                                                          {:catalogue-item/id 30 :resource/ext-id "urn:31"}]})
+                                    expected-application (deep-merge expected-application
+                                                                     {:application/last-activity (DateTime. 4500)
+                                                                      :application/modified (DateTime. 4500)
+                                                                      :application/events events
+                                                                      :application/resources [{:catalogue-item/id 10
+                                                                                               :resource/id 11
+                                                                                               :resource/ext-id "urn:11"
+                                                                                               :catalogue-item/title {:en "en title"
+                                                                                                                      :fi "fi title"
+                                                                                                                      :default "non-localized title"}
+                                                                                               :catalogue-item/start (DateTime. 100)
+                                                                                               :catalogue-item/end nil
+                                                                                               :catalogue-item/enabled true
+                                                                                               :catalogue-item/expired false
+                                                                                               :catalogue-item/archived false}
+                                                                                              {:catalogue-item/id 30
+                                                                                               :resource/id 31
+                                                                                               :resource/ext-id "urn:31"
+                                                                                               :catalogue-item/title {:en "en title"
+                                                                                                                      :fi "fi title"
+                                                                                                                      :default "non-localized title"}
+                                                                                               :catalogue-item/start (DateTime. 100)
+                                                                                               :catalogue-item/end nil
+                                                                                               :catalogue-item/enabled true
+                                                                                               :catalogue-item/expired false
+                                                                                               :catalogue-item/archived false}]})]
+                                (is (= expected-application (apply-events events)))))
+
                             (testing "> licenses accepted"
                               (let [events (conj events
                                                  {:event/type :application.event/licenses-accepted
