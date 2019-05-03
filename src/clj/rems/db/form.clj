@@ -127,7 +127,6 @@
 (defn get-form [form-id]
   (-> (db/get-form {:id form-id})
       (db/assoc-expired)
-      (update :fields json/parse-string) ;; TODO get rid of :fields
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
                          (mapv #(process-field nil form-id %))))))
