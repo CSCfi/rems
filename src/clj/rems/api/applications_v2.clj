@@ -9,6 +9,7 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
+            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
@@ -18,7 +19,7 @@
   (:import [org.joda.time Duration]))
 
 (def ^:private injections
-  {:get-form applications/get-form
+  {:get-form form/get-form
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-license licenses/get-license
    :get-user users/get-user-attributes

@@ -172,17 +172,7 @@ SELECT
   form.start as start,
   form.endt as "end",
   form.enabled,
-  form.archived,
-  (SELECT json_agg(joined)
-   FROM (SELECT *,
-                (SELECT json_agg(formitemlocalization)
-                 FROM application_form_item_localization formitemlocalization
-                 WHERE (formitemmap.formitemid = formitemlocalization.itemid)
-                 GROUP BY formitemlocalization.itemid)  AS localizations
-         FROM application_form_item_map formitemmap
-         JOIN application_form_item formitem ON (formitemmap.formitemid = formitem.id)
-         WHERE formitemmap.formid = form.id) joined)::TEXT
-         AS fields
+  form.archived
 FROM application_form form
 WHERE form.id = :id;
 
