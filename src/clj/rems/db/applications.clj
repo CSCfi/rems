@@ -30,9 +30,12 @@
 
 ;;; Query functions
 
-(declare is-dynamic-application?)
-(declare fix-workflow-from-db)
-(declare is-dynamic-handler?)
+;; TODO use also in UI side?
+(defn is-dynamic-application? [application]
+  (= :workflow/dynamic (get-in application [:workflow :type])))
+
+(defn is-dynamic-handler? [user-id application]
+  (contains? (set (get-in application [:workflow :handlers])) user-id))
 
 ;;; Creating drafts
 
@@ -219,13 +222,6 @@
     (if (:success result)
       (add-event! (:result result))
       result)))
-
-(defn is-dynamic-handler? [user-id application]
-  (contains? (set (get-in application [:workflow :handlers])) user-id))
-
-;; TODO use also in UI side?
-(defn is-dynamic-application? [application]
-  (= :workflow/dynamic (get-in application [:workflow :type])))
 
 (defn accept-invitation [user-id invitation-token]
   (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
