@@ -26,8 +26,6 @@
             [schema.utils])
   (:import [org.joda.time DateTime]))
 
-(declare get-dynamic-application-state)
-
 ;;; Query functions
 
 ;; TODO use also in UI side?
