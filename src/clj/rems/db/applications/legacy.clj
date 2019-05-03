@@ -139,6 +139,41 @@
          (or (:start application) (time/now))
          {:wfid (:wfid application) :items catalogue-item-ids})))
 
+;;; Phases
+
+(defn get-application-phases [state]
+  (cond (contains? #{"rejected" :application.state/rejected} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
+         {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+
+        (contains? #{"approved" :application.state/approved} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+         {:phase :result :completed? true :approved? true :text :t.phases/approved}]
+
+        (contains? #{"closed" :application.state/closed} state)
+        [{:phase :apply :closed? true :text :t.phases/apply}
+         {:phase :approve :closed? true :text :t.phases/approve}
+         {:phase :result :closed? true :text :t.phases/approved}]
+
+        (contains? #{"draft" "returned" "withdrawn" :application.state/draft} state)
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        (contains? #{"applied" :application.state/submitted} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :active? true :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        :else
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]))
+
+;;; The main entry point, get-form-for
+
 (defn get-form-for
   "Returns a form structure like this:
 
@@ -221,7 +256,7 @@
       :items items
       :licenses licenses
       :accepted-licenses (get-in application [:form-contents :accepted-licenses])
-      :phases (applications/get-application-phases (:state application))})))
+      :phases (get-application-phases (:state application))})))
 
 
 ;;; Round-based events

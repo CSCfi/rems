@@ -214,7 +214,7 @@
     (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
           app (applications/create-new-draft "applicant" wf)
-          get-phases (fn [] (applications/get-application-phases (:state (legacy/get-application-state app))))]
+          get-phases (fn [] (legacy/get-application-phases (:state (legacy/get-application-state app))))]
       (db/add-application-item! {:application app :item item})
       (actors/add-approver! wf "approver1" 0)
       (actors/add-approver! wf "approver2" 1)
@@ -253,7 +253,7 @@
     (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
           app (applications/create-new-draft "applicant" wf)
-          get-phases (fn [] (applications/get-application-phases (:state (legacy/get-application-state app))))]
+          get-phases (fn [] (legacy/get-application-phases (:state (legacy/get-application-state app))))]
       (db/add-application-item! {:application app :item item})
       (actors/add-approver! wf "approver1" 0)
       (actors/add-approver! wf "approver2" 1)
@@ -284,7 +284,7 @@
     (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
           app (applications/create-new-draft "applicant" wf)
-          get-phases (fn [] (applications/get-application-phases (:state (legacy/get-application-state app))))]
+          get-phases (fn [] (legacy/get-application-phases (:state (legacy/get-application-state app))))]
       (db/add-application-item! {:application app :item item})
       (actors/add-approver! wf "approver1" 0)
       (actors/add-approver! wf "approver2" 1)
