@@ -7,6 +7,7 @@
             [rems.application.events :as events]
             [rems.config :refer [env]]
             [rems.db.applications :refer :all]
+            [rems.db.applications.legacy :as legacy]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -27,9 +28,9 @@
   test-data-fixture)
 
 (deftest can-act-as?-test
-  (is (can-act-as? "developer" (get-application-state 10) "approver"))
-  (is (not (can-act-as? "developer" (get-application-state 10) "reviewer")))
-  (is (not (can-act-as? "alice" (get-application-state 10) "approver"))))
+  (is (legacy/can-act-as? "developer" (legacy/get-application-state 10) "approver"))
+  (is (not (legacy/can-act-as? "developer" (legacy/get-application-state 10) "reviewer")))
+  (is (not (legacy/can-act-as? "alice" (legacy/get-application-state 10) "approver"))))
 
 (deftest test-event-serialization
   (testing "round trip serialization"

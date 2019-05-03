@@ -2,6 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [conman.core :as conman]
             [rems.db.applications :as applications]
+            [rems.db.applications.legacy :as legacy]
             [rems.db.core :refer [*db*] :as db]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
@@ -15,8 +16,8 @@
   (let [read-user (or (first (actors/get-by-role application-id "approver"))
                       ;; auto-approved workflows do not have an approver,
                       ;; so the applicant is the only one who can see the application
-                      (:applicantuserid (applications/get-application-state application-id)))
-        form (applications/get-form-for read-user application-id)
+                      (:applicantuserid (legacy/get-application-state application-id)))
+        form (legacy/get-form-for read-user application-id)
         application (:application form)
         workflow (workflow/get-workflow workflow-id)
         comment-requests-by-commenter (atom {})]
