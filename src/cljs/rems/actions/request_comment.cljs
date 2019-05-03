@@ -63,10 +63,12 @@
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-comment)
-   [[button-wrapper {:id "request-comment"
-                     :text (text :t.actions/request-comment)
-                     :class "btn-primary"
-                     :on-click on-send}]]
+   [[button-wrapper (merge {:id "request-comment"
+                            :text (text :t.actions/request-comment)
+                            :class "btn-primary"
+                            :on-click on-send}
+                           (when (empty? selected-commenters)
+                             {:disabled true}))]]
    [:div
     [action-comment {:id action-form-id
                      :label (text :t.form/add-comments-not-shown-to-applicant)
