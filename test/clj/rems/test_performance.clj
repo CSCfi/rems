@@ -3,8 +3,8 @@
             [criterium.core :as criterium]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.api.applications :as applications-api]
+            [rems.db.applications :as applications]
             [rems.db.events :as events])
   (:import [java.util Locale]))
 
@@ -46,17 +46,17 @@
                       :benchmark test-get-application-events}])))
 
 (defn benchmark-get-all-applications []
-  (let [test-get-all-unrestricted-applications #(doall (applications-v2/get-all-unrestricted-applications))
-        test-get-all-applications #(doall (applications-v2/get-all-applications "alice"))
-        test-get-all-application-roles #(doall (applications-v2/get-all-application-roles "developer"))
-        test-get-my-applications #(doall (applications-v2/get-my-applications "alice"))
+  (let [test-get-all-unrestricted-applications #(doall (applications/get-all-unrestricted-applications))
+        test-get-all-applications #(doall (applications/get-all-applications "alice"))
+        test-get-all-application-roles #(doall (applications/get-all-application-roles "developer"))
+        test-get-my-applications #(doall (applications/get-my-applications "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-todos #(doall (applications-api/get-todos "developer"))
         no-cache (fn []
-                   (mount/stop #'applications-v2/all-applications-cache))
+                   (mount/stop #'applications/all-applications-cache))
         cached (fn []
-                 (mount/stop #'applications-v2/all-applications-cache)
-                 (mount/start #'applications-v2/all-applications-cache)
+                 (mount/stop #'applications/all-applications-cache)
+                 (mount/start #'applications/all-applications-cache)
                  (test-get-all-unrestricted-applications))]
     (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
                       :benchmark test-get-all-unrestricted-applications
@@ -76,15 +76,15 @@
                      {:name "get-todos, cached"
                       :benchmark test-get-todos
                       :setup cached}])
-    (println "cache size" (mm/measure applications-v2/all-applications-cache))))
+    (println "cache size" (mm/measure applications/all-applications-cache))))
 
 (defn benchmark-get-application []
-  (let [test-get-application #(applications-v2/get-application "developer" 12)
+  (let [test-get-application #(applications/get-application "developer" 12)
         no-cache (fn []
-                   (mount/stop #'applications-v2/application-cache))
+                   (mount/stop #'applications/application-cache))
         cached (fn []
-                 (mount/stop #'applications-v2/application-cache)
-                 (mount/start #'applications-v2/application-cache)
+                 (mount/stop #'applications/application-cache)
+                 (mount/start #'applications/application-cache)
                  (test-get-application))]
     (run-benchmarks [{:name "get-application, no cache"
                       :benchmark test-get-application
@@ -92,7 +92,7 @@
                      {:name "get-application, cached"
                       :benchmark test-get-application
                       :setup cached}])
-    (println "cache size" (mm/measure applications-v2/application-cache))))
+    (println "cache size" (mm/measure applications/application-cache))))
 
 (comment
   ;; Note: If clj-memory-meter throws InaccessibleObjectException on Java 9+,

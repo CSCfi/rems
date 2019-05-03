@@ -3,8 +3,8 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
-            [rems.api.applications-v2]
             [rems.config :refer [env]]
+            [rems.db.applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]))
 
@@ -20,8 +20,8 @@
 
 (defn caches-fixture [f]
   ;; no specific teardown. relies on the teardown of test-db-fixture.
-  (mount/start #'rems.api.applications-v2/application-cache
-               #'rems.api.applications-v2/all-applications-cache)
+  (mount/start #'rems.db.applications/application-cache
+               #'rems.db.applications/all-applications-cache)
   (f))
 
 (defn test-data-fixture [f]
