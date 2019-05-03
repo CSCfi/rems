@@ -5,7 +5,7 @@
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
 
-(defn button-wrapper [{:keys [id text class on-click disabled] :as props}]
+(defn button-wrapper [{:keys [text class] :as props}]
   [:button.btn
    (merge
     {:class (or class :btn-secondary)}
