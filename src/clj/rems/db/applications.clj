@@ -30,11 +30,6 @@
 
 ;;; Query functions
 
-(defn draft?
-  "Is the given `application-id` for an unsaved draft application?"
-  [application-id]
-  (nil? application-id))
-
 (declare is-dynamic-application?)
 (declare fix-workflow-from-db)
 (declare is-dynamic-handler?)
