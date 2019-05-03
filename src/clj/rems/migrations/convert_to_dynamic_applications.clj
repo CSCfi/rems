@@ -4,6 +4,7 @@
             [rems.db.applications :as applications]
             [rems.db.applications.legacy :as legacy]
             [rems.db.core :refer [*db*] :as db]
+            [rems.db.events :as events]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
             [rems.poller.email :as email])
@@ -33,83 +34,83 @@
                                                                            (map :id))
                                                   :time (:start application)
                                                   :actor (:applicantuserid application)})
-    (applications/add-event! {:event/type :application.event/draft-saved
-                              :event/time (:start application)
-                              :event/actor (:applicantuserid application)
-                              :application/id (:id application)
-                              :application/field-values (->> (:items form)
-                                                             (map (fn [item]
-                                                                    [(:id item) (:value item)]))
-                                                             (into {}))})
-    (applications/add-event! {:event/type :application.event/licenses-accepted
-                              :event/time (:start application)
-                              :event/actor (:applicantuserid application)
-                              :application/id (:id application)
-                              :application/accepted-licenses (->> (:licenses form)
-                                                                  (filter :approved)
-                                                                  (map :id)
-                                                                  set)})
+    (events/add-event! {:event/type :application.event/draft-saved
+                        :event/time (:start application)
+                        :event/actor (:applicantuserid application)
+                        :application/id (:id application)
+                        :application/field-values (->> (:items form)
+                                                       (map (fn [item]
+                                                              [(:id item) (:value item)]))
+                                                       (into {}))})
+    (events/add-event! {:event/type :application.event/licenses-accepted
+                        :event/time (:start application)
+                        :event/actor (:applicantuserid application)
+                        :application/id (:id application)
+                        :application/accepted-licenses (->> (:licenses form)
+                                                            (filter :approved)
+                                                            (map :id)
+                                                            set)})
     (doseq [event (:events application)]
       (case (:event event)
         "save" nil ; skip - the draft-saved event is produced separately and the legacy applications don't have form history
-        "apply" (applications/add-event! {:event/type :application.event/submitted
-                                          :event/time (:time event)
-                                          :event/actor (:userid event)
-                                          :application/id (:id application)})
-        "reject" (applications/add-event! {:event/type :application.event/rejected
-                                           :event/time (:time event)
-                                           :event/actor (:userid event)
-                                           :application/id (:id application)
-                                           :application/comment (or (:comment event) "")})
-        "approve" (applications/add-event! {:event/type :application.event/approved
-                                            :event/time (:time event)
-                                            :event/actor (:userid event)
-                                            :application/id (:id application)
-                                            :application/comment (or (:comment event) "")})
-        "autoapprove" (applications/add-event! {:event/type :application.event/approved
-                                                :event/time (:time event)
-                                                :event/actor (:userid event)
-                                                :application/id (:id application)
-                                                :application/comment ""})
-        "return" (applications/add-event! {:event/type :application.event/returned
-                                           :event/time (:time event)
-                                           :event/actor (:userid event)
-                                           :application/id (:id application)
-                                           :application/comment (or (:comment event) "")})
-        "review" (applications/add-event! {:event/type :application.event/commented
-                                           :event/time (:time event)
-                                           :event/actor (:userid event)
-                                           :application/id (:id application)
-                                           ;; TODO: request-id doesn't make much sense for these old applications - make it optional?
-                                           :application/request-id (UUID. 0 0)
-                                           :application/comment (or (:comment event) "")})
-        "review-request" (applications/add-event! {:event/type :application.event/comment-requested
-                                                   :event/time (:time event)
-                                                   ;; TODO: the review request's actor is not known; can we guess the approver?
-                                                   :event/actor (:userid event)
-                                                   :application/id (:id application)
-                                                   :application/request-id (let [request-id (UUID/randomUUID)]
-                                                                             (swap! comment-requests-by-commenter
-                                                                                    assoc (:userid event) request-id)
-                                                                             request-id)
-                                                   :application/commenters [(:userid event)]
-                                                   :application/comment (or (:comment event) "")})
-        "third-party-review" (applications/add-event! {:event/type :application.event/commented
-                                                       :event/time (:time event)
-                                                       :event/actor (:userid event)
-                                                       :application/id (:id application)
-                                                       :application/request-id (get @comment-requests-by-commenter (:userid event))
-                                                       :application/comment (or (:comment event) "")})
-        "withdraw" (applications/add-event! {:event/type :application.event/returned
-                                             :event/time (:time event)
-                                             :event/actor (:userid event)
-                                             :application/id (:id application)
-                                             :application/comment (or (:comment event) "")})
-        "close" (applications/add-event! {:event/type :application.event/closed
+        "apply" (events/add-event! {:event/type :application.event/submitted
+                                    :event/time (:time event)
+                                    :event/actor (:userid event)
+                                    :application/id (:id application)})
+        "reject" (events/add-event! {:event/type :application.event/rejected
+                                     :event/time (:time event)
+                                     :event/actor (:userid event)
+                                     :application/id (:id application)
+                                     :application/comment (or (:comment event) "")})
+        "approve" (events/add-event! {:event/type :application.event/approved
+                                      :event/time (:time event)
+                                      :event/actor (:userid event)
+                                      :application/id (:id application)
+                                      :application/comment (or (:comment event) "")})
+        "autoapprove" (events/add-event! {:event/type :application.event/approved
                                           :event/time (:time event)
                                           :event/actor (:userid event)
                                           :application/id (:id application)
-                                          :application/comment (or (:comment event) "")})))))
+                                          :application/comment ""})
+        "return" (events/add-event! {:event/type :application.event/returned
+                                     :event/time (:time event)
+                                     :event/actor (:userid event)
+                                     :application/id (:id application)
+                                     :application/comment (or (:comment event) "")})
+        "review" (events/add-event! {:event/type :application.event/commented
+                                     :event/time (:time event)
+                                     :event/actor (:userid event)
+                                     :application/id (:id application)
+                                     ;; TODO: request-id doesn't make much sense for these old applications - make it optional?
+                                     :application/request-id (UUID. 0 0)
+                                     :application/comment (or (:comment event) "")})
+        "review-request" (events/add-event! {:event/type :application.event/comment-requested
+                                             :event/time (:time event)
+                                             ;; TODO: the review request's actor is not known; can we guess the approver?
+                                             :event/actor (:userid event)
+                                             :application/id (:id application)
+                                             :application/request-id (let [request-id (UUID/randomUUID)]
+                                                                       (swap! comment-requests-by-commenter
+                                                                              assoc (:userid event) request-id)
+                                                                       request-id)
+                                             :application/commenters [(:userid event)]
+                                             :application/comment (or (:comment event) "")})
+        "third-party-review" (events/add-event! {:event/type :application.event/commented
+                                                 :event/time (:time event)
+                                                 :event/actor (:userid event)
+                                                 :application/id (:id application)
+                                                 :application/request-id (get @comment-requests-by-commenter (:userid event))
+                                                 :application/comment (or (:comment event) "")})
+        "withdraw" (events/add-event! {:event/type :application.event/returned
+                                       :event/time (:time event)
+                                       :event/actor (:userid event)
+                                       :application/id (:id application)
+                                       :application/comment (or (:comment event) "")})
+        "close" (events/add-event! {:event/type :application.event/closed
+                                    :event/time (:time event)
+                                    :event/actor (:userid event)
+                                    :application/id (:id application)
+                                    :application/comment (or (:comment event) "")})))))
 
 (defn migrate-all-applications! [new-workflow-id]
   (conman/with-transaction [*db* {:isolation :serializable}]

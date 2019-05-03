@@ -470,7 +470,7 @@
     value))
 
 (defn- create-draft! [user-id catids wfid field-value & [now]]
-  (let [app-id (applications/create-new-draft-at-time user-id wfid (or now (time/now)))
+  (let [app-id (legacy/create-new-draft-at-time user-id wfid (or now (time/now)))
         catids (if (vector? catids) catids [catids])
         _ (doseq [catid catids]
             (db/add-application-item! {:application app-id :item catid}))

@@ -6,7 +6,7 @@
             [postal.core :as postal]
             [rems.api.applications-v2 :as applications-v2]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
+            [rems.db.events :as events]
             [rems.db.users :as users]
             [rems.poller.common :as common]
             [rems.scheduler :as scheduler]
@@ -162,7 +162,7 @@
 ;; 4. open http://localhost:8025 in your browser to view the emails
 
 (defn mark-all-emails-as-sent! []
-  (let [events (applications/get-all-events-since 0)
+  (let [events (events/get-all-events-since 0)
         last-id (:event/id (last events))]
     (common/set-poller-state! ::poller {:last-processed-event-id last-id})))
 

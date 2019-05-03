@@ -10,6 +10,7 @@
             [rems.db.applications.legacy :as legacy]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.events :as db-events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
@@ -37,22 +38,22 @@
     (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
                                                 (generators/large-integer* {:min 0}))}]
       (doseq [event (sg/sample 100 events/Event generators)]
-        (is (= event (-> event event->json json->event))))))
+        (is (= event (-> event db-events/event->json db-events/json->event))))))
 
   (testing "event->json validates events"
     (is (not
          (:rems.event/validate-event
-          (try-catch-ex (event->json {}))))))
+          (try-catch-ex (db-events/event->json {}))))))
 
   (testing "json->event validates events"
-    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (json->event "{}"))))
+    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (db-events/json->event "{}"))))
 
   (testing "json data format"
     (let [event {:event/type :application.event/submitted
                  :event/time (DateTime. 2020 1 1 12 0 0 (DateTimeZone/forID "Europe/Helsinki"))
                  :event/actor "foo"
                  :application/id 123}
-          json (event->json event)]
+          json (db-events/event->json event)]
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
 
 (deftest test-application-created-event
