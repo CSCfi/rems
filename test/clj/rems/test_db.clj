@@ -4,7 +4,6 @@
             [clj-time.core :as time]
             [clojure.string :refer [split-lines]]
             [clojure.test :refer :all]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.auth.ForbiddenException]
             [rems.config]
             [rems.context :as context]
@@ -199,7 +198,7 @@
                                       :application-id app-id
                                       :time (time/now)
                                       :comment ""})))
-    (is (= :application.state/approved (:application/state (applications-v2/get-application uid app-id))))
+    (is (= :application.state/approved (:application/state (applications/get-application uid app-id))))
 
     (entitlements-poller/run)
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))

@@ -2,7 +2,6 @@
   (:require [clj-time.core :as time]
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
             [rems.application.commands :as commands]
@@ -94,7 +93,7 @@
        (not= :application.state/draft (:application/state application))))
 
 (defn- get-potential-todos [user-id]
-  (->> (applications-v2/get-all-applications user-id)
+  (->> (applications/get-all-applications user-id)
        (filter potential-todo?)))
 
 (defn- todo? [application]
@@ -145,7 +144,7 @@
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications-v2/get-my-applications (getx-user-id))))))
+      (ok (applications/get-my-applications (getx-user-id))))))
 
 (def applications-api
   (context "/applications" []
@@ -155,7 +154,7 @@
       :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications-v2/get-all-applications (getx-user-id))))
+      (ok (applications/get-all-applications (getx-user-id))))
 
     (GET "/todo" []
       :summary "Get all applications that the current user needs to act on."
@@ -258,7 +257,7 @@
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema Application}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -267,7 +266,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
             (ByteArrayInputStream.)

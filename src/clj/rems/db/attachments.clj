@@ -1,6 +1,6 @@
 (ns rems.db.attachments
-  (:require [rems.api.applications-v2 :as applications-v2]
-            [rems.application-util :refer [form-fields-editable?]]
+  (:require [rems.application-util :refer [form-fields-editable?]]
+            [rems.db.applications :as applications]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db])
   (:import [java.io ByteArrayOutputStream FileInputStream File ByteArrayInputStream]
@@ -23,7 +23,7 @@
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id item-id]
   (check-attachment-content-type content-type)
-  (let [application (applications-v2/get-application user-id application-id)
+  (let [application (applications/get-application user-id application-id)
         byte-array (with-open [input (FileInputStream. ^File tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
@@ -39,7 +39,7 @@
                           :data byte-array})))
 
 (defn remove-attachment! [user-id application-id item-id]
-  (let [application (applications-v2/get-application user-id application-id)]
+  (let [application (applications/get-application user-id application-id)]
     (when-not (form-fields-editable? application)
       (throw-forbidden))
     (db/remove-attachment! {:application application-id
@@ -47,7 +47,7 @@
                             :item item-id})))
 
 (defn get-attachment [user-id application-id field-id]
-  (let [application (applications-v2/get-application user-id application-id)
+  (let [application (applications/get-application user-id application-id)
         form-id (get-in application [:application/form :form/id])]
     (when-let [attachment (db/get-attachment {:item field-id
                                               :form form-id

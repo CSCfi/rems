@@ -4,8 +4,8 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.config :refer [env]]
+            [rems.db.applications :as applications]
             [rems.db.events :as events]
             [rems.db.users :as users]
             [rems.poller.common :as common]
@@ -147,7 +147,7 @@
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
-    (event-to-emails-impl event (applications-v2/get-unrestricted-application app-id))))
+    (event-to-emails-impl event (applications/get-unrestricted-application app-id))))
 
 ;;; Generic poller infrastructure
 
