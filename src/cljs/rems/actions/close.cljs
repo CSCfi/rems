@@ -32,21 +32,23 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn close-view
-  [{:keys [comment on-set-comment on-send]}]
+  [{:keys [comment see-everything? on-set-comment on-send]}]
   [action-form-view action-form-id
    (text :t.actions/close)
    [[button-wrapper {:id "close"
                      :text (text :t.actions/close)
                      :class "btn-danger"
                      :on-click on-send}]]
-   [action-comment {:id action-form-id
-                    :label (text :t.form/add-comments-not-shown-to-applicant)
-                    :comment comment
-                    :on-comment on-set-comment}]])
+   (when see-everything?
+     [action-comment {:id action-form-id
+                      :label (text :t.form/add-comments-not-shown-to-applicant)
+                      :comment comment
+                      :on-comment on-set-comment}])])
 
-(defn close-form [application-id on-finished]
+(defn close-form [application-id see-everything? on-finished]
   (let [comment @(rf/subscribe [::comment])]
     [close-view {:comment comment
+                 :see-everything? see-everything?
                  :on-set-comment #(rf/dispatch [::set-comment %])
                  :on-send #(rf/dispatch [::send-close {:application-id application-id
                                                        :comment comment

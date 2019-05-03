@@ -539,13 +539,14 @@
 
 (defn- actions-form [application]
   (let [app-id (:application/id application)
+        see-everything? (contains? (:application/permissions application) :see-everything)
         actions (action-buttons application)
         reload (partial reload! app-id)
         forms [[:div#actions-forms.mt-3
                 [request-comment-form app-id reload]
                 [request-decision-form app-id reload]
                 [comment-form app-id reload]
-                [close-form app-id reload]
+                [close-form app-id see-everything? reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
                 [add-licenses-form app-id reload]
