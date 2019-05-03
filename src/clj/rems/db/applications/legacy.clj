@@ -113,6 +113,17 @@
 
 ;;; Legacy form stuff
 
+(defn- assoc-field-value [field form-id application-id]
+  (let [query-params {:item (:id field)
+                      :form form-id
+                      :application application-id}]
+    (assoc field
+           :value
+           (cond
+             (nil? application-id) ""
+             (= "attachment" (:type field)) (or (:filename (db/get-attachment query-params)) "")
+             :else (or (:value (db/get-field-value query-params)) "")))))
+
 (defn- assoc-field-previous-values [application fields]
   (let [previous-values (:items (if (form-fields-editable? application)
                                   (:submitted-form-contents application)
@@ -226,7 +237,8 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})
          items (->> (db/get-form-items {:id form-id})
-                    (mapv #(form/process-field application-id form-id %))
+                    (mapv form/process-field)
+                    (mapv #(assoc-field-value % form-id application-id))
                     (assoc-field-previous-values application))
          description (-> (filter #(= "description" (:type %)) items)
                          first

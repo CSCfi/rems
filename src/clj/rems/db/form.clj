@@ -69,14 +69,6 @@
 
 ;;; older, non-form-template code path, for fetching forms for applications
 
-(defn- get-field-value [field form-id application-id]
-  (let [query-params {:item (:id field)
-                      :form form-id
-                      :application application-id}]
-    (if (= "attachment" (:type field))
-      (:filename (db/get-attachment query-params))
-      (:value (db/get-field-value query-params)))))
-
 (defn- process-field-options [options]
   (->> options
        (map (fn [{:keys [key langcode label displayorder]}]
@@ -107,7 +99,7 @@
      :inputprompt \"hello\"
      :optional true
      :value \"filled value or nil\"}"
-  [application-id form-id field]
+  [field]
   {:id (:id field)
    :optional (:formitemoptional field)
    :type (:type field)
@@ -117,11 +109,6 @@
                                  (db/get-form-item-localizations {:item (:id field)})]
                              [(keyword langcode) {:title title :inputprompt inputprompt}]))
    :options (process-field-options (db/get-form-item-options {:item (:id field)}))
-   ;; TODO this is kinda hacky, get rid of the call to get-field-value
-   :value (or
-           (when application-id
-             (get-field-value field form-id application-id))
-           "")
    :maxlength (:maxlength field)})
 
 (defn get-form [form-id]
@@ -129,7 +116,7 @@
       (db/assoc-expired)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv #(process-field nil form-id %))))))
+                         (mapv process-field)))))
 
 (comment
   (get-form 1))
