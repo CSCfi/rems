@@ -13,11 +13,6 @@
        (map db/assoc-expired)
        (db/apply-filters filters)))
 
-(defn get-form [id]
-  (-> (db/get-form {:id id})
-      (db/assoc-expired)
-      (update :fields json/parse-string)))
-
 (defn get-form-template [id]
   (-> (db/get-form-template {:id id})
       (db/assoc-expired)
@@ -72,7 +67,7 @@
         (db/set-form-template-state! command)
         {:success true}))))
 
-;;; fetching fields and values
+;;; older, non-form-template code path, for fetching forms for applications
 
 (defn- get-field-value [field form-id application-id]
   (let [query-params {:item (:id field)
@@ -128,3 +123,14 @@
              (get-field-value field form-id application-id))
            "")
    :maxlength (:maxlength field)})
+
+(defn get-form [form-id]
+  (-> (db/get-form {:id form-id})
+      (db/assoc-expired)
+      (update :fields json/parse-string) ;; TODO get rid of :fields
+      (select-keys [:id :organization :title :start :end])
+      (assoc :items (->> (db/get-form-items {:id form-id})
+                         (mapv #(process-field nil form-id %))))))
+
+(comment
+  (get-form 1))

@@ -196,14 +196,8 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn get-form [form-id]
-  (-> (form/get-form form-id)
-      (select-keys [:id :organization :title :start :end])
-      (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv #(form/process-field nil form-id %))))))
-
 (defn- validate-form-answers [form-id answers]
-  (let [form (get-form form-id)
+  (let [form (form/get-form form-id)
         _ (assert form)
         fields (for [field (:items form)]
                  (assoc field :value (get-in answers [:items (:id field)])))]

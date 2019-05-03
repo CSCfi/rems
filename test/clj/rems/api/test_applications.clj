@@ -388,7 +388,7 @@
                                            :type "text"
                                            :optional true}])
         [req-id opt-id] (->> (form/get-form form-id)
-                             :fields
+                             :items
                              (map :id))
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)]
@@ -434,7 +434,7 @@
         form-id (create-form-with-fields [{:title {:en "some attachment"}
                                            :type "attachment"
                                            :optional true}])
-        field-id (-> (form/get-form form-id) :fields first :id)
+        field-id (-> (form/get-form form-id) :items first :id)
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)
         upload-request (fn [file]
