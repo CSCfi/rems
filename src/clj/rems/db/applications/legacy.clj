@@ -5,21 +5,22 @@
             [rems.application.model :as model]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.db.workflow-actors :as actors]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
             [rems.db.entitlements :as entitlements]
+            [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
+            [rems.db.workflow-actors :as actors]
+            [rems.json :as json]
             [rems.permissions :as permissions]
             [rems.workflow.dynamic :as dynamic]))
 
 (declare get-application-state)
 
 ;;; Query functions
-
 
 (defn- is-actor? [user-id actors]
   (assert user-id)
@@ -183,6 +184,27 @@
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
+
+;;; Shim for supporting dynami applications
+
+(defn- fix-workflow-from-db [wf]
+  ;; TODO could use a schema for this coercion
+  (update (json/parse-string wf)
+          :type keyword))
+
+(defn- get-dynamic-application-state [application-id]
+  (let [application (or (first (db/get-applications {:id application-id}))
+                        (throw (rems.InvalidRequestException.
+                                (str "Application " application-id " not found"))))
+        events (events/get-application-events application-id)
+        application (assoc application
+                           :state :application.state/draft
+                           :dynamic-events events
+                           :workflow (fix-workflow-from-db (:workflow application))
+                           :last-modified (or (:event/time (last events))
+                                              (:start application)))]
+    (assert (applications/is-dynamic-application? application) (pr-str application))
+    (dynamic/apply-events application events)))
 
 ;;; The main entry point, get-form-for
 
@@ -386,7 +408,7 @@
                                (db/get-application-events {:application application-id}))))
   ([application events]
    (if (not (nil? (:workflow application)))
-     (applications/get-dynamic-application-state (:id application))
+     (get-dynamic-application-state (:id application))
      (let [application (-> application
                            (dissoc :workflow)
                            (assoc :state "draft" :curround 0) ;; reset state
