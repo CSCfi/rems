@@ -132,7 +132,6 @@
 (rf/reg-event-db
  ::set-validation-errors
  (fn [db [_ errors]]
-   (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
 (defn- field-values-to-api [field-values]
@@ -563,7 +562,7 @@
   (let [application-id (:application/id application)
         possible-commands (:application/permissions application)
         applicant? (= (:application/applicant application) userid)
-        can-see-full-catalogue? (not applicant?)
+        can-bundle-all? (not applicant?)
         can-change? (contains? possible-commands :application.command/change-resources)
         can-comment? (not applicant?)]
     [collapsible/component
@@ -578,7 +577,7 @@
                [:div.commands
                 (when can-change? [change-resources-action-button (:application/resources application)])]
                [:div#resource-action-forms
-                [change-resources-form application-id can-see-full-catalogue? can-comment? (partial reload! application-id)]]]}]))
+                [change-resources-form application can-bundle-all? can-comment? (partial reload! application-id)]]]}]))
 
 (defn- render-application [application edit-application userid]
   (let [messages (remove nil?

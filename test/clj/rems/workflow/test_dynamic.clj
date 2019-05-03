@@ -171,8 +171,10 @@
                                                   :event/time test-time
                                                   :event/actor applicant-user-id
                                                   :application/id 123}])
-        injections {:get-catalogue-item {1 {:id 1 :resid "abc"}
-                                         2 {:id 2 :resid "efg"}}}]
+        injections {:get-catalogue-item {1 {:id 1 :resid "abc" :formid 1 :wfid 1}
+                                         2 {:id 2 :resid "efg" :formid 1 :wfid 1}
+                                         3 {:id 3 :resid "hij" :formid 1 :wfid 2}
+                                         4 {:id 4 :resid "klm" :formid 2 :wfid 1}} }]
     (testing "applicant can change draft resources"
       (is (= [{:event/type :application.event/resources-changed
                :event/time test-time
@@ -190,7 +192,37 @@
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [1 2]}
-                           injections))))
+                           injections)))
+      (is (= {:errors [{:type :unbundlable-catalogue-items
+                        :catalogue-item-ids [1 2 3]}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1 2 3]}
+                           injections))
+          "can't bundle with different wfid")
+      (is (= {:errors [{:type :unbundlable-catalogue-items
+                        :catalogue-item-ids [1 2 4]}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1 2 4]}
+                           injections))
+          "can't bundle with different formid")
+      (is (= {:errors [{:type :changes-original-workflow :workflow/id 1 :ids [2]}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [3]}
+                           injections))
+          "can't change workflow from original")
+      (is (= {:errors [{:type :changes-original-form :form/id 1 :ids [2]}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [4]}
+                           injections))
+          "can't change formid from original"))
 
     (testing "handler can change submitted resources"
       (is (= [{:event/type :application.event/resources-changed
@@ -205,6 +237,22 @@
                           :actor handler-user-id
                           :comment "Changed these for you"
                           :catalogue-item-ids [1 2]}
+                         injections)))
+
+      (is (= [{:event/type :application.event/resources-changed
+               :event/time test-time
+               :event/actor handler-user-id
+               :application/id 123
+               :application/comment "Changed these for you"
+               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
+                                       {:catalogue-item/id 2 :resource/ext-id "efg"}
+                                       {:catalogue-item/id 3 :resource/ext-id "hij"}
+                                       {:catalogue-item/id 4 :resource/ext-id "klm"}]}]
+             (ok-command submitted-application
+                         {:type :application.command/change-resources
+                          :actor handler-user-id
+                          :comment "Changed these for you"
+                          :catalogue-item-ids [1 2 3 4]}
                          injections))))
 
     (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}

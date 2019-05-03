@@ -21,7 +21,6 @@
  :alert-warning-color "#8a6d3b"
  :alert-warning-bgcolor "#fcf8e3"
  :alert-warning-bordercolor "#8a6d3b"
- :text-warning "#ffc107!important"
  :bg-warning "#ffc107!important"
 
  :alert-info-color "#31708f"
