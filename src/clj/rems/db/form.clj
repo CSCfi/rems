@@ -1,5 +1,7 @@
 (ns rems.db.form
-  (:require [rems.InvalidRequestException]
+  (:require [clojure.test :refer :all]
+            [cprop.tools :refer [merge-maps]]
+            [rems.InvalidRequestException]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]))
@@ -69,3 +71,60 @@
         (db/set-form-state! command)
         (db/set-form-template-state! command)
         {:success true}))))
+
+;;; fetching fields and values
+
+(defn- get-field-value [field form-id application-id]
+  (let [query-params {:item (:id field)
+                      :form form-id
+                      :application application-id}]
+    (if (= "attachment" (:type field))
+      (:filename (db/get-attachment query-params))
+      (:value (db/get-field-value query-params)))))
+
+(defn- process-field-options [options]
+  (->> options
+       (map (fn [{:keys [key langcode label displayorder]}]
+              {:key key
+               :label {(keyword langcode) label}
+               :displayorder displayorder}))
+       (group-by :key)
+       (map (fn [[_key options]] (apply merge-maps options))) ; merge label translations
+       (sort-by :displayorder)
+       (mapv #(select-keys % [:key :label]))))
+
+(deftest process-field-options-test
+  (is (= [{:key "yes" :label {:en "Yes" :fi "Kyllä"}}
+          {:key "no" :label {:en "No" :fi "Ei"}}]
+         (process-field-options
+          [{:itemid 9, :key "no", :langcode "en", :label "No", :displayorder 1}
+           {:itemid 9, :key "no", :langcode "fi", :label "Ei", :displayorder 1}
+           {:itemid 9, :key "yes", :langcode "en", :label "Yes", :displayorder 0}
+           {:itemid 9, :key "yes", :langcode "fi", :label "Kyllä", :displayorder 0}]))))
+
+;; TODO figure out a better name
+(defn process-field
+  "Returns a field structure like this:
+
+    {:id 123
+     :type \"texta\"
+     :title \"Item title\"
+     :inputprompt \"hello\"
+     :optional true
+     :value \"filled value or nil\"}"
+  [application-id form-id field]
+  {:id (:id field)
+   :optional (:formitemoptional field)
+   :type (:type field)
+   ;; TODO here we do a db call per item, for licenses we do one huge
+   ;; db call. Not sure which is better?
+   :localizations (into {} (for [{:keys [langcode title inputprompt]}
+                                 (db/get-form-item-localizations {:item (:id field)})]
+                             [(keyword langcode) {:title title :inputprompt inputprompt}]))
+   :options (process-field-options (db/get-form-item-options {:item (:id field)}))
+   ;; TODO this is kinda hacky, get rid of the call to get-field-value
+   :value (or
+           (when application-id
+             (get-field-value field form-id application-id))
+           "")
+   :maxlength (:maxlength field)})

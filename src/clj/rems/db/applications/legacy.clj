@@ -10,6 +10,7 @@
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
             [rems.db.entitlements :as entitlements]
+            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.permissions :as permissions]
@@ -225,7 +226,7 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})
          items (->> (db/get-form-items {:id form-id})
-                    (mapv #(applications/process-field application-id form-id %))
+                    (mapv #(form/process-field application-id form-id %))
                     (assoc-field-previous-values application))
          description (-> (filter #(= "description" (:type %)) items)
                          first
