@@ -5,7 +5,7 @@
             [mount.core :as mount]
             [rems.api.applications-v2 :as applications-v2]
             [rems.api.applications :as applications-api]
-            [rems.db.applications :as applications])
+            [rems.db.events :as events])
   (:import [java.util Locale]))
 
 (defn run-benchmark [benchmark]
@@ -34,10 +34,10 @@
                     (map-vals #(String/format Locale/ENGLISH "%.3f ms" (to-array [(* 1000 %)]))))))))
 
 (defn benchmark-get-events []
-  (let [last-event-id (:event/id (last (applications/get-all-events-since 0)))
-        test-get-all-events-since-beginning #(doall (applications/get-all-events-since 0))
-        test-get-all-events-since-end #(doall (applications/get-all-events-since last-event-id))
-        test-get-application-events #(doall (applications/get-application-events 12))]
+  (let [last-event-id (:event/id (last (events/get-all-events-since 0)))
+        test-get-all-events-since-beginning #(doall (events/get-all-events-since 0))
+        test-get-all-events-since-end #(doall (events/get-all-events-since last-event-id))
+        test-get-application-events #(doall (events/get-application-events 12))]
     (run-benchmarks [{:name "get-all-events-since, all events"
                       :benchmark test-get-all-events-since-beginning}
                      {:name "get-all-events-since, zero new events"

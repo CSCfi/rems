@@ -9,6 +9,7 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
+            [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
@@ -35,7 +36,7 @@
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (applications/get-application-events application-id)
+  (let [events (events/get-application-events application-id)
         cache-key [application-id (count events)]
         build-app (fn [_] (model/build-application-view events injections))]
     (if (empty? events)

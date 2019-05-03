@@ -1,16 +1,15 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [clj-time.core :as time]
-            [clj-time.format :as time-format]
             [clojure.java.jdbc :as jdbc]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
-            [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
@@ -20,11 +19,7 @@
             [rems.json :as json]
             [rems.permissions :as permissions]
             [rems.util :refer [secure-token]]
-            [rems.workflow.dynamic :as dynamic]
-            [schema-tools.core :as st]
-            [schema.coerce :as coerce]
-            [schema.utils])
-  (:import [org.joda.time DateTime]))
+            [rems.workflow.dynamic :as dynamic]))
 
 ;;; Query functions
 
@@ -34,70 +29,6 @@
 
 (defn is-dynamic-handler? [user-id application]
   (contains? (set (get-in application [:workflow :handlers])) user-id))
-
-;;; Event storage
-
-(defn- fix-workflow-from-db [wf]
-  ;; TODO could use a schema for this coercion
-  (update (json/parse-string wf)
-          :type keyword))
-
-(defn- datestring->datetime [s]
-  (if (string? s)
-    (time-format/parse s)
-    s))
-
-(def ^:private datestring-coercion-matcher
-  {DateTime datestring->datetime})
-
-(defn- coercion-matcher [schema]
-  (or (datestring-coercion-matcher schema)
-      (coerce/string-coercion-matcher schema)))
-
-;; TODO: remove "dynamic" from names
-(def ^:private coerce-dynamic-event-commons
-  (coerce/coercer (st/open-schema events/EventBase) coercion-matcher))
-
-(def ^:private coerce-dynamic-event-specifics
-  (coerce/coercer events/Event coercion-matcher))
-
-(defn- coerce-dynamic-event [event]
-  ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
-  (-> event
-      coerce-dynamic-event-commons
-      coerce-dynamic-event-specifics))
-
-(defn json->event [json]
-  (when json
-    (let [result (coerce-dynamic-event (json/parse-string json))]
-      (when (schema.utils/error? result)
-        ;; similar exception as what schema.core/validate throws
-        (throw (ex-info (str "Value does not match schema: " (pr-str result))
-                        {:schema events/Event :value json :error result})))
-      result)))
-
-(defn event->json [event]
-  (events/validate-event event)
-  (json/generate-string event))
-
-(defn- fix-event-from-db [event]
-  (assoc (-> event :eventdata json->event)
-         :event/id (:id event)))
-
-(defn get-application-events [application-id]
-  (map fix-event-from-db (db/get-application-events {:application application-id})))
-
-(defn get-all-events-since [event-id]
-  (map fix-event-from-db (db/get-application-events-since {:id event-id})))
-
-(defn add-event! [event]
-  (db/add-application-event! {:application (:application/id event)
-                              :user (:event/actor event)
-                              :comment nil
-                              :round -1
-                              :event (str (:event/type event))
-                              :eventdata (event->json event)})
-  nil)
 
 ;;; Creating applications
 
@@ -148,7 +79,7 @@
        :workflow/type (:type workflow)})))
 
 (defn add-application-created-event! [opts]
-  (add-event! (application-created-event (assoc opts :allocate-external-id? true))))
+  (events/add-event! (application-created-event (assoc opts :allocate-external-id? true))))
 
 (defn- get-workflow-id-for-catalogue-items [catalogue-item-ids]
   (:workflow/id (application-created-event {:catalogue-item-ids catalogue-item-ids})))
@@ -168,11 +99,16 @@
 
 ;;; Running commands
 
+(defn- fix-workflow-from-db [wf]
+  ;; TODO could use a schema for this coercion
+  (update (json/parse-string wf)
+          :type keyword))
+
 (defn get-dynamic-application-state [application-id] ; TODO: legacy code; remove me
   (let [application (or (first (db/get-applications {:id application-id}))
                         (throw (rems.InvalidRequestException.
                                 (str "Application " application-id " not found"))))
-        events (get-application-events application-id)
+        events (events/get-application-events application-id)
         application (assoc application
                            :state :application.state/draft
                            :dynamic-events events
@@ -205,13 +141,13 @@
   ;; lots of transaction conflicts when there is contention. This lock
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
-  (let [events (get-application-events (:application-id cmd))
+  (let [events (events/get-application-events (:application-id cmd))
         app (-> nil
                 (dynamic/apply-events events)
                 (model/enrich-workflow-handlers workflow/get-workflow))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
-      (add-event! (:result result))
+      (events/add-event! (:result result))
       result)))
 
 (defn accept-invitation [user-id invitation-token]

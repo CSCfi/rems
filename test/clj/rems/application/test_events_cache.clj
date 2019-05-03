@@ -3,8 +3,8 @@
             [clojure.test :refer :all]
             [mount.core :as mount]
             [rems.application.events-cache :as events-cache]
-            [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.events :as events]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.users :as users])
   (:import [java.util UUID]))
@@ -36,7 +36,7 @@
                :event/time (time/now)
                :event/actor user-id
                :application/id app-id}]
-    (applications/add-event! event)
+    (events/add-event! event)
     event))
 
 ;; in case the cache uses mount and somebody forgets to start it

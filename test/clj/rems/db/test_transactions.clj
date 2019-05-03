@@ -5,6 +5,7 @@
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.resource :as resource]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
@@ -110,11 +111,11 @@
                           (conman/with-transaction [db/*db* {:isolation :serializable
                                                              :read-only? true}]
                             {::app-id app-id
-                             ::events (applications/get-application-events app-id)}))
+                             ::events (events/get-application-events app-id)}))
         read-all-events (fn []
                           (conman/with-transaction [db/*db* {:isolation :serializable
                                                              :read-only? true}]
-                            {::events (applications/get-all-events-since 0)}))
+                            {::events (events/get-all-events-since 0)}))
         thread-pool (Executors/newCachedThreadPool)
         app-events-readers (submit-all thread-pool (for [app-id app-ids]
                                                      (fn [] (sample-until-interrupted
@@ -135,7 +136,7 @@
           writer-results (remove #{::transaction-conflict} writer-attempts)
           app-events-reader-results (flatten (map #(.get ^Future %) app-events-readers))
           all-events-reader-results (flatten (map #(.get ^Future %) all-events-readers))
-          final-events (applications/get-all-events-since 0)
+          final-events (events/get-all-events-since 0)
           final-events-by-app-id (group-by :application/id final-events)]
       (comment
         (prn 'writer-attempts (count writer-attempts))
