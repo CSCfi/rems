@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
+            [rems.db.attachments :as attachments]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.util :refer [getx-user-id]]
@@ -21,20 +22,6 @@
 
 (s/defschema AttachmentMetadata
   {:id s/Num})
-
-(defn- check-attachment-content-type
-  "Checks that content-type matches the allowed ones listed on the UI side:
-   .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-  [content-type]
-  (when-not (or (#{"application/pdf"
-                   "application/msword"
-                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                   "application/vnd.ms-powerpoint"
-                   "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                   "text/plain"}
-                 content-type)
-                (.startsWith content-type "image/"))
-    (throw (rems.InvalidRequestException. (str "Unsupported content-type: " content-type)))))
 
 (s/defschema CreateLicenseResponse
   {:success s/Bool
@@ -82,7 +69,7 @@
       :multipart-params [file :- upload/TempFileUpload]
       :middleware [multipart/wrap-multipart-params]
       :return AttachmentMetadata
-      (check-attachment-content-type (:content-type file))
+      (attachments/check-attachment-content-type (:content-type file))
       (ok (licenses/create-license-attachment! file (getx-user-id))))
 
     (POST "/remove_attachment" []
@@ -99,7 +86,7 @@
       :roles #{:owner}
       :path-params [attachment-id :- (describe s/Int "attachment id")]
       (if-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
-        (do (check-attachment-content-type (:type attachment))
+        (do (attachments/check-attachment-content-type (:type attachment))
             (-> (:data attachment)
                 (java.io.ByteArrayInputStream.)
                 (ok)

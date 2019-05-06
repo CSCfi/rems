@@ -6,7 +6,7 @@
   (:import [java.io ByteArrayOutputStream FileInputStream File ByteArrayInputStream]
            rems.InvalidRequestException))
 
-(defn- check-attachment-content-type
+(defn check-attachment-content-type
   "Checks that content-type matches the allowed ones listed on the UI side:
    .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
   [content-type]
