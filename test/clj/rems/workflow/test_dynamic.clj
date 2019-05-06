@@ -174,7 +174,7 @@
         injections {:get-catalogue-item {1 {:id 1 :resid "abc" :formid 1 :wfid 1}
                                          2 {:id 2 :resid "efg" :formid 1 :wfid 1}
                                          3 {:id 3 :resid "hij" :formid 1 :wfid 2}
-                                         4 {:id 4 :resid "klm" :formid 2 :wfid 1}} }]
+                                         4 {:id 4 :resid "klm" :formid 2 :wfid 1}}}]
     (testing "applicant can change draft resources"
       (is (= [{:event/type :application.event/resources-changed
                :event/time test-time

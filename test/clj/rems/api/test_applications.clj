@@ -377,9 +377,18 @@
                 "application.event/submitted"]
                (map :event/type (get submitted :application/events))))))))
 
+(deftest test-application-close
+  (let [user-id "alice"
+        application-id (create-dummy-application user-id)]
+    (is (= {:success true}
+           (send-command user-id {:type :application.command/close
+                                  :application-id application-id
+                                  :comment ""})))
+    (is (= "application.state/closed"
+           (:application/state (get-application application-id user-id))))))
+
 (deftest test-application-validation
-  (let [api-key "42"
-        user-id "alice"
+  (let [user-id "alice"
         workflow-id (create-dynamic-workflow)
         form-id (create-form-with-fields [{:title {:en "req"}
                                            :type "text"
