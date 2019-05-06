@@ -539,14 +539,17 @@
 
 (defn- actions-form [application]
   (let [app-id (:application/id application)
-        see-everything? (contains? (:application/permissions application) :see-everything)
+        ;; The :see-everything permission is used to determine whether the user
+        ;; is allowed to see all comments. It would not make sense for the user
+        ;; to be able to write a comment which he then cannot see.
+        show-comment-field? (contains? (:application/permissions application) :see-everything)
         actions (action-buttons application)
         reload (partial reload! app-id)
         forms [[:div#actions-forms.mt-3
                 [request-comment-form app-id reload]
                 [request-decision-form app-id reload]
                 [comment-form app-id reload]
-                [close-form app-id see-everything? reload]
+                [close-form app-id show-comment-field? reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
                 [add-licenses-form app-id reload]
