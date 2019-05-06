@@ -440,7 +440,7 @@
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})))
-        read-request #(request :get "/api/applications/attachments" {:application-id app-id :attachment-id %})]
+        read-request #(request :get (str "/api/applications/attachment/" %))]
     (testing "uploading attachment for a draft"
       (let [body (-> (upload-request filecontent)
                      (authenticate api-key user-id)

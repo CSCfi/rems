@@ -1,7 +1,6 @@
 (ns rems.db.attachments
   (:require [rems.application-util :refer [form-fields-editable?]]
             [rems.InvalidRequestException]
-            #_[rems.db.applications :as applications]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db])
   (:import [java.io ByteArrayOutputStream FileInputStream File ByteArrayInputStream]
@@ -24,38 +23,29 @@
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id]
   (check-attachment-content-type content-type)
-  (let [application ((resolve 'rems.db.applications/get-application) user-id application-id) ;; will throw if unauthorized?
-        byte-array (with-open [input (FileInputStream. ^File tempfile)
+  (let [byte-array (with-open [input (FileInputStream. ^File tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
-                     (.toByteArray buffer))]
-    (when-not (form-fields-editable? application)
-      (throw-forbidden))
-    (let [id (:id (db/save-attachment! {:application application-id
-                                        :user user-id
-                                        :filename filename
-                                        :type content-type
-                                        :data byte-array}))]
-      {:id id
-       :success true})))
+                     (.toByteArray buffer))
+        id (:id (db/save-attachment! {:application application-id
+                                      :user user-id
+                                      :filename filename
+                                      :type content-type
+                                      :data byte-array}))]
+    {:id id
+     :success true}))
 
-(defn get-attachment [user-id application-id attachment-id]
-  (let [application ((resolve 'rems.db.applications/get-application) user-id application-id)] ;; will throw if unauthorized?
-    (when-let [attachment (db/get-attachment {:id attachment-id})]
-      (assert (= (:appid attachment) application-id)
-              {:got (:appid attachment) :wanted application-id})
-      (check-attachment-content-type (:type attachment))
-      {:data (-> (:data attachment)
-                 (ByteArrayInputStream.))
-       :content-type (:type attachment)})))
+(defn get-attachment [attachment-id]
+  (when-let [{:keys [type appid filename data]} (db/get-attachment {:id attachment-id})]
+    (check-attachment-content-type type)
+    {:application/id appid
+     :attachment/filename filename
+     :attachment/data data
+     :attachment/type type}))
 
-;; TODO no access control here, only in get-attachment
 (defn get-attachments-for-application [application-id]
   (vec
    (for [{:keys [id filename type]} (db/get-attachments-for-application {:application-id application-id})]
      {:attachment/id id
       :attachment/filename filename
       :attachment/type type})))
-
-(comment
-  (get-attachments-for-application 1022))

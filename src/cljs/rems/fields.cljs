@@ -215,7 +215,7 @@
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
         filename-field [:div.field
                         [:a.btn.btn-secondary.mr-2
-                         {:href (str "/api/applications/attachments?application-id=" app-id "&attachment-id=" value)
+                         {:href (str "/api/applications/attachment/" value)
                           :target :_new}
                          filename " " (external-link)]]
         upload-field [:div.upload-file.mr-2
