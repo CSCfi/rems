@@ -21,37 +21,28 @@
     (throw (InvalidRequestException. (str "Unsupported content-type: " content-type)))))
 
 (defn save-attachment!
-  [{:keys [tempfile filename content-type]} user-id application-id item-id]
+  [{:keys [tempfile filename content-type]} user-id application-id]
   (check-attachment-content-type content-type)
-  (let [application (applications/get-application user-id application-id)
+  (let [application (applications/get-application user-id application-id) ;; will throw if unauthorized?
         byte-array (with-open [input (FileInputStream. ^File tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
     (when-not (form-fields-editable? application)
       (throw-forbidden))
-    (db/save-attachment! {:application application-id
-                          :form (get-in application [:application/form :form/id])
-                          :item item-id
-                          :user user-id
-                          :filename filename
-                          :type content-type
-                          :data byte-array})))
+    (let [id (:id (db/save-attachment! {:application application-id
+                                        :user user-id
+                                        :filename filename
+                                        :type content-type
+                                        :data byte-array}))]
+      {:id id
+       :success true})))
 
-(defn remove-attachment! [user-id application-id item-id]
-  (let [application (applications/get-application user-id application-id)]
-    (when-not (form-fields-editable? application)
-      (throw-forbidden))
-    (db/remove-attachment! {:application application-id
-                            :form (get-in application [:application/form :form/id])
-                            :item item-id})))
-
-(defn get-attachment [user-id application-id field-id]
-  (let [application (applications/get-application user-id application-id)
-        form-id (get-in application [:application/form :form/id])]
-    (when-let [attachment (db/get-attachment {:item field-id
-                                              :form form-id
-                                              :application application-id})]
+(defn get-attachment [user-id application-id attachment-id]
+  (let [application (applications/get-application user-id application-id)] ;; will throw if unauthorized?
+    (when-let [attachment (db/get-attachment {:id attachment-id})]
+      (assert (= (:appid attachment) application-id)
+              {:got (:appid attachment) :wanted application-id})
       (check-attachment-content-type (:type attachment))
       {:data (-> (:data attachment)
                  (ByteArrayInputStream.))

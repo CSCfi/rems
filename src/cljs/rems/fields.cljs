@@ -214,7 +214,7 @@
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
         filename-field [:div.field
                         [:a.btn.btn-secondary.mr-2
-                         {:href (str "/api/applications/attachments?application-id=" app-id "&field-id=" id)
+                         {:href (str "/api/applications/attachments?application-id=" app-id "&attachment-id=" value)
                           :target :_new}
                          value " " (external-link)]]
         upload-field [:div.upload-file.mr-2
@@ -236,7 +236,7 @@
         remove-button [:button.btn.btn-secondary.mr-2
                        {:on-click (fn [event]
                                     (on-change "")
-                                    (on-remove-attachment (text :t.form/attachment-remove)))}
+                                    (on-remove-attachment))}
                        (text :t.form/attachment-remove)]]
     [field-wrapper (assoc opts :readonly-component (if (empty? value)
                                                      [:span]

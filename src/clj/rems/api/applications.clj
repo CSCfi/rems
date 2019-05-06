@@ -61,6 +61,10 @@
    (s/optional-key :application-id) s/Num
    (s/optional-key :errors) [s/Any]})
 
+(s/defschema SaveAttachmentResponse
+  (merge SuccessResponse
+         {(s/optional-key :id) s/Num}))
+
 ;; Api implementation
 
 (defn invalid-user? [u]
@@ -197,8 +201,8 @@
       :summary "Get an attachment for a field in an application"
       :roles #{:logged-in}
       :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (if-let [attachment (attachments/get-attachment (getx-user-id) application-id field-id)]
+                     attachment-id :- (describe s/Int "attachment id")]
+      (if-let [attachment (attachments/get-attachment (getx-user-id) application-id attachment-id)]
         (-> (ok (:data attachment))
             (content-type (:content-type attachment)))
         (api-util/not-found-json-response)))
@@ -208,21 +212,10 @@
       :summary "Add an attachment file related to an application field"
       :roles #{:applicant}
       :multipart-params [file :- upload/TempFileUpload]
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      :query-params [application-id :- (describe s/Int "application id")]
       :middleware [multipart/wrap-multipart-params]
-      :return SuccessResponse
-      (attachments/save-attachment! file (getx-user-id) application-id field-id)
-      (ok {:success true}))
-
-    (POST "/remove-attachment" []
-      :summary "Remove an attachment file related to an application field"
-      :roles #{:applicant}
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
-      :return SuccessResponse
-      (attachments/remove-attachment! (getx-user-id) application-id field-id)
-      (ok {:success true}))
+      :return SaveAttachmentResponse
+      (ok (attachments/save-attachment! file (getx-user-id) application-id)))
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"

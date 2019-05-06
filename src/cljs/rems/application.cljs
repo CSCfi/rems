@@ -198,34 +198,12 @@
             ;; adding an attachment and not clicking [Save] will leave
             ;; a dangling attachment in the db. consider forcing a
             ;; save here. see also comment in remove-attachment
-            :handler (partial status-modal/common-success-handler! (fn []))
+            :handler (partial status-modal/common-success-handler! (fn [resp]
+                                                                     (rf/dispatch [::set-field-value field-id (str (:id resp))])))
             :error-handler status-modal/common-error-handler!})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
-
-(defn- remove-attachment [{:keys [db]} [_ field-id description]]
-  (let [application-id (get-in db [::application :application/id])]
-    (status-modal/common-pending-handler! description)
-    (post! "/api/applications/remove-attachment"
-           {:url-params {:application-id application-id
-                         :field-id field-id}
-            :body {}
-            :handler (fn [response]
-                       ;; if we just remove the attachment from the backend but
-                       ;; don't save the field, the application will be left in an
-                       ;; inconsistent state (referring to a nonexistant attachment)
-                       ;; TODO: save only the value for the attachment field
-                       (if (:success response)
-                         (rf/dispatch [::save-application (text :t.form/save)])
-                         (status-modal/common-error-handler! response)))
-            :error-handler status-modal/common-error-handler!})
-    {}))
-
-(rf/reg-event-fx ::remove-attachment remove-attachment)
-
-
-
 
 ;;;; UI components
 
@@ -310,7 +288,7 @@
                [fields/field (assoc fld
                                     :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
-                                    :on-remove-attachment #(rf/dispatch [::remove-attachment (:field/id fld) %])
+                                    :on-remove-attachment #(rf/dispatch [::set-field-value (:field/id fld) ""])
                                     :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
                                     :field/value (get field-values (:field/id fld))
                                     :diff (get show-diff (:field/id fld))

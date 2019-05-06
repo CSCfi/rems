@@ -374,29 +374,15 @@ ON CONFLICT (catAppId, formMapId)
 DO UPDATE
 SET (modifierUserId, value) = (:user, :value);
 
--- :name save-attachment! :!
-INSERT INTO application_attachments
-(catAppId, modifierUserId, filename, type, data, formMapId)
+-- :name save-attachment! :insert
+INSERT INTO attachment
+(appId, modifierUserId, filename, type, data)
 VALUES
-(:application, :user, :filename, :type, :data,
- (SELECT id FROM application_form_item_map
-  WHERE formId = :form AND formItemId = :item))
-ON CONFLICT (catAppId, formMapId)
-DO UPDATE
-SET (modifierUserId, filename, type, data) = (:user, :filename, :type, :data);
-
--- :name remove-attachment! :!
-DELETE FROM application_attachments
-WHERE catAppId = :application
-AND formmapid = (SELECT id FROM application_form_item_map
-                 WHERE formId = :form AND formItemId = :item);
+(:application, :user, :filename, :type, :data)
 
 -- :name get-attachment :? :1
-SELECT filename, type, data FROM application_attachments attachments
-LEFT OUTER JOIN application_form_item_map itemmap ON attachments.formMapId = itemmap.id
-WHERE attachments.catAppId = :application
-  AND itemmap.formItemId = :item
-  AND itemmap.formId = :form;
+SELECT appid, filename, type, data FROM attachment
+WHERE id = :id
 
 -- :name save-license-approval! :!
 -- NB: this is not atomic
