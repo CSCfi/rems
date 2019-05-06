@@ -195,11 +195,15 @@
            {:url-params {:application-id application-id
                          :field-id field-id}
             :body file
-            ;; adding an attachment and not clicking [Save] will leave
-            ;; a dangling attachment in the db. consider forcing a
-            ;; save here. see also comment in remove-attachment
-            :handler (partial status-modal/common-success-handler! (fn [resp]
-                                                                     (rf/dispatch [::set-field-value field-id (str (:id resp))])))
+            ;; force saving a draft when you upload an attachment.
+            ;; this ensures that the attachment is not left
+            ;; dangling (with no references to it)
+            :handler (fn [response]
+                       (if (:success response)
+                         (do
+                           (rf/dispatch [::set-field-value field-id (str (:id response))])
+                           (rf/dispatch [::save-application (text :t.form/upload)]))
+                         (status-modal/common-error-handler! response)))
             :error-handler status-modal/common-error-handler!})
     {}))
 
