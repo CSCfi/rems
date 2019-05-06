@@ -3,7 +3,8 @@
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application.events :as events]
-            [rems.permissions :as permissions]))
+            [rems.permissions :as permissions]
+            [rems.util :refer [getx]]))
 
 ;;;; Roles & Permissions
 
@@ -492,7 +493,8 @@
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
 (defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license
-                                                  get-user get-users-with-role get-workflow]}]
+                                                  get-user get-users-with-role get-workflow
+                                                  get-attachments-for-application]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
@@ -514,6 +516,7 @@
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
         (assoc :application/applicant-attributes (get-user (:application/applicant application)))
+        (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)
         (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))

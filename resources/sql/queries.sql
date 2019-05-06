@@ -384,6 +384,10 @@ VALUES
 SELECT appid, filename, type, data FROM attachment
 WHERE id = :id
 
+-- :name get-attachments-for-application :? :*
+SELECT id, filename, type, modifierUserId FROM attachment
+WHERE appid = :application-id
+
 -- :name save-license-approval! :!
 -- NB: this is not atomic
 INSERT INTO application_license_approval_values

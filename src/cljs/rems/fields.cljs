@@ -211,12 +211,13 @@
   (let [id (:field/id opts)
         title (localized (:field/title opts))
         value (:field/value opts)
+        filename (get-in opts [:field/attachment :attachment/filename])
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
         filename-field [:div.field
                         [:a.btn.btn-secondary.mr-2
                          {:href (str "/api/applications/attachments?application-id=" app-id "&attachment-id=" value)
                           :target :_new}
-                         value " " (external-link)]]
+                         filename " " (external-link)]]
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"

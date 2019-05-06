@@ -27,7 +27,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [localize-decision localize-event localized localize-item localize-state localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch post!]])
+            [rems.util :refer [dispatch! fetch parse-int post!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -276,6 +276,7 @@
   (let [field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
         field-validations (index-by [:field-id] (:validation-errors edit-application))
+        attachments (index-by [:attachment/id] (:application/attachments application))
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
     [collapsible/component
@@ -290,6 +291,8 @@
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
                                     :on-remove-attachment #(rf/dispatch [::set-field-value (:field/id fld) ""])
                                     :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
+                                    :field/attachment (when (= :attachment (:field/type fld))
+                                                        (get attachments (parse-int (:field/value fld))))
                                     :field/value (get field-values (:field/id fld))
                                     :diff (get show-diff (:field/id fld))
                                     :validation (field-validations (:field/id fld))

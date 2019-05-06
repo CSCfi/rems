@@ -174,13 +174,18 @@
        :archived false
        :expired false}})
 
+;; no attachments here for now
+(defn ^:private get-attachments-for-application [id]
+  [])
+
 (deftest test-application-view
   (let [injections {:get-form get-form
                     :get-catalogue-item get-catalogue-item
                     :get-license get-license
                     :get-user get-user
                     :get-users-with-role get-users-with-role
-                    :get-workflow get-workflow}
+                    :get-workflow get-workflow
+                    :get-attachments-for-application get-attachments-for-application}
         apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events
@@ -304,6 +309,7 @@
                                                                     :field/optional false
                                                                     :field/options []
                                                                     :field/max-length 100}]}
+                                  :application/attachments []
                                   :application/workflow {:workflow/id 50
                                                          :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/handlers #{"handler"}
