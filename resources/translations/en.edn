@@ -261,6 +261,8 @@
          :alert-disabled-resources "The following resources can't be applied anymore."
          :application "Application"
          :attachment-remove "Remove"
+         :checkbox-checked "Yes"
+         :checkbox-unchecked "No"
          :comment "Comment"
          :date "Time"
          :diff-hide "Hide changes"
@@ -309,6 +311,10 @@
            :approve "Approval"
            :approved "Approved"
            :rejected "Rejected"}
+  :search {:close-search "Close search"
+           :open-search "Open search"
+           :search "Search"
+           :search-parameters "Search parameters"}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You are unauthorized to use this page."}
   :forbidden-page {:forbidden "Forbidden"

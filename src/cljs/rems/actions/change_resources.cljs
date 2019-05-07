@@ -123,7 +123,7 @@
                                          (sort-by #(get-catalogue-item-title % language)))
         original-form-id (get-in application [:application/form :form/id])
         original-workflow-id (get-in application [:application/workflow :workflow/id])
-        compatible-first-sort-fn #(if (compatible-item? % enriched-selected-resources original-workflow-id original-form-id ) -1 1)
+        compatible-first-sort-fn #(if (compatible-item? % enriched-selected-resources original-workflow-id original-form-id) -1 1)
         sorted-selected-catalogue (->> catalogue
                                        (remove (comp (set selected-resources) :id))
                                        (sort-by #(get-catalogue-item-title % language))
@@ -134,7 +134,7 @@
                        :text (text :t.actions/change-resources)
                        :class "btn-primary"
                        :disabled (or (and (not can-bundle-all?)
-                                          (or (show-bundling-warning? enriched-selected-resources) )
+                                          (or (show-bundling-warning? enriched-selected-resources))
                                           (show-change-form-warning? original-form-id enriched-selected-resources)
                                           (show-change-workflow-warning? original-workflow-id enriched-selected-resources))
                                      (empty? selected-resources)
@@ -145,7 +145,7 @@
        [:div
         (cond (show-bundling-warning? enriched-selected-resources)
               [bundling-warning enriched-selected-resources can-bundle-all? language]
-              (show-change-form-warning? original-form-id  enriched-selected-resources)
+              (show-change-form-warning? original-form-id enriched-selected-resources)
               [change-workflow-warning enriched-selected-resources can-bundle-all? language]
               (show-change-workflow-warning? original-workflow-id enriched-selected-resources)
               [change-form-warning enriched-selected-resources can-bundle-all? language])

@@ -1,7 +1,8 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
-            [rems.guide-functions])
+            [rems.guide-functions]
+            [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn external-link []
@@ -44,8 +45,8 @@
   "Displays a checkbox."
   [checked?]
   (if checked?
-    [:i.far.fa-lg.fa-check-square.color1]
-    [:i.far.fa-lg.fa-square.color1]))
+    [:i.far.fa-lg.fa-check-square {:aria-label (text :t.form/checkbox-checked)}]
+    [:i.far.fa-lg.fa-square {:aria-label (text :t.form/checkbox-unchecked)}]))
 
 (defn info-field
   "A component that shows a readonly field with title and value.

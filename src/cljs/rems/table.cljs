@@ -3,10 +3,10 @@
   (:require [clojure.data :refer [diff]]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
-            [hiccup-find.core :as hf]
-            [schema.core :as s]
             [reagent.core :as reagent]
-            [rems.atoms :refer [close-symbol search-symbol sort-symbol]]))
+            [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
+            [rems.text :refer [text]]
+            [schema.core :as s]))
 
 (defn column-header [column-definitions col]
   ((get-in column-definitions [col :header] (constantly ""))))
@@ -113,7 +113,7 @@
   {:column-definitions {s/Keyword {(s/optional-key :header) s/Any
                                    (s/optional-key :value) Applicable
                                    (s/optional-key :values) Applicable
-                                   (s/optional-key :sortable?)  s/Bool
+                                   (s/optional-key :sortable?) s/Bool
                                    (s/optional-key :sort-value) Applicable
                                    (s/optional-key :filterable?) s/Bool
                                    (s/optional-key :filter-value) Applicable
@@ -142,6 +142,7 @@
        :name "table-search"
        :default-value filters-new
        :placeholder ""
+       :aria-label (text :t.search/search-parameters)
        :on-change (fn [event]
                     (set-filtering (assoc filtering :filters-new (-> event .-target .-value))))
        :on-blur update-current-filters
@@ -150,7 +151,8 @@
                          (.preventDefault event)
                          (update-current-filters event)))}]
      [:button.btn.btn-primary
-      {:on-click update-current-filters}
+      {:on-click update-current-filters
+       :aria-label (text :t.search/search)}
       (search-symbol)]]))
 
 (defn- filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
@@ -158,6 +160,8 @@
     [:div.rems-table-search-toggle.d-flex.flex-row-reverse
      [:button.btn
       {:class (if show-filters "btn-secondary" "btn-primary")
+       :aria-label (if show-filters (text :t.search/close-search) (text :t.search/open-search))
+       ;; TODO: focus needs to be moved to the search field after opening it, especially for screen readers
        :on-click #(set-filtering (-> filtering
                                      (update :show-filters not)
                                      (assoc :filters ""

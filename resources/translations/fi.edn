@@ -261,6 +261,8 @@
          :alert-disabled-resources "Seuraavia resursseja ei voi enää hakea."
          :application "Tiedot"
          :attachment-remove "Poista"
+         :checkbox-checked "Kyllä"
+         :checkbox-unchecked "Ei"
          :comment "Kommentti"
          :date "Aika"
          :diff-hide "Piilota muutokset"
@@ -309,6 +311,10 @@
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
            :rejected "Hylätty"}
+  :search {:close-search "Sulje haku"
+           :open-search "Avaa haku"
+           :search "Hae"
+           :search-parameters "Hakutermit"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeuksia"
                       :you-are-unauthorized "Sinulla ei ole käyttöoikeuksia tähän sivuun."}
   :forbidden-page {:forbidden "Kielletty"

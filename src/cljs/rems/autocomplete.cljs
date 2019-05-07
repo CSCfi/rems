@@ -4,6 +4,7 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+;; TODO: add an ID to the input field and then link all labels to it
 (defn component
   "Multiple selectable, searchable list"
   [{:keys [value items add-fn remove-fn item->key item->text item->value value->text search-fields term-match-fn max-results]
