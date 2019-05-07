@@ -460,6 +460,18 @@
                              (authenticate api-key "carl")
                              handler)]
             (is (response-is-forbidden? response))))))
+    (testing "retrieving nonexistent attachment"
+      (let [response (-> (read-request 999999999999999)
+                         (authenticate api-key "carl")
+                         handler)]
+        (is (response-is-not-found? response))))
+    (testing "uploading attachment for nonexistent application"
+      (let [response (-> (request :post "/api/applications/add-attachment?application-id=99999999")
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (response-is-forbidden? response))))
     (testing "uploading malicious file for a draft"
       (let [response (-> (upload-request malicious-content)
                          (authenticate api-key user-id)
