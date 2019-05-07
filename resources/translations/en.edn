@@ -273,6 +273,7 @@
          :licenses "Terms of Use"
          :maxlength "(max %1 characters)"
          :must-accept-licenses "To be eligible to the resources of this application, each member must accept the following terms of use."
+         :no-attachment "No attachment"
          :optional "(optional)"
          :resources "Resources"
          :save "Save as draft"

@@ -273,6 +273,7 @@
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Saadakseen oikeudet haettuihin resursseihin, jokaisen hakijan pitää hyväksyä seuraavat käyttöehdot."
+         :no-attachment "Ei liitetiedostoa"
          :optional "(ei pakollinen)"
          :previous-value "Edellinen"
          :resources "Resurssit"

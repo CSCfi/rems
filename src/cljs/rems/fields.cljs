@@ -213,11 +213,14 @@
         filename (get-in opts [:field/attachment :attachment/filename])
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
         link (fn [attachment-id filename]
-               [:div.field
-                [:a.btn.btn-secondary.mr-2
-                 {:href (str "/api/applications/attachment/" attachment-id)
-                  :target :_new}
-                 filename " " (external-link)]])
+               (if (empty? attachment-id)
+                 [:div.field.mr-2
+                  [:span.btn.btn-secondary.disabled (text :t.form/no-attachment)]]
+                 [:div.field
+                  [:a.btn.btn-secondary.mr-2
+                   {:href (str "/api/applications/attachment/" attachment-id)
+                    :target :_new}
+                   filename " " (external-link)]]))
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
@@ -240,9 +243,7 @@
                                     (on-remove-attachment))}
                        (text :t.form/attachment-remove)]]
     [field-wrapper (assoc opts
-                          :readonly-component (if (empty? value)
-                                                [:span]
-                                                (link value filename))
+                          :readonly-component (link value filename)
                           :diff-component [:div {:style {:display :flex}}
                                            [:div
                                             (text :t.form/previous-value) ": "
@@ -250,11 +251,11 @@
                                            [:div
                                             (text :t.form/current-value) ": "
                                             (link value filename)]])
-     (if (empty? value)
-       upload-field
-       [:div {:style {:display :flex :justify-content :flex-start}}
-        (link value filename)
-        remove-button])]))
+     [:div {:style {:display :flex :justify-content :flex-start}}
+      (link value filename)
+      (if (empty? value)
+        upload-field
+        remove-button)]]))
 
 (defn unsupported-field
   [f]
