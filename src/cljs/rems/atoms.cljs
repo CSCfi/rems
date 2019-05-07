@@ -45,8 +45,8 @@
   "Displays a checkbox."
   [checked?]
   (if checked?
-    [:i.far.fa-lg.fa-check-square.color1 {:aria-label (text :t.form/checkbox-checked)}]
-    [:i.far.fa-lg.fa-square.color1 {:aria-label (text :t.form/checkbox-unchecked)}]))
+    [:i.far.fa-lg.fa-check-square {:aria-label (text :t.form/checkbox-checked)}]
+    [:i.far.fa-lg.fa-square {:aria-label (text :t.form/checkbox-unchecked)}]))
 
 (defn info-field
   "A component that shows a readonly field with title and value.
