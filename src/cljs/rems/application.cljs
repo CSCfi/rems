@@ -201,6 +201,7 @@
             :handler (fn [response]
                        (if (:success response)
                          (do
+                           ;; no race condition here: events are handled in a FIFO manner
                            (rf/dispatch [::set-field-value field-id (str (:id response))])
                            (rf/dispatch [::save-application (text :t.form/upload)]))
                          (status-modal/common-error-handler! response)))
