@@ -219,7 +219,7 @@
                  [:div.field
                   [:a.btn.btn-secondary.mr-2
                    {:href (str "/api/applications/attachment/" attachment-id)
-                    :target :_new}
+                    :target :_blank}
                    filename " " (external-link)]]))
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
