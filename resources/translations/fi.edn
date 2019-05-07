@@ -261,6 +261,8 @@
          :alert-disabled-resources "Seuraavia resursseja ei voi enää hakea."
          :application "Tiedot"
          :attachment-remove "Poista"
+         :checkbox-checked "Kyllä"
+         :checkbox-unchecked "Ei"
          :comment "Kommentti"
          :date "Aika"
          :diff-hide "Piilota muutokset"

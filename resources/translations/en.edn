@@ -261,6 +261,8 @@
          :alert-disabled-resources "The following resources can't be applied anymore."
          :application "Application"
          :attachment-remove "Remove"
+         :checkbox-checked "Yes"
+         :checkbox-unchecked "No"
          :comment "Comment"
          :date "Time"
          :diff-hide "Hide changes"
