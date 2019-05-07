@@ -1,12 +1,12 @@
 (ns rems.db.attachments
   (:require [rems.application-util :refer [form-fields-editable?]]
-            [rems.db.applications :as applications]
+            [rems.InvalidRequestException]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db])
   (:import [java.io ByteArrayOutputStream FileInputStream File ByteArrayInputStream]
-           [rems InvalidRequestException]))
+           rems.InvalidRequestException))
 
-(defn- check-attachment-content-type
+(defn check-attachment-content-type
   "Checks that content-type matches the allowed ones listed on the UI side:
    .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
   [content-type]
@@ -21,38 +21,31 @@
     (throw (InvalidRequestException. (str "Unsupported content-type: " content-type)))))
 
 (defn save-attachment!
-  [{:keys [tempfile filename content-type]} user-id application-id item-id]
+  [{:keys [tempfile filename content-type]} user-id application-id]
   (check-attachment-content-type content-type)
-  (let [application (applications/get-application user-id application-id)
-        byte-array (with-open [input (FileInputStream. ^File tempfile)
+  (let [byte-array (with-open [input (FileInputStream. ^File tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
-                     (.toByteArray buffer))]
-    (when-not (form-fields-editable? application)
-      (throw-forbidden))
-    (db/save-attachment! {:application application-id
-                          :form (get-in application [:application/form :form/id])
-                          :item item-id
-                          :user user-id
-                          :filename filename
-                          :type content-type
-                          :data byte-array})))
+                     (.toByteArray buffer))
+        id (:id (db/save-attachment! {:application application-id
+                                      :user user-id
+                                      :filename filename
+                                      :type content-type
+                                      :data byte-array}))]
+    {:id id
+     :success true}))
 
-(defn remove-attachment! [user-id application-id item-id]
-  (let [application (applications/get-application user-id application-id)]
-    (when-not (form-fields-editable? application)
-      (throw-forbidden))
-    (db/remove-attachment! {:application application-id
-                            :form (get-in application [:application/form :form/id])
-                            :item item-id})))
+(defn get-attachment [attachment-id]
+  (when-let [{:keys [type appid filename data]} (db/get-attachment {:id attachment-id})]
+    (check-attachment-content-type type)
+    {:application/id appid
+     :attachment/filename filename
+     :attachment/data data
+     :attachment/type type}))
 
-(defn get-attachment [user-id application-id field-id]
-  (let [application (applications/get-application user-id application-id)
-        form-id (get-in application [:application/form :form/id])]
-    (when-let [attachment (db/get-attachment {:item field-id
-                                              :form form-id
-                                              :application application-id})]
-      (check-attachment-content-type (:type attachment))
-      {:data (-> (:data attachment)
-                 (ByteArrayInputStream.))
-       :content-type (:type attachment)})))
+(defn get-attachments-for-application [application-id]
+  (vec
+   (for [{:keys [id filename type]} (db/get-attachments-for-application {:application-id application-id})]
+     {:attachment/id id
+      :attachment/filename filename
+      :attachment/type type})))

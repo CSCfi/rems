@@ -11,6 +11,7 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.db.attachments :as attachments]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
@@ -156,7 +157,8 @@
 ;;; Fetching applications (for API) (incl. caching)
 
 (def ^:private injections
-  {:get-form form/get-form
+  {:get-attachments-for-application attachments/get-attachments-for-application
+   :get-form form/get-form
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-license licenses/get-license
    :get-user users/get-user-attributes

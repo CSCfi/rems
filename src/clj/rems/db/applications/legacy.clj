@@ -122,7 +122,7 @@
            :value
            (cond
              (nil? application-id) ""
-             (= "attachment" (:type field)) (or (:filename (db/get-attachment query-params)) "")
+             (= "attachment" (:type field)) "" ;; there used to be support for legacy attachments here, but not any more
              :else (or (:value (db/get-field-value query-params)) "")))))
 
 (defn- assoc-field-previous-values [application fields]

@@ -434,31 +434,49 @@
         form-id (create-form-with-fields [{:title {:en "some attachment"}
                                            :type "attachment"
                                            :optional true}])
-        field-id (-> (form/get-form form-id) :items first :id)
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)
         upload-request (fn [file]
-                         (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
+                         (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})))
-        read-request (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})]
+        read-request #(request :get (str "/api/applications/attachment/" %))]
     (testing "uploading attachment for a draft"
       (let [body (-> (upload-request filecontent)
                      (authenticate api-key user-id)
                      handler
-                     read-ok-body)]
-        (is (= {:success true} body))))
+                     read-ok-body)
+            id (:id body)]
+        (is (:success body))
+        (is (number? id))
+        (testing "and retrieving it as the applicant"
+          (let [response (-> (read-request id)
+                             (authenticate api-key user-id)
+                             handler
+                             assert-response-is-ok)]
+            (is (= (slurp testfile) (slurp (:body response))))))
+        (testing "and retrieving it as non-applicant"
+          (let [response (-> (read-request id)
+                             (authenticate api-key "carl")
+                             handler)]
+            (is (response-is-forbidden? response))))))
+    (testing "retrieving nonexistent attachment"
+      (let [response (-> (read-request 999999999999999)
+                         (authenticate api-key "carl")
+                         handler)]
+        (is (response-is-not-found? response))))
+    (testing "uploading attachment for nonexistent application"
+      (let [response (-> (request :post "/api/applications/add-attachment?application-id=99999999")
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (response-is-forbidden? response))))
     (testing "uploading malicious file for a draft"
       (let [response (-> (upload-request malicious-content)
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-bad-request? response))))
-    (testing "retrieving attachment for a draft"
-      (let [response (-> read-request
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok)]
-        (is (= (slurp testfile) (slurp (:body response))))))
     (testing "uploading attachment without authentication"
       (let [response (-> (upload-request filecontent)
                          handler)]
@@ -471,11 +489,6 @@
         (is (response-is-unauthorized? response))))
     (testing "uploading attachment as non-applicant"
       (let [response (-> (upload-request filecontent)
-                         (authenticate api-key "carl")
-                         handler)]
-        (is (response-is-forbidden? response))))
-    (testing "retrieving attachment as non-applicant"
-      (let [response (-> read-request
                          (authenticate api-key "carl")
                          handler)]
         (is (response-is-forbidden? response))))

@@ -124,6 +124,11 @@
    :form/title s/Str
    :form/fields [Field]})
 
+(s/defschema ApplicationAttachment
+  {:attachment/id s/Num
+   :attachment/filename s/Str
+   :attachment/type s/Str})
+
 (s/defschema Application
   {:application/id s/Int
    :application/external-id (s/maybe s/Str)
@@ -147,7 +152,8 @@
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) #{s/Str}}
    :application/roles #{s/Keyword}
-   :application/permissions #{s/Keyword}})
+   :application/permissions #{s/Keyword}
+   :application/attachments [ApplicationAttachment]})
 
 (s/defschema ApplicationOverview
   (dissoc Application

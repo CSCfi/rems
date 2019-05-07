@@ -4,6 +4,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
+            [rems.application-util :as application-util]
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
@@ -60,6 +61,10 @@
   {:success s/Bool
    (s/optional-key :application-id) s/Num
    (s/optional-key :errors) [s/Any]})
+
+(s/defschema SaveAttachmentResponse
+  (merge SuccessResponse
+         {(s/optional-key :id) s/Num}))
 
 ;; Api implementation
 
@@ -193,36 +198,31 @@
       :return Deciders
       (ok (get-deciders)))
 
-    (GET "/attachments" []
-      :summary "Get an attachment for a field in an application"
+    (GET "/attachment/:attachment-id" []
+      :summary "Get an attachment"
       :roles #{:logged-in}
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (if-let [attachment (attachments/get-attachment (getx-user-id) application-id field-id)]
-        (-> (ok (:data attachment))
-            (content-type (:content-type attachment)))
-        (api-util/not-found-json-response)))
+      :path-params [attachment-id :- (describe s/Int "attachment id")]
+      (let [attachment (attachments/get-attachment attachment-id)
+            application-id (:application/id attachment)]
+        (when application-id
+          (applications/get-application (getx-user-id) application-id)) ;; check that user is allowed to read application
+        (if attachment
+          (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
+              (content-type (:attachment/type attachment)))
+          (api-util/not-found-json-response))))
 
     ;; TODO: think about size limit
     (POST "/add-attachment" []
-      :summary "Add an attachment file related to an application field"
+      :summary "Add an attachment file related to an application"
       :roles #{:applicant}
       :multipart-params [file :- upload/TempFileUpload]
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      :query-params [application-id :- (describe s/Int "application id")]
       :middleware [multipart/wrap-multipart-params]
-      :return SuccessResponse
-      (attachments/save-attachment! file (getx-user-id) application-id field-id)
-      (ok {:success true}))
-
-    (POST "/remove-attachment" []
-      :summary "Remove an attachment file related to an application field"
-      :roles #{:applicant}
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
-      :return SuccessResponse
-      (attachments/remove-attachment! (getx-user-id) application-id field-id)
-      (ok {:success true}))
+      :return SaveAttachmentResponse
+      (let [application (applications/get-application (getx-user-id) application-id)]
+        (when-not (application-util/form-fields-editable? application)
+          (throw-forbidden))
+        (ok (attachments/save-attachment! file (getx-user-id) application-id))))
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
