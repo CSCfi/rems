@@ -205,7 +205,6 @@
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
-;; TODO: custom :diff-component, for example link to both old and new attachment
 (defn attachment-field
   [{:keys [validation app-id on-change on-set-attachment on-remove-attachment] :as opts}]
   (let [id (:field/id opts)
@@ -213,11 +212,12 @@
         value (:field/value opts)
         filename (get-in opts [:field/attachment :attachment/filename])
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
-        filename-field [:div.field
-                        [:a.btn.btn-secondary.mr-2
-                         {:href (str "/api/applications/attachment/" value)
-                          :target :_new}
-                         filename " " (external-link)]]
+        link (fn [attachment-id filename]
+               [:div.field
+                [:a.btn.btn-secondary.mr-2
+                 {:href (str "/api/applications/attachment/" attachment-id)
+                  :target :_new}
+                 filename " " (external-link)]])
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
@@ -239,13 +239,21 @@
                                     (on-change "")
                                     (on-remove-attachment))}
                        (text :t.form/attachment-remove)]]
-    [field-wrapper (assoc opts :readonly-component (if (empty? value)
-                                                     [:span]
-                                                     filename-field))
+    [field-wrapper (assoc opts
+                          :readonly-component (if (empty? value)
+                                                [:span]
+                                                (link value filename))
+                          :diff-component [:div {:style {:display :flex}}
+                                           [:div
+                                            (text :t.form/previous-value) ": "
+                                            (link (:field/previous-value opts) (get-in opts [:field/previous-attachment :attachment/filename]))]
+                                           [:div
+                                            (text :t.form/current-value) ": "
+                                            (link value filename)]])
      (if (empty? value)
        upload-field
        [:div {:style {:display :flex :justify-content :flex-start}}
-        filename-field
+        (link value filename)
         remove-button])]))
 
 (defn unsupported-field
