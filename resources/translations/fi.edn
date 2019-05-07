@@ -309,6 +309,10 @@
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
            :rejected "Hylätty"}
+  :search {:close-search "Sulje haku"
+           :open-search "Avaa haku"
+           :search "Hae"
+           :search-parameters "Hakuehdot"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeuksia"
                       :you-are-unauthorized "Sinulla ei ole käyttöoikeuksia tähän sivuun."}
   :forbidden-page {:forbidden "Kielletty"
