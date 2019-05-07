@@ -296,9 +296,12 @@
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
                                     :on-remove-attachment #(rf/dispatch [::set-field-value (:field/id fld) ""])
                                     :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
+                                    :field/value (get field-values (:field/id fld))
                                     :field/attachment (when (= :attachment (:field/type fld))
                                                         (get attachments (parse-int (:field/value fld))))
-                                    :field/value (get field-values (:field/id fld))
+                                    :field/previous-attachment (when (= :attachment (:field/type fld))
+                                                                 (when-let [prev (:field/previous-value fld)]
+                                                                   (get attachments (parse-int prev))))
                                     :diff (get show-diff (:field/id fld))
                                     :validation (field-validations (:field/id fld))
                                     :readonly readonly?
