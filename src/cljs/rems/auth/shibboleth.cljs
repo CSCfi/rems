@@ -10,7 +10,7 @@
    [:div.col-md6
     [atoms/link-to nil
                    (nav/url-dest "/Shibboleth.sso/Login")
-                   [atoms/image {:class "login-btn"} "/img/haka-logo.jpg"]]]
+                   [atoms/image {:class "login-btn" :alt "Haka"} "/img/haka-logo.jpg"]]]
    (when alternative-endpoint
     [atoms/link-to nil
                    (nav/url-dest alternative-endpoint)
