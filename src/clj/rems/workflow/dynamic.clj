@@ -11,43 +11,10 @@
 
 ;;; Application model
 
-(defmulti ^:private write-model
-  "Projection for application state which is only needed in the command handlers.
-   We don't separate the read and write models in a strict CQRS way, but the
-   command handlers reuse the read model for command validation, instead of
-   having a dedicated write model."
-  (fn [_application event] (:event/type event)))
-
-(defmethod write-model :default
-  [application _event]
-  application)
-
-(defmethod write-model :application.event/decision-requested
-  [application event]
-  (-> application
-      (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
-                                                              (repeat (:application/request-id event))))))
-
-(defmethod write-model :application.event/decided
-  [application event]
-  (-> application
-      (update ::latest-decision-request-by-user dissoc (:event/actor event))))
-
-(defmethod write-model :application.event/comment-requested
-  [application event]
-  (-> application
-      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
-                                                             (repeat (:application/request-id event))))))
-
-(defmethod write-model :application.event/commented
-  [application event]
-  (-> application
-      (update ::latest-comment-request-by-user dissoc (:event/actor event))))
-
 (defn apply-events [application events]
   (reduce (fn [application event] (-> application
-                                      (model/application-view event)
-                                      (write-model event)))
+                                      (model/application-view event)))
+
           application
           events))
 
@@ -191,7 +158,7 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-decider-error [application cmd]
-  (when-not (contains? (get-in application [:application/workflow :workflow.dynamic/awaiting-deciders])
+  (when-not (contains? (get application ::model/latest-decision-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
@@ -200,7 +167,7 @@
   (or (actor-is-not-decider-error application cmd)
       (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
-      (let [last-request-for-actor (get-in application [::latest-decision-request-by-user (:actor cmd)])]
+      (let [last-request-for-actor (get-in application [::model/latest-decision-request-by-user (:actor cmd)])]
         (ok {:event/type :application.event/decided
              :application/request-id last-request-for-actor
              :application/decision (:decision cmd)
@@ -216,14 +183,14 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (get-in application [:application/workflow :workflow.dynamic/awaiting-commenters])
+  (when-not (contains? (get application ::model/latest-comment-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
 (defmethod command-handler :application.command/comment
   [cmd application _injections]
   (or (actor-is-not-commenter-error application cmd)
-      (let [last-request-for-actor (get-in application [::latest-comment-request-by-user (:actor cmd)])]
+      (let [last-request-for-actor (get-in application [::model/latest-comment-request-by-user (:actor cmd)])]
         (ok {:event/type :application.event/commented
              ;; Currently we want to tie all comments to the latest request.
              ;; In the future this might change so that commenters can freely continue to comment

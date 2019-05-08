@@ -185,12 +185,10 @@
              :application/accepted-licenses {}
              :application/events []
              :application/form {:form/id (:form/id event)}
+             ;; TODO: other workflows
+             ;; TODO: extract an event handler for dynamic workflow specific stuff
              :application/workflow {:workflow/id (:workflow/id event)
-                                    :workflow/type (:workflow/type event)
-                                    ;; TODO: other workflows
-                                    ;; TODO: extract an event handler for dynamic workflow specific stuff
-                                    :workflow.dynamic/awaiting-commenters #{}
-                                    :workflow.dynamic/awaiting-deciders #{}})))
+                                    :workflow/type (:workflow/type event)})))
 
 (defmethod event-type-specific-application-view :application.event/draft-saved
   [application event]
@@ -262,22 +260,24 @@
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] set/union (set (:application/commenters event)))))
+      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
+                                                             (repeat (:application/request-id event))))))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] disj (:event/actor event))))
+      (update ::latest-comment-request-by-user dissoc (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] set/union (set (:application/deciders event)))))
+      (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
+                                                              (repeat (:application/request-id event))))))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] disj (:event/actor event))))
+      (update ::latest-decision-request-by-user dissoc (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/approved
   [application event]
@@ -312,9 +312,6 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   application)
 
-;; TODO: replace rems.workflow.dynamic/apply-event with this
-;;       (it will couple the write and read models, but it's probably okay
-;;        because they both are about a single application and are logically coupled)
 (defn application-view
   "Projection for the current state of a single application.
   Pure function; must use `enrich-with-injections` to enrich the model with
@@ -564,9 +561,7 @@
       (dissoc :application/invitation-tokens)
       (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
-      (update-in [:application/workflow] dissoc
-                 :workflow.dynamic/awaiting-commenters
-                 :workflow.dynamic/awaiting-deciders)
+      (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
 (defn apply-user-permissions [application user-id]
