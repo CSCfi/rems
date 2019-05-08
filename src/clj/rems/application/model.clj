@@ -526,40 +526,29 @@
 
 ;;;; Authorization
 
-(defmulti ^:private hide-sensitive-event-content
-  (fn [event] (:event/type event)))
-
-(defmethod hide-sensitive-event-content :default
-  [event]
-  event)
-
-(defmethod hide-sensitive-event-content :application.event/member-invited
-  [event]
-  (dissoc event :invitation/token))
-
-(defmethod hide-sensitive-event-content :application.event/member-joined
-  [event]
-  (dissoc event :invitation/token))
-
 (defn hide-sensitive-events [events]
   (->> events
        (remove (comp #{:application.event/comment-requested
                        :application.event/commented
                        :application.event/decided
                        :application.event/decision-requested}
-                     :event/type))
-       (mapv hide-sensitive-event-content)))
+                     :event/type))))
 
 (defn- hide-sensitive-information [application]
   (-> application
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
-(defn- hide-non-public-information [application]
+(defn- hide-invitation-tokens [application]
   (-> application
-      ;; the keys are invitation tokens and must be kept secret
+      ;; the keys of the invitation-tokens map are secret
       (dissoc :application/invitation-tokens)
       (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
+      (update :application/events (partial mapv #(dissoc % :invitation/token)))))
+
+(defn- hide-non-public-information [application]
+  (-> application
+      hide-invitation-tokens
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
