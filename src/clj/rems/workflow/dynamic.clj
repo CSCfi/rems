@@ -9,16 +9,7 @@
            [java.util UUID]
            [org.joda.time DateTime]))
 
-;;; Application model
-
-(defn apply-events [application events]
-  (reduce (fn [application event] (-> application
-                                      (model/application-view event)))
-
-          application
-          events))
-
-;;; Command handlers
+;; TODO move all of this to rems.application.commands?
 
 (defmulti command-handler
   "Receives a command and produces events."
@@ -81,10 +72,8 @@
                      (count (set (map :wfid catalogue-items)))))
       {:errors [{:type :unbundlable-catalogue-items :catalogue-item-ids catalogue-item-ids}]})))
 
-(defn- validation-error [application {:keys [validate-form-answers]}]
-  (let [form-id (getx-in application [:application/form :form/id])
-        answers (get application :rems.application.model/draft-answers {}) ;; the key does not exist before the first save
-        errors (validate-form-answers form-id {:items answers})]
+(defn- validation-error [application {:keys [validate-fields]}]
+  (let [errors (validate-fields (getx-in application [:application/form :form/fields]))]
     (when (seq errors)
       {:errors errors})))
 
@@ -288,9 +277,9 @@
                    [{:type :forbidden}])})))
 
 (deftest test-handle-command
-  (let [application (apply-events nil [{:event/type :application.event/created
-                                        :event/actor "applicant"
-                                        :workflow/type :workflow/dynamic}])
+  (let [application (model/application-view nil {:event/type :application.event/created
+                                                 :event/actor "applicant"
+                                                 :workflow/type :workflow/dynamic})
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values []

@@ -110,18 +110,13 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn- validate-form-answers [form-id answers]
-  (let [form (form/get-form form-id)
-        _ (assert form)
-        fields (for [field (:items form)]
-                 (assoc field :value (get-in answers [:items (:id field)])))]
-    (form-validation/validate-fields fields)))
-
 (def ^:private db-injections
   {:valid-user? valid-user?
-   :validate-form-answers validate-form-answers
+   :validate-fields form-validation/validate-fields
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item})
+
+(declare get-unrestricted-application)
 
 (defn command! [cmd]
   (assert (:application-id cmd))
@@ -130,10 +125,7 @@
   ;; lots of transaction conflicts when there is contention. This lock
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
-  (let [events (events/get-application-events (:application-id cmd))
-        app (-> nil
-                (dynamic/apply-events events)
-                (model/enrich-workflow-handlers workflow/get-workflow))
+  (let [app (get-unrestricted-application  (:application-id cmd))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
       (events/add-event! (:result result))

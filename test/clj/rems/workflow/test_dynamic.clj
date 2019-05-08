@@ -3,6 +3,7 @@
             [clojure.test :refer :all]
             [rems.application.events :as events]
             [rems.application.model :as model]
+            [rems.form-validation :as form-validation]
             [rems.util :refer [assert-ex getx]]
             [rems.workflow.dynamic :as dynamic])
   (:import [java.util UUID]
@@ -25,10 +26,25 @@
                                     :workflow/type :workflow/dynamic})
 (def ^:private dummy-workflows {1 {:workflow {:handlers [handler-user-id]}}})
 
+(def ^:private dummy-forms {1 {:items [{:id 41
+                                        :optional false}
+                                       {:id 42
+                                        :optional false}]}})
+
+(def ^:private injections
+  {:get-workflow dummy-workflows
+   :get-form dummy-forms
+   :get-catalogue-item (constantly nil)
+   :get-license (constantly nil)
+   :get-user (constantly nil)
+   :get-users-with-role (constantly nil)
+   :get-attachments-for-application (constantly nil)})
+
+;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
   (events/validate-events events)
-  (-> (dynamic/apply-events application events)
-      (model/enrich-workflow-handlers dummy-workflows)))
+  (-> (reduce model/application-view application events)
+      (model/enrich-with-injections injections)))
 
 (defn- fail-command
   ([application cmd]
@@ -60,14 +76,6 @@
   ([application commands injections]
    (reduce (fn [app cmd] (apply-command app cmd injections))
            application commands)))
-
-(defn- fake-validate-form-answers [_form-id answers]
-  (->> (:items answers)
-       (map (fn [[field-id value]]
-              (when (str/blank? value)
-                {:type :t.form.validation/required
-                 :field-id field-id})))
-       (remove nil?)))
 
 ;;; Tests
 
@@ -268,7 +276,7 @@
                           :catalogue-item-ids []})))))
 
 (deftest test-submit
-  (let [injections {:validate-form-answers fake-validate-form-answers}
+  (let [injections {:validate-fields form-validation/validate-fields}
         created-event {:event/type :application.event/created
                        :event/time test-time
                        :event/actor applicant-user-id
@@ -278,8 +286,7 @@
                                                 :resource/ext-id "urn:11"}
                                                {:catalogue-item/id 20
                                                 :resource/ext-id "urn:21"}]
-                       :application/licenses [{:license/id 30}
-                                              {:license/id 31}]
+                       :application/licenses []
                        :form/id 40
                        :workflow/id 50
                        :workflow/type :workflow/dynamic}

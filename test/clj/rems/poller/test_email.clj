@@ -20,7 +20,7 @@
   (sort-by #(or (:to %) (:to-user %)) emails))
 
 (defn events-to-emails [events]
-  (let [application (-> (dynamic/apply-events nil events)
+  (let [application (-> (reduce model/application-view nil events)
                         (model/enrich-workflow-handlers {5 {:workflow {:handlers ["handler" "assistant"]}}}))]
     (text/with-language :en
       (fn [] (mapv #(sort-emails (#'rems.poller.email/event-to-emails-impl % application)) events)))))

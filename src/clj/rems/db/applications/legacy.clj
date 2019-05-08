@@ -185,12 +185,19 @@
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
 
-;;; Shim for supporting dynami applications
+;;; Shim for supporting dynamic applications
 
 (defn- fix-workflow-from-db [wf]
   ;; TODO could use a schema for this coercion
   (update (json/parse-string wf)
           :type keyword))
+
+(defn apply-dynamic-events [application events]
+  (reduce (fn [application event] (-> application
+                                      (model/application-view event)
+                                      (model/calculate-permissions event)))
+          application
+          events))
 
 (defn- get-dynamic-application-state [application-id]
   (let [application (or (first (db/get-applications {:id application-id}))
@@ -204,7 +211,7 @@
                            :last-modified (or (:event/time (last events))
                                               (:start application)))]
     (assert (applications/is-dynamic-application? application) (pr-str application))
-    (dynamic/apply-events application events)))
+    (apply-dynamic-events application events)))
 
 ;;; The main entry point, get-form-for
 
