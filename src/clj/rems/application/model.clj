@@ -20,6 +20,7 @@
 
 (def ^:private draft-permissions {:applicant [:application.command/save-draft
                                               :application.command/submit
+                                              :application.command/close
                                               :application.command/remove-member
                                               :application.command/invite-member
                                               :application.command/uninvite-member
