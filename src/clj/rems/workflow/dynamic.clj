@@ -9,16 +9,7 @@
            [java.util UUID]
            [org.joda.time DateTime]))
 
-;;; Application model
-
-(defn apply-events [application events]
-  (reduce (fn [application event] (-> application
-                                      (model/application-view event)))
-
-          application
-          events))
-
-;;; Command handlers
+;; TODO move all of this to rems.application.commands?
 
 (defmulti command-handler
   "Receives a command and produces events."
