@@ -25,9 +25,10 @@
                                     :workflow/type :workflow/dynamic})
 (def ^:private dummy-workflows {1 {:workflow {:handlers [handler-user-id]}}})
 
+;; TODO ugly
 (defn apply-events [application events]
   (events/validate-events events)
-  (-> (dynamic/apply-events application events)
+  (-> (reduce model/application-view application events)
       (model/enrich-workflow-handlers dummy-workflows)))
 
 (defn- fail-command
