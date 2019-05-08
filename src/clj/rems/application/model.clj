@@ -258,24 +258,32 @@
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
       (assoc :application/state :application.state/returned)))
 
+;; TODO: combine latest-X-request-by-user and awaiting-X
+
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
   (-> application
+      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
+                                                             (repeat (:application/request-id event))))
       (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] set/union (set (:application/commenters event)))))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
   (-> application
+      (update ::latest-comment-request-by-user dissoc (:event/actor event))
       (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] disj (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
   (-> application
+      (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
+                                                              (repeat (:application/request-id event))))
       (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] set/union (set (:application/deciders event)))))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
+      (update ::latest-decision-request-by-user dissoc (:event/actor event))
       (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] disj (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/approved
@@ -563,6 +571,7 @@
       (update-in [:application/workflow] dissoc
                  :workflow.dynamic/awaiting-commenters
                  :workflow.dynamic/awaiting-deciders)
+      (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
 (defn apply-user-permissions [application user-id]

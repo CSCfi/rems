@@ -617,7 +617,8 @@
                                 expected-application (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 4000)
                                                                   :application/events events
-                                                                  :application/workflow {:workflow.dynamic/awaiting-commenters #{"commenter"}}})]
+                                                                  :application/workflow {:workflow.dynamic/awaiting-commenters #{"commenter"}}
+                                                                  :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
                             (is (= expected-application (apply-events events)))
 
                             (testing "> commented"
@@ -628,10 +629,12 @@
                                                   :application/id 1
                                                   :application/request-id request-id
                                                   :application/comment "looks good"})
-                                    expected-application (deep-merge expected-application
-                                                                     {:application/last-activity (DateTime. 5000)
-                                                                      :application/events events
-                                                                      :application/workflow {:workflow.dynamic/awaiting-commenters #{}}})]
+                                    expected-application (-> expected-application
+                                                             (deep-merge
+                                                              {:application/last-activity (DateTime. 5000)
+                                                               :application/events events
+                                                               :application/workflow {:workflow.dynamic/awaiting-commenters #{}}})
+                                                             (assoc :rems.application.model/latest-comment-request-by-user {}))]
                                 (is (= expected-application (apply-events events)))))))
 
                         (testing "> decision requested"
@@ -647,7 +650,8 @@
                                 expected-application (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 4000)
                                                                   :application/events events
-                                                                  :application/workflow {:workflow.dynamic/awaiting-deciders #{"decider"}}})]
+                                                                  :application/workflow {:workflow.dynamic/awaiting-deciders #{"decider"}}
+                                                                  :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
                             (is (= expected-application (apply-events events)))
 
                             (testing "> decided"
@@ -659,10 +663,11 @@
                                                   :application/request-id request-id
                                                   :application/decision :approved
                                                   :application/comment "I approve this"})
-                                    expected-application (deep-merge expected-application
-                                                                     {:application/last-activity (DateTime. 5000)
-                                                                      :application/events events
-                                                                      :application/workflow {:workflow.dynamic/awaiting-deciders #{}}})]
+                                    expected-application (-> expected-application
+                                                             (deep-merge {:application/last-activity (DateTime. 5000)
+                                                                          :application/events events
+                                                                          :application/workflow {:workflow.dynamic/awaiting-deciders #{}}})
+                                                             (assoc :rems.application.model/latest-decision-request-by-user {}))]
                                 (is (= expected-application (apply-events events)))))))
 
                         (testing "> member invited"
