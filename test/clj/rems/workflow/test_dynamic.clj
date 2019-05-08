@@ -40,7 +40,7 @@
    :get-users-with-role (constantly nil)
    :get-attachments-for-application (constantly nil)})
 
-;; TODO ugly?
+;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
   (events/validate-events events)
   (-> (reduce model/application-view application events)
