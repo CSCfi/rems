@@ -4,42 +4,37 @@
 
 (deftest test-validate-fields
   (testing "all fields filled"
-    (is (nil? (validate-fields [{:title "A"
-                                 :optional false
-                                 :value "a"}]))))
+    (is (nil? (validate-fields [{:field/title "A"
+                                 :field/optional false
+                                 :field/value "a"}]))))
 
 
   (testing "optional fields"
-    (is (nil? (validate-fields [{:title "A"
-                                 :optional true
-                                 :value nil}
-                                {:title "B"
-                                 :optional true
-                                 :value ""}]))))
+    (is (nil? (validate-fields [{:field/title "A"
+                                 :field/optional true
+                                 :field/value nil}
+                                {:field/title "B"
+                                 :field/optional true
+                                 :field/value ""}]))))
 
   (testing "error: field required"
     (is (= [{:type :t.form.validation/required :field-id 2}
             {:type :t.form.validation/required :field-id 3}]
-           (validate-fields [{:id 1
-                              :localizations {:en {:title "A"}}
-                              :optional true
-                              :value nil}
-                             {:id 2
-                              :localizations {:en {:title "B"}}
-                              :optional false
-                              :value ""}
-                             {:id 3
-                              :localizations {:en {:title "C"}}
-                              :optional false
-                              :value nil}]))))
+           (validate-fields [{:field/id 1
+                              :field/optional true
+                              :field/value nil}
+                             {:field/id 2
+                              :field/optional false
+                              :field/value ""}
+                             {:field/id 3
+                              :field/optional false
+                              :field/value nil}]))))
 
   (testing "error: field input too long"
     (is (= [{:type :t.form.validation/toolong :field-id 2}]
-           (validate-fields [{:id 1
-                              :localizations {:en {:title "A"}}
-                              :maxlength 5
-                              :value "abcde"}
-                             {:id 2
-                              :localizations {:en {:title "B"}}
-                              :maxlength 5
-                              :value "abcdef"}])))))
+           (validate-fields [{:field/id 1
+                              :field/maxlength 5
+                              :field/value "abcde"}
+                             {:field/id 2
+                              :field/maxlength 5
+                              :field/value "abcdef"}])))))

@@ -81,10 +81,8 @@
                      (count (set (map :wfid catalogue-items)))))
       {:errors [{:type :unbundlable-catalogue-items :catalogue-item-ids catalogue-item-ids}]})))
 
-(defn- validation-error [application {:keys [validate-form-answers]}]
-  (let [form-id (getx-in application [:application/form :form/id])
-        answers (get application :rems.application.model/draft-answers {}) ;; the key does not exist before the first save
-        errors (validate-form-answers form-id {:items answers})]
+(defn- validation-error [application {:keys [validate-fields]}]
+  (let [errors (validate-fields (getx-in application [:application/form :form/fields]))]
     (when (seq errors)
       {:errors errors})))
 
