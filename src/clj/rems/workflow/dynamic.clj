@@ -47,7 +47,6 @@
 (defn apply-events [application events]
   (reduce (fn [application event] (-> application
                                       (model/application-view event)
-                                      (model/calculate-permissions event)
                                       (write-model event)))
           application
           events))
