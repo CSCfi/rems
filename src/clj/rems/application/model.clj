@@ -311,9 +311,6 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   application)
 
-;; TODO: replace rems.workflow.dynamic/apply-event with this
-;;       (it will couple the write and read models, but it's probably okay
-;;        because they both are about a single application and are logically coupled)
 (defn application-view
   "Projection for the current state of a single application.
   Pure function; must use `enrich-with-injections` to enrich the model with
