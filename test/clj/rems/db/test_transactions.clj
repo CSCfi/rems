@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [conman.core :as conman]
+            [rems.application.commands :as commands]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
@@ -10,8 +11,7 @@
             [rems.db.resource :as resource]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.db.workflow :as workflow])
   (:import [java.sql SQLException]
            [java.util UUID]
            [java.util.concurrent Executors Future TimeUnit ExecutorService]
@@ -96,7 +96,7 @@
         write-event (fn [app-id]
                       (try
                         (conman/with-transaction [db/*db* {:isolation :serializable}]
-                          (binding [dynamic/postprocess-command-result-for-tests mark-observed-app-version]
+                          (binding [commands/postprocess-command-result-for-tests mark-observed-app-version]
                             (applications/command!
                              {:type :application.command/save-draft
                               :time (time/now)

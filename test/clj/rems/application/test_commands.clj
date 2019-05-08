@@ -1,11 +1,11 @@
-(ns rems.workflow.test-dynamic
+(ns rems.application.test-commands
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
+            [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.form-validation :as form-validation]
-            [rems.util :refer [assert-ex getx]]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.util :refer [assert-ex getx]])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
@@ -51,7 +51,7 @@
    (fail-command application cmd nil))
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
-         result (dynamic/handle-command cmd application injections)]
+         result (commands/handle-command cmd application injections)]
      (assert-ex (not (:success result)) {:cmd cmd :result result})
      result)))
 
@@ -60,7 +60,7 @@
    (ok-command application cmd nil))
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
-         result (dynamic/handle-command cmd application injections)]
+         result (commands/handle-command cmd application injections)]
      (assert-ex (:success result) {:cmd cmd :result result})
      (events/validate-event (getx result :result)))))
 

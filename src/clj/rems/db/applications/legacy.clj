@@ -2,6 +2,7 @@
   "Functions for dealing with old round-based applications."
   (:require [clojure.test :refer :all]
             [clj-time.core :as time]
+            [rems.application.commands :as commands]
             [rems.application.model :as model]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
@@ -15,8 +16,7 @@
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.json :as json]
-            [rems.permissions :as permissions]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.permissions :as permissions]))
 
 (declare get-application-state)
 
@@ -35,7 +35,7 @@
   (or (and (= "applied" (:state application))
            (is-actor? user-id (actors/get-by-role (:id application) (:curround application) role)))
       (and (= "approver" role)
-           (contains? (dynamic/possible-commands user-id (get-application-state (:id application)))
+           (contains? (commands/possible-commands user-id (get-application-state (:id application)))
                       :application.command/approve))))
 
 (defn- has-actor-role? [user-id application-id role]
@@ -258,7 +258,7 @@
          _ (assert form)
          application (get-application-state application-id)
          application (if (applications/is-dynamic-application? application)
-                       (dynamic/assoc-possible-commands user-id application) ; TODO move even higher?
+                       (commands/assoc-possible-commands user-id application) ; TODO move even higher?
                        application)
          _ (assert application)
          form-id (:formid form)

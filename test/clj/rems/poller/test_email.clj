@@ -5,8 +5,7 @@
             [rems.config]
             [rems.locales]
             [rems.poller.email :refer :all]
-            [rems.text :as text]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.text :as text]))
 
 (use-fixtures
   :once

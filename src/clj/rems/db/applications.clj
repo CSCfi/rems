@@ -8,6 +8,7 @@
             [conman.core :as conman]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
+            [rems.application.commands :as commands]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
@@ -25,8 +26,7 @@
             [rems.json :as json]
             [rems.permissions :as permissions]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [atom? getx secure-token]]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.util :refer [atom? getx secure-token]])
   (:import [org.joda.time Duration]))
 
 ;;; Query functions
@@ -126,7 +126,7 @@
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
   (let [app (get-unrestricted-application  (:application-id cmd))
-        result (dynamic/handle-command cmd app db-injections)]
+        result (commands/handle-command cmd app db-injections)]
     (if (:success result)
       (events/add-event! (:result result))
       result)))
