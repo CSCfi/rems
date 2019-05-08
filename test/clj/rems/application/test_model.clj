@@ -837,6 +837,7 @@
                                                                                   :email "member@example.com"}
                                                              :invitation/token "secret"})]
         (testing "- original"
+          (is (= #{"secret" nil} (set (map :invitation/token (:application/events application)))))
           (is (= {"secret" {:name "member"
                             :email "member@example.com"}}
                  (:application/invitation-tokens application)))
@@ -845,6 +846,7 @@
         (doseq [user-id ["applicant" "handler"]]
           (testing (str "- as user " user-id)
             (let [application (model/apply-user-permissions application user-id)]
+              (is (= #{nil} (set (map :invitation/token (:application/events application)))))
               (is (= nil
                      (:application/invitation-tokens application)))
               (is (= #{{:name "member"
