@@ -158,7 +158,7 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-decider-error [application cmd]
-  (when-not (contains? (get-in application [:application/workflow :workflow.dynamic/awaiting-deciders])
+  (when-not (contains? (get application ::model/latest-decision-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
@@ -183,7 +183,7 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (get-in application [:application/workflow :workflow.dynamic/awaiting-commenters])
+  (when-not (contains? (get application ::model/latest-comment-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
