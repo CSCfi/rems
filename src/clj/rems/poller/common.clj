@@ -25,7 +25,7 @@
         (throw (InterruptedException.)))
       (try
         ;; TODO: add proper monitoring for pollers and caches
-        (log/info name-kw "processing event" (:event/id event))
+        (log/info name-kw "processing event" (:event/id event) (:event/type event))
         (process-event! event)
         (set-poller-state! name-kw {:last-processed-event-id (:event/id event)})
         (catch Throwable t
