@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
-            [rems.atoms :refer [external-link]]
+            [rems.atoms :refer [file-download]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! post!]]
@@ -157,7 +157,7 @@
           filename-field [:a.btn.btn-secondary.mr-2
                           {:href (str "/api/licenses/attachments/" attachment-id)
                            :target :_blank}
-                          filename " " [external-link]]
+                          filename " " (file-download)]
           upload-field [:div.upload-file.mr-2
                         [:input {:style {:display "none"}
                                  :type "file"
