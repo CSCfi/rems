@@ -216,7 +216,7 @@
   (when app-id
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" app-id "/pdf")
-      :target :_new}
+      :target :_blank}
      "PDF " (external-link)]))
 
 (rf/reg-event-db
@@ -233,7 +233,7 @@
   (let [title (localized (:license/title opts))
         link (localized (:license/link opts))]
     [:div.license
-     [:a.license-title {:href link :target "_blank"}
+     [:a.license-title {:href link :target :_blank}
       title " " (external-link)]]))
 
 (defn- text-license [opts]
@@ -256,7 +256,7 @@
   (let [title (localized (:license/title opts))
         link (str "/api/licenses/attachments/" (localized (:license/attachment-id opts)))]
     [:div.license
-     [:a.license-title {:href link :target "_blank"}
+     [:a.license-title {:href link :target :_blank}
       title " " (file-download)]]))
 
 (defn license-field [f]

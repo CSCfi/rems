@@ -70,7 +70,7 @@
   [id title]
   [:a.btn.btn-secondary.mr-2
    {:href (str "api/licenses/attachments/" id)
-    :target :_new}
+    :target :_blank}
    title " " [external-link]])
 
 (defn enrich-user [user]
