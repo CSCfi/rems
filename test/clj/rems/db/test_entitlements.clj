@@ -95,8 +95,10 @@
                                                    "owner"))
             res1 (:id (resource/create-resource! {:resid "resource1" :organization organization :licenses [lic-id1]} "owner"))
             res2 (:id (resource/create-resource! {:resid "resource2" :organization organization :licenses [lic-id2]} "owner"))
+            res3 (:id (resource/create-resource! {:resid "resource3" :organization organization :licenses [lic-id1]} "owner"))
             item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wfid}))
-            item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))]
+            item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))
+            item3 (:id (db/create-catalogue-item! {:title "item3" :form formid :resid res3 :wfid wfid}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
         (db/add-user! {:user memberid :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
         (db/add-user! {:user admin :userattrs nil})
@@ -195,36 +197,56 @@
 
           (testing "removing a member ends entitlements"
             (entitlements-poller/run)
-            (is (= 5 (count (stub/recorded-requests server))))
+            (is (= 6 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= [[uid "resource1"] [uid "resource2"]]
                      (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
             (testing "POST"
-              (let [data (nth (stub/recorded-requests server) 4)
-                    target (:path data)
-                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
-                (is (= "/remove" target))
+              (let [data (take 2 (drop 4 (stub/recorded-requests server)))
+                    targets (map :path data)
+                    bodies (->> data
+                                (map #(get-in % [:body "postData"]))
+                                (map #(cheshire/parse-string % keyword))
+                                (apply concat))]
+                (is (every? #{"/remove"} targets))
                 (is (= [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
                         {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
-                       body)))))
+                       bodies)))))
+
+          (is (nil? (applications/command! {:type :application.command/change-resources
+                                            :actor admin
+                                            :application-id app-id
+                                            :catalogue-item-ids [item1 item3]
+                                            :comment "Removed second resource, added third resource"
+                                            :time (time/now)})))
+
+          (testing "changing resources changes entitlements"
+            (entitlements-poller/run)
+            (is (= 8 (count (stub/recorded-requests server))))
+            (testing "db"
+              (is (= [[uid "resource1"] [uid "resource3"]]
+                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
+            (testing "POST"
+              (let [data (take 2 (drop 6 (stub/recorded-requests server)))
+                    data (map #(assoc :body (cheshire/parse-string (get-in % [:body "postData"]) keyword)) data)]
+                (is (= [{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}
+                        {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}])
+                    data))))
 
           (is (nil? (applications/command! {:type :application.command/close
                                             :actor admin
                                             :application-id app-id
-                                            :comment ""
+                                            :comment "Finished"
                                             :time (time/now)})))
 
           (testing "closed application should end entitlements"
             (entitlements-poller/run)
-            (is (= 6 (count (stub/recorded-requests server))))
+            (is (= 10 (count (stub/recorded-requests server))))
             (testing "db"
-              (is (= []
-                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
+              (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
             (testing "POST"
-              (let [data (nth (stub/recorded-requests server) 5)
-                    target (:path data)
-                    body (cheshire/parse-string (get-in data [:body "postData"]) keyword)]
-                (is (= "/remove" target))
-                (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
-                       body))))))))))
+              (let [data (take 2 (drop 8 (stub/recorded-requests server)))
+                    data (map #(assoc :body (cheshire/parse-string (get-in % [:body "postData"]) keyword)) data)]
+                (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
+                        {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}])
+                    data)))))))))
