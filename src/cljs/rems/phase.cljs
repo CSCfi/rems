@@ -22,9 +22,11 @@
                                    (when (:completed? phase) "completed ")
                                    (when (:closed? phase) "closed "))}
            [:span
-            (cond (:rejected? phase) [:i.fa.fa-times]
-                  (:completed? phase) [:i.fas.fa-check]
-                  (:active? phase) [:i.fa.fa-chevron-right])
+            (cond (:rejected? phase) [:i.fa.fa-times {:aria-label (text :t.phases/phase-rejected)}]
+                  (:completed? phase) [:i.fas.fa-check {:aria-label (text :t.phases/phase-completed)}]
+                  (:active? phase) [:i.fa.fa-chevron-right {:aria-label (text :t.phases/phase-active)}]
+                  (:closed? phase) [:i {:aria-label (text :t.phases/phase-closed)}]
+                  :else [:i {:aria-label (text :t.phases/phase-pending)}])
             "\u00a0"
             (if (:text phase)
               (text (:text phase))

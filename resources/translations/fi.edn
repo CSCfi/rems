@@ -313,6 +313,11 @@
   :phases {:apply "Hae"
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
+           :phase-active "Vaihe aktiivinen:"
+           :phase-closed "Vaihe suljettu:"
+           :phase-completed "Vaihe valmis:"
+           :phase-pending "Vaihe tulossa:"
+           :phase-rejected "Vaihe hylätty:"
            :rejected "Hylätty"}
   :search {:close-search "Sulje haku"
            :open-search "Avaa haku"
