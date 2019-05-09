@@ -366,7 +366,7 @@ WHERE 1=1
   AND entitlement.userId = :user
 /*~ ) ~*/
 /*~ (when (:resource params) */
-  AND res.resId = :resource
+  AND res.id = :resource
 /*~ ) ~*/
 /*~ (when (:is-active? params) */
   AND entitlement.endt IS NULL
