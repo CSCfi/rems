@@ -65,8 +65,9 @@
         (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
 
 (defn update-entitlements-for
-  "If the given application is approved, add an entitlement to the db
-  and call the entitlement REST callback (if defined)."
+  "If the given application is approved, licenses accepted etc. add an entitlement to the db
+  and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
+  then we end the entitlement and call the REST callback."
   [application]
   (when (contains? #{:application.state/approved :application.state/closed}
                    (:application/state application))
