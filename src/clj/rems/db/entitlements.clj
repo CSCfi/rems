@@ -118,8 +118,8 @@
         (doseq [[userid resource-ids] entitlements-to-remove]
           (log/info "revoking entitlements on application" app-id "to" userid "resources" resource-ids)
           (doseq [resource-id (sort resource-ids)]
-            (db/end-entitlement! {:application app-id
-                                  :user userid
-                                  :resource resource-id})
+            (db/end-entitlements! {:application app-id
+                                   :user userid
+                                   :resource resource-id})
             (post-entitlements :remove (db/get-entitlements {:application app-id :user userid :resource resource-id})))))
       members-to-update)))

@@ -336,7 +336,7 @@ WHERE 1=1
 INSERT INTO entitlement (catAppId, userId, resId)
 VALUES (:application, :user, :resource);
 
--- :name end-entitlement! :!
+-- :name end-entitlements! :!
 UPDATE entitlement
 SET endt = current_timestamp
 WHERE catAppId = :application
