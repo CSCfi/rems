@@ -92,7 +92,14 @@ SELECT
   enabled,
   archived
 FROM resource
-WHERE id = :id;
+WHERE 1=1
+/*~ (when (:id params) */
+  AND id = :id
+/*~ ) ~*/
+/*~ (when (:resid params) */
+  AND resid = :resid
+/*~ ) ~*/
+;
 
 -- :name create-resource! :insert
 -- :doc Create a single resource
