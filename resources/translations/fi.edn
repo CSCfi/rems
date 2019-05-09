@@ -297,6 +297,8 @@
          :password "Salasana"
          :title "LDAP-kirjautuminen"
          :username "Käyttäjänimi"}
+  :link {:download-file "Lataa tiedosto"
+         :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
           :text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}

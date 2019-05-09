@@ -297,6 +297,8 @@
          :password "Password"
          :title "LDAP Login"
          :username "Username"}
+  :link {:download-file "Download file"
+         :opens-in-new-window "Opens in new window"}
   :login {:alternative "Other sign in options"
           :text "Login by using your Haka credentials"
           :title "Login"}
