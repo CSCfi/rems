@@ -274,13 +274,13 @@
                          injections))))
 
     (testing "handler can change approved resources"
-      (is (= [{:event/type :application.event/resources-changed
-               :event/time test-time
-               :event/actor handler-user-id
-               :application/id 123
-               :application/comment "Changed these for you"
-               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
-                                       {:catalogue-item/id 2 :resource/ext-id "efg"}]}]
+      (is (= {:event/type :application.event/resources-changed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id 123
+              :application/comment "Changed these for you"
+              :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
+                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]}
              (ok-command approved-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
@@ -288,15 +288,15 @@
                           :catalogue-item-ids [1 2]}
                          injections)))
 
-      (is (= [{:event/type :application.event/resources-changed
-               :event/time test-time
-               :event/actor handler-user-id
-               :application/id 123
-               :application/comment "Changed these for you"
-               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
-                                       {:catalogue-item/id 2 :resource/ext-id "efg"}
-                                       {:catalogue-item/id 3 :resource/ext-id "hij"}
-                                       {:catalogue-item/id 4 :resource/ext-id "klm"}]}]
+      (is (= {:event/type :application.event/resources-changed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id 123
+              :application/comment "Changed these for you"
+              :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
+                                      {:catalogue-item/id 2 :resource/ext-id "efg"}
+                                      {:catalogue-item/id 3 :resource/ext-id "hij"}
+                                      {:catalogue-item/id 4 :resource/ext-id "klm"}]}
              (ok-command approved-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
