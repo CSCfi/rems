@@ -220,7 +220,7 @@
                   [:a.btn.btn-secondary.mr-2
                    {:href (str "/api/applications/attachment/" attachment-id)
                     :target :_blank}
-                   filename " " (file-download)]]))
+                   filename " " [file-download]]]))
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
