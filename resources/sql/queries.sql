@@ -343,6 +343,9 @@ WHERE catAppId = :application
 /*~ (when (:user params) */
   AND entitlement.userId = :user
 /*~ ) ~*/
+/*~ (when (:resource params) */
+  AND entitlement.resId = :resource
+/*~ ) ~*/
 ;
 
 -- :name get-entitlements :?
