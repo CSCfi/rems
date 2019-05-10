@@ -6,10 +6,12 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn external-link []
-  [:i {:class "fa fa-external-link-alt"}])
+  [:i {:class "fa fa-external-link-alt"
+       :aria-label (text :t.link/opens-in-new-window)}])
 
 (defn file-download []
-  [:i {:class "fa fa-file-download"}])
+  [:i {:class "fa fa-file-download"
+       :aria-label (text :t.link/download-file)}])
 
 (defn link-to [opts uri title]
   [:a (merge opts {:href uri}) title])
@@ -70,7 +72,7 @@
   [id title]
   [:a.btn.btn-secondary.mr-2
    {:href (str "api/licenses/attachments/" id)
-    :target :_new}
+    :target :_blank}
    title " " [external-link]])
 
 (defn enrich-user [user]

@@ -2,7 +2,7 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             [cljs-time.core :as time]
-            [rems.atoms :refer [external-link textarea]]
+            [rems.atoms :refer [file-download textarea]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format localize-time]]
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
@@ -220,7 +220,7 @@
                   [:a.btn.btn-secondary.mr-2
                    {:href (str "/api/applications/attachment/" attachment-id)
                     :target :_blank}
-                   filename " " (external-link)]]))
+                   filename " " [file-download]]]))
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"

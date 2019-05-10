@@ -297,6 +297,8 @@
          :password "Salasana"
          :title "LDAP-kirjautuminen"
          :username "Käyttäjänimi"}
+  :link {:download-file "Lataa tiedosto"
+         :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
           :text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}
@@ -313,6 +315,11 @@
   :phases {:apply "Hae"
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
+           :phase-active "Vaihe aktiivinen:"
+           :phase-closed "Vaihe suljettu:"
+           :phase-completed "Vaihe valmis:"
+           :phase-pending "Vaihe tulossa:"
+           :phase-rejected "Vaihe hylätty:"
            :rejected "Hylätty"}
   :search {:close-search "Sulje haku"
            :open-search "Avaa haku"

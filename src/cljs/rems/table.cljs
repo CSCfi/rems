@@ -153,7 +153,7 @@
      [:button.btn.btn-primary
       {:on-click update-current-filters
        :aria-label (text :t.search/search)}
-      (search-symbol)]]))
+      [search-symbol]]]))
 
 (defn- filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
   (when filtering
@@ -166,7 +166,7 @@
                                      (update :show-filters not)
                                      (assoc :filters ""
                                             :filters-new "")))}
-      (if show-filters (close-symbol) (search-symbol))]
+      (if show-filters [close-symbol] [search-symbol])]
      (when show-filters
        [filter-view filtering])]))
 
@@ -183,7 +183,7 @@
       (column-header column-definitions column)
       " "
       (when (= column sort-column)
-        (sort-symbol sort-order))]]))
+        [sort-symbol sort-order])]]))
 
 (defn- head [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
   [:thead

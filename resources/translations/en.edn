@@ -297,6 +297,8 @@
          :password "Password"
          :title "LDAP Login"
          :username "Username"}
+  :link {:download-file "Download file"
+         :opens-in-new-window "Opens in new window"}
   :login {:alternative "Other sign in options"
           :text "Login by using your Haka credentials"
           :title "Login"}
@@ -313,6 +315,11 @@
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"
+           :phase-active "Phase active:"
+           :phase-closed "Phase closed:"
+           :phase-completed "Phase completed:"
+           :phase-pending "Phase pending:"
+           :phase-rejected "Phase rejected:"
            :rejected "Rejected"}
   :search {:close-search "Close search"
            :open-search "Open search"
