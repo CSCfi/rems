@@ -64,6 +64,13 @@
           (log/warnf "Post failed: %s", response))
         (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
 
+(defn- get-entitlements-by-user [app-id]
+  (->> (db/get-entitlements {:application app-id :is-active? true})
+       (group-by :userid)
+       (map (fn [[userid rows]]
+              [userid (set (map :resourceid rows))]))
+       (into {})))
+
 (defn update-entitlements-for
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
@@ -79,14 +86,10 @@
                                      :application/resources
                                      (map :resource/id)
                                      set)
-          application-entitlements (->> (db/get-entitlements {:application app-id :is-active? true})
-                                        (group-by :userid)
-                                        (map (fn [[userid rows]]
-                                               [userid (set (map :resourceid rows))]))
-                                        (into {}))
+          entitlements-by-user (get-entitlements-by-user app-id)
           user-entitlements (into {}
                                   (for [userid (union members past-members)]
-                                    [userid (or (application-entitlements userid) #{})]))
+                                    [userid (or (entitlements-by-user userid) #{})]))
           entitlements-to-add (->> (for [[userid resource-ids] user-entitlements
                                          :when (and (= :application.state/approved (:application/state application))
                                                     (contains? members userid)
