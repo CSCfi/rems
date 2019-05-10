@@ -39,10 +39,11 @@
 
 (rf/reg-event-fx
  ::update-catalogue-item
- (fn [_ [_ item]]
+ (fn [_ [_ item description]]
+   (status-modal/common-pending-handler! description)
    (put! "/api/catalogue-items/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler #(rf/dispatch [::fetch-catalogue])
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-catalogue]))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -104,8 +105,8 @@
             :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
-                         [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %])]
-                         [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %])]])
+                         [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]
+                         [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]])
               :sortable? false
               :filterable? false}})
 
