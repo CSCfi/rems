@@ -123,9 +123,7 @@
                                             :when (not (is-entitled? userid resource-id))]
                                         {userid #{resource-id}})
                                       (apply merge-with union))
-          members-to-update (set
-                             (concat (keys entitlements-to-add)
-                                     (keys entitlements-to-remove)))]
+          members-to-update (keys (merge entitlements-to-add entitlements-to-remove))]
       (when (seq members-to-update)
         (log/info "updating entitlements on application" application-id)
         (doseq [[userid resource-ids] entitlements-to-add]
