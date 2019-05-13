@@ -6,8 +6,8 @@
 
 (defn lang-link-classes [current-language language]
   (if (= current-language language)
-    "btn btn-link active"
-    "btn btn-link"))
+    "nav-link active"
+    "nav-link"))
 
 (defn language-switcher
   "Language switcher widget"
@@ -18,9 +18,13 @@
           (for [language languages]
             (let [lang-str (str/upper-case (name language))]
               [:form.inline
-               #_(anti-forgery-field)
-               [:button {:class (lang-link-classes current-language language) :type "button"
-                         :on-click #(rf/dispatch [:set-current-language language])} lang-str]])))))
+               [:a {:href "#"
+                    :on-click (fn [event]
+                                (.preventDefault event)
+                                (rf/dispatch [:set-current-language language]))
+                    :class (lang-link-classes current-language language)
+                    :style {:padding 0}}
+                lang-str]])))))
 
 (defn guide []
   [:div
