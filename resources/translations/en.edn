@@ -303,6 +303,7 @@
           :text "Login by using your Haka credentials"
           :title "Login"}
   :missing "Missing translation %1"
+  :modal {:close-dialog "Close dialog"}
   :navigation {:about "About"
                :actions "Actions"
                :administration "Administration"
