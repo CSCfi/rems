@@ -64,8 +64,8 @@
           (log/warnf "Post failed: %s", response))
         (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
 
-(defn- get-entitlements-by-user [app-id]
-  (->> (db/get-entitlements {:application app-id :is-active? true})
+(defn- get-entitlements-by-user [application-id]
+  (->> (db/get-entitlements {:application application-id :is-active? true})
        (group-by :userid)
        (map (fn [[userid rows]]
               [userid (set (map :resourceid rows))]))
@@ -78,7 +78,7 @@
   [application]
   (when (contains? #{:application.state/approved :application.state/closed}
                    (:application/state application))
-    (let [app-id (:application/id application)
+    (let [application-id (:application/id application)
           members (set (concat (map :userid (:application/members application))
                                [(:application/applicant application)]))
           past-members (set (map :userid (:application/past-members application)))
@@ -86,7 +86,7 @@
                                      :application/resources
                                      (map :resource/id)
                                      set)
-          application-entitlements (get-entitlements-by-user app-id)
+          application-entitlements (get-entitlements-by-user application-id)
           entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
           entitlements-to-add (->> (for [userid (union members past-members)
                                          :let [resource-ids (entitlements-by-user userid)]
@@ -110,19 +110,19 @@
                              (concat (keys entitlements-to-add)
                                      (keys entitlements-to-remove)))]
       (when (seq members-to-update)
-        (log/info "updating entitlements on application" app-id)
+        (log/info "updating entitlements on application" application-id)
         (doseq [[userid resource-ids] entitlements-to-add]
-          (log/info "granting entitlements on application" app-id "to" userid "resources" resource-ids)
+          (log/info "granting entitlements on application" application-id "to" userid "resources" resource-ids)
           (doseq [resource-id (sort resource-ids)]
-            (db/add-entitlement! {:application app-id
+            (db/add-entitlement! {:application application-id
                                   :user userid
                                   :resource resource-id})
-            (post-entitlements :add (db/get-entitlements {:application app-id :user userid :resource resource-id}))))
+            (post-entitlements :add (db/get-entitlements {:application application-id :user userid :resource resource-id}))))
         (doseq [[userid resource-ids] entitlements-to-remove]
-          (log/info "revoking entitlements on application" app-id "to" userid "resources" resource-ids)
+          (log/info "revoking entitlements on application" application-id "to" userid "resources" resource-ids)
           (doseq [resource-id (sort resource-ids)]
-            (db/end-entitlements! {:application app-id
+            (db/end-entitlements! {:application application-id
                                    :user userid
                                    :resource resource-id})
-            (post-entitlements :remove (db/get-entitlements {:application app-id :user userid :resource resource-id})))))
+            (post-entitlements :remove (db/get-entitlements {:application application-id :user userid :resource resource-id})))))
       members-to-update)))
