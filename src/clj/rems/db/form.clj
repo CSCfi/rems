@@ -1,7 +1,6 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
             [cprop.tools :refer [merge-maps]]
-            [rems.InvalidRequestException]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]))

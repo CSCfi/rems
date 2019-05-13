@@ -4,7 +4,6 @@
             [clj-time.core :as time]
             [clojure.string :refer [split-lines]]
             [clojure.test :refer :all]
-            [rems.auth.ForbiddenException]
             [rems.config]
             [rems.context :as context]
             [rems.db.applications :as applications]

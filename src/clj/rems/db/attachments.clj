@@ -1,6 +1,5 @@
 (ns rems.db.attachments
   (:require [rems.application-util :refer [form-fields-editable?]]
-            [rems.InvalidRequestException]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db])
   (:import [java.io ByteArrayOutputStream FileInputStream File ByteArrayInputStream]
