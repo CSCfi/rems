@@ -82,6 +82,7 @@
           members (set (concat (map :userid (:application/members application))
                                [(:application/applicant application)]))
           past-members (set (map :userid (:application/past-members application)))
+          application-state (:application/state application)
           application-resources (->> application
                                      :application/resources
                                      (map :resource/id)
@@ -90,7 +91,7 @@
           entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
           entitlements-to-add (->> (for [userid (union members past-members)
                                          :let [resource-ids (entitlements-by-user userid)]
-                                         :when (and (= :application.state/approved (:application/state application))
+                                         :when (and (= :application.state/approved application-state)
                                                     (contains? members userid)
                                                     (accepted-licenses? application userid))
                                          resource-id application-resources
@@ -100,7 +101,7 @@
           entitlements-to-remove (->> (for [userid (union members past-members)
                                             :let [resource-ids (entitlements-by-user userid)]
                                             resource-id resource-ids
-                                            :when (or (= :application.state/closed (:application/state application))
+                                            :when (or (= :application.state/closed application-state)
                                                       (not (contains? members userid))
                                                       (not (accepted-licenses? application userid))
                                                       (not (contains? application-resources resource-id)))]
