@@ -46,7 +46,8 @@
    :description {:value (fn [app] [:div {:style {:overflow :hidden
                                                  :text-overflow :ellipsis
                                                  :white-space :nowrap
-                                                 :max-width "30em"}}
+                                                 :max-width "30em"}
+                                         :title (:application/description app)}
                                    (:application/description app)])
                  :header #(text :t.actions/description)}
    :resource {:value format-catalogue-items
