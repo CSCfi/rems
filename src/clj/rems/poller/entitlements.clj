@@ -15,6 +15,7 @@
   (when (contains? #{:application.event/approved
                      :application.event/licenses-accepted
                      :application.event/member-removed
+                     :application.event/resources-changed
                      :application.event/closed}
                    (:event/type event))
     (let [application (applications/get-unrestricted-application (:application/id event))]

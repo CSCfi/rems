@@ -630,24 +630,24 @@
         item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wf}))
         jack-app (:application-id (applications/create-application! "jack" [item1]))
         jill-app (:application-id (applications/create-application! "jill" [item1 item2]))]
-    (assert (nil? (applications/command! {:type :application.command/submit
-                                          :time (time/now)
-                                          :actor "jack"
-                                          :application-id jack-app})))
-    (assert (nil? (applications/command! {:type :application.command/approve
-                                          :time (time/now)
-                                          :actor "handler"
-                                          :application-id jack-app
-                                          :comment ""})))
-    (assert (nil? (applications/command! {:type :application.command/submit
-                                          :time (time/now)
-                                          :actor "jill"
-                                          :application-id jill-app})))
-    (assert (nil? (applications/command! {:type :application.command/approve
-                                          :time (time/now)
-                                          :actor "handler"
-                                          :application-id jill-app
-                                          :comment ""})))
+    (is (nil? (applications/command! {:type :application.command/submit
+                                      :time (time/now)
+                                      :actor "jack"
+                                      :application-id jack-app})))
+    (is (nil? (applications/command! {:type :application.command/approve
+                                      :time (time/now)
+                                      :actor "handler"
+                                      :application-id jack-app
+                                      :comment ""})))
+    (is (nil? (applications/command! {:type :application.command/submit
+                                      :time (time/now)
+                                      :actor "jill"
+                                      :application-id jill-app})))
+    (is (nil? (applications/command! {:type :application.command/approve
+                                      :time (time/now)
+                                      :actor "handler"
+                                      :application-id jill-app
+                                      :comment ""})))
     (entitlements-poller/run)
 
     (binding [context/*roles* #{:handler}]

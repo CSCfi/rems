@@ -179,6 +179,16 @@
                                                   :event/time test-time
                                                   :event/actor applicant-user-id
                                                   :application/id 123}])
+        approved-application (apply-events nil [dummy-created-event
+                                                {:event/type :application.event/submitted
+                                                 :event/time test-time
+                                                 :event/actor applicant-user-id
+                                                 :application/id 123}
+                                                {:event/type :application.event/approved
+                                                 :event/time test-time
+                                                 :event/actor handler-user-id
+                                                 :application/comment "This is good"
+                                                 :application/id 123}])
         injections {:get-catalogue-item {1 {:id 1 :resid "abc" :formid 1 :wfid 1}
                                          2 {:id 2 :resid "efg" :formid 1 :wfid 1}
                                          3 {:id 3 :resid "hij" :formid 1 :wfid 2}
@@ -257,6 +267,37 @@
                                       {:catalogue-item/id 3 :resource/ext-id "hij"}
                                       {:catalogue-item/id 4 :resource/ext-id "klm"}]}
              (ok-command submitted-application
+                         {:type :application.command/change-resources
+                          :actor handler-user-id
+                          :comment "Changed these for you"
+                          :catalogue-item-ids [1 2 3 4]}
+                         injections))))
+
+    (testing "handler can change approved resources"
+      (is (= {:event/type :application.event/resources-changed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id 123
+              :application/comment "Changed these for you"
+              :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
+                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]}
+             (ok-command approved-application
+                         {:type :application.command/change-resources
+                          :actor handler-user-id
+                          :comment "Changed these for you"
+                          :catalogue-item-ids [1 2]}
+                         injections)))
+
+      (is (= {:event/type :application.event/resources-changed
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id 123
+              :application/comment "Changed these for you"
+              :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
+                                      {:catalogue-item/id 2 :resource/ext-id "efg"}
+                                      {:catalogue-item/id 3 :resource/ext-id "hij"}
+                                      {:catalogue-item/id 4 :resource/ext-id "klm"}]}
+             (ok-command approved-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
                           :comment "Changed these for you"

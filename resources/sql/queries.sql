@@ -92,7 +92,14 @@ SELECT
   enabled,
   archived
 FROM resource
-WHERE id = :id;
+WHERE 1=1
+/*~ (when (:id params) */
+  AND id = :id
+/*~ ) ~*/
+/*~ (when (:resid params) */
+  AND resid = :resid
+/*~ ) ~*/
+;
 
 -- :name create-resource! :insert
 -- :doc Create a single resource
@@ -329,12 +336,15 @@ WHERE 1=1
 INSERT INTO entitlement (catAppId, userId, resId)
 VALUES (:application, :user, :resource);
 
--- :name end-entitlement! :!
+-- :name end-entitlements! :!
 UPDATE entitlement
 SET endt = current_timestamp
 WHERE catAppId = :application
 /*~ (when (:user params) */
   AND entitlement.userId = :user
+/*~ ) ~*/
+/*~ (when (:resource params) */
+  AND entitlement.resId = :resource
 /*~ ) ~*/
 ;
 
@@ -345,7 +355,7 @@ WHERE catAppId = :application
 --   :user -- user id to limit select to
 --   :resource -- resid to limit select to
 --   :is-active? -- entitlement is without end date
-SELECT res.resId, catAppId, entitlement.userId, entitlement.start, users.userAttrs->>'mail' AS mail FROM entitlement
+SELECT res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
 LEFT OUTER JOIN users on entitlement.userId = users.userId
 WHERE 1=1
@@ -356,7 +366,7 @@ WHERE 1=1
   AND entitlement.userId = :user
 /*~ ) ~*/
 /*~ (when (:resource params) */
-  AND res.resId = :resource
+  AND res.id = :resource
 /*~ ) ~*/
 /*~ (when (:is-active? params) */
   AND entitlement.endt IS NULL
