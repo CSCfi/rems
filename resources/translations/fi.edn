@@ -142,6 +142,7 @@
                    :username "Käyttäjätunnus"}
   :applications {:all-applications "Kaikki hakemukset"
                  :application "Hakemus"
+                 :applications "Hakemukset"
                  :empty "Sinulla ei ole hakemuksia."
                  :events {:approved "Hyväksytty"
                           :closed "Poistettu"

@@ -103,12 +103,14 @@
 
 (defn applications-page []
   (let [apps @(rf/subscribe [::my-applications])
+        identity @(rf/subscribe [:identity])
         loading? @(rf/subscribe [::loading-my-applications?])]
     [:div
-     [:h2 (text :t.applications/my-applications)]
+     [:h1 (text :t.applications/applications)]
+     (when (roles/show-all-applications? (:roles identity))
+       [:h2 (text :t.applications/my-applications)])
      [application-list apps loading?]
-     (let [identity @(rf/subscribe [:identity])
-           apps @(rf/subscribe [::all-applications])
+     (let [apps @(rf/subscribe [::all-applications])
            loading? @(rf/subscribe [::loading-all-applications?])]
        (when (roles/show-all-applications? (:roles identity))
          [:div
