@@ -86,11 +86,10 @@
                                      :application/resources
                                      (map :resource/id)
                                      set)
-          entitlements-by-user (get-entitlements-by-user app-id)
-          user-entitlements (into {}
-                                  (for [userid (union members past-members)]
-                                    [userid (or (entitlements-by-user userid) #{})]))
-          entitlements-to-add (->> (for [[userid resource-ids] user-entitlements
+          application-entitlements (get-entitlements-by-user app-id)
+          entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
+          entitlements-to-add (->> (for [userid (union members past-members)
+                                         :let [resource-ids (entitlements-by-user userid)]
                                          :when (and (= :application.state/approved (:application/state application))
                                                     (contains? members userid)
                                                     (accepted-licenses? application userid))
@@ -98,7 +97,8 @@
                                          :when (not (contains? resource-ids resource-id))]
                                      {userid #{resource-id}})
                                    (apply merge-with union))
-          entitlements-to-remove (->> (for [[userid resource-ids] user-entitlements
+          entitlements-to-remove (->> (for [userid (union members past-members)
+                                            :let [resource-ids (entitlements-by-user userid)]
                                             resource-id resource-ids
                                             :when (or (= :application.state/closed (:application/state application))
                                                       (not (contains? members userid))
