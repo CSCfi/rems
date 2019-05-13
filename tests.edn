@@ -1,0 +1,16 @@
+#kaocha/v1 {:tests [{:id :unit
+                     :ns-patterns ["rems"]
+                     :test-paths ["src" "test"]
+                     :skip-meta [:browser :integration]}
+                    {:id :browser
+                     :ns-patterns ["rems"]
+                     :test-paths ["src" "test"]
+                     :focus-meta [:browser]}
+                    {:id :integration
+                     :ns-patterns ["rems"]
+                     :test-paths ["src" "test"]
+                     :focus-meta [:integration]}]
+            :kaocha/reporter kaocha.report/dots
+            :plugins [:kaocha.plugin/print-invocations
+                      :kaocha.plugin/notifier
+                      :kaocha.plugin/profiling]}
