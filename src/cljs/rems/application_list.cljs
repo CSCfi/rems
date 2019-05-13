@@ -43,7 +43,11 @@
                  :header #(text :t.actions/id)}
    :id {:value :application/id
         :header #(text :t.actions/id)}
-   :description {:value :application/description
+   :description {:value (fn [app] [:div {:style {:overflow :hidden
+                                                 :text-overflow :ellipsis
+                                                 :white-space :nowrap
+                                                 :max-width "30em"}}
+                                   (:application/description app)])
                  :header #(text :t.actions/description)}
    :resource {:value format-catalogue-items
               :header #(text :t.actions/resource)}
