@@ -79,8 +79,8 @@
   (when (contains? #{:application.state/approved :application.state/closed}
                    (:application/state application))
     (let [application-id (:application/id application)
-          members (set (concat (map :userid (:application/members application))
-                               [(:application/applicant application)]))
+          current-members (set (concat (map :userid (:application/members application))
+                                       [(:application/applicant application)]))
           past-members (set (map :userid (:application/past-members application)))
           application-state (:application/state application)
           application-resources (->> application
@@ -89,20 +89,20 @@
                                      set)
           application-entitlements (get-entitlements-by-user application-id)
           entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
-          entitlements-to-add (->> (for [userid (union members past-members)
+          entitlements-to-add (->> (for [userid (union current-members past-members)
                                          :let [resource-ids (entitlements-by-user userid)]
                                          :when (and (= :application.state/approved application-state)
-                                                    (contains? members userid)
+                                                    (contains? current-members userid)
                                                     (accepted-licenses? application userid))
                                          resource-id application-resources
                                          :when (not (contains? resource-ids resource-id))]
                                      {userid #{resource-id}})
                                    (apply merge-with union))
-          entitlements-to-remove (->> (for [userid (union members past-members)
+          entitlements-to-remove (->> (for [userid (union current-members past-members)
                                             :let [resource-ids (entitlements-by-user userid)]
                                             resource-id resource-ids
                                             :when (or (= :application.state/closed application-state)
-                                                      (not (contains? members userid))
+                                                      (not (contains? current-members userid))
                                                       (not (accepted-licenses? application userid))
                                                       (not (contains? application-resources resource-id)))]
                                         {userid #{resource-id}})
