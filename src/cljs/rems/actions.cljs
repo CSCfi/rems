@@ -119,9 +119,8 @@
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
-     {:visible-columns
-      (application-list/open-application-visible-columns
-       (get @(rf/subscribe [:rems.config/config]) :application-id-column :id))
+     {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
+                             [:description :resource :applicant :state :created :last-activity :view])
       :sorting (assoc @(rf/subscribe [::sorting ::open-applications])
                       :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
       :filtering (assoc @(rf/subscribe [::filtering ::open-applications])
@@ -143,9 +142,8 @@
       [:div
        top-buttons
        [application-list/component
-        {:visible-columns
-         (application-list/handled-application-visible-columns
-          (get @(rf/subscribe [:rems.config/config]) :application-id-column :id))
+        {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
+                                [:description :resource :applicant :state :last-activity :view])
          :sorting (assoc @(rf/subscribe [::sorting ::handled-applications])
                          :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
          :filtering (assoc @(rf/subscribe [::filtering ::handled-applications])

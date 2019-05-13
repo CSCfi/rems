@@ -120,7 +120,7 @@
      [:h4 (text :t.catalogue/continue-existing-application)]
      [application-list/component
       ;; TODO: use application-list/visible-columns like on other pages?
-      {:visible-columns application-list/+draft-columns+
+      {:visible-columns [:resource :last-activity :view]
        :items drafts}]]))
 
 (defn catalogue-page []

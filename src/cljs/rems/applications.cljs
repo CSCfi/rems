@@ -93,9 +93,8 @@
 
         :else
         [application-list/component
-         {:visible-columns
-          (application-list/open-application-visible-columns
-           (get @(rf/subscribe [:rems.config/config]) :application-id-column :id))
+         {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
+                                 [:description :resource :applicant :state :created :last-activity :view])
           :sorting (assoc @(rf/subscribe [::sorting])
                           :set-sorting #(rf/dispatch [::set-sorting %]))
           :filtering (assoc @(rf/subscribe [::filtering])
