@@ -17,6 +17,14 @@
        (map localized)
        (str/join ", ")))
 
+(defn- format-description [app]
+  [:div {:style {:overflow :hidden
+                 :text-overflow :ellipsis
+                 :white-space :nowrap
+                 :max-width "30em"}
+         :title (:application/description app)}
+   (:application/description app)])
+
 (def ^:private +open-application-base-columns+
   [:description :resource :applicant :state :created :last-activity :view])
 
@@ -43,12 +51,7 @@
                  :header #(text :t.actions/id)}
    :id {:value :application/id
         :header #(text :t.actions/id)}
-   :description {:value (fn [app] [:div {:style {:overflow :hidden
-                                                 :text-overflow :ellipsis
-                                                 :white-space :nowrap
-                                                 :max-width "30em"}
-                                         :title (:application/description app)}
-                                   (:application/description app)])
+   :description {:value format-description
                  :header #(text :t.actions/description)}
    :resource {:value format-catalogue-items
               :header #(text :t.actions/resource)}
