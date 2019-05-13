@@ -71,6 +71,22 @@
               [userid (set (map :resourceid rows))]))
        (into {})))
 
+(defn- grant-entitlements! [application-id user-id resource-ids]
+  (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids)
+  (doseq [resource-id (sort resource-ids)]
+    (db/add-entitlement! {:application application-id
+                          :user user-id
+                          :resource resource-id})
+    (post-entitlements :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+
+(defn- revoke-entitlements! [application-id user-id resource-ids]
+  (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids)
+  (doseq [resource-id (sort resource-ids)]
+    (db/end-entitlements! {:application application-id
+                           :user user-id
+                           :resource resource-id})
+    (post-entitlements :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+
 (defn update-entitlements-for
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
@@ -113,17 +129,6 @@
       (when (seq members-to-update)
         (log/info "updating entitlements on application" application-id)
         (doseq [[userid resource-ids] entitlements-to-add]
-          (log/info "granting entitlements on application" application-id "to" userid "resources" resource-ids)
-          (doseq [resource-id (sort resource-ids)]
-            (db/add-entitlement! {:application application-id
-                                  :user userid
-                                  :resource resource-id})
-            (post-entitlements :add (db/get-entitlements {:application application-id :user userid :resource resource-id}))))
+          (grant-entitlements! application-id userid resource-ids))
         (doseq [[userid resource-ids] entitlements-to-remove]
-          (log/info "revoking entitlements on application" application-id "to" userid "resources" resource-ids)
-          (doseq [resource-id (sort resource-ids)]
-            (db/end-entitlements! {:application application-id
-                                   :user userid
-                                   :resource resource-id})
-            (post-entitlements :remove (db/get-entitlements {:application application-id :user userid :resource resource-id})))))
-      members-to-update)))
+          (revoke-entitlements! application-id userid resource-ids))))))
