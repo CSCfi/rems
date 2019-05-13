@@ -95,7 +95,7 @@
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
-  (wait-visible *driver* {:tag :h2, :fn/text "My Applications"})
+  (wait-visible *driver* {:tag :h1, :fn/text "Applications"})
   (wait-visible *driver* [{:css "i.fa-search"}])
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "applications-page.png")))
