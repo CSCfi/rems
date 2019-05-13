@@ -189,7 +189,6 @@
     {:id application-id
      :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
      :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))
-     :applicant (get-element-text-el *driver* (child *driver* row {:css ".applicant"}))
      :state (get-element-text-el *driver* (child *driver* row {:css ".state"}))}))
 
 ;;; tests
@@ -232,7 +231,6 @@
       (go-to-applications)
       (let [summary (get-application-summary application-id)]
         (is (= "THL catalogue item" (:resource summary)))
-        (is (= "alice" (:applicant summary)))
         (is (= "Applied" (:state summary)))
         ;; don't bother trying to predict the external id:
         (is (.contains (:description summary) "Test name"))))))
