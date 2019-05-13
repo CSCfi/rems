@@ -89,7 +89,8 @@
             :return "Palauta hakijalle"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä läpimenoajat"
-            :state "Tila"}
+            :state "Tila"
+            :submitted "Lähtetetty"}
   :administration {:active "Aktiivinen"
                    :archive "Arkistoi"
                    :back "Takaisin"

@@ -120,7 +120,7 @@
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
      {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
-                             [:description :resource :applicant :state :created :last-activity :view])
+                             [:description :resource :applicant :state :submitted :last-activity :view])
       :sorting (assoc @(rf/subscribe [::sorting ::open-applications])
                       :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
       :filtering (assoc @(rf/subscribe [::filtering ::open-applications])

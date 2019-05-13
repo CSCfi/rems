@@ -89,7 +89,8 @@
             :return "Return to applicant"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
-            :state "State"}
+            :state "State"
+            :submitted "Sent"}
   :administration {:active "Active"
                    :archive "Archive"
                    :back "Back"

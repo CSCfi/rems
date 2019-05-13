@@ -41,6 +41,9 @@
                                 :created {:value #(localize-time (:application/created %))
                                           :sort-value :application/created
                                           :header #(text :t.actions/created)}
+                                :submitted {:value #(localize-time (:application/first-submitted %))
+                                            :sort-value :application/first-submitted
+                                            :header #(text :t.actions/submitted)}
                                 :last-activity {:value #(localize-time (:application/last-activity %))
                                                 :sort-value :application/last-activity
                                                 :header #(text :t.actions/last-activity)}
