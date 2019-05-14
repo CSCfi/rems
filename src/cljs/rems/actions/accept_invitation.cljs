@@ -1,5 +1,6 @@
 (ns rems.actions.accept-invitation
   (:require [re-frame.core :as rf]
+            [rems.atoms :refer [document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
@@ -48,6 +49,6 @@
            :error-handler error-handler})))
 
 (defn accept-invitation-page []
-  (let [token @(rf/subscribe [::token])]
-    [:div
-     [:h2 (text :t.actions/accept-invitation)]]))
+  [:div
+   [:h1 [document-title (text :t.actions/accept-invitation)]]
+   [spinner/big]])

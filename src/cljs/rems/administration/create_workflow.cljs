@@ -1,14 +1,13 @@
 (ns rems.administration.create-workflow
   (:require [clojure.string :as str]
-            [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field]]
-            [rems.status-modal :as status-modal]
-            [rems.atoms :refer [enrich-user]]
+            [rems.atoms :refer [enrich-user document-title]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post! put!]]))
 
@@ -215,7 +214,7 @@
                 (text :t.administration/create-workflow))]
     [:div
      [administration-navigator-container]
-     [:h2 title]
+     [:h1 [document-title title]]
      [collapsible/component
       {:id "create-workflow"
        :title title

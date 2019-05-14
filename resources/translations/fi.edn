@@ -1,12 +1,12 @@
 {:t
  {:about {:text [[:div.document
-                  [:h2 "REMS-demo"]
+                  [:h1 "REMS-demo"]
                   [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Kullekin tietoaineistolle on luotu hakulomake, jonka hakija täyttää ja lähettää, sekä työnkulku, joka määrittelee, minkälaisen käsittelypolun lähetetty lomake kulkee."]
                   [:p "Demo-ympäristöön voi kirjautua eri rooleissa alla olevilla käyttäjätunnuksilla ja salasanoilla. REMS-demo ei kontrolloi minkään todellisen tietoaineiston käyttöoikeuksia. Demo-ympäristöstä ei myöskään lähetetä sähköposti-ilmoituksia käyttöoikeuden hakijoille, kommentoijille tai hyväksyjille."]
                   [:p [:strong "Demoympäristö saatetaan nollata ajoittain "] ", jolloin kaikki tehdyt hakemukset ja käyttöoikeudet pyyhkiytyvät. Huomioi kuitenkin, että demotunnuksilla tekemäsi hakemukset ja muutokset saattavat sitä ennen näkyä muille kokeilijoille."]
                   [:p [:a {:href "http://www.csc.fi/rems"} "Lisätietoa REMS-ohjelmistosta"] "."]
                   [:p "REMS-tuki: rems@csc.fi"]
-                  [:h3 "Testitilit ja roolit"]
+                  [:h2 "Testitilit ja roolit"]
                   [:p "Hakan testi-IdP:ltä löytyy seuraavia testitunnuksia:"]
                   [:p [:strong "1. Käyttöluvanhakija 1"] [:br]
                    "Käyttäjätunnus: RDapplicant1" [:br]
@@ -36,10 +36,10 @@
                    "Käyttäjätunnus: RDdomainreporter" [:br]
                    "Salasana: RDdomainreporter" [:br]
                    "Kuvaus: Raportoija näkee kaikki hakemukset."]
-                  [:h3 "Käyttöehdot"]
+                  [:h2 "Käyttöehdot"]
                   [:p "Sitoudut siihen, että et tee REMS-demossa mitään sellaista joka loukkaa lakeja tai asetuksia tai kolmannen osapuolen oikeuksia (kuten tekijänoikeuksia) tai on säädytöntä, uhkaavaa, väkivaltaista, herjaavaa, vihamielistä, häiritsevää tai muulla tavalla paheksuttavaa."]
                   [:p "Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa."]
-                  [:h3 "Rahoittaja"]
+                  [:h2 "Rahoittaja"]
                   [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]]]}
   :actions {:accept-invitation "Hyväksy kutsu"
             :accept-invitation-success [:div [:p "Liittyminen hakemukseen onnistui."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]

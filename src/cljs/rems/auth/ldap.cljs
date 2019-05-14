@@ -1,9 +1,10 @@
 (ns rems.auth.ldap
-  (:require [rems.text :refer [text]]))
+  (:require [rems.atoms :refer [document-title]]
+            [rems.text :refer [text]]))
 
 (defn login-component []
   [:div.jumbotron
-   [:h2 (text :t.ldap/title)]
+   [:h1 [document-title (text :t.ldap/title)]]
    [:form
     {:action "/ldap/login" :method "post"}
     [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]

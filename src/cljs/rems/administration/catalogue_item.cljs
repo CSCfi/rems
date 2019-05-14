@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [info-field readonly-checkbox]]
+            [rems.atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
@@ -73,7 +73,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h2 (text :t.administration/catalogue-item)]
+       [:h1 [document-title (text :t.administration/catalogue-item)]]
        (if @loading?
          [spinner/big]
          [catalogue-item-view @catalogue-item @language])])))

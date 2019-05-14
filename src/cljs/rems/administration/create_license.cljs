@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
-            [rems.atoms :refer [file-download]]
+            [rems.atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! post!]]
@@ -195,7 +195,7 @@
         languages @(rf/subscribe [:languages])]
     [:div
      [administration-navigator-container]
-     [:h2 (text :t.administration/create-license)]
+     [:h1 [document-title (text :t.administration/create-license)]]
      [collapsible/component
       {:id "create-license"
        :title (text :t.administration/create-license)

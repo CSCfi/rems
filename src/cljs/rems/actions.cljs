@@ -1,13 +1,12 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [clojure.string :as str]
-            [medley.core :refer [distinct-by]]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
+            [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-state localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -158,6 +157,7 @@
     (if @(rf/subscribe [::loading-actions?])
       [spinner/big]
       [:div.spaced-sections
+       [:h1 [document-title (text :t.navigation/actions)]]
        [collapsible/component
         {:id "open-approvals"
          :open? true

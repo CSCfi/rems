@@ -1,12 +1,11 @@
 (ns rems.guide-page
   (:require [re-frame.core :as rf]
-            [rems.actions :as actions]
             [rems.administration.administration :as administration]
             [rems.application :as application]
             [rems.application-list :as application-list]
-            [rems.atoms :as atoms]
-            [rems.autocomplete :as autocomplete]
+            [rems.atoms :as atoms :refer [document-title]]
             [rems.auth.auth :as auth]
+            [rems.autocomplete :as autocomplete]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
@@ -79,7 +78,7 @@
 (defn guide-page []
   [:div.container
    [:div.example-page
-    [:h1 "Component Guide"]
+    [:h1 [document-title "Component Guide"]]
 
     [:h2 "Colors"]
     (example "Brand colors" [color-boxes])

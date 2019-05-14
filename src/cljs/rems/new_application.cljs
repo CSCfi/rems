@@ -1,6 +1,7 @@
 (ns rems.new-application
   (:require [re-frame.core :as rf]
             [rems.application :as application]
+            [rems.atoms :refer [document-title]]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -21,5 +22,5 @@
 
 (defn new-application-page []
   [:div
-   [:h2 (text :t.applications/application)]
+   [:h1 [document-title (text :t.applications/application)]]
    [spinner/big]])

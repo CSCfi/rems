@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [attachment-link external-link readonly-checkbox]]
+            [rems.atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -105,7 +105,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h2 (text :t.administration/resource)]
+       [:h1 [document-title (text :t.administration/resource)]]
        (if @loading?
          [spinner/big]
          [resource-view @resource @language])])))

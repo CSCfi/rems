@@ -1,12 +1,12 @@
 {:t
  {:about {:text [[:div.document
-                  [:h2 "REMS-Demo"]
+                  [:h1 "REMS-Demo"]
                   [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. For each dataset, there is an application form that the applicant fills in and submits and a workflow that determines how and to whom the submitted application is circulated for approval."]
                   [:p "You can use the demo usernames and passwords below to log in with various roles. The demo environment does not control access to any real datasets and does not send any email notifications to the applicants, reviewers or approvers of the applications."]
                   [:p [:strong "The demo environment might get cleaned occasionally"] ", which will make all applications and access rights disappear. However, please notice that the applications or configurations you make may be visible to the other persons using the demo."]
                   [:p [:a {:href "http://www.csc.fi/rems"} "More information on the REMS tool."]]
                   [:p "REMS support: rems@csc.fi"]
-                  [:h3 "User Accounts and Roles"]
+                  [:h2 "User Accounts and Roles"]
                   [:p "Following test user accounts (roles) can be used when signing in using Haka test IdP:"]
                   [:p [:strong "1. Applicant 1"] [:br]
                    "Username: RDapplicant1" [:br]
@@ -36,10 +36,10 @@
                    "Username: RDdomainreporter" [:br]
                    "Password: RDdomainreporter" [:br]
                    "Description: A reporter can see all applications."]
-                  [:h3 "Terms of Use"]
+                  [:h2 "Terms of Use"]
                   [:p "You agree not to do anything that infringes any laws or regulations or the rights of another (such as copyright) or is obscene, threatening, violent, abusive, hateful, harassing or otherwise objectionable."]
                   [:p "You agree not to introduce to REMS any information that relates to an identified or identifiable natural person."]
-                  [:h3 "Acknowledgements"]
+                  [:h2 "Acknowledgements"]
                   [:p "CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI."]]]}
   :actions {:accept-invitation "Accept invitation"
             :accept-invitation-success [:div [:p "Joining the application was successful."] [:p "Next you will be taken to the application."]]

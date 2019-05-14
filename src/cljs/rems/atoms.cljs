@@ -78,6 +78,9 @@
 (defn enrich-user [user]
   (assoc user :display (str (:name user) " (" (:email user) ")")))
 
+(defn document-title [title]
+  title)
+
 (defn guide []
   [:div
    (component-info flash-message)

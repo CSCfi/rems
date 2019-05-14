@@ -1,10 +1,9 @@
 (ns rems.administration.form
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.create-form :refer [form-preview]]
-            [rems.atoms :refer [info-field readonly-checkbox]]
+            [rems.atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -51,7 +50,7 @@
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
    [:div.col.commands [back-button]]
    [form-preview form]])
-   ;; TODO Do we support form licenses?
+;; TODO Do we support form licenses?
 
 (defn form-page []
   (let [form (rf/subscribe [::form])
@@ -60,7 +59,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h2 (text :t.administration/form)]
+       [:h1 [document-title (text :t.administration/form)]]
        (if @loading?
          [spinner/big]
          [form-view @form @language])])))
