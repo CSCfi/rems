@@ -62,7 +62,6 @@
 
 (defn- login-page []
   (layout/render
-   "login"
    (login-component)))
 
 (defn- login-failed []

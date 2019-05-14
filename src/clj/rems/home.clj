@@ -1,7 +1,5 @@
 (ns rems.home
-  (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clojure.test :refer [deftest is]]
+  (:require [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes routes]]
             [markdown.core :as md]
             [rems.auth.util :as auth-util]
@@ -30,7 +28,7 @@
 
 (defn- markdown-page [filename]
   (if-let [allowed-file (find-allowed-markdown-file filename)]
-    (layout/render filename (md/md-to-html-string (slurp (:file allowed-file))))
+    (layout/render (md/md-to-html-string (slurp (:file allowed-file))))
     (auth-util/throw-unauthorized)))
 
 (defn render-css

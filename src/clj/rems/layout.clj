@@ -60,7 +60,7 @@ window.rems = {
    params: :status -- status code to return, defaults to 200
            :headers -- map of headers to return, optional
            :content-type -- optional, defaults to \"text/html; charset=utf-8\""
-  [page-name content & [params]]
+  [content & [params]]
   (let [content-type (:content-type params "text/html; charset=utf-8")
         status (:status params 200)
         headers (:headers params {})]
@@ -73,7 +73,6 @@ window.rems = {
 (defn home-page []
   (users/add-user-if-logged-in! (get-user-id) context/*user*)
   (render
-   "REMS"
    (list
     [:script {:type "text/javascript"}
      (format "var csrfToken = '%s';" *anti-forgery-token*)]
@@ -105,4 +104,4 @@ window.rems = {
    returns a response map with the error page as the body
    and the status specified by the status key"
   [error-details]
-  (render "error page" (error-content error-details) error-details))
+  (render (error-content error-details) error-details))
