@@ -299,6 +299,11 @@
    [:.main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap}]
+   ;; Bootstrap has inaccessible focus indicators in particular
+   ;; for .btn-link and .btn-secondary, so we define our own.
+   [:a:focus :button:focus :.btn.focus :.btn:focus
+    {:outline 0
+     :box-shadow "0 0 0 0.2rem rgba(38,143,255,.5) !important"}]
    [:.btn-primary
     [:&:hover
      :&:focus

@@ -40,7 +40,8 @@
                                                      :space-between
                                                      :align-items :center}}
                           title
-                          [:button.btn.btn-link.link.ml-3 {:on-click on-close}
+                          [:button.btn.btn-link.link.ml-3 {:on-click on-close
+                                                           :aria-label (text :t.modal/close-dialog)}
                            [:i.fa.fa-times {:style {:margin 0}}]]]
                   :title-class title-class
                   :always [:div.full

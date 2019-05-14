@@ -303,6 +303,7 @@
           :text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
+  :modal {:close-dialog "Sulje ilmoitus"}
   :navigation {:about "Info"
                :actions "Toiminnot"
                :administration "Ylläpito"
