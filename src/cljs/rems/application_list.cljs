@@ -18,10 +18,7 @@
        (str/join ", ")))
 
 (defn- format-description [app]
-  [:div {:style {:overflow :hidden
-                 :text-overflow :ellipsis
-                 :white-space :nowrap
-                 :max-width "30em"}
+  [:div {:class "application-description"
          :title (:application/description app)}
    (:application/description app)])
 
