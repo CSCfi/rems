@@ -8,6 +8,7 @@
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
+            [rems.api.extra-pages :refer [extra-pages-api]]
             [rems.api.forms :refer [forms-api]]
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
@@ -113,6 +114,7 @@
       catalogue-api
       catalogue-items-api
       entitlements-api
+      extra-pages-api
       forms-api
       licenses-api
       resources-api

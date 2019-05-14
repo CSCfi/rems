@@ -31,6 +31,7 @@
             [rems.catalogue :refer [catalogue-page]]
             [rems.config :as config]
             [rems.guide-page :refer [guide-page]]
+            [rems.extra-pages :refer [extra-pages]]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
@@ -160,12 +161,6 @@
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
 
-(defn about-page []
-  [:div.container
-   [:div.row
-    [:div.col-md-12
-     (text :t.about/text)]]])
-
 (defn home-page []
   (if @(rf/subscribe [:user])
     ;; TODO this is a hack to show something useful on the home page
@@ -200,11 +195,11 @@
   {:home home-page
    :catalogue catalogue-page
    :guide guide-page
-   :about about-page
    :actions actions-page
    :application application-page
    :new-application new-application-page
    :applications applications-page
+   :extra-pages extra-pages
    :rems.actions/accept-invitation accept-invitation-page
    :rems.administration/administration administration-page
    :rems.administration/catalogue-item catalogue-item-page
@@ -272,9 +267,6 @@
 
 (secretary/defroute "/guide" []
   (rf/dispatch [:set-active-page :guide]))
-
-(secretary/defroute "/about" []
-  (rf/dispatch [:set-active-page :about]))
 
 (secretary/defroute "/actions" []
   (rf/dispatch [:rems.actions/enter-page])
@@ -361,6 +353,10 @@
 (secretary/defroute "/administration/create-workflow" []
   (rf/dispatch [:rems.administration.create-workflow/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
+
+(secretary/defroute "/extra-pages/:page-id" [page-id]
+  (rf/dispatch [:rems.extra-pages/enter-page page-id])
+  (rf/dispatch [:set-active-page :extra-pages]))
 
 (secretary/defroute "/unauthorized" []
   (rf/dispatch [:set-active-page :unauthorized]))
