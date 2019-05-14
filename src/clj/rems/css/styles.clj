@@ -614,6 +614,13 @@
                                  (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 1) 0]]}]
 
+   ;; application list
+   [:.applications
+    [:.application-description {:overflow :hidden
+                                :text-overflow :ellipsis
+                                :white-space :nowrap
+                                :max-width "30em"}]]
+
    ;; autocomplete, duplicates some Bootstrap styling
    ;; because the component classes are hard-coded
    [:.autocomplete {:width (u/percent 100)}

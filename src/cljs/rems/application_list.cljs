@@ -17,6 +17,11 @@
        (map localized)
        (str/join ", ")))
 
+(defn- format-description [app]
+  [:div {:class "application-description"
+         :title (:application/description app)}
+   (:application/description app)])
+
 (defn component
   "A table of applications.
 
@@ -29,7 +34,7 @@
                                               :header #(text :t.actions/id)}
                                 :id {:value :application/id
                                      :header #(text :t.actions/id)}
-                                :description {:value :application/description
+                                :description {:value format-description
                                               :header #(text :t.actions/description)}
                                 :resource {:value format-catalogue-items
                                            :header #(text :t.actions/resource)}
