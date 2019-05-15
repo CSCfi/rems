@@ -1,5 +1,3 @@
-# REMS-Demo
-
 This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. For each dataset, there is an application form that the applicant fills in and submits and a workflow that determines how and to whom the submitted application is circulated for approval.
 
 You can use the demo usernames and passwords below to log in with various roles. The demo environment does not control access to any real datasets and does not send any email notifications to the applicants, reviewers or approvers of the applications.

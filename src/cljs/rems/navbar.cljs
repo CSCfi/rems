@@ -28,7 +28,7 @@
   (let [config @(rf/subscribe [:rems.config/config])
         extra-pages (when config (config :extra-pages))
         language @(rf/subscribe [:language])
-        extra-page-id @(rf/subscribe [:rems.extra-pages/extra-page-id])]
+        extra-page-id @(rf/subscribe [:rems.extra-pages/page-id])]
     (when extra-pages
       (for [page extra-pages]
         (let [url (or (page :url)
