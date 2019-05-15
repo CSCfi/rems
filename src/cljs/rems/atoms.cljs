@@ -86,12 +86,16 @@
                " - ")
              (text :t.header/title))))
 
-(defn document-title [title]
-  (reagent/create-class
-   {:component-did-mount #(set-document-title! title)
-    :component-did-update #(set-document-title! title)
-    :display-name "document-title"
-    :reagent-render (fn [] [:h1 title])}))
+(defn document-title [_title]
+  (let [on-update (fn [this]
+                    (let [[_ title] (reagent/argv this)]
+                      (set-document-title! title)))]
+    (reagent/create-class
+     {:component-did-mount on-update
+      :component-did-update on-update
+      :display-name "document-title"
+      :reagent-render (fn [title]
+                        [:h1 title])})))
 
 (defn guide []
   [:div
