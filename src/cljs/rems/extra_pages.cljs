@@ -10,14 +10,9 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ page-id]]
-   {:db (assoc db ::loading? true)
-    ::fetch-extra-page [page-id]}))
-
-(defn- fetch-extra-page [page-id]
-  (fetch (str "/api/extra-pages/" page-id)
-         {:handler #(rf/dispatch [::fetch-extra-page-result %])}))
-
-(rf/reg-fx ::fetch-extra-page (fn [[page-id]] (fetch-extra-page page-id)))
+   (fetch (str "/api/extra-pages/" page-id)
+          {:handler #(rf/dispatch [::fetch-extra-page-result %])})
+   {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
  ::fetch-extra-page-result
