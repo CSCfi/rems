@@ -1,47 +1,5 @@
 {:t
- {:about {:text [[:div.document
-                  [:h2 "REMS-demo"]
-                  [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Kullekin tietoaineistolle on luotu hakulomake, jonka hakija täyttää ja lähettää, sekä työnkulku, joka määrittelee, minkälaisen käsittelypolun lähetetty lomake kulkee."]
-                  [:p "Demo-ympäristöön voi kirjautua eri rooleissa alla olevilla käyttäjätunnuksilla ja salasanoilla. REMS-demo ei kontrolloi minkään todellisen tietoaineiston käyttöoikeuksia. Demo-ympäristöstä ei myöskään lähetetä sähköposti-ilmoituksia käyttöoikeuden hakijoille, kommentoijille tai hyväksyjille."]
-                  [:p [:strong "Demoympäristö saatetaan nollata ajoittain "] ", jolloin kaikki tehdyt hakemukset ja käyttöoikeudet pyyhkiytyvät. Huomioi kuitenkin, että demotunnuksilla tekemäsi hakemukset ja muutokset saattavat sitä ennen näkyä muille kokeilijoille."]
-                  [:p [:a {:href "http://www.csc.fi/rems"} "Lisätietoa REMS-ohjelmistosta"] "."]
-                  [:p "REMS-tuki: rems@csc.fi"]
-                  [:h3 "Testitilit ja roolit"]
-                  [:p "Hakan testi-IdP:ltä löytyy seuraavia testitunnuksia:"]
-                  [:p [:strong "1. Käyttöluvanhakija 1"] [:br]
-                   "Käyttäjätunnus: RDapplicant1" [:br]
-                   "Salasana: RDapplicant1" [:br]
-                   "Kuvaus: Kirjaudu tällä tunnuksella hakeaksesi tietoaineiston käyttöoikeutta."]
-                  [:p [:strong "2. Käyttöluvanhakija 2"] [:br]
-                   "Käyttäjätunnus: RDapplicant2" [:br]
-                   "Salasana: RDapplicant2" [:br]
-                   "Kuvaus: Toinen tunnus tietoaineiston käyttöoikeuden hakemiseen. RDapplicant1 voi vaikkapa kutsua tämän käyttäjän käyttölupahakemuksensa toiseksi jäseneksi, jolloin käyttöoikeuksia anotaan samalla myös hänelle."]
-                  [:p [:strong "3. Katselmoija"] [:br]
-                   "Käyttäjätunnus: RDreview" [:br]
-                   "Salasana: RDreview" [:br]
-                   "Kuvaus: Katselmoija voi kommentoida saapunutta käyttölupahakemusta mutta ei voi hyväksyä tai hylätä sitä."]
-                  [:p [:strong "4. Hyväksyjä 1"] [:br]
-                   "Käyttäjätunnus: RDapprover1" [:br]
-                   "Salasana: RDapprover1" [:br]
-                   "Kuvaus: Hyväksyjä hyväksyy tai hylkää saapuneen käyttölupahakemuksen tai palauttaa sen täydennettäväksi."]
-                  [:p [:strong "5. Hyväksyjä 2"] [:br]
-                   "Käyttäjätunnus: RDapprover2" [:br]
-                   "Salasana: RDapprover2" [:br]
-                   "Kuvaus: Demon eräillä tietoaineistoilla on useita rinnakkaisia tai vaihtoehtoisia hyväksyjiä."]
-                  [:p [:strong "6. Aineiston omistaja"] [:br]
-                   "Käyttäjätunnus: RDowner" [:br]
-                   "Salasana: RDowner" [:br]
-                   "Kuvaus: Aineiston omistaja voi lisätä uusia tietoaineistoja ja muuttaa niiden ominaisuuksia, kuten hakulomaketta, hyväksymisprosessia ja hyväksyjiä."]
-                  [:p [:strong "6. Raportoija"] [:br]
-                   "Käyttäjätunnus: RDdomainreporter" [:br]
-                   "Salasana: RDdomainreporter" [:br]
-                   "Kuvaus: Raportoija näkee kaikki hakemukset."]
-                  [:h3 "Käyttöehdot"]
-                  [:p "Sitoudut siihen, että et tee REMS-demossa mitään sellaista joka loukkaa lakeja tai asetuksia tai kolmannen osapuolen oikeuksia (kuten tekijänoikeuksia) tai on säädytöntä, uhkaavaa, väkivaltaista, herjaavaa, vihamielistä, häiritsevää tai muulla tavalla paheksuttavaa."]
-                  [:p "Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa."]
-                  [:h3 "Rahoittaja"]
-                  [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]]]}
-  :actions {:accept-invitation "Hyväksy kutsu"
+ {:actions {:accept-invitation "Hyväksy kutsu"
             :accept-invitation-success [:div [:p "Liittyminen hakemukseen onnistui."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
             :accept-invitation-already-member [:div. [:p "Olet jo jäsen."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
             :accept-licenses "Hyväksy käyttöehdot"
@@ -306,8 +264,7 @@
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
   :modal {:close-dialog "Sulje ilmoitus"}
-  :navigation {:about "Info"
-               :actions "Toiminnot"
+  :navigation {:actions "Toiminnot"
                :administration "Ylläpito"
                :applications "Hakemukset"
                :catalogue "Aineistoluettelo"

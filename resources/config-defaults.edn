@@ -59,21 +59,22 @@
  ;; Optional extra script files loaded when UI loads
  :extra-scripts {:root "/dev/null" :files []}
 
- :extra-pages [;; example of internal page with translation in localization files
-               #_{:id "about"
-                  :url "/about"
-                  :translation-key :t.navigation/about}
-
-               ;; example of an external page with inline translation
+ ;; Optional extra pages shown in the navigation bar.
+ :extra-pages [;; example of an external page
                #_{:id "hello"
                   :url "http://example.org/hello.html"
-                  :external? true
-                  :translations {:fi "Hei", :en "Hello"}}
+                  :translations {:fi {:title "Hei"}
+                                 :en {:title "Hello"}}}
 
-               ;; example of a local markdown file with inline translation
-               #_{:id "mark"
-                  :url "/markdown/about.md"
-                  :file "about.md"
-                  :translations {:fi "Info", :en "About"}}]
+               ;; example of a local markdown file
+               #_{:id "about"
+                  :translations {:fi {:title "Info"
+                                      :file "about-fi.md"}
+                                 :en {:title "About"
+                                      :file "about-en.md"}}}]
 
+ ;; Path to the markdown files for the extra pages.
+ :extra-pages-path nil
+
+ ;; The character used as the separator in csv files.
  :csv-separator ","}

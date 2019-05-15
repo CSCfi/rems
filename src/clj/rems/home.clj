@@ -23,16 +23,6 @@
                               (content-type "text/plain"))
       :else (redirect (str "/#/application?items=" (:id (first items)))))))
 
-(defn- find-allowed-markdown-file [filename]
-  (let [allowed-files (index-by [:file] (filter :file (:extra-pages env)))]
-    (when (contains? allowed-files filename)
-      (allowed-files filename))))
-
-(defn- markdown-page [filename]
-  (if-let [allowed-file (find-allowed-markdown-file filename)]
-    (layout/render filename (md/md-to-html-string (slurp (:file allowed-file))))
-    (auth-util/throw-unauthorized)))
-
 (defn render-css
   "Helper function for rendering styles that has parameters for
   easy memoization purposes."
@@ -49,7 +39,6 @@
   (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/#/application/accept-invitation/" token)))
   (GET "/apply-for" {{:keys [resource]} :params} (apply-for-resource resource))
   (GET "/landing_page" req (redirect "/#/redirect")) ; DEPRECATED: legacy url redirect
-  (GET "/markdown/:filename" [filename] (markdown-page filename))
   (GET "/favicon.ico" [] (redirect "/img/favicon.ico")))
 
 (defroutes css-routes

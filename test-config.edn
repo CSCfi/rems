@@ -4,4 +4,10 @@
  :database-url "postgresql://localhost/rems_test?user=rems_test"
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :authentication :fake-shibboleth
- :public-url "http://localhost:3001/"}
+ :public-url "http://localhost:3001/"
+ :extra-pages [{:id "test"
+                :translations {:fi {:title "Testi"
+                                    :filename "test-fi.md"}
+                               :en {:title "Test"
+                                    :filename "test-en.md"}}}]
+ :extra-pages-path "./test-data/extra-pages/"}
