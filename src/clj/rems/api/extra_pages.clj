@@ -14,14 +14,13 @@
 (defn- get-extra-page [page-id]
   (let [allowed-ids (index-by [:id] (filter #(not (:url %)) (:extra-pages env)))]
     (when (contains? allowed-ids page-id)
-      (let [translations (get-in allowed-ids [page-id :translations])]
+      (let [translations (get-in allowed-ids [page-id :translations])
+            extra-pages-path (:extra-pages-path env)]
+        (assert extra-pages-path ":extra-pages-path undefined in config")
         (into
          {}
-         (for [lang (keys translations)]
-           (let [filename (get-in translations [lang :filename])
-                 extra-pages-path (:extra-pages-path env)
-                 _ (assert extra-pages-path ":extra-pages-path undefined in config")
-                 file (io/file extra-pages-path filename)]
+         (for [[lang {:keys [filename]}] translations]
+           (let [file (io/file extra-pages-path filename)]
              (if (.isFile file)
                [lang (slurp file)]
                (throw (FileNotFoundException. (str "the file specified in extra-pages does not exist: " file)))))))))))
