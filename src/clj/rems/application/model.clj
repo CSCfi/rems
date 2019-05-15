@@ -249,6 +249,7 @@
   (-> application
       (assoc ::previous-submitted-answers (::submitted-answers application))
       (assoc ::submitted-answers (::draft-answers application))
+      (update :application/first-submitted #(or % (:event/time event)))
       (dissoc ::draft-answers)
       (assoc :application/state :application.state/submitted)))
 

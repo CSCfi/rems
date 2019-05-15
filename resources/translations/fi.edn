@@ -89,7 +89,8 @@
             :return "Palauta hakijalle"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä läpimenoajat"
-            :state "Tila"}
+            :state "Tila"
+            :submitted "Lähtetetty"}
   :administration {:active "Aktiivinen"
                    :archive "Arkistoi"
                    :back "Takaisin"
@@ -142,6 +143,7 @@
                    :username "Käyttäjätunnus"}
   :applications {:all-applications "Kaikki hakemukset"
                  :application "Hakemus"
+                 :applications "Hakemukset"
                  :empty "Sinulla ei ole hakemuksia."
                  :events {:approved "Hyväksytty"
                           :closed "Poistettu"
