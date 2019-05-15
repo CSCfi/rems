@@ -5,4 +5,10 @@
  :theme-path "example-theme/theme.edn"
  :authentication :fake-shibboleth
  :public-url "http://localhost:3000/"
- :render-css-file? true}
+ :render-css-file? true
+ :extra-pages [{:id "about"
+                :translations {:fi {:title "Info"
+                                    :filename "about-fi.md"}
+                               :en {:title "About"
+                                    :filename "about-en.md"}}}]
+ :extra-pages-path "./test-data/extra-pages"}
