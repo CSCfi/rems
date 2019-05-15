@@ -11,7 +11,8 @@
  ::enter-page
  (fn [{:keys [db]} [_ page-id]]
    (fetch (str "/api/extra-pages/" page-id)
-          {:handler #(rf/dispatch [::fetch-extra-page-result %])})
+          {:handler #(rf/dispatch [::fetch-extra-page-result %])
+           :error-handler #(rf/dispatch [::fetch-extra-page-result :not-found])})
    {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
@@ -32,13 +33,15 @@
         language @(rf/subscribe [:language])]
     (if loading?
       [spinner/big]
-      (let [content (get extra-page language)]
-        [:div.container
-         [:div.row
-          [:div.col-md-12
-           [:div.document
-            (if content
-              {:dangerouslySetInnerHTML
-               {:__html
-                (md/md->html content)}}
-              (text :t/missing))]]]]))))
+      (if (= extra-page :not-found)
+        (rf/dispatch [:set-active-page :not-found])
+        (let [content (get extra-page language)]
+          [:div.container
+           [:div.row
+            [:div.col-md-12
+             [:div.document
+              (if content
+                {:dangerouslySetInnerHTML
+                 {:__html
+                  (md/md->html content)}}
+                (text :t/missing))]]]])))))
