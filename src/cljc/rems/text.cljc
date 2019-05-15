@@ -93,7 +93,8 @@
   (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
 
 (defn localize-time [time]
-  #?(:clj (format/unparse time-format time)
+  #?(:clj (when time
+            (format/unparse time-format time))
      :cljs (let [time (if (string? time) (format/parse time) time)]
              (when time
                (format/unparse-local time-format (time/to-default-time-zone time))))))
