@@ -79,14 +79,16 @@
 (defn enrich-user [user]
   (assoc user :display (str (:name user) " (" (:email user) ")")))
 
+(defn set-document-title! [title]
+  (set! (.-title js/document)
+        (str title
+             (when-not (str/blank? title)
+               " - ")
+             (text :t.header/title))))
+
 (defn document-title [title]
   (reagent/create-class
-   {:component-did-mount
-    (fn [] (set! (.-title js/document)
-                 (str title
-                      (when-not (str/blank? title)
-                        " - ")
-                      (text :t.header/title))))
+   {:component-did-mount #(set-document-title! title)
     :display-name "document-title"
     :reagent-render (fn [] title)}))
 
