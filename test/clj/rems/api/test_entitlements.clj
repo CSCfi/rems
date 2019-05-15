@@ -37,12 +37,15 @@
           ;; sanity check the data
           (is (= {:resource "urn:nbn:fi:lb-201403262"
                   :application-id 12
+                  :end nil
                   :mail "alice@example.com"}
-                 (-> data first (dissoc :start :end))))
+                 (-> data first (dissoc :start))))
+          (is (nil? (-> data first :end)))
           (is (= {:resource "urn:nbn:fi:lb-201403262"
                   :application-id 19
+                  :end nil
                   :mail "developer@example.com"}
-                 (-> data second (dissoc :start :end)))))))
+                 (-> data second (dissoc :start)))))))
 
     (testing "just for alice as a developer"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -53,8 +56,9 @@
         ;; sanity check the data
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
+                :end nil
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start :end))))))
+               (-> data first (dissoc :start))))))
 
     (testing "just for alice as an owner"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -65,8 +69,9 @@
         ;; sanity check the data
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
+                :end nil
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start :end))))))
+               (-> data first (dissoc :start))))))
 
     (testing "just for alice as a reporter"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -77,8 +82,9 @@
         ;; sanity check the data
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
+                :end nil
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start :end))))))
+               (-> data first (dissoc :start))))))
 
     (testing "listing as applicant"
       (testing "with entitlements"
