@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
+            [rems.api.util :as api-util]
             [rems.config :refer [env]]
             [rems.common-util :refer [index-by]]
             [ring.util.http-response :refer :all]
@@ -32,5 +33,8 @@
     (GET "/:page-id" []
       :summary "Return all translations for a given extra page"
       :path-params [page-id :- (describe s/Str "page-id")]
-      :return ExtraPageResponse
-      (ok (get-extra-page page-id)))))
+      :responses {200 {:schema ExtraPageResponse}
+                  404 {:schema s/Any :description "Not found"}}
+      (if-let [response (get-extra-page page-id)]
+        (ok response)
+        (api-util/not-found-json-response)))))
