@@ -22,7 +22,7 @@
    :mail mail})
 
 (defn get-entitlements-for-api [user-or-nil resource-or-nil]
-  (if (has-roles? :handler :owner)
+  (if (has-roles? :handler :owner :reporter)
     (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
                                                    :resource resource-or-nil}))
     (mapv entitlement-to-api (db/get-entitlements {:user (getx-user-id)
