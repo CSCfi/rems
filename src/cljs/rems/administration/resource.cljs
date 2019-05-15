@@ -105,7 +105,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h1 [document-title (text :t.administration/resource)]]
+       [document-title (text :t.administration/resource)]
        (if @loading?
          [spinner/big]
          [resource-view @resource @language])])))

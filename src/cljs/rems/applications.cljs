@@ -107,7 +107,7 @@
         identity @(rf/subscribe [:identity])
         loading? @(rf/subscribe [::loading-my-applications?])]
     [:div
-     [:h1 [document-title (text :t.applications/applications)]]
+     [document-title (text :t.applications/applications)]
      (when (roles/show-all-applications? (:roles identity))
        [:h2 (text :t.applications/my-applications)])
      [application-list apps loading?]

@@ -155,7 +155,7 @@
     (if @(rf/subscribe [::loading-actions?])
       [spinner/big]
       [:div.spaced-sections
-       [:h1 [document-title (text :t.navigation/actions)]]
+       [document-title (text :t.navigation/actions)]
        [collapsible/component
         {:id "open-approvals"
          :open? true

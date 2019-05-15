@@ -126,7 +126,7 @@
         form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
-     [:h1 [document-title (text :t.administration/create-resource)]]
+     [document-title (text :t.administration/create-resource)]
      [collapsible/component
       {:id "create-resource"
        :title (text :t.administration/create-resource)

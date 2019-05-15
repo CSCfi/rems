@@ -6,7 +6,7 @@
 
 (defn login-component [alternative-endpoint]
   [:div.jumbotron
-   [:h1 [document-title (text :t.login/title)]]
+   [document-title (text :t.login/title)]
    [:p (text :t.login/text)]
    [:div.col-md6
     [atoms/link-to nil

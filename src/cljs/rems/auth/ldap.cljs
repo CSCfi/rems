@@ -4,7 +4,7 @@
 
 (defn login-component []
   [:div.jumbotron
-   [:h1 [document-title (text :t.ldap/title)]]
+   [document-title (text :t.ldap/title)]
    [:form
     {:action "/ldap/login" :method "post"}
     [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]

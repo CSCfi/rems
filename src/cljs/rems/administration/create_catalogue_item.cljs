@@ -185,7 +185,7 @@
         form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
-     [:h1 [document-title (text :t.administration/create-catalogue-item)]]
+     [document-title (text :t.administration/create-catalogue-item)]
      [collapsible/component
       {:id "create-catalogue-item"
        :title (text :t.administration/create-catalogue-item)

@@ -90,7 +90,7 @@
   (reagent/create-class
    {:component-did-mount #(set-document-title! title)
     :display-name "document-title"
-    :reagent-render (fn [] title)}))
+    :reagent-render (fn [] [:h1 title])}))
 
 (defn guide []
   [:div

@@ -195,7 +195,7 @@
         languages @(rf/subscribe [:languages])]
     [:div
      [administration-navigator-container]
-     [:h1 [document-title (text :t.administration/create-license)]]
+     [document-title (text :t.administration/create-license)]
      [collapsible/component
       {:id "create-license"
        :title (text :t.administration/create-license)

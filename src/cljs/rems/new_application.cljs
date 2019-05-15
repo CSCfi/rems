@@ -22,5 +22,5 @@
 
 (defn new-application-page []
   [:div
-   [:h1 [document-title (text :t.applications/application)]]
+   [document-title (text :t.applications/application)]
    [spinner/big]])

@@ -107,7 +107,7 @@
 (defn workflows-page []
   (into [:div
          [administration-navigator-container]
-         [:h1 [document-title (text :t.administration/workflows)]]]
+         [document-title (text :t.administration/workflows)]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-workflow]

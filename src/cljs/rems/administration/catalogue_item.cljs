@@ -73,7 +73,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h1 [document-title (text :t.administration/catalogue-item)]]
+       [document-title (text :t.administration/catalogue-item)]
        (if @loading?
          [spinner/big]
          [catalogue-item-view @catalogue-item @language])])))

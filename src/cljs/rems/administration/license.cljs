@@ -91,7 +91,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h1 [document-title (text :t.administration/license)]]
+       [document-title (text :t.administration/license)]
        (if @loading?
          [spinner/big]
          [license-view @license @language])])))

@@ -101,7 +101,7 @@
 (defn resources-page []
   (into [:div
          [administration-navigator-container]
-         [:h1 [document-title (text :t.administration/resources)]]]
+         [document-title (text :t.administration/resources)]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]

@@ -124,7 +124,7 @@
 (defn catalogue-items-page []
   (into [:div
          [administration-navigator-container]
-         [:h1 [document-title (text :t.administration/catalogue-items)]]]
+         [document-title (text :t.administration/catalogue-items)]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]

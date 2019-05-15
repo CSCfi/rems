@@ -305,7 +305,7 @@
   (let [form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
-     [:h1 [document-title (text :t.administration/create-form)]]
+     [document-title (text :t.administration/create-form)]
      [:div.container-fluid.editor-content
       [:div.row
        [:div.col-lg

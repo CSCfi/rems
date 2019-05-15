@@ -214,7 +214,7 @@
                 (text :t.administration/create-workflow))]
     [:div
      [administration-navigator-container]
-     [:h1 [document-title title]]
+     [document-title title]
      [collapsible/component
       {:id "create-workflow"
        :title title

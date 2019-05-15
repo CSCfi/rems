@@ -59,7 +59,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h1 [document-title (text :t.administration/form)]]
+       [document-title (text :t.administration/form)]
        (if @loading?
          [spinner/big]
          [form-view @form @language])])))

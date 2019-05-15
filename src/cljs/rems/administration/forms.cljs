@@ -106,7 +106,7 @@
 (defn forms-page []
   (into [:div
          [administration-navigator-container]
-         [:h1 [document-title (text :t.administration/forms)]]]
+         [document-title (text :t.administration/forms)]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-form]

@@ -90,7 +90,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h1 [document-title (text :t.navigation/administration)]]
+       [document-title (text :t.navigation/administration)]
        (if @loading?
          [spinner/big]
          [:div.spaced-sections

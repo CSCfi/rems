@@ -581,7 +581,7 @@
                               :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
-     [:h1 [document-title (text :t.applications/application)]]
+     [document-title (text :t.applications/application)]
      (into [:div] messages)
      [application-header application]
      [:div.mt-3 [applicants-info application]]
@@ -599,7 +599,7 @@
         loading? (not application)]
     (if loading?
       [:div
-       [:h1 [document-title (text :t.applications/application)]]
+       [document-title (text :t.applications/application)]
        [spinner/big]]
       [render-application application edit-application userid])))
 

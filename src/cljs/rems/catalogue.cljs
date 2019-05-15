@@ -129,7 +129,7 @@
         drafts @(rf/subscribe [::draft-applications])
         loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
-     [:h1 [document-title (text :t.catalogue/catalogue)]]
+     [document-title (text :t.catalogue/catalogue)]
      (if (or loading-catalogue? loading-drafts?)
        [spinner/big]
        [:div

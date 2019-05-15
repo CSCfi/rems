@@ -50,5 +50,5 @@
 
 (defn accept-invitation-page []
   [:div
-   [:h1 [document-title (text :t.actions/accept-invitation)]]
+   [document-title (text :t.actions/accept-invitation)]
    [spinner/big]])

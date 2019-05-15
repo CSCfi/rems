@@ -78,7 +78,7 @@
 (defn guide-page []
   [:div.container
    [:div.example-page
-    [:h1 [document-title "Component Guide"]]
+    [document-title "Component Guide"]
 
     [:h2 "Colors"]
     (example "Brand colors" [color-boxes])

@@ -106,7 +106,7 @@
 (defn licenses-page []
   (into [:div
          [administration-navigator-container]
-         [:h1 [document-title (text :t.administration/licenses)]]]
+         [document-title (text :t.administration/licenses)]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-licenses]

@@ -144,7 +144,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h1 [document-title (text :t.administration/workflow)]]
+       [document-title (text :t.administration/workflow)]
        (if @loading?
          [spinner/big]
          [workflow-view @workflow @language])])))
