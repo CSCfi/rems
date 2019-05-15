@@ -15,14 +15,15 @@
 
 ;; TODO move Entitlement schema here from rems.api?
 
-(defn- entitlement-to-api [{:keys [resid catappid start mail]}]
+(defn- entitlement-to-api [{:keys [resid catappid start end mail]}]
   {:resource resid
    :application-id catappid
    :start (text/localize-time start)
+   :end (text/localize-time end)
    :mail mail})
 
 (defn get-entitlements-for-api [user-or-nil resource-or-nil]
-  (if (has-roles? :handler)
+  (if (has-roles? :handler :owner :reporter)
     (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
                                                    :resource resource-or-nil}))
     (mapv entitlement-to-api (db/get-entitlements {:user (getx-user-id)

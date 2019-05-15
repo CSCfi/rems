@@ -27,7 +27,26 @@
                      read-body)]
         (is (= 2 (count data)))))
 
-    (testing "just for alice"
+    (doseq [userid ["developer" "owner" "reporter"]]
+      (testing (str "all as " userid)
+        (let [data (-> (request :get "/api/entitlements")
+                       (authenticate api-key userid)
+                       handler
+                       read-body)]
+          (is (= 2 (count data)))
+          ;; sanity check the data
+          (is (= {:resource "urn:nbn:fi:lb-201403262"
+                  :application-id 12
+                  :end nil
+                  :mail "alice@example.com"}
+                 (-> data first (dissoc :start))))
+          (is (= {:resource "urn:nbn:fi:lb-201403262"
+                  :application-id 19
+                  :end nil
+                  :mail "developer@example.com"}
+                 (-> data second (dissoc :start)))))))
+
+    (testing "just for alice as a developer"
       (let [data (-> (request :get "/api/entitlements?user=alice")
                      (authenticate api-key "developer")
                      handler
@@ -36,6 +55,33 @@
         ;; sanity check the data
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
+                :end nil
+                :mail "alice@example.com"}
+               (-> data first (dissoc :start))))))
+
+    (testing "just for alice as an owner"
+      (let [data (-> (request :get "/api/entitlements?user=alice")
+                     (authenticate api-key "owner")
+                     handler
+                     read-body)]
+        (is (= 1 (count data)))
+        ;; sanity check the data
+        (is (= {:resource "urn:nbn:fi:lb-201403262"
+                :application-id 12
+                :end nil
+                :mail "alice@example.com"}
+               (-> data first (dissoc :start))))))
+
+    (testing "just for alice as a reporter"
+      (let [data (-> (request :get "/api/entitlements?user=alice")
+                     (authenticate api-key "reporter")
+                     handler
+                     read-body)]
+        (is (= 1 (count data)))
+        ;; sanity check the data
+        (is (= {:resource "urn:nbn:fi:lb-201403262"
+                :application-id 12
+                :end nil
                 :mail "alice@example.com"}
                (-> data first (dissoc :start))))))
 
