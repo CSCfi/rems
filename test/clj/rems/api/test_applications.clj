@@ -91,14 +91,14 @@
       handler
       read-ok-body))
 
-(defn- get-open-reviews [user-id]
-  (-> (request :get "/api/reviews/open")
+(defn- get-todos [user-id]
+  (-> (request :get "/api/applications/todo")
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
-(defn- get-handled-reviews [user-id]
-  (-> (request :get "/api/reviews/handled")
+(defn- get-handled-todos [user-id]
+  (-> (request :get "/api/applications/handled")
       (authenticate "42" user-id)
       handler
       read-ok-body))
@@ -207,6 +207,7 @@
                  "application.command/remove-member"
                  "application.command/invite-member"
                  "application.command/uninvite-member"
+                 "application.command/change-resources"
                  "see-everything"}
                (set (get application :application/permissions))))))
 
@@ -225,6 +226,23 @@
                                     :application-id application-id
                                     :comment ""}))
           "user should be forbidden to send command"))
+
+    (testing "application can be returned"
+      (is (= {:success true} (send-command handler-id
+                                           {:type :application.command/return
+                                            :application-id application-id
+                                            :comment "Please check again"}))))
+
+    (testing "changing resources as applicant"
+      (is (= {:success true} (send-command user-id
+                                           {:type :application.command/change-resources
+                                            :application-id application-id
+                                            :catalogue-item-ids [9]}))))
+
+    (testing "submitting again"
+      (is (= {:success true} (send-command user-id
+                                           {:type :application.command/submit
+                                            :application-id application-id}))))
 
     (testing "send commands with authorized user"
       (testing "even handler cannot comment without request"
@@ -254,18 +272,24 @@
                      (:application/request-id comment-event)))))))
 
       (testing "adding and then accepting additonal licenses"
-        (let [eventcount (count (get (get-application application-id handler-id) :events))]
-          (testing "add licenses"
-            (is (= {:success true} (send-command handler-id
-                                                 {:type :application.command/add-licenses
-                                                  :application-id application-id
-                                                  :licenses [license-id]
-                                                  :comment "Please approve these new terms"}))))
-          (testing "applicant can now accept licenses"
-            (is (= {:success true} (send-command user-id
-                                                 {:type :application.command/accept-licenses
-                                                  :application-id application-id
-                                                  :accepted-licenses [license-id]}))))))
+        (testing "add licenses"
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/add-licenses
+                                                :application-id application-id
+                                                :licenses [license-id]
+                                                :comment "Please approve these new terms"}))))
+        (testing "applicant can now accept licenses"
+          (is (= {:success true} (send-command user-id
+                                               {:type :application.command/accept-licenses
+                                                :application-id application-id
+                                                :accepted-licenses [license-id]})))))
+
+      (testing "changing resources as handler"
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/change-resources
+                                              :application-id application-id
+                                              :catalogue-item-ids [9 10]
+                                              :comment "Here are the correct resources"}))))
 
       (testing "request-decision"
         (is (= {:success true} (send-command handler-id
@@ -295,10 +319,14 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/returned"
+                    "application.event/resources-changed"
+                    "application.event/submitted"
                     "application.event/comment-requested"
                     "application.event/commented"
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
+                    "application.event/resources-changed"
                     "application.event/decision-requested"
                     "application.event/decided"
                     "application.event/approved"]
@@ -308,8 +336,12 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/returned"
+                    "application.event/resources-changed"
+                    "application.event/submitted"
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
+                    "application.event/resources-changed"
                     "application.event/approved"]
                    applicant-event-types))))))))
 
@@ -345,9 +377,18 @@
                 "application.event/submitted"]
                (map :event/type (get submitted :application/events))))))))
 
+(deftest test-application-close
+  (let [user-id "alice"
+        application-id (create-dummy-application user-id)]
+    (is (= {:success true}
+           (send-command user-id {:type :application.command/close
+                                  :application-id application-id
+                                  :comment ""})))
+    (is (= "application.state/closed"
+           (:application/state (get-application application-id user-id))))))
+
 (deftest test-application-validation
-  (let [api-key "42"
-        user-id "alice"
+  (let [user-id "alice"
         workflow-id (create-dynamic-workflow)
         form-id (create-form-with-fields [{:title {:en "req"}
                                            :type "text"
@@ -356,7 +397,7 @@
                                            :type "text"
                                            :optional true}])
         [req-id opt-id] (->> (form/get-form form-id)
-                             :fields
+                             :items
                              (map :id))
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)]
@@ -402,31 +443,49 @@
         form-id (create-form-with-fields [{:title {:en "some attachment"}
                                            :type "attachment"
                                            :optional true}])
-        field-id (-> (form/get-form form-id) :fields first :id)
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)
         upload-request (fn [file]
-                         (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id "&field-id=" field-id))
+                         (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})))
-        read-request (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})]
+        read-request #(request :get (str "/api/applications/attachment/" %))]
     (testing "uploading attachment for a draft"
       (let [body (-> (upload-request filecontent)
                      (authenticate api-key user-id)
                      handler
-                     read-ok-body)]
-        (is (= {:success true} body))))
+                     read-ok-body)
+            id (:id body)]
+        (is (:success body))
+        (is (number? id))
+        (testing "and retrieving it as the applicant"
+          (let [response (-> (read-request id)
+                             (authenticate api-key user-id)
+                             handler
+                             assert-response-is-ok)]
+            (is (= (slurp testfile) (slurp (:body response))))))
+        (testing "and retrieving it as non-applicant"
+          (let [response (-> (read-request id)
+                             (authenticate api-key "carl")
+                             handler)]
+            (is (response-is-forbidden? response))))))
+    (testing "retrieving nonexistent attachment"
+      (let [response (-> (read-request 999999999999999)
+                         (authenticate api-key "carl")
+                         handler)]
+        (is (response-is-not-found? response))))
+    (testing "uploading attachment for nonexistent application"
+      (let [response (-> (request :post "/api/applications/add-attachment?application-id=99999999")
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (response-is-forbidden? response))))
     (testing "uploading malicious file for a draft"
       (let [response (-> (upload-request malicious-content)
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-bad-request? response))))
-    (testing "retrieving attachment for a draft"
-      (let [response (-> read-request
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok)]
-        (is (= (slurp testfile) (slurp (:body response))))))
     (testing "uploading attachment without authentication"
       (let [response (-> (upload-request filecontent)
                          handler)]
@@ -439,11 +498,6 @@
         (is (response-is-unauthorized? response))))
     (testing "uploading attachment as non-applicant"
       (let [response (-> (upload-request filecontent)
-                         (authenticate api-key "carl")
-                         handler)]
-        (is (response-is-forbidden? response))))
-    (testing "retrieving attachment as non-applicant"
-      (let [response (-> read-request
                          (authenticate api-key "carl")
                          handler)]
         (is (response-is-forbidden? response))))
@@ -537,26 +591,42 @@
       (is (contains? (get-ids (get-all-applications "alice"))
                      app-id)))))
 
-(deftest test-reviews
+(deftest test-todos
   (let [app-id (create-dummy-application "alice")]
 
     (testing "does not list drafts"
-      (is (not (contains? (get-ids (get-open-reviews "developer"))
+      (is (not (contains? (get-ids (get-todos "developer"))
                           app-id))))
 
-    (testing "lists submitted in open reviews"
+    (testing "lists submitted in todos"
       (is (= {:success true} (send-command "alice" {:type :application.command/submit
                                                     :application-id app-id})))
-      (is (contains? (get-ids (get-open-reviews "developer"))
+      (is (contains? (get-ids (get-todos "developer"))
                      app-id))
-      (is (not (contains? (get-ids (get-handled-reviews "developer"))
+      (is (not (contains? (get-ids (get-handled-todos "developer"))
                           app-id))))
 
-    (testing "lists handled in handled reviews"
+    (testing "commenter sees application in todos"
+      (is (= {:success true} (send-command "developer" {:type :application.command/request-comment
+                                                        :application-id app-id
+                                                        :commenters ["bob"]
+                                                        :comment "x"})))
+      (is (contains? (get-ids (get-todos "bob"))
+                     app-id))
+      (is (not (contains? (get-ids (get-handled-todos "bob"))
+                          app-id))))
+
+    (testing "lists handled in handled"
       (is (= {:success true} (send-command "developer" {:type :application.command/approve
                                                         :application-id app-id
                                                         :comment ""})))
-      (is (not (contains? (get-ids (get-open-reviews "developer"))
+      (is (not (contains? (get-ids (get-todos "developer"))
                           app-id)))
-      (is (contains? (get-ids (get-handled-reviews "developer"))
+      (is (contains? (get-ids (get-handled-todos "developer"))
+                     app-id)))
+
+    (testing "commenter doesn't see accepted application in todos"
+      (is (not (contains? (get-ids (get-todos "bob"))
+                          app-id)))
+      (is (contains? (get-ids (get-handled-todos "bob"))
                      app-id)))))

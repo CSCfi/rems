@@ -2,8 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [external-link readonly-checkbox]]
-            [rems.catalogue-util :refer [get-catalogue-item-title]]
+            [rems.atoms :refer [readonly-checkbox]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -38,7 +37,8 @@
 
 (rf/reg-event-fx
  ::update-resource
- (fn [{:keys [db]} [_ item]]
+ (fn [{:keys [db]} [_ item description]]
+   (status-modal/common-pending-handler! description)
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
           :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-resources]))
@@ -82,8 +82,8 @@
             :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [resource]
                         [[to-view-resource (:id resource)]
-                         [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %])]
-                         [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %])]])
+                         [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %1 %2])]
+                         [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %1 %2])]])
               :sortable? false
               :filterable? false}})
 

@@ -10,7 +10,7 @@
             [rems.config :refer [dev-environment?]]
             [rems.fields :as fields]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! post! normalize-option-key]]
+            [rems.util :refer [dispatch! post! normalize-option-key parse-int]]
             [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
@@ -87,10 +87,6 @@
   (and (not (str/blank? (:key option)))
        (valid-required-localized-string? (:label option) languages)))
 
-(defn- parse-maxlength [maxlength]
-  (let [parsed (parseInt maxlength)]
-    (when-not (js/isNaN parsed) parsed)))
-
 (defn- valid-request-field? [field languages]
   (and (valid-required-localized-string? (:title field) languages)
        (not (str/blank? (:type field)))
@@ -124,7 +120,7 @@
          (when (supports-input-prompt? field)
            {:input-prompt (build-localized-string (:input-prompt field) languages)})
          (when (supports-maxlength? field)
-           {:maxlength (parse-maxlength (:maxlength field))})
+           {:maxlength (parse-int (:maxlength field))})
          (when (supports-options? field)
            {:options (for [{:keys [key label]} (:options field)]
                        {:key key
@@ -292,7 +288,7 @@
          (when (supports-input-prompt? field)
            {:field/placeholder (:input-prompt field)})
          (when (supports-maxlength? field)
-           {:field/max-length (parse-maxlength (:maxlength field))})
+           {:field/max-length (parse-int (:maxlength field))})
          (when (supports-options? field)
            {:field/options (:options field)})))
 

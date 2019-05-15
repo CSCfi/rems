@@ -20,6 +20,7 @@
 (s/defschema GetConfigResponse
   {:authentication s/Keyword
    :alternative-login-url (s/maybe s/Str)
+   :application-id-column (s/enum :id :external-id)
    :extra-pages [ExtraPage]
    :languages [s/Keyword]
    :default-language s/Keyword
@@ -50,4 +51,14 @@
     (GET "/" []
       :summary "Get configuration that is relevant to UI"
       :return GetConfigResponse
-      (ok (select-keys env [:authentication :alternative-login-url :extra-pages :languages :default-language :dev])))))
+      (ok (select-keys env [:authentication :alternative-login-url :application-id-column :extra-pages :languages :default-language :dev])))
+
+    (GET "/full" []
+      :summary "Get (almost) full configuration"
+      :roles #{:owner}
+      :return s/Any
+      (ok (assoc env
+                 :authentication "HIDDEN"
+                 :database-url "HIDDEN"
+                 :ldap "HIDDEN"
+                 :test-database-url "HIDDEN")))))

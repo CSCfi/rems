@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [external-link readonly-checkbox]]
+            [rems.atoms :refer [readonly-checkbox]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -36,7 +36,8 @@
 
 (rf/reg-event-fx
  ::update-workflow
- (fn [_ [_ item]]
+ (fn [_ [_ item description]]
+   (status-modal/common-pending-handler! description)
    (put! "/api/workflows/update"
          {:params (select-keys item [:id :enabled :archived])
           :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-workflows]))
@@ -86,8 +87,8 @@
             :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [workflow]
                         [[to-view-workflow (:id workflow)]
-                         [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %])]
-                         [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %])]])
+                         [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]
+                         [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]])
               :sortable? false
               :filterable? false}})
 

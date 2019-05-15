@@ -1,17 +1,22 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clj-time.core :as time]
-            [clj-time.format :as time-format]
+  (:require [clojure.core.cache :as cache]
+            [clj-time.core :as time]
+            [clojure.java.jdbc :as jdbc]
+            [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
-            [cprop.tools :refer [merge-maps]]
-            [rems.application.events :as events]
+            [medley.core :refer [map-vals]]
+            [mount.core :as mount]
+            [rems.application.commands :as commands]
+            [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
-            [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.db.attachments :as attachments]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
@@ -20,647 +25,20 @@
             [rems.form-validation :as form-validation]
             [rems.json :as json]
             [rems.permissions :as permissions]
-            [rems.util :refer [secure-token]]
-            [rems.workflow.dynamic :as dynamic]
-            [schema-tools.core :as st]
-            [schema.coerce :as coerce]
-            [schema.utils])
-  (:import [org.joda.time DateTime]))
-
-(declare get-dynamic-application-state)
-
-(defn draft?
-  "Is the given `application-id` for an unsaved draft application?"
-  [application-id]
-  (nil? application-id))
-
-(declare get-application-state)
-
-(defn- not-empty? [args]
-  ((complement empty?) args))
+            [rems.scheduler :as scheduler]
+            [rems.util :refer [atom? getx secure-token]])
+  (:import [org.joda.time Duration]))
 
 ;;; Query functions
 
-(declare is-dynamic-application?)
+;; TODO use also in UI side?
+(defn is-dynamic-application? [application]
+  (= :workflow/dynamic (get-in application [:workflow :type])))
 
-(declare fix-workflow-from-db)
-(declare is-dynamic-handler?)
+(defn is-dynamic-handler? [user-id application]
+  (contains? (set (get-in application [:workflow :handlers])) user-id))
 
-(defn- is-actor? [user-id actors]
-  (assert user-id)
-  (assert actors)
-  (contains? (set actors) user-id))
-
-(defn can-act-as?
-  [user-id application role]
-  (assert user-id)
-  (assert application)
-  (assert role)
-  (or (and (= "applied" (:state application))
-           (is-actor? user-id (actors/get-by-role (:id application) (:curround application) role)))
-      (and (= "approver" role)
-           (contains? (dynamic/possible-commands user-id (get-application-state (:id application)))
-                      :application.command/approve))))
-
-(declare get-application-state)
-
-(defn- has-actor-role? [user-id application-id role]
-  (assert user-id)
-  (assert application-id)
-  (assert role)
-  (or (is-actor? user-id (actors/get-by-role application-id role))
-      (is-dynamic-handler? user-id (get-application-state application-id))))
-
-(defn can-approve? [user-id application]
-  (assert user-id)
-  (assert application)
-  (can-act-as? user-id application "approver"))
-
-(defn- is-approver? [user-id application-id]
-  (assert user-id)
-  (assert application-id)
-  (has-actor-role? user-id application-id "approver"))
-
-(defn- can-review? [user-id application]
-  (assert user-id)
-  (assert application)
-  (can-act-as? user-id application "reviewer"))
-
-(defn- is-reviewer? [user-id application-id]
-  (has-actor-role? user-id application-id "reviewer"))
-
-(defn- is-third-party-reviewer?
-  "Checks if a given user has been requested to review the given application.
-   Additionally a specific round can be provided to narrow the check to apply only to the given round."
-  ([user application]
-   (->> (:events application)
-        (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
-        (not-empty?)))
-  ([user round application]
-   (is-third-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
-
-(defn can-third-party-review?
-  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
-  [user-id application]
-  (and (= "applied" (:state application))
-       (is-third-party-reviewer? user-id (:curround application) application)))
-
-(defn is-applicant? [user-id application]
-  (assert user-id)
-  (assert application)
-  (= user-id (:applicantuserid application)))
-
-(defn may-see-application? [user-id application]
-  (assert user-id)
-  (assert application)
-  (let [application-id (:id application)]
-    (or (is-applicant? user-id application)
-        (is-approver? user-id application-id)
-        (is-reviewer? user-id application-id)
-        (is-third-party-reviewer? user-id application)
-        (model/see-application? application user-id))))
-
-(defn can-close? [user-id application]
-  (assert user-id)
-  (assert application)
-  (let [application-id (:id application)]
-    (or (and (is-approver? user-id application-id)
-             (= "approved" (:state application)))
-        (and (is-applicant? user-id application)
-             (not= "closed" (:state application))))))
-
-(defn can-withdraw? [user-id application]
-  (assert user-id)
-  (assert application)
-  (and (is-applicant? user-id application)
-       (= (:state application) "applied")))
-
-(defn- get-field-value [field form-id application-id]
-  (let [query-params {:item (:id field)
-                      :form form-id
-                      :application application-id}]
-    (if (= "attachment" (:type field))
-      (:filename (db/get-attachment query-params))
-      (:value (db/get-field-value query-params)))))
-
-(defn- process-field-options [options]
-  (->> options
-       (map (fn [{:keys [key langcode label displayorder]}]
-              {:key key
-               :label {(keyword langcode) label}
-               :displayorder displayorder}))
-       (group-by :key)
-       (map (fn [[_key options]] (apply merge-maps options))) ; merge label translations
-       (sort-by :displayorder)
-       (mapv #(select-keys % [:key :label]))))
-
-(deftest process-field-options-test
-  (is (= [{:key "yes" :label {:en "Yes" :fi "Kyllä"}}
-          {:key "no" :label {:en "No" :fi "Ei"}}]
-         (process-field-options
-          [{:itemid 9, :key "no", :langcode "en", :label "No", :displayorder 1}
-           {:itemid 9, :key "no", :langcode "fi", :label "Ei", :displayorder 1}
-           {:itemid 9, :key "yes", :langcode "en", :label "Yes", :displayorder 0}
-           {:itemid 9, :key "yes", :langcode "fi", :label "Kyllä", :displayorder 0}]))))
-
-(defn process-field
-  "Returns a field structure like this:
-
-    {:id 123
-     :type \"texta\"
-     :title \"Item title\"
-     :inputprompt \"hello\"
-     :optional true
-     :value \"filled value or nil\"}"
-  [application-id form-id field]
-  {:id (:id field)
-   :optional (:formitemoptional field)
-   :type (:type field)
-   ;; TODO here we do a db call per item, for licenses we do one huge
-   ;; db call. Not sure which is better?
-   :localizations (into {} (for [{:keys [langcode title inputprompt]}
-                                 (db/get-form-item-localizations {:item (:id field)})]
-                             [(keyword langcode) {:title title :inputprompt inputprompt}]))
-   :options (process-field-options (db/get-form-item-options {:item (:id field)}))
-   :value (or
-           (when-not (draft? application-id)
-             (get-field-value field form-id application-id))
-           "")
-   :maxlength (:maxlength field)})
-
-(defn- assoc-field-previous-values [application fields]
-  (let [previous-values (:items (if (form-fields-editable? application)
-                                  (:submitted-form-contents application)
-                                  (:previous-submitted-form-contents application)))]
-    (for [field fields]
-      (assoc field :previous-value (get previous-values (:id field))))))
-
-(defn- process-license
-  [application license]
-  (let [app-id (:id application)
-        app-user (:applicantuserid application)
-        license-id (:id license)]
-    (-> license
-        (assoc :type "license"
-               :approved (= "approved"
-                            (:state
-                             (when application
-                               (db/get-application-license-approval {:catappid app-id
-                                                                     :licid license-id
-                                                                     :actoruserid app-user}))))))))
-
-(defn get-application-licenses [application catalogue-item-ids]
-  (mapv #(process-license application %)
-        (licenses/get-active-licenses
-         (or (:start application) (time/now))
-         {:wfid (:wfid application) :items catalogue-item-ids})))
-
-;;; Application phases
-
-(defn get-application-phases [state]
-  (cond (contains? #{"rejected" :application.state/rejected} state)
-        [{:phase :apply :completed? true :text :t.phases/apply}
-         {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
-         {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
-
-        (contains? #{"approved" :application.state/approved} state)
-        [{:phase :apply :completed? true :text :t.phases/apply}
-         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
-         {:phase :result :completed? true :approved? true :text :t.phases/approved}]
-
-        (contains? #{"closed" :application.state/closed} state)
-        [{:phase :apply :closed? true :text :t.phases/apply}
-         {:phase :approve :closed? true :text :t.phases/approve}
-         {:phase :result :closed? true :text :t.phases/approved}]
-
-        (contains? #{"draft" "returned" "withdrawn" :application.state/draft} state)
-        [{:phase :apply :active? true :text :t.phases/apply}
-         {:phase :approve :text :t.phases/approve}
-         {:phase :result :text :t.phases/approved}]
-
-        (contains? #{"applied" :application.state/submitted} state)
-        [{:phase :apply :completed? true :text :t.phases/apply}
-         {:phase :approve :active? true :text :t.phases/approve}
-         {:phase :result :text :t.phases/approved}]
-
-        :else
-        [{:phase :apply :active? true :text :t.phases/apply}
-         {:phase :approve :text :t.phases/approve}
-         {:phase :result :text :t.phases/approved}]))
-
-(defn get-form-for
-  "Returns a form structure like this:
-
-    {:id 7
-     :title \"Title\"
-     :application {:id 3
-                   :state \"draft\"
-                   :review-type :normal
-                   :can-approve? false
-                   :can-close? true
-                   :can-withdraw? false
-                   :can-third-party-review? false
-                   :is-applicant? true
-                   :workflow {...}
-                   :possible-actions #{...}}
-     :applicant-attributes {\"eppn\" \"developer\"
-                            \"email\" \"developer@e.mail\"
-                            \"displayName\" \"deve\"
-                            \"surname\" \"loper\"
-                            ...}
-     :catalogue-items [{:application 3 :item 123}]
-     :items [{:id 123
-              :type \"texta\"
-              :title \"Item title\"
-              :inputprompt \"hello\"
-              :optional true
-              :value \"filled value or nil\"}
-             ...]
-     :licenses [{:id 2
-                 :type \"license\"
-                 :licensetype \"link\"
-                 :title \"LGPL\"
-                 :textcontent \"http://foo\"
-                 :localizations {\"fi\" {:title \"...\" :textcontent \"...\"}}
-                 :approved false}]
-     :phases [{:phase :apply :active? true :text :t.phases/apply}
-              {:phase :approve :text :t.phases/approve}
-              {:phase :result :text :t.phases/approved}]}"
-  ([user-id application-id]
-   (let [form (db/get-form-for-application {:application application-id})
-         _ (assert form)
-         application (get-application-state application-id)
-         application (if (is-dynamic-application? application)
-                       (dynamic/assoc-possible-commands user-id application) ; TODO move even higher?
-                       application)
-         _ (assert application)
-         form-id (:formid form)
-         _ (assert form-id)
-         catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
-         catalogue-items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})
-         items (->> (db/get-form-items {:id form-id})
-                    (mapv #(process-field application-id form-id %))
-                    (assoc-field-previous-values application))
-         description (-> (filter #(= "description" (:type %)) items)
-                         first
-                         :value)
-         licenses (get-application-licenses application catalogue-item-ids)
-         review-type (cond
-                       (can-review? user-id application) :normal
-                       (can-third-party-review? user-id application) :third-party
-                       :else nil)]
-     (when application-id
-       (when-not (may-see-application? user-id application)
-         (throw-forbidden)))
-     {:id form-id
-      :title (:formtitle form)
-      :catalogue-items catalogue-items
-      :application (-> application
-                       (assoc :formid form-id
-                              :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
-                              :can-approve? (can-approve? user-id application)
-                              :can-close? (can-close? user-id application)
-                              :can-withdraw? (can-withdraw? user-id application)
-                              :can-third-party-review? (can-third-party-review? user-id application)
-                              :is-applicant? (is-applicant? user-id application)
-                              :review-type review-type
-                              :description description)
-                       (permissions/cleanup))
-      :applicant-attributes (users/get-user-attributes (:applicantuserid application))
-      :items items
-      :licenses licenses
-      :accepted-licenses (get-in application [:form-contents :accepted-licenses])
-      :phases (get-application-phases (:state application))})))
-
-(defn create-new-draft [user-id wfid]
-  (assert user-id)
-  (assert wfid)
-  (:id (db/create-application! {:user user-id :wfid wfid})))
-
-(defn create-new-draft-at-time [user-id wfid time]
-  (:id (db/create-application! {:user user-id :wfid wfid :start time})))
-
-;;; Applying events
-
-(defmulti ^:private apply-event
-  "Applies an event to an application state."
-  ;; dispatch by event type
-  (fn [_application event] (:event event)))
-
-(defn get-event-types
-  "Fetch sequence of supported event names."
-  []
-  (keys (methods apply-event)))
-
-(defmethod apply-event "save"
-  [application _event]
-  application)
-
-(defmethod apply-event "apply"
-  [application event]
-  (assert (#{"draft" "returned" "withdrawn"} (:state application))
-          (str "Can't submit application " (pr-str application)))
-  (assert (= (:round event) 0)
-          (str "Apply event should have round 0" (pr-str event)))
-  (assoc application :state "applied" :curround 0))
-
-(defn- apply-approve [application event]
-  (assert (= (:state application) "applied")
-          (str "Can't approve application " (pr-str application)))
-  (assert (= (:curround application) (:round event))
-          (str "Application and approval rounds don't match: "
-               (pr-str application) " vs. " (pr-str event)))
-  (if (= (:curround application) (:fnlround application))
-    (assoc application :state "approved")
-    (assoc application :state "applied" :curround (inc (:curround application)))))
-
-(defmethod apply-event "approve"
-  [application event]
-  (apply-approve application event))
-
-(defmethod apply-event "autoapprove"
-  [application event]
-  (apply-approve application event))
-
-(defmethod apply-event "reject"
-  [application event]
-  (assert (= (:state application) "applied")
-          (str "Can't reject application " (pr-str application)))
-  (assert (= (:curround application) (:round event))
-          (str "Application and rejection rounds don't match: "
-               (pr-str application) " vs. " (pr-str event)))
-  (assoc application :state "rejected"))
-
-(defmethod apply-event "return"
-  [application event]
-  (assert (= (:state application) "applied")
-          (str "Can't return application " (pr-str application)))
-  (assert (= (:curround application) (:round event))
-          (str "Application and rejection rounds don't match: "
-               (pr-str application) " vs. " (pr-str event)))
-  (assoc application :state "returned" :curround 0))
-
-(defmethod apply-event "review"
-  [application event]
-  (assert (= (:state application) "applied")
-          (str "Can't review application " (pr-str application)))
-  (assert (= (:curround application) (:round event))
-          (str "Application and review rounds don't match: "
-               (pr-str application) " vs. " (pr-str event)))
-  (if (= (:curround application) (:fnlround application))
-    (assoc application :state "approved")
-    (assoc application :state "applied" :curround (inc (:curround application)))))
-
-(defmethod apply-event "third-party-review"
-  [application event]
-  (assert (= (:state application) "applied")
-          (str "Can't review application " (pr-str application)))
-  (assert (= (:curround application) (:round event))
-          (str "Application and review rounds don't match: "
-               (pr-str application) " vs. " (pr-str event)))
-  (assoc application :state "applied"))
-
-(defmethod apply-event "review-request"
-  [application event]
-  (assert (= (:state application) "applied")
-          (str "Can't send a review request " (pr-str application)))
-  (assert (= (:curround application) (:round event))
-          (str "Application and review request rounds don't match: "
-               (pr-str application) " vs. " (pr-str event)))
-  (assoc application :state "applied"))
-
-(defmethod apply-event "withdraw"
-  [application event]
-  (assert (= (:state application) "applied")
-          (str "Can't withdraw application " (pr-str application)))
-  (assert (= (:curround application) (:round event))
-          (str "Application and withdrawal rounds don't match: "
-               (pr-str application) " vs. " (pr-str event)))
-  (assoc application :state "withdrawn" :curround 0))
-
-(defmethod apply-event "close"
-  [application event]
-  (assoc application :state "closed"))
-
-(defn- apply-events [application events]
-  (reduce apply-event application events))
-
-;;; Public event api
-
-(defn get-application-state ; TODO: legacy code; remove me
-  ([application-id]
-   (get-application-state (first (db/get-applications {:id application-id}))
-                          (map #(dissoc % :id :appid) ; remove keys not in v1 API
-                               (db/get-application-events {:application application-id}))))
-  ([application events]
-   (if (not (nil? (:workflow application)))
-     (get-dynamic-application-state (:id application))
-     (let [application (-> application
-                           (dissoc :workflow)
-                           (assoc :state "draft" :curround 0) ;; reset state
-                           (assoc :events events)
-                           (assoc :last-modified (or (:time (last events))
-                                                     (:start application))))]
-       (apply-events application events)))))
-
-(declare handle-state-change)
-
-(defn try-autoapprove-application
-  "If application can be autoapproved (round has no approvers), add an
-   autoapprove event. Otherwise do nothing."
-  [user-id application]
-  (let [application-id (:id application)
-        round (:curround application)
-        fnlround (:fnlround application)
-        state (:state application)]
-    (when (= "applied" state)
-      (let [approvers (actors/get-by-role application-id round "approver")
-            reviewers (actors/get-by-role application-id round "reviewer")]
-        (when (and (empty? approvers)
-                   (empty? reviewers)
-                   (<= round fnlround))
-          (db/add-application-event! {:application application-id :user user-id
-                                      :round round :event "autoapprove" :comment nil})
-          true)))))
-
-(defn handle-state-change [user-id application-id]
-  (let [application (get-application-state application-id)]
-    (entitlements/update-entitlements-for application)
-    (when (try-autoapprove-application user-id application)
-      (recur user-id application-id))))
-
-(defn submit-application [applicant-id application-id]
-  (assert applicant-id)
-  (assert application-id)
-  (let [application (get-application-state application-id)]
-    (when-not (= applicant-id (:applicantuserid application))
-      (throw-forbidden))
-    (when-not (#{"draft" "returned" "withdrawn"} (:state application))
-      (throw-forbidden))
-    (db/add-application-event! {:application application-id :user applicant-id
-                                :round 0 :event "apply" :comment nil})
-    (handle-state-change applicant-id application-id)))
-
-(defn- judge-application [approver-id application-id event round msg]
-  (assert approver-id)
-  (assert application-id)
-  (assert event)
-  (assert round)
-  (assert msg)
-  (let [state (get-application-state application-id)]
-    (when-not (= round (:curround state))
-      (throw-forbidden))
-    (db/add-application-event! {:application application-id :user approver-id
-                                :round round :event event :comment msg})
-    (handle-state-change approver-id application-id)))
-
-(defn approve-application [approver-id application-id round msg]
-  (when-not (can-approve? approver-id (get-application-state application-id))
-    (throw-forbidden))
-  (judge-application approver-id application-id "approve" round msg))
-
-(defn reject-application [user-id application-id round msg]
-  (when-not (can-approve? user-id (get-application-state application-id))
-    (throw-forbidden))
-  (judge-application user-id application-id "reject" round msg))
-
-(defn return-application [user-id application-id round msg]
-  (when-not (can-approve? user-id (get-application-state application-id))
-    (throw-forbidden))
-  (judge-application user-id application-id "return" round msg))
-
-(defn review-application [user-id application-id round msg]
-  (when-not (can-review? user-id (get-application-state application-id))
-    (throw-forbidden))
-  (judge-application user-id application-id "review" round msg))
-
-(defn perform-third-party-review [user-id application-id round msg]
-  (let [application (get-application-state application-id)]
-    (when-not (can-third-party-review? user-id application)
-      (throw-forbidden))
-    (when-not (= round (:curround application))
-      (throw-forbidden))
-    (db/add-application-event! {:application application-id :user user-id
-                                :round round :event "third-party-review" :comment msg})))
-
-(defn send-review-request [user-id application-id round msg recipients]
-  (let [application (get-application-state application-id)]
-    (when-not (can-approve? user-id application)
-      (throw-forbidden))
-    (when-not (= round (:curround application))
-      (throw-forbidden))
-    (assert (not-empty? recipients)
-            (str "Can't send a review request without recipients."))
-    (let [send-to (if (vector? recipients)
-                    recipients
-                    (vector recipients))]
-      (doseq [recipient send-to]
-        (when-not (is-third-party-reviewer? recipient (:curround application) application)
-          (db/add-application-event! {:application application-id :user recipient
-                                      :round round :event "review-request" :comment msg}))))))
-
-;; TODO better name
-;; TODO consider refactoring together with judge
-(defn- unjudge-application
-  "Action handling for both approver and applicant."
-  [user-id application event round msg]
-  (let [application-id (:id application)]
-    (when-not (= round (:curround application))
-      (throw-forbidden))
-    (db/add-application-event! {:application application-id :user user-id
-                                :round round :event event :comment msg})
-    (handle-state-change user-id application-id)))
-
-(defn withdraw-application [applicant-id application-id round msg]
-  (let [application (get-application-state application-id)]
-    (when-not (can-withdraw? applicant-id application)
-      (throw-forbidden))
-    (unjudge-application applicant-id application "withdraw" round msg)))
-
-(defn close-application [user-id application-id round msg]
-  (let [application (get-application-state application-id)]
-    (when-not (can-close? user-id application)
-      (throw-forbidden))
-    (unjudge-application user-id application "close" round msg)))
-
-;;; Dynamic workflows
-;; TODO these should be in their own namespace probably
-
-(defn- fix-workflow-from-db [wf]
-  ;; TODO could use a schema for this coercion
-  (update (json/parse-string wf)
-          :type keyword))
-
-(defn- datestring->datetime [s]
-  (if (string? s)
-    (time-format/parse s)
-    s))
-
-(def ^:private datestring-coercion-matcher
-  {DateTime datestring->datetime})
-
-(defn- coercion-matcher [schema]
-  (or (datestring-coercion-matcher schema)
-      (coerce/string-coercion-matcher schema)))
-
-;; TODO: remove "dynamic" from names
-(def ^:private coerce-dynamic-event-commons
-  (coerce/coercer (st/open-schema events/EventBase) coercion-matcher))
-
-(def ^:private coerce-dynamic-event-specifics
-  (coerce/coercer events/Event coercion-matcher))
-
-(defn- coerce-dynamic-event [event]
-  ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
-  (-> event
-      coerce-dynamic-event-commons
-      coerce-dynamic-event-specifics))
-
-(defn json->event [json]
-  (when json
-    (let [result (coerce-dynamic-event (json/parse-string json))]
-      (when (schema.utils/error? result)
-        ;; similar exception as what schema.core/validate throws
-        (throw (ex-info (str "Value does not match schema: " (pr-str result))
-                        {:schema events/Event :value json :error result})))
-      result)))
-
-(defn event->json [event]
-  (events/validate-event event)
-  (json/generate-string event))
-
-(defn- fix-event-from-db [event]
-  (assoc (-> event :eventdata json->event)
-         :event/id (:id event)))
-
-(defn get-application-events [application-id]
-  (map fix-event-from-db (db/get-application-events {:application application-id})))
-
-(defn get-all-events-since [event-id]
-  (map fix-event-from-db (db/get-application-events-since {:id event-id})))
-
-(defn get-dynamic-application-state [application-id] ; TODO: legacy code; remove me
-  (let [application (or (first (db/get-applications {:id application-id}))
-                        (throw (rems.InvalidRequestException.
-                                (str "Application " application-id " not found"))))
-        events (get-application-events application-id)
-        application (assoc application
-                           :state :application.state/draft
-                           :dynamic-events events
-                           :workflow (fix-workflow-from-db (:workflow application))
-                           :last-modified (or (:event/time (last events))
-                                              (:start application)))]
-    (assert (is-dynamic-application? application) (pr-str application))
-    (dynamic/apply-events application events)))
-
-(defn add-event! [event]
-  (db/add-application-event! {:application (:application/id event)
-                              :user (:event/actor event)
-                              :comment nil
-                              :round -1
-                              :event (str (:event/type event))
-                              :eventdata (event->json event)})
-  nil)
+;;; Creating applications
 
 (defn allocate-external-id! [prefix]
   (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
@@ -709,7 +87,7 @@
        :workflow/type (:type workflow)})))
 
 (defn add-application-created-event! [opts]
-  (add-event! (application-created-event (assoc opts :allocate-external-id? true))))
+  (events/add-event! (application-created-event (assoc opts :allocate-external-id? true))))
 
 (defn- get-workflow-id-for-catalogue-items [catalogue-item-ids]
   (:workflow/id (application-created-event {:catalogue-item-ids catalogue-item-ids})))
@@ -727,44 +105,31 @@
     {:success true
      :application-id app-id}))
 
+;;; Running commands
+
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn get-form [form-id]
-  (-> (form/get-form form-id)
-      (select-keys [:id :organization :title :start :end])
-      (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv #(process-field nil form-id %))))))
-
-(defn- validate-form-answers [form-id answers]
-  (let [form (get-form form-id)
-        _ (assert form)
-        fields (for [field (:items form)]
-                 (assoc field :value (get-in answers [:items (:id field)])))]
-    (form-validation/validate-fields fields)))
-
 (def ^:private db-injections
   {:valid-user? valid-user?
-   :validate-form-answers validate-form-answers
-   :secure-token secure-token})
+   :validate-fields form-validation/validate-fields
+   :secure-token secure-token
+   :get-catalogue-item catalogue/get-localized-catalogue-item})
+
+(declare get-unrestricted-application)
 
 (defn command! [cmd]
   (assert (:application-id cmd))
-  (let [events (get-application-events (:application-id cmd))
-        app (-> nil
-                (dynamic/apply-events events)
-                (model/enrich-workflow-handlers workflow/get-workflow))
-        result (dynamic/handle-command cmd app db-injections)]
+  ;; Use locks to prevent multiple commands being executed in parallel.
+  ;; Serializable isolation level will already avoid anomalies, but produces
+  ;; lots of transaction conflicts when there is contention. This lock
+  ;; roughly doubles the throughput for rems.db.test-transactions tests.
+  (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
+  (let [app (get-unrestricted-application  (:application-id cmd))
+        result (commands/handle-command cmd app db-injections)]
     (if (:success result)
-      (add-event! (:result result))
+      (events/add-event! (:result result))
       result)))
-
-(defn is-dynamic-handler? [user-id application]
-  (contains? (set (get-in application [:workflow :handlers])) user-id))
-
-;; TODO use also in UI side?
-(defn is-dynamic-application? [application]
-  (= :workflow/dynamic (get-in application [:workflow :type])))
 
 (defn accept-invitation [user-id invitation-token]
   (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
@@ -780,3 +145,167 @@
              :errors (:errors response)})))
       {:success false
        :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
+
+;;; Fetching applications (for API) (incl. caching)
+
+(def ^:private injections
+  {:get-attachments-for-application attachments/get-attachments-for-application
+   :get-form form/get-form
+   :get-catalogue-item catalogue/get-localized-catalogue-item
+   :get-license licenses/get-license
+   :get-user users/get-user-attributes
+   :get-users-with-role users/get-users-with-role
+   :get-workflow workflow/get-workflow})
+
+;; short-lived cache to speed up pollers which get the application
+;; repeatedly for each event instead of building their own projection
+(mount/defstate application-cache
+  :start (atom (cache/ttl-cache-factory {} :ttl 10000)))
+
+(defn get-unrestricted-application
+  "Returns the full application state without any user permission
+   checks and filtering of sensitive information. Don't expose via APIs."
+  [application-id]
+  (let [events (events/get-application-events application-id)
+        cache-key [application-id (count events)]
+        build-app (fn [_] (model/build-application-view events injections))]
+    (if (empty? events)
+      nil ; application not found
+      ;; TODO: this caching could be removed by refactoring the pollers to build their own projection
+      (if (atom? application-cache) ; guard against not started cache
+        (-> (swap! application-cache cache/through-cache cache-key build-app)
+            (getx cache-key))
+        (build-app nil)))))
+
+(defn get-application
+  "Returns the part of application state which the specified user
+   is allowed to see. Suitable for returning from public APIs as-is."
+  [user-id application-id]
+  (when-let [application (get-unrestricted-application application-id)]
+    (or (model/apply-user-permissions application user-id)
+        (throw-forbidden))))
+
+;;; Listing all applications
+
+(defn- all-applications-view
+  "Projection for the current state of all applications."
+  [applications event]
+  (if-let [app-id (:application/id event)] ; old style events don't have :application/id
+    (update applications app-id model/application-view event)
+    applications))
+
+(defn- exclude-unnecessary-keys-from-overview [application]
+  (dissoc application
+          :application/events
+          :application/form
+          :application/licenses))
+
+(mount/defstate
+  ^{:doc "The cached state will contain the following keys:
+          ::raw-apps
+          - Map from application ID to the pure projected state of an application.
+          ::enriched-apps
+          - Map from application ID to the enriched version of an application.
+            Built from the raw apps by calling `enrich-with-injections`.
+            Since the injected entities (resources, forms etc.) are mutable,
+            it creates a cache invalidation problem here.
+          ::apps-by-user
+          - Map from user ID to a list of applications which the user can see.
+            Built from the enriched apps by calling `apply-user-permissions`.
+          ::roles-by-user
+          - Map from user ID to a set of all application roles which the user has,
+            a union of roles from all applications."}
+  all-applications-cache
+  :start (events-cache/new))
+
+(defn- group-apps-by-user [apps]
+  (->> apps
+       (mapcat (fn [app]
+                 (for [user (keys (::permissions/user-roles app))]
+                   (when-let [app (model/apply-user-permissions app user)]
+                     [user app]))))
+       (reduce (fn [apps-by-user [user app]]
+                 (update apps-by-user user conj app))
+               {})))
+
+(deftest test-group-apps-by-user
+  (let [apps [(-> {:application/id 1}
+                  (permissions/give-role-to-users :foo ["user-1" "user-2"]))
+              (-> {:application/id 2}
+                  (permissions/give-role-to-users :bar ["user-1"]))]]
+    (is (= {"user-1" [{:application/id 1} {:application/id 2}]
+            "user-2" [{:application/id 1}]}
+           (->> (group-apps-by-user apps)
+                (map-vals (fn [apps]
+                            (->> apps
+                                 (map #(select-keys % [:application/id]))
+                                 (sort-by :application/id)))))))))
+
+(defn- group-roles-by-user [apps]
+  (->> apps
+       (mapcat (fn [app] (::permissions/user-roles app)))
+       (reduce (fn [roles-by-user [user roles]]
+                 (update roles-by-user user set/union roles))
+               {})))
+
+(deftest test-group-roles-by-user
+  (let [apps [(-> {:application/id 1}
+                  (permissions/give-role-to-users :foo ["user-1" "user-2"]))
+              (-> {:application/id 2}
+                  (permissions/give-role-to-users :bar ["user-1"]))]]
+    (is (= {"user-1" #{:foo :bar}
+            "user-2" #{:foo}}
+           (group-roles-by-user apps)))))
+
+(defn refresh-all-applications-cache! []
+  (events-cache/refresh!
+   all-applications-cache
+   (fn [state events]
+     ;; Because enrich-with-injections is not idempotent,
+     ;; it's necessary to hold on to the "raw" applications.
+     ;; TODO: consider making enrich-with-injections idempotent (move dissocs to hide-non-public-information and other small refactorings)
+     (let [raw-apps (reduce all-applications-view (::raw-apps state) events)
+           updated-app-ids (distinct (map :application/id events))
+           ;; TODO: batched injections: only one DB query to fetch all catalogue items etc.
+           ;;       - fetch all items in the background as a batch, use plain maps as injections
+           ;;       - change db/get-license and db/get-user-attributes to fetch all rows if ID is not defined
+           cached-injections (map-vals memoize injections)
+           enriched-apps (->> (select-keys raw-apps updated-app-ids)
+                              (map-vals #(model/enrich-with-injections % cached-injections))
+                              (merge (::enriched-apps state)))]
+       {::raw-apps raw-apps
+        ::enriched-apps enriched-apps
+        ::apps-by-user (group-apps-by-user (vals enriched-apps))
+        ::roles-by-user (group-roles-by-user (vals enriched-apps))}))))
+
+(defn get-all-unrestricted-applications []
+  (-> (refresh-all-applications-cache!)
+      ::enriched-apps
+      (vals)))
+
+(defn get-all-applications [user-id]
+  (-> (refresh-all-applications-cache!)
+      (get-in [::apps-by-user user-id])
+      (->> (map exclude-unnecessary-keys-from-overview))))
+
+(defn get-all-application-roles [user-id]
+  (-> (refresh-all-applications-cache!)
+      (get-in [::roles-by-user user-id])
+      (set)))
+
+(defn- my-application? [application]
+  (some #{:applicant :member} (:application/roles application)))
+
+(defn get-my-applications [user-id]
+  (->> (get-all-applications user-id)
+       (filter my-application?)))
+
+(defn reload-cache! []
+  ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
+  (events-cache/empty! all-applications-cache)
+  (refresh-all-applications-cache!))
+
+;; empty the cache occasionally in case some of the injected entities are changed
+(mount/defstate all-applications-cache-reloader
+  :start (scheduler/start! reload-cache! (Duration/standardHours 1))
+  :stop (scheduler/stop! all-applications-cache-reloader))

@@ -60,6 +60,7 @@ jobs:
           keys:
           - v2-dependencies-{{ checksum "project.clj" }}
       - run: sudo apt remove google-chrome-stable
+      - run: sudo rm /usr/local/bin/chromedriver
       - run: sudo apt install chromium-chromedriver
       - run: FOR_TESTS=1 ./dev_db.sh
       - run: lein cljtests

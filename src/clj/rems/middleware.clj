@@ -7,11 +7,11 @@
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.api-key :as api-key]
+            [rems.db.applications :as applications]
             [rems.db.roles :as roles]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
@@ -83,7 +83,7 @@
               context/*flash* (:flash request)
               context/*roles* (when context/*user*
                                 (set/union (roles/get-roles (getx-user-id))
-                                           (applications-v2/get-all-application-roles (getx-user-id))))]
+                                           (applications/get-all-application-roles (getx-user-id))))]
       (with-mdc {:roles (str/join " " (sort context/*roles*))}
         (handler request)))))
 

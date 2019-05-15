@@ -1,5 +1,6 @@
 (ns rems.util
   (:require [ajax.core :refer [GET PUT POST]]
+            [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
             [secretary.core :as secretary]
             [clojure.string :as str]))
@@ -86,6 +87,10 @@
                     :response-format :transit}
                    opts
                    {:error-handler (wrap-default-error-handler (:error-handler opts))})))
+
+(defn parse-int [string]
+  (let [parsed (parseInt string)]
+    (when-not (js/isNaN parsed) parsed)))
 
 ;; String manipulation
 

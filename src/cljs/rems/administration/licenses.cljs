@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [external-link readonly-checkbox]]
+            [rems.atoms :refer [readonly-checkbox]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -38,7 +38,8 @@
 
 (rf/reg-event-fx
  ::update-license
- (fn [_ [_ item]]
+ (fn [_ [_ item description]]
+   (status-modal/common-pending-handler! description)
    (put! "/api/licenses/update"
          {:params (select-keys item [:id :enabled :archived])
           :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-licenses]))
@@ -86,8 +87,8 @@
             :value (comp readonly-checkbox not :expired)}
    :commands {:values (fn [license]
                         [[to-view-license (:id license)]
-                         [status-flags/enabled-toggle license #(rf/dispatch [::update-license %])]
-                         [status-flags/archived-toggle license #(rf/dispatch [::update-license %])]])
+                         [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2])]
+                         [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2])]])
               :sortable? false
               :filterable? false}})
 

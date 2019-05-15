@@ -5,8 +5,14 @@
             :accept-licenses "Accept terms of use"
             :add-licenses "Add terms of use"
             :add-member "Add member"
+            :bundling-error "The resources can't be bundled into one application."
+            :bundling-warning "The resources can't normally be bundled into one application because they have different forms or workflows."
+            :change-form-error "The resources can't be applied with this application. Change them or make a new application."
+            :change-form-warning "Form is different from the form of the original application."
+            :change-workflow-error "The resources can't be applied with this application. Change them or make a new application."
+            :change-workflow-warning "Workflow is different from the workflow of the original application."
+            :change-resources "Change resources"
             :applicant "Applicant"
-            :application "Application"
             :approve "Approve"
             :approve-reject "Approve or reject"
             :cancel "Cancel"
@@ -20,6 +26,7 @@
             :errors {:invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]}
             :export-entitlements "Export entitlements as csv"
             :handled-approvals "Processed applications"
+            :id "Id"
             :invite-member "Invite member"
             :last-activity "Last activity"
             :licenses-selection "Require following additional terms of use"
@@ -36,10 +43,12 @@
             :request-decision "Request decision"
             :request-selection "Send request to users"
             :resource "Resource"
+            :resources-selection "Following resources will be included in the application"
             :return "Return to applicant"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
-            :state "State"}
+            :state "State"
+            :submitted "Sent"}
   :administration {:active "Active"
                    :archive "Archive"
                    :back "Back"
@@ -54,6 +63,8 @@
                    :created "Created"
                    :disable "Disable"
                    :display-old "Display old"
+                   :edit "Edit"
+                   :edit-workflow "Edit workflow"
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."
@@ -90,6 +101,7 @@
                    :username "Username"}
   :applications {:all-applications "All Applications"
                  :application "Application"
+                 :applications "Applications"
                  :empty "You don't have any applications."
                  :events {:approved "Approved"
                           :closed "Deleted"
@@ -107,6 +119,7 @@
                           :member-removed "Member removed"
                           :member-uninvited "Member uninvited"
                           :rejected "Rejected"
+                          :resources-changed "Resources changed"
                           :returned "Changes requested"
                           :submitted "Applied"
                           :unknown "Unknown"}
@@ -185,6 +198,8 @@
                                  :message "Dear %1,\nYour application %2 has been rejected.\nView your application: %3"}
           :application-closed {:subject "Your application has been closed"
                                :message "Dear %1,\nYour application %2 has been closed.\nView your application: %3"}
+          :application-submitted {:subject "A new application has been submitted"
+                                  :message "Dear %1,\nUser %2 has submitted a new application %3.\nView the application: %4"}
           :comment-requested {:subject "Comment request"
                               :message "Dear %1,\nUser %2 has requested your comment on application %3.\nComment here: %4"}
           :commented {:subject "New comment notification"
@@ -206,7 +221,10 @@
          :alert-disabled-resources "The following resources can't be applied anymore."
          :application "Application"
          :attachment-remove "Remove"
+         :checkbox-checked "Yes"
+         :checkbox-unchecked "No"
          :comment "Comment"
+         :current-value "Current"
          :date "Time"
          :diff-hide "Hide changes"
          :diff-show "Show changes"
@@ -217,11 +235,13 @@
          :licenses "Terms of Use"
          :maxlength "(max %1 characters)"
          :must-accept-licenses "To be eligible to the resources of this application, each member must accept the following terms of use."
+         :no-attachment "No attachment"
          :optional "(optional)"
          :resources "Resources"
          :save "Save as draft"
          :submit "Send application"
          :success "Success"
+         :previous-value "Previous"
          :upload "Upload an attachment"
          :user "User"
          :validation {:errors "There were problems. Check the following fields."
@@ -237,10 +257,13 @@
          :password "Password"
          :title "LDAP Login"
          :username "Username"}
+  :link {:download-file "Download file"
+         :opens-in-new-window "Opens in new window"}
   :login {:alternative "Other sign in options"
           :text "Login by using your Haka credentials"
           :title "Login"}
   :missing "Missing translation %1"
+  :modal {:close-dialog "Close dialog"}
   :navigation {:actions "Actions"
                :administration "Administration"
                :applications "Applications"
@@ -252,7 +275,16 @@
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"
+           :phase-active "Phase active:"
+           :phase-closed "Phase closed:"
+           :phase-completed "Phase completed:"
+           :phase-pending "Phase pending:"
+           :phase-rejected "Phase rejected:"
            :rejected "Rejected"}
+  :search {:close-search "Close search"
+           :open-search "Open search"
+           :search "Search"
+           :search-parameters "Search parameters"}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You are unauthorized to use this page."}
   :forbidden-page {:forbidden "Forbidden"

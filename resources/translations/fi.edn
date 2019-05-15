@@ -5,8 +5,14 @@
             :accept-licenses "Hyväksy käyttöehdot"
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
+            :bundling-error "Resursseja ei voi hakea samalla hakemuksella."
+            :bundling-warning "Resursseja ei tavallisesti voi hakea samalla hakemuksella, koska niillä on eri lomake tai työvuo."
+            :change-form-error "Resursseja ei voi hakea tällä hakemuksella. Muuta niitä tai tee uusi hakemus."
+            :change-form-warning "Lomake on eri kuin se millä alkuperäinen hakemus on tehty."
+            :change-workflow-error "Resursseja ei voi hakea tällä hakemuksella. Muuta niitä tai tee uusi hakemus."
+            :change-workflow-warning "Työvuo on eri kuin se millä alkuperäinen hakemus on tehty."
+            :change-resources "Muuta resursseja"
             :applicant "Hakija"
-            :application "Hakemus"
             :approve "Hyväksy"
             :approve-reject "Hyväksy tai hylkää"
             :cancel "Peruuta"
@@ -20,6 +26,7 @@
             :errors {:invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]}
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
             :handled-approvals "Käsitellyt hakemukset"
+            :id "Tunniste"
             :invite-member "Kutsu jäsen"
             :last-activity "Muokattu"
             :licenses-selection "Lisää seuraavat käyttöehdot"
@@ -36,10 +43,12 @@
             :request-decision "Pyydä päätöstä"
             :request-selection "Lähetä pyyntö seuraaville henkilöille"
             :resource "Resurssi"
+            :resources-selection "Seuraavat resurssit liitetään hakemukseen"
             :return "Palauta hakijalle"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä läpimenoajat"
-            :state "Tila"}
+            :state "Tila"
+            :submitted "Lähtetetty"}
   :administration {:active "Aktiivinen"
                    :archive "Arkistoi"
                    :back "Takaisin"
@@ -54,6 +63,8 @@
                    :created "Luotu"
                    :disable "Poista käytöstä"
                    :display-old "Näytä vanhat"
+                   :edit "Muokkaa"
+                   :edit-workflow "Muokkaa työvuota"
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
@@ -90,6 +101,7 @@
                    :username "Käyttäjätunnus"}
   :applications {:all-applications "Kaikki hakemukset"
                  :application "Hakemus"
+                 :applications "Hakemukset"
                  :empty "Sinulla ei ole hakemuksia."
                  :events {:approved "Hyväksytty"
                           :closed "Poistettu"
@@ -107,6 +119,7 @@
                           :member-removed "Poistettu jäsen"
                           :member-uninvited "Poistettu jäsen"
                           :rejected "Hylätty"
+                          :resources-changed "Resursseja muutettu"
                           :returned "Palautettu muokattavaksi"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
@@ -185,6 +198,8 @@
                                  :message "Hyvä %1,\nHakemuksesi %2 on hylätty.\nKatsele hakemusta: %3"}
           :application-closed {:subject "Hakemuksesi on suljettu"
                                :message "Hyvä %1,\nHakemuksesi %2 on suljettu.\nKatsele hakemusta: %3"}
+          :application-submitted {:subject "Uusi hakemus"
+                                  :message "Hyvä %1,\nKäyttäjä %2 on lähettänyt uuden hakemuksen %3.\nKatsele hakemusta: %4"}
           :comment-requested {:subject "Kommenttipyyntö"
                               :message "Hyvä %1,\nKäyttäjä %2 on pyytänyt sinulta kommenttia hakemukseen %3.\nKommentoi täällä: %4"}
           :commented {:subject "Uusi kommentti"
@@ -206,7 +221,10 @@
          :alert-disabled-resources "Seuraavia resursseja ei voi enää hakea."
          :application "Tiedot"
          :attachment-remove "Poista"
+         :checkbox-checked "Kyllä"
+         :checkbox-unchecked "Ei"
          :comment "Kommentti"
+         :current-value "Nykyinen"
          :date "Aika"
          :diff-hide "Piilota muutokset"
          :diff-show "Näytä muutokset"
@@ -217,7 +235,9 @@
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Saadakseen oikeudet haettuihin resursseihin, jokaisen hakijan pitää hyväksyä seuraavat käyttöehdot."
+         :no-attachment "Ei liitetiedostoa"
          :optional "(ei pakollinen)"
+         :previous-value "Edellinen"
          :resources "Resurssit"
          :save "Tallenna luonnos"
          :submit "Lähetä hakemus"
@@ -237,10 +257,13 @@
          :password "Salasana"
          :title "LDAP-kirjautuminen"
          :username "Käyttäjänimi"}
+  :link {:download-file "Lataa tiedosto"
+         :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
           :text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
+  :modal {:close-dialog "Sulje ilmoitus"}
   :navigation {:actions "Toiminnot"
                :administration "Ylläpito"
                :applications "Hakemukset"
@@ -252,7 +275,16 @@
   :phases {:apply "Hae"
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
+           :phase-active "Vaihe aktiivinen:"
+           :phase-closed "Vaihe suljettu:"
+           :phase-completed "Vaihe valmis:"
+           :phase-pending "Vaihe tulossa:"
+           :phase-rejected "Vaihe hylätty:"
            :rejected "Hylätty"}
+  :search {:close-search "Sulje haku"
+           :open-search "Avaa haku"
+           :search "Hae"
+           :search-parameters "Hakutermit"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeuksia"
                       :you-are-unauthorized "Sinulla ei ole käyttöoikeuksia tähän sivuun."}
   :forbidden-page {:forbidden "Kielletty"

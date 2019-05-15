@@ -13,7 +13,6 @@
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
-            [rems.api.reviews :refer [reviews-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
             [rems.auth.ForbiddenException]
@@ -65,14 +64,13 @@
     :access-control-allow-origin #".*"
     :access-control-allow-methods [:get :put :post :delete]))
 
-(defn- should-wrap-transaction? [request]
-  (contains? #{:put :post} (:request-method request)))
+(defn- read-only? [request]
+  (not (contains? #{:put :post} (:request-method request))))
 
 (defn transaction-middleware [handler]
   (fn [request]
-    (if (should-wrap-transaction? request)
-      (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
-        (handler request))
+    (conman/with-transaction [rems.db.core/*db* {:isolation :serializable
+                                                 :read-only? (read-only? request)}]
       (handler request))))
 
 (defn slow-middleware [request]
@@ -108,7 +106,6 @@
       public/theme-api
       public/config-api
 
-      reviews-api
       my-applications-api
       applications-api
       catalogue-api

@@ -1,5 +1,7 @@
 (ns rems.application.events-cache
-  (:require [rems.db.applications :as applications]
+  (:require [conman.core :as conman]
+            [rems.db.events :as events]
+            [rems.db.core :refer [*db*]]
             [rems.util :refer [atom?]]))
 
 (def ^:private empty-cache
@@ -10,6 +12,15 @@
 (defn new []
   (atom empty-cache))
 
+(defn- update-with-new-events [cached update-fn]
+  (conman/with-transaction [*db* {:isolation :serializable
+                                  :read-only? true}]
+    (let [new-events (events/get-all-events-since (:last-processed-event-id cached))]
+      (if (empty? new-events)
+        cached
+        {:state (update-fn (:state cached) new-events)
+         :last-processed-event-id (:event/id (last new-events))}))))
+
 (defn refresh!
   "Refreshes the cache with new events and returns the latest state.
    `update-fn` should be a function which takes as parameters the previously
@@ -17,15 +28,12 @@
   [cache update-fn]
   (let [cache-enabled? (atom? cache)
         cached (if cache-enabled? @cache empty-cache)
-        new-events (applications/get-all-events-since (:last-processed-event-id cached))]
-    (if (empty? new-events)
-      (:state cached)
-      (let [updated {:state (update-fn (:state cached) new-events)
-                     :last-processed-event-id (:event/id (last new-events))}]
-        ;; with concurrent requests, only one of them will update the cache
-        (when cache-enabled?
-          (compare-and-set! cache cached updated))
-        (:state updated)))))
+        updated (update-with-new-events cached update-fn)]
+    (when (and cache-enabled?
+               (not (identical? cached updated)))
+      ;; with concurrent requests, only one of them will update the cache
+      (compare-and-set! cache cached updated))
+    (:state updated)))
 
 (defn empty! [cache]
   (when (atom? cache)

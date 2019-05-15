@@ -5,7 +5,7 @@
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
 
-(defn button-wrapper [{:keys [id text class on-click disabled] :as props}]
+(defn button-wrapper [{:keys [text class] :as props}]
   [:button.btn
    (merge
     {:class (or class :btn-secondary)}
@@ -49,9 +49,10 @@
 (defn action-button [{:keys [id text class on-click]}]
   [:button.btn.mr-3
    {:id (str id "-action-button")
-    :class (or class "btn-secondary")
+    :class (str (or class "btn-secondary")
+                " btn-opens-more")
     :type "button"
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))
     :on-click on-click}
-   (str text " ...")])
+   text])

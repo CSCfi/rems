@@ -21,7 +21,7 @@
 (rf/reg-event-fx
  ::fetch-actions
  (fn [{:keys [db]} _]
-   (fetch "/api/reviews/open"
+   (fetch "/api/applications/todo"
           {:handler #(rf/dispatch [::fetch-actions-result %])})
    {:db (assoc db ::loading-actions? true)}))
 
@@ -47,7 +47,7 @@
 (rf/reg-event-fx
  ::fetch-handled-actions
  (fn [{:keys [db]} _]
-   (fetch "/api/reviews/handled"
+   (fetch "/api/applications/handled"
           {:handler #(rf/dispatch [::fetch-handled-actions-result %])})
    {:db (assoc db ::loading-handled-actions? true)}))
 
@@ -119,7 +119,8 @@
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
-     {:visible-columns application-list/+all-columns+
+     {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
+                             [:description :resource :applicant :state :submitted :last-activity :view])
       :sorting (assoc @(rf/subscribe [::sorting ::open-applications])
                       :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
       :filtering (assoc @(rf/subscribe [::filtering ::open-applications])
@@ -141,7 +142,8 @@
       [:div
        top-buttons
        [application-list/component
-        {:visible-columns [:id :description :resource :applicant :state :last-activity :view]
+        {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
+                                [:description :resource :applicant :state :last-activity :view])
          :sorting (assoc @(rf/subscribe [::sorting ::handled-applications])
                          :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
          :filtering (assoc @(rf/subscribe [::filtering ::handled-applications])

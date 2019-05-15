@@ -1,6 +1,7 @@
 (ns rems.db.entitlements
   "Creating and fetching entitlements."
   (:require [clj-http.client :as http]
+            [clojure.set :refer [union]]
             [clojure.string :refer [join]]
             [clojure.tools.logging :as log]
             [rems.auth.util :refer [throw-forbidden]]
@@ -63,52 +64,69 @@
           (log/warnf "Post failed: %s", response))
         (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
 
-(defn- add-entitlements-for
-  "If the given application is approved, add an entitlement to the db
-  and call the entitlement REST callback (if defined)."
-  [application]
-  (when (= :application.state/approved (:application/state application))
-    (let [app-id (:application/id application)
-          members (conj (map :userid (:application/members application))
-                        (:application/applicant application))
-          has-entitlement? (set (map :userid (db/get-entitlements {:application app-id})))
-          members-to-update (->> members
-                                 (filter #(accepted-licenses? application %))
-                                 (remove has-entitlement?))]
-      (when (seq members-to-update)
-        (doseq [user-id members-to-update]
-          (log/info "granting entitlements on application" app-id "to" user-id)
-          (doseq [[resource-id ext-id] (->> (:application/resources application)
-                                            (map (juxt :resource/id :resource/ext-id)))]
-            (db/add-entitlement! {:application app-id
-                                  :user user-id
-                                  :resource resource-id})
-            (post-entitlements :add (db/get-entitlements {:application app-id :user user-id :resource ext-id})))))
-      members-to-update)))
+(defn- get-entitlements-by-user [application-id]
+  (->> (db/get-entitlements {:application application-id :is-active? true})
+       (group-by :userid)
+       (map (fn [[userid rows]]
+              [userid (set (map :resourceid rows))]))
+       (into {})))
 
-(defn- end-entitlements-for
-  [application]
-  (let [app-id (:application/id application)
-        members (case (:application/state application)
-                    :application.state/closed
-                    (conj (map :userid (:application/members application))
-                          (:application/applicant application))
+(defn- grant-entitlements! [application-id user-id resource-ids]
+  (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids)
+  (doseq [resource-id (sort resource-ids)]
+    (db/add-entitlement! {:application application-id
+                          :user user-id
+                          :resource resource-id})
+    (post-entitlements :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
-                    :application.state/approved
-                    (map :userid (:application/past-members application)) ; someone was removed
-
-                    []) ; by default don't do anything
-        has-entitlement? (set (map :userid (db/get-entitlements {:application app-id})))
-        members-to-update (->> members
-                               (filter has-entitlement?))]
-    (when (seq members-to-update)
-      (doseq [user-id members-to-update]
-        (log/info "ending entitlements on application" app-id "to" user-id)
-        (db/end-entitlement! {:application app-id :user user-id})
-        (post-entitlements :remove (db/get-entitlements {:application app-id :user user-id}))))
-    members-to-update))
+(defn- revoke-entitlements! [application-id user-id resource-ids]
+  (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids)
+  (doseq [resource-id (sort resource-ids)]
+    (db/end-entitlements! {:application application-id
+                           :user user-id
+                           :resource resource-id})
+    (post-entitlements :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
 (defn update-entitlements-for
+  "If the given application is approved, licenses accepted etc. add an entitlement to the db
+  and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
+  then we end the entitlement and call the REST callback."
   [application]
-  (add-entitlements-for application)
-  (end-entitlements-for application))
+  (when (contains? #{:application.state/approved :application.state/closed}
+                   (:application/state application))
+    (let [application-id (:application/id application)
+          current-members (set (concat (map :userid (:application/members application))
+                                       [(:application/applicant application)]))
+          past-members (set (map :userid (:application/past-members application)))
+          application-state (:application/state application)
+          application-resources (->> application
+                                     :application/resources
+                                     (map :resource/id)
+                                     set)
+          application-entitlements (get-entitlements-by-user application-id)
+          is-entitled? (fn [userid resource-id]
+                         (and (= :application.state/approved application-state)
+                              (contains? current-members userid)
+                              (accepted-licenses? application userid)
+                              (contains? application-resources resource-id)))
+          entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
+          entitlements-to-add (->> (for [userid (union current-members past-members)
+                                         :let [current-resource-ids (entitlements-by-user userid)]
+                                         resource-id application-resources
+                                         :when (is-entitled? userid resource-id)
+                                         :when (not (contains? current-resource-ids resource-id))]
+                                     {userid #{resource-id}})
+                                   (apply merge-with union))
+          entitlements-to-remove (->> (for [userid (union current-members past-members)
+                                            :let [resource-ids (entitlements-by-user userid)]
+                                            resource-id resource-ids
+                                            :when (not (is-entitled? userid resource-id))]
+                                        {userid #{resource-id}})
+                                      (apply merge-with union))
+          members-to-update (keys (merge entitlements-to-add entitlements-to-remove))]
+      (when (seq members-to-update)
+        (log/info "updating entitlements on application" application-id)
+        (doseq [[userid resource-ids] entitlements-to-add]
+          (grant-entitlements! application-id userid resource-ids))
+        (doseq [[userid resource-ids] entitlements-to-remove]
+          (revoke-entitlements! application-id userid resource-ids))))))

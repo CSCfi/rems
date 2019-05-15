@@ -37,7 +37,7 @@
             [rems.roles :as roles]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch]]
+            [rems.util :refer [dispatch! fetch parse-int]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.History))
@@ -352,6 +352,10 @@
 
 (secretary/defroute "/administration/create-workflow" []
   (rf/dispatch [:rems.administration.create-workflow/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
+
+(secretary/defroute "/administration/edit-workflow/:workflow-id" [workflow-id]
+  (rf/dispatch [:rems.administration.create-workflow/enter-page (parse-int workflow-id)])
   (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
 
 (secretary/defroute "/extra-pages/:page-id" [page-id]

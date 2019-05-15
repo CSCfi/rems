@@ -28,6 +28,10 @@
  :entitlements-target {:add nil
                        :remove nil}
 
+ ;; Which database column to show as the application id.
+ ;; Options: :id, :external-id
+ :application-id-column :external-id
+
  ;; List of supported languages. They will be selectable in the UI.
  :languages [:en :fi]
  :default-language :en

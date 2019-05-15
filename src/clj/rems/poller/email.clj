@@ -4,9 +4,9 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
+            [rems.db.events :as events]
             [rems.db.users :as users]
             [rems.poller.common :as common]
             [rems.scheduler :as scheduler]
@@ -35,9 +35,19 @@
 (defmethod event-to-emails-impl :default [_event _application]
   [])
 
+(defmethod event-to-emails-impl :application.event/submitted [_event application]
+  (vec
+   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
+     {:to-user handler
+      :subject (text :t.email.application-submitted/subject)
+      :body (text-format :t.email.application-submitted/message
+                         handler
+                         (:application/applicant application)
+                         (application-id-for-email application)
+                         (link-to-application (:application/id application)))})))
+
 (defn- applicant-and-members [application]
-  ;; XXX: the tests depend on the order of members
-  (conj (reverse (sort-by :userid (:application/members application)))
+  (conj (:application/members application)
         {:userid (:application/applicant application)}))
 
 ;; There's a slight inconsistency here: we look at current members, so
@@ -137,7 +147,7 @@
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
-    (event-to-emails-impl event (applications-v2/get-unrestricted-application app-id))))
+    (event-to-emails-impl event (applications/get-unrestricted-application app-id))))
 
 ;;; Generic poller infrastructure
 
@@ -152,7 +162,7 @@
 ;; 4. open http://localhost:8025 in your browser to view the emails
 
 (defn mark-all-emails-as-sent! []
-  (let [events (applications/get-all-events-since 0)
+  (let [events (events/get-all-events-since 0)
         last-id (:event/id (last events))]
     (common/set-poller-state! ::poller {:last-processed-event-id last-id})))
 

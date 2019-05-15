@@ -6,6 +6,7 @@
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
+            [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.comment :refer [comment-action-button comment-form]]
@@ -16,7 +17,7 @@
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable?]]
-            [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
+            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
@@ -26,7 +27,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [localize-decision localize-event localized localize-item localize-state localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch post!]])
+            [rems.util :refer [dispatch! fetch parse-int post!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -131,7 +132,6 @@
 (rf/reg-event-db
  ::set-validation-errors
  (fn [db [_ errors]]
-   (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
 (defn- field-values-to-api [field-values]
@@ -195,37 +195,20 @@
            {:url-params {:application-id application-id
                          :field-id field-id}
             :body file
-            ;; adding an attachment and not clicking [Save] will leave
-            ;; a dangling attachment in the db. consider forcing a
-            ;; save here. see also comment in remove-attachment
-            :handler (partial status-modal/common-success-handler! (fn []))
-            :error-handler status-modal/common-error-handler!})
-    {}))
-
-(rf/reg-event-fx ::save-attachment save-attachment)
-
-(defn- remove-attachment [{:keys [db]} [_ field-id description]]
-  (let [application-id (get-in db [::application :application/id])]
-    (status-modal/common-pending-handler! description)
-    (post! "/api/applications/remove-attachment"
-           {:url-params {:application-id application-id
-                         :field-id field-id}
-            :body {}
+            ;; force saving a draft when you upload an attachment.
+            ;; this ensures that the attachment is not left
+            ;; dangling (with no references to it)
             :handler (fn [response]
-                       ;; if we just remove the attachment from the backend but
-                       ;; don't save the field, the application will be left in an
-                       ;; inconsistent state (referring to a nonexistant attachment)
-                       ;; TODO: save only the value for the attachment field
                        (if (:success response)
-                         (rf/dispatch [::save-application (text :t.form/save)])
+                         (do
+                           ;; no race condition here: events are handled in a FIFO manner
+                           (rf/dispatch [::set-field-value field-id (str (:id response))])
+                           (rf/dispatch [::save-application (text :t.form/upload)]))
                          (status-modal/common-error-handler! response)))
             :error-handler status-modal/common-error-handler!})
     {}))
 
-(rf/reg-event-fx ::remove-attachment remove-attachment)
-
-
-
+(rf/reg-event-fx ::save-attachment save-attachment)
 
 ;;;; UI components
 
@@ -233,8 +216,8 @@
   (when app-id
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" app-id "/pdf")
-      :target :_new}
-     "PDF " (external-link)]))
+      :target :_blank}
+     "PDF " [external-link]]))
 
 (rf/reg-event-db
  ::set-field-value
@@ -246,35 +229,41 @@
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
 
-(defn- link-license
-  [{:keys [accepted readonly] :as opts}]
-  (let [id (:license/id opts)
-        title (localized (:license/title opts))
+(defn- link-license [opts]
+  (let [title (localized (:license/title opts))
         link (localized (:license/link opts))]
     [:div.license
-     [:a.license-title {:href link :target "_blank"}
-      title " " (external-link)]]))
+     [:a.license-title {:href link :target :_blank}
+      title " " [external-link]]]))
 
-(defn- text-license
-  [{:keys [accepted readonly] :as opts}]
+(defn- text-license [opts]
   (let [id (:license/id opts)
+        collapse-id (str "collapse" id)
         title (localized (:license/title opts))
         text (localized (:license/text opts))]
     [:div.license
      [:div.license-panel
       [:span.license-title
        [:a.license-header.collapsed {:data-toggle "collapse"
-                                     :href (str "#collapse" id)
+                                     :href (str "#" collapse-id)
                                      :aria-expanded "false"
-                                     :aria-controls (str "collapse" id)}
-        title " " [:i {:class "fa fa-ellipsis-h"}]]]
-      [:div.collapse {:id (str "collapse" id)}
+                                     :aria-controls collapse-id}
+        title]]
+      [:div.collapse {:id collapse-id}
        [:div.license-block (str/trim (str text))]]]]))
+
+(defn- attachment-license [opts]
+  (let [title (localized (:license/title opts))
+        link (str "/api/licenses/attachments/" (localized (:license/attachment-id opts)))]
+    [:div.license
+     [:a.license-title {:href link :target :_blank}
+      title " " [file-download]]]))
 
 (defn license-field [f]
   (case (:license/type f)
     :link [link-license f]
     :text [text-license f]
+    :attachment [attachment-license f]
     [fields/unsupported-field f]))
 
 (defn- save-button []
@@ -292,6 +281,7 @@
   (let [field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
         field-validations (index-by [:field-id] (:validation-errors edit-application))
+        attachments (index-by [:attachment/id] (:application/attachments application))
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
     [collapsible/component
@@ -304,9 +294,14 @@
                [fields/field (assoc fld
                                     :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
-                                    :on-remove-attachment #(rf/dispatch [::remove-attachment (:field/id fld) %1 %2])
+                                    :on-remove-attachment #(rf/dispatch [::set-field-value (:field/id fld) ""])
                                     :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
                                     :field/value (get field-values (:field/id fld))
+                                    :field/attachment (when (= :attachment (:field/type fld))
+                                                        (get attachments (parse-int (:field/value fld))))
+                                    :field/previous-attachment (when (= :attachment (:field/type fld))
+                                                                 (when-let [prev (:field/previous-value fld)]
+                                                                   (get attachments (parse-int prev))))
                                     :diff (get show-diff (:field/id fld))
                                     :validation (field-validations (:field/id fld))
                                     :readonly readonly?
@@ -533,13 +528,17 @@
 
 (defn- actions-form [application]
   (let [app-id (:application/id application)
+        ;; The :see-everything permission is used to determine whether the user
+        ;; is allowed to see all comments. It would not make sense for the user
+        ;; to be able to write a comment which he then cannot see.
+        show-comment-field? (contains? (:application/permissions application) :see-everything)
         actions (action-buttons application)
         reload (partial reload! app-id)
         forms [[:div#actions-forms.mt-3
                 [request-comment-form app-id reload]
                 [request-decision-form app-id reload]
                 [comment-form app-id reload]
-                [close-form app-id reload]
+                [close-form app-id show-comment-field? reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
                 [add-licenses-form app-id reload]
@@ -552,15 +551,26 @@
                                   actions)]
                       forms)}])))
 
-(defn- applied-resources [application]
-  [collapsible/component
-   {:id "resources"
-    :title (text :t.form/resources)
-    :always [:div.form-items.form-group
-             (into [:ul]
-                   (for [resource (:application/resources application)]
-                     ^{:key (:resource/id resource)}
-                     [:li (localized (:catalogue-item/title resource))]))]}])
+(defn- applied-resources [application userid]
+  (let [application-id (:application/id application)
+        possible-commands (:application/permissions application)
+        applicant? (= (:application/applicant application) userid)
+        can-bundle-all? (not applicant?)
+        can-change? (contains? possible-commands :application.command/change-resources)
+        can-comment? (not applicant?)]
+    [collapsible/component
+     {:id "resources"
+      :title (text :t.form/resources)
+      :always [:div.form-items.form-group
+               (into [:div.application-resources]
+                     (for [resource (:application/resources application)]
+                       ^{:key (:catalogue-item/id resource)}
+                       [:div.application-resource (localized (:catalogue-item/title resource))]))]
+      :footer [:div
+               [:div.commands
+                (when can-change? [change-resources-action-button (:application/resources application)])]
+               [:div#resource-action-forms
+                [change-resources-form application can-bundle-all? can-comment? (partial reload! application-id)]]]}]))
 
 (defn- render-application [application edit-application userid]
   (let [messages (remove nil?
@@ -575,7 +585,7 @@
      (into [:div] messages)
      [application-header application]
      [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources application]]
+     [:div.mt-3 [applied-resources application userid]]
      [:div.my-3 [application-fields application edit-application]]
      [:div.my-3 [application-licenses application edit-application userid]]
      [:div.mb-3 [actions-form application]]]))

@@ -66,7 +66,8 @@
    [[button-wrapper {:id "request-comment"
                      :text (text :t.actions/request-comment)
                      :class "btn-primary"
-                     :on-click on-send}]]
+                     :on-click on-send
+                     :disabled (empty? selected-commenters)}]]
    [:div
     [action-comment {:id action-form-id
                      :label (text :t.form/add-comments-not-shown-to-applicant)

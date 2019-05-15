@@ -40,11 +40,13 @@
                                                      :space-between
                                                      :align-items :center}}
                           title
-                          [:button.btn.btn-link.link.ml-3 {:on-click on-close}
+                          [:button.btn.btn-link.link.ml-3 {:on-click on-close
+                                                           :aria-label (text :t.modal/close-dialog)}
                            [:i.fa.fa-times {:style {:margin 0}}]]]
                   :title-class title-class
                   :always [:div.full
-                           [:div.modal--content content]
+                           ;; max-height in order to keep header and controls visible
+                           [:div.modal--content {:style {:max-height "70vh" :overflow :auto}} content]
                            (into [:div.modal--commands.commands {:style {:padding 0}}]
                                  commands)]
                   :open? true}]]

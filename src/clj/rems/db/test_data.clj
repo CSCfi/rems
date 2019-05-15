@@ -3,6 +3,7 @@
   (:require [clj-time.core :as time]
             [rems.context :as context]
             [rems.db.applications :as applications]
+            [rems.db.applications.legacy :as legacy]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -49,7 +50,7 @@
    :approver2 "RDapprover2@funet.fi"
    :reviewer "RDreview@funet.fi"
    :owner "RDowner@funet.fi"
-   :reporter "RDreporter@funet.fi"})
+   :reporter "RDdomainreporter@funet.fi"})
 
 (def +demo-user-data+
   {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
@@ -58,7 +59,7 @@
    "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
-   "RDreporter@funet.fi" {:eppn "RDreporter@funet.fi" :mail "RDreporter.test@test_example.org" :commonName "RDreporter REMSDEMO"}})
+   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
 
 (defn- create-user! [user-attributes & roles]
   (let [user (:eppn user-attributes)]
@@ -469,12 +470,13 @@
     value))
 
 (defn- create-draft! [user-id catids wfid field-value & [now]]
-  (let [app-id (applications/create-new-draft-at-time user-id wfid (or now (time/now)))
+  (let [app-id (legacy/create-new-draft-at-time user-id wfid (or now (time/now)))
         catids (if (vector? catids) catids [catids])
         _ (doseq [catid catids]
             (db/add-application-item! {:application app-id :item catid}))
+        ;; TODO don't use legacy get-form-for
         form (binding [context/*lang* :en]
-               (applications/get-form-for user-id app-id))
+               (legacy/get-form-for user-id app-id))
         dynamic-workflow? (= :workflow/dynamic (get-in form [:application :workflow :type]))
         save-draft-command (atom {:type :application.command/save-draft
                                   :actor user-id
@@ -516,16 +518,16 @@
   (binding [context/*tempura* (locales/tempura-config)]
     (create-draft! applicant catid wfid "draft application")
     (let [application (create-draft! applicant catid wfid "applied application")]
-      (applications/submit-application applicant application))
+      (legacy/submit-application applicant application))
     (let [application (create-draft! applicant catid wfid "rejected application")]
-      (applications/submit-application applicant application)
-      (applications/reject-application approver application 0 "comment for rejection"))
+      (legacy/submit-application applicant application)
+      (legacy/reject-application approver application 0 "comment for rejection"))
     (let [application (create-draft! applicant catid wfid "accepted application")]
-      (applications/submit-application applicant application)
-      (applications/approve-application approver application 0 "comment for approval"))
+      (legacy/submit-application applicant application)
+      (legacy/approve-application approver application 0 "comment for approval"))
     (let [application (create-draft! applicant catid wfid "returned application")]
-      (applications/submit-application applicant application)
-      (applications/return-application approver application 0 "comment for return"))))
+      (legacy/submit-application applicant application)
+      (legacy/return-application approver application 0 "comment for return"))))
 
 (defn- run-and-check-dynamic-command! [& args]
   (let [result (apply applications/command! args)]
@@ -554,9 +556,9 @@
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
   (binding [context/*tempura* (locales/tempura-config)]
     (let [app-id (create-draft! applicant [catid catid2] wfid "bundled application")]
-      (applications/submit-application applicant app-id)
-      (applications/return-application approver app-id 0 "comment for return")
-      (applications/submit-application applicant app-id))))
+      (legacy/submit-application applicant app-id)
+      (legacy/return-application approver app-id 0 "comment for return")
+      (legacy/submit-application applicant app-id))))
 
 (defn- create-member-applications! [catid wfid applicant approver members]
   (let [appid1 (create-draft! applicant catid wfid "draft with invited members")]
@@ -607,11 +609,11 @@
         reviewer (users :reviewer)]
     (binding [context/*tempura* (locales/tempura-config)]
       (let [app-id (create-draft! applicant catid wfid "application with review")]
-        (applications/submit-application applicant app-id)
-        (applications/review-application reviewer app-id 0 "comment for review")
-        (applications/approve-application approver app-id 1 "comment for approval")) ; already reviewed and approved
+        (legacy/submit-application applicant app-id)
+        (legacy/review-application reviewer app-id 0 "comment for review")
+        (legacy/approve-application approver app-id 1 "comment for approval")) ; already reviewed and approved
       (let [app-id (create-draft! applicant catid wfid "application in review")]
-        (applications/submit-application applicant app-id))))) ; still in review
+        (legacy/submit-application applicant app-id))))) ; still in review
 
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -625,7 +627,7 @@
                                                                                  "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
     (binding [context/*tempura* (locales/tempura-config)]
       (let [application (create-draft! applicant item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))]
-        (applications/submit-application applicant application)))))
+        (legacy/submit-application applicant application)))))
 
 (defn- create-application-before-new-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -637,7 +639,7 @@
                                                                                 "fi" "Resurssi jolla on uusi resurssilisenssi"})]
     (binding [context/*tempura* (locales/tempura-config)]
       (let [application (create-draft! applicant item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
-        (applications/submit-application applicant application)))))
+        (legacy/submit-application applicant application)))))
 
 (defn create-performance-test-data! []
   (let [resource-count 1000
@@ -707,9 +709,9 @@
                         :actor user-id
                         :time (time/now)
                         :application-id app-id
-                        :field-values [{:field (:id (first (:fields form)))
+                        :field-values [{:field (:id (first (:items form)))
                                         :value (str "Performance test application " (UUID/randomUUID))}
-                                       {:field (:id (second (:fields form)))
+                                       {:field (:id (second (:items form)))
                                         ;; 5000 characters (10 KB) of lorem ipsum generated with www.lipsum.com
                                         ;; to increase the memory requirements of an application
                                         :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"

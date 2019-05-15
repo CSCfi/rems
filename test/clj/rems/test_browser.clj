@@ -26,7 +26,6 @@
   [f]
   ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
   (let [run #(with-chrome-headless {:args ["--lang=en-US"]
-                                    :path-driver "/usr/lib/chromium-browser/chromedriver"
                                     :prefs {"intl.accept_languages" "en-US"}}
                                    driver
                (binding [*driver* driver]
@@ -96,7 +95,7 @@
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
-  (wait-visible *driver* {:tag :h2, :fn/text "My Applications"})
+  (wait-visible *driver* {:tag :h1, :fn/text "Applications"})
   (wait-visible *driver* [{:css "i.fa-search"}])
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "applications-page.png")))
@@ -190,7 +189,6 @@
     {:id application-id
      :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
      :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))
-     :applicant (get-element-text-el *driver* (child *driver* row {:css ".applicant"}))
      :state (get-element-text-el *driver* (child *driver* row {:css ".state"}))}))
 
 ;;; tests
@@ -233,7 +231,6 @@
       (go-to-applications)
       (let [summary (get-application-summary application-id)]
         (is (= "THL catalogue item" (:resource summary)))
-        (is (= "alice" (:applicant summary)))
         (is (= "Applied" (:state summary)))
         ;; don't bother trying to predict the external id:
         (is (.contains (:description summary) "Test name"))))))

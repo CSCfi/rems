@@ -1,10 +1,12 @@
 (ns rems.table
   "Generic sortable table widget"
-  (:require [clojure.string :as str]
+  (:require [clojure.data :refer [diff]]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
-            [hiccup-find.core :as hf]
-            [schema.core :as s]
-            [rems.atoms :refer [sort-symbol search-symbol]]))
+            [reagent.core :as reagent]
+            [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
+            [rems.text :refer [text]]
+            [schema.core :as s]))
 
 (defn column-header [column-definitions col]
   ((get-in column-definitions [col :header] (constantly ""))))
@@ -74,27 +76,27 @@
         (keys column-definitions)))
 
 (deftest test-match-filter?
- (is (match-filter? {:id {:value :id}
-                     :description {:value :description}}
-                    "bar"
-                    {:id "foo"
-                     :description "bar"})
-     "matches")
- (is (not (match-filter? {:id {:value :id}
-                          :description {:value :its-a-trap
-                                        :filter-value :description}}
-                         "willnotmatch"
-                         {:id "foo"
-                          :its-a-trap "willnotmatch"
-                          :description "bar"}))
-     "doesn't match with value if filter-value is provided")
- (is (not (match-filter? {:id {:value :id}
-                          :description {:value :description
-                                        :filterable? false}}
-                         "shouldnotmatch"
-                         {:id "foo"
-                          :description "shouldnotmatch"}))
-     "doesn't match if filterable is false"))
+  (is (match-filter? {:id {:value :id}
+                      :description {:value :description}}
+                     "bar"
+                     {:id "foo"
+                      :description "bar"})
+      "matches")
+  (is (not (match-filter? {:id {:value :id}
+                           :description {:value :its-a-trap
+                                         :filter-value :description}}
+                          "willnotmatch"
+                          {:id "foo"
+                           :its-a-trap "willnotmatch"
+                           :description "bar"}))
+      "doesn't match with value if filter-value is provided")
+  (is (not (match-filter? {:id {:value :id}
+                           :description {:value :description
+                                         :filterable? false}}
+                          "shouldnotmatch"
+                          {:id "foo"
+                           :description "shouldnotmatch"}))
+      "doesn't match if filterable is false"))
 
 (defn match-filters? [column-definitions filters item]
   (every? (fn [filter-word]
@@ -111,7 +113,7 @@
   {:column-definitions {s/Keyword {(s/optional-key :header) s/Any
                                    (s/optional-key :value) Applicable
                                    (s/optional-key :values) Applicable
-                                   (s/optional-key :sortable?)  s/Bool
+                                   (s/optional-key :sortable?) s/Bool
                                    (s/optional-key :sort-value) Applicable
                                    (s/optional-key :filterable?) s/Bool
                                    (s/optional-key :filter-value) Applicable
@@ -123,6 +125,7 @@
                               (s/optional-key :sort-order) (s/enum :asc :desc)
                               (s/optional-key :set-sorting) Applicable}
    (s/optional-key :filtering) {(s/optional-key :filters) s/Str
+                                (s/optional-key :filters-new) s/Str
                                 (s/optional-key :show-filters) s/Bool
                                 (s/optional-key :set-filtering) Applicable}
    :id-function Applicable
@@ -130,22 +133,40 @@
    (s/optional-key :class) s/Str})
 
 (defn- filter-view [filtering]
-  (let [{:keys [filters set-filtering]} filtering]
-    [:input.flex-grow-1
-     {:type "text"
-      :name "table-search"
-      :value (str filters) ; To make react happy when filters is nil
-      :placeholder ""
-      :on-input (fn [event]
-                  (set-filtering (assoc filtering :filters (-> event .-target .-value))))}]))
+  (let [{:keys [filters-new set-filtering]} filtering
+        update-current-filters (fn [event]
+                                 (set-filtering (assoc filtering :filters filters-new)))]
+    [:div.flex-grow-1.d-flex
+     [:input.flex-grow-1
+      {:type "text"
+       :name "table-search"
+       :default-value filters-new
+       :placeholder ""
+       :aria-label (text :t.search/search-parameters)
+       :on-change (fn [event]
+                    (set-filtering (assoc filtering :filters-new (-> event .-target .-value))))
+       :on-blur update-current-filters
+       :on-key-press (fn [event]
+                       (when (= 13 (.-which event)) ; enter
+                         (.preventDefault event)
+                         (update-current-filters event)))}]
+     [:button.btn.btn-primary
+      {:on-click update-current-filters
+       :aria-label (text :t.search/search)}
+      [search-symbol]]]))
 
 (defn- filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
   (when filtering
     [:div.rems-table-search-toggle.d-flex.flex-row-reverse
      [:button.btn
       {:class (if show-filters "btn-secondary" "btn-primary")
-       :on-click #(set-filtering (update filtering :show-filters not))}
-      (search-symbol)]
+       :aria-label (if show-filters (text :t.search/close-search) (text :t.search/open-search))
+       ;; TODO: focus needs to be moved to the search field after opening it, especially for screen readers
+       :on-click #(set-filtering (-> filtering
+                                     (update :show-filters not)
+                                     (assoc :filters ""
+                                            :filters-new "")))}
+      (if show-filters [close-symbol] [search-symbol])]
      (when show-filters
        [filter-view filtering])]))
 
@@ -162,7 +183,7 @@
       (column-header column-definitions column)
       " "
       (when (= column sort-column)
-        (sort-symbol sort-order))]]))
+        [sort-symbol sort-order])]]))
 
 (defn- head [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
   [:thead
@@ -170,15 +191,32 @@
          (for [column visible-columns]
            [column-header-view column column-definitions sorting]))])
 
-(defn- body [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
-  (let [{:keys [initial-sort sort-column sort-order set-sorting]} sorting
-        {:keys [show-filters filters]} filtering]
-    [:tbody
-     (map (fn [item] ^{:key (id-function item)} [row (id-function item) column-definitions visible-columns item])
-          (cond->> items
-            (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
-            (and show-filters filters) (apply-filtering column-definitions filters)
-            (and sorting sort-column) (apply-sorting column-definitions sort-column sort-order)))]))
+(defn- comparable-params [params]
+  (let [params-without-fns (-> params
+                               (dissoc :id-function)
+                               (dissoc :column-definitions)
+                               (update :filtering dissoc :set-filtering :filters-new)
+                               (update :sorting dissoc :set-sorting))]
+    [(dissoc params-without-fns :items)
+     (:items params)]))
+
+(defn- body
+  "Create a Form 3 component because we don't want to compare potentially anonymous callback fns in the params. It would cause us to re-render every time."
+  [params]
+  (reagent/create-class
+   {:display-name "table-body"
+    :should-component-update (fn [this [_ old] [_ new]]
+                               (not= (comparable-params old)
+                                     (comparable-params new)))
+    :reagent-render (fn [{:keys [column-definitions visible-columns sorting filtering id-function items class]}]
+                      (let [{:keys [initial-sort sort-column sort-order]} sorting
+                            {:keys [show-filters filters]} filtering]
+                        [:tbody
+                         (map (fn [item] ^{:key (id-function item)} [row (id-function item) column-definitions visible-columns item])
+                              (cond->> items
+                                (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
+                                (and show-filters filters) (apply-filtering column-definitions filters)
+                                (and sorting sort-column) (apply-sorting column-definitions sort-column sort-order)))]))}))
 
 (defn component
   "Table component.
@@ -203,12 +241,13 @@
     `:set-sorting`      - callback that is called when sorting changes
 
   `:filtering`          - filtering options that can have
-    `:filters`          - the filter values by column
+    `:filters`          - the current filter values
+    `:filters-new`      - the new filter values (internal)
     `:show-filters`     - are the filters currently visible?
     `:set-filtering`    - callback that is called when filtering changes
 
   `:id-function`        - function for setting unique React key for row
-  `:items`              -  sequence of items to render
+  `:items`              - sequence of items to render
   `:class`              - class for the table
 
   See also `TableParams`."

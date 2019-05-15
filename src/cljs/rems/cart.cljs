@@ -16,24 +16,22 @@
 (rf/reg-event-db
  ::add-item
  (fn [db [_ item]]
-   (update db ::cart conj item)))
+   (if (contains? (set (map :id (::cart db))) (:id item))
+     db
+     (update db ::cart conj item))))
 
 (rf/reg-event-db
  ::remove-item
  (fn [db [_ item-id]]
-   (update db ::cart #(remove (comp (partial = item-id) :id) %))))
+   (update db ::cart #(remove (comp #{item-id} :id) %))))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
-  (let [cart @(rf/subscribe [::cart])
-        disabled? (and cart (contains? (set (map :id cart)) (:id item)))]
-    [:button.btn.btn-primary.add-to-cart
-     {:type "submit"
-      :disabled disabled?
-      :class (if disabled? " disabled" "")
-      :on-click #(rf/dispatch [::add-item item])}
-     (text :t.cart/add)]))
+  [:button.btn.btn-primary.add-to-cart
+   {:type "submit"
+    :on-click #(rf/dispatch [::add-item item])}
+   (text :t.cart/add)])
 
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
@@ -71,7 +69,7 @@
   "List of shopping cart items"
   [items language]
   (when-not (empty? items)
-    [:div.outer-cart
+    [:div.outer-cart.mb-3
      [:div.inner-cart
       [:div.cart-title
        [:i.fa.fa-shopping-cart]

@@ -1,11 +1,17 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
-            [rems.guide-functions])
+            [rems.guide-functions]
+            [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn external-link []
-  [:i {:class "fa fa-external-link-alt"}])
+  [:i {:class "fa fa-external-link-alt"
+       :aria-label (text :t.link/opens-in-new-window)}])
+
+(defn file-download []
+  [:i {:class "fa fa-file-download"
+       :aria-label (text :t.link/download-file)}])
 
 (defn link-to [opts uri title]
   [:a (merge opts {:href uri}) title])
@@ -20,6 +26,9 @@
 
 (defn search-symbol []
   [:i.fa {:class "fa-search"}])
+
+(defn close-symbol []
+  [:i.fa {:class "fa-times"}])
 
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
@@ -38,8 +47,8 @@
   "Displays a checkbox."
   [checked?]
   (if checked?
-    [:i.far.fa-lg.fa-check-square.color1]
-    [:i.far.fa-lg.fa-square.color1]))
+    [:i.far.fa-lg.fa-check-square {:aria-label (text :t.form/checkbox-checked)}]
+    [:i.far.fa-lg.fa-square {:aria-label (text :t.form/checkbox-unchecked)}]))
 
 (defn info-field
   "A component that shows a readonly field with title and value.
@@ -63,7 +72,7 @@
   [id title]
   [:a.btn.btn-secondary.mr-2
    {:href (str "api/licenses/attachments/" id)
-    :target :_new}
+    :target :_blank}
    title " " [external-link]])
 
 (defn enrich-user [user]

@@ -5,8 +5,7 @@
             [rems.config]
             [rems.locales]
             [rems.poller.email :refer :all]
-            [rems.text :as text]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.text :as text]))
 
 (use-fixtures
   :once
@@ -16,11 +15,14 @@
     (f)
     (mount/stop)))
 
+(defn sort-emails [emails]
+  (sort-by #(or (:to %) (:to-user %)) emails))
+
 (defn events-to-emails [events]
-  (let [application (-> (dynamic/apply-events nil events)
+  (let [application (-> (reduce model/application-view nil events)
                         (model/enrich-workflow-handlers {5 {:workflow {:handlers ["handler" "assistant"]}}}))]
     (text/with-language :en
-      (fn [] (mapv #(#'rems.poller.email/event-to-emails-impl % application) events)))))
+      (fn [] (mapv #(sort-emails (#'rems.poller.email/event-to-emails-impl % application)) events)))))
 
 (deftest test-event-to-emails-impl
   (let [base-events [{:application/id 7
@@ -72,7 +74,12 @@
                     :event/type :application.event/closed
                     :event/actor "assistant"}])]
       (is (= [[]
-              []
+              [{:to-user "assistant",
+                :subject "A new application has been submitted",
+                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
+               {:to-user "handler",
+                :subject "A new application has been submitted",
+                :body "Dear handler,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
               [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
                 :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nParticipate with this link: http://localhost:3001/accept-invitation?token=abc"}]
@@ -83,49 +90,54 @@
                 :subject "Comment request",
                 :body "Dear commenter2,\nUser handler has requested your comment on application 2001/3.\nComment here: http://localhost:3001/#/application/7"}]
               []
-              [{:to-user "handler",
+              [{:to-user "assistant",
                 :subject "New comment notification",
-                :body "Dear handler,\nUser commenter2 has posted a comment on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
-               {:to-user "assistant",
+                :body "Dear assistant,\nUser commenter2 has posted a comment on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
+               {:to-user "handler",
                 :subject "New comment notification",
-                :body "Dear assistant,\nUser commenter2 has posted a comment on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
+                :body "Dear handler,\nUser commenter2 has posted a comment on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
               [{:to-user "member",
                 :subject "You've been added as a member to an application",
                 :body "Dear member,\nYou've been added as a member to application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
               [{:to-user "decider",
                 :subject "Decision request",
                 :body "Dear decider,\nUser assistant has requested your decision on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
-              [{:to-user "handler",
+              [{:to-user "assistant",
                 :subject "New decision notification",
-                :body "Dear handler,\nUser decider has sent a decision on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
-               {:to-user "assistant",
+                :body "Dear assistant,\nUser decider has sent a decision on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
+               {:to-user "handler",
                 :subject "New decision notification",
-                :body "Dear assistant,\nUser decider has sent a decision on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
+                :body "Dear handler,\nUser decider has sent a decision on application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
               [{:to-user "applicant",
                 :subject "Your application has been approved",
                 :body "Dear applicant,\nYour application 2001/3 has been approved.\nView your application: http://localhost:3001/#/application/7"}
-               {:to-user "somebody",
-                :subject "Your application has been approved",
-                :body "Dear somebody,\nYour application 2001/3 has been approved.\nView your application: http://localhost:3001/#/application/7"}
                {:to-user "member",
                 :subject "Your application has been approved",
-                :body "Dear member,\nYour application 2001/3 has been approved.\nView your application: http://localhost:3001/#/application/7"}]
+                :body "Dear member,\nYour application 2001/3 has been approved.\nView your application: http://localhost:3001/#/application/7"}
+               {:to-user "somebody",
+                :subject "Your application has been approved",
+                :body "Dear somebody,\nYour application 2001/3 has been approved.\nView your application: http://localhost:3001/#/application/7"}]
               [{:to-user "applicant",
                 :subject "Your application has been closed",
                 :body "Dear applicant,\nYour application 2001/3 has been closed.\nView your application: http://localhost:3001/#/application/7"}
-               {:to-user "somebody",
-                :subject "Your application has been closed",
-                :body "Dear somebody,\nYour application 2001/3 has been closed.\nView your application: http://localhost:3001/#/application/7"}
                {:to-user "member",
                 :subject "Your application has been closed",
-                :body "Dear member,\nYour application 2001/3 has been closed.\nView your application: http://localhost:3001/#/application/7"}]]
+                :body "Dear member,\nYour application 2001/3 has been closed.\nView your application: http://localhost:3001/#/application/7"}
+               {:to-user "somebody",
+                :subject "Your application has been closed",
+                :body "Dear somebody,\nYour application 2001/3 has been closed.\nView your application: http://localhost:3001/#/application/7"}]]
              (events-to-emails events))))
     (let [events (conj base-events
                        {:application/id 7
                         :event/type :application.event/rejected
                         :event/actor "handler"})]
       (is (= [[]
-              []
+              [{:to-user "assistant",
+                :subject "A new application has been submitted",
+                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
+               {:to-user "handler",
+                :subject "A new application has been submitted",
+                :body "Dear handler,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
               [{:subject "Your application has been rejected",
                 :body "Dear applicant,\nYour application 2001/3 has been rejected.\nView your application: http://localhost:3001/#/application/7",
                 :to-user "applicant"}]]

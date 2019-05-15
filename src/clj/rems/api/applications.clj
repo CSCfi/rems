@@ -2,9 +2,9 @@
   (:require [clj-time.core :as time]
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
+            [rems.application-util :as application-util]
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
@@ -62,6 +62,10 @@
    (s/optional-key :application-id) s/Num
    (s/optional-key :errors) [s/Any]})
 
+(s/defschema SaveAttachmentResponse
+  (merge SuccessResponse
+         {(s/optional-key :id) s/Num}))
+
 ;; Api implementation
 
 (defn invalid-user? [u]
@@ -85,6 +89,32 @@
 (def get-commenters get-users)
 
 (def get-deciders get-users)
+
+(def ^:private todo-roles
+  #{:handler :commenter :decider :past-commenter :past-decider})
+
+(defn- potential-todo? [application]
+  (and (some todo-roles (:application/roles application))
+       (not= :application.state/draft (:application/state application))))
+
+(defn- get-potential-todos [user-id]
+  (->> (applications/get-all-applications user-id)
+       (filter potential-todo?)))
+
+(defn- todo? [application]
+  (and (= :application.state/submitted (:application/state application))
+       (some #{:application.command/approve
+               :application.command/comment
+               :application.command/decide}
+             (:application/permissions application))))
+
+(defn get-todos [user-id]
+  (->> (get-potential-todos user-id)
+       (filter todo?)))
+
+(defn get-handled-todos [user-id]
+  (->> (get-potential-todos user-id)
+       (remove todo?)))
 
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
@@ -119,7 +149,7 @@
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications-v2/get-my-applications (getx-user-id))))))
+      (ok (applications/get-my-applications (getx-user-id))))))
 
 (def applications-api
   (context "/applications" []
@@ -129,7 +159,19 @@
       :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications-v2/get-all-applications (getx-user-id))))
+      (ok (applications/get-all-applications (getx-user-id))))
+
+    (GET "/todo" []
+      :summary "Get all applications that the current user needs to act on."
+      :roles #{:logged-in}
+      :return [ApplicationOverview]
+      (ok (get-todos (getx-user-id))))
+
+    (GET "/handled" []
+      :summary "Get all applications that the current user no more needs to act on."
+      :roles #{:logged-in}
+      :return [ApplicationOverview]
+      (ok (get-handled-todos (getx-user-id))))
 
     (POST "/create" []
       :summary "Create a new application"
@@ -156,36 +198,31 @@
       :return Deciders
       (ok (get-deciders)))
 
-    (GET "/attachments" []
-      :summary "Get an attachment for a field in an application"
+    (GET "/attachment/:attachment-id" []
+      :summary "Get an attachment"
       :roles #{:logged-in}
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (if-let [attachment (attachments/get-attachment (getx-user-id) application-id field-id)]
-        (-> (ok (:data attachment))
-            (content-type (:content-type attachment)))
-        (api-util/not-found-json-response)))
+      :path-params [attachment-id :- (describe s/Int "attachment id")]
+      (let [attachment (attachments/get-attachment attachment-id)
+            application-id (:application/id attachment)]
+        (when application-id
+          (applications/get-application (getx-user-id) application-id)) ;; check that user is allowed to read application
+        (if attachment
+          (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
+              (content-type (:attachment/type attachment)))
+          (api-util/not-found-json-response))))
 
     ;; TODO: think about size limit
     (POST "/add-attachment" []
-      :summary "Add an attachment file related to an application field"
+      :summary "Add an attachment file related to an application"
       :roles #{:applicant}
       :multipart-params [file :- upload/TempFileUpload]
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      :query-params [application-id :- (describe s/Int "application id")]
       :middleware [multipart/wrap-multipart-params]
-      :return SuccessResponse
-      (attachments/save-attachment! file (getx-user-id) application-id field-id)
-      (ok {:success true}))
-
-    (POST "/remove-attachment" []
-      :summary "Remove an attachment file related to an application field"
-      :roles #{:applicant}
-      :query-params [application-id :- (describe s/Int "application id")
-                     field-id :- (describe s/Int "application form field id the attachment is related to")]
-      :return SuccessResponse
-      (attachments/remove-attachment! (getx-user-id) application-id field-id)
-      (ok {:success true}))
+      :return SaveAttachmentResponse
+      (let [application (applications/get-application (getx-user-id) application-id)]
+        (when-not (application-util/form-fields-editable? application)
+          (throw-forbidden))
+        (ok (attachments/save-attachment! file (getx-user-id) application-id))))
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
@@ -198,6 +235,7 @@
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
     (command-endpoint :application.command/add-licenses commands/AddLicensesCommand)
     (command-endpoint :application.command/add-member commands/AddMemberCommand)
+    (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/approve commands/ApproveCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
@@ -219,7 +257,7 @@
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema Application}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -228,7 +266,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
             (ByteArrayInputStream.)

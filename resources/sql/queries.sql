@@ -92,7 +92,14 @@ SELECT
   enabled,
   archived
 FROM resource
-WHERE id = :id;
+WHERE 1=1
+/*~ (when (:id params) */
+  AND id = :id
+/*~ ) ~*/
+/*~ (when (:resid params) */
+  AND resid = :resid
+/*~ ) ~*/
+;
 
 -- :name create-resource! :insert
 -- :doc Create a single resource
@@ -172,17 +179,7 @@ SELECT
   form.start as start,
   form.endt as "end",
   form.enabled,
-  form.archived,
-  (SELECT json_agg(joined)
-   FROM (SELECT *,
-                (SELECT json_agg(formitemlocalization)
-                 FROM application_form_item_localization formitemlocalization
-                 WHERE (formitemmap.formitemid = formitemlocalization.itemid)
-                 GROUP BY formitemlocalization.itemid)  AS localizations
-         FROM application_form_item_map formitemmap
-         JOIN application_form_item formitem ON (formitemmap.formitemid = formitem.id)
-         WHERE formitemmap.formid = form.id) joined)::TEXT
-         AS fields
+  form.archived
 FROM application_form form
 WHERE form.id = :id;
 
@@ -339,12 +336,15 @@ WHERE 1=1
 INSERT INTO entitlement (catAppId, userId, resId)
 VALUES (:application, :user, :resource);
 
--- :name end-entitlement! :!
+-- :name end-entitlements! :!
 UPDATE entitlement
 SET endt = current_timestamp
 WHERE catAppId = :application
 /*~ (when (:user params) */
   AND entitlement.userId = :user
+/*~ ) ~*/
+/*~ (when (:resource params) */
+  AND entitlement.resId = :resource
 /*~ ) ~*/
 ;
 
@@ -355,7 +355,7 @@ WHERE catAppId = :application
 --   :user -- user id to limit select to
 --   :resource -- resid to limit select to
 --   :is-active? -- entitlement is without end date
-SELECT res.resId, catAppId, entitlement.userId, entitlement.start, users.userAttrs->>'mail' AS mail FROM entitlement
+SELECT res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
 LEFT OUTER JOIN users on entitlement.userId = users.userId
 WHERE 1=1
@@ -366,7 +366,7 @@ WHERE 1=1
   AND entitlement.userId = :user
 /*~ ) ~*/
 /*~ (when (:resource params) */
-  AND res.resId = :resource
+  AND res.id = :resource
 /*~ ) ~*/
 /*~ (when (:is-active? params) */
   AND entitlement.endt IS NULL
@@ -384,29 +384,19 @@ ON CONFLICT (catAppId, formMapId)
 DO UPDATE
 SET (modifierUserId, value) = (:user, :value);
 
--- :name save-attachment! :!
-INSERT INTO application_attachments
-(catAppId, modifierUserId, filename, type, data, formMapId)
+-- :name save-attachment! :insert
+INSERT INTO attachment
+(appId, modifierUserId, filename, type, data)
 VALUES
-(:application, :user, :filename, :type, :data,
- (SELECT id FROM application_form_item_map
-  WHERE formId = :form AND formItemId = :item))
-ON CONFLICT (catAppId, formMapId)
-DO UPDATE
-SET (modifierUserId, filename, type, data) = (:user, :filename, :type, :data);
-
--- :name remove-attachment! :!
-DELETE FROM application_attachments
-WHERE catAppId = :application
-AND formmapid = (SELECT id FROM application_form_item_map
-                 WHERE formId = :form AND formItemId = :item);
+(:application, :user, :filename, :type, :data)
 
 -- :name get-attachment :? :1
-SELECT filename, type, data FROM application_attachments attachments
-LEFT OUTER JOIN application_form_item_map itemmap ON attachments.formMapId = itemmap.id
-WHERE attachments.catAppId = :application
-  AND itemmap.formItemId = :item
-  AND itemmap.formId = :form;
+SELECT appid, filename, type, data FROM attachment
+WHERE id = :id
+
+-- :name get-attachments-for-application :? :*
+SELECT id, filename, type, modifierUserId FROM attachment
+WHERE appid = :application-id
 
 -- :name save-license-approval! :!
 -- NB: this is not atomic
@@ -483,7 +473,7 @@ SET
   --~(when (contains? params :archived) ", archived = :archived")
   --~(when (contains? params :title) ", title = :title")
   --~(when (contains? params :workflow) ", workflowBody = :workflow::jsonb")
-WHERE id = :id
+WHERE id = :id;
 
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
@@ -727,7 +717,8 @@ SELECT prefix, suffix FROM external_application_id
 /*~ (when (:prefix params) */
 WHERE prefix = :prefix
 /*~ ) ~*/
+;
 
 -- :name add-external-id! :!
 INSERT INTO external_application_id (prefix, suffix)
-VALUES (:prefix, :suffix)
+VALUES (:prefix, :suffix);

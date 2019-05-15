@@ -49,7 +49,17 @@
        (assoc ::catalogue catalogue)
        (dissoc ::loading-catalogue?))))
 
-(rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
+(rf/reg-sub ::full-catalogue (fn [db _] (::catalogue db)))
+
+(rf/reg-sub
+ ::catalogue
+ (fn [_ _]
+   (rf/subscribe [::full-catalogue]))
+ (fn [catalogue _]
+   (->> catalogue
+        (filter :enabled)
+        (remove :expired))))
+
 (rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
 
 ;;;; draft applications
@@ -109,8 +119,7 @@
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
      [application-list/component
-      ;; TODO: use +all-columns+ like on other pages?
-      {:visible-columns application-list/+draft-columns+
+      {:visible-columns [:resource :last-activity :view]
        :items drafts}]]))
 
 (defn catalogue-page []

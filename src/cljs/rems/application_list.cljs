@@ -17,36 +17,10 @@
        (map localized)
        (str/join ", ")))
 
-(def +all-columns+
-  [:description :resource :applicant :state :created :last-activity :view])
-
-(def +default-columns+
-  [:description :resource :applicant :state :created :view])
-
-(def +draft-columns+
-  [:resource :last-activity :view])
-
-(def ^:private +columns+
-  {:id {:value :application/id
-        :header #(text :t.actions/application)}
-   :description {:value application-util/format-description
-                 :header #(text :t.actions/description)}
-   :resource {:value format-catalogue-items
-              :header #(text :t.actions/resource)}
-   :applicant {:value :application/applicant
-               :header #(text :t.actions/applicant)}
-   :state {:value #(localize-state (:application/state %))
-           :header #(text :t.actions/state)
-           :class #(if (application-util/form-fields-editable? %) "state text-highlight" "state")}
-   :created {:value #(localize-time (:application/created %))
-             :sort-value :application/created
-             :header #(text :t.actions/created)}
-   :last-activity {:value #(localize-time (:application/last-activity %))
-                   :sort-value :application/last-activity
-                   :header #(text :t.actions/last-activity)}
-   :view {:value view-button
-          :sortable? false
-          :filterable? false}})
+(defn- format-description [app]
+  [:div {:class "application-description"
+         :title (:application/description app)}
+   (:application/description app)])
 
 (defn component
   "A table of applications.
@@ -56,7 +30,31 @@
   Binds the column definitions for you and the visible columns should be a subsequence."
   [opts]
   [table/component
-   (merge {:column-definitions +columns+
+   (merge {:column-definitions {:external-id {:value :application/external-id
+                                              :header #(text :t.actions/id)}
+                                :id {:value :application/id
+                                     :header #(text :t.actions/id)}
+                                :description {:value format-description
+                                              :header #(text :t.actions/description)}
+                                :resource {:value format-catalogue-items
+                                           :header #(text :t.actions/resource)}
+                                :applicant {:value :application/applicant
+                                            :header #(text :t.actions/applicant)}
+                                :state {:value #(localize-state (:application/state %))
+                                        :header #(text :t.actions/state)
+                                        :class #(if (application-util/form-fields-editable? %) "state text-highlight" "state")}
+                                :created {:value #(localize-time (:application/created %))
+                                          :sort-value :application/created
+                                          :header #(text :t.actions/created)}
+                                :submitted {:value #(localize-time (:application/first-submitted %))
+                                            :sort-value :application/first-submitted
+                                            :header #(text :t.actions/submitted)}
+                                :last-activity {:value #(localize-time (:application/last-activity %))
+                                                :sort-value :application/last-activity
+                                                :header #(text :t.actions/last-activity)}
+                                :view {:value view-button
+                                       :sortable? false
+                                       :filterable? false}}
            :id-function #(str "application-" (:application/id %))
            :class "applications"}
           opts)])
@@ -99,19 +97,19 @@
   [:div
    (component-info component)
    (example "empty list"
-            [component {:visible-columns +default-columns+
+            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
                         :sorting {:sort-column :id :sort-order :asc}
                         :items []}])
    (example "applications, default order"
-            [component {:visible-columns +default-columns+
+            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
                         :sorting {:sort-column :id :sort-order :asc}
                         :items +example-applications+}])
    (example "applications, descending date, all columns"
-            [component {:visible-columns +all-columns+
+            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
                         :sorting {:sort-column :created :sort-order :desc}
                         :items +example-applications+}])
    (example "applications, initially sorted by id descending, then resource descending"
-            [component {:visible-columns +all-columns+
+            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
                         :sorting {:initial-sort [{:sort-column :id :sort-order :desc}
                                                  {:sort-column :resource :sort-order :desc}]}
                         :items +example-applications+}])])

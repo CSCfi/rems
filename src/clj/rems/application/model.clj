@@ -3,7 +3,8 @@
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application.events :as events]
-            [rems.permissions :as permissions]))
+            [rems.permissions :as permissions]
+            [rems.util :refer [getx]]))
 
 ;;;; Roles & Permissions
 
@@ -19,10 +20,12 @@
 
 (def ^:private draft-permissions {:applicant [:application.command/save-draft
                                               :application.command/submit
+                                              :application.command/close
                                               :application.command/remove-member
                                               :application.command/invite-member
                                               :application.command/uninvite-member
-                                              :application.command/accept-licenses]
+                                              :application.command/accept-licenses
+                                              :application.command/change-resources]
                                   :member [:application.command/accept-licenses]
                                   :handler [:see-everything
                                             :application.command/remove-member
@@ -43,6 +46,7 @@
                                       :handler [:see-everything
                                                 :application.command/add-licenses
                                                 :application.command/add-member
+                                                :application.command/change-resources
                                                 :application.command/remove-member
                                                 :application.command/invite-member
                                                 :application.command/uninvite-member
@@ -62,6 +66,7 @@
                                      :member [:application.command/accept-licenses]
                                      :handler [:see-everything
                                                :application.command/add-member
+                                               :application.command/change-resources
                                                :application.command/remove-member
                                                :application.command/invite-member
                                                :application.command/uninvite-member
@@ -181,12 +186,10 @@
              :application/accepted-licenses {}
              :application/events []
              :application/form {:form/id (:form/id event)}
+             ;; TODO: other workflows
+             ;; TODO: extract an event handler for dynamic workflow specific stuff
              :application/workflow {:workflow/id (:workflow/id event)
-                                    :workflow/type (:workflow/type event)
-                                    ;; TODO: other workflows
-                                    ;; TODO: extract an event handler for dynamic workflow specific stuff
-                                    :workflow.dynamic/awaiting-commenters #{}
-                                    :workflow.dynamic/awaiting-deciders #{}})))
+                                    :workflow/type (:workflow/type event)})))
 
 (defmethod event-type-specific-application-view :application.event/draft-saved
   [application event]
@@ -246,6 +249,7 @@
   (-> application
       (assoc ::previous-submitted-answers (::submitted-answers application))
       (assoc ::submitted-answers (::draft-answers application))
+      (update :application/first-submitted #(or % (:event/time event)))
       (dissoc ::draft-answers)
       (assoc :application/state :application.state/submitted)))
 
@@ -258,22 +262,24 @@
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] set/union (set (:application/commenters event)))))
+      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
+                                                             (repeat (:application/request-id event))))))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] disj (:event/actor event))))
+      (update ::latest-comment-request-by-user dissoc (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] set/union (set (:application/deciders event)))))
+      (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
+                                                              (repeat (:application/request-id event))))))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] disj (:event/actor event))))
+      (update ::latest-decision-request-by-user dissoc (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/approved
   [application event]
@@ -284,6 +290,12 @@
   [application event]
   (-> application
       (assoc :application/state :application.state/rejected)))
+
+(defmethod event-type-specific-application-view :application.event/resources-changed
+  [application event]
+  (-> application
+      (assoc :application/modified (:event/time event))
+      (assoc :application/resources (vec (:application/resources event)))))
 
 (defmethod event-type-specific-application-view :application.event/closed
   [application event]
@@ -302,9 +314,6 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   application)
 
-;; TODO: replace rems.workflow.dynamic/apply-event with this
-;;       (it will couple the write and read models, but it's probably okay
-;;        because they both are about a single application and are logically coupled)
 (defn application-view
   "Projection for the current state of a single application.
   Pure function; must use `enrich-with-injections` to enrich the model with
@@ -484,7 +493,8 @@
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
 (defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license
-                                                  get-user get-users-with-role get-workflow]}]
+                                                  get-user get-users-with-role get-workflow
+                                                  get-attachments-for-application]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
@@ -506,6 +516,7 @@
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
         (assoc :application/applicant-attributes (get-user (:application/applicant application)))
+        (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)
         (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))
@@ -517,44 +528,31 @@
 
 ;;;; Authorization
 
-(defmulti ^:private hide-sensitive-event-content
-  (fn [event] (:event/type event)))
-
-(defmethod hide-sensitive-event-content :default
-  [event]
-  event)
-
-(defmethod hide-sensitive-event-content :application.event/member-invited
-  [event]
-  (dissoc event :invitation/token))
-
-(defmethod hide-sensitive-event-content :application.event/member-joined
-  [event]
-  (dissoc event :invitation/token))
-
 (defn hide-sensitive-events [events]
   (->> events
        (remove (comp #{:application.event/comment-requested
                        :application.event/commented
                        :application.event/decided
                        :application.event/decision-requested}
-                     :event/type))
-       (mapv hide-sensitive-event-content)))
+                     :event/type))))
 
 (defn- hide-sensitive-information [application]
   (-> application
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
-(defn- hide-non-public-information [application]
+(defn- hide-invitation-tokens [application]
   (-> application
-      ;; the keys are invitation tokens and must be kept secret
+      ;; the keys of the invitation-tokens map are secret
       (dissoc :application/invitation-tokens)
       (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
+      (update :application/events (partial mapv #(dissoc % :invitation/token)))))
+
+(defn- hide-non-public-information [application]
+  (-> application
+      hide-invitation-tokens
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
-      (update-in [:application/workflow] dissoc
-                 :workflow.dynamic/awaiting-commenters
-                 :workflow.dynamic/awaiting-deciders)
+      (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
 (defn apply-user-permissions [application user-id]

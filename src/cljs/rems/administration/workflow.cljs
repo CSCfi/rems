@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [attachment-link external-link info-field readonly-checkbox]]
+            [rems.atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -37,10 +37,10 @@
    {:on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/back)])
 
-(defn- to-create-workflow []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-workflow"}
-   (text :t.administration/create-workflow)])
+(defn- edit-button [id]
+  [:button.btn.btn-primary
+   {:on-click #(dispatch! (str "/#/administration/edit-workflow/" id))}
+   (text :t.administration/edit)])
 
 (defn get-localized-value [field key language]
   (key (first (filter (comp #{(name language)} :langcode)
@@ -126,13 +126,16 @@
                      (seq (:actors workflow)) (text :t.create-workflow/rounds-workflow)
                      :else (text :t.create-workflow/auto-approve-workflow))]
               (when (:workflow workflow)
-                [inline-info-field (text :t.create-workflow/handlers) (str/join ", " (get-in workflow [:workflow :handlers]))])
+                [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
+                                                                           (map enrich-user)
+                                                                           (map :display)
+                                                                           (str/join ", "))])
               [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired workflow))]]]}]
    [rounds-view (:actors workflow) language]
    [licenses-view (:licenses workflow) language]
-   [:div.col.commands [back-button]]])
+   [:div.col.commands [back-button] [edit-button (:id workflow)]]])
 
 (defn workflow-page []
   (let [workflow (rf/subscribe [::workflow])

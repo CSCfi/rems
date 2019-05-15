@@ -146,8 +146,7 @@
    [:.table-border {:padding 0
                     :margin "1em 0"
                     :border (util/get-theme-attribute :table-border "1px solid #ccc")
-                    :border-radius (u/rem 0.4)
-                    :overflow :hidden}]
+                    :border-radius (u/rem 0.4)}]
    [:.rems-table {:min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor :color1)
                   :box-shadow (util/get-theme-attribute :table-shadow)
@@ -266,9 +265,9 @@
    [:* {:margin 0}]
    [:a
     :button
-    {:cursor :pointer}
-    ["&:not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
-     [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]]
+    {:cursor :pointer
+     :color (util/get-theme-attribute :link-color "#007bff")}
+    [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
@@ -300,6 +299,11 @@
    [:.main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap}]
+   ;; Bootstrap has inaccessible focus indicators in particular
+   ;; for .btn-link and .btn-secondary, so we define our own.
+   [:a:focus :button:focus :.btn.focus :.btn:focus
+    {:outline 0
+     :box-shadow "0 0 0 0.2rem rgba(38,143,255,.5) !important"}]
    [:.btn-primary
     [:&:hover
      :&:focus
@@ -318,24 +322,24 @@
      :&:focus
      :&:active:hover
      (into {}
-       (filter val
-        {:background-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
-         :border-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
-         :color (util/get-theme-attribute :secondary-button-hover-color)
-         :outline-color :transparent}))]
+           (filter val
+                   {:background-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
+                    :border-color (util/get-theme-attribute :secondary-button-hover-bgcolor)
+                    :color (util/get-theme-attribute :secondary-button-hover-color)
+                    :outline-color :transparent}))]
     (into {}
-      (filter val
-       {:background-color (util/get-theme-attribute :secondary-button-bgcolor)
-        :border-color (util/get-theme-attribute :secondary-button-bgcolor)
-        :color (util/get-theme-attribute :secondary-button-color)
-        :outline-color :transparent}))]
+          (filter val
+                  {:background-color (util/get-theme-attribute :secondary-button-bgcolor)
+                   :border-color (util/get-theme-attribute :secondary-button-bgcolor)
+                   :color (util/get-theme-attribute :secondary-button-color)
+                   :outline-color :transparent}))]
    [:.btn-primary.disabled :.btn-primary:disabled
     :.btn-secondary.disabled :.btn-secondary:disabled
     {:color "#fff"
      :background-color "#aaa"
      :border-color "#aaa"}]
    [:.button-min-width {:min-width (u/rem 5)}]
-   [:.icon-link {:color "#6c757d"  ; same color as bootstrap's default for .btn-secondary
+   [:.icon-link {:color "#6c757d" ; same color as bootstrap's default for .btn-secondary
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
    [:.modal--title [:.link
@@ -350,7 +354,7 @@
    [:.text-secondary {:color (util/get-theme-attribute :text-secondary)}]
    [:.text-success {:color (util/get-theme-attribute :text-success)}]
    [:.text-danger {:color (util/get-theme-attribute :text-danger)}]
-   [:.text-warning {:color (util/get-theme-attribute :text-warning)}]
+   [:.text-warning {:color (util/get-theme-attribute :text-warning "#ffc107!important")}]
    [:.text-info {:color (util/get-theme-attribute :text-info)}]
    [:.text-light {:color (util/get-theme-attribute :text-light)}]
    [:.text-dark {:color (util/get-theme-attribute :text-dark)}]
@@ -394,11 +398,6 @@
    [:.alert-dark {:color (util/get-theme-attribute :alert-dark-color)
                   :background-color (util/get-theme-attribute :alert-dark-bgcolor)
                   :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
-   [:.nav-link
-    :.btn-link
-    (s/descendant :.nav-link :a)
-    {:color (util/get-theme-attribute :nav-color :link-color :color3)
-     :border 0}] ; for button links
    [:.navbar
     {:max-width content-width}
     [:.nav-link :.btn-link
@@ -414,6 +413,8 @@
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
+    {:color (util/get-theme-attribute :nav-color :link-color :color3)
+     :border 0} ; for button links
     [:&.active
      {:color (util/get-theme-attribute :nav-active-color :color4)}]
     [:&:hover
@@ -526,6 +527,7 @@
    [(s/> :.form-actions "*:not(:first-child)")
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
+   [".btn-opens-more::after" {:content "'...'"}]
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
@@ -553,8 +555,8 @@
    [:.new-form-field {:text-align "center"}]
 
    [:.form-field-option (assoc dashed-form-group
-                              :margin-left 0
-                              :margin-right 0)]
+                               :margin-left 0
+                               :margin-right 0)]
    [:.new-form-field-option {:text-align "center"}]
 
    [:.full {:width "100%"}]
@@ -577,6 +579,10 @@
                         :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                         :margin (u/px -1)}] ; make sure header overlaps container border
    [(s/descendant :.card-header :a) {:color :inherit}]
+   [:.application-resources
+    [:.application-resource {:margin-bottom (u/rem 1)
+                             :line-height (u/rem 1)
+                             :font-size (u/rem 1)}]]
    [:.license {:margin-bottom (u/rem 1)}
     [:.license-block {:color "#000"
                       :white-space "pre-wrap"}]
@@ -613,6 +619,13 @@
                                  (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 1) 0]]}]
 
+   ;; application list
+   [:.applications
+    [:.application-description {:overflow :hidden
+                                :text-overflow :ellipsis
+                                :white-space :nowrap
+                                :max-width "30em"}]]
+
    ;; autocomplete, duplicates some Bootstrap styling
    ;; because the component classes are hard-coded
    [:.autocomplete {:width (u/percent 100)}
@@ -648,10 +661,12 @@
     [:.autocomplete__control [:input {:display :inline-block}]]
     [:.autocomplete__item {:padding (u/px 10)}]
     [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "#fff")
-                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
+                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}
+     [:.text-warning :.text-danger {:color "inherit!important"}]]
     [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "#fff")
                                  :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
-                                 :cursor :pointer}]
+                                 :cursor :pointer}
+     [:.text-warning :.text-danger {:color "inherit!important"}]]
     [:.autocomplete__selected-item {:display :inline-block
                                     :padding [[0 (u/rem 0.5)]]
                                     :margin-right (u/px 10)}

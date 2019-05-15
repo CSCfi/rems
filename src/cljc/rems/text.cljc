@@ -76,6 +76,7 @@
    :application.event/member-removed :t.applications.events/member-removed
    :application.event/member-uninvited :t.applications.events/member-uninvited
    :application.event/rejected :t.applications.events/rejected
+   :application.event/resources-changed :t.applications.events/resources-changed
    :application.event/returned :t.applications.events/returned
    :application.event/submitted :t.applications.events/submitted})
 

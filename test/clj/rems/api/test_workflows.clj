@@ -77,7 +77,8 @@
                   :organization "abc"
                   :title "dynamic workflow"
                   :workflow {:type "workflow/dynamic"
-                             :handlers ["bob" "carl"]}
+                             :handlers [{:userid "bob" :email "bob@example.com" :name "Bob Approver"}
+                                        {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
                   :enabled true
                   :archived false}
                  (select-keys workflow [:id :organization :title :workflow :enabled :archived]))))))))
@@ -100,7 +101,8 @@
                   :organization "abc"
                   :title "dynamic workflow"
                   :workflow {:type "workflow/dynamic"
-                             :handlers ["bob" "carl"]}
+                             :handlers [{:userid "bob" :email "bob@example.com" :name "Bob Approver"}
+                                        {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
                   :enabled true
                   :expired false
                   :archived false}
@@ -144,7 +146,8 @@
       (is (= (assoc expected
                     :title "x"
                     :workflow {:type "workflow/dynamic"
-                               :handlers ["owner" "alice"]})
+                               :handlers [{:email "owner@example.com" :name "Owner" :userid "owner"}
+                                          {:email "alice@example.com" :name "Alice Applicant" :userid "alice"}]})
              (fetch))))))
 
 (deftest workflows-api-filtering-test

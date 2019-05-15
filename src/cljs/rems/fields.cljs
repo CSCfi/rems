@@ -1,9 +1,10 @@
 (ns rems.fields
   "UI components for form fields"
   (:require [clojure.string :as str]
-            [rems.atoms :refer [external-link textarea]]
+            [cljs-time.core :as time]
+            [rems.atoms :refer [file-download textarea]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
-            [rems.text :refer [localized text text-format]]
+            [rems.text :refer [localized text text-format localize-time]]
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -204,18 +205,22 @@
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
-;; TODO: custom :diff-component, for example link to both old and new attachment
 (defn attachment-field
   [{:keys [validation app-id on-change on-set-attachment on-remove-attachment] :as opts}]
   (let [id (:field/id opts)
         title (localized (:field/title opts))
         value (:field/value opts)
+        filename (get-in opts [:field/attachment :attachment/filename])
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
-        filename-field [:div.field
-                        [:a.btn.btn-secondary.mr-2
-                         {:href (str "/api/applications/attachments?application-id=" app-id "&field-id=" id)
-                          :target :_new}
-                         value " " (external-link)]]
+        link (fn [attachment-id filename]
+               (if (empty? attachment-id)
+                 [:div.field.mr-2
+                  [:span.btn.btn-secondary.disabled (text :t.form/no-attachment)]]
+                 [:div.field
+                  [:a.btn.btn-secondary.mr-2
+                   {:href (str "/api/applications/attachment/" attachment-id)
+                    :target :_blank}
+                   filename " " [file-download]]]))
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
@@ -228,23 +233,29 @@
                                                   filename (.-name filecontent)
                                                   form-data (doto (js/FormData.)
                                                               (.append "file" filecontent))]
-                                              (on-change filename)
+                                              (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
                       [:button.btn.btn-secondary {:on-click click-upload}
                        (text :t.form/upload)]]
         remove-button [:button.btn.btn-secondary.mr-2
                        {:on-click (fn [event]
                                     (on-change "")
-                                    (on-remove-attachment (text :t.form/attachment-remove)))}
+                                    (on-remove-attachment))}
                        (text :t.form/attachment-remove)]]
-    [field-wrapper (assoc opts :readonly-component (if (empty? value)
-                                                     [:span]
-                                                     filename-field))
-     (if (empty? value)
-       upload-field
-       [:div {:style {:display :flex :justify-content :flex-start}}
-        filename-field
-        remove-button])]))
+    [field-wrapper (assoc opts
+                          :readonly-component (link value filename)
+                          :diff-component [:div {:style {:display :flex}}
+                                           [:div
+                                            (text :t.form/previous-value) ": "
+                                            (link (:field/previous-value opts) (get-in opts [:field/previous-attachment :attachment/filename]))]
+                                           [:div
+                                            (text :t.form/current-value) ": "
+                                            (link value filename)]])
+     [:div {:style {:display :flex :justify-content :flex-start}}
+      (link value filename)
+      (if (empty? value)
+        upload-field
+        remove-button)]]))
 
 (defn unsupported-field
   [f]
@@ -382,6 +393,38 @@
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "test.txt"}]])
+   (example "field of type \"attachment\", previous and new file uploaded, diff shown"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/value "new.txt"
+                     :field/previous-value "old.txt"
+                     :diff true}]])
+   (example "field of type \"attachment\", previous and new file uploaded, diff hidden"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/value "new.txt"
+                     :field/previous-value "old.txt"}]])
+   (example "field of type \"attachment\", previous file uploaded, new deleted, diff shown"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/previous-value "old.txt"
+                     :diff true}]])
+   (example "field of type \"attachment\", previous file uploaded, new deleted, diff hidden"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/previous-value "old.txt"}]])
    (example "non-editable field of type \"attachment\""
             [:form
              [field {:app-id 5

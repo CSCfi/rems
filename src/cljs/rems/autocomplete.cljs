@@ -4,23 +4,27 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+;; TODO: add an ID to the input field and then link all labels to it
 (defn component
   "Multiple selectable, searchable list"
-  [{:keys [value items add-fn remove-fn item->key item->text item->value value->text search-fields]
-    :or {item->key :key item->value :value item->text :value value->text get search-fields [:value]}}]
+  [{:keys [value items add-fn remove-fn item->key item->text item->value value->text search-fields term-match-fn max-results]
+    :or {item->key :key item->value :value item->text :value value->text get search-fields [:value] max-results 25}}]
   [autocomplete/multiple-autocomplete
-   {:value value
-    :on-change add-fn
-    :on-remove remove-fn
-    :item->key item->key
-    :item->text item->text
-    :item->value item->value
-    :value->text value->text
-    :search-fields search-fields
-    :placeholder (text :t.autocomplete/placeholder)
-    :no-results-text (text :t.autocomplete/no-results)
-    :ctrl-class "autocomplete"
-    :items items}])
+   (merge {:value value
+           :on-change add-fn
+           :on-remove remove-fn
+           :item->key item->key
+           :item->text item->text
+           :item->value item->value
+           :value->text value->text
+           :max-results max-results
+           :placeholder (text :t.autocomplete/placeholder)
+           :no-results-text (text :t.autocomplete/no-results)
+           :ctrl-class "autocomplete"
+           :items items}
+          (if term-match-fn
+            {:term-match-fn term-match-fn}
+            {:search-fields search-fields}))])
 
 (defn guide
   []

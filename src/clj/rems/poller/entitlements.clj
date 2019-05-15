@@ -3,7 +3,7 @@
    entitlements in the db and optionally POSTs them to a webhook."
   (:require [clojure.test :refer :all]
             [mount.core :as mount]
-            [rems.api.applications-v2 :as applications-v2]
+            [rems.db.applications :as applications]
             [rems.db.entitlements :as entitlements]
             [rems.poller.common :as common]
             [rems.scheduler :as scheduler])
@@ -15,9 +15,10 @@
   (when (contains? #{:application.event/approved
                      :application.event/licenses-accepted
                      :application.event/member-removed
+                     :application.event/resources-changed
                      :application.event/closed}
                    (:event/type event))
-    (let [application (applications-v2/get-unrestricted-application (:application/id event))]
+    (let [application (applications/get-unrestricted-application (:application/id event))]
       (entitlements/update-entitlements-for application))))
 
 (defn run []
