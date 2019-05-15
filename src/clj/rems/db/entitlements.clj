@@ -18,8 +18,8 @@
 (defn- entitlement-to-api [{:keys [resid catappid start end mail]}]
   {:resource resid
    :application-id catappid
-   :start (text/localize-time start)
-   :end (text/localize-time end)
+   :start start
+   :end end
    :mail mail})
 
 (defn get-entitlements-for-api [user-or-nil resource-or-nil]

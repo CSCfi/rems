@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-entitlements
-  (:require [clojure.test :refer :all]
+  (:require [clj-time.format :as time-format]
+            [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.users :as users]
             [rems.handler :refer [handler]]
@@ -17,9 +18,27 @@
           body (read-body response)]
       (is (= "unauthorized" body)))))
 
+(defn- valid-date? [x]
+  (and (string? x)
+       (time-format/parse (time-format/formatters :date-time) x)))
+
 (deftest entitlements-test
   (entitlements-poller/run)
-  (let [api-key "42"]
+  (let [api-key "42"
+        check-alice-entitlement (fn [x]
+                                  (is (= {:resource "urn:nbn:fi:lb-201403262"
+                                          :application-id 12
+                                          :end nil
+                                          :mail "alice@example.com"}
+                                         (dissoc x :start)))
+                                  (is (valid-date? (:start x))))
+        check-developer-entitlement (fn [x]
+                                      (is (= {:resource "urn:nbn:fi:lb-201403262"
+                                              :application-id 19
+                                              :end nil
+                                              :mail "developer@example.com"}
+                                             (dissoc x :start)))
+                                      (is (valid-date? (:start x))))]
     (testing "all"
       (let [data (-> (request :get "/api/entitlements")
                      (authenticate api-key "developer")
@@ -34,17 +53,8 @@
                        handler
                        read-body)]
           (is (= 2 (count data)))
-          ;; sanity check the data
-          (is (= {:resource "urn:nbn:fi:lb-201403262"
-                  :application-id 12
-                  :end nil
-                  :mail "alice@example.com"}
-                 (-> data first (dissoc :start))))
-          (is (= {:resource "urn:nbn:fi:lb-201403262"
-                  :application-id 19
-                  :end nil
-                  :mail "developer@example.com"}
-                 (-> data second (dissoc :start)))))))
+          (check-alice-entitlement (first data))
+          (check-developer-entitlement (second data)))))
 
     (testing "just for alice as a developer"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -52,12 +62,7 @@
                      handler
                      read-body)]
         (is (= 1 (count data)))
-        ;; sanity check the data
-        (is (= {:resource "urn:nbn:fi:lb-201403262"
-                :application-id 12
-                :end nil
-                :mail "alice@example.com"}
-               (-> data first (dissoc :start))))))
+        (check-alice-entitlement (first data))))
 
     (testing "just for alice as an owner"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -65,12 +70,7 @@
                      handler
                      read-body)]
         (is (= 1 (count data)))
-        ;; sanity check the data
-        (is (= {:resource "urn:nbn:fi:lb-201403262"
-                :application-id 12
-                :end nil
-                :mail "alice@example.com"}
-               (-> data first (dissoc :start))))))
+        (check-alice-entitlement (first data))))
 
     (testing "just for alice as a reporter"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -78,12 +78,7 @@
                      handler
                      read-body)]
         (is (= 1 (count data)))
-        ;; sanity check the data
-        (is (= {:resource "urn:nbn:fi:lb-201403262"
-                :application-id 12
-                :end nil
-                :mail "alice@example.com"}
-               (-> data first (dissoc :start))))))
+        (check-alice-entitlement (first data))))
 
     (testing "listing as applicant"
       (testing "with entitlements"
@@ -93,7 +88,8 @@
                        assert-response-is-ok
                        read-body)]
           (is (coll-is-not-empty? body))
-          (is (every? #(= (:mail %) "alice@example.com") body))))
+          (doseq [x body]
+            (check-alice-entitlement x))))
 
       (testing "without entitlements"
         (users/add-user! "allison" {})
