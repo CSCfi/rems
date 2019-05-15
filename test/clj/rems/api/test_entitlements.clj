@@ -40,7 +40,6 @@
                   :end nil
                   :mail "alice@example.com"}
                  (-> data first (dissoc :start))))
-          (is (nil? (-> data first :end)))
           (is (= {:resource "urn:nbn:fi:lb-201403262"
                   :application-id 19
                   :end nil
