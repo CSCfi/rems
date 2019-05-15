@@ -37,11 +37,11 @@
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start))))
+               (-> data first (dissoc :start :end))))
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 19
                 :mail "developer@example.com"}
-               (-> data second (dissoc :start))))))
+               (-> data second (dissoc :start :end))))))
 
     (testing "all as an owner"
       (let [data (-> (request :get "/api/entitlements")
@@ -53,11 +53,11 @@
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start))))
+               (-> data first (dissoc :start :end))))
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 19
                 :mail "developer@example.com"}
-               (-> data second (dissoc :start))))))
+               (-> data second (dissoc :start :end))))))
 
     (testing "all as a reporter"
       (let [data (-> (request :get "/api/entitlements")
@@ -69,11 +69,11 @@
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start))))
+               (-> data first (dissoc :start :end))))
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 19
                 :mail "developer@example.com"}
-               (-> data second (dissoc :start))))))
+               (-> data second (dissoc :start :end))))))
 
     (testing "just for alice as a developer"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -85,7 +85,7 @@
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start))))))
+               (-> data first (dissoc :start :end))))))
 
     (testing "just for alice as an owner"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -97,7 +97,7 @@
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start))))))
+               (-> data first (dissoc :start :end))))))
 
     (testing "just for alice as a reporter"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -109,7 +109,7 @@
         (is (= {:resource "urn:nbn:fi:lb-201403262"
                 :application-id 12
                 :mail "alice@example.com"}
-               (-> data first (dissoc :start))))))
+               (-> data first (dissoc :start :end))))))
 
     (testing "listing as applicant"
       (testing "with entitlements"

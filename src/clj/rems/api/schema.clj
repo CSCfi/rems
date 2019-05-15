@@ -65,6 +65,7 @@
   {:resource s/Str
    :application-id s/Num
    :start s/Str
+   :end s/Str
    :mail s/Str})
 
 (s/defschema UpdateStateCommand
