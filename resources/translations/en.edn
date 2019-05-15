@@ -1,47 +1,5 @@
 {:t
- {:about {:text [[:div.document
-                  [:h1 "REMS-Demo"]
-                  [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. For each dataset, there is an application form that the applicant fills in and submits and a workflow that determines how and to whom the submitted application is circulated for approval."]
-                  [:p "You can use the demo usernames and passwords below to log in with various roles. The demo environment does not control access to any real datasets and does not send any email notifications to the applicants, reviewers or approvers of the applications."]
-                  [:p [:strong "The demo environment might get cleaned occasionally"] ", which will make all applications and access rights disappear. However, please notice that the applications or configurations you make may be visible to the other persons using the demo."]
-                  [:p [:a {:href "http://www.csc.fi/rems"} "More information on the REMS tool."]]
-                  [:p "REMS support: rems@csc.fi"]
-                  [:h2 "User Accounts and Roles"]
-                  [:p "Following test user accounts (roles) can be used when signing in using Haka test IdP:"]
-                  [:p [:strong "1. Applicant 1"] [:br]
-                   "Username: RDapplicant1" [:br]
-                   "Password: RDapplicant1" [:br]
-                   "Description: Use this account to apply for access rights to a dataset."]
-                  [:p [:strong "2. Applicant 2"] [:br]
-                   "Username: RDapplicant2" [:br]
-                   "Password: RDapplicant2" [:br]
-                   "Description: Another account for applying for access rights. For instance, RDapplicant1 can add this user to an application as a member to whom equal access rights are applied as well."]
-                  [:p [:strong "3. Reviewer"] [:br]
-                   "Username: RDreview" [:br]
-                   "Password: RDreview" [:br]
-                   "Description: A reviewer can provide comments on an application to the approver but cannot approve or reject the application."]
-                  [:p [:strong "4. Approver 1"] [:br]
-                   "Username: RDapprover1" [:br]
-                   "Password: RDapprover1" [:br]
-                   "Description: An approver can approve, reject, close and return applications"]
-                  [:p [:strong "5. Approver 2"] [:br]
-                   "Username: RDapprover2" [:br]
-                   "Password: RDapprover2" [:br]
-                   "Description: Some datasets in the demo have several parallel or alternative approvers."]
-                  [:p [:strong "6. Dataset Owner"] [:br]
-                   "Username: RDowner" [:br]
-                   "Password: RDowner" [:br]
-                   "Description: A dataset owner can add new datasets and change properties of a dataset, such as its application form, approval workflow and approvers."]
-                  [:p [:strong "6. Reporter"] [:br]
-                   "Username: RDdomainreporter" [:br]
-                   "Password: RDdomainreporter" [:br]
-                   "Description: A reporter can see all applications."]
-                  [:h2 "Terms of Use"]
-                  [:p "You agree not to do anything that infringes any laws or regulations or the rights of another (such as copyright) or is obscene, threatening, violent, abusive, hateful, harassing or otherwise objectionable."]
-                  [:p "You agree not to introduce to REMS any information that relates to an identified or identifiable natural person."]
-                  [:h2 "Acknowledgements"]
-                  [:p "CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI."]]]}
-  :actions {:accept-invitation "Accept invitation"
+ {:actions {:accept-invitation "Accept invitation"
             :accept-invitation-success [:div [:p "Joining the application was successful."] [:p "Next you will be taken to the application."]]
             :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Next you will be taken to the application."]]
             :accept-licenses "Accept terms of use"
@@ -89,7 +47,8 @@
             :return "Return to applicant"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
-            :state "State"}
+            :state "State"
+            :submitted "Sent"}
   :administration {:active "Active"
                    :archive "Archive"
                    :back "Back"
@@ -142,6 +101,7 @@
                    :username "Username"}
   :applications {:all-applications "All Applications"
                  :application "Application"
+                 :applications "Applications"
                  :empty "You don't have any applications."
                  :events {:approved "Approved"
                           :closed "Deleted"
@@ -304,8 +264,7 @@
           :title "Login"}
   :missing "Missing translation %1"
   :modal {:close-dialog "Close dialog"}
-  :navigation {:about "About"
-               :actions "Actions"
+  :navigation {:actions "Actions"
                :administration "Administration"
                :applications "Applications"
                :catalogue "Catalogue"

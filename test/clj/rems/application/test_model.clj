@@ -379,6 +379,7 @@
                         expected-application (merge expected-application
                                                     {:application/last-activity (DateTime. 3000)
                                                      :application/events events
+                                                     :application/first-submitted (DateTime. 3000)
                                                      :application/state :application.state/submitted})]
                     (is (= expected-application (apply-events events)))
 

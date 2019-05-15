@@ -95,7 +95,7 @@
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
-  (wait-visible *driver* {:tag :h1, :fn/text "My Applications"})
+  (wait-visible *driver* {:tag :h1, :fn/text "Applications"})
   (wait-visible *driver* [{:css "i.fa-search"}])
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "applications-page.png")))
@@ -189,7 +189,6 @@
     {:id application-id
      :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
      :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))
-     :applicant (get-element-text-el *driver* (child *driver* row {:css ".applicant"}))
      :state (get-element-text-el *driver* (child *driver* row {:css ".state"}))}))
 
 ;;; tests
@@ -232,7 +231,6 @@
       (go-to-applications)
       (let [summary (get-application-summary application-id)]
         (is (= "THL catalogue item" (:resource summary)))
-        (is (= "alice" (:applicant summary)))
         (is (= "Applied" (:state summary)))
         ;; don't bother trying to predict the external id:
         (is (.contains (:description summary) "Test name"))))))

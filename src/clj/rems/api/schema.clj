@@ -135,6 +135,7 @@
    :application/state s/Keyword
    :application/created DateTime
    :application/modified DateTime
+   (s/optional-key :application/first-submitted) DateTime
    :application/last-activity DateTime
    :application/applicant s/Str
    :application/applicant-attributes {s/Keyword s/Str}

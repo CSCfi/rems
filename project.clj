@@ -79,7 +79,7 @@
             [lein-cprop "1.0.3"]
             [lein-npm "0.6.2"]
             [lein-shell "0.5.0"]
-            [lein-uberwar "0.2.0"]
+            [lein-uberwar "0.2.1"]
             [migratus-lein "0.5.7"]]
 
   :clean-targets ["target"]
