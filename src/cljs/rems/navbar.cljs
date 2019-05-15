@@ -27,13 +27,15 @@
 (defn navbar-extra-pages [e page-id identity]
   (let [config @(rf/subscribe [:rems.config/config])
         extra-pages (when config (config :extra-pages))
-        language @(rf/subscribe [:language])]
+        language @(rf/subscribe [:language])
+        extra-page-id @(rf/subscribe [:rems.extra-pages/extra-page-id])]
     (when extra-pages
       (for [page extra-pages]
         (let [url (or (page :url)
                       (str "/#/extra-pages/" (page :id)))
               text (get-in page [:translations language :title] (text :t/missing))]
-          [nav-link url text (= page-id :markdown)])))))
+          [nav-link url text (and (= page-id :extra-pages)
+                                  (= extra-page-id (page :id)))])))))
 
 (defn navbar-items [e page-id identity]
   ;;TODO: get navigation options from subscription
