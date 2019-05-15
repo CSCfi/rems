@@ -46,17 +46,15 @@
         title @(rf/subscribe [::title])
         extra-page @(rf/subscribe [::content])
         language @(rf/subscribe [:language])]
-    (if loading?
-      [spinner/big]
-      (if (= extra-page :not-found)
-        (rf/dispatch [:set-active-page :not-found])
-        (let [content (get extra-page language)]
-          [:div.container
-           [:div.row
-            [:div.col-md-12
-             [document-title title]
-             [:div.document
-              (if content
-                {:dangerouslySetInnerHTML {:__html
-                                           (md/md->html content)}}
-                (text :t/missing))]]]])))))
+    [:div
+     [document-title title]
+     (if loading?
+       [spinner/big]
+       (if (= extra-page :not-found)
+         (rf/dispatch [:set-active-page :not-found])
+         (let [content (get extra-page language)]
+           [:div.document
+            (if content
+              {:dangerouslySetInnerHTML {:__html
+                                         (md/md->html content)}}
+              (text :t/missing))])))]))
