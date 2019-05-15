@@ -1,4 +1,4 @@
-## REMS-demo
+# REMS-demo
 
 Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Kullekin tietoaineistolle on luotu hakulomake, jonka hakija täyttää ja lähettää, sekä työnkulku, joka määrittelee, minkälaisen käsittelypolun lähetetty lomake kulkee.
 
@@ -10,7 +10,7 @@ Demo-ympäristöön voi kirjautua eri rooleissa alla olevilla käyttäjätunnuks
 
 REMS-tuki: rems@csc.fi
 
-### Testitilit ja roolit
+## Testitilit ja roolit
 
 Hakan testi-IdP:ltä löytyy seuraavia testitunnuksia:
 
@@ -44,7 +44,7 @@ Käyttäjätunnus: RDowner<br/>
 Salasana: RDowner<br/>
 Kuvaus: Aineiston omistaja voi lisätä uusia tietoaineistoja ja muuttaa niiden ominaisuuksia, kuten hakulomaketta, hyväksymisprosessia ja hyväksyjiä.
 
-### Aineistot
+## Aineistot
 
 **ELFA-korpus, suora hyväksyntä**<br/>
 Kuvaus: Tässä aineistossa on minimi työkulku. Käyttäjä sitoutuu lisenssin ehtoihin ja saa käyttöluvan.
@@ -58,12 +58,12 @@ Kuvaus: Tässä aineistossa on yksinkertainen työkulku. Katselmoija (RDreview) 
 **ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä**<br/>
 Kuvaus: Tässä aineistossa on kaksivaiheinen hyväksyntä. Hakemuksen hyväksyy ensin käyttäjä RDapprover1 ja sitten käyttäjä RDapprover2.
 
-### Käyttöehdot
+## Käyttöehdot
 
 Sitoudut siihen, että et tee REMS-demossa mitään sellaista joka loukkaa lakeja tai asetuksia tai kolmannen osapuolen oikeuksia (kuten tekijänoikeuksia) tai on säädytöntä, uhkaavaa, väkivaltaista, herjaavaa, vihamielistä, häiritsevää tai muulla tavalla paheksuttavaa.
 
 Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa.
 
-### Rahoittaja
+## Rahoittaja
 
 CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio).
