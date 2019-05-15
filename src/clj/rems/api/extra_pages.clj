@@ -8,7 +8,7 @@
             [schema.core :as s])
   (:import (java.io FileNotFoundException)))
 
-(s/defschema ExtraPage
+(s/defschema ExtraPageResponse
   {s/Keyword s/Str})
 
 (defn- get-extra-page [page-id]
@@ -33,5 +33,5 @@
     (GET "/:page-id" []
       :summary "Return all translations for a given extra page"
       :path-params [page-id :- (describe s/Str "page-id")]
-      :return ExtraPage
+      :return ExtraPageResponse
       (ok (get-extra-page page-id)))))
