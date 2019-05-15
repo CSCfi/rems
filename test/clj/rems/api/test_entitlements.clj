@@ -28,8 +28,21 @@
         (is (= 2 (count data)))))
 
     (testing "just for alice"
+    (testing "just for alice as a developer"
       (let [data (-> (request :get "/api/entitlements?user=alice")
                      (authenticate api-key "developer")
+                     handler
+                     read-body)]
+        (is (= 1 (count data)))
+        ;; sanity check the data
+        (is (= {:resource "urn:nbn:fi:lb-201403262"
+                :application-id 12
+                :mail "alice@example.com"}
+               (-> data first (dissoc :start))))))
+
+    (testing "just for alice as an owner"
+      (let [data (-> (request :get "/api/entitlements?user=alice")
+                     (authenticate api-key "owner")
                      handler
                      read-body)]
         (is (= 1 (count data)))
