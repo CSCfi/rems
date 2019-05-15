@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [readonly-checkbox]]
+            [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
@@ -124,7 +124,7 @@
 (defn catalogue-items-page []
   (into [:div
          [administration-navigator-container]
-         [:h2 (text :t.administration/catalogue-items)]]
+         [document-title (text :t.administration/catalogue-items)]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]

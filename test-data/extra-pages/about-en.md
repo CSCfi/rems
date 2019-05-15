@@ -1,5 +1,3 @@
-## REMS-Demo
-
 This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. For each dataset, there is an application form that the applicant fills in and submits and a workflow that determines how and to whom the submitted application is circulated for approval.
 
 You can use the demo usernames and passwords below to log in with various roles. The demo environment does not control access to any real datasets and does not send any email notifications to the applicants, reviewers or approvers of the applications.
@@ -10,7 +8,7 @@ You can use the demo usernames and passwords below to log in with various roles.
 
 REMS support: rems@csc.fi
 
-### User Accounts and Roles
+## User Accounts and Roles
 
 Following test user accounts (roles) can be used when signing in using Haka test IdP:
 
@@ -44,7 +42,7 @@ Username: RDowner<br/>
 Password: RDowner<br/>
 Description: A dataset owner can add new datasets and change properties of a dataset, such as its application form, approval workflow and approvers.
 
-### Datasets
+## Datasets
 
 **ELFA Corpus, direct approval**<br/>
 Description: This dataset has a minimal workflow. The user just commits to licence terms and receives an entitlement.
@@ -58,12 +56,12 @@ Description: This dataset has a simple workflow with a reviewer (RDreview), who 
 **ELFA Corpus, two rounds of approval by different approvers**<br/>
 Description: This dataset has two approval phases. The application must be first approved by RDapprover1 and then by RDapprover2.
 
-### Terms of Use
+## Terms of Use
 
 You agree not to do anything that infringes any laws or regulations or the rights of another (such as copyright) or is obscene, threatening, violent, abusive, hateful, harassing or otherwise objectionable.
 
 You agree not to introduce to REMS any information that relates to an identified or identifiable natural person.
 
-### Acknowledgements
+## Acknowledgements
 
 CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI.

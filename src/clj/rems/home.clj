@@ -1,12 +1,6 @@
 (ns rems.home
-  (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clojure.test :refer [deftest is]]
+  (:require [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes routes]]
-            [markdown.core :as md]
-            [rems.auth.util :as auth-util]
-            [rems.common-util :refer [index-by]]
-            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]

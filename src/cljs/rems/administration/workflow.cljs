@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user]]
+            [rems.atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -144,7 +144,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h2 (text :t.administration/workflow)]
+       [document-title (text :t.administration/workflow)]
        (if @loading?
          [spinner/big]
          [workflow-view @workflow @language])])))

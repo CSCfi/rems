@@ -1,6 +1,7 @@
 (ns rems.applications
   (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
+            [rems.atoms :refer [document-title]]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-state localize-time text]]
@@ -106,7 +107,7 @@
         identity @(rf/subscribe [:identity])
         loading? @(rf/subscribe [::loading-my-applications?])]
     [:div
-     [:h1 (text :t.applications/applications)]
+     [document-title (text :t.applications/applications)]
      (when (roles/show-all-applications? (:roles identity))
        [:h2 (text :t.applications/my-applications)])
      [application-list apps loading?]

@@ -46,7 +46,7 @@
 
 (defn login-component []
   [:div.jumbotron
-   [:h2 (text :t.ldap/title)]
+   [:h1 (text :t.ldap/title)]
    [:form
     {:action "/ldap/login" :method "post"}
     [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]
@@ -62,7 +62,6 @@
 
 (defn- login-page []
   (layout/render
-   "login"
    (login-component)))
 
 (defn- login-failed []
@@ -71,15 +70,15 @@
 
 (defroutes routes
   (GET "/ldap/logout" req
-       (let [session (get req :session)]
-         (assoc (redirect "/#/redirect") :session (dissoc session :identity))))
+    (let [session (get req :session)]
+      (assoc (redirect "/#/redirect") :session (dissoc session :identity))))
   (GET "/ldap/login" [] (login-page))
   (POST "/ldap/login" req
-        (let [session (get req :session)
-              username (getx-in req [:form-params "username"])
-              password (getx-in req [:form-params "password"])
-              user (get-ldap-user username password)]
-          (if user
-            (assoc (redirect "/")
-                   :session (assoc session :identity (convert-ldap-user user)))
-            (login-failed)))))
+    (let [session (get req :session)
+          username (getx-in req [:form-params "username"])
+          password (getx-in req [:form-params "password"])
+          user (get-ldap-user username password)]
+      (if user
+        (assoc (redirect "/")
+               :session (assoc session :identity (convert-ldap-user user)))
+        (login-failed)))))

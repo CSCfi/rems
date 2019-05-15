@@ -1,5 +1,6 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
+            [rems.atoms :refer [document-title]]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch!]])
@@ -89,7 +90,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h2 (text :t.navigation/administration)]
+       [document-title (text :t.navigation/administration)]
        (if @loading?
          [spinner/big]
          [:div.spaced-sections

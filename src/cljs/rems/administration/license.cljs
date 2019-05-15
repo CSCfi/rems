@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [attachment-link external-link readonly-checkbox]]
+            [rems.atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
@@ -77,7 +77,7 @@
                            (str (text :t.create-license/license-attachment)
                                 " "
                                 (str/upper-case (name langcode)))
-                           [attachment-link (:attachment-id localization)(:title localization)]
+                           [attachment-link (:attachment-id localization) (:title localization)]
                            {:no-box? true}])))
                     [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]
@@ -91,7 +91,7 @@
     (fn []
       [:div
        [administration-navigator-container]
-       [:h2 (text :t.administration/license)]
+       [document-title (text :t.administration/license)]
        (if @loading?
          [spinner/big]
          [license-view @license @language])])))

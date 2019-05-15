@@ -17,7 +17,7 @@
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable?]]
-            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea]]
+            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
@@ -581,7 +581,7 @@
                               :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
-     [:h2 (text :t.applications/application)]
+     [document-title (text :t.applications/application)]
      (into [:div] messages)
      [application-header application]
      [:div.mt-3 [applicants-info application]]
@@ -599,7 +599,7 @@
         loading? (not application)]
     (if loading?
       [:div
-       [:h2 (text :t.applications/application)]
+       [document-title (text :t.applications/application)]
        [spinner/big]]
       [render-application application edit-application userid])))
 

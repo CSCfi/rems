@@ -1,17 +1,16 @@
 (ns rems.administration.create-resource
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
+            [rems.atoms :refer [document-title]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [rems.status-modal :as status-modal]))
-
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -127,7 +126,7 @@
         form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
-     [:h2 (text :t.administration/create-resource)]
+     [document-title (text :t.administration/create-resource)]
      [collapsible/component
       {:id "create-resource"
        :title (text :t.administration/create-resource)

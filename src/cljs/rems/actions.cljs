@@ -1,13 +1,12 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [clojure.string :as str]
-            [medley.core :refer [distinct-by]]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
+            [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-state localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -153,16 +152,18 @@
 (defn actions-page []
   (let [actions @(rf/subscribe [::actions])
         handled-actions @(rf/subscribe [::handled-actions])]
-    (if @(rf/subscribe [::loading-actions?])
-      [spinner/big]
-      [:div.spaced-sections
-       [collapsible/component
-        {:id "open-approvals"
-         :open? true
-         :title (text :t.actions/open-approvals)
-         :collapse [open-applications actions]}]
-       [collapsible/component
-        {:id "handled-approvals"
-         :on-open #(rf/dispatch [::fetch-handled-actions])
-         :title (text :t.actions/handled-approvals)
-         :collapse [handled-applications handled-actions nil @(rf/subscribe [::loading-handled-actions?])]}]])))
+    [:div
+     [document-title (text :t.navigation/actions)]
+     (if @(rf/subscribe [::loading-actions?])
+       [spinner/big]
+       [:div.spaced-sections
+        [collapsible/component
+         {:id "open-approvals"
+          :open? true
+          :title (text :t.actions/open-approvals)
+          :collapse [open-applications actions]}]
+        [collapsible/component
+         {:id "handled-approvals"
+          :on-open #(rf/dispatch [::fetch-handled-actions])
+          :title (text :t.actions/handled-approvals)
+          :collapse [handled-applications handled-actions nil @(rf/subscribe [::loading-handled-actions?])]}]])]))

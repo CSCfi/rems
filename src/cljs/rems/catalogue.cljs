@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.application-util :refer [form-fields-editable?]]
-            [rems.atoms :refer [external-link]]
+            [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
             [rems.catalogue-util :refer [get-catalogue-item-title urn-catalogue-item-link urn-catalogue-item?]]
             [rems.guide-functions]
@@ -117,7 +117,7 @@
 (defn draft-application-list [drafts]
   (when (seq drafts)
     [:div.drafts
-     [:h4 (text :t.catalogue/continue-existing-application)]
+     [:h2 (text :t.catalogue/continue-existing-application)]
      [application-list/component
       {:visible-columns [:resource :last-activity :view]
        :items drafts}]]))
@@ -129,12 +129,12 @@
         drafts @(rf/subscribe [::draft-applications])
         loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
-     [:h2 (text :t.catalogue/catalogue)]
+     [document-title (text :t.catalogue/catalogue)]
      (if (or loading-catalogue? loading-drafts?)
        [spinner/big]
        [:div
         [draft-application-list drafts]
-        [:h4 (text :t.catalogue/apply-resources)]
+        [:h2 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container language]
         [catalogue-list
          {:items catalogue

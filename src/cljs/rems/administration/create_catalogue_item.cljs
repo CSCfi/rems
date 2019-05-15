@@ -3,13 +3,13 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
+            [rems.atoms :refer [document-title]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post!]]
             [rems.status-modal :as status-modal]
-            [reagent.core :as r]))
+            [rems.text :refer [text]]
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- update-loading [db]
   (let [progress (::loading-progress db)]
@@ -185,7 +185,7 @@
         form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
-     [:h2 (text :t.administration/create-catalogue-item)]
+     [document-title (text :t.administration/create-catalogue-item)]
      [collapsible/component
       {:id "create-catalogue-item"
        :title (text :t.administration/create-catalogue-item)

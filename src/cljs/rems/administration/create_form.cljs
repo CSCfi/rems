@@ -5,14 +5,12 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.administration.items :as items]
-            [rems.atoms :refer [enrich-user]]
+            [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
-            [rems.config :refer [dev-environment?]]
             [rems.fields :as fields]
-            [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! post! normalize-option-key parse-int]]
             [rems.status-modal :as status-modal]
-            [reagent.core :as r]))
+            [rems.text :refer [text text-format]]
+            [rems.util :refer [dispatch! post! normalize-option-key parse-int]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -307,7 +305,7 @@
   (let [form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
-     [:h2 (text :t.administration/create-form)]
+     [document-title (text :t.administration/create-form)]
      [:div.container-fluid.editor-content
       [:div.row
        [:div.col-lg

@@ -26,6 +26,7 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
+            [rems.atoms :refer [document-title]]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
@@ -178,17 +179,17 @@
 
 (defn unauthorized-page []
   [:div
-   [:h2 (text :t.unauthorized-page/unauthorized)]
+   [document-title (text :t.unauthorized-page/unauthorized)]
    [:p (text :t.unauthorized-page/you-are-unauthorized)]])
 
 (defn forbidden-page []
   [:div
-   [:h2 (text :t.forbidden-page/forbidden)]
+   [document-title (text :t.forbidden-page/forbidden)]
    [:p (text :t.forbidden-page/you-are-forbidden)]])
 
 (defn not-found-page []
   [:div
-   [:h2 (text :t.not-found-page/not-found)]
+   [document-title (text :t.not-found-page/not-found)]
    [:p (text :t.not-found-page/page-was-not-found)]])
 
 (def pages

@@ -58,7 +58,9 @@ a:visited { color: #fff; }
 (defn- fake-login-screen [{session :session :as req}]
   (if-let [username (-> req :params :username)]
     (fake-login session username)
-    (-> (html5 [:head [:style fake-login-styles]]
+    (-> (html5 [:head
+                [:title "Development Login"]
+                [:style fake-login-styles]]
                [:body
                 [:div.login
                  [:h1 "Development Login"]

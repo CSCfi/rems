@@ -451,7 +451,7 @@
      :border-style "solid"
      :border-width (u/px 1)
      :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
-    [:h2 {:margin-bottom (u/px 20)}]]
+    [:h1 {:margin-bottom (u/px 20)}]]
    [:.login-btn {:max-height (u/px 70)
                  :margin-bottom (u/px 20)}
     [:&:hover {:filter "brightness(80%)"}]]

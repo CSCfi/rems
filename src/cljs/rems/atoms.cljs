@@ -1,6 +1,7 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
+            [reagent.core :as reagent]
             [rems.guide-functions]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -77,6 +78,24 @@
 
 (defn enrich-user [user]
   (assoc user :display (str (:name user) " (" (:email user) ")")))
+
+(defn set-document-title! [title]
+  (set! (.-title js/document)
+        (str title
+             (when-not (str/blank? title)
+               " - ")
+             (text :t.header/title))))
+
+(defn document-title [_title]
+  (let [on-update (fn [this]
+                    (let [[_ title] (reagent/argv this)]
+                      (set-document-title! title)))]
+    (reagent/create-class
+     {:component-did-mount on-update
+      :component-did-update on-update
+      :display-name "document-title"
+      :reagent-render (fn [title]
+                        [:h1 title])})))
 
 (defn guide []
   [:div

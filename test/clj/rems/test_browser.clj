@@ -89,7 +89,7 @@
 
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
-  (wait-visible *driver* {:tag :h2, :fn/text "Catalogue"})
+  (wait-visible *driver* {:tag :h1, :fn/text "Catalogue"})
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "catalogue-page.png")))
 
@@ -113,7 +113,7 @@
                               {:fn/text resource-name}
                               {:xpath "./ancestor::tr"}
                               {:css "button.apply-for-catalogue-items"}])
-  (wait-visible *driver* {:tag :h2, :fn/text "Application"})
+  (wait-visible *driver* {:tag :h1, :fn/text "Application"})
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "application-page.png")))
 
