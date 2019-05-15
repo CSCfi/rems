@@ -13,7 +13,9 @@
    (fetch (str "/api/extra-pages/" page-id)
           {:handler #(rf/dispatch [::fetch-extra-page-result %])
            :error-handler #(rf/dispatch [::fetch-extra-page-result :not-found])})
-   {:db (assoc db ::loading? true)}))
+   {:db (assoc db
+               ::loading? true
+               ::extra-page-id page-id)}))
 
 (rf/reg-event-db
  ::fetch-extra-page-result
@@ -23,6 +25,7 @@
        (dissoc ::loading?))))
 
 (rf/reg-sub ::extra-page (fn [db _] (::extra-page db)))
+(rf/reg-sub ::extra-page-id (fn [db _] (::extra-page-id db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 ;;;; Entry point
