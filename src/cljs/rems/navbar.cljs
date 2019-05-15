@@ -24,7 +24,7 @@
      [:span.user-name (str (:commonName user) " /")]
      [atoms/link-to {:id "logout", :class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout)]]))
 
-(defn navbar-extra-pages [e page-id identity]
+(defn navbar-extra-pages [page-id]
   (let [config @(rf/subscribe [:rems.config/config])
         extra-pages (when config (config :extra-pages))
         language @(rf/subscribe [:language])]
@@ -38,20 +38,20 @@
 (defn navbar-items [e page-id identity]
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)]
-    [e [:div.navbar-nav.mr-auto
-        (when (roles/is-logged-in? roles)
-          [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)])
-        (when (roles/show-applications? roles)
-          [nav-link "#/applications" (text :t.navigation/applications)
-           (contains? #{:application :applications} page-id)])
-        (when (roles/show-reviews? roles)
-          [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
-        (when (roles/show-admin-pages? roles)
-          [nav-link "#/administration"
-           (text :t.navigation/administration)
-           (and page-id (namespace page-id) (str/starts-with? (namespace page-id) "rems.administration"))])
-        (when-not (:user identity) [nav-link "#/" (text :t.navigation/home) (= page-id :home)])
-        (navbar-extra-pages e page-id identity)]
+    [e (into [:div.navbar-nav.mr-auto
+              (when (roles/is-logged-in? roles)
+                [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)])
+              (when (roles/show-applications? roles)
+                [nav-link "#/applications" (text :t.navigation/applications)
+                 (contains? #{:application :applications} page-id)])
+              (when (roles/show-reviews? roles)
+                [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
+              (when (roles/show-admin-pages? roles)
+                [nav-link "#/administration" (text :t.navigation/administration)
+                 (and page-id (namespace page-id) (str/starts-with? (namespace page-id) "rems.administration"))])
+              (when-not (:user identity)
+                [nav-link "#/" (text :t.navigation/home) (= page-id :home)])]
+             (navbar-extra-pages page-id))
      [language-switcher]]))
 
 (defn navbar-normal [page-id identity]
