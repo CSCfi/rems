@@ -68,9 +68,14 @@
 (defn navbar-small [page-id user]
   [navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-id user])
 
+(defn skip-navigation []
+  [:a {:href "#main-content" :class "skip-navigation"}
+   (text :t.navigation/skip-navigation)])
+
 (defn navigation-widget [page-id]
   (let [identity @(rf/subscribe [:identity])]
     [:div.fixed-top
+     [skip-navigation]
      [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
      [:div.container
       [navbar-normal page-id identity]
