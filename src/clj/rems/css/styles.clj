@@ -300,7 +300,12 @@
                     :flex-wrap :none
                     :min-height (u/px 300)
                     :max-width content-width
-                    :flex-grow 1}]
+                    :flex-grow 1
+                    ;; Height of navigation + logo, to avoid page content going under
+                    ;; the navigation bar when the main content is focused.
+                    ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
+                    :padding-top (u/px 212)
+                    :margin-top (u/px -212)}]
    [:.main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap}]
