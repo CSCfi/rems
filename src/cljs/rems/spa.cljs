@@ -114,15 +114,21 @@
  (fn [db [_ theme]]
    (assoc db :theme theme)))
 
+(declare render-empty-page mount-components)
 (reg-event-fx
  :set-current-language
  (fn [{:keys [db]} [_ language]]
+   ;; XXX: Changing the language on the catalogue page is 10x slower
+   ;;      than rendering the page from scratch, so let's render it
+   ;;      from scratch. Consider improving catalogue page's performance.
+   (render-empty-page)
    {:db (assoc db :language language)
     :update-document-language (name language)}))
 
 (reg-fx
  :update-document-language
  (fn [language]
+   (mount-components)
    (let [localized-css (str "/css/" (name language) "/screen.css")]
      (set! (.. js/document -documentElement -lang) language)
      (set! (.. js/document -title) (text :t.header/title))
@@ -412,6 +418,9 @@
 (defn mount-components []
   (rf/clear-subscription-cache!)
   (r/render [page] (.getElementById js/document "app")))
+
+(defn render-empty-page []
+  (r/render [:div] (.getElementById js/document "app")))
 
 (defn init! []
   (rf/dispatch-sync [:initialize-db])
