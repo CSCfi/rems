@@ -295,7 +295,7 @@
     [:&:active
      :&:focus
      {:left (u/em 0)}]]
-   [:.main-content {:display :flex
+   [:#main-content {:display :flex
                     :flex-direction :column
                     :flex-wrap :none
                     :min-height (u/px 300)
@@ -306,7 +306,7 @@
                     ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
                     :padding-top (u/px 212)
                     :margin-top (u/px -212)}]
-   [:.main-content.page-create-form {:max-width :unset}]
+   [:#main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap}]
    ;; Bootstrap has inaccessible focus indicators in particular

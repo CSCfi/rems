@@ -263,7 +263,7 @@
       :display-name "main-content"
       :reagent-render (fn [page-id _grab-focus?]
                         (let [content (pages page-id)]
-                          [:main.container-fluid.main-content
+                          [:main.container-fluid
                            {:class (str "page-" (name page-id))
                             :id "main-content"}
                            [content]]))})))
