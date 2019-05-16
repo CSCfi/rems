@@ -18,9 +18,11 @@
           (for [language languages]
             (let [lang-str (str/upper-case (name language))]
               [:form.inline
-               #_(anti-forgery-field)
                [:button {:class (lang-link-classes current-language language) :type "button"
-                         :on-click #(rf/dispatch [:set-current-language language])} lang-str]])))))
+                         :on-click (fn []
+                                     (rf/dispatch [:set-current-language language])
+                                     (rf/dispatch [:rems.spa/user-triggered-navigation]))}
+                lang-str]])))))
 
 (defn guide []
   [:div
