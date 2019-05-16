@@ -269,7 +269,8 @@
                :applications "Hakemukset"
                :catalogue "Aineistoluettelo"
                :home "Etusivu"
-               :logout "Kirjaudu ulos"}
+               :logout "Kirjaudu ulos"
+               :skip-navigation "Siirry sivun pääsisältöön"}
   :not-found-page {:not-found "Sivua ei löytynyt"
                    :page-was-not-found "Tätä sivua ei löytynyt."}
   :phases {:apply "Hae"

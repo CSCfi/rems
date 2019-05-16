@@ -242,7 +242,8 @@
      [status-modal/status-modal]
      [logo]
      [:div.container-fluid.main-content
-      {:class (str "page-" (name page-id))}
+      {:class (str "page-" (name page-id))
+       :id "main-content"}
       [content]]
      [footer]]))
 
@@ -377,6 +378,11 @@
       (.removeItem js/sessionStorage "rems-redirect-url")
       (dispatch! url))
     (rf/dispatch [:landing-page-redirect!])))
+
+;; XXX: A workaround to prevent the skip navigation link (an anchor link with
+;;   href "#main-content") from triggering a page change: define a matching
+;;   route that does nothing.
+(secretary/defroute "/main-content" [])
 
 (secretary/defroute "*" []
   (rf/dispatch [:set-active-page :not-found]))

@@ -290,6 +290,11 @@
                  :border-bottom (util/get-theme-attribute :header-border "3px solid #ccc")
                  :box-shadow (util/get-theme-attribute :header-shadow :table-shadow)
                  :min-height (u/px 56)}]
+   [:.skip-navigation {:position :absolute
+                       :left (u/em -1000)}
+    [:&:active
+     :&:focus
+     {:left (u/em 0)}]]
    [:.main-content {:display :flex
                     :flex-direction :column
                     :flex-wrap :none

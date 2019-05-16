@@ -269,7 +269,8 @@
                :applications "Applications"
                :catalogue "Catalogue"
                :home "Home"
-               :logout "Sign out"}
+               :logout "Sign out"
+               :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "Page was not found."}
   :phases {:apply "Apply"
