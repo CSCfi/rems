@@ -276,7 +276,7 @@
            :display :flex
            :flex-direction :column
            :padding-top (u/px 56)}]
-   [:h1 :h2 {:font-weight 500}]
+   [:h1 :h2 {:font-weight 400}]
    [:h1 :h2 :h3 {:letter-spacing (u/rem 0.17)}]
    [:h4 :h5 :h6 {:letter-spacing (u/rem 0.12)}]
    [:#app {:min-height (u/percent 100)
@@ -539,7 +539,7 @@
 
    ;; workflow editor
    [:.workflow-round dashed-form-group
-    [:h2 {:font-weight 500
+    [:h2 {:font-weight 400
           :font-size (u/rem 1.4)}]]
    [:.next-workflow-arrow {:position "absolute"
                            :font-size (u/px 40)
@@ -605,7 +605,7 @@
                         :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
     [:.card-header {:border-bottom "none"
                     :border-radius (u/rem 0.4)
-                    :font-weight 500
+                    :font-weight 400
                     :font-size (u/rem 1.5)
                     :line-height 1.1
                     :font-family (util/get-theme-attribute :font-family "'Lato', sans-serif")
