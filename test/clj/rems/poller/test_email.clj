@@ -18,9 +18,31 @@
 (defn sort-emails [emails]
   (sort-by #(or (:to %) (:to-user %)) emails))
 
+(def ^:private get-catalogue-item
+  {10 {:localizations {:en {:langcode :en
+                            :title "en title 11"}
+                       :fi {:langcode :fi
+                            :title "fi title 11"}}}
+   20 {:localizations {:en {:langcode :en
+                            :title "en title 21"}
+                       :fi {:langcode :fi
+                            :title "fi title 21"}}}})
+
+(def ^:private get-workflow
+  {5 {:workflow {:handlers ["handler" "assistant"]}}})
+
+(defn ^:private get-nothing [& _]
+  nil)
+
 (defn events-to-emails [events]
   (let [application (-> (reduce model/application-view nil events)
-                        (model/enrich-workflow-handlers {5 {:workflow {:handlers ["handler" "assistant"]}}}))]
+                        (model/enrich-with-injections {:get-workflow get-workflow
+                                                       :get-catalogue-item get-catalogue-item
+                                                       :get-form get-nothing
+                                                       :get-license get-nothing
+                                                       :get-user get-nothing
+                                                       :get-users-with-role get-nothing
+                                                       :get-attachments-for-application get-nothing}))]
     (text/with-language :en
       (fn [] (mapv #(sort-emails (#'rems.poller.email/event-to-emails-impl % application)) events)))))
 
@@ -29,6 +51,10 @@
                       :application/external-id "2001/3"
                       :event/type :application.event/created
                       :event/actor "applicant"
+                      :application/resources [{:catalogue-item/id 10
+                                               :resource/ext-id "urn:11"}
+                                              {:catalogue-item/id 20
+                                               :resource/ext-id "urn:21"}]
                       :workflow/id 5
                       :workflow/type :workflow/dynamic}
                      {:application/id 7
@@ -76,10 +102,10 @@
       (is (= [[]
               [{:to-user "assistant",
                 :subject "A new application has been submitted",
-                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
+                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://localhost:3001/#/application/7"}
                {:to-user "handler",
                 :subject "A new application has been submitted",
-                :body "Dear handler,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
+                :body "Dear handler,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://localhost:3001/#/application/7"}]
               [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
                 :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nParticipate with this link: http://localhost:3001/accept-invitation?token=abc"}]
@@ -134,10 +160,10 @@
       (is (= [[]
               [{:to-user "assistant",
                 :subject "A new application has been submitted",
-                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}
+                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://localhost:3001/#/application/7"}
                {:to-user "handler",
                 :subject "A new application has been submitted",
-                :body "Dear handler,\nUser applicant has submitted a new application 2001/3.\nView the application: http://localhost:3001/#/application/7"}]
+                :body "Dear handler,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://localhost:3001/#/application/7"}]
               [{:subject "Your application has been rejected",
                 :body "Dear applicant,\nYour application 2001/3 has been rejected.\nView your application: http://localhost:3001/#/application/7",
                 :to-user "applicant"}]]
@@ -147,8 +173,8 @@
         (is (= [[]
                 [{:to-user "assistant"
                   :subject "A new application has been submitted"
-                  :body "Dear assistant,\nUser applicant has submitted a new application 7.\nView the application: http://localhost:3001/#/application/7"}
+                  :body "Dear assistant,\nUser applicant has submitted a new application 7 for the resource(s) en title 11, en title 21.\nView the application: http://localhost:3001/#/application/7"}
                  {:to-user "handler"
                   :subject "A new application has been submitted"
-                  :body "Dear handler,\nUser applicant has submitted a new application 7.\nView the application: http://localhost:3001/#/application/7"}]]
+                  :body "Dear handler,\nUser applicant has submitted a new application 7 for the resource(s) en title 11, en title 21.\nView the application: http://localhost:3001/#/application/7"}]]
                (events-to-emails base-events)))))))

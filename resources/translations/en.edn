@@ -199,7 +199,7 @@
           :application-closed {:subject "Your application has been closed"
                                :message "Dear %1,\nYour application %2 has been closed.\nView your application: %3"}
           :application-submitted {:subject "A new application has been submitted"
-                                  :message "Dear %1,\nUser %2 has submitted a new application %3.\nView the application: %4"}
+                                  :message "Dear %1,\nUser %2 has submitted a new application %3 for the resource(s) %4.\nView the application: %5"}
           :comment-requested {:subject "Comment request"
                               :message "Dear %1,\nUser %2 has requested your comment on application %3.\nComment here: %4"}
           :commented {:subject "New comment notification"
