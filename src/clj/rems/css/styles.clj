@@ -349,13 +349,12 @@
                    :border-color (util/get-theme-attribute :secondary-button-bgcolor)
                    :color (util/get-theme-attribute :secondary-button-color)
                    :outline-color :transparent}))]
-   [:.btn-primary.disabled :.btn-primary:disabled
-    :.btn-secondary.disabled :.btn-secondary:disabled
+   [:.btn-primary.disabled :.btn-primary:disabled ; same color as bootstrap's default for .btn-secondary.disabled
     {:color "#fff"
-     :background-color "#aaa"
-     :border-color "#aaa"}]
+     :background-color "#6c757d"
+     :border-color "#6c757d"}]
    [:.button-min-width {:min-width (u/rem 5)}]
-   [:.icon-link {:color "#6c757d" ; same color as bootstrap's default for .btn-secondary
+   [:.icon-link {:color "#6c757d" ; same color as bootstrap's default for .btn-secondary.disabled
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
    [:.modal--title [:.link
