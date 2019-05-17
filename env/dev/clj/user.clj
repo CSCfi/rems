@@ -1,21 +1,12 @@
 (ns user
   (:require [clojure.pprint :refer [pprint]]
-            [clojure.tools.namespace.repl :as repl]
-            [eftest.runner :as ef]))
+            [clojure.tools.namespace.repl :as repl]))
 
 (defn reload []
   ((resolve 'rems.standalone/stop-app))
   (repl/refresh-all)
   ((resolve 'rems.standalone/start-app))
   ((resolve 'rems.validate/validate)))
-
-(defn run-tests [& namespaces]
-  (repl/refresh)
-  (ef/run-tests (ef/find-tests namespaces) {:multithread? false}))
-
-(defn run-all-tests []
-  (repl/refresh)
-  (ef/run-tests (ef/find-tests "test/clj") {:multithread? false}))
 
 (defn pptransit []
   ;; XXX: The user namespace is loaded before AOT happens, so our custom exceptions won't exist yet then,

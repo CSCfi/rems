@@ -11,7 +11,7 @@ To work on an issue do the following:
 ```
 git clone git@github.com:your-username/rems.git
 ```
-- Make sure that tests pass by running `lein eftest :all`
+- Make sure that tests pass by running `lein alltests`
 - Submit a pull request against the main repository
 
 ## Accepting changes

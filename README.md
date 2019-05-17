@@ -51,29 +51,22 @@ Point your browser to <http://localhost:3000>
 To run unit tests:
 
 ```
-lein eftest
+lein kaocha unit
 ```
 
 To run tests that need a database:
 
 ```
-lein eftest :all
+lein kaocha integration
 ```
 
-To run browser tests (requires chromedriver in $PATH, the alias also builds cljs):
+To run build the JS bundle and run browser tests (requires chromedriver in $PATH, the alias also builds cljs):
 
 ```
 lein browsertests
 ```
 
 If browser tests fail, screenshots and DOM are written in `browsertest-errors`.
-
-Start REPL and run tests in there:
-
-```
-lein with-profile test repl
-(user/run-all-tests)
-```
 
 #### Clojurescript tests
 

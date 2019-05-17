@@ -95,14 +95,6 @@
             :web-xml "web.xml"
             :name "rems.war"}
 
-  ;; flag tests that need a db with ^:integration
-  :test-selectors {:default #(not (or (:integration %) (:browser %)))
-                   :browser :browser
-                   :integration #(not (:browser %))
-                   :all (constantly true)
-                   :focused :focused}
-  :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
-
   ;; cljs testing
   :npm {:devDependencies [[karma "3.1.1"]
                           [karma-cljs-test "0.1.0"]
@@ -111,10 +103,11 @@
         :paths {:karma "node_modules/karma/bin/karma"}
         :alias {:default [:chrome-headless]}}
 
-  :aliases {"browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
-            "cljtests" ["do" ["cljsbuild" "once"] ["eftest" ":all"]]
-            "alltests" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]
-            "test-ancient" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]} ; for lein ancient to work and run all tests
+  :aliases {"kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
+            "browsertests" ["do" ["cljsbuild" "once"] ["kaocha" "browser"]]
+            "cljtests" ["do" ["cljsbuild" "once"] ["kaocha"]]
+            "alltests" ["do" ["cljsbuild" "once"] ["kaocha"] ["doo" "once"]]
+            "test-ancient" ["do" ["cljsbuild" "once"] ["kaocha"] ["doo" "once"]]} ; for lein ancient to work and run all tests
 
   :profiles
   {:uberjar {:omit-source true
@@ -147,7 +140,7 @@
                                 [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
                                 [criterium "0.4.4"]
                                 [doo "0.1.11"]
-                                [eftest "0.5.4"]
+                                [lambdaisland/kaocha "0.0-418"]
                                 [etaoin "0.3.1"]
                                 [figwheel-sidecar "0.5.18" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
                                 [org.clojure/core.rrb-vector "0.0.14"] ;; the version doo pulls in is broken on fresh cljs
@@ -155,10 +148,8 @@
                                 [ring/ring-mock "0.3.2" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.5"]]
 
-                 :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
-                           [lein-ancient "0.6.15"]
+                 :plugins [[lein-ancient "0.6.15"]
                            [lein-doo "0.1.11"]
-                           [lein-eftest "0.5.4"]
                            [lein-figwheel "0.5.18"]]
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
