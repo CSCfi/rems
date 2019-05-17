@@ -185,7 +185,10 @@
                   :font-weight "bold"}]
    [:.cart-item {:padding-right (u/em 1)}
     [:>span {:display :inline-block :vertical-align :middle}]]
-   [:.text-highlight {:color (when (util/get-theme-attribute :color4) (c/lighten (util/get-theme-attribute :color4) 20))}]))
+   ;; TODO: Change naming of :color3? It is used as text color here,
+   ;;   which means that it should have a good contrast with light background.
+   ;;   This could be made explicit by changing the name accordingly.
+   [:.text-highlight {:color (util/get-theme-attribute :color3)}]))
 
 (def ^:private dashed-form-group {:position "relative"
                                   :border "2px dashed #ccc"
