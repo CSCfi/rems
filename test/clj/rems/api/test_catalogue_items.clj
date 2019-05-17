@@ -26,13 +26,20 @@
                                :wfid 1
                                :archived true})
                    handler
-                   read-body)]
-      (is (= 13 (:id data))))
-    (let [data (-> (request :get "/api/catalogue-items/7")
-                   (authenticate api-key user-id)
-                   handler
-                   read-body)]
-      (is (= 7 (:id data))))
+                   read-body)
+          id (:id data)]
+      (is (:success data))
+      (is (number? id))
+      (let [data (-> (request :get (str "/api/catalogue-items/" id))
+                     (authenticate api-key user-id)
+                     handler
+                     read-body)]
+        (is (= {:id id
+                :title "test-item-title"
+                :workflow-name "minimal"
+                :form-name "Basic form"
+                :resource-name "urn:nbn:fi:lb-201403262"}
+               (select-keys data [:id :title :workflow-name :form-name :resource-name])))))
     (testing "not found"
       (let [response (-> (request :get "/api/catalogue-items/777777777")
                          (authenticate api-key user-id)

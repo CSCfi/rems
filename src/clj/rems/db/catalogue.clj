@@ -33,7 +33,7 @@
         (map db/assoc-expired))))
 
 (defn get-localized-catalogue-item [id]
-  (first (get-localized-catalogue-items {:ids [id] :archived true})))
+  (first (get-localized-catalogue-items {:ids [id] :archived true :expand-names? true})))
 
 (defn create-catalogue-item! [command]
   (let [id (:id (db/create-catalogue-item! (select-keys command [:title :form :resid :wfid :enabled :archived])))]
