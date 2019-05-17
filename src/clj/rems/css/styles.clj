@@ -303,7 +303,13 @@
                     :flex-grow 1}]
    [:.main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
-   [:.btn {:white-space :nowrap}]
+   [:.btn {:white-space :nowrap
+           ;; Default font-weight to 700 so the text is considered
+           ;; 'large text' and thus requires smaller contrast ratio for
+           ;; accessibility.
+           :font-weight
+           (util/get-theme-attribute :button-font-weight 700)
+           :font-size (u/px 18)}]
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
    [:a:focus :button:focus :.btn.focus :.btn:focus
@@ -404,7 +410,8 @@
                   :background-color (util/get-theme-attribute :alert-dark-bgcolor)
                   :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
    [:.navbar
-    {:max-width content-width}
+    {:max-width content-width
+     :font-size (u/px 18)}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
    [:.navbar-top-bar {:width (u/percent 100)
@@ -415,10 +422,16 @@
                        :background-color (util/get-theme-attribute :color4)}]
    [:.navbar-top-right {:flex 1
                         :background-color (util/get-theme-attribute :color2)}]
+   [:.navbar-text {:font-size (u/px 16)}]
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
     {:color (util/get-theme-attribute :nav-color :link-color :color3)
+     ;; Default font-weight to 700 so the text is considered
+     ;; 'large text' and thus requires smaller contrast ratio for
+     ;; accessibility.
+     :font-weight
+     (util/get-theme-attribute :link-font-weight 700)
      :border 0} ; for button links
     [:&.active
      {:color (util/get-theme-attribute :nav-active-color :color4)}]
@@ -439,7 +452,8 @@
                                  :background-position [[:center :center]]
                                  :background-origin (util/get-theme-attribute :logo-content-origin)
                                  :padding-left (u/px 20)
-                                 :padding-right (u/px 20)}]
+                                 :padding-right (u/px 20)
+                                 :padding-top (u/px 8)}]
    [:footer {:width "100%"
              :height (u/px 53.6)
              :color (util/get-theme-attribute :footer-color :table-heading-color "#fff")

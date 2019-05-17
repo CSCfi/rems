@@ -55,4 +55,6 @@
  :table-shadow "10px -12px 21px -14px rgba(0,0,0,0.75)"
  :link-color "#025b96"
  :footer-color "#595959"
- :footer-bgcolor "#dfe1e3"}
+ :footer-bgcolor "#dfe1e3"
+ :button-font-weight 400
+ :link-font-weight 400}
