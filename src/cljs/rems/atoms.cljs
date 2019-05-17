@@ -1,6 +1,7 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
+            [re-frame.core :as rf]
             [reagent.core :as reagent]
             [rems.guide-functions]
             [rems.text :refer [text]])
@@ -15,7 +16,9 @@
        :aria-label (text :t.link/download-file)}])
 
 (defn link-to [opts uri title]
-  [:a (merge opts {:href uri}) title])
+  [:a (merge opts {:href uri
+                   :on-click (fn [] (rf/dispatch [:rems.spa/user-triggered-navigation]))})
+   title])
 
 (defn image [opts src]
   [:img (merge opts {:src src})])

@@ -31,8 +31,8 @@
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
             [rems.config :as config]
-            [rems.guide-page :refer [guide-page]]
             [rems.extra-pages :refer [extra-pages]]
+            [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
@@ -125,7 +125,6 @@
  (fn [language]
    (let [localized-css (str "/css/" (name language) "/screen.css")]
      (set! (.. js/document -documentElement -lang) language)
-     (set! (.. js/document -title) (text :t.header/title))
      ;; Figwheel replaces the linked stylesheet
      ;; so we need to search dynamically
      (doseq [element (array-seq (.getElementsByTagName js/document "link"))]
@@ -161,6 +160,21 @@
        {})
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
+
+(rf/reg-event-db
+ ::user-triggered-navigation
+ (fn [db [_]]
+   (assoc db ::grab-focus? true)))
+
+(rf/reg-event-db
+ ::focus-grabbed
+ (fn [db [_]]
+   (assoc db ::grab-focus? false)))
+
+(rf/reg-sub
+ ::grab-focus?
+ (fn [db _]
+   (::grab-focus? db)))
 
 (defn home-page []
   (if @(rf/subscribe [:user])
@@ -234,17 +248,33 @@
 (defn logo []
   [:div.logo [:div.container.img]])
 
+(defn main-content [_page-id _grab-focus?]
+  (let [on-update (fn [this]
+                    (let [[_ _page-id grab-focus?] (r/argv this)]
+                      (when grab-focus?
+                        (when-let [element (.querySelector js/document "#main-content")]
+                          (.setAttribute element "tabindex" "-1")
+                          (.focus element)
+                          (rf/dispatch [::focus-grabbed])))))]
+    (r/create-class
+     {:component-did-mount on-update
+      :component-did-update on-update
+      :display-name "main-content"
+      :reagent-render (fn [page-id _grab-focus?]
+                        (let [content (pages page-id)]
+                          [:main.container-fluid
+                           {:class (str "page-" (name page-id))
+                            :id "main-content"}
+                           [content]]))})))
+
 (defn page []
   (let [page-id @(rf/subscribe [:page])
-        content (pages page-id)]
+        grab-focus? @(rf/subscribe [::grab-focus?])]
     [:div
      [nav/navigation-widget page-id]
      [status-modal/status-modal]
      [logo]
-     [:div.container-fluid.main-content
-      {:class (str "page-" (name page-id))
-       :id "main-content"}
-      [content]]
+     [main-content page-id grab-focus?]
      [footer]]))
 
 (reg-event-fx
