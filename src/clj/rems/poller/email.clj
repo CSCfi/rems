@@ -27,7 +27,9 @@
   (str (:public-url env) "accept-invitation?token=" token))
 
 (defn- application-id-for-email [application]
-  (or (:application/external-id application) (:application/id application)))
+  (case (util/getx env :application-id-column)
+    :external-id (:application/external-id application)
+    :id (:application/id application)))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))

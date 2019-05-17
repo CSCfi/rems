@@ -141,4 +141,14 @@
               [{:subject "Your application has been rejected",
                 :body "Dear applicant,\nYour application 2001/3 has been rejected.\nView your application: http://localhost:3001/#/application/7",
                 :to-user "applicant"}]]
-             (events-to-emails events))))))
+             (events-to-emails events))))
+    (testing "id field can be overrided"
+      (with-redefs [rems.config/env (assoc rems.config/env :application-id-column :id)]
+        (is (= [[]
+                [{:to-user "assistant"
+                  :subject "A new application has been submitted"
+                  :body "Dear assistant,\nUser applicant has submitted a new application 7.\nView the application: http://localhost:3001/#/application/7"}
+                 {:to-user "handler"
+                  :subject "A new application has been submitted"
+                  :body "Dear handler,\nUser applicant has submitted a new application 7.\nView the application: http://localhost:3001/#/application/7"}]]
+               (events-to-emails base-events)))))))
