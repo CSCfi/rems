@@ -32,7 +32,13 @@
                    (authenticate api-key user-id)
                    handler
                    read-body)]
-      (is (= 7 (:id data))))
+      (is (= {:id 7
+              :title "non-localized title"
+              :workflow-name "simple"
+              :form-name "Basic form"
+              :resource-name "Resource that has expired license"
+              :resid "Resource that has expired license"}
+             (select-keys data [:id :title :workflow-name :form-name :resource-name :resid]))))
     (testing "not found"
       (let [response (-> (request :get "/api/catalogue-items/777777777")
                          (authenticate api-key user-id)
