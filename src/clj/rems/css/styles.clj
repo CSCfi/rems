@@ -309,7 +309,7 @@
            ;; accessibility.
            :font-weight
            (util/get-theme-attribute :button-font-weight 700)
-           :font-size (u/px 18)}]
+           :font-size (u/px 19)}]
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
    [:a:focus :button:focus :.btn.focus :.btn:focus
@@ -411,7 +411,7 @@
                   :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
    [:.navbar
     {:max-width content-width
-     :font-size (u/px 18)}
+     :font-size (u/px 19)}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
    [:.navbar-top-bar {:width (u/percent 100)
