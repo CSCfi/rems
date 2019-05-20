@@ -36,18 +36,24 @@
                    :desc #(compare %2 %1)
                    #(compare %1 %2))))))
 
+(defn- display-row? [row columns filters]
+  (some (fn [column]
+          (str/includes? (get-in row [(:key column) :filter-value])
+                         filters))
+        columns))
+
 (rf/reg-sub
  ::sorted-and-filtered-rows
  (fn [[_ spec] _]
    [(rf/subscribe [::sorted-rows spec])
     (rf/subscribe [::filtering spec])])
- (fn [[rows filtering] _]
-   (let [needle (str/lower-case (str (:filters filtering)))]
+ (fn [[rows filtering] [_ spec]]
+   (let [filters (str/lower-case (str (:filters filtering)))
+         columns (->> (:columns spec)
+                      (filter :filterable?))]
      (->> rows
           (map (fn [row]
-                 ;; TODO: componentize
-                 (assoc row ::display-row? (str/includes? (get-in row [:name :filter-value])
-                                                          needle))))))))
+                 (assoc row ::display-row? (display-row? row columns filters))))))))
 
 (defn filter-field [spec]
   (let [filtering @(rf/subscribe [::filtering spec])
