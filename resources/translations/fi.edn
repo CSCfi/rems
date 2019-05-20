@@ -199,7 +199,7 @@
           :application-closed {:subject "Hakemuksesi on suljettu"
                                :message "Hyvä %1,\nHakemuksesi %2 on suljettu.\nKatsele hakemusta: %3"}
           :application-submitted {:subject "Uusi hakemus"
-                                  :message "Hyvä %1,\nKäyttäjä %2 on lähettänyt uuden hakemuksen %3.\nKatsele hakemusta: %4"}
+                                  :message "Hyvä %1,\nKäyttäjä %2 on lähettänyt uuden hakemuksen %3 resurss(e)ille %4.\nKatsele hakemusta: %5"}
           :comment-requested {:subject "Kommenttipyyntö"
                               :message "Hyvä %1,\nKäyttäjä %2 on pyytänyt sinulta kommenttia hakemukseen %3.\nKommentoi täällä: %4"}
           :commented {:subject "Uusi kommentti"

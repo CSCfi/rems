@@ -1,10 +1,12 @@
 (ns rems.poller.email
   "Sending emails based on application events."
-  (:require [clojure.test :refer :all]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
             [rems.config :refer [env]]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.events :as events]
             [rems.db.users :as users]
@@ -27,7 +29,14 @@
   (str (:public-url env) "accept-invitation?token=" token))
 
 (defn- application-id-for-email [application]
-  (or (:application/external-id application) (:application/id application)))
+  (case (util/getx env :application-id-column)
+    :external-id (:application/external-id application)
+    :id (:application/id application)))
+
+(defn- resources-for-email [application]
+  (->> (:application/resources application)
+       (map #(get-in % [:catalogue-item/title context/*lang*]))
+       (str/join ", ")))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -44,6 +53,7 @@
                          handler
                          (:application/applicant application)
                          (application-id-for-email application)
+                         (resources-for-email application)
                          (link-to-application (:application/id application)))})))
 
 (defn- applicant-and-members [application]
