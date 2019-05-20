@@ -53,7 +53,7 @@
     :desc :asc
     :desc))
 
-(defn change-sort-order [old-column old-order new-column]
+(defn- change-sort-order [old-column old-order new-column]
   (if (= old-column new-column)
     (flip old-order)
     :asc))
@@ -135,7 +135,7 @@
 (defn- filter-view [filtering]
   (let [{:keys [filters-new set-filtering]} filtering
         update-current-filters (fn [event]
-                                 #_(set-filtering (assoc filtering :filters filters-new)))]
+                                 (set-filtering (assoc filtering :filters filters-new)))]
     [:div.flex-grow-1.d-flex
      [:input.flex-grow-1
       {:type "text"
@@ -144,7 +144,7 @@
        :placeholder ""
        :aria-label (text :t.search/search-parameters)
        :on-change (fn [event]
-                    (set-filtering (assoc filtering :filters (-> event .-target .-value))))
+                    (set-filtering (assoc filtering :filters-new (-> event .-target .-value))))
        :on-blur update-current-filters
        :on-key-press (fn [event]
                        (when (= 13 (.-which event)) ; enter
@@ -155,7 +155,7 @@
        :aria-label (text :t.search/search)}
       [search-symbol]]]))
 
-(defn filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
+(defn- filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
   (when filtering
     [:div.rems-table-search-toggle.d-flex.flex-row-reverse
      [:button.btn
