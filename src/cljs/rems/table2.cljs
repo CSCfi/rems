@@ -47,19 +47,19 @@
     [:div.table-border
      [:table.rems-table.catalogue
       [:thead
-       [:tr
-        (for [column columns]
-          [:th
-           (when (:sortable? column)
-             {:on-click (fn []
-                          (rf/dispatch [::set-sorting (-> sorting
-                                                          (assoc :sort-column (:key column))
-                                                          (assoc :sort-order (rems.table/change-sort-order (:sort-column sorting) (:sort-order sorting) (:key column))))]))})
-           (:title column)
-           " "
-           (when (:sortable? column)
-             (when (= (:key column) (:sort-column sorting))
-               [rems.atoms/sort-symbol (:sort-order sorting)]))])]]
+       (into [:tr]
+             (for [column columns]
+               [:th
+                (when (:sortable? column)
+                  {:on-click (fn []
+                               (rf/dispatch [::set-sorting (-> sorting
+                                                               (assoc :sort-column (:key column))
+                                                               (assoc :sort-order (rems.table/change-sort-order (:sort-column sorting) (:sort-order sorting) (:key column))))]))})
+                (:title column)
+                " "
+                (when (:sortable? column)
+                  (when (= (:key column) (:sort-column sorting))
+                    [rems.atoms/sort-symbol (:sort-order sorting)]))]))]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
          (into [:tr {:key (:row-id row)
