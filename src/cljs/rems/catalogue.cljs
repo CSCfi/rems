@@ -89,7 +89,8 @@
    (->> catalogue
         (map (fn [item]
                (let [title (get-catalogue-item-title item language)]
-                 {:row-id (:id item)
+                 {:key (:id item)
+                  ;; TODO: helpers for the common case of simple values
                   :name {:td [:td.name title]
                          :sort-value title
                          :filter-value (str/lower-case title)}
@@ -126,7 +127,7 @@
         [draft-application-list drafts]
         [:h2 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container language]
-        [table2/filter-field table-spec]
+        [table2/search table-spec]
         [table2/table table-spec]])]))
 
 (defn guide []

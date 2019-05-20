@@ -71,9 +71,10 @@
                       (filter :filterable?))]
      (->> rows
           (map (fn [row]
+                 ;; performance optimization: hide DOM nodes instead of destroying them
                  (assoc row ::display-row? (display-row? row columns filters))))))))
 
-(defn filter-field [spec]
+(defn search [spec]
   (let [filtering @(rf/subscribe [::filtering spec])
         on-search (fn [event]
                     (rf/dispatch [::set-filtering spec (-> filtering
@@ -100,29 +101,34 @@
                                  :on-click on-toggle}
         [search-symbol]]])))
 
+(defn- table-header [spec]
+  (let [sorting @(rf/subscribe [::sorting spec])]
+    (into [:tr]
+          (for [column (:columns spec)]
+            [:th
+             (when (:sortable? column)
+               {:on-click #(rf/dispatch [::toggle-sorting spec (:key column)])})
+             (:title column)
+             " "
+             (when (:sortable? column)
+               (when (= (:key column) (:sort-column sorting))
+                 [sort-symbol (:sort-order sorting)]))]))))
+
+(defn- table-row [row spec]
+  ;; performance optimization: hide DOM nodes instead of destroying them
+  (into [:tr {:style {:display (if (::display-row? row)
+                                 "table-row"
+                                 "none")}}]
+        (for [column (:columns spec)]
+          (get-in row [(:key column) :td]))))
+
 (defn table [spec]
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows spec])
-        sorting @(rf/subscribe [::sorting spec])
         language @(rf/subscribe [:language])]
     [:div.table-border
      [:table.rems-table.catalogue
       [:thead
-       (into [:tr]
-             (for [column (:columns spec)]
-               [:th
-                (when (:sortable? column)
-                  {:on-click #(rf/dispatch [::toggle-sorting spec (:key column)])})
-                (:title column)
-                " "
-                (when (:sortable? column)
-                  (when (= (:key column) (:sort-column sorting))
-                    [sort-symbol (:sort-order sorting)]))]))]
+       [table-header spec]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
-         (into [:tr {:key (:row-id row)
-                     ;; performance optimization: hide DOM nodes instead of destroying them
-                     :style {:display (if (::display-row? row)
-                                        "table-row"
-                                        "none")}}]
-               (for [column (:columns spec)]
-                 (get-in row [(:key column) :td]))))]]]))
+         ^{:key (:key row)} [table-row row spec])]]]))
