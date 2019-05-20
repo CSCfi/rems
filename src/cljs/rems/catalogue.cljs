@@ -122,12 +122,12 @@
 
 ;; TODO: componentize
 (rf/reg-sub
- ::catalogue-table-sorted
- (fn [_ _]
-   [(rf/subscribe [::catalogue-table-data])
-    (rf/subscribe [::sorting])])
- (fn [[catalogue sorting] _]
-   (->> catalogue
+ ::sorted-rows
+ (fn [[_ data-key] _]
+   [(rf/subscribe [data-key])
+    (rf/subscribe [::sorting data-key])])
+ (fn [[rows sorting] [_ data-key]]
+   (->> rows
         (sort-by #(get-in % [(:sort-column sorting) :sort-value])
                  (case (:sort-order sorting)
                    :desc #(compare %2 %1)
@@ -135,13 +135,13 @@
 
 ;; TODO: componentize
 (rf/reg-sub
- ::catalogue-table-filtered
- (fn [_ _]
-   [(rf/subscribe [::catalogue-table-sorted])
-    (rf/subscribe [::filtering])])
- (fn [[catalogue filtering] _]
+ ::sorted-and-filtered-rows
+ (fn [[_ data-key] _]
+   [(rf/subscribe [::sorted-rows data-key])
+    (rf/subscribe [::filtering data-key])])
+ (fn [[rows filtering] [_ data-key]]
    (let [needle (str/lower-case (str (:filters filtering)))]
-     (->> catalogue
+     (->> rows
           (map (fn [row]
                  (assoc row ::display-row? (str/includes? (get-in row [:name :filter-value])
                                                           needle))))))))
@@ -169,13 +169,13 @@
        :items drafts}]]))
 
 ;; TODO: componentize
-(defn table2-filter []
+(defn table2-filter [data-key]
   (let [filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]
     [rems.table/filter-toggle filtering]))
 
 ;; TODO: componentize
-(defn table2 [columns]
-  (let [rows @(rf/subscribe [::catalogue-table-filtered])
+(defn table2 [data-key columns]
+  (let [rows @(rf/subscribe [::sorted-and-filtered-rows data-key])
         sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
         language @(rf/subscribe [:language])]
     [:div.table-border
@@ -217,12 +217,12 @@
         [draft-application-list drafts]
         [:h2 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container language]
-        [table2-filter]
-        [table2 [{:key :name
-                  :title "Resource"
-                  :sortable? true
-                  :filterable? true}
-                 {:key :commands}]]])]))
+        [table2-filter ::catalogue-table-data]
+        [table2 ::catalogue-table-data [{:key :name
+                                         :title "Resource"
+                                         :sortable? true
+                                         :filterable? true}
+                                        {:key :commands}]]])]))
 
 (defn guide []
   [:div
