@@ -3,9 +3,15 @@
             [re-frame.core :as rf]))
 
 (rf/reg-event-db
- ::set-sorting
- (fn [db [_ spec sorting]]
-   (assoc-in db [::sorting (:id spec)] sorting)))
+ ::toggle-sorting
+ (fn [db [_ spec sort-column]]
+   (update-in db [::sorting (:id spec)]
+              (fn [sorting]
+                (-> sorting
+                    (assoc :sort-column sort-column)
+                    (assoc :sort-order (rems.table/change-sort-order (:sort-column sorting)
+                                                                     (:sort-order sorting)
+                                                                     sort-column)))))))
 
 (rf/reg-sub
  ::sorting
@@ -63,7 +69,7 @@
 
 (defn table [spec]
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows spec])
-        sorting (assoc @(rf/subscribe [::sorting spec]) :set-sorting #(rf/dispatch [::set-sorting spec %]))
+        sorting @(rf/subscribe [::sorting spec])
         language @(rf/subscribe [:language])]
     [:div.table-border
      [:table.rems-table.catalogue
@@ -72,10 +78,7 @@
              (for [column (:columns spec)]
                [:th
                 (when (:sortable? column)
-                  {:on-click (fn []
-                               (rf/dispatch [::set-sorting spec (-> sorting
-                                                                    (assoc :sort-column (:key column))
-                                                                    (assoc :sort-order (rems.table/change-sort-order (:sort-column sorting) (:sort-order sorting) (:key column))))]))})
+                  {:on-click #(rf/dispatch [::toggle-sorting spec (:key column)])})
                 (:title column)
                 " "
                 (when (:sortable? column)
