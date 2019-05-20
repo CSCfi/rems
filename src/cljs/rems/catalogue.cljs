@@ -9,7 +9,6 @@
             [rems.guide-functions]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.table :as table]
             [rems.table2 :as table2]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [fetch unauthorized!]])
@@ -76,32 +75,18 @@
 
 ;;;; UI
 
-(defn- catalogue-item-title [item language]
-  [:span (get-catalogue-item-title item language)])
-
 (defn- catalogue-item-more-info [item config]
   (when (urn-catalogue-item? item)
     [:a.btn.btn-secondary {:href (urn-catalogue-item-link item config) :target :_blank}
      (text :t.catalogue/more-info) " " [external-link]]))
 
-(defn- catalogue-columns [lang config]
-  {:name {:header #(text :t.catalogue/header)
-          :value (fn [item] [catalogue-item-title item lang])
-          :sort-value #(get-catalogue-item-title % lang)}
-   :commands {:values (fn [item] [[catalogue-item-more-info item config]
-                                  [cart/add-to-cart-button item]])
-              :sortable? false
-              :filterable? false}})
-
 (rf/reg-sub
- ::catalogue-table-data
+ ::catalogue-table-rows
  (fn [_ _]
-   [(rf/subscribe [::full-catalogue])
+   [(rf/subscribe [::catalogue])
     (rf/subscribe [:language])])
  (fn [[catalogue language] _]
    (->> catalogue
-        (filter :enabled)
-        (remove :expired)
         (map (fn [item]
                (let [title (get-catalogue-item-title item language)]
                  {:row-id (:id item)
@@ -111,20 +96,6 @@
                   :commands {:td [:td.commands
                                   [catalogue-item-more-info item {}]
                                   [cart/add-to-cart-button item]]}}))))))
-
-(defn- catalogue-list
-  "Renders the catalogue using table.
-
-  See `table/component`."
-  [{:keys [items language sorting filtering config] :as params}]
-  [table/component
-   (merge {:column-definitions (catalogue-columns language config)
-           :visible-columns [:name :commands]
-           :id-function :id
-           :items items
-           :class "catalogue"}
-          (when sorting {:sorting sorting})
-          (when filtering {:filtering filtering}))])
 
 (defn draft-application-list [drafts]
   (when (seq drafts)
@@ -145,7 +116,7 @@
                                :sortable? true
                                :filterable? true}
                               {:key :commands}]
-                    :rows ::catalogue-table-data
+                    :rows ::catalogue-table-rows
                     :default-sort-column :name}]
     [:div
      [document-title (text :t.catalogue/catalogue)]
@@ -160,30 +131,6 @@
 
 (defn guide []
   [:div
-   (component-info catalogue-item-title)
-   (example "catalogue-item-title"
-            [:table.rems-table
-             [:tbody
-              [:tr
-               [:td
-                [catalogue-item-title {:title "Item title"} nil]]]]])
-   (example "catalogue-item-title in Finnish with localizations"
-            [:table.rems-table
-             [:tbody
-              [:tr
-               [:td
-                [catalogue-item-title {:title "Not used when there are localizations"
-                                       :localizations {:fi {:title "Suomenkielinen title"}
-                                                       :en {:title "English title"}}} :en]]]]])
-   (example "catalogue-item-title in English with localizations"
-            [:table.rems-table
-             [:tbody
-              [:tr
-               [:td
-                [catalogue-item-title {:title "Not used when there are localizations"
-                                       :localizations {:fi {:title "Suomenkielinen title"}
-                                                       :en {:title "English title"}}} :fi]]]]])
-
    (component-info draft-application-list)
    (example "draft-list empty"
             [draft-application-list []])
@@ -199,18 +146,4 @@
                                       :application/state :application.state/draft
                                       :application/applicant "bob"
                                       :application/created "1971-02-03T23:59:00.000Z"
-                                      :application/last-activity "2017-01-01T01:01:01:001Z"}]])
-
-   (component-info catalogue-list)
-   (example "catalogue-list empty"
-            [catalogue-list {:items [] :sorting {:sort-column :name, :sort-order :asc}}])
-   (example "catalogue-list with two items"
-            [catalogue-list {:items [{:title "Item title" :enabled true} {:title "Another title" :enabled true}] :sorting {:sort-column :name, :sort-order :asc}}])
-   (example "catalogue-list with two items in reverse order"
-            [catalogue-list {:items [{:title "Item title" :enabled true} {:title "Another title" :enabled true}] :sorting {:sort-column :name, :sort-order :desc}}])
-   (example "catalogue-list with three items, of which second is disabled"
-            [catalogue-list {:items [{:title "Item 1" :enabled true} {:title "Item 2 is disabled and should not be shown" :enabled false} {:title "Item 3"}] :sorting {:sort-column :name, :sort-order :asc}}])
-   (example "catalogue-list with item linked to urn.fi"
-            [catalogue-list {:items [{:title "Item title" :enabled true :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}}])
-   (example "catalogue-list with item linked to example.org"
-            [catalogue-list {:items [{:title "Item title" :enabled true :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc} :config {:urn-organization "http://example.org/"}}])])
+                                      :application/last-activity "2017-01-01T01:01:01:001Z"}]])])
