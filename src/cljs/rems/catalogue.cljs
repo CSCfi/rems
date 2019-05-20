@@ -1,5 +1,6 @@
 (ns rems.catalogue
-  (:require [re-frame.core :as rf]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link document-title document-title]]
@@ -100,6 +101,51 @@
               :sortable? false
               :filterable? false}})
 
+(rf/reg-sub
+ ::catalogue-table-data
+ (fn [_ _]
+   [(rf/subscribe [::full-catalogue])
+    (rf/subscribe [:language])])
+ (fn [[catalogue language] _]
+   (->> catalogue
+        (filter :enabled)
+        (remove :expired)
+        (map (fn [item]
+               (let [title (get-catalogue-item-title item language)]
+                 {:row-id (:id item)
+                  :name {:td [:td.name title]
+                         :sort-value title
+                         :filter-value (str/lower-case title)}
+                  :commands {:td [:td.commands
+                                  [catalogue-item-more-info item {}]
+                                  [cart/add-to-cart-button item]]}}))))))
+
+;; TODO: componentize
+(rf/reg-sub
+ ::catalogue-table-sorted
+ (fn [_ _]
+   [(rf/subscribe [::catalogue-table-data])
+    (rf/subscribe [::sorting])])
+ (fn [[catalogue sorting] _]
+   (->> catalogue
+        (sort-by #(get-in % [(:sort-column sorting) :sort-value])
+                 (case (:sort-order sorting)
+                   :desc #(compare %2 %1)
+                   #(compare %1 %2))))))
+
+;; TODO: componentize
+(rf/reg-sub
+ ::catalogue-table-filtered
+ (fn [_ _]
+   [(rf/subscribe [::catalogue-table-sorted])
+    (rf/subscribe [::filtering])])
+ (fn [[catalogue filtering] _]
+   (let [needle (str/lower-case (str (:filters filtering)))]
+     (->> catalogue
+          (map (fn [row]
+                 (assoc row ::display-row? (str/includes? (get-in row [:name :filter-value])
+                                                          needle))))))))
+
 (defn- catalogue-list
   "Renders the catalogue using table.
 
@@ -122,9 +168,44 @@
       {:visible-columns [:resource :last-activity :view]
        :items drafts}]]))
 
+;; TODO: componentize
+(defn table2-filter []
+  (let [filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]
+    [rems.table/filter-toggle filtering]))
+
+;; TODO: componentize
+(defn table2 [columns]
+  (let [rows @(rf/subscribe [::catalogue-table-filtered])
+        sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+        language @(rf/subscribe [:language])]
+    [:div.table-border
+     [:table.rems-table.catalogue
+      [:thead
+       [:tr
+        (for [column columns]
+          [:th
+           (when (:sortable? column)
+             {:on-click (fn []
+                          (rf/dispatch [::set-sorting (-> sorting
+                                                          (assoc :sort-column (:key column))
+                                                          (assoc :sort-order (rems.table/change-sort-order (:sort-column sorting) (:sort-order sorting) (:key column))))]))})
+           (:title column)
+           " "
+           (when (:sortable? column)
+             (when (= (:key column) (:sort-column sorting))
+               [rems.atoms/sort-symbol (:sort-order sorting)]))])]]
+      [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
+       (for [row rows]
+         (into [:tr {:key (:row-id row)
+                     ;; performance optimization: hide DOM nodes instead of destroying them
+                     :style {:display (if (::display-row? row)
+                                        "table-row"
+                                        "none")}}]
+               (for [column columns]
+                 (get-in row [(:key column) :td]))))]]]))
+
 (defn catalogue-page []
   (let [language @(rf/subscribe [:language])
-        catalogue @(rf/subscribe [::catalogue])
         loading-catalogue? @(rf/subscribe [::loading-catalogue?])
         drafts @(rf/subscribe [::draft-applications])
         loading-drafts? @(rf/subscribe [::loading-drafts?])]
@@ -136,12 +217,12 @@
         [draft-application-list drafts]
         [:h2 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container language]
-        [catalogue-list
-         {:items catalogue
-          :language language
-          :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
-          :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
-          :config @(rf/subscribe [:rems.config/config])}]])]))
+        [table2-filter]
+        [table2 [{:key :name
+                  :title "Resource"
+                  :sortable? true
+                  :filterable? true}
+                 {:key :commands}]]])]))
 
 (defn guide []
   [:div
