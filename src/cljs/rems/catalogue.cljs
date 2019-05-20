@@ -138,7 +138,15 @@
   (let [language @(rf/subscribe [:language])
         loading-catalogue? @(rf/subscribe [::loading-catalogue?])
         drafts @(rf/subscribe [::draft-applications])
-        loading-drafts? @(rf/subscribe [::loading-drafts?])]
+        loading-drafts? @(rf/subscribe [::loading-drafts?])
+        table-spec {:id :catalogue
+                    :columns [{:key :name
+                               :title (text :t.catalogue/header)
+                               :sortable? true
+                               :filterable? true}
+                              {:key :commands}]
+                    :rows ::catalogue-table-data
+                    :default-sort-column :name}]
     [:div
      [document-title (text :t.catalogue/catalogue)]
      (if (or loading-catalogue? loading-drafts?)
@@ -147,12 +155,8 @@
         [draft-application-list drafts]
         [:h2 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container language]
-        [table2/filter-field ::catalogue-table-data]
-        [table2/table ::catalogue-table-data [{:key :name
-                                               :title "Resource"
-                                               :sortable? true
-                                               :filterable? true}
-                                              {:key :commands}]]])]))
+        [table2/filter-field table-spec]
+        [table2/table table-spec]])]))
 
 (defn guide []
   [:div
