@@ -126,7 +126,7 @@
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows spec])
         language @(rf/subscribe [:language])]
     [:div.table-border
-     [:table.rems-table.catalogue
+     [:table.rems-table {:class (:id spec)}
       [:thead
        [table-header spec]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
