@@ -128,6 +128,12 @@
                    :border-color (util/get-theme-attribute :phase-bgcolor-completed "#ccc")
                    :color (util/get-theme-attribute :phase-color-completed :phase-color)}]]])
 
+(defn- button-navbar-font-weight []
+  ;; Default font-weight to 700 so the text is considered
+  ;; 'large text' and thus requires smaller contrast ratio for
+  ;; accessibility.
+  (util/get-theme-attribute :button-navbar-font-weight 700))
+
 (defn- generate-rems-table-styles []
   (list
    [:.rems-table.cart {:background "#fff"
@@ -312,11 +318,7 @@
    [:#main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
-           ;; Default font-weight to 700 so the text is considered
-           ;; 'large text' and thus requires smaller contrast ratio for
-           ;; accessibility.
-           :font-weight
-           (util/get-theme-attribute :button-font-weight 700)
+           :font-weight (button-navbar-font-weight)
            :font-size (u/px 19)}]
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
@@ -429,16 +431,13 @@
                        :background-color (util/get-theme-attribute :color4)}]
    [:.navbar-top-right {:flex 1
                         :background-color (util/get-theme-attribute :color2)}]
-   [:.navbar-text {:font-size (u/px 16)}]
+   [:.navbar-text {:font-size (u/px 19)
+                   :font-weight (button-navbar-font-weight)}]
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
     {:color (util/get-theme-attribute :nav-color :link-color :color3)
-     ;; Default font-weight to 700 so the text is considered
-     ;; 'large text' and thus requires smaller contrast ratio for
-     ;; accessibility.
-     :font-weight
-     (util/get-theme-attribute :link-font-weight 700)
+     :font-weight (button-navbar-font-weight)
      :border 0} ; for button links
     [:&.active
      {:color (util/get-theme-attribute :nav-active-color :color4)}]
