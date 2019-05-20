@@ -16,7 +16,10 @@
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
+ ;; link to alternative login method
  :alternative-login-url nil
+ ;; url for embedding alternative login method in an iframe
+ :alternative-login-embed nil
 
  ;; Sending email.
  :smtp-host nil

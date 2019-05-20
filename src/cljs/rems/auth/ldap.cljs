@@ -3,7 +3,7 @@
             [rems.text :refer [text]]))
 
 (defn login-component []
-  [:div.jumbotron
+  [:div
    [document-title (text :t.ldap/title)]
    [:form
     {:action "/ldap/login" :method "post"}
