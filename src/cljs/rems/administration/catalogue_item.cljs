@@ -33,7 +33,8 @@
 
 (defn- back-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration/catalogue-items")}
+   {:type "button"
+    :on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/back)])
 
 (defn- to-create-catalogue-item []

@@ -34,7 +34,8 @@
 
 (defn- back-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration/resources")}
+   {:type "button"
+    :on-click #(dispatch! "/#/administration/resources")}
    (text :t.administration/back)])
 
 (defn- to-create-resource []

@@ -18,7 +18,8 @@
           (for [language languages]
             (let [lang-str (str/upper-case (name language))]
               [:form.inline
-               [:button {:class (lang-link-classes current-language language) :type "button"
+               [:button {:type "button"
+                         :class (lang-link-classes current-language language)
                          :on-click (fn []
                                      (rf/dispatch [:set-current-language language])
                                      (rf/dispatch [:rems.spa/user-triggered-navigation]))}
