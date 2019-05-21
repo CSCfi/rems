@@ -87,16 +87,16 @@
     (if (:show-filters filtering)
       [:div.rems-table-search-toggle.d-flex.flex-row
        [:div.flex-grow-1.d-flex
-        [:input.flex-grow-1 {:type "text"
+        [:input.flex-grow-1 {:type :text
                              :default-value (:filters filtering)
                              :aria-label (text :t.search/search-parameters)
                              :on-change on-search}]]
-       [:button.btn.btn-secondary {:type "button"
+       [:button.btn.btn-secondary {:type :button
                                    :aria-label (text :t.search/close-search)
                                    :on-click on-toggle}
         [close-symbol]]]
       [:div.rems-table-search-toggle.d-flex.flex-row-reverse
-       [:button.btn.btn-primary {:type "button"
+       [:button.btn.btn-primary {:type :button
                                  :aria-label (text :t.search/open-search)
                                  :on-click on-toggle}
         [search-symbol]]])))
