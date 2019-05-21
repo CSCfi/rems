@@ -46,7 +46,7 @@
 (rf/reg-sub
  ::sorted-rows
  (fn [[_ table] _]
-   [(rf/subscribe [(:rows table)])
+   [(rf/subscribe (:rows table))
     (rf/subscribe [::sorting table])])
  (fn [[rows sorting] _]
    (->> rows
@@ -180,7 +180,7 @@
                                       {:key :last-name
                                        :title "Last name"}
                                       {:key :commands}]
-                            :rows ::example-table-rows
+                            :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [table example1]))
    (example "sortable and filterable table"
@@ -194,7 +194,7 @@
                                        :sortable? true
                                        :filterable? true}
                                       {:key :commands}]
-                            :rows ::example-table-rows
+                            :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [:div
                [search example2]

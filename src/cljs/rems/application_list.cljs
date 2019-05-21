@@ -1,5 +1,6 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.application-util :as application-util]
             [rems.guide-functions]
             [rems.table :as table]
@@ -60,6 +61,25 @@
            :class "applications"}
           opts)])
 
+(rf/reg-sub
+ ::table-rows
+ (fn [[_ apps-sub] _]
+   [(rf/subscribe [apps-sub])])
+ (fn [[apps] _]
+   ;; TODO
+   (map (fn [app]
+          {:external-id {:td [:td.external-id "x"]}
+           :id {:td [:td.id "x"]}
+           :description {:td [:td.description "x"]}
+           :resource {:td [:td.resource "x"]}
+           :applicant {:td [:td.applicant "x"]}
+           :state {:td [:td.state "x"]}
+           :created {:td [:td.created "x"]}
+           :submitted {:td [:td.submitted "x"]}
+           :last-activity {:td [:td.last-activity "x"]}
+           :view {:td [:td.view "x"]}})
+        apps)))
+
 (defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order]}]
   (let [all-columns [{:key :external-id
                       :title (text :t.actions/id)
@@ -104,7 +124,7 @@
         visible-columns (or visible-columns (constantly true))
         application-table {:id id
                            :columns (filter #(visible-columns (:key %)) all-columns)
-                           :rows applications ; TODO: preprocess subscription
+                           :rows [::table-rows applications]
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
     [table2/table application-table]))

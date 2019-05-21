@@ -117,7 +117,7 @@
                                     :sortable? true
                                     :filterable? true}
                                    {:key :commands}]
-                         :rows ::catalogue-table-rows
+                         :rows [::catalogue-table-rows]
                          :default-sort-column :name}]
     [:div
      [document-title (text :t.catalogue/catalogue)]
