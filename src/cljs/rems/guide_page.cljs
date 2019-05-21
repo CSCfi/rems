@@ -15,7 +15,8 @@
             [rems.navbar :as nav]
             [rems.phase :as phase]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal])
+            [rems.status-modal :as status-modal]
+            [rems.table2 :as table2])
   (:require-macros [rems.guide-macros :refer [example]]))
 
 (defn color-box [id hex]
@@ -126,6 +127,7 @@
     [administration/guide]
 
     [:h2 "Misc components"]
+    [table2/guide]
     [autocomplete/guide]
     [phase/guide]
     [atoms/guide]]])
