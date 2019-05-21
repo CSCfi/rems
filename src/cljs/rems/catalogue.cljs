@@ -111,14 +111,14 @@
         loading-catalogue? @(rf/subscribe [::loading-catalogue?])
         drafts @(rf/subscribe [::draft-applications])
         loading-drafts? @(rf/subscribe [::loading-drafts?])
-        table-spec {:id :catalogue
-                    :columns [{:key :name
-                               :title (text :t.catalogue/header)
-                               :sortable? true
-                               :filterable? true}
-                              {:key :commands}]
-                    :rows ::catalogue-table-rows
-                    :default-sort-column :name}]
+        catalogue-table {:id :catalogue
+                         :columns [{:key :name
+                                    :title (text :t.catalogue/header)
+                                    :sortable? true
+                                    :filterable? true}
+                                   {:key :commands}]
+                         :rows ::catalogue-table-rows
+                         :default-sort-column :name}]
     [:div
      [document-title (text :t.catalogue/catalogue)]
      (if (or loading-catalogue? loading-drafts?)
@@ -127,8 +127,8 @@
         [draft-application-list drafts]
         [:h2 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container language]
-        [table2/search table-spec]
-        [table2/table table-spec]])]))
+        [table2/search catalogue-table]
+        [table2/table catalogue-table]])]))
 
 (defn guide []
   [:div

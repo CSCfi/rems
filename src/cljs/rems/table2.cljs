@@ -16,8 +16,8 @@
 
 (rf/reg-event-db
  ::toggle-sorting
- (fn [db [_ spec sort-column]]
-   (update-in db [::sorting (:id spec)]
+ (fn [db [_ table sort-column]]
+   (update-in db [::sorting (:id table)]
               (fn [sorting]
                 (-> sorting
                     (assoc :sort-column sort-column)
@@ -27,26 +27,26 @@
 
 (rf/reg-sub
  ::sorting
- (fn [db [_ spec]]
-   (or (get-in db [::sorting (:id spec)])
+ (fn [db [_ table]]
+   (or (get-in db [::sorting (:id table)])
        {:sort-order :asc
-        :sort-column (:default-sort-column spec)})))
+        :sort-column (:default-sort-column table)})))
 
 (rf/reg-event-db
  ::set-filtering
- (fn [db [_ spec filtering]]
-   (assoc-in db [::filtering (:id spec)] filtering)))
+ (fn [db [_ table filtering]]
+   (assoc-in db [::filtering (:id table)] filtering)))
 
 (rf/reg-sub
  ::filtering
- (fn [db [_ spec]]
-   (get-in db [::filtering (:id spec)])))
+ (fn [db [_ table]]
+   (get-in db [::filtering (:id table)])))
 
 (rf/reg-sub
  ::sorted-rows
- (fn [[_ spec] _]
-   [(rf/subscribe [(:rows spec)])
-    (rf/subscribe [::sorting spec])])
+ (fn [[_ table] _]
+   [(rf/subscribe [(:rows table)])
+    (rf/subscribe [::sorting table])])
  (fn [[rows sorting] _]
    (->> rows
         (sort-by #(get-in % [(:sort-column sorting) :sort-value])
@@ -62,28 +62,28 @@
 
 (rf/reg-sub
  ::sorted-and-filtered-rows
- (fn [[_ spec] _]
-   [(rf/subscribe [::sorted-rows spec])
-    (rf/subscribe [::filtering spec])])
- (fn [[rows filtering] [_ spec]]
+ (fn [[_ table] _]
+   [(rf/subscribe [::sorted-rows table])
+    (rf/subscribe [::filtering table])])
+ (fn [[rows filtering] [_ table]]
    (let [filters (str/lower-case (str (:filters filtering)))
-         columns (->> (:columns spec)
+         columns (->> (:columns table)
                       (filter :filterable?))]
      (->> rows
           (map (fn [row]
                  ;; performance optimization: hide DOM nodes instead of destroying them
                  (assoc row ::display-row? (display-row? row columns filters))))))))
 
-(defn search [spec]
-  (let [filtering @(rf/subscribe [::filtering spec])
+(defn search [table]
+  (let [filtering @(rf/subscribe [::filtering table])
         on-search (fn [event]
-                    (rf/dispatch [::set-filtering spec (-> filtering
-                                                           (assoc :filters (-> event .-target .-value)))]))
+                    (rf/dispatch [::set-filtering table (-> filtering
+                                                            (assoc :filters (-> event .-target .-value)))]))
         ;; TODO: focus needs to be moved to the search field after opening it, especially for screen readers
         on-toggle (fn [_event]
-                    (rf/dispatch [::set-filtering spec (-> filtering
-                                                           (update :show-filters not)
-                                                           (assoc :filters ""))]))]
+                    (rf/dispatch [::set-filtering table (-> filtering
+                                                            (update :show-filters not)
+                                                            (assoc :filters ""))]))]
     (if (:show-filters filtering)
       [:div.rems-table-search-toggle.d-flex.flex-row
        [:div.flex-grow-1.d-flex
@@ -101,34 +101,34 @@
                                  :on-click on-toggle}
         [search-symbol]]])))
 
-(defn- table-header [spec]
-  (let [sorting @(rf/subscribe [::sorting spec])]
+(defn- table-header [table]
+  (let [sorting @(rf/subscribe [::sorting table])]
     (into [:tr]
-          (for [column (:columns spec)]
+          (for [column (:columns table)]
             [:th
              (when (:sortable? column)
-               {:on-click #(rf/dispatch [::toggle-sorting spec (:key column)])})
+               {:on-click #(rf/dispatch [::toggle-sorting table (:key column)])})
              (:title column)
              " "
              (when (:sortable? column)
                (when (= (:key column) (:sort-column sorting))
                  [sort-symbol (:sort-order sorting)]))]))))
 
-(defn- table-row [row spec]
+(defn- table-row [row table]
   ;; performance optimization: hide DOM nodes instead of destroying them
   (into [:tr {:style {:display (if (::display-row? row)
                                  "table-row"
                                  "none")}}]
-        (for [column (:columns spec)]
+        (for [column (:columns table)]
           (get-in row [(:key column) :td]))))
 
-(defn table [spec]
-  (let [rows @(rf/subscribe [::sorted-and-filtered-rows spec])
+(defn table [table]
+  (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
         language @(rf/subscribe [:language])]
     [:div.table-border
-     [:table.rems-table {:class (:id spec)}
+     [:table.rems-table {:class (:id table)}
       [:thead
-       [table-header spec]]
+       [table-header table]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
-         ^{:key (:key row)} [table-row row spec])]]]))
+         ^{:key (:key row)} [table-row row table])]]]))
