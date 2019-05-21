@@ -86,17 +86,17 @@
    [(rf/subscribe [::catalogue])
     (rf/subscribe [:language])])
  (fn [[catalogue language] _]
-   (->> catalogue
-        (map (fn [item]
-               (let [title (get-catalogue-item-title item language)]
-                 {:key (:id item)
-                  ;; TODO: helpers for the common case of simple values
-                  :name {:td [:td.name title]
-                         :sort-value title
-                         :filter-value (str/lower-case title)}
-                  :commands {:td [:td.commands
-                                  [catalogue-item-more-info item {}]
-                                  [cart/add-to-cart-button item]]}}))))))
+   (map (fn [item]
+          (let [title (get-catalogue-item-title item language)]
+            {:key (:id item)
+             ;; TODO: helpers for the common case of simple values
+             :name {:td [:td.name title]
+                    :sort-value title
+                    :filter-value (str/lower-case title)}
+             :commands {:td [:td.commands
+                             [catalogue-item-more-info item {}]
+                             [cart/add-to-cart-button item]]}}))
+        catalogue)))
 
 (defn draft-application-list [drafts]
   (when (seq drafts)
