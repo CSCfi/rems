@@ -176,16 +176,15 @@
   (let [{:keys [sort-column sort-order set-sorting]} sorting
         sortable? (get-in column-definitions [column :sortable?] true)]
     [:th
-     [:div.column-header
-      (when (and sortable? set-sorting)
-        {:on-click (fn []
-                     (set-sorting (-> sorting
-                                      (assoc :sort-column column)
-                                      (assoc :sort-order (change-sort-order sort-column sort-order column)))))})
-      (column-header column-definitions column)
-      " "
-      (when (= column sort-column)
-        [sort-symbol sort-order])]]))
+     (when (and sortable? set-sorting)
+       {:on-click (fn []
+                    (set-sorting (-> sorting
+                                     (assoc :sort-column column)
+                                     (assoc :sort-order (change-sort-order sort-column sort-order column)))))})
+     (column-header column-definitions column)
+     " "
+     (when (= column sort-column)
+       [sort-symbol sort-order])]))
 
 (defn- head [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
   [:thead
