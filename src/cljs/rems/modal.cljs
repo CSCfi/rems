@@ -41,7 +41,7 @@
                                                      :align-items :center}}
                           title
                           [:button.btn.btn-link.link.ml-3
-                           {:type "button"
+                           {:type :button
                             :on-click on-close
                             :aria-label (text :t.modal/close-dialog)}
                            [:i.fa.fa-times {:style {:margin 0}}]]]
@@ -65,7 +65,7 @@
   See `modal/component` for options."
   [{:keys [title title-class content on-close shade?] :as opts}]
   [component (assoc opts :commands [[:button#modal-ok.btn.btn-primary
-                                     {:type "button"
+                                     {:type :button
                                       :on-click on-close}
                                      (text :t.actions/ok)]])])
 
@@ -76,8 +76,8 @@
    (example "modal component"
             [component {:title "Hello World"
                         :content [:div "Hello world!"]
-                        :commands [[:button.btn.btn-secondary {:type "button"} "Say"]
-                                   [:button.btn.btn-primary {:type "button"} "IT"]]
+                        :commands [[:button.btn.btn-secondary {:type :button} "Say"]
+                                   [:button.btn.btn-primary {:type :button} "IT"]]
                         :on-close #(.alert js/window "close")
                         :shade? false}])
    (component-info notification)

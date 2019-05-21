@@ -165,11 +165,11 @@
                                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                                  :on-change (set-attachment-event language)}]
                         [:button.btn.btn-secondary
-                         {:type "button"
+                         {:type :button
                           :on-click #(.click (.getElementById js/document "upload-license-button"))}
                          (text :t.form/upload)]]
           remove-button [:button.btn.btn-secondary.mr-2
-                         {:type "button"
+                         {:type :button
                           :on-click (remove-attachment-event language attachment-id)}
                          (text :t.form/attachment-remove)]]
       (if (empty? filename)
@@ -184,14 +184,14 @@
         languages @(rf/subscribe [:languages])
         request (build-request form default-language languages)]
     [:button.btn.btn-primary
-     {:type "button"
+     {:type :button
       :on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:type "button"
+   {:type :button
     :on-click #(dispatch! "/#/administration/licenses")}
    (text :t.administration/cancel)])
 

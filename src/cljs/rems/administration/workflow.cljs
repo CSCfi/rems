@@ -34,13 +34,13 @@
 
 (defn- back-button []
   [:button.btn.btn-secondary
-   {:type "button"
+   {:type :button
     :on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/back)])
 
 (defn- edit-button [id]
   [:button.btn.btn-primary
-   {:type "button"
+   {:type :button
     :on-click #(dispatch! (str "/#/administration/edit-workflow/" id))}
    (text :t.administration/edit)])
 

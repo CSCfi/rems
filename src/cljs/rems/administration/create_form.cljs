@@ -244,7 +244,7 @@
         languages @(rf/subscribe [:languages])
         request (build-request form languages)]
     [:button.btn.btn-primary
-     {:type "button"
+     {:type :button
       :on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))

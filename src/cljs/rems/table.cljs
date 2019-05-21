@@ -151,7 +151,7 @@
                          (.preventDefault event)
                          (update-current-filters event)))}]
      [:button.btn.btn-primary
-      {:type "button"
+      {:type :button
        :on-click update-current-filters
        :aria-label (text :t.search/search)}
       [search-symbol]]]))
@@ -160,7 +160,7 @@
   (when filtering
     [:div.rems-table-search-toggle.d-flex.flex-row-reverse
      [:button.btn
-      {:type "button"
+      {:type :button
        :class (if show-filters "btn-secondary" "btn-primary")
        :aria-label (if show-filters (text :t.search/close-search) (text :t.search/open-search))
        ;; TODO: focus needs to be moved to the search field after opening it, especially for screen readers

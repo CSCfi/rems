@@ -236,11 +236,11 @@
                                               (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
                       [:button.btn.btn-secondary
-                       {:type "button"
+                       {:type :button
                         :on-click click-upload}
                        (text :t.form/upload)]]
         remove-button [:button.btn.btn-secondary.mr-2
-                       {:type "button"
+                       {:type :button
                         :on-click (fn [event]
                                     (on-change "")
                                     (on-remove-attachment))}

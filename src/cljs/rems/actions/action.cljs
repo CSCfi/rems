@@ -7,7 +7,7 @@
 
 (defn button-wrapper [{:keys [text class] :as props}]
   [:button.btn
-   (merge {:type "button"
+   (merge {:type :button
            :class (or class :btn-secondary)}
           (dissoc props :class :text))
    text])
@@ -17,7 +17,7 @@
 
 (defn cancel-action-button [id]
   [:button.btn.btn-secondary
-   {:type "button"
+   {:type :button
     :id (str "cancel-" id)
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))}
@@ -49,7 +49,7 @@
 
 (defn action-button [{:keys [id text class on-click]}]
   [:button.btn.mr-3
-   {:type "button"
+   {:type :button
     :id (str id "-action-button")
     :class (str (or class "btn-secondary")
                 " btn-opens-more")

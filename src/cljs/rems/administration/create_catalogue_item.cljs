@@ -170,14 +170,14 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:type "button"
+   {:type :button
     :on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button [form on-click]
   (let [request (build-request form)]
     [:button.btn.btn-primary
-     {:type "button"
+     {:type :button
       :on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))

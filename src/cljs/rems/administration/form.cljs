@@ -34,7 +34,7 @@
 
 (defn- back-button []
   [:button.btn.btn-secondary
-   {:type "button"
+   {:type :button
     :on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/back)])
 

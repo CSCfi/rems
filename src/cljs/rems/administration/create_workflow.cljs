@@ -164,7 +164,7 @@
                   (build-update-request id form)
                   (build-create-request form))]
     [:button.btn.btn-primary
-     {:type "button"
+     {:type :button
       :on-click #(if id
                    (rf/dispatch [::update-workflow (build-update-request id form)])
                    (rf/dispatch [::create-workflow (build-create-request form)]))
@@ -173,7 +173,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:type "button"
+   {:type :button
     :on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/cancel)])
 

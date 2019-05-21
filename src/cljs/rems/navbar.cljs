@@ -60,7 +60,7 @@
   [:div.navbar-flex
    [:nav.navbar.navbar-expand-sm {:role "navigation"}
     [:button.navbar-toggler
-     {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
+     {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]
     [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 page-id identity]]
    [:div.navbar [user-widget (:user identity)]]])

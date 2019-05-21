@@ -112,14 +112,14 @@
 (defn- save-resource-button [form]
   (let [request (build-request form)]
     [:button.btn.btn-primary
-     {:type "button"
+     {:type :button
       :on-click #(rf/dispatch [::create-resource request])
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button [on-click]
   [:button.btn.btn-secondary
-   {:type "button"
+   {:type :button
     :on-click on-click}
    (text :t.administration/cancel)])
 
