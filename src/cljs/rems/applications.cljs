@@ -85,7 +85,7 @@
 ;;;; UI
 
 ;; XXX: the application lists share sorting and filtering state
-(defn- application-list [apps loading?]
+(defn- application-list [apps loading? opts]
   (cond loading?
         [spinner/big]
 
@@ -93,37 +93,38 @@
         [:div.applications.alert.alert-success (text :t.applications/empty)]
 
         :else
-        [application-list/component
-         {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
-                                 [:description :resource :state :created :submitted :last-activity :view])
-          :sorting (assoc @(rf/subscribe [::sorting])
-                          :set-sorting #(rf/dispatch [::set-sorting %]))
-          :filtering (assoc @(rf/subscribe [::filtering])
-                            :set-filtering #(rf/dispatch [::set-filtering %]))
-          :items apps}]))
+        [:div
+         (let [config @(rf/subscribe [:rems.config/config])
+               id-column (get config :application-id-column :id)]
+           [application-list/component2
+            (merge {:visible-columns #{id-column :description :resource :state :created :submitted :last-activity :view}
+                    :default-sort-column :created
+                    :default-sort-order :desc}
+                   opts)])
+         ;; TODO: remove me
+         [application-list/component
+          {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
+                                  [:description :resource :state :created :submitted :last-activity :view])
+           :sorting (assoc @(rf/subscribe [::sorting])
+                           :set-sorting #(rf/dispatch [::set-sorting %]))
+           :filtering (assoc @(rf/subscribe [::filtering])
+                             :set-filtering #(rf/dispatch [::set-filtering %]))
+           :items apps}]]))
 
 (defn applications-page []
   (let [apps @(rf/subscribe [::my-applications])
         identity @(rf/subscribe [:identity])
-        loading? @(rf/subscribe [::loading-my-applications?])
-        config @(rf/subscribe [:rems.config/config])]
+        loading? @(rf/subscribe [::loading-my-applications?])]
     [:div
      [document-title (text :t.applications/applications)]
-
-     ;; TODO: remove spike code
-     [application-list/component2 {:id :my-applications
-                                   :applications ::my-applications
-                                   :visible-columns #{(get config :application-id-column :id)
-                                                      :description :resource :state :created :submitted :last-activity :view}
-                                   :default-sort-column :created
-                                   :default-sort-order :desc}]
-
      (when (roles/show-all-applications? (:roles identity))
        [:h2 (text :t.applications/my-applications)])
-     [application-list apps loading?]
+     [application-list apps loading? {:id :my-applications
+                                      :applications ::my-applications}]
      (let [apps @(rf/subscribe [::all-applications])
            loading? @(rf/subscribe [::loading-all-applications?])]
        (when (roles/show-all-applications? (:roles identity))
          [:div
           [:h2 (text :t.applications/all-applications)]
-          [application-list apps loading?]]))]))
+          [application-list apps loading? {:id :all-applications
+                                           :applications ::all-applications}]]))]))
