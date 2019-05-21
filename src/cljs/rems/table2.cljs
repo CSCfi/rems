@@ -59,7 +59,7 @@
   (if (empty? filtered-columns)
     true ; table has no filtering enabled
     (some (fn [column]
-            (str/includes? (get-in row [(:key column) :filter-value])
+            (str/includes? (str (get-in row [(:key column) :filter-value]))
                            filters))
           filtered-columns)))
 
