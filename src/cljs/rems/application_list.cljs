@@ -69,7 +69,8 @@
  (fn [[apps] _]
    ;; TODO: filtering
    (map (fn [app]
-          {:external-id (let [value (:application/external-id app)]
+          {:key (:application/id app)
+           :external-id (let [value (:application/external-id app)]
                           {:td [:td.external-id value]
                            :sort-value value})
            :id (let [value (:application/id app)]
