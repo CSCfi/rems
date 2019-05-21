@@ -16,7 +16,7 @@
         (is (= (set (keys response)) #{:en :fi}))
         (is (= (:en response) "This is a test.\n"))))
     (testing "try to fetch non-existing extra-page"
-      (let [response (-> (request :get "api/extra-pages/test2")
+      (let [response (-> (request :get "/api/extra-pages/test2")
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-not-found? response))))))
