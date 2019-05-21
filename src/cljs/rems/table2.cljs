@@ -30,8 +30,8 @@
  ::sorting
  (fn [db [_ table]]
    (or (get-in db [::sorting (:id table)])
-       {:sort-order :asc
-        :sort-column (:default-sort-column table)})))
+       {:sort-order (get table :default-sort-order :asc)
+        :sort-column (get table :default-sort-column (-> table :columns first :key))})))
 
 (rf/reg-event-db
  ::set-filtering

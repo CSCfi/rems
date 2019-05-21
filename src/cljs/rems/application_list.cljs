@@ -3,6 +3,7 @@
             [rems.application-util :as application-util]
             [rems.guide-functions]
             [rems.table :as table]
+            [rems.table2 :as table2]
             [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -58,6 +59,55 @@
            :id-function #(str "application-" (:application/id %))
            :class "applications"}
           opts)])
+
+(defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order]}]
+  (let [all-columns [{:key :external-id
+                      :title (text :t.actions/id)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :id
+                      :title (text :t.actions/id)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :description
+                      :title (text :t.actions/description)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :resource
+                      :title (text :t.actions/resource)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :applicant
+                      :title (text :t.actions/applicant)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :state
+                      :title (text :t.actions/state)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :created
+                      :title (text :t.actions/created)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :submitted
+                      :title (text :t.actions/submitted)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :last-activity
+                      :title (text :t.actions/last-activity)
+                      :sortable? true
+                      :filterable? true}
+                     {:key :view
+                      :title ""
+                      :sortable? false
+                      :filterable? false}]
+        visible-columns (or visible-columns (constantly true))
+        application-table {:id id
+                           :columns (filter #(visible-columns (:key %)) all-columns)
+                           :rows applications ; TODO: preprocess subscription
+                           :default-sort-column default-sort-column
+                           :default-sort-order default-sort-order}]
+    [table2/table application-table]))
 
 (def ^:private +example-applications+
   [{:application/id 1

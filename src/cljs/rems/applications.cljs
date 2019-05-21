@@ -105,9 +105,19 @@
 (defn applications-page []
   (let [apps @(rf/subscribe [::my-applications])
         identity @(rf/subscribe [:identity])
-        loading? @(rf/subscribe [::loading-my-applications?])]
+        loading? @(rf/subscribe [::loading-my-applications?])
+        config @(rf/subscribe [:rems.config/config])]
     [:div
      [document-title (text :t.applications/applications)]
+
+     ;; TODO: remove spike code
+     [application-list/component2 {:id :my-applications
+                                   :applications ::my-applications
+                                   :visible-columns #{(get config :application-id-column :id)
+                                                      :description :resource :state :created :submitted :last-activity :view}
+                                   :default-sort-column :created
+                                   :default-sort-order :desc}]
+
      (when (roles/show-all-applications? (:roles identity))
        [:h2 (text :t.applications/my-applications)])
      [application-list apps loading?]
