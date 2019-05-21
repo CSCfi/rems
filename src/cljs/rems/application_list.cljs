@@ -37,6 +37,7 @@
                                 :id {:value :application/id
                                      :header #(text :t.actions/id)}
                                 :description {:value format-description
+                                              :sort-value :application/description
                                               :header #(text :t.actions/description)}
                                 :resource {:value format-catalogue-items
                                            :header #(text :t.actions/resource)}
@@ -66,30 +67,39 @@
  (fn [[_ apps-sub] _]
    [(rf/subscribe [apps-sub])])
  (fn [[apps] _]
-   ;; TODO: sorting and filtering
+   ;; TODO: filtering
    (map (fn [app]
-          {:external-id {:td [:td.external-id
-                              (:application/external-id app)]}
-           :id {:td [:td.id
-                     (:application/id app)]}
-           :description {:td [:td.description
-                              (format-description app)]}
-           :resource {:td [:td.resource
-                           (format-catalogue-items app)]}
-           :applicant {:td [:td.applicant
-                            (:application/applicant app)]}
-           :state {:td [:td.state
-                        {:class (when (application-util/form-fields-editable? app)
-                                  "text-highlight")}
-                        (localize-state (:application/state app))]}
-           :created {:td [:td.created
-                          (localize-time (:application/created app))]}
-           :submitted {:td [:td.submitted
-                            (localize-time (:application/first-submitted app))]}
-           :last-activity {:td [:td.last-activity
-                                (localize-time (:application/last-activity app))]}
-           :view {:td [:td.view
-                       [view-button app]]}})
+          {:external-id (let [value (:application/external-id app)]
+                          {:td [:td.external-id value]
+                           :sort-value value})
+           :id (let [value (:application/id app)]
+                 {:td [:td.id value]
+                  :sort-value value})
+           :description {:td [:td.description (format-description app)]
+                         :sort-value (:application/description app)}
+           :resource (let [value (format-catalogue-items app)]
+                       {:td [:td.resource value]
+                        :sort-value value})
+           :applicant (let [value (:application/applicant app)]
+                        {:td [:td.applicant value]
+                         :sort-value value})
+           :state (let [value (localize-state (:application/state app))]
+                    {:td [:td.state
+                          {:class (when (application-util/form-fields-editable? app)
+                                    "text-highlight")}
+                          value]
+                     :sort-value value})
+           :created (let [value (:application/created app)]
+                      {:td [:td.created
+                            (localize-time value)]
+                       :sort-value value})
+           :submitted (let [value (:application/first-submitted app)]
+                        {:td [:td.submitted (localize-time value)]
+                         :sort-value value})
+           :last-activity (let [value (:application/last-activity app)]
+                            {:td [:td.last-activity (localize-time value)]
+                             :sort-value value})
+           :view {:td [:td.view [view-button app]]}})
         apps)))
 
 (defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order]}]
