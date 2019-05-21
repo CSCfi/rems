@@ -88,9 +88,7 @@
 (defn- valid-request-field? [field languages]
   (and (valid-required-localized-string? (:title field) languages)
        (not (str/blank? (:type field)))
-       (if (supports-optional? field)
-         (boolean? (:optional field))
-         (nil? (:optional field)))
+       (boolean? (:optional field))
        (if (supports-input-prompt? field)
          (valid-optional-localized-string? (:input-prompt field) languages)
          (nil? (:input-prompt field)))
@@ -112,9 +110,10 @@
 
 (defn- build-request-field [field languages]
   (merge {:title (build-localized-string (:title field) languages)
-          :type (:type field)}
-         (when (supports-optional? field)
-           {:optional (boolean (:optional field))})
+          :type (:type field)
+          :optional (if (supports-optional? field)
+                      (boolean (:optional field))
+                      false)}
          (when (supports-input-prompt? field)
            {:input-prompt (build-localized-string (:input-prompt field) languages)})
          (when (supports-maxlength? field)
