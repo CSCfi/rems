@@ -88,7 +88,7 @@
 
 ;; TODO not implemented
 (defn- load-application-states-button []
-  [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#load-application-states-modal" :disabled true}
+  [:button.btn.btn-secondary {:type :button :data-toggle "modal" :data-target "#load-application-states-modal" :disabled true}
    (text :t.actions/load-application-states)])
 
 (defn- export-entitlements-button []
@@ -98,12 +98,12 @@
 
 ;; TODO not implemented
 (defn- show-publications-button []
-  [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#show-publications-modal" :disabled true}
+  [:button.btn.btn-secondary {:type :button :data-toggle "modal" :data-target "#show-publications-modal" :disabled true}
    (text :t.actions/show-publications)])
 
 ;; TODO not implemented
 (defn- show-throughput-times-button []
-  [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#show-throughput-times-modal" :disabled true}
+  [:button.btn.btn-secondary {:type :button :data-toggle "modal" :data-target "#show-throughput-times-modal" :disabled true}
    (text :t.actions/show-throughput-times)])
 
 (defn- report-buttons []

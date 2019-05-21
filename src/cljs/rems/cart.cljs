@@ -29,7 +29,7 @@
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
   [:button.btn.btn-primary.add-to-cart
-   {:type "submit"
+   {:type :button
     :on-click #(rf/dispatch [::add-item item])}
    (text :t.cart/add)])
 
@@ -37,7 +37,7 @@
   "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
   [:button.btn.btn-secondary.remove-from-cart
-   {:type "submit"
+   {:type :button
     :on-click #(rf/dispatch [::remove-item (:id item)])}
    (text :t.cart/remove)])
 
@@ -47,7 +47,9 @@
        (mapv edn/read-string)))
 
 (defn- apply-button [items]
-  [:button.btn.btn-primary.apply-for-catalogue-items {:on-click #(application/apply-for items)}
+  [:button.btn.btn-primary.apply-for-catalogue-items
+   {:type :button
+    :on-click #(application/apply-for items)}
    (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]

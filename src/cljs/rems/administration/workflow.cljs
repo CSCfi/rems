@@ -34,12 +34,14 @@
 
 (defn- back-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration/workflows")}
+   {:type :button
+    :on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/back)])
 
 (defn- edit-button [id]
   [:button.btn.btn-primary
-   {:on-click #(dispatch! (str "/#/administration/edit-workflow/" id))}
+   {:type :button
+    :on-click #(dispatch! (str "/#/administration/edit-workflow/" id))}
    (text :t.administration/edit)])
 
 (defn get-localized-value [field key language]

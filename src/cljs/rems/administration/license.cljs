@@ -33,7 +33,8 @@
 
 (defn- back-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration/licenses")}
+   {:type :button
+    :on-click #(dispatch! "/#/administration/licenses")}
    (text :t.administration/back)])
 
 (defn- to-create-license []

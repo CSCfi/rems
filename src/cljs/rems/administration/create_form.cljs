@@ -243,13 +243,15 @@
         languages @(rf/subscribe [:languages])
         request (build-request form languages)]
     [:button.btn.btn-primary
-     {:on-click #(on-click request)
+     {:type :button
+      :on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration/forms")}
+   {:button "type"
+    :on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/cancel)])
 
 (defn- form-fields [fields]
