@@ -66,18 +66,30 @@
  (fn [[_ apps-sub] _]
    [(rf/subscribe [apps-sub])])
  (fn [[apps] _]
-   ;; TODO
+   ;; TODO: sorting and filtering
    (map (fn [app]
-          {:external-id {:td [:td.external-id "x"]}
-           :id {:td [:td.id "x"]}
-           :description {:td [:td.description "x"]}
-           :resource {:td [:td.resource "x"]}
-           :applicant {:td [:td.applicant "x"]}
-           :state {:td [:td.state "x"]}
-           :created {:td [:td.created "x"]}
-           :submitted {:td [:td.submitted "x"]}
-           :last-activity {:td [:td.last-activity "x"]}
-           :view {:td [:td.view "x"]}})
+          {:external-id {:td [:td.external-id
+                              (:application/external-id app)]}
+           :id {:td [:td.id
+                     (:application/id app)]}
+           :description {:td [:td.description
+                              (format-description app)]}
+           :resource {:td [:td.resource
+                           (format-catalogue-items app)]}
+           :applicant {:td [:td.applicant
+                            (:application/applicant app)]}
+           :state {:td [:td.state
+                        {:class (when (application-util/form-fields-editable? app)
+                                  "text-highlight")}
+                        (localize-state (:application/state app))]}
+           :created {:td [:td.created
+                          (localize-time (:application/created app))]}
+           :submitted {:td [:td.submitted
+                            (localize-time (:application/first-submitted app))]}
+           :last-activity {:td [:td.last-activity
+                                (localize-time (:application/last-activity app))]}
+           :view {:td [:td.view
+                       [view-button app]]}})
         apps)))
 
 (defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order]}]
