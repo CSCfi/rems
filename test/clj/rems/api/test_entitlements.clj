@@ -44,7 +44,9 @@
                      (authenticate api-key "developer")
                      handler
                      read-body)]
-        (is (= 2 (count data)))))
+        (is (= 2 (count data)))
+        (check-alice-entitlement (first data))
+        (check-developer-entitlement (second data))))
 
     (doseq [userid ["developer" "owner" "reporter"]]
       (testing (str "all as " userid)
