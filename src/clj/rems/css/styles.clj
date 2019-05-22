@@ -637,7 +637,7 @@
    [:h2 {:margin [[(u/rem 1) 0]]}]
 
    ;; application list
-   [:.applications
+   [:.rems-table
     [:.application-description {:overflow :hidden
                                 :text-overflow :ellipsis
                                 :white-space :nowrap
