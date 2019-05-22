@@ -57,8 +57,8 @@
     (let [translations (locales/load-translations {:languages [:en :fi]
                                                    :translations-directory "translations/"})]
       (is (= [:en :fi] (sort (keys translations))))
-      (is (not (empty? (:en translations))))
-      (is (not (empty? (:fi translations))))))
+      (is (seq (:en translations)))
+      (is (seq (:fi translations)))))
 
   (testing "loads external translations"
     (let [translations-dir (create-temp-dir)

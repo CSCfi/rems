@@ -60,16 +60,16 @@
   Used for e.g. displaying applicant attributes.
 
   Additional options:
-  `:inline?`  - puts the label and value on the same row
-  `:no-box?` - don't wrap the value into a field value box"
-  [title value & [{:keys [inline? no-box?] :as opts}]]
+  `:inline?` - puts the label and value on the same row
+  `:box?`    - wrap the value into a field value box (default true)"
+  [title value & [{:keys [inline? box?] :or {box? true} :as opts}]]
   (if inline?
     [:div.form-group.row
      [:label.col-sm-3.col-form-label title]
-     [:div.col-sm-9 (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]
+     [:div.col-sm-9 (if box? {:class "form-control"} {:style {:padding-left 0}}) value]]
     [:div.form-group
      [:label title]
-     [:div (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]))
+     [:div (if box? {:class "form-control"} {:style {:padding-left 0}}) value]]))
 
 (defn attachment-link
   "Renders link to the attachment with `id` and name `title`."
@@ -118,6 +118,8 @@
    (component-info info-field)
    (example "info-field with data"
             [info-field "Name" "Bob Tester"])
+   (example "info-field without box around value"
+            [info-field "Name" "Bob Tester" {:box? false}])
    (example "info-field inline"
             [info-field "Name" "Bob Tester" {:inline? true}])
    (component-info attachment-link)

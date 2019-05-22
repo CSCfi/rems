@@ -70,7 +70,7 @@
 (defn cart-list
   "List of shopping cart items"
   [items language]
-  (when-not (empty? items)
+  (when (seq items)
     [:div.outer-cart.mb-3
      [:div.inner-cart
       [:div.cart-title
