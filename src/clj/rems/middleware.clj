@@ -188,7 +188,7 @@
                 "user:" context/*user*
                 "roles:" context/*roles*)
       (log/debug "session" (pr-str (:session request)))
-      (when-not (empty? (:form-params request))
+      (when (seq (:form-params request))
         (log/debug "form params" (pr-str (:form-params request))))
       (let [response (handler request)]
         (log/info "<" (:request-method request) uri (:status response)

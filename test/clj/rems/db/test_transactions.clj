@@ -145,7 +145,7 @@
         (prn 'all-events-reader-results (count all-events-reader-results)))
 
       (testing "all commands succeeded"
-        (is (not (empty? writer-results)))
+        (is (seq writer-results))
         (is (every? nil? writer-results)) ; successful commands return nil
         (is (= (count writer-results)
                (count writer-attempts))

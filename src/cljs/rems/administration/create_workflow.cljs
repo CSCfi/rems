@@ -58,7 +58,7 @@
        (not (str/blank? (:title request)))
        (case (:type request)
          :auto-approve true
-         :dynamic (not (empty? (:handlers request)))
+         :dynamic (seq (:handlers request))
          nil false)))
 
 (defn build-create-request [form]
@@ -73,7 +73,7 @@
 
 (defn- valid-update-request? [request]
   (and (number? (:id request))
-       (not (empty? (:handlers request)))
+       (seq (:handlers request))
        (not (str/blank? (:title request)))))
 
 (defn build-update-request [id form]

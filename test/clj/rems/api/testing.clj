@@ -53,7 +53,7 @@
 
 (defn coll-is-not-empty? [data]
   (and (coll? data)
-       (not (empty? data))))
+       (seq data)))
 
 (defn coll-is-empty? [data]
   (and (coll? data)
