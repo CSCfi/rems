@@ -75,7 +75,8 @@
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
-(defn component [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]}]
+(defn component [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]
+                  :or {visible-columns (constantly true) filterable? true}}]
   (let [all-columns [{:key :id
                       :title (text :t.actions/id)}
                      {:key :external-id
@@ -97,14 +98,13 @@
                      {:key :view
                       :sortable? false
                       :filterable? false}]
-        visible-columns (or visible-columns (constantly true))
         application-table {:id id
                            :columns (filter #(visible-columns (:key %)) all-columns)
                            :rows [::table-rows applications]
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
     [:div
-     (when-not (false? filterable?)
+     (when filterable?
        [table2/search application-table])
      [table2/table application-table]]))
 
