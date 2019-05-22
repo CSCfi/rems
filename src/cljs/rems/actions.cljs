@@ -107,7 +107,7 @@
   (let [applications ::todo-applications]
     (if (empty? @(rf/subscribe [applications]))
       [:div.actions.alert.alert-success (text :t.actions/empty)]
-      [application-list/component2
+      [application-list/component
        (-> (application-list-defaults)
            (assoc :id applications
                   :applications applications))])))
@@ -122,7 +122,7 @@
       [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
 
       :else
-      [application-list/component2
+      [application-list/component
        (-> (application-list-defaults)
            (update :visible-columns disj :submitted)
            (assoc :id applications

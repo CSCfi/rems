@@ -103,7 +103,7 @@
     (when (seq @(rf/subscribe [applications]))
       [:div
        [:h2 (text :t.catalogue/continue-existing-application)]
-       [application-list/component2
+       [application-list/component
         {:id applications
          :applications applications
          :visible-columns #{:resource :last-activity :view}

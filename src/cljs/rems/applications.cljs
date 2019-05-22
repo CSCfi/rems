@@ -80,7 +80,7 @@
           :else
           (let [config @(rf/subscribe [:rems.config/config])
                 id-column (get config :application-id-column :id)]
-            [application-list/component2
+            [application-list/component
              (merge {:visible-columns #{id-column :description :resource :state :created :submitted :last-activity :view}
                      :default-sort-column :created
                      :default-sort-order :desc}

@@ -3,7 +3,6 @@
             [re-frame.core :as rf]
             [rems.application-util :as application-util]
             [rems.guide-functions]
-            [rems.table :as table]
             [rems.table2 :as table2]
             [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -23,44 +22,6 @@
   [:div {:class "application-description"
          :title (:application/description app)}
    (:application/description app)])
-
-(defn component
-  "A table of applications.
-
-  See `table/component`.
-
-  Binds the column definitions for you and the visible columns should be a subsequence."
-  [opts]
-  [table/component
-   (merge {:column-definitions {:external-id {:value :application/external-id
-                                              :header #(text :t.actions/id)}
-                                :id {:value :application/id
-                                     :header #(text :t.actions/id)}
-                                :description {:value format-description
-                                              :sort-value :application/description
-                                              :header #(text :t.actions/description)}
-                                :resource {:value format-catalogue-items
-                                           :header #(text :t.actions/resource)}
-                                :applicant {:value :application/applicant
-                                            :header #(text :t.actions/applicant)}
-                                :state {:value #(localize-state (:application/state %))
-                                        :header #(text :t.actions/state)
-                                        :class #(if (application-util/form-fields-editable? %) "state text-highlight" "state")}
-                                :created {:value #(localize-time (:application/created %))
-                                          :sort-value :application/created
-                                          :header #(text :t.actions/created)}
-                                :submitted {:value #(localize-time (:application/first-submitted %))
-                                            :sort-value :application/first-submitted
-                                            :header #(text :t.actions/submitted)}
-                                :last-activity {:value #(localize-time (:application/last-activity %))
-                                                :sort-value :application/last-activity
-                                                :header #(text :t.actions/last-activity)}
-                                :view {:value view-button
-                                       :sortable? false
-                                       :filterable? false}}
-           :id-function #(str "application-" (:application/id %))
-           :class "applications"}
-          opts)])
 
 (rf/reg-sub
  ::table-rows
@@ -114,7 +75,7 @@
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
-(defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]}]
+(defn component [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]}]
   (let [all-columns [{:key :id
                       :title (text :t.actions/id)
                       :sortable? true
@@ -208,18 +169,18 @@
        :application/last-activity "2017-01-01T01:01:01:001Z"}]))
 
   [:div
-   (component-info component2)
+   (component-info component)
    (example "empty list"
-            [component2 {:id ::example1
-                         :applications ::no-applications
-                         :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
+            [component {:id ::example1
+                        :applications ::no-applications
+                        :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, default order"
-            [component2 {:id ::example2
-                         :applications ::example-applications
-                         :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
+            [component {:id ::example2
+                        :applications ::example-applications
+                        :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, descending date, all columns"
-            [component2 {:id ::example3
-                         :applications ::example-applications
-                         :visible-columns (constantly true)
-                         :default-sort-column :created
-                         :default-sort-order :desc}])])
+            [component {:id ::example3
+                        :applications ::example-applications
+                        :visible-columns (constantly true)
+                        :default-sort-column :created
+                        :default-sort-order :desc}])])
