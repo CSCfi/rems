@@ -113,18 +113,18 @@
    [show-publications-button]
    [show-throughput-times-button]])
 
-(defn- open-applications
-  [apps]
-  (if (empty? apps)
-    [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [application-list/component
-     {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
-                             [:description :resource :applicant :state :submitted :last-activity :view])
-      :sorting (assoc @(rf/subscribe [::sorting ::open-applications])
-                      :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
-      :filtering (assoc @(rf/subscribe [::filtering ::open-applications])
-                        :set-filtering #(rf/dispatch [::set-filtering ::open-applications %]))
-      :items apps}]))
+(defn- open-applications []
+  (let [apps @(rf/subscribe [::actions])
+        config @(rf/subscribe [:rems.config/config])
+        id-column (get config :application-id-column :id)]
+    (if (empty? apps)
+      [:div.actions.alert.alert-success (text :t.actions/empty)]
+      [application-list/component2
+       {:id ::open-applications
+        :applications ::actions
+        :visible-columns #{id-column :description :resource :applicant :state :submitted :last-activity :view}
+        :default-sort-column :last-activity
+        :default-sort-order :desc}])))
 
 (defn- handled-applications
   "Creates a table containing a list of handled applications.
@@ -150,8 +150,7 @@
          :items apps}]])))
 
 (defn actions-page []
-  (let [actions @(rf/subscribe [::actions])
-        handled-actions @(rf/subscribe [::handled-actions])]
+  (let [handled-actions @(rf/subscribe [::handled-actions])]
     [:div
      [document-title (text :t.navigation/actions)]
      (if @(rf/subscribe [::loading-actions?])
@@ -161,7 +160,7 @@
          {:id "open-approvals"
           :open? true
           :title (text :t.actions/open-approvals)
-          :collapse [open-applications actions]}]
+          :collapse [open-applications]}]
         [collapsible/component
          {:id "handled-approvals"
           :on-open #(rf/dispatch [::fetch-handled-actions])
