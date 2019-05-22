@@ -76,7 +76,7 @@
                             " "
                             (str/upper-case (:langcode localization)))
                        [attachment-link (:attachment-id localization) (:title localization)]
-                       {:no-box? true}])))
+                       {:box? false}])))
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                  [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
 
