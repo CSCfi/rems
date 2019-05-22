@@ -18,16 +18,18 @@
 (defn- entitlement-to-api [{:keys [resid catappid start end mail]}]
   {:resource resid
    :application-id catappid
-   :start (text/localize-time start)
-   :end (text/localize-time end)
+   :start start
+   :end end
    :mail mail})
 
-(defn get-entitlements-for-api [user-or-nil resource-or-nil]
+(defn get-entitlements-for-api [user-or-nil resource-or-nil expired?]
   (if (has-roles? :handler :owner :reporter)
     (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
-                                                   :resource resource-or-nil}))
+                                                   :resource resource-or-nil
+                                                   :is-active? (not expired?)}))
     (mapv entitlement-to-api (db/get-entitlements {:user (getx-user-id)
-                                                   :resource resource-or-nil}))))
+                                                   :resource resource-or-nil
+                                                   :is-active? (not expired?)}))))
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"

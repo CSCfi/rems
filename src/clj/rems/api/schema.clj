@@ -64,8 +64,8 @@
 (s/defschema Entitlement
   {:resource s/Str
    :application-id s/Num
-   :start s/Str
-   :end (s/maybe s/Str)
+   :start DateTime
+   :end (s/maybe DateTime)
    :mail s/Str})
 
 (s/defschema UpdateStateCommand

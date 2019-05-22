@@ -15,7 +15,9 @@
             [rems.db.workflow-actors :as actors]
             [rems.locales :as locales]
             [rems.poller.email :as email]
-            [ring.util.http-response :refer [bad-request!]])
+            [rems.poller.entitlements :as entitlements-poller]
+            [ring.util.http-response :refer [bad-request!]]
+            [rems.poller.entitlements :as entitlements-poller])
   (:import [java.util UUID]
            [org.joda.time DateTimeUtils DateTime]))
 
@@ -596,6 +598,13 @@
       (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"}))
 
+    (let [app-id (create-draft! applicant catid wfid "approved application that is closed")] ; approved then closed
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}) ; submit
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
+      (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"})
+      (entitlements-poller/run)
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
     (let [app-id (create-draft! applicant catid wfid "application in commenting")] ; still in commenting
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment ""}))
