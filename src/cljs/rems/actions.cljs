@@ -12,60 +12,60 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (dissoc db ::actions ::handled-actions) ; zero state that should be reloaded, good for performance
-    :dispatch [::fetch-actions]}))
+   {:db (dissoc db ::todo-applications ::handled-applications)
+    :dispatch [::fetch-todo-applications]}))
 
-;;;; actions
+;;;; applications to do
 
 (rf/reg-event-fx
- ::fetch-actions
+ ::fetch-todo-applications
  (fn [{:keys [db]} _]
    (fetch "/api/applications/todo"
-          {:handler #(rf/dispatch [::fetch-actions-result %])})
-   {:db (assoc db ::loading-actions? true)}))
+          {:handler #(rf/dispatch [::fetch-todo-applications-result %])})
+   {:db (assoc db ::loading-todo-applications? true)}))
 
 (rf/reg-event-db
- ::fetch-actions-result
+ ::fetch-todo-applications-result
  (fn [db [_ result]]
    (-> db
-       (assoc ::actions result)
-       (dissoc ::loading-actions?))))
+       (assoc ::todo-applications result)
+       (dissoc ::loading-todo-applications?))))
 
 (rf/reg-sub
- ::actions
+ ::todo-applications
  (fn [db _]
-   (::actions db)))
+   (::todo-applications db)))
 
 (rf/reg-sub
- ::loading-actions?
+ ::loading-todo-applications?
  (fn [db _]
-   (::loading-actions? db)))
+   (::loading-todo-applications? db)))
 
-;;;; handled actions
+;;;; handled applications
 
 (rf/reg-event-fx
- ::fetch-handled-actions
+ ::fetch-handled-applications
  (fn [{:keys [db]} _]
    (fetch "/api/applications/handled"
-          {:handler #(rf/dispatch [::fetch-handled-actions-result %])})
-   {:db (assoc db ::loading-handled-actions? true)}))
+          {:handler #(rf/dispatch [::fetch-handled-applications-result %])})
+   {:db (assoc db ::loading-handled-applications? true)}))
 
 (rf/reg-event-db
- ::fetch-handled-actions-result
+ ::fetch-handled-applications-result
  (fn [db [_ result]]
    (-> db
-       (assoc ::handled-actions result)
-       (dissoc ::loading-handled-actions?))))
+       (assoc ::handled-applications result)
+       (dissoc ::loading-handled-applications?))))
 
 (rf/reg-sub
- ::handled-actions
+ ::handled-applications
  (fn [db _]
-   (::handled-actions db)))
+   (::handled-applications db)))
 
 (rf/reg-sub
- ::loading-handled-actions?
+ ::loading-handled-applications?
  (fn [db _]
-   (::loading-handled-actions? db)))
+   (::loading-handled-applications? db)))
 
 ;;;; UI
 
@@ -103,19 +103,19 @@
      :default-sort-column :last-activity
      :default-sort-order :desc}))
 
-(defn- open-applications []
-  (let [applications ::actions]
+(defn- todo-applications []
+  (let [applications ::todo-applications]
     (if (empty? @(rf/subscribe [applications]))
       [:div.actions.alert.alert-success (text :t.actions/empty)]
       [application-list/component2
        (-> (application-list-defaults)
-           (assoc :id ::open-applications
+           (assoc :id applications
                   :applications applications))])))
 
 (defn- handled-applications []
-  (let [applications ::handled-actions]
+  (let [applications ::handled-applications]
     (cond
-      @(rf/subscribe [::loading-handled-actions?])
+      @(rf/subscribe [::loading-handled-applications?])
       [spinner/big]
 
       (empty? @(rf/subscribe [applications]))
@@ -125,22 +125,22 @@
       [application-list/component2
        (-> (application-list-defaults)
            (update :visible-columns disj :submitted)
-           (assoc :id ::handled-applications
+           (assoc :id applications
                   :applications applications))])))
 
 (defn actions-page []
   [:div
    [document-title (text :t.navigation/actions)]
-   (if @(rf/subscribe [::loading-actions?])
+   (if @(rf/subscribe [::loading-todo-applications?])
      [spinner/big]
      [:div.spaced-sections
       [collapsible/component
-       {:id "open-approvals"
+       {:id "todo-applications"
         :open? true
-        :title (text :t.actions/open-approvals)
-        :collapse [open-applications]}]
+        :title (text :t.actions/todo-applications)
+        :collapse [todo-applications]}]
       [collapsible/component
-       {:id "handled-approvals"
-        :on-open #(rf/dispatch [::fetch-handled-actions])
-        :title (text :t.actions/handled-approvals)
+       {:id "handled-applications"
+        :on-open #(rf/dispatch [::fetch-handled-applications])
+        :title (text :t.actions/handled-applications)
         :collapse [handled-applications]}]])])
