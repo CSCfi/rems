@@ -101,7 +101,7 @@
 (defn draft-application-list []
   (let [applications ::draft-applications]
     (when (seq @(rf/subscribe [applications]))
-      [:div.drafts
+      [:div
        [:h2 (text :t.catalogue/continue-existing-application)]
        [application-list/component2
         {:id applications
@@ -111,18 +111,22 @@
          :default-sort-order :desc
          :filterable? false}]])))
 
+(defn- catalogue-table []
+  (let [catalogue {:id ::catalogue
+                   :columns [{:key :name
+                              :title (text :t.catalogue/header)
+                              :sortable? true
+                              :filterable? true}
+                             {:key :commands}]
+                   :rows [::catalogue-table-rows]
+                   :default-sort-column :name}]
+    [:div
+     [table2/search catalogue]
+     [table2/table catalogue]]))
+
 (defn catalogue-page []
-  (let [language @(rf/subscribe [:language])
-        loading-catalogue? @(rf/subscribe [::loading-catalogue?])
-        loading-drafts? @(rf/subscribe [::loading-drafts?])
-        catalogue-table {:id ::catalogue
-                         :columns [{:key :name
-                                    :title (text :t.catalogue/header)
-                                    :sortable? true
-                                    :filterable? true}
-                                   {:key :commands}]
-                         :rows [::catalogue-table-rows]
-                         :default-sort-column :name}]
+  (let [loading-catalogue? @(rf/subscribe [::loading-catalogue?])
+        loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
      [document-title (text :t.catalogue/catalogue)]
      (if (or loading-catalogue? loading-drafts?)
@@ -130,6 +134,5 @@
        [:div
         [draft-application-list]
         [:h2 (text :t.catalogue/apply-resources)]
-        [cart/cart-list-container language]
-        [table2/search catalogue-table]
-        [table2/table catalogue-table]])]))
+        [cart/cart-list-container]
+        [catalogue-table]])]))

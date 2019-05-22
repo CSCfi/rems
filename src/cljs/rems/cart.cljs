@@ -83,8 +83,9 @@
                       (for [group (vals (into (sorted-map) (group-by key-fn items)))]
                         (group-view (sort-by get-catalogue-item-title group) language)))))]]]))
 
-(defn cart-list-container [language]
-  (let [cart @(rf/subscribe [::cart])]
+(defn cart-list-container []
+  (let [language @(rf/subscribe [:language])
+        cart @(rf/subscribe [::cart])]
     [cart-list cart language]))
 
 (defn guide []
