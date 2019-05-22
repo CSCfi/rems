@@ -30,9 +30,16 @@
                                           :mail "alice@example.com"}
                                          (dissoc x :start)))
                                   (is (valid-date? (:start x))))
+        check-alice-expired-entitlement (fn [x]
+                                          (is (= {:resource "urn:nbn:fi:lb-201403262"
+                                                  :application-id 13
+                                                  :mail "alice@example.com"}
+                                                 (dissoc x :start :end)))
+                                          (is (valid-date? (:start x)))
+                                          (is (valid-date? (:end x))))
         check-developer-entitlement (fn [x]
                                       (is (= {:resource "urn:nbn:fi:lb-201403262"
-                                              :application-id 19
+                                              :application-id 20
                                               :end nil
                                               :mail "developer@example.com"}
                                              (dissoc x :start)))
@@ -71,6 +78,16 @@
                      read-body)]
         (is (= 1 (count data)))
         (check-alice-entitlement (first data))))
+
+    (testing "also expired / ended as an owner"
+      (let [data (-> (request :get "/api/entitlements?expired=true")
+                     (authenticate api-key "owner")
+                     handler
+                     read-body)]
+        (is (= 3 (count data)))
+        (check-alice-entitlement (first data))
+        (check-alice-expired-entitlement (second data))
+        (check-developer-entitlement (nth data 2))))
 
     (testing "just for alice as a reporter"
       (let [data (-> (request :get "/api/entitlements?user=alice")

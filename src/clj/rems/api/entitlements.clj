@@ -17,6 +17,7 @@
       :summary "With proper privileges gets all entitlements, otherwise returns user's own entitlements."
       :roles #{:logged-in}
       :query-params [{user :- (describe s/Str "return entitlements for this user (optional), ignored if the user doesn't have appropriate privileges") nil}
-                     {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}]
+                     {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}
+                     {expired :- (describe s/Bool "whether to include expired entitlements") false}]
       :return GetEntitlementsResponse
-      (ok (entitlements/get-entitlements-for-api user resource)))))
+      (ok (entitlements/get-entitlements-for-api user resource expired)))))
