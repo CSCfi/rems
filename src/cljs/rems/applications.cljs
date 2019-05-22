@@ -92,12 +92,12 @@
      [document-title (text :t.applications/applications)]
      (when (roles/show-all-applications? (:roles identity))
        [:h2 (text :t.applications/my-applications)])
-     [application-list {:id :my-applications
+     [application-list {:id ::my-applications
                         :applications ::my-applications
                         ::loading? @(rf/subscribe [::loading-my-applications?])}]
      (when (roles/show-all-applications? (:roles identity))
        [:div
         [:h2 (text :t.applications/all-applications)]
-        [application-list {:id :all-applications
+        [application-list {:id ::all-applications
                            :applications ::all-applications
                            ::loading? @(rf/subscribe [::loading-all-applications?])}]])]))

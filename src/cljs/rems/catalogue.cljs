@@ -111,7 +111,7 @@
         loading-catalogue? @(rf/subscribe [::loading-catalogue?])
         drafts @(rf/subscribe [::draft-applications])
         loading-drafts? @(rf/subscribe [::loading-drafts?])
-        catalogue-table {:id :catalogue
+        catalogue-table {:id ::catalogue
                          :columns [{:key :name
                                     :title (text :t.catalogue/header)
                                     :sortable? true
