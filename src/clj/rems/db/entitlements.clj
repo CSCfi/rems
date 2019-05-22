@@ -23,13 +23,12 @@
    :mail mail})
 
 (defn get-entitlements-for-api [user-or-nil resource-or-nil expired?]
-  (if (has-roles? :handler :owner :reporter)
-    (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
-                                                   :resource resource-or-nil
-                                                   :is-active? (not expired?)}))
-    (mapv entitlement-to-api (db/get-entitlements {:user (getx-user-id)
-                                                   :resource resource-or-nil
-                                                   :is-active? (not expired?)}))))
+  (mapv entitlement-to-api
+        (db/get-entitlements {:user (if (has-roles? :handler :owner :reporter)
+                                      user-or-nil
+                                      (getx-user-id))
+                              :resource resource-or-nil
+                              :is-active? (not expired?)})))
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
