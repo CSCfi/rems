@@ -40,7 +40,6 @@
   (mount/start)
   (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
   (test-data/create-test-data!)
-  (test-data/create-performance-test-data!)
   (f)
   (mount/stop))
 
@@ -62,13 +61,13 @@
 ;;; basic navigation
 
 (defn scroll-and-click
- "Wait a button to become visible, scroll it to middle
- (to make sure it's not hidden under navigation) and click."
- [driver q & [opt]]
- (doto driver
-   (wait-visible q opt)
-   (scroll-query q {"block" "center"})
-   (click q)))
+  "Wait a button to become visible, scroll it to middle
+  (to make sure it's not hidden under navigation) and click."
+  [driver q & [opt]]
+  (doto driver
+    (wait-visible q opt)
+    (scroll-query q {"block" "center"})
+    (click q)))
 
 (defn login-as [username]
   (doto *driver*
