@@ -30,8 +30,10 @@
  ::sorting
  (fn [db [_ table]]
    (or (get-in db [::sorting (:id table)])
-       {:sort-order (get table :default-sort-order :asc)
-        :sort-column (get table :default-sort-column (-> table :columns first :key))})))
+       {:sort-order (or (:default-sort-order table)
+                        :asc)
+        :sort-column (or (:default-sort-column table)
+                         (-> table :columns first :key))})))
 
 (rf/reg-event-db
  ::set-filtering
@@ -175,7 +177,7 @@
   [:div
    (component-info table)
    (example "static table"
-            (let [example1 {:id :example1
+            (let [example1 {:id ::example1
                             :columns [{:key :first-name
                                        :title "First name"}
                                       {:key :last-name
@@ -185,7 +187,7 @@
                             :default-sort-column :first-name}]
               [table example1]))
    (example "sortable and filterable table"
-            (let [example2 {:id :example2
+            (let [example2 {:id ::example2
                             :columns [{:key :first-name
                                        :title "First name"
                                        :sortable? true

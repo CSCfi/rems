@@ -69,38 +69,38 @@
  (fn [[apps] _]
    (map (fn [app]
           {:key (:application/id app)
-           :external-id (let [value (:application/external-id app)]
-                          {:td [:td.external-id value]
-                           :sort-value value
-                           :filter-value (str/lower-case value)})
            :id (let [value (:application/id app)]
                  {:td [:td.id value]
                   :sort-value value
                   :filter-value (str/lower-case (str value))})
+           :external-id (let [value (:application/external-id app)]
+                          {:td [:td.external-id value]
+                           :sort-value value
+                           :filter-value (str/lower-case (str value))})
            :description (let [value (:application/description app)]
                           {:td [:td.description (format-description app)]
                            :sort-value value
-                           :filter-value (str/lower-case value)})
+                           :filter-value (str/lower-case (str value))})
            :resource (let [value (format-catalogue-items app)]
                        {:td [:td.resource value]
                         :sort-value value
-                        :filter-value (str/lower-case value)})
+                        :filter-value (str/lower-case (str value))})
            :applicant (let [value (:application/applicant app)]
                         {:td [:td.applicant value]
                          :sort-value value
-                         :filter-value (str/lower-case value)})
+                         :filter-value (str/lower-case (str value))})
            :state (let [value (localize-state (:application/state app))]
                     {:td [:td.state
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
                           value]
                      :sort-value value
-                     :filter-value (str/lower-case value)})
+                     :filter-value (str/lower-case (str value))})
            :created (let [value (:application/created app)
                           display-value (localize-time value)]
                       {:td [:td.created display-value]
                        :sort-value value
-                       :filter-value (str/lower-case display-value)})
+                       :filter-value (str/lower-case (str display-value))})
            :submitted (let [value (:application/first-submitted app)
                             display-value (localize-time value)]
                         {:td [:td.submitted display-value]
@@ -110,16 +110,16 @@
                                 display-value (localize-time value)]
                             {:td [:td.last-activity display-value]
                              :sort-value value
-                             :filter-value (str/lower-case display-value)})
+                             :filter-value (str/lower-case (str display-value))})
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
 (defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order]}]
-  (let [all-columns [{:key :external-id
+  (let [all-columns [{:key :id
                       :title (text :t.actions/id)
                       :sortable? true
                       :filterable? true}
-                     {:key :id
+                     {:key :external-id
                       :title (text :t.actions/id)
                       :sortable? true
                       :filterable? true}
@@ -165,57 +165,60 @@
      [table2/search application-table]
      [table2/table application-table]]))
 
-(def ^:private +example-applications+
-  [{:application/id 1
-    :application/resources [{:catalogue-item/title {:en "Item 5"}}]
-    :application/state :application.state/draft
-    :application/applicant "alice"
-    :application/created "1980-01-02T13:45:00.000Z"
-    :application/last-activity "2017-01-01T01:01:01:001Z"}
-   {:application/id 2
-    :application/resources [{:catalogue-item/title {:en "Item 3"}}]
-    :application/state :application.state/submitted
-    :application/applicant "bob"
-    :application/created "1971-02-03T23:59:00.000Z"
-    :application/last-activity "2017-01-01T01:01:01:001Z"}
-   {:application/id 3
-    :application/resources [{:catalogue-item/title {:en "Item 2"}}
-                            {:catalogue-item/title {:en "Item 5"}}]
-    :application/state :application.state/approved
-    :application/applicant "charlie"
-    :application/created "1980-01-01T01:01:00.000Z"
-    :application/last-activity "2017-01-01T01:01:01:001Z"}
-   {:application/id 4
-    :application/resources [{:catalogue-item/title {:en "Item 2"}}]
-    :application/state :application.state/rejected
-    :application/applicant "david"
-    :application/created "1972-12-12T12:12:00.000Z"
-    :application/last-activity "2017-01-01T01:01:01:001Z"}
-   {:application/id 5
-    :application/resources [{:catalogue-item/title {:en "Item 2"}}]
-    :application/state :application.state/closed
-    :application/applicant "ernie"
-    :application/created "1972-12-12T12:12:00.000Z"
-    :application/last-activity "2017-01-01T01:01:01:001Z"}])
+(defn guide []
+  (rf/reg-sub
+   ::no-applications
+   (fn [_ _]
+     []))
 
-(defn guide
-  []
+  (rf/reg-sub
+   ::example-applications
+   (fn [_ _]
+     [{:application/id 1
+       :application/resources [{:catalogue-item/title {:en "Item 5"}}]
+       :application/state :application.state/draft
+       :application/applicant "alice"
+       :application/created "1980-01-02T13:45:00.000Z"
+       :application/last-activity "2017-01-01T01:01:01:001Z"}
+      {:application/id 2
+       :application/resources [{:catalogue-item/title {:en "Item 3"}}]
+       :application/state :application.state/submitted
+       :application/applicant "bob"
+       :application/created "1971-02-03T23:59:00.000Z"
+       :application/last-activity "2017-01-01T01:01:01:001Z"}
+      {:application/id 3
+       :application/resources [{:catalogue-item/title {:en "Item 2"}}
+                               {:catalogue-item/title {:en "Item 5"}}]
+       :application/state :application.state/approved
+       :application/applicant "charlie"
+       :application/created "1980-01-01T01:01:00.000Z"
+       :application/last-activity "2017-01-01T01:01:01:001Z"}
+      {:application/id 4
+       :application/resources [{:catalogue-item/title {:en "Item 2"}}]
+       :application/state :application.state/rejected
+       :application/applicant "david"
+       :application/created "1972-12-12T12:12:00.000Z"
+       :application/last-activity "2017-01-01T01:01:01:001Z"}
+      {:application/id 5
+       :application/resources [{:catalogue-item/title {:en "Item 2"}}]
+       :application/state :application.state/closed
+       :application/applicant "ernie"
+       :application/created "1972-12-12T12:12:00.000Z"
+       :application/last-activity "2017-01-01T01:01:01:001Z"}]))
+
   [:div
    (component-info component)
    (example "empty list"
-            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
-                        :sorting {:sort-column :id :sort-order :asc}
-                        :items []}])
+            [component2 {:id ::example1
+                         :applications ::no-applications
+                         :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, default order"
-            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
-                        :sorting {:sort-column :id :sort-order :asc}
-                        :items +example-applications+}])
+            [component2 {:id ::example2
+                         :applications ::example-applications
+                         :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, descending date, all columns"
-            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
-                        :sorting {:sort-column :created :sort-order :desc}
-                        :items +example-applications+}])
-   (example "applications, initially sorted by id descending, then resource descending"
-            [component {:visible-columns [:id :description :resource :applicant :state :created :last-activity :view]
-                        :sorting {:initial-sort [{:sort-column :id :sort-order :desc}
-                                                 {:sort-column :resource :sort-order :desc}]}
-                        :items +example-applications+}])])
+            [component2 {:id ::example3
+                         :applications ::example-applications
+                         :visible-columns (constantly true)
+                         :default-sort-column :created
+                         :default-sort-order :desc}])])
