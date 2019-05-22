@@ -162,6 +162,5 @@
    (example "applications, descending date, all columns"
             [component {:id ::example3
                         :applications ::example-applications
-                        :visible-columns (constantly true)
                         :default-sort-column :created
                         :default-sort-order :desc}])])
