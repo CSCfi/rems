@@ -114,7 +114,7 @@
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
-(defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order]}]
+(defn component2 [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]}]
   (let [all-columns [{:key :id
                       :title (text :t.actions/id)
                       :sortable? true
@@ -162,7 +162,8 @@
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
     [:div
-     [table2/search application-table]
+     (when-not (false? filterable?)
+       [table2/search application-table])
      [table2/table application-table]]))
 
 (defn guide []
@@ -207,7 +208,7 @@
        :application/last-activity "2017-01-01T01:01:01:001Z"}]))
 
   [:div
-   (component-info component)
+   (component-info component2)
    (example "empty list"
             [component2 {:id ::example1
                          :applications ::no-applications

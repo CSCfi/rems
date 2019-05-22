@@ -101,9 +101,6 @@
     [:h2 "Login"]
     [auth/guide]
 
-    [:h2 "Catalogue components"]
-    [catalogue/guide]
-
     [:h2 "Cart components"]
     [cart/guide]
 
