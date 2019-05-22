@@ -62,6 +62,12 @@
                    :desc #(compare %2 %1)
                    #(compare %1 %2))))))
 
+(defn- sortable? [column]
+  (:sortable? column true))
+
+(defn- filterable? [column]
+  (:filterable? column true))
+
 (defn- display-row? [row filtered-columns filters]
   (if (empty? filtered-columns)
     true ; table has no filtering enabled
@@ -78,7 +84,7 @@
  (fn [[rows filtering] [_ table]]
    (let [filters (str/lower-case (str (:filters filtering)))
          columns (->> (:columns table)
-                      (filter :filterable?))]
+                      (filter filterable?))]
      (->> rows
           (map (fn [row]
                  ;; performance optimization: hide DOM nodes instead of destroying them
@@ -116,11 +122,11 @@
     (into [:tr]
           (for [column (:columns table)]
             [:th
-             (when (:sortable? column)
+             (when (sortable? column)
                {:on-click #(rf/dispatch [::toggle-sorting table (:key column)])})
              (:title column)
              " "
-             (when (:sortable? column)
+             (when (sortable? column)
                (when (= (:key column) (:sort-column sorting))
                  [sort-symbol (:sort-order sorting)]))]))))
 
@@ -184,9 +190,13 @@
    (example "static table"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
-                                       :title "First name"}
+                                       :title "First name"
+                                       :sortable? false
+                                       :filterable? false}
                                       {:key :last-name
-                                       :title "Last name"}
+                                       :title "Last name"
+                                       :sortable? false
+                                       :filterable? false}
                                       {:key :commands}]
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]
@@ -194,13 +204,9 @@
    (example "sortable and filterable table"
             (let [example2 {:id ::example2
                             :columns [{:key :first-name
-                                       :title "First name"
-                                       :sortable? true
-                                       :filterable? true}
+                                       :title "First name"}
                                       {:key :last-name
-                                       :title "Last name"
-                                       :sortable? true
-                                       :filterable? true}
+                                       :title "Last name"}
                                       {:key :commands}]
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]

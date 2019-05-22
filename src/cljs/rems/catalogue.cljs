@@ -115,10 +115,10 @@
 (defn- catalogue-table []
   (let [catalogue {:id ::catalogue
                    :columns [{:key :name
-                              :title (text :t.catalogue/header)
-                              :sortable? true
-                              :filterable? true}
-                             {:key :commands}]
+                              :title (text :t.catalogue/header)}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false}]
                    :rows [::catalogue-table-rows]
                    :default-sort-column :name}]
     [:div

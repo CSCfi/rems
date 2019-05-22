@@ -77,43 +77,24 @@
 
 (defn component [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]}]
   (let [all-columns [{:key :id
-                      :title (text :t.actions/id)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/id)}
                      {:key :external-id
-                      :title (text :t.actions/id)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/id)}
                      {:key :description
-                      :title (text :t.actions/description)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/description)}
                      {:key :resource
-                      :title (text :t.actions/resource)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/resource)}
                      {:key :applicant
-                      :title (text :t.actions/applicant)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/applicant)}
                      {:key :state
-                      :title (text :t.actions/state)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/state)}
                      {:key :created
-                      :title (text :t.actions/created)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/created)}
                      {:key :submitted
-                      :title (text :t.actions/submitted)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/submitted)}
                      {:key :last-activity
-                      :title (text :t.actions/last-activity)
-                      :sortable? true
-                      :filterable? true}
+                      :title (text :t.actions/last-activity)}
                      {:key :view
-                      :title ""
                       :sortable? false
                       :filterable? false}]
         visible-columns (or visible-columns (constantly true))
