@@ -67,39 +67,50 @@
  (fn [[_ apps-sub] _]
    [(rf/subscribe [apps-sub])])
  (fn [[apps] _]
-   ;; TODO: filtering
    (map (fn [app]
           {:key (:application/id app)
            :external-id (let [value (:application/external-id app)]
                           {:td [:td.external-id value]
-                           :sort-value value})
+                           :sort-value value
+                           :filter-value (str/lower-case value)})
            :id (let [value (:application/id app)]
                  {:td [:td.id value]
-                  :sort-value value})
-           :description {:td [:td.description (format-description app)]
-                         :sort-value (:application/description app)}
+                  :sort-value value
+                  :filter-value (str/lower-case (str value))})
+           :description (let [value (:application/description app)]
+                          {:td [:td.description (format-description app)]
+                           :sort-value value
+                           :filter-value (str/lower-case value)})
            :resource (let [value (format-catalogue-items app)]
                        {:td [:td.resource value]
-                        :sort-value value})
+                        :sort-value value
+                        :filter-value (str/lower-case value)})
            :applicant (let [value (:application/applicant app)]
                         {:td [:td.applicant value]
-                         :sort-value value})
+                         :sort-value value
+                         :filter-value (str/lower-case value)})
            :state (let [value (localize-state (:application/state app))]
                     {:td [:td.state
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
                           value]
-                     :sort-value value})
-           :created (let [value (:application/created app)]
-                      {:td [:td.created
-                            (localize-time value)]
-                       :sort-value value})
-           :submitted (let [value (:application/first-submitted app)]
-                        {:td [:td.submitted (localize-time value)]
-                         :sort-value value})
-           :last-activity (let [value (:application/last-activity app)]
-                            {:td [:td.last-activity (localize-time value)]
-                             :sort-value value})
+                     :sort-value value
+                     :filter-value (str/lower-case value)})
+           :created (let [value (:application/created app)
+                          display-value (localize-time value)]
+                      {:td [:td.created display-value]
+                       :sort-value value
+                       :filter-value (str/lower-case display-value)})
+           :submitted (let [value (:application/first-submitted app)
+                            display-value (localize-time value)]
+                        {:td [:td.submitted display-value]
+                         :sort-value value
+                         :filter-value (str/lower-case (str display-value))})
+           :last-activity (let [value (:application/last-activity app)
+                                display-value (localize-time value)]
+                            {:td [:td.last-activity display-value]
+                             :sort-value value
+                             :filter-value (str/lower-case display-value)})
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
@@ -150,7 +161,9 @@
                            :rows [::table-rows applications]
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
-    [table2/table application-table]))
+    [:div
+     [table2/search application-table]
+     [table2/table application-table]]))
 
 (def ^:private +example-applications+
   [{:application/id 1
