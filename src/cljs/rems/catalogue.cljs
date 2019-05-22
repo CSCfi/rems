@@ -20,7 +20,8 @@
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
      {:db (dissoc db ::catalogue ::draft-applications)
       :dispatch-n [[::fetch-catalogue]
-                   [::fetch-drafts]]}
+                   [::fetch-drafts]
+                   [:rems.table2/reset]]}
      (do
        (unauthorized!)
        {}))))

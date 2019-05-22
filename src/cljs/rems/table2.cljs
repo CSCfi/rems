@@ -5,6 +5,11 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+(rf/reg-event-db
+ ::reset
+ (fn [db _]
+   (dissoc db ::sorting ::filtering)))
+
 (defn- flip [order]
   (case order
     :desc :asc

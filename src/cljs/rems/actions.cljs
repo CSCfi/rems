@@ -13,7 +13,8 @@
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (dissoc db ::todo-applications ::handled-applications)
-    :dispatch [::fetch-todo-applications]}))
+    :dispatch-n [[::fetch-todo-applications]
+                 [:rems.table2/reset]]}))
 
 ;;;; applications to do
 

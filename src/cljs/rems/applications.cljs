@@ -13,7 +13,8 @@
    {:db (dissoc db ::my-applications ::all-applications)
     :dispatch-n [[::fetch-my-applications]
                  (when (roles/show-all-applications? (:roles (:identity db)))
-                   [::fetch-all-applications])]}))
+                   [::fetch-all-applications])
+                 [:rems.table2/reset]]}))
 
 ;;;; my applications
 
