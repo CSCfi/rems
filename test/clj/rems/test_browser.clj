@@ -184,8 +184,8 @@
 ;; applications page
 
 (defn get-application-summary [application-id]
-  (let [row (query *driver* [{:css "table.applications"}
-                             {:tag :tr, :id (str "application-" application-id)}])]
+  (let [row (query *driver* [{:css "table.my-applications"}
+                             {:tag :tr, :data-row application-id}])]
     {:id application-id
      :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
      :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))

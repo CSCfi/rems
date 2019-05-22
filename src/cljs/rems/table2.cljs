@@ -118,8 +118,9 @@
                  [sort-symbol (:sort-order sorting)]))]))))
 
 (defn- table-row [row table]
-  ;; performance optimization: hide DOM nodes instead of destroying them
-  (into [:tr {:style {:display (if (::display-row? row)
+  (into [:tr {:data-row (:key row)
+              ;; performance optimization: hide DOM nodes instead of destroying them
+              :style {:display (if (::display-row? row)
                                  "table-row"
                                  "none")}}]
         (for [column (:columns table)]
