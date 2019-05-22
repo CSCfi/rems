@@ -11,19 +11,17 @@
   :once
   api-fixture)
 
-(deftest entitlements-api-security-test
-  (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/entitlements"))
-                       handler)
-          body (read-body response)]
-      (is (= "unauthorized" body)))))
-
 (defn- valid-date? [x]
   (and (string? x)
        (time-format/parse (time-format/formatters :date-time) x)))
 
 (deftest entitlements-test
   (entitlements-poller/run)
+  (testing "listing without authentication"
+    (let [response (-> (request :get (str "/api/entitlements"))
+                       handler)
+          body (read-body response)]
+      (is (= "unauthorized" body))))
   (let [api-key "42"
         check-alice-entitlement (fn [x]
                                   (is (= {:resource "urn:nbn:fi:lb-201403262"
