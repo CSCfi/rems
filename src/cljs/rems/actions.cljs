@@ -14,7 +14,7 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db ::todo-applications ::handled-applications)
     :dispatch-n [[::fetch-todo-applications]
-                 [:rems.table2/reset]]}))
+                 [:rems.table/reset]]}))
 
 ;;;; applications to do
 

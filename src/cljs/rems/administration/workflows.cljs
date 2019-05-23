@@ -5,7 +5,7 @@
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table2 :as table2]
+            [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! put! fetch]]))
 
@@ -14,7 +14,7 @@
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
     :dispatch-n [[::fetch-workflows]
-                 [:rems.table2/reset]]}))
+                 [:rems.table/reset]]}))
 
 (rf/reg-event-db
  ::fetch-workflows
@@ -106,8 +106,8 @@
                          :rows [::workflows-table-rows]
                          :default-sort-column :title}]
     [:div
-     [table2/search workflows-table]
-     [table2/table workflows-table]]))
+     [table/search workflows-table]
+     [table/table workflows-table]]))
 
 ;; TODO Very similar components are used in here, licenses, forms, resources
 (defn workflows-page []

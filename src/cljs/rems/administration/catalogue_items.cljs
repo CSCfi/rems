@@ -6,7 +6,7 @@
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table2 :as table2]
+            [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
@@ -15,7 +15,7 @@
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
     :dispatch-n [[::fetch-catalogue]
-                 [:rems.table2/reset]]}))
+                 [:rems.table/reset]]}))
 
 (rf/reg-event-fx
  ::fetch-catalogue
@@ -129,8 +129,8 @@
                          :rows [::catalogue-table-rows]
                          :default-sort-column :name}]
     [:div
-     [table2/search catalogue-table]
-     [table2/table catalogue-table]]))
+     [table/search catalogue-table]
+     [table/table catalogue-table]]))
 
 (defn catalogue-items-page []
   (into [:div

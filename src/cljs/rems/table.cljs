@@ -1,4 +1,4 @@
-(ns rems.table2
+(ns rems.table
   (:require [cljs.test :refer-macros [deftest is testing]]
             [clojure.string :as str]
             [re-frame.core :as rf]

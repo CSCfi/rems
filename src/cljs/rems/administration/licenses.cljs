@@ -5,7 +5,7 @@
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table2 :as table2]
+            [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! put! fetch]]))
 
@@ -14,7 +14,7 @@
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
     :dispatch-n [[::fetch-licenses]
-                 [:rems.table2/reset]]}))
+                 [:rems.table/reset]]}))
 
 (rf/reg-event-db
  ::fetch-licenses
@@ -107,8 +107,8 @@
                         :rows [::licenses-table-rows]
                         :default-sort-column :title}]
     [:div
-     [table2/search licenses-table]
-     [table2/table licenses-table]]))
+     [table/search licenses-table]
+     [table/table licenses-table]]))
 
 (defn licenses-page []
   (into [:div

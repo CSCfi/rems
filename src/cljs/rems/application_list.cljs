@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.application-util :as application-util]
             [rems.guide-functions]
-            [rems.table2 :as table2]
+            [rems.table :as table]
             [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -84,8 +84,8 @@
                            :default-sort-order default-sort-order}]
     [:div
      (when filterable?
-       [table2/search application-table])
-     [table2/table application-table]]))
+       [table/search application-table])
+     [table/table application-table]]))
 
 (defn guide []
   (rf/reg-sub
