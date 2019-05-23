@@ -95,6 +95,14 @@
                   :td [:td {:class "foo"} "42"]}}
            (apply-row-defaults {:key 123
                                 :foo {:value 42}}))))
+  (testing "component only"
+    (is (= {:key 123
+            :foo {:sort-value nil
+                  :display-value ""
+                  :filter-value ""
+                  :td [:td.foo [:button "Button"]]}}
+           (apply-row-defaults {:key 123
+                                :foo {:td [:td.foo [:button "Button"]]}}))))
   (testing ":filter-value is normalized to lowercase"
     (is (= {:key 123
             :foo {:sort-value ""
@@ -242,12 +250,8 @@
           (map (fn [person]
                  (let [{:keys [id first-name last-name]} person]
                    {:key id
-                    :first-name {:td [:td.first-name first-name]
-                                 :sort-value first-name
-                                 :filter-value (str/lower-case first-name)}
-                    :last-name {:td [:td.last-name last-name]
-                                :sort-value last-name
-                                :filter-value (str/lower-case last-name)}
+                    :first-name {:value first-name}
+                    :last-name {:value last-name}
                     :commands {:td [:td.commands
                                     [:button.btn.btn-primary
                                      {:type :button
@@ -270,7 +274,9 @@
                                        :title "Last name"
                                        :sortable? false
                                        :filterable? false}
-                                      {:key :commands}]
+                                      {:key :commands
+                                       :sortable? false
+                                       :filterable? false}]
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [table example1]))
@@ -280,7 +286,9 @@
                                        :title "First name"}
                                       {:key :last-name
                                        :title "Last name"}
-                                      {:key :commands}]
+                                      {:key :commands
+                                       :sortable? false
+                                       :filterable? false}]
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [:div
