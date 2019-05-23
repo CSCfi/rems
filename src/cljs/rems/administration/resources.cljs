@@ -5,7 +5,7 @@
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table :as table]
+            [rems.table2 :as table2]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
@@ -13,7 +13,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
-    :dispatch [::fetch-resources]}))
+    :dispatch-n [[::fetch-resources]
+                 [:rems.table2/reset]]}))
 
 (rf/reg-event-fx
  ::fetch-resources
@@ -45,13 +46,6 @@
           :error-handler status-modal/common-error-handler!})
    {}))
 
-(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-(rf/reg-sub ::sorting (fn [db _] (::sorting db {:sort-order :asc
-                                                :sort-column :title})))
-
-(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
-(rf/reg-sub ::filtering (fn [db _] (or (::filtering db))))
-
 (rf/reg-event-fx
  ::set-display-old?
  (fn [{:keys [db]} [_ display-old?]]
@@ -69,34 +63,52 @@
    {:href (str "/#/administration/resources/" resource-id)}
    (text :t.administration/view)])
 
-(defn- resources-columns []
-  {:organization {:header #(text :t.administration/organization)
-                  :value :organization}
-   :title {:header #(text :t.administration/resource)
-           :value :resid}
-   :start {:header #(text :t.administration/created)
-           :value (comp localize-time :start)}
-   :end {:header #(text :t.administration/end)
-         :value (comp localize-time :end)}
-   :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox not :expired)}
-   :commands {:values (fn [resource]
-                        [[to-view-resource (:id resource)]
-                         [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %1 %2])]
-                         [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %1 %2])]])
-              :sortable? false
-              :filterable? false}})
+(rf/reg-sub
+ ::resources-table-rows
+ (fn [_ _]
+   [(rf/subscribe [::resources])])
+ (fn [[resources] _]
+   (map (fn [resource]
+          {:key (:id resource)
+           :organization {:value (:organization resource)}
+           :title {:value (:resid resource)}
+           :start (let [value (:start resource)]
+                    {:value value
+                     :display-value (localize-time value)})
+           :end (let [value (:end resource)]
+                  {:value value
+                   :display-value (localize-time value)})
+           :active (let [checked? (not (:expired resource))]
+                     {:td [:td.active
+                           [readonly-checkbox checked?]]
+                      :sort-value (if checked? 1 2)})
+           :commands {:td [:td.commands
+                           [to-view-resource (:id resource)]
+                           [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %1 %2])]
+                           [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %1 %2])]]}})
+        resources)))
 
-(defn- resources-list
-  "List of resources"
-  [resources sorting filtering]
-  [table/component
-   {:column-definitions (resources-columns)
-    :visible-columns [:organization :title :start :end :active :commands]
-    :sorting sorting
-    :filtering filtering
-    :id-function :id
-    :items resources}])
+(defn- resources-list []
+  (let [resources-table {:id ::resources
+                         :columns [{:key :organization
+                                    :title (text :t.administration/organization)}
+                                   {:key :title
+                                    :title (text :t.administration/resource)}
+                                   {:key :start
+                                    :title (text :t.administration/created)}
+                                   {:key :end
+                                    :title (text :t.administration/end)}
+                                   {:key :active
+                                    :title (text :t.administration/active)
+                                    :filterable? false}
+                                   {:key :commands
+                                    :sortable? false
+                                    :filterable? false}]
+                         :rows [::resources-table-rows]
+                         :default-sort-column :title}]
+    [:div
+     [table2/search resources-table]
+     [table2/table resources-table]]))
 
 (defn resources-page []
   (into [:div
@@ -108,7 +120,4 @@
            [status-flags/display-old-toggle
             @(rf/subscribe [::display-old?])
             #(rf/dispatch [::set-display-old? %])]
-           [resources-list
-            @(rf/subscribe [::resources])
-            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
-            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))
+           [resources-list]])))
