@@ -6,7 +6,7 @@
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table :as table]
+            [rems.table2 :as table2]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
@@ -14,7 +14,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
-    :dispatch [::fetch-catalogue]}))
+    :dispatch-n [[::fetch-catalogue]
+                 [:rems.table2/reset]]}))
 
 (rf/reg-event-fx
  ::fetch-catalogue
@@ -47,17 +48,6 @@
           :error-handler status-modal/common-error-handler!})
    {}))
 
-(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :name
-        :sort-order :asc})))
-
-(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
-(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
-
 (rf/reg-event-fx
  ::set-display-old?
  (fn [{:keys [db]} [_ display-old?]]
@@ -75,51 +65,72 @@
    {:href (str "/#/administration/catalogue-items/" catalogue-item-id)}
    (text :t.administration/view)])
 
-(defn- catalogue-columns [language]
-  {:name {:header #(text :t.catalogue/header)
-          :value #(get-catalogue-item-title % language)}
-   :resource {:header #(text :t.administration/resource)
-              :value (fn [row]
-                       [:a {:href (str "#/administration/resources/" (:resource-id row))}
-                        (:resource-name row)])
-              :sort-value :resource-name
-              :filter-value :resource-name}
-   :form {:header #(text :t.administration/form)
-          :value (fn [row]
-                   [:a {:href (str "#/administration/forms/" (:formid row))}
-                    (:form-name row)])
-          :sort-value :form-name
-          :filter-value :form-name}
-   :workflow {:header #(text :t.administration/workflow)
-              :value (fn [row]
-                       [:a {:href (str "#/administration/workflows/" (:wfid row))}
-                        (:workflow-name row)])
-              :sort-value :workflow-name
-              :filter-value :workflow-name}
-   :created {:header #(text :t.administration/created)
-             :value (comp localize-time :start)}
-   :end {:header #(text :t.administration/end)
-         :value (comp localize-time :end)}
-   ;; TODO: active means not-expired currently. it should maybe mean (and not-expired enabled not-archived)
-   :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox not :expired)}
-   :commands {:values (fn [item]
-                        [[to-catalogue-item (:id item)]
-                         [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]
-                         [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]])
-              :sortable? false
-              :filterable? false}})
+(rf/reg-sub
+ ::catalogue-table-rows
+ (fn [_ _]
+   [(rf/subscribe [::catalogue])
+    (rf/subscribe [:language])])
+ (fn [[catalogue language] _]
+   (map (fn [item]
+          {:key (:id item)
+           :name {:value (get-catalogue-item-title item language)}
+           :resource (let [value (:resource-name item)]
+                       {:value value
+                        :td [:td.resource
+                             [:a {:href (str "#/administration/resources/" (:resource-id item))}
+                              value]]})
+           :form (let [value (:form-name item)]
+                   {:value value
+                    :td [:td.form
+                         [:a {:href (str "#/administration/forms/" (:formid item))}
+                          value]]})
+           :workflow (let [value (:workflow-name item)]
+                       {:value value
+                        :td [:td.workflow
+                             [:a {:href (str "#/administration/workflows/" (:wfid item))}
+                              value]]})
+           :created (let [value (:start item)]
+                      {:value value
+                       :display-value (localize-time value)})
+           :end (let [value (:end item)]
+                  {:value value
+                   :display-value (localize-time value)})
+           ;; TODO: active means not-expired currently. it should maybe mean (and not-expired enabled not-archived)
+           :active (let [checked? (not (:expired item))]
+                     {:td [:td.active
+                           [readonly-checkbox checked?]]
+                      :sort-value (if checked? 1 2)})
+           :commands {:td [:td.commands
+                           [to-catalogue-item (:id item)]
+                           [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]
+                           [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]]}})
+        catalogue)))
 
-(defn- catalogue-list
-  "List of catalogue items"
-  [items language sorting filtering]
-  [table/component
-   {:column-definitions (catalogue-columns language)
-    :visible-columns [:name :resource :form :workflow :created :end :active :commands]
-    :sorting sorting
-    :filtering filtering
-    :id-function :id
-    :items items}])
+(defn- catalogue-list []
+  (let [catalogue-table {:id ::catalogue
+                         :columns [{:key :name
+                                    :title (text :t.catalogue/header)}
+                                   {:key :resource
+                                    :title (text :t.administration/resource)}
+                                   {:key :form
+                                    :title (text :t.administration/form)}
+                                   {:key :workflow
+                                    :title (text :t.administration/workflow)}
+                                   {:key :created
+                                    :title (text :t.administration/created)}
+                                   {:key :end
+                                    :title (text :t.administration/end)}
+                                   {:key :active
+                                    :title (text :t.administration/active)
+                                    :filterable? false}
+                                   {:key :commands
+                                    :sortable? false
+                                    :filterable? false}]
+                         :rows [::catalogue-table-rows]
+                         :default-sort-column :name}]
+    [:div
+     [table2/search catalogue-table]
+     [table2/table catalogue-table]]))
 
 (defn catalogue-items-page []
   (into [:div
@@ -131,8 +142,4 @@
            [status-flags/display-old-toggle
             @(rf/subscribe [::display-old?])
             #(rf/dispatch [::set-display-old? %])]
-           [catalogue-list
-            @(rf/subscribe [::catalogue])
-            @(rf/subscribe [:language])
-            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
-            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))
+           [catalogue-list]])))
