@@ -4,8 +4,9 @@
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.config :refer [env]]
+            [rems.context :as context]
             [rems.layout :as layout]
-            [rems.text :refer [text]]
+            [rems.text :refer [with-language text]]
             [rems.util :refer [getx getx-in]]
             [ring.util.response :refer [redirect]]))
 
@@ -45,14 +46,16 @@
    :dn (getx user :dn)})
 
 (defn login-component []
-  [:div.jumbotron
-   [:h1 (text :t.ldap/title)]
-   [:form
-    {:action "/ldap/login" :method "post"}
-    [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]
-    [:input.form-control {:type "password" :placeholder (text :t.ldap/password) :name "password" :required true}]
-    (anti-forgery-field)
-    [:button.btn.btn-lg.btn-primary.btn-block {:type :submit} (text :t.ldap/login)]]])
+  (with-language context/*lang*
+    (fn []
+      [:div.jumbotron
+       [:h1 (text :t.ldap/title)]
+       [:form
+        {:action "/ldap/login" :method "post"}
+        [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]
+        [:input.form-control {:type "password" :placeholder (text :t.ldap/password) :name "password" :required true}]
+        (anti-forgery-field)
+        [:button.btn.btn-lg.btn-primary.btn-block {:type :submit} (text :t.ldap/login)]]])))
 
 (defn login-url []
   "/ldap/login")
