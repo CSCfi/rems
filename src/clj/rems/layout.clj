@@ -4,7 +4,7 @@
             [rems.context :as context]
             [rems.db.users :as users]
             [rems.json :as json]
-            [rems.text :refer [text]]
+            [rems.text :refer [text with-language]]
             [rems.util :refer [get-user-id]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
@@ -32,7 +32,8 @@ window.rems = {
            [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
            [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
            [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
-           [:title (text :t.header/title)]
+           [:title (with-language (env :default-language)
+                     #(text :t.header/title))]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
            (include-css "/assets/font-awesome/css/all.css")
            (include-css (css-filename (env :default-language)))]

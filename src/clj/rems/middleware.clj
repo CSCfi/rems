@@ -80,7 +80,6 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
-              context/*flash* (:flash request)
               context/*roles* (when context/*user*
                                 (set/union (roles/get-roles (getx-user-id))
                                            (applications/get-all-application-roles (getx-user-id))))]
@@ -135,26 +134,14 @@
   (restrict handler {:handler authenticated?
                      :on-error on-restricted-page}))
 
-(defn- wrap-tempura-locales-from-session
+(defn wrap-i18n
+  "Sets context/*lang*"
   [handler]
   (fn [request]
-    (handler
-     (if-let [lang (get-in request [:session :language])]
-       (assoc request :tr-locales [lang])
-       request))))
-
-(defn wrap-i18n
-  "Wraps tempura into both the request as well as dynamic context."
-  [handler]
-  (wrap-tempura-locales-from-session
-   (tempura/wrap-ring-request
-    (fn [request]
-      (binding [context/*tempura* (:tempura/tr request)
-                context/*lang* (or (get-in request [:params :lang])
-                                   (get-in request [:session :language])
-                                   (:default-language env))]
-        (handler request)))
-    {:tr-opts (tempura-config)})))
+    (binding [context/*lang* (or (get-in request [:params :lang])
+                                 (get-in request [:session :language])
+                                 (:default-language env))]
+      (handler request))))
 
 (defn on-unauthorized-error [request]
   (error-page
@@ -220,6 +207,5 @@
       wrap-webjars
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
-      wrap-i18n ; rendering the error page fails if rems.context/*tempura* is not set
       wrap-formats
       wrap-request-context))

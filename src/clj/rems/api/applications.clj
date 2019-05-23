@@ -7,10 +7,12 @@
             [rems.application-util :as application-util]
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
+            [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
@@ -267,9 +269,10 @@
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
       (if-let [app (applications/get-application (getx-user-id) application-id)]
-        (-> app
-            (pdf/application-to-pdf-bytes)
-            (ByteArrayInputStream.)
-            (ok)
-            (content-type "application/pdf"))
+        (with-language context/*lang*
+          #(-> app
+               (pdf/application-to-pdf-bytes)
+               (ByteArrayInputStream.)
+               (ok)
+               (content-type "application/pdf")))
         (api-util/not-found-json-response)))))
