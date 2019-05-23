@@ -157,16 +157,8 @@
                   :background-color (util/get-theme-attribute :table-bgcolor :color1)
                   :box-shadow (util/get-theme-attribute :table-shadow)
                   :color (util/get-theme-attribute :table-text-color)}
-    [:.column-header {:white-space "nowrap"}]
-    [:.column-filter {:position "relative"}
-     [:input
-      {:width "100%"}]
-     [:.reset-button
-      {:position "absolute"
-       :right "0px"
-       :top "50%"
-       :margin-top "-0.5em"}]]
-    [:th {:color (util/get-theme-attribute :table-heading-color "#fff")
+    [:th {:white-space "nowrap"
+          :color (util/get-theme-attribute :table-heading-color "#fff")
           :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
     [:th
      :td
@@ -646,7 +638,7 @@
    [:h2 {:margin [[(u/rem 1) 0]]}]
 
    ;; application list
-   [:.applications
+   [:.rems-table
     [:.application-description {:overflow :hidden
                                 :text-overflow :ellipsis
                                 :white-space :nowrap

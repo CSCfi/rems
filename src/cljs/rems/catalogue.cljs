@@ -20,7 +20,8 @@
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
      {:db (dissoc db ::catalogue ::draft-applications)
       :dispatch-n [[::fetch-catalogue]
-                   [::fetch-drafts]]}
+                   [::fetch-drafts]
+                   [:rems.table2/reset]]}
      (do
        (unauthorized!)
        {}))))
@@ -98,53 +99,41 @@
                              [cart/add-to-cart-button item]]}}))
         catalogue)))
 
-(defn draft-application-list [drafts]
-  (when (seq drafts)
-    [:div.drafts
-     [:h2 (text :t.catalogue/continue-existing-application)]
-     [application-list/component
-      {:visible-columns [:resource :last-activity :view]
-       :items drafts}]]))
+(defn draft-application-list []
+  (let [applications ::draft-applications]
+    (when (seq @(rf/subscribe [applications]))
+      [:div
+       [:h2 (text :t.catalogue/continue-existing-application)]
+       [application-list/component
+        {:id applications
+         :applications applications
+         :visible-columns #{:resource :last-activity :view}
+         :default-sort-column :last-activity
+         :default-sort-order :desc
+         :filterable? false}]])))
+
+(defn- catalogue-table []
+  (let [catalogue {:id ::catalogue
+                   :columns [{:key :name
+                              :title (text :t.catalogue/header)}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false}]
+                   :rows [::catalogue-table-rows]
+                   :default-sort-column :name}]
+    [:div
+     [table2/search catalogue]
+     [table2/table catalogue]]))
 
 (defn catalogue-page []
-  (let [language @(rf/subscribe [:language])
-        loading-catalogue? @(rf/subscribe [::loading-catalogue?])
-        drafts @(rf/subscribe [::draft-applications])
-        loading-drafts? @(rf/subscribe [::loading-drafts?])
-        catalogue-table {:id :catalogue
-                         :columns [{:key :name
-                                    :title (text :t.catalogue/header)
-                                    :sortable? true
-                                    :filterable? true}
-                                   {:key :commands}]
-                         :rows ::catalogue-table-rows
-                         :default-sort-column :name}]
+  (let [loading-catalogue? @(rf/subscribe [::loading-catalogue?])
+        loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
      [document-title (text :t.catalogue/catalogue)]
      (if (or loading-catalogue? loading-drafts?)
        [spinner/big]
        [:div
-        [draft-application-list drafts]
+        [draft-application-list]
         [:h2 (text :t.catalogue/apply-resources)]
-        [cart/cart-list-container language]
-        [table2/search catalogue-table]
-        [table2/table catalogue-table]])]))
-
-(defn guide []
-  [:div
-   (component-info draft-application-list)
-   (example "draft-list empty"
-            [draft-application-list []])
-   (example "draft-list with two drafts"
-            [draft-application-list [{:application/id 1
-                                      :application/resources [{:catalogue-item/title {:en "Item 5"}}]
-                                      :application/state :application.state/draft
-                                      :application/applicant "alice"
-                                      :application/created "1980-01-02T13:45:00.000Z"
-                                      :application/last-activity "2017-01-01T01:01:01:001Z"}
-                                     {:application/id 2
-                                      :application/resources [{:catalogue-item/title {:en "Item 3"}}]
-                                      :application/state :application.state/draft
-                                      :application/applicant "bob"
-                                      :application/created "1971-02-03T23:59:00.000Z"
-                                      :application/last-activity "2017-01-01T01:01:01:001Z"}]])])
+        [cart/cart-list-container]
+        [catalogue-table]])]))

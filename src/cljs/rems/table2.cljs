@@ -5,6 +5,11 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+(rf/reg-event-db
+ ::reset
+ (fn [db _]
+   (dissoc db ::sorting ::filtering)))
+
 (defn- flip [order]
   (case order
     :desc :asc
@@ -30,8 +35,10 @@
  ::sorting
  (fn [db [_ table]]
    (or (get-in db [::sorting (:id table)])
-       {:sort-order :asc
-        :sort-column (:default-sort-column table)})))
+       {:sort-order (or (:default-sort-order table)
+                        :asc)
+        :sort-column (or (:default-sort-column table)
+                         (-> table :columns first :key))})))
 
 (rf/reg-event-db
  ::set-filtering
@@ -46,7 +53,7 @@
 (rf/reg-sub
  ::sorted-rows
  (fn [[_ table] _]
-   [(rf/subscribe [(:rows table)])
+   [(rf/subscribe (:rows table))
     (rf/subscribe [::sorting table])])
  (fn [[rows sorting] _]
    (->> rows
@@ -55,11 +62,17 @@
                    :desc #(compare %2 %1)
                    #(compare %1 %2))))))
 
+(defn- sortable? [column]
+  (:sortable? column true))
+
+(defn- filterable? [column]
+  (:filterable? column true))
+
 (defn- display-row? [row filtered-columns filters]
   (if (empty? filtered-columns)
     true ; table has no filtering enabled
     (some (fn [column]
-            (str/includes? (get-in row [(:key column) :filter-value])
+            (str/includes? (str (get-in row [(:key column) :filter-value]))
                            filters))
           filtered-columns)))
 
@@ -71,7 +84,7 @@
  (fn [[rows filtering] [_ table]]
    (let [filters (str/lower-case (str (:filters filtering)))
          columns (->> (:columns table)
-                      (filter :filterable?))]
+                      (filter filterable?))]
      (->> rows
           (map (fn [row]
                  ;; performance optimization: hide DOM nodes instead of destroying them
@@ -109,17 +122,18 @@
     (into [:tr]
           (for [column (:columns table)]
             [:th
-             (when (:sortable? column)
+             (when (sortable? column)
                {:on-click #(rf/dispatch [::toggle-sorting table (:key column)])})
              (:title column)
              " "
-             (when (:sortable? column)
+             (when (sortable? column)
                (when (= (:key column) (:sort-column sorting))
                  [sort-symbol (:sort-order sorting)]))]))))
 
 (defn- table-row [row table]
-  ;; performance optimization: hide DOM nodes instead of destroying them
-  (into [:tr {:style {:display (if (::display-row? row)
+  (into [:tr {:data-row (:key row)
+              ;; performance optimization: hide DOM nodes instead of destroying them
+              :style {:display (if (::display-row? row)
                                  "table-row"
                                  "none")}}]
         (for [column (:columns table)]
@@ -174,27 +188,27 @@
   [:div
    (component-info table)
    (example "static table"
-            (let [example1 {:id :example1
+            (let [example1 {:id ::example1
+                            :columns [{:key :first-name
+                                       :title "First name"
+                                       :sortable? false
+                                       :filterable? false}
+                                      {:key :last-name
+                                       :title "Last name"
+                                       :sortable? false
+                                       :filterable? false}
+                                      {:key :commands}]
+                            :rows [::example-table-rows]
+                            :default-sort-column :first-name}]
+              [table example1]))
+   (example "sortable and filterable table"
+            (let [example2 {:id ::example2
                             :columns [{:key :first-name
                                        :title "First name"}
                                       {:key :last-name
                                        :title "Last name"}
                                       {:key :commands}]
-                            :rows ::example-table-rows
-                            :default-sort-column :first-name}]
-              [table example1]))
-   (example "sortable and filterable table"
-            (let [example2 {:id :example2
-                            :columns [{:key :first-name
-                                       :title "First name"
-                                       :sortable? true
-                                       :filterable? true}
-                                      {:key :last-name
-                                       :title "Last name"
-                                       :sortable? true
-                                       :filterable? true}
-                                      {:key :commands}]
-                            :rows ::example-table-rows
+                            :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [:div
                [search example2]

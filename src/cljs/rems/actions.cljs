@@ -12,77 +12,61 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (dissoc db ::actions ::handled-actions) ; zero state that should be reloaded, good for performance
-    :dispatch [::fetch-actions]}))
+   {:db (dissoc db ::todo-applications ::handled-applications)
+    :dispatch-n [[::fetch-todo-applications]
+                 [:rems.table2/reset]]}))
 
-;;;; actions
+;;;; applications to do
 
 (rf/reg-event-fx
- ::fetch-actions
+ ::fetch-todo-applications
  (fn [{:keys [db]} _]
    (fetch "/api/applications/todo"
-          {:handler #(rf/dispatch [::fetch-actions-result %])})
-   {:db (assoc db ::loading-actions? true)}))
+          {:handler #(rf/dispatch [::fetch-todo-applications-result %])})
+   {:db (assoc db ::loading-todo-applications? true)}))
 
 (rf/reg-event-db
- ::fetch-actions-result
+ ::fetch-todo-applications-result
  (fn [db [_ result]]
    (-> db
-       (assoc ::actions result)
-       (dissoc ::loading-actions?))))
+       (assoc ::todo-applications result)
+       (dissoc ::loading-todo-applications?))))
 
 (rf/reg-sub
- ::actions
+ ::todo-applications
  (fn [db _]
-   (::actions db)))
+   (::todo-applications db)))
 
 (rf/reg-sub
- ::loading-actions?
+ ::loading-todo-applications?
  (fn [db _]
-   (::loading-actions? db)))
+   (::loading-todo-applications? db)))
 
-;;;; handled actions
+;;;; handled applications
 
 (rf/reg-event-fx
- ::fetch-handled-actions
+ ::fetch-handled-applications
  (fn [{:keys [db]} _]
    (fetch "/api/applications/handled"
-          {:handler #(rf/dispatch [::fetch-handled-actions-result %])})
-   {:db (assoc db ::loading-handled-actions? true)}))
+          {:handler #(rf/dispatch [::fetch-handled-applications-result %])})
+   {:db (assoc db ::loading-handled-applications? true)}))
 
 (rf/reg-event-db
- ::fetch-handled-actions-result
+ ::fetch-handled-applications-result
  (fn [db [_ result]]
    (-> db
-       (assoc ::handled-actions result)
-       (dissoc ::loading-handled-actions?))))
+       (assoc ::handled-applications result)
+       (dissoc ::loading-handled-applications?))))
 
 (rf/reg-sub
- ::handled-actions
+ ::handled-applications
  (fn [db _]
-   (::handled-actions db)))
+   (::handled-applications db)))
 
 (rf/reg-sub
- ::loading-handled-actions?
+ ::loading-handled-applications?
  (fn [db _]
-   (::loading-handled-actions? db)))
-
-;;;; table sorting
-
-;; Because we want to display multiple independently sortable
-;; application tables, we store a map of sort types in the db.
-
-(rf/reg-sub
- ::sorting
- (fn [db [_ key]]
-   (get-in db [::sorting key]
-           {:sort-column :last-activity
-            :sort-order :desc})))
-
-(rf/reg-event-db ::set-sorting (fn [db [_ key sorting]] (assoc-in db [::sorting key] sorting)))
-
-(rf/reg-sub ::filtering (fn [db [_ key]] (get-in db [::filtering key])))
-(rf/reg-event-db ::set-filtering (fn [db [_ key filtering]] (assoc-in db [::filtering key] filtering)))
+   (::loading-handled-applications? db)))
 
 ;;;; UI
 
@@ -113,57 +97,51 @@
    [show-publications-button]
    [show-throughput-times-button]])
 
-(defn- open-applications
-  [apps]
-  (if (empty? apps)
-    [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [application-list/component
-     {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
-                             [:description :resource :applicant :state :submitted :last-activity :view])
-      :sorting (assoc @(rf/subscribe [::sorting ::open-applications])
-                      :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
-      :filtering (assoc @(rf/subscribe [::filtering ::open-applications])
-                        :set-filtering #(rf/dispatch [::set-filtering ::open-applications %]))
-      :items apps}]))
+(defn application-list-defaults []
+  (let [config @(rf/subscribe [:rems.config/config])
+        id-column (get config :application-id-column :id)]
+    {:visible-columns #{id-column :description :resource :applicant :state :submitted :last-activity :view}
+     :default-sort-column :last-activity
+     :default-sort-order :desc}))
 
-(defn- handled-applications
-  "Creates a table containing a list of handled applications.
+(defn- todo-applications []
+  (let [applications ::todo-applications]
+    (if (empty? @(rf/subscribe [applications]))
+      [:div.actions.alert.alert-success (text :t.actions/empty)]
+      [application-list/component
+       (-> (application-list-defaults)
+           (assoc :id applications
+                  :applications applications))])))
 
-  The function takes the following parameters as arguments:
-  key:         key to use for table ordering in re-frame
-  apps:        collection of apps to be shown
-  top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
-  [apps top-buttons loading?]
-  (if loading?
-    [spinner/big]
-    (if (empty? apps)
+(defn- handled-applications []
+  (let [applications ::handled-applications]
+    (cond
+      @(rf/subscribe [::loading-handled-applications?])
+      [spinner/big]
+
+      (empty? @(rf/subscribe [applications]))
       [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
-      [:div
-       top-buttons
-       [application-list/component
-        {:visible-columns (into [(get @(rf/subscribe [:rems.config/config]) :application-id-column :id)]
-                                [:description :resource :applicant :state :last-activity :view])
-         :sorting (assoc @(rf/subscribe [::sorting ::handled-applications])
-                         :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
-         :filtering (assoc @(rf/subscribe [::filtering ::handled-applications])
-                           :set-filtering #(rf/dispatch [::set-filtering ::handled-applications %]))
-         :items apps}]])))
+
+      :else
+      [application-list/component
+       (-> (application-list-defaults)
+           (update :visible-columns disj :submitted)
+           (assoc :id applications
+                  :applications applications))])))
 
 (defn actions-page []
-  (let [actions @(rf/subscribe [::actions])
-        handled-actions @(rf/subscribe [::handled-actions])]
-    [:div
-     [document-title (text :t.navigation/actions)]
-     (if @(rf/subscribe [::loading-actions?])
-       [spinner/big]
-       [:div.spaced-sections
-        [collapsible/component
-         {:id "open-approvals"
-          :open? true
-          :title (text :t.actions/open-approvals)
-          :collapse [open-applications actions]}]
-        [collapsible/component
-         {:id "handled-approvals"
-          :on-open #(rf/dispatch [::fetch-handled-actions])
-          :title (text :t.actions/handled-approvals)
-          :collapse [handled-applications handled-actions nil @(rf/subscribe [::loading-handled-actions?])]}]])]))
+  [:div
+   [document-title (text :t.navigation/actions)]
+   (if @(rf/subscribe [::loading-todo-applications?])
+     [spinner/big]
+     [:div.spaced-sections
+      [collapsible/component
+       {:id "todo-applications"
+        :open? true
+        :title (text :t.actions/todo-applications)
+        :collapse [todo-applications]}]
+      [collapsible/component
+       {:id "handled-applications"
+        :on-open #(rf/dispatch [::fetch-handled-applications])
+        :title (text :t.actions/handled-applications)
+        :collapse [handled-applications]}]])])

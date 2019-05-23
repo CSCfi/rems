@@ -25,7 +25,7 @@
             :empty "You don't have any applications to process."
             :errors {:invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]}
             :export-entitlements "Export entitlements as csv"
-            :handled-approvals "Processed applications"
+            :handled-applications "Processed applications"
             :id "Id"
             :invite-member "Invite member"
             :last-activity "Last activity"
@@ -36,7 +36,7 @@
             :member-email "Email"
             :no-handled-yet "You have not processed any applications yet."
             :ok "Ok"
-            :open-approvals "Open applications"
+            :todo-applications "Open applications"
             :reject "Reject"
             :remove-member "Remove member"
             :request-comment "Request comment"

@@ -7,7 +7,6 @@
             [rems.auth.auth :as auth]
             [rems.autocomplete :as autocomplete]
             [rems.cart :as cart]
-            [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
             [rems.language-switcher :as language-switcher]
@@ -100,9 +99,6 @@
 
     [:h2 "Login"]
     [auth/guide]
-
-    [:h2 "Catalogue components"]
-    [catalogue/guide]
 
     [:h2 "Cart components"]
     [cart/guide]

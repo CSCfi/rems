@@ -40,7 +40,6 @@
   (mount/start)
   (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
   (test-data/create-test-data!)
-  (test-data/create-performance-test-data!)
   (f)
   (mount/stop))
 
@@ -62,13 +61,13 @@
 ;;; basic navigation
 
 (defn scroll-and-click
- "Wait a button to become visible, scroll it to middle
- (to make sure it's not hidden under navigation) and click."
- [driver q & [opt]]
- (doto driver
-   (wait-visible q opt)
-   (scroll-query q {"block" "center"})
-   (click q)))
+  "Wait a button to become visible, scroll it to middle
+  (to make sure it's not hidden under navigation) and click."
+  [driver q & [opt]]
+  (doto driver
+    (wait-visible q opt)
+    (scroll-query q {"block" "center"})
+    (click q)))
 
 (defn login-as [username]
   (doto *driver*
@@ -184,8 +183,8 @@
 ;; applications page
 
 (defn get-application-summary [application-id]
-  (let [row (query *driver* [{:css "table.applications"}
-                             {:tag :tr, :id (str "application-" application-id)}])]
+  (let [row (query *driver* [{:css "table.my-applications"}
+                             {:tag :tr, :data-row application-id}])]
     {:id application-id
      :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
      :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))
