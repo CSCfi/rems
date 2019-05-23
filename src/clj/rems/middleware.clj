@@ -80,7 +80,6 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
-              context/*flash* (:flash request)
               context/*roles* (when context/*user*
                                 (set/union (roles/get-roles (getx-user-id))
                                            (applications/get-all-application-roles (getx-user-id))))]
