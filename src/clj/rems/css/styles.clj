@@ -196,12 +196,13 @@
    ;;   This could be made explicit by changing the name accordingly.
    [:.text-highlight {:color (util/get-theme-attribute :color3)}]))
 
-(def ^:private dashed-form-group {:position "relative"
-                                  :border "2px dashed #ccc"
-                                  :border-radius (u/rem 0.4)
-                                  :padding (u/px 10)
-                                  :margin-top 0
-                                  :margin-bottom (u/px 16)})
+(def ^:private dashed-form-group
+  {:position "relative"
+   :border "2px dashed #ccc"
+   :border-radius (u/rem 0.4)
+   :padding (u/px 10)
+   :margin-top 0
+   :margin-bottom (u/px 16)})
 
 (defn- remove-nil-vals
   "Recursively removes all keys with nil values from a map."

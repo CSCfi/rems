@@ -54,12 +54,12 @@
 ;;; form submit
 
 (defn- valid-create-request? [request]
-  (and (not (str/blank? (:organization request)))
-       (not (str/blank? (:title request)))
-       (case (:type request)
+  (and (case (:type request)
          :auto-approve true
          :dynamic (seq (:handlers request))
-         nil false)))
+         nil false)
+       (not (str/blank? (:organization request)))
+       (not (str/blank? (:title request)))))
 
 (defn build-create-request [form]
   (let [request {:organization (:organization form)

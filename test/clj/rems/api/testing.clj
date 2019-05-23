@@ -51,13 +51,12 @@
 (defn response-is-not-found? [response]
   (= 404 (:status response)))
 
-(defn coll-is-not-empty? [data]
-  (and (coll? data)
-       (seq data)))
-
 (defn coll-is-empty? [data]
   (and (coll? data)
        (empty? data)))
+
+(defn coll-is-not-empty? [data]
+  (not (coll-is-empty? data)))
 
 (defn read-body [{body :body}]
   (cond

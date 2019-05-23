@@ -18,70 +18,74 @@
   [application _event]
   application)
 
-(def ^:private draft-permissions {:applicant [:application.command/save-draft
-                                              :application.command/submit
-                                              :application.command/close
-                                              :application.command/remove-member
-                                              :application.command/invite-member
-                                              :application.command/uninvite-member
-                                              :application.command/accept-licenses
-                                              :application.command/change-resources]
-                                  :member [:application.command/accept-licenses]
-                                  :handler [:see-everything
-                                            :application.command/remove-member
-                                            :application.command/uninvite-member]
-                                  :commenter [:see-everything]
-                                  :decider [:see-everything]
-                                  ;; roles whose permissions don't change
-                                  :reporter [:see-everything]
-                                  :past-commenter [:see-everything]
-                                  :past-decider [:see-everything]
-                                  ;; member before accepting an invitation
-                                  :everyone-else [:application.command/accept-invitation]})
+(def ^:private draft-permissions
+  {:applicant [:application.command/save-draft
+               :application.command/submit
+               :application.command/close
+               :application.command/remove-member
+               :application.command/invite-member
+               :application.command/uninvite-member
+               :application.command/accept-licenses
+               :application.command/change-resources]
+   :member [:application.command/accept-licenses]
+   :handler [:see-everything
+             :application.command/remove-member
+             :application.command/uninvite-member]
+   :commenter [:see-everything]
+   :decider [:see-everything]
+   ;; roles whose permissions don't change
+   :reporter [:see-everything]
+   :past-commenter [:see-everything]
+   :past-decider [:see-everything]
+   ;; member before accepting an invitation
+   :everyone-else [:application.command/accept-invitation]})
 
-(def ^:private submitted-permissions {:applicant [:application.command/remove-member
-                                                  :application.command/uninvite-member
-                                                  :application.command/accept-licenses]
-                                      :member [:application.command/accept-licenses]
-                                      :handler [:see-everything
-                                                :application.command/add-licenses
-                                                :application.command/add-member
-                                                :application.command/change-resources
-                                                :application.command/remove-member
-                                                :application.command/invite-member
-                                                :application.command/uninvite-member
-                                                :application.command/request-comment
-                                                :application.command/request-decision
-                                                :application.command/return
-                                                :application.command/approve
-                                                :application.command/reject]
-                                      :commenter [:see-everything
-                                                  :application.command/comment]
-                                      :decider [:see-everything
-                                                :application.command/decide]})
+(def ^:private submitted-permissions
+  {:applicant [:application.command/remove-member
+               :application.command/uninvite-member
+               :application.command/accept-licenses]
+   :member [:application.command/accept-licenses]
+   :handler [:see-everything
+             :application.command/add-licenses
+             :application.command/add-member
+             :application.command/change-resources
+             :application.command/remove-member
+             :application.command/invite-member
+             :application.command/uninvite-member
+             :application.command/request-comment
+             :application.command/request-decision
+             :application.command/return
+             :application.command/approve
+             :application.command/reject]
+   :commenter [:see-everything
+               :application.command/comment]
+   :decider [:see-everything
+             :application.command/decide]})
 
-(def ^:private approved-permissions {:applicant [:application.command/remove-member
-                                                 :application.command/uninvite-member
-                                                 :application.command/accept-licenses]
-                                     :member [:application.command/accept-licenses]
-                                     :handler [:see-everything
-                                               :application.command/add-member
-                                               :application.command/change-resources
-                                               :application.command/remove-member
-                                               :application.command/invite-member
-                                               :application.command/uninvite-member
-                                               :application.command/close]
-                                     :commenter [:see-everything
-                                                 :application.command/comment]
-                                     :decider [:see-everything
-                                               :application.command/decide]})
+(def ^:private approved-permissions
+  {:applicant [:application.command/remove-member
+               :application.command/uninvite-member
+               :application.command/accept-licenses]
+   :member [:application.command/accept-licenses]
+   :handler [:see-everything
+             :application.command/add-member
+             :application.command/change-resources
+             :application.command/remove-member
+             :application.command/invite-member
+             :application.command/uninvite-member
+             :application.command/close]
+   :commenter [:see-everything
+               :application.command/comment]
+   :decider [:see-everything
+             :application.command/decide]})
 
-(def ^:private closed-permissions {:applicant []
-                                   :member []
-                                   :handler [:see-everything]
-                                   :commenter [:see-everything]
-                                   :decider [:see-everything]
-                                   :everyone-else []})
+(def ^:private closed-permissions
+  {:applicant []
+   :member []
+   :handler [:see-everything]
+   :commenter [:see-everything]
+   :decider [:see-everything]
+   :everyone-else []})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
