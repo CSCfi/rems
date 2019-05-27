@@ -39,20 +39,27 @@
       (db/localize-form-item! {:item item-id
                                :langcode (name lang)
                                :title (get title lang)
-                               :inputprompt (get input-prompt lang)}))))
+                               :inputprompt (get input-prompt lang)}))
+    item-id))
 
 (defn create-form! [user-id {:keys [organization title fields] :as form}]
   ;; FIXME Remove saving old style forms only when we have a db migration.
   ;;       Otherwise it will get reeealy tricky to return both versions in get-api.
   (let [form-id (:id (db/create-form! {:organization organization
                                        :title title
-                                       :user user-id}))]
+                                       :user user-id}))
+        ;; Mirror field ids to form template so that form templates
+        ;; can be cross-referenced with form answers. Once old-style
+        ;; forms are gone, will need to allocate ids here (just use
+        ;; order, or generate UUIDs)
+        fields-with-ids (map-indexed (fn [order field]
+                                       (let [id (create-form-item! user-id form-id order field)]
+                                         (assoc field :id id)))
+                                     fields)]
     (db/save-form-template! (assoc form
                                    :id form-id
                                    :user user-id
-                                   :fields (json/generate-string fields)))
-    (doseq [[index item] (map-indexed vector fields)]
-      (create-form-item! user-id form-id index item))
+                                   :fields (json/generate-string fields-with-ids)))
     {:success (not (nil? form-id))
      :id form-id}))
 

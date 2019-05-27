@@ -69,7 +69,7 @@
                   (is (= (select-keys command [:title :organization])
                          (select-keys form-template [:title :organization])))
                   (is (= (:fields command)
-                         (:fields form-template))))))))))))
+                         (mapv #(dissoc % :id) (:fields form-template)))))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
@@ -123,7 +123,10 @@
                          (authenticate api-key user-id)
                          handler
                          read-ok-body)]
-            (is (= form-spec (select-keys form [:organization :title :fields])))))))))
+            (is (= (select-keys form-spec [:organization :title])
+                   (select-keys form [:organization :title])))
+            (is (= (:fields form-spec)
+                   (mapv #(dissoc % :id) (:fields form))))))))))
 
 (deftest form-update-test
   (let [api-key "42"
@@ -196,7 +199,7 @@
                          handler
                          read-ok-body)]
             (is (= (:fields command)
-                   (:fields form)))))))))
+                   (mapv #(dissoc % :id) (:fields form))))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:expired true})
