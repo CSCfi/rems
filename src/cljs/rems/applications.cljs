@@ -14,7 +14,7 @@
     :dispatch-n [[::fetch-my-applications]
                  (when (roles/show-all-applications? (:roles (:identity db)))
                    [::fetch-all-applications])
-                 [:rems.table2/reset]]}))
+                 [:rems.table/reset]]}))
 
 ;;;; my applications
 

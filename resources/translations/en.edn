@@ -284,7 +284,6 @@
            :rejected "Rejected"}
   :search {:close-search "Close search"
            :open-search "Open search"
-           :search "Search"
            :search-parameters "Search parameters"}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You are unauthorized to use this page."}

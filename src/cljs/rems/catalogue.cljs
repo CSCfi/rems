@@ -9,7 +9,7 @@
             [rems.guide-functions]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.table2 :as table2]
+            [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [fetch unauthorized!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -21,7 +21,7 @@
      {:db (dissoc db ::catalogue ::draft-applications)
       :dispatch-n [[::fetch-catalogue]
                    [::fetch-drafts]
-                   [:rems.table2/reset]]}
+                   [:rems.table/reset]]}
      (do
        (unauthorized!)
        {}))))
@@ -119,8 +119,8 @@
                    :rows [::catalogue-table-rows]
                    :default-sort-column :name}]
     [:div
-     [table2/search catalogue]
-     [table2/table catalogue]]))
+     [table/search catalogue]
+     [table/table catalogue]]))
 
 (defn catalogue-page []
   (let [loading-catalogue? @(rf/subscribe [::loading-catalogue?])

@@ -5,7 +5,7 @@
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table2 :as table2]
+            [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
@@ -14,7 +14,7 @@
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
     :dispatch-n [[::fetch-resources]
-                 [:rems.table2/reset]]}))
+                 [:rems.table/reset]]}))
 
 (rf/reg-event-fx
  ::fetch-resources
@@ -107,8 +107,8 @@
                          :rows [::resources-table-rows]
                          :default-sort-column :title}]
     [:div
-     [table2/search resources-table]
-     [table2/table resources-table]]))
+     [table/search resources-table]
+     [table/table resources-table]]))
 
 (defn resources-page []
   (into [:div
