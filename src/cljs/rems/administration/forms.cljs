@@ -5,7 +5,7 @@
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table :as table]
+            [rems.table2 :as table2]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
@@ -13,7 +13,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
-    :dispatch [::fetch-forms]}))
+    :dispatch-n [[::fetch-forms]
+                 [:rems.table2/reset]]}))
 
 (rf/reg-event-db
  ::fetch-forms
@@ -44,18 +45,6 @@
           :error-handler status-modal/common-error-handler!})
    {}))
 
-(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :title
-        :sort-order :asc})))
-
-(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
-(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
-
 (rf/reg-event-fx
  ::set-display-old?
  (fn [{:keys [db]} [_ display-old?]]
@@ -74,34 +63,52 @@
    {:href (str "/#/administration/forms/" (:id form))}
    (text :t.administration/view)])
 
-(defn- forms-columns []
-  {:organization {:header #(text :t.administration/organization)
-                  :value :organization}
-   :title {:header #(text :t.administration/title)
-           :value :title}
-   :start {:header #(text :t.administration/created)
-           :value (comp localize-time :start)}
-   :end {:header #(text :t.administration/end)
-         :value (comp localize-time :end)}
-   :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox not :expired)}
-   :commands {:values (fn [item]
-                        [[to-view-form item]
-                         [status-flags/enabled-toggle item #(rf/dispatch [::update-form %1 %2])]
-                         [status-flags/archived-toggle item #(rf/dispatch [::update-form %1 %2])]])
-              :sortable? false
-              :filterable? false}})
+(rf/reg-sub
+ ::forms-table-rows
+ (fn [_ _]
+   [(rf/subscribe [::forms])])
+ (fn [[forms] _]
+   (map (fn [form]
+          {:key (:id form)
+           :organization {:value (:organization form)}
+           :title {:value (:title form)}
+           :start (let [value (:start form)]
+                    {:value value
+                     :display-value (localize-time value)})
+           :end (let [value (:end form)]
+                  {:value value
+                   :display-value (localize-time value)})
+           :active (let [checked? (not (:expired form))]
+                     {:td [:td.active
+                           [readonly-checkbox checked?]]
+                      :sort-value (if checked? 1 2)})
+           :commands {:td [:td.commands
+                           [to-view-form form]
+                           [status-flags/enabled-toggle form #(rf/dispatch [::update-form %1 %2])]
+                           [status-flags/archived-toggle form #(rf/dispatch [::update-form %1 %2])]]}})
+        forms)))
 
-(defn- forms-list
-  "List of forms"
-  [forms sorting filtering]
-  [table/component
-   {:column-definitions (forms-columns)
-    :visible-columns [:organization :title :start :end :active :commands]
-    :sorting sorting
-    :filtering filtering
-    :id-function :id
-    :items forms}])
+(defn- forms-list []
+  (let [forms-table {:id ::forms
+                     :columns [{:key :organization
+                                :title (text :t.administration/organization)}
+                               {:key :title
+                                :title (text :t.administration/title)}
+                               {:key :start
+                                :title (text :t.administration/created)}
+                               {:key :end
+                                :title (text :t.administration/end)}
+                               {:key :active
+                                :title (text :t.administration/active)
+                                :filterable? false}
+                               {:key :commands
+                                :sortable? false
+                                :filterable? false}]
+                     :rows [::forms-table-rows]
+                     :default-sort-column :title}]
+    [:div
+     [table2/search forms-table]
+     [table2/table forms-table]]))
 
 (defn forms-page []
   (into [:div
@@ -113,7 +120,4 @@
            [status-flags/display-old-toggle
             @(rf/subscribe [::display-old?])
             #(rf/dispatch [::set-display-old? %])]
-           [forms-list
-            @(rf/subscribe [::forms])
-            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
-            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))
+           [forms-list]])))

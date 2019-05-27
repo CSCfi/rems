@@ -1,5 +1,6 @@
 (ns rems.table2
-  (:require [clojure.string :as str]
+  (:require [cljs.test :refer-macros [deftest is testing]]
+            [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
             [rems.text :refer [text]])
@@ -50,10 +51,90 @@
  (fn [db [_ table]]
    (get-in db [::filtering (:id table)])))
 
+(defn- default-if-missing [m k make-default]
+  (if (contains? m k)
+    m
+    (assoc m k (make-default m))))
+
+(defn- apply-row-defaults [row]
+  (->> row
+       (map (fn [[column opts]]
+              [column
+               (if (= :key column) ; not a column, but the row key
+                 opts
+                 (-> opts
+                     (default-if-missing :sort-value :value)
+                     (default-if-missing :display-value (comp str :value))
+                     (default-if-missing :filter-value (fn [opts]
+                                                         (if (string? (:display-value opts))
+                                                           (str/lower-case (:display-value opts))
+                                                           "")))
+                     (default-if-missing :td (fn [opts]
+                                               [:td {:class (name column)}
+                                                (:display-value opts)]))))]))
+       (into {})))
+
+(deftest test-apply-row-defaults
+  (testing "all custom"
+    (is (= {:key 123
+            :foo {:sort-value "foo1"
+                  :display-value "foo2"
+                  :filter-value "foo3"
+                  :td [:td "foo4"]}}
+           (apply-row-defaults {:key 123
+                                :foo {:sort-value "foo1"
+                                      :display-value "foo2"
+                                      :filter-value "foo3"
+                                      :td [:td "foo4"]}}))))
+  (testing "all defaults"
+    (is (= {:key 123
+            :foo {:value 42
+                  :sort-value 42
+                  :display-value "42"
+                  :filter-value "42"
+                  :td [:td {:class "foo"} "42"]}}
+           (apply-row-defaults {:key 123
+                                :foo {:value 42}}))))
+  (testing "component only"
+    (is (= {:key 123
+            :foo {:sort-value nil
+                  :display-value ""
+                  :filter-value ""
+                  :td [:td.foo [:button "Button"]]}}
+           (apply-row-defaults {:key 123
+                                :foo {:td [:td.foo [:button "Button"]]}}))))
+  (testing ":filter-value is normalized to lowercase"
+    (is (= {:key 123
+            :foo {:sort-value ""
+                  :display-value "FooBar"
+                  :filter-value "foobar"
+                  :td [:td ""]}}
+           (apply-row-defaults {:key 123
+                                :foo {:sort-value ""
+                                      :display-value "FooBar"
+                                      :td [:td ""]}}))))
+  (testing "cannot calculate :filter-value from non-string :display-value"
+    (is (= {:key 123
+            :foo {:sort-value ""
+                  :display-value [:p "foo"]
+                  :filter-value ""
+                  :td [:td ""]}}
+           (apply-row-defaults {:key 123
+                                :foo {:sort-value ""
+                                      :display-value [:p "foo"]
+                                      :td [:td ""]}})))))
+
+(rf/reg-sub
+ ::rows
+ (fn [[_ table] _]
+   [(rf/subscribe (:rows table))])
+ (fn [[rows] _]
+   (map apply-row-defaults rows)))
+
 (rf/reg-sub
  ::sorted-rows
  (fn [[_ table] _]
-   [(rf/subscribe (:rows table))
+   [(rf/subscribe [::rows table])
     (rf/subscribe [::sorting table])])
  (fn [[rows sorting] _]
    (->> rows
@@ -169,12 +250,8 @@
           (map (fn [person]
                  (let [{:keys [id first-name last-name]} person]
                    {:key id
-                    :first-name {:td [:td.first-name first-name]
-                                 :sort-value first-name
-                                 :filter-value (str/lower-case first-name)}
-                    :last-name {:td [:td.last-name last-name]
-                                :sort-value last-name
-                                :filter-value (str/lower-case last-name)}
+                    :first-name {:value first-name}
+                    :last-name {:value last-name}
                     :commands {:td [:td.commands
                                     [:button.btn.btn-primary
                                      {:type :button
@@ -197,7 +274,9 @@
                                        :title "Last name"
                                        :sortable? false
                                        :filterable? false}
-                                      {:key :commands}]
+                                      {:key :commands
+                                       :sortable? false
+                                       :filterable? false}]
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [table example1]))
@@ -207,7 +286,9 @@
                                        :title "First name"}
                                       {:key :last-name
                                        :title "Last name"}
-                                      {:key :commands}]
+                                      {:key :commands
+                                       :sortable? false
+                                       :filterable? false}]
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [:div

@@ -5,7 +5,7 @@
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table :as table]
+            [rems.table2 :as table2]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! put! fetch]]))
 
@@ -13,7 +13,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
-    :dispatch [::fetch-licenses]}))
+    :dispatch-n [[::fetch-licenses]
+                 [:rems.table2/reset]]}))
 
 (rf/reg-event-db
  ::fetch-licenses
@@ -34,8 +35,6 @@
 (rf/reg-sub ::licenses (fn [db _] (::licenses db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-
 (rf/reg-event-fx
  ::update-license
  (fn [_ [_ item description]]
@@ -45,16 +44,6 @@
           :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-licenses]))
           :error-handler status-modal/common-error-handler!})
    {}))
-
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :title
-        :sort-order :asc})))
-
-(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
-(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (rf/reg-event-fx
  ::set-display-old?
@@ -74,34 +63,52 @@
    {:href (str "/#/administration/licenses/" license-id)}
    (text :t.administration/view)])
 
-(defn- licenses-columns []
-  {:title {:header #(text :t.administration/licenses)
-           :value :title}
-   :type {:header #(text :t.administration/type)
-          :value :licensetype}
-   :start {:header #(text :t.administration/created)
-           :value (comp localize-time :start)}
-   :end {:header #(text :t.administration/end)
-         :value (comp localize-time :end)}
-   :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox not :expired)}
-   :commands {:values (fn [license]
-                        [[to-view-license (:id license)]
-                         [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2])]
-                         [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2])]])
-              :sortable? false
-              :filterable? false}})
+(rf/reg-sub
+ ::licenses-table-rows
+ (fn [_ _]
+   [(rf/subscribe [::licenses])])
+ (fn [[licenses] _]
+   (map (fn [license]
+          {:key (:id license)
+           :title {:value (:title license)}
+           :type {:value (:licensetype license)}
+           :start (let [value (:start license)]
+                    {:value value
+                     :display-value (localize-time value)})
+           :end (let [value (:end license)]
+                  {:value value
+                   :display-value (localize-time value)})
+           :active (let [checked? (not (:expired license))]
+                     {:td [:td.active
+                           [readonly-checkbox checked?]]
+                      :sort-value (if checked? 1 2)})
+           :commands {:td [:td.commands
+                           [to-view-license (:id license)]
+                           [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2])]
+                           [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2])]]}})
+        licenses)))
 
-(defn- licenses-list
-  "List of licenses"
-  [licenses sorting filtering]
-  [table/component
-   {:column-definitions (licenses-columns)
-    :visible-columns [:title :type :start :end :active :commands]
-    :sorting sorting
-    :filtering filtering
-    :id-function :id
-    :items licenses}])
+(defn- licenses-list []
+  (let [licenses-table {:id ::licenses
+                        :columns [{:key :title
+                                   :title (text :t.administration/licenses)}
+                                  {:key :type
+                                   :title (text :t.administration/type)}
+                                  {:key :start
+                                   :title (text :t.administration/created)}
+                                  {:key :end
+                                   :title (text :t.administration/end)}
+                                  {:key :active
+                                   :title (text :t.administration/active)
+                                   :filterable? false}
+                                  {:key :commands
+                                   :sortable? false
+                                   :filterable? false}]
+                        :rows [::licenses-table-rows]
+                        :default-sort-column :title}]
+    [:div
+     [table2/search licenses-table]
+     [table2/table licenses-table]]))
 
 (defn licenses-page []
   (into [:div
@@ -113,7 +120,4 @@
            [status-flags/display-old-toggle
             @(rf/subscribe [::display-old?])
             #(rf/dispatch [::set-display-old? %])]
-           [licenses-list
-            @(rf/subscribe [::licenses])
-            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
-            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))
+           [licenses-list]])))

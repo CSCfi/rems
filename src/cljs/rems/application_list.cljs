@@ -30,48 +30,27 @@
  (fn [[apps] _]
    (map (fn [app]
           {:key (:application/id app)
-           :id (let [value (:application/id app)]
-                 {:td [:td.id value]
-                  :sort-value value
-                  :filter-value (str/lower-case (str value))})
-           :external-id (let [value (:application/external-id app)]
-                          {:td [:td.external-id value]
-                           :sort-value value
-                           :filter-value (str/lower-case (str value))})
-           :description (let [value (:application/description app)]
-                          {:td [:td.description (format-description app)]
-                           :sort-value value
-                           :filter-value (str/lower-case (str value))})
-           :resource (let [value (format-catalogue-items app)]
-                       {:td [:td.resource value]
-                        :sort-value value
-                        :filter-value (str/lower-case (str value))})
-           :applicant (let [value (:application/applicant app)]
-                        {:td [:td.applicant value]
-                         :sort-value value
-                         :filter-value (str/lower-case (str value))})
+           :id {:value (:application/id app)}
+           :external-id {:value (:application/external-id app)}
+           :description {:value (:application/description app)
+                         :td [:td.description (format-description app)]}
+           :resource {:value (format-catalogue-items app)}
+           :applicant {:value (:application/applicant app)}
            :state (let [value (localize-state (:application/state app))]
-                    {:td [:td.state
+                    {:value value
+                     :td [:td.state
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
-                          value]
-                     :sort-value value
-                     :filter-value (str/lower-case (str value))})
-           :created (let [value (:application/created app)
-                          display-value (localize-time value)]
-                      {:td [:td.created display-value]
-                       :sort-value value
-                       :filter-value (str/lower-case (str display-value))})
-           :submitted (let [value (:application/first-submitted app)
-                            display-value (localize-time value)]
-                        {:td [:td.submitted display-value]
-                         :sort-value value
-                         :filter-value (str/lower-case (str display-value))})
-           :last-activity (let [value (:application/last-activity app)
-                                display-value (localize-time value)]
-                            {:td [:td.last-activity display-value]
-                             :sort-value value
-                             :filter-value (str/lower-case (str display-value))})
+                          value]})
+           :created (let [value (:application/created app)]
+                      {:value value
+                       :display-value (localize-time value)})
+           :submitted (let [value (:application/first-submitted app)]
+                        {:value value
+                         :display-value (localize-time value)})
+           :last-activity (let [value (:application/last-activity app)]
+                            {:value value
+                             :display-value (localize-time value)})
            :view {:td [:td.view [view-button app]]}})
         apps)))
 

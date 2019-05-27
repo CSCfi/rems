@@ -5,7 +5,7 @@
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.table :as table]
+            [rems.table2 :as table2]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! put! fetch]]))
 
@@ -13,7 +13,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db ::display-old? false)
-    :dispatch [::fetch-workflows]}))
+    :dispatch-n [[::fetch-workflows]
+                 [:rems.table2/reset]]}))
 
 (rf/reg-event-db
  ::fetch-workflows
@@ -44,25 +45,12 @@
           :error-handler status-modal/common-error-handler!})
    {}))
 
-(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :title
-        :sort-order :asc})))
-
-(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
-(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
-
 (rf/reg-event-fx
  ::set-display-old?
  (fn [{:keys [db]} [_ display-old?]]
    {:db (assoc db ::display-old? display-old?)
     :dispatch [::fetch-workflows]}))
 (rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
-
 
 (defn- to-create-workflow []
   [:a.btn.btn-primary
@@ -74,34 +62,52 @@
    {:href (str "/#/administration/workflows/" workflow-id)}
    (text :t.administration/view)])
 
-(defn- workflows-columns []
-  {:organization {:header #(text :t.administration/organization)
-                  :value :organization}
-   :title {:header #(text :t.administration/workflow)
-           :value :title}
-   :start {:header #(text :t.administration/created)
-           :value (comp localize-time :start)}
-   :end {:header #(text :t.administration/end)
-         :value (comp localize-time :end)}
-   :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox not :expired)}
-   :commands {:values (fn [workflow]
-                        [[to-view-workflow (:id workflow)]
-                         [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]
-                         [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]])
-              :sortable? false
-              :filterable? false}})
+(rf/reg-sub
+ ::workflows-table-rows
+ (fn [_ _]
+   [(rf/subscribe [::workflows])])
+ (fn [[workflows] _]
+   (map (fn [workflow]
+          {:key (:id workflow)
+           :organization {:value (:organization workflow)}
+           :title {:value (:title workflow)}
+           :start (let [value (:start workflow)]
+                    {:value value
+                     :display-value (localize-time value)})
+           :end (let [value (:end workflow)]
+                  {:value value
+                   :display-value (localize-time value)})
+           :active (let [checked? (not (:expired workflow))]
+                     {:td [:td.active
+                           [readonly-checkbox checked?]]
+                      :sort-value (if checked? 1 2)})
+           :commands {:td [:td.commands
+                           [to-view-workflow (:id workflow)]
+                           [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]
+                           [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]]}})
+        workflows)))
 
-(defn- workflows-list
-  "List of workflows"
-  [workflows sorting filtering]
-  [table/component
-   {:column-definitions (workflows-columns)
-    :visible-columns [:organization :title :start :end :active :commands]
-    :sorting sorting
-    :filtering filtering
-    :id-function :id
-    :items workflows}])
+(defn- workflows-list []
+  (let [workflows-table {:id ::workflows
+                         :columns [{:key :organization
+                                    :title (text :t.administration/organization)}
+                                   {:key :title
+                                    :title (text :t.administration/workflow)}
+                                   {:key :start
+                                    :title (text :t.administration/created)}
+                                   {:key :end
+                                    :title (text :t.administration/end)}
+                                   {:key :active
+                                    :title (text :t.administration/active)
+                                    :filterable? false}
+                                   {:key :commands
+                                    :sortable? false
+                                    :filterable? false}]
+                         :rows [::workflows-table-rows]
+                         :default-sort-column :title}]
+    [:div
+     [table2/search workflows-table]
+     [table2/table workflows-table]]))
 
 ;; TODO Very similar components are used in here, licenses, forms, resources
 (defn workflows-page []
@@ -114,7 +120,4 @@
            [status-flags/display-old-toggle
             @(rf/subscribe [::display-old?])
             #(rf/dispatch [::set-display-old? %])]
-           [workflows-list
-            @(rf/subscribe [::workflows])
-            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
-            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))
+           [workflows-list]])))
