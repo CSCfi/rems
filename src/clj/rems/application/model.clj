@@ -401,16 +401,16 @@
 (defn- enrich-form [app-form get-form]
   (let [form (get-form (:form/id app-form))
         app-fields (:form/fields app-form)
-        rich-fields (map (fn [item]
-                           {:field/id (:id item)
+        rich-fields (map (fn [field]
+                           {:field/id (:id field)
                             :field/value "" ; default for new forms
-                            :field/type (keyword (:type item))
-                            :field/title (localization-for :title item)
-                            :field/placeholder (localization-for :inputprompt item)
-                            :field/optional (:optional item)
-                            :field/options (:options item)
-                            :field/max-length (:maxlength item)})
-                         (:items form))
+                            :field/type (keyword (:type field))
+                            :field/title (:title field)
+                            :field/placeholder (get field :input-prompt {})
+                            :field/optional (:optional field)
+                            :field/options (:options field)
+                            :field/max-length (:maxlength field)})
+                         (:fields form))
         fields (merge-lists-by :field/id rich-fields app-fields)]
     (assoc app-form
            :form/title (:title form)
@@ -496,7 +496,7 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license
+(defn enrich-with-injections [application {:keys [get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
                                                   get-attachments-for-application]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
@@ -515,7 +515,7 @@
                                                                           {:field/id field-id
                                                                            :field/value value})
                                                                         current-answers)))
-        (update :application/form enrich-form get-form)
+        (update :application/form enrich-form get-form-template)
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)

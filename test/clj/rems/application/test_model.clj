@@ -7,28 +7,24 @@
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
-(def ^:private get-form
+(def ^:private get-form-template
   {40 {:id 40
        :organization "org"
        :title "form title"
-       :items [{:id 41
-                :localizations {:en {:title "en title"
-                                     :inputprompt "en placeholder"}
-                                :fi {:title "fi title"
-                                     :inputprompt "fi placeholder"}}
-                :optional false
-                :options []
-                :maxlength 100
-                :type "description"}
-               {:id 42
-                :localizations {:en {:title "en title"
-                                     :inputprompt "en placeholder"}
-                                :fi {:title "fi title"
-                                     :inputprompt "fi placeholder"}}
-                :optional false
-                :options []
-                :maxlength 100
-                :type "text"}]
+       :fields [{:id 41
+                 :title {:en "en title" :fi "fi title"}
+                 :input-prompt {:en "en placeholder" :fi "fi placeholder"}
+                 :optional false
+                 :options []
+                 :maxlength 100
+                 :type "description"}
+                {:id 42
+                 :title {:en "en title" :fi "fi title"}
+                 :input-prompt {:en "en placeholder" :fi "fi placeholder"}
+                 :optional false
+                 :options []
+                 :maxlength 100
+                 :type "text"}]
        :start (DateTime. 100)
        :end nil}})
 
@@ -179,7 +175,7 @@
   [])
 
 (deftest test-application-view
-  (let [injections {:get-form get-form
+  (let [injections {:get-form-template get-form-template
                     :get-catalogue-item get-catalogue-item
                     :get-license get-license
                     :get-user get-user

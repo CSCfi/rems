@@ -150,7 +150,7 @@
 
 (def ^:private injections
   {:get-attachments-for-application attachments/get-attachments-for-application
-   :get-form form/get-form
+   :get-form-template form/get-form-template
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-license licenses/get-license
    :get-user users/get-user-attributes

@@ -29,9 +29,13 @@
                                :label {s/Keyword s/Str}}]
    (s/optional-key :input-prompt) {s/Keyword s/Str}})
 
+(s/defschema FormFieldWithId
+  (merge FormField
+         {:id s/Int}))
+
 (s/defschema FullForm
   (merge Form
-         {:fields [FormField]}))
+         {:fields [FormFieldWithId]}))
 
 (s/defschema Forms
   [Form])
