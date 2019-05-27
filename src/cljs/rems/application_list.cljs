@@ -23,6 +23,11 @@
          :title (:application/description app)}
    (:application/description app)])
 
+(defn- format-applicant [app]
+  [:div {:class "application-applicant"
+         :title (:application/applicant app)}
+   (:application/applicant app)])
+
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
@@ -35,7 +40,8 @@
            :description {:value (:application/description app)
                          :td [:td.description (format-description app)]}
            :resource {:value (format-catalogue-items app)}
-           :applicant {:value (:application/applicant app)}
+           :applicant {:value (:application/applicant app)
+                       :td [:td.applicant (format-applicant app)]}
            :state (let [value (localize-state (:application/state app))]
                     {:value value
                      :td [:td.state
