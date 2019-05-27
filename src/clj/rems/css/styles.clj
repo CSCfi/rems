@@ -646,10 +646,14 @@
 
    ;; application list
    [:.applications
-    [:.application-description {:overflow :hidden
-                                :text-overflow :ellipsis
-                                :white-space :nowrap
-                                :max-width "30em"}]]
+    [:.application-description
+     :.application-applicant
+     {:overflow :hidden
+      :text-overflow :ellipsis
+      :white-space :nowrap}
+
+     :.application-description {:max-width "30em"}
+     :.application-applicant {:max-width "10em"}]]
 
    ;; autocomplete, duplicates some Bootstrap styling
    ;; because the component classes are hard-coded

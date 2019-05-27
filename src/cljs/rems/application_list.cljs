@@ -22,6 +22,11 @@
          :title (:application/description app)}
    (:application/description app)])
 
+(defn- format-applicant []
+  [:div {:class "application-applicant"
+         :title :application/applicant}
+   :application/applicant])
+
 (defn component
   "A table of applications.
 
@@ -38,7 +43,7 @@
                                               :header #(text :t.actions/description)}
                                 :resource {:value format-catalogue-items
                                            :header #(text :t.actions/resource)}
-                                :applicant {:value :application/applicant
+                                :applicant {:value format-applicant
                                             :header #(text :t.actions/applicant)}
                                 :state {:value #(localize-state (:application/state %))
                                         :header #(text :t.actions/state)
