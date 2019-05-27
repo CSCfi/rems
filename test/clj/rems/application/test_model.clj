@@ -7,7 +7,7 @@
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
-(def ^:private get-form
+(def ^:private get-form-template
   {40 {:id 40
        :organization "org"
        :title "form title"
@@ -175,7 +175,7 @@
   [])
 
 (deftest test-application-view
-  (let [injections {:get-form get-form
+  (let [injections {:get-form-template get-form-template
                     :get-catalogue-item get-catalogue-item
                     :get-license get-license
                     :get-user get-user

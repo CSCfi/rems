@@ -33,7 +33,7 @@
 
 (def ^:private injections
   {:get-workflow dummy-workflows
-   :get-form dummy-forms
+   :get-form-template dummy-forms
    :get-catalogue-item (constantly nil)
    :get-license (constantly nil)
    :get-user (constantly nil)

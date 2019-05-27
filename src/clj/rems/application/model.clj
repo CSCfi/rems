@@ -496,7 +496,7 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn enrich-with-injections [application {:keys [get-form get-catalogue-item get-license
+(defn enrich-with-injections [application {:keys [get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
                                                   get-attachments-for-application]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
@@ -515,7 +515,7 @@
                                                                           {:field/id field-id
                                                                            :field/value value})
                                                                         current-answers)))
-        (update :application/form enrich-form get-form)
+        (update :application/form enrich-form get-form-template)
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)

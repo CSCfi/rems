@@ -38,7 +38,7 @@
   (let [application (-> (reduce model/application-view nil events)
                         (model/enrich-with-injections {:get-workflow get-workflow
                                                        :get-catalogue-item get-catalogue-item
-                                                       :get-form get-nothing
+                                                       :get-form-template get-nothing
                                                        :get-license get-nothing
                                                        :get-user get-nothing
                                                        :get-users-with-role get-nothing
