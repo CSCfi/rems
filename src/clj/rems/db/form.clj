@@ -126,4 +126,6 @@
                          (mapv process-field)))))
 
 (comment
-  (get-form 1))
+  (clojure.pprint/pprint
+   [(get-form 1)
+    (get-form-template 1)]))

@@ -401,16 +401,16 @@
 (defn- enrich-form [app-form get-form]
   (let [form (get-form (:form/id app-form))
         app-fields (:form/fields app-form)
-        rich-fields (map (fn [item]
-                           {:field/id (:id item)
+        rich-fields (map (fn [field]
+                           {:field/id (:id field)
                             :field/value "" ; default for new forms
-                            :field/type (keyword (:type item))
-                            :field/title (localization-for :title item)
-                            :field/placeholder (localization-for :inputprompt item)
-                            :field/optional (:optional item)
-                            :field/options (:options item)
-                            :field/max-length (:maxlength item)})
-                         (:items form))
+                            :field/type (keyword (:type field))
+                            :field/title (:title field)
+                            :field/placeholder (get field :input-prompt {})
+                            :field/optional (:optional field)
+                            :field/options (:options field)
+                            :field/max-length (:maxlength field)})
+                         (:fields form))
         fields (merge-lists-by :field/id rich-fields app-fields)]
     (assoc app-form
            :form/title (:title form)
