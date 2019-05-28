@@ -95,10 +95,11 @@
     (create-user! (users :owner) :owner)
     (create-user! (users :reporter) :reporter)))
 
-(defn- create-expired-form! []
-  (let [yesterday (time/minus (time/now) (time/days 1))]
-    ;; only used from create-test-data!
-    (db/create-form! {:organization "nbn" :title "Expired form, should not be seen by applicants" :user (+fake-users+ :owner) :end yesterday})))
+(defn- create-archived-form! []
+  ;; only used from create-test-data!
+  (let [yesterday (time/minus (time/now) (time/days 1))
+        id (:id (form/create-form! (+fake-users+ :owner) {:organization "nbn" :title "Archived form, should not be seen by applicants" :fields []}))]
+    (form/update-form! {:id id :enabled true :archived true})))
 
 (defn- create-expired-license! []
   (let [owner (+fake-users+ :owner) ; only used from create-test-data!
@@ -741,7 +742,7 @@
           res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
           _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :end (time/minus (time/now) (time/years 1))}))
           form (create-basic-form! +fake-users+)
-          _ (create-expired-form!)
+          _ (create-archived-form!)
           workflows (create-workflows! +fake-users+)
           _ (create-catalogue-item! res1 (:minimal workflows) form
                                     {"en" "ELFA Corpus, direct approval"
