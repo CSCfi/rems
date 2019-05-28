@@ -202,7 +202,7 @@
                    (mapv #(dissoc % :id) (:fields form))))))))))
 
 (deftest forms-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/forms" {:expired true})
+  (let [unfiltered (-> (request :get "/api/forms" {:archived true})
                        (authenticate "42" "owner")
                        handler
                        assert-response-is-ok
@@ -214,8 +214,8 @@
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
     (is (coll-is-not-empty? filtered))
-    (is (every? #(contains? % :expired) unfiltered))
-    (is (not-any? :expired filtered))
+    (is (every? #(contains? % :archived) unfiltered))
+    (is (not-any? :archived filtered))
     (is (< (count filtered) (count unfiltered)))))
 
 (deftest forms-api-security-test
