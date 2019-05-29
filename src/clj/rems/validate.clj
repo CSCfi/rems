@@ -8,9 +8,8 @@
             [schema.core :as s]))
 
 (defn validate-forms []
-  (doseq [form (form/get-forms {})]
-    (let [template (form/get-form-template (:id form))]
-      (s/validate rems.api.forms/FullForm template))))
+  (doseq [template (form/get-form-templates {})]
+    (s/validate rems.api.forms/FullForm template)))
 
 (defn validate []
   (log/info "Validating data")
