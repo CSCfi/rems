@@ -398,8 +398,8 @@
          (localization-for :title {:localizations {:en {}
                                                    :fi {}}}))))
 
-(defn- enrich-form [app-form get-form]
-  (let [form (get-form (:form/id app-form))
+(defn- enrich-form [app-form get-form-template]
+  (let [form (get-form-template (:form/id app-form))
         app-fields (:form/fields app-form)
         rich-fields (map (fn [field]
                            {:field/id (:id field)
