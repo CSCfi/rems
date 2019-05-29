@@ -541,7 +541,7 @@
                    :flex-direction "row"
                    :justify-content "space-between"
                    :min-width "100%"}
-    [:nav {:flex 1}]]
+    ["> .navbar:first-child" {:flex 1}]]
    [(s/> :.form-actions "*:not(:first-child)")
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
