@@ -51,7 +51,7 @@
 ;; TODO try to unify with resource license-view
 (defn license-view [license language]
   (into [:div.form-item
-         [:h4 (text-format :t.administration/license-field (get-localized-value license :title language))]
+         [:h3 (text-format :t.administration/license-field (get-localized-value license :title language))]
          [inline-info-field (text :t.administration/title) (:title license)]]
         (concat (for [localization (:localizations license)]
                   [inline-info-field (str (text :t.administration/title)
@@ -82,7 +82,7 @@
 
 (defn round-view [actors]
   [:div.form-item
-   [:h4 (text-format :t.create-workflow/round-n (inc (:round (first actors))))]
+   [:h3 (text-format :t.create-workflow/round-n (inc (:round (first actors))))]
    (let [{approvers "approver" reviewers "reviewer"} (group-by :role actors)]
      [:div
       (when (seq approvers)

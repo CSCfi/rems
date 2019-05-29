@@ -410,9 +410,9 @@
       :always (into [:div
                      [:div.mb-3 {:class (str "state-" (name state))}
                       (phases (get-application-phases state))]
-                     [:h4 (text-format :t.applications/latest-activity (localize-time last-activity))]]
+                     [:h3 (text-format :t.applications/latest-activity (localize-time last-activity))]]
                     (when-let [g (first event-groups)]
-                      (into [[:h4 (text :t.form/events)]]
+                      (into [[:h3 (text :t.form/events)]]
                             (render-event-groups [g]))))
       :collapse (when-let [g (seq (rest event-groups))]
                   (into [:div]
@@ -440,9 +440,9 @@
       :class (when group? "group")
       :always
       [:div
-       (cond (= (:application/applicant application) user-id) [:h5 (text :t.applicant-info/applicant)]
-             (:userid attributes) [:h5 (text :t.applicant-info/member)]
-             :else [:h5 (text :t.applicant-info/invited-member)])
+       [:h3 (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
+                  (:userid attributes) (text :t.applicant-info/member)
+                  :else (text :t.applicant-info/invited-member))]
        (when-let [name (or (:commonName attributes) (:name attributes))]
          [info-field (text :t.applicant-info/name) name {:inline? true}])
        (when user-id

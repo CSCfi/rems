@@ -5,7 +5,7 @@
 
 (defn- header
   [title title-class]
-  [:div.card-header {:class (or title-class "rems-card-header")} title])
+  [:h2.card-header {:class (or title-class "rems-card-header")} title])
 
 (defn- show-more-button
   [id expanded callback]

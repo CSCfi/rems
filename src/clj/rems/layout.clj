@@ -94,7 +94,7 @@ window.rems = {
         (when-let [title (error-details :title)]
           [:h2.without-margin title])
         (when-let [message (error-details :message)]
-          [:h4.text-danger message])]]]]]])
+          [:h3.text-danger message])]]]]]])
 
 (defn error-page
   "error-details should be a map containing the following keys:

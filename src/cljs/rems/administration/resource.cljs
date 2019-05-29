@@ -45,7 +45,7 @@
 
 (defn license-view [license language]
   (into [:div.form-item
-         [:h4 (text-format :t.administration/license-field (get-in license [:localizations language :title]))]
+         [:h3 (text-format :t.administration/license-field (get-in license [:localizations language :title]))]
          [inline-info-field (text :t.administration/title) (:title license)]]
         (concat (for [[langcode localization] (:localizations license)]
                   [inline-info-field (str (text :t.administration/title)
