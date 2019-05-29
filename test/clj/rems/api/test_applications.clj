@@ -396,8 +396,8 @@
                                           {:title {:en "opt"}
                                            :type "text"
                                            :optional true}])
-        [req-id opt-id] (->> (form/get-form form-id)
-                             :items
+        [req-id opt-id] (->> (form/get-form-template form-id)
+                             :fields
                              (map :id))
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)]

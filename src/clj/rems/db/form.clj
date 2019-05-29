@@ -117,15 +117,3 @@
                              [(keyword langcode) {:title title :inputprompt inputprompt}]))
    :options (process-field-options (db/get-form-item-options {:item (:id field)}))
    :maxlength (:maxlength field)})
-
-(defn get-form [form-id]
-  (-> (db/get-form {:id form-id})
-      (db/assoc-expired)
-      (select-keys [:id :organization :title :start :end])
-      (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv process-field)))))
-
-(comment
-  (clojure.pprint/pprint
-   [(get-form 1)
-    (get-form-template 1)]))
