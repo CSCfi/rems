@@ -7,15 +7,19 @@
 
 ;;; form api related code – form "templates"
 
+(defn- parse-db-row [row]
+  (-> row
+      (update :fields json/parse-string)
+      db/assoc-expired))
+
 (defn get-form-templates [filters]
   (->> (db/get-form-templates)
-       (map db/assoc-expired)
+       (map parse-db-row)
        (db/apply-filters filters)))
 
 (defn get-form-template [id]
   (-> (db/get-form-template {:id id})
-      (db/assoc-expired)
-      (update :fields json/parse-string)))
+      parse-db-row))
 
 (defn- create-form-item! [user-id form-id item-index {:keys [title optional type input-prompt maxlength options]}]
   (let [item-id (:id (db/create-form-item! {:type type
