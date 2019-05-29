@@ -238,12 +238,13 @@
 
 (defn footer []
   [:footer.footer
-   [:div.container [:nav.navbar
-                    [:div.navbar-text (text :t/footer)]
-                    (when-let [{:keys [version revision repo-url]} (read-current-version)]
-                      [:div#footer-release-number
-                       [:a {:href (str repo-url revision)}
-                        version]])]]])
+   [:div.container
+    [:div.navbar
+     [:div.navbar-text (text :t/footer)]
+     (when-let [{:keys [version revision repo-url]} (read-current-version)]
+       [:div#footer-release-number
+        [:a {:href (str repo-url revision)}
+         version]])]]])
 
 (defn logo []
   [:div.logo [:div.container.img]])
