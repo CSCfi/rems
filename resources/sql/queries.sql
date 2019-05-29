@@ -199,6 +199,18 @@ WHERE 1=1
 /*~ ) ~*/
 ;
 
+-- :name get-form-templates :? :*
+SELECT
+  id,
+  organization,
+  title,
+  start,
+  endt as "end",
+  fields::TEXT,
+  enabled,
+  archived
+FROM form_template;
+
 -- :name get-form-template :? :1
 SELECT
   id,

@@ -7,8 +7,8 @@
 
 ;;; form api related code – form "templates"
 
-(defn get-forms [filters]
-  (->> (db/get-forms)
+(defn get-form-templates [filters]
+  (->> (db/get-form-templates)
        (map db/assoc-expired)
        (db/apply-filters filters)))
 
