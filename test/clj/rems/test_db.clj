@@ -43,7 +43,7 @@
                                       :workflow-name))
             "should find same catalogue item by id")))))
 
-;; TODO port this test to look at get-form or build-application-view instead of legacy/get-form-for
+;; TODO port this test to look at get-form-template or build-application-view instead of legacy/get-form-for
 (deftest test-form
   (binding [context/*lang* :en]
     (let [uid "test-user"

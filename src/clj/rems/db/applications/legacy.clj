@@ -2,6 +2,7 @@
   "Functions for dealing with old round-based applications."
   (:require [clojure.test :refer :all]
             [clj-time.core :as time]
+            [cprop.tools :refer [merge-maps]]
             [rems.application.commands :as commands]
             [rems.application.model :as model]
             [rems.application-util :refer [form-fields-editable?]]
@@ -213,6 +214,47 @@
     (assert (applications/is-dynamic-application? application) (pr-str application))
     (apply-dynamic-events application events)))
 
+;;; reading legacy form tables
+
+(defn- process-field-options [options]
+  (->> options
+       (map (fn [{:keys [key langcode label displayorder]}]
+              {:key key
+               :label {(keyword langcode) label}
+               :displayorder displayorder}))
+       (group-by :key)
+       (map (fn [[_key options]] (apply merge-maps options))) ; merge label translations
+       (sort-by :displayorder)
+       (mapv #(select-keys % [:key :label]))))
+
+(deftest process-field-options-test
+  (is (= [{:key "yes" :label {:en "Yes" :fi "Kyllä"}}
+          {:key "no" :label {:en "No" :fi "Ei"}}]
+         (process-field-options
+          [{:itemid 9, :key "no", :langcode "en", :label "No", :displayorder 1}
+           {:itemid 9, :key "no", :langcode "fi", :label "Ei", :displayorder 1}
+           {:itemid 9, :key "yes", :langcode "en", :label "Yes", :displayorder 0}
+           {:itemid 9, :key "yes", :langcode "fi", :label "Kyllä", :displayorder 0}]))))
+
+(defn- process-field
+  "Returns a field structure like this:
+
+    {:id 123
+     :type \"texta\"
+     :title \"Item title\"
+     :inputprompt \"hello\"
+     :optional true
+     :value \"filled value or nil\"}"
+  [field]
+  {:id (:id field)
+   :optional (:formitemoptional field)
+   :type (:type field)
+   :localizations (into {} (for [{:keys [langcode title inputprompt]}
+                                 (db/get-form-item-localizations {:item (:id field)})]
+                             [(keyword langcode) {:title title :inputprompt inputprompt}]))
+   :options (process-field-options (db/get-form-item-options {:item (:id field)}))
+   :maxlength (:maxlength field)})
+
 ;;; The main entry point, get-form-for
 
 (defn get-form-for
@@ -266,7 +308,7 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})
          items (->> (db/get-form-items {:id form-id})
-                    (mapv form/process-field)
+                    (mapv process-field)
                     (mapv #(assoc-field-value % form-id application-id))
                     (assoc-field-previous-values application))
          description (-> (filter #(= "description" (:type %)) items)

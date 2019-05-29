@@ -51,9 +51,9 @@
    :enabled enabled
    :archived archived})
 
-(defn- get-forms [filters]
+(defn- get-form-templates [filters]
   (doall
-   (for [wf (form/get-forms filters)]
+   (for [wf (form/get-form-templates filters)]
      (format-form wf))))
 
 (s/defschema CreateFormCommand
@@ -76,9 +76,9 @@
                      {expired :- (describe s/Bool "whether to include expired forms") false}
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return Forms
-      (ok (get-forms (merge (when-not expired {:expired false})
-                            (when-not disabled {:enabled true})
-                            (when-not archived {:archived false})))))
+      (ok (get-form-templates (merge (when-not expired {:expired false})
+                                     (when-not disabled {:enabled true})
+                                     (when-not archived {:archived false})))))
 
     (GET "/:form-id" []
       :summary "Get form by id"
