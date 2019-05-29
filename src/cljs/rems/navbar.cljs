@@ -58,7 +58,7 @@
 
 (defn navbar-normal [page-id identity]
   [:div.navbar-flex
-   [:nav.navbar.navbar-expand-sm {:role "navigation"}
+   [:nav.navbar.navbar-expand-sm
     [:button.navbar-toggler
      {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]
