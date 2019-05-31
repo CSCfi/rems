@@ -7,5 +7,6 @@
          :header "%1 kielivaraa korissa"}
   :catalogue {:catalogue "Kielivarat"
               :header "Kielivarat"
+              :intro "Tällä sivulla on listattuna kaikki kielivarat joita voit tästä järjestelmästä hakea."
               :apply-resources "Hae uusia kielivaroja"}
   :navigation {:catalogue "Kielivarat"}}}
