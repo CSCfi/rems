@@ -33,7 +33,7 @@
 
 (defn- field-validation-message [validation title]
   (when validation
-    [:div {:class "text-danger"}
+    [:div {:class "invalid-feedback"}
      (text-format (:type validation) title)]))
 
 (defn- toggle-diff-button [item-id diff-visible on-toggle-diff]
