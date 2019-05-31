@@ -473,6 +473,7 @@
    [:.login-btn {:max-height (u/px 70)
                  :margin-bottom (u/px 20)}
     [:&:hover {:filter "brightness(80%)"}]]
+   [:.login-component {:max-width (u/px 420)}]
    (generate-rems-table-styles)
    [:.btn.disabled {:opacity 0.25}]
    [:.catalogue-item-link {:color "#fff"
