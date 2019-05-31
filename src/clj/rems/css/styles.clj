@@ -463,7 +463,6 @@
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"
-     :max-width (u/px 420)
      :margin "30px auto"
      :color "#000"
      :border-style "solid"

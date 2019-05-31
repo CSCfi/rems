@@ -262,6 +262,8 @@
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in new window"}
   :login {:alternative "Other sign in options"
+          :intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software."]
+                  [:p "Please, login first to access REMS."]]
           :text "Login by using your Haka credentials"
           :title "Login"}
   :missing "Missing translation %1"
