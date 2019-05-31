@@ -634,7 +634,7 @@
                              (-> (util/get-theme-attribute :color1)
                                  (c/saturate -50)
                                  (c/lighten 33)))}]
-   [:h2 {:margin [[(u/rem 1) 0]]}]
+   [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
 
    ;; application list
    [:.rems-table
