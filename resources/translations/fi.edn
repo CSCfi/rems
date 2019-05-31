@@ -246,6 +246,7 @@
          :user "Käyttäjä"
          :validation {:errors "Lähetys epäonnistui. Tarkista seuraavat kentät."
                       :invalid-user "Käyttäjä ei kelpaa."
+                      :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" vastaus on liian pitkä."}}
   :header {:title "Tervetuloa REMSiin"}
