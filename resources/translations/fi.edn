@@ -157,7 +157,7 @@
                 :add-option "Add option"
                 :field-n "Kenttä %1"
                 :field-title "Kentän otsikko"
-                :input-prompt "Esimerkkiteksti"
+                :input-prompt "Esimerkkiteksti (ei pakollinen)"
                 :maxlength "Maksimipituus (ei pakollinen)"
                 :option-key "Tunnuskoodi"
                 :option-label "Otsikko"
