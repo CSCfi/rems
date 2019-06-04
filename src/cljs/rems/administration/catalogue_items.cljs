@@ -3,11 +3,10 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [readonly-checkbox document-title]]
-            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [localize-time text get-localized-title]]
             [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
@@ -73,7 +72,7 @@
  (fn [[catalogue language] _]
    (map (fn [item]
           {:key (:id item)
-           :name {:value (get-catalogue-item-title item language)}
+           :name {:value (get-localized-title item language)}
            :resource (let [value (:resource-name item)]
                        {:value value
                         :td [:td.resource

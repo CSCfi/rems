@@ -48,6 +48,11 @@
         (get m :default)
         (first (vals m)))))
 
+;; TODO: replace usages of `get-localized-title` with `localized`
+(defn get-localized-title [item language]
+  (or (get-in item [:localizations language :title])
+      (:title item)))
+
 (def ^:private states
   {:application.state/draft :t.applications.states/draft
    :application.state/submitted :t.applications.states/submitted

@@ -1,8 +1,7 @@
 (ns rems.administration.status-flags
   (:require [re-frame.core :as rf]
             [rems.status-modal :as status-modal]
-            [rems.text :refer [text]]
-            [rems.catalogue-util :refer [get-catalogue-item-title]]))
+            [rems.text :refer [text get-localized-title]]))
 
 (defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
@@ -58,7 +57,7 @@
              [:li
               (text :t.administration/catalogue-item) ": "
               [:a {:href (str "#/administration/catalogue-items/" (:id ci))}
-               (get-catalogue-item-title ci language)]]))
+               (get-localized-title ci language)]]))
      (into [:ul]
            (for [r resources]
              [:li

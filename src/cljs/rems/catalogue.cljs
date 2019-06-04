@@ -1,16 +1,15 @@
 (ns rems.catalogue
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
-            [rems.catalogue-util :refer [get-catalogue-item-title urn-catalogue-item-link urn-catalogue-item?]]
+            [rems.catalogue-util :refer [urn-catalogue-item-link urn-catalogue-item?]]
             [rems.guide-functions]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [localize-time text get-localized-title]]
             [rems.util :refer [fetch unauthorized!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -88,7 +87,7 @@
     (rf/subscribe [:language])])
  (fn [[catalogue language] _]
    (map (fn [item]
-          (let [title (get-catalogue-item-title item language)]
+          (let [title (get-localized-title item language)]
             {:key (:id item)
              :name {:value title}
              :commands {:td [:td.commands

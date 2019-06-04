@@ -6,7 +6,3 @@
 
 (defn urn-catalogue-item-link [{:keys [resid]} {:keys [urn-organization]}]
   (str (or urn-organization "http://urn.fi/") resid))
-
-(defn get-catalogue-item-title [item language]
-  (or (get-in item [:localizations language :title])
-      (:title item)))
