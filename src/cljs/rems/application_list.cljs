@@ -31,8 +31,11 @@
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
-   [(rf/subscribe [apps-sub])])
- (fn [[apps] _]
+   [(rf/subscribe [apps-sub])
+    ;; This subscription calls the localization functions in rems.text
+    ;; and re-frame must be made aware of the language dependency.
+    (rf/subscribe [:language])])
+ (fn [[apps _language] _]
    (map (fn [app]
           {:key (:application/id app)
            :id {:value (:application/id app)}
