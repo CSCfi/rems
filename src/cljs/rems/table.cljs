@@ -171,31 +171,47 @@
                  ;; performance optimization: hide DOM nodes instead of destroying them
                  (assoc row ::display-row? (display-row? row columns filters))))))))
 
+(defn- focus-async!
+  ([parent selector]
+   (focus-async! parent selector 20 10))
+  ([parent selector tries interval]
+   (let [target (.querySelector parent selector)]
+     (if target
+       (.focus target)
+       (if (pos? tries)
+         (js/setTimeout #(focus-async! parent selector (dec tries) interval)
+                        interval)
+         (js/console.warn (str "Could not focus element " selector " under:") parent))))))
+
 (defn search [table]
   (let [filtering @(rf/subscribe [::filtering table])
         on-search (fn [event]
                     (rf/dispatch [::set-filtering table (-> filtering
                                                             (assoc :filters (-> event .-target .-value)))]))
-        ;; TODO: focus needs to be moved to the search field after opening it, especially for screen readers
-        on-toggle (fn [_event]
+        on-toggle (fn [event]
+                    (focus-async! (-> (.-target event)
+                                      (.closest ".rems-table-search-toggle"))
+                                  (if (:show-filters filtering)
+                                    "button.open-search"
+                                    "input.search-parameters"))
                     (rf/dispatch [::set-filtering table (-> filtering
                                                             (update :show-filters not)
                                                             (assoc :filters ""))]))]
     (if (:show-filters filtering)
       [:div.rems-table-search-toggle.d-flex.flex-row
        [:div.flex-grow-1.d-flex
-        [:input.flex-grow-1 {:type :text
-                             :default-value (:filters filtering)
-                             :aria-label (text :t.search/search-parameters)
-                             :on-change on-search}]]
-       [:button.btn.btn-secondary {:type :button
-                                   :aria-label (text :t.search/close-search)
-                                   :on-click on-toggle}
+        [:input.flex-grow-1.search-parameters {:type :text
+                                               :default-value (:filters filtering)
+                                               :aria-label (text :t.search/search-parameters)
+                                               :on-change on-search}]]
+       [:button.btn.btn-secondary.close-search {:type :button
+                                                :aria-label (text :t.search/close-search)
+                                                :on-click on-toggle}
         [close-symbol]]]
       [:div.rems-table-search-toggle.d-flex.flex-row-reverse
-       [:button.btn.btn-primary {:type :button
-                                 :aria-label (text :t.search/open-search)
-                                 :on-click on-toggle}
+       [:button.btn.btn-primary.open-search {:type :button
+                                             :aria-label (text :t.search/open-search)
+                                             :on-click on-toggle}
         [search-symbol]]])))
 
 (defn- table-header [table]
