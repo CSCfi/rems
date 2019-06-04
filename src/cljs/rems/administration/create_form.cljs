@@ -259,7 +259,7 @@
         (map-indexed (fn [field-index field]
                        [:div.form-field {:key field-index}
                         [:div.form-field-header
-                         [:h4 (text-format :t.create-form/field-n (inc field-index))]
+                         [:h3 (text-format :t.create-form/field-n (inc field-index))]
                          [:div.form-field-controls
                           [move-form-field-up-button field-index]
                           [move-form-field-down-button field-index]

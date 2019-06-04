@@ -57,8 +57,8 @@
      [language-switcher]]))
 
 (defn navbar-normal [page-id identity]
-  [:div.navbar-flex
-   [:nav.navbar.navbar-expand-sm {:role "navigation"}
+  [:nav.navbar-flex
+   [:div.navbar.navbar-expand-sm.flex-fill
     [:button.navbar-toggler
      {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]

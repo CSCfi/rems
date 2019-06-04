@@ -103,7 +103,7 @@
                         :update-form ::set-form-field})
 
 (defn- language-heading [language]
-  [:h2 (str/upper-case (name language))])
+  [:h3 (str/upper-case (name language))])
 
 (defn- license-title-field [language]
   [text-field context {:keys [:localizations language :title]
