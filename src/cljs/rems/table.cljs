@@ -175,6 +175,7 @@
   ([parent selector]
    (focus-async! parent selector 500 10))
   ([parent selector timeout interval]
+   (assert (pos? interval))
    (let [target (.querySelector parent selector)]
      (cond
        target (.focus target)
