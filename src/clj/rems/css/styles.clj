@@ -281,6 +281,7 @@
    [:h1 :h2 {:font-weight 400}]
    [:h1 :h2 :h3 {:letter-spacing (u/rem 0.17)}]
    [:h4 :h5 :h6 {:letter-spacing (u/rem 0.12)}]
+   [:h1 {:margin-bottom (u/rem 2)}]
    [:#app {:min-height (u/percent 100)
            :flex 1
            :display :flex}]
