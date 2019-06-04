@@ -124,6 +124,7 @@
                           :returned "Changes requested"
                           :submitted "Applied"
                           :unknown "Unknown"}
+                 :intro [:div.intro [:p "By filling and sending in this application, all the applicants may be granted the applied resources. All the applicable licenses must also be accepted before or after applying."]]
                  :my-applications "My Applications"
                  :state "State"
                  :states {:approved "Approved"

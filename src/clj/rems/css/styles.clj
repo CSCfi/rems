@@ -578,6 +578,7 @@
    [:.new-form-field-option {:text-align "center"}]
 
    [:.full {:width "100%"}]
+   [:.intro {:margin-bottom (u/rem 2)}]
    [:.rectangle {:width (u/px 50)
                  :height (u/px 50)}]
    [:.color-1 {:background-color (util/get-theme-attribute :color1)}]

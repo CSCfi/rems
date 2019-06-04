@@ -581,6 +581,7 @@
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [document-title (text :t.applications/application)]
+     (text :t.applications/intro)
      (into [:div] messages)
      [application-header application]
      [:div.mt-3 [applicants-info application]]
