@@ -173,13 +173,13 @@
 
 (defn- focus-async!
   ([parent selector]
-   (focus-async! parent selector 20 10))
-  ([parent selector tries interval]
+   (focus-async! parent selector 500 10))
+  ([parent selector timeout interval]
    (let [target (.querySelector parent selector)]
      (if target
        (.focus target)
-       (if (pos? tries)
-         (js/setTimeout #(focus-async! parent selector (dec tries) interval)
+       (if (pos? timeout)
+         (js/setTimeout #(focus-async! parent selector (- timeout interval) interval)
                         interval)
          (js/console.warn (str "Could not focus element " selector " under:") parent))))))
 
