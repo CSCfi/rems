@@ -3,6 +3,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [readonly-checkbox document-title]]
+            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -66,11 +67,12 @@
 (rf/reg-sub
  ::licenses-table-rows
  (fn [_ _]
-   [(rf/subscribe [::licenses])])
- (fn [[licenses] _]
+   [(rf/subscribe [::licenses])
+    (rf/subscribe [:language])])
+ (fn [[licenses language] _]
    (map (fn [license]
           {:key (:id license)
-           :title {:value (:title license)}
+           :title {:value (get-catalogue-item-title license language)} ; XXX: not really catalogue item, but the structure is the same
            :type {:value (:licensetype license)}
            :start (let [value (:start license)]
                     {:value value
