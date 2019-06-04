@@ -3,9 +3,8 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application :as application]
-            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.common-util :refer [select-vals]]
-            [rems.text :refer [text text-format]])
+            [rems.text :refer [text text-format get-localized-title]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-sub
@@ -54,7 +53,7 @@
 
 (defn- item-view [item language & [apply-button?]]
   [:tr.cart-item {:class (if apply-button? "separator" "")}
-   [:td.title (get-catalogue-item-title item language)]
+   [:td.title (get-localized-title item language)]
    [:td.commands
     [remove-from-cart-button item]
     (when apply-button? [apply-button [item]])]])
@@ -81,7 +80,7 @@
              (let [key-fn #(select-vals % [:wfid :formid])]
                (apply concat
                       (for [group (vals (into (sorted-map) (group-by key-fn items)))]
-                        (group-view (sort-by get-catalogue-item-title group) language)))))]]]))
+                        (group-view (sort-by get-localized-title group) language)))))]]]))
 
 (defn cart-list-container []
   (let [language @(rf/subscribe [:language])

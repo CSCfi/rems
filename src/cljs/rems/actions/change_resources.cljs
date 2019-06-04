@@ -3,11 +3,10 @@
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.autocomplete :as autocomplete]
-            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.common-util :refer [index-by]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.text :refer [text]]
+            [rems.text :refer [text get-localized-title]]
             [rems.util :refer [fetch post!]]))
 
 (rf/reg-event-fx
@@ -29,7 +28,7 @@
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (defn resource-matches? [language resource query]
-  (-> (get-catalogue-item-title resource language)
+  (-> (get-localized-title resource language)
       .toLowerCase
       (.indexOf query)
       (not= -1)))
@@ -79,7 +78,7 @@
           (text :t.actions/bundling-error))]
     (into [:ul]
           (for [group (vals (group-by (juxt :wfid :formid) resources))]
-            [:li (str/join ", " (map #(get-catalogue-item-title % language) group))]))]])
+            [:li (str/join ", " (map #(get-localized-title % language) group))]))]])
 
 (defn- show-change-form-warning? [original-form-id resources]
   (and (seq resources)
@@ -93,7 +92,7 @@
           (text :t.actions/change-form-error))]
     (into [:ul]
           (for [group (vals (group-by :formid resources))]
-            [:li (str/join ", " (map #(get-catalogue-item-title % language) group))]))]])
+            [:li (str/join ", " (map #(get-localized-title % language) group))]))]])
 
 (defn- show-change-workflow-warning? [original-workflow-id resources]
   (and (seq resources)
@@ -107,7 +106,7 @@
           (text :t.actions/change-workflow-error))]
     (into [:ul]
           (for [group (vals (group-by :wfid resources))]
-            [:li (str/join ", " (map #(get-catalogue-item-title % language) group))]))]])
+            [:li (str/join ", " (map #(get-localized-title % language) group))]))]])
 
 (defn compatible-item? [item resources original-workflow-id original-form-id]
   (not (or (show-bundling-warning? (conj resources item))
@@ -120,13 +119,13 @@
         enriched-selected-resources (->> selected-resources
                                          (select-keys indexed-resources)
                                          vals
-                                         (sort-by #(get-catalogue-item-title % language)))
+                                         (sort-by #(get-localized-title % language)))
         original-form-id (get-in application [:application/form :form/id])
         original-workflow-id (get-in application [:application/workflow :workflow/id])
         compatible-first-sort-fn #(if (compatible-item? % enriched-selected-resources original-workflow-id original-form-id) -1 1)
         sorted-selected-catalogue (->> catalogue
                                        (remove (comp (set selected-resources) :id))
-                                       (sort-by #(get-catalogue-item-title % language))
+                                       (sort-by #(get-localized-title % language))
                                        (sort-by compatible-first-sort-fn))]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
@@ -159,12 +158,12 @@
          [autocomplete/component
           {:value enriched-selected-resources
            :items sorted-selected-catalogue
-           :value->text #(get-catalogue-item-title %2 language)
+           :value->text #(get-localized-title %2 language)
            :item->key :id
            :item->text (fn [item]
                          [:span (when-not (compatible-item? item enriched-selected-resources original-workflow-id original-form-id)
                                   {:class (if can-bundle-all? :text-warning :text-danger)})
-                          (get-catalogue-item-title item language)])
+                          (get-localized-title item language)])
            :item->value identity
            :term-match-fn (partial resource-matches? language)
            :add-fn on-add-resources

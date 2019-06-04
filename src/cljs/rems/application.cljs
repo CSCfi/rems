@@ -6,8 +6,8 @@
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
-            [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
+            [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.comment :refer [comment-action-button comment-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
@@ -18,7 +18,6 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable?]]
             [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title]]
-            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
             [rems.fields :as fields]
@@ -26,7 +25,7 @@
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.text :refer [localize-decision localize-event localized localize-item localize-state localize-time text text-format]]
+            [rems.text :refer [localize-decision localize-event localized localize-item localize-state localize-time text text-format get-localized-title]]
             [rems.util :refer [dispatch! fetch parse-int post!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

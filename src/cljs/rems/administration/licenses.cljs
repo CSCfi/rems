@@ -6,7 +6,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [localize-time text get-localized-title]]
             [rems.util :refer [dispatch! put! fetch]]))
 
 (rf/reg-event-fx
@@ -66,11 +66,12 @@
 (rf/reg-sub
  ::licenses-table-rows
  (fn [_ _]
-   [(rf/subscribe [::licenses])])
- (fn [[licenses] _]
+   [(rf/subscribe [::licenses])
+    (rf/subscribe [:language])])
+ (fn [[licenses language] _]
    (map (fn [license]
           {:key (:id license)
-           :title {:value (:title license)}
+           :title {:value (get-localized-title license language)} ; XXX: not really catalogue item, but the structure is the same
            :type {:value (:licensetype license)}
            :start (let [value (:start license)]
                     {:value value
