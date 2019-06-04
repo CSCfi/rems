@@ -463,8 +463,8 @@
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"
-     :margin "30px auto"
      :color "#000"
+     :margin-top (u/rem 2)
      :border-style "solid"
      :border-width (u/px 1)
      :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
