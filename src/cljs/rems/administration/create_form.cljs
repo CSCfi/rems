@@ -10,7 +10,7 @@
             [rems.fields :as fields]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! post! normalize-option-key parse-int]]))
+            [rems.util :refer [dispatch! post! normalize-option-key parse-int remove-empty-keys]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -102,10 +102,13 @@
     (when (not-empty (remove identity validated))
       {key (apply merge validated)})))
 
+(def ^:private maxlength-range [0 32767])
+
 (defn- validate-maxlength [maxlength]
   (when-not (str/blank? maxlength)
     (let [parsed (parse-int maxlength)]
-      (when (or (neg? parsed) (nil? parsed))
+      (when (or (nil? parsed)
+                (not (<= (first maxlength-range) parsed (second maxlength-range))))
         {:maxlength :t.form.validation/invalid-value}))))
 
 (defn- validate-option [option id languages]
@@ -122,19 +125,17 @@
              (validate-maxlength (:maxlength field))
              (validate-options (:options field) languages))})
 
-(defn- validate-form [form languages]
-  (merge (validate-text-field form :organization)
-         (validate-text-field form :title)
-         {:fields (apply merge (mapv #(validate-field %1 %2 languages) (form :fields) (range)))}))
-
-(defn- nil-vals? [x]
-  (cond (map? x) (every? nil-vals? (vals x)) (nil? x) true :else false))
+(defn validate-form [form languages]
+  (-> (merge (validate-text-field form :organization)
+             (validate-text-field form :title)
+             {:fields (apply merge (mapv #(validate-field %1 %2 languages) (form :fields) (range)))})
+      remove-empty-keys))
 
 (rf/reg-event-fx
  ::create-form
  (fn [{:keys [db]} [_ request]]
    (let [form-errors (validate-form (db ::form) (db :languages))]
-     (when (nil-vals? form-errors)
+     (when (empty? form-errors)
        (status-modal/common-pending-handler! (text :t.administration/create-form))
        (post! "/api/forms/create" {:params request
                                    :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))

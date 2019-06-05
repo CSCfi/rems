@@ -1,7 +1,7 @@
 (ns rems.administration.test-create-form
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
-            [rems.administration.create-form :as f :refer [build-request build-localized-string validate-form nil-vals?]]
+            [rems.administration.create-form :as f :refer [build-request build-localized-string validate-form]]
             [rems.testing :refer [isolate-re-frame-state stub-re-frame-effect]]
             [rems.util :refer [getx-in]]))
 
@@ -274,7 +274,7 @@
         languages [:en :fi]]
 
     (testing "valid form"
-      (is (nil-vals? (validate-form form languages))))
+      (is (empty? (validate-form form languages))))
 
     (testing "missing organization"
       (is (= (:organization (validate-form (assoc-in form [:organization] "") languages))
@@ -285,7 +285,7 @@
              :t.form.validation/required)))
 
     (testing "zero fields is ok"
-      (is (nil-vals? (validate-form (assoc-in form [:fields] []) languages))))
+      (is (empty? (validate-form (assoc-in form [:fields] []) languages))))
 
     (testing "missing field title"
       (let [nil-title (validate-form (assoc-in form [:fields 0 :title] nil) languages)]
@@ -319,7 +319,7 @@
                                                       :label {:en "en no"
                                                               :fi "fi no"}}]))]
         (testing "valid form"
-          (is (nil-vals? (validate-form form languages))))
+          (is (empty? (validate-form form languages))))
 
         (testing "missing option key"
           (is (= (get-in (validate-form (assoc-in form [:fields 0 :options 0 :key] "") languages)
@@ -347,7 +347,7 @@
                                                       :label {:en "Bacon"
                                                               :fi "Pekonia"}}]))]
         (testing "valid form"
-          (is (nil-vals? (validate-form form languages))))
+          (is (empty? (validate-form form languages))))
 
         (testing "missing option key"
           (is (= (get-in (validate-form (assoc-in form [:fields 0 :options 0 :key] "") languages)

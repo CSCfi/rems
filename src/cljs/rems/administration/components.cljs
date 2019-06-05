@@ -28,20 +28,17 @@
        (map key-to-id)
        (str/join "-")))
 
-(defn- get-error [context keys]
-  (when (:get-form-errors context)
-    (let [form-errors @(rf/subscribe [(:get-form-errors context)])]
-      (get-in form-errors keys))))
-
 (defn- field-validation-message [error label]
   [:div {:class "invalid-feedback"}
    (when error (text-format error label))])
 
 (defn input-field [{:keys [keys label placeholder context type normalizer readonly]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)
-        error (get-error context keys)
-        normalizer (or normalizer identity)]
+        normalizer (or normalizer identity)
+        error (get-in form-errors keys)]
     [:div.form-group.field
      [:label {:for id} label]
      [:input.form-control {:type type
@@ -64,8 +61,10 @@
   "A basic textarea, full page width."
   [context {:keys [keys label placeholder]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)
-        error (get-error context keys)]
+        error (get-in form-errors keys)]
     [:div.form-group.field
      [:label {:for id} label]
      [textarea {:id id
@@ -79,9 +78,11 @@
 
 (defn- localized-text-field-lang [context {:keys [keys-prefix label lang]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
         keys (conj keys-prefix lang)
         id (keys-to-id keys)
-        error (get-error context keys)]
+        error (get-in form-errors keys)]
     [:div.form-group.row
      [:label.col-sm-1.col-form-label {:for id}
       (str/upper-case (name lang))]
@@ -126,9 +127,11 @@
 
 (defn- radio-button [context {:keys [keys value label orientation readonly]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
         name (keys-to-id keys)
         id (keys-to-id (conj keys value))
-        error (get-error context keys)]
+        error (get-in form-errors keys)]
     [(case orientation
        :vertical :div.form-check
        :horizontal :div.form-check.form-check-inline)
