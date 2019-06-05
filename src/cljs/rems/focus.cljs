@@ -1,8 +1,8 @@
 (ns rems.focus)
 
-(def autofocus (atom nil))
+(def ^:private autofocus (atom nil))
 
-(defn grab-focus []
+(defn- grab-focus []
   (when-let [element-atom @autofocus]
     (when-let [element @element-atom]
       (.focus element)
