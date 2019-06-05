@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
+            [rems.focus :as focus]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -171,48 +172,39 @@
                  ;; performance optimization: hide DOM nodes instead of destroying them
                  (assoc row ::display-row? (display-row? row columns filters))))))))
 
-(defn- focus-async!
-  ([parent selector]
-   (focus-async! parent selector 500 10))
-  ([parent selector timeout interval]
-   (assert (pos? interval))
-   (let [target (.querySelector parent selector)]
-     (cond
-       target (.focus target)
-       (pos? timeout) (js/setTimeout #(focus-async! parent selector (- timeout interval) interval)
-                                     interval)
-       :else (js/console.warn (str "Could not focus element " selector " under:") parent)))))
-
 (defn search [table]
-  (let [filtering @(rf/subscribe [::filtering table])
+  (let [search-params (atom nil)
+        open-search (atom nil)
+        filtering (rf/subscribe [::filtering table])
         on-search (fn [event]
-                    (rf/dispatch [::set-filtering table (-> filtering
+                    (rf/dispatch [::set-filtering table (-> @filtering
                                                             (assoc :filters (-> event .-target .-value)))]))
-        on-toggle (fn [event]
-                    (focus-async! (-> (.-target event)
-                                      (.closest ".rems-table-search-toggle"))
-                                  (if (:show-filters filtering)
-                                    "button.open-search"
-                                    "input.search-parameters"))
-                    (rf/dispatch [::set-filtering table (-> filtering
+        on-toggle (fn [_event]
+                    (focus/set-focus (if (:show-filters @filtering)
+                                       open-search
+                                       search-params))
+                    (rf/dispatch [::set-filtering table (-> @filtering
                                                             (update :show-filters not)
                                                             (assoc :filters ""))]))]
-    (if (:show-filters filtering)
-      [:div.rems-table-search-toggle.d-flex.flex-row
-       [:div.flex-grow-1.d-flex
-        [:input.flex-grow-1.search-parameters {:type :text
-                                               :default-value (:filters filtering)
-                                               :aria-label (text :t.search/search-parameters)
-                                               :on-change on-search}]]
-       [:button.btn.btn-secondary.close-search {:type :button
-                                                :aria-label (text :t.search/close-search)
-                                                :on-click on-toggle}
-        [close-symbol]]]
-      [:div.rems-table-search-toggle.d-flex.flex-row-reverse
-       [:button.btn.btn-primary.open-search {:type :button
-                                             :aria-label (text :t.search/open-search)
-                                             :on-click on-toggle}
-        [search-symbol]]])))
+    (fn []
+      (if (:show-filters @filtering)
+        [:div.rems-table-search-toggle.d-flex.flex-row
+         [:div.flex-grow-1.d-flex
+          [:input.flex-grow-1 {:type :text
+                               :default-value (:filters @filtering)
+                               :aria-label (text :t.search/search-parameters)
+                               :on-change on-search
+                               :ref #(focus/ref-changed search-params %)}]]
+         [:button.btn.btn-secondary {:type :button
+                                     :aria-label (text :t.search/close-search)
+                                     :on-click on-toggle}
+          [close-symbol]]]
+        [:div.rems-table-search-toggle.d-flex.flex-row-reverse
+         [:button.btn.btn-primary {:type :button
+                                   :aria-label (text :t.search/open-search)
+                                   :on-click on-toggle
+                                   :ref #(focus/ref-changed open-search %)}
+          [search-symbol]]]))))
 
 (defn- table-header [table]
   (let [sorting @(rf/subscribe [::sorting table])]
