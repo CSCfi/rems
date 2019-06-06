@@ -222,7 +222,7 @@
     (check-box "disease_prevention")
 
     (send-application)
-    (is (= "State: Applied" (get-element-text *driver* :application-state)))
+    (is (= "Applied" (get-element-text *driver* :application-state)))
 
     (accept-licenses)
 

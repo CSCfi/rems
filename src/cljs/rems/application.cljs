@@ -406,10 +406,14 @@
       :always (into [:div
                      [:div.mb-3 {:class (str "state-" (name state))}
                       (phases (get-application-phases state))]
-                     [:h3#application-state
-                      (str (text :t.applications/state) ": ")
-                      (localize-state state)]
-                     [:h3 (text-format :t.applications/latest-activity (localize-time last-activity))]]
+                     [info-field
+                      (text :t.applications/state)
+                      [:span#application-state (localize-state state)]
+                      {:inline? true}]
+                     [info-field
+                      (text :t.applications/latest-activity)
+                      (localize-time last-activity)
+                      {:inline? true}]]
                     (when-let [g (first event-groups)]
                       (into [[:h3 (text :t.form/events)]]
                             (render-event-groups [g]))))
