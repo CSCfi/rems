@@ -141,7 +141,9 @@
   :cart {:add "Add to cart"
          :apply "Apply"
          :apply-for-bundle "Apply for these %1 resources as a bundle "
+         :empty [:div.intro [:p "Select resources to apply for."]]
          :header "%1 resources in cart"
+         :intro [:div.intro [:p "Here are all the resources that you have picked. If the resources can be applied with the same application, they will be automatically grouped into a bundle."]]
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
