@@ -102,57 +102,57 @@
                     :event/actor "assistant"}])]
       (is (= [[]
               [{:to-user "assistant",
-                :subject "A new application has been submitted",
-                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://example.com/#/application/7"}
+                :subject "New application (applicant: 2001/3)",
+                :body "Dear assistant,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "A new application has been submitted",
-                :body "Dear handler,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://example.com/#/application/7"}]
+                :subject "New application (applicant: 2001/3)",
+                :body "Dear handler,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
               [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
-                :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nParticipate with this link: http://example.com/accept-invitation?token=abc"}]
+                :body "Hello,\n\nThis email address (somebody@example.com) has been invited to participate in an application.\n\nParticipate: http://example.com/accept-invitation?token=abc"}]
               [{:to-user "commenter1",
-                :subject "Comment request",
-                :body "Dear commenter1,\nUser handler has requested your comment on application 2001/3.\nComment here: http://example.com/#/application/7"}
+                :subject "Comment requested (handler: 2001/3)",
+                :body "Dear commenter1,\n\nhandler has requested a comment on application 2001/3.\n\nComment: http://example.com/#/application/7"}
                {:to-user "commenter2",
-                :subject "Comment request",
-                :body "Dear commenter2,\nUser handler has requested your comment on application 2001/3.\nComment here: http://example.com/#/application/7"}]
+                :subject "Comment requested (handler: 2001/3)",
+                :body "Dear commenter2,\n\nhandler has requested a comment on application 2001/3.\n\nComment: http://example.com/#/application/7"}]
               []
               [{:to-user "assistant",
-                :subject "New comment notification",
-                :body "Dear assistant,\nUser commenter2 has posted a comment on application 2001/3.\nView the application: http://example.com/#/application/7"}
+                :subject "Comment added (commenter2: 2001/3)",
+                :body "Dear assistant,\n\ncommenter2 has commented application 2001/3.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "New comment notification",
-                :body "Dear handler,\nUser commenter2 has posted a comment on application 2001/3.\nView the application: http://example.com/#/application/7"}]
+                :subject "Comment added (commenter2: 2001/3)",
+                :body "Dear handler,\n\ncommenter2 has commented application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "member",
-                :subject "You've been added as a member to an application",
-                :body "Dear member,\nYou've been added as a member to application 2001/3.\nView the application: http://example.com/#/application/7"}]
+                :subject "Added as a member of an application (2001/3)",
+                :body "Dear member,\n\nYou've been added as a member of application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "decider",
-                :subject "Decision request",
-                :body "Dear decider,\nUser assistant has requested your decision on application 2001/3.\nView the application: http://example.com/#/application/7"}]
+                :subject "Decision requested (assistant: 2001/3)",
+                :body "Dear decider,\n\nassistant has requested your decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "assistant",
-                :subject "New decision notification",
-                :body "Dear assistant,\nUser decider has sent a decision on application 2001/3.\nView the application: http://example.com/#/application/7"}
+                :subject "Application resolved (decider: 2001/3)",
+                :body "Dear assistant,\n\ndecider has resolved application 2001/3.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "New decision notification",
-                :body "Dear handler,\nUser decider has sent a decision on application 2001/3.\nView the application: http://example.com/#/application/7"}]
+                :subject "Application resolved (decider: 2001/3)",
+                :body "Dear handler,\n\ndecider has resolved application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "applicant",
-                :subject "Your application has been approved",
-                :body "Dear applicant,\nYour application 2001/3 has been approved.\nView your application: http://example.com/#/application/7"}
+                :subject "Application approved (2001/3)",
+                :body "Dear applicant,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
                {:to-user "member",
-                :subject "Your application has been approved",
-                :body "Dear member,\nYour application 2001/3 has been approved.\nView your application: http://example.com/#/application/7"}
+                :subject "Application approved (2001/3)",
+                :body "Dear member,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
                {:to-user "somebody",
-                :subject "Your application has been approved",
-                :body "Dear somebody,\nYour application 2001/3 has been approved.\nView your application: http://example.com/#/application/7"}]
+                :subject "Application approved (2001/3)",
+                :body "Dear somebody,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "applicant",
-                :subject "Your application has been closed",
-                :body "Dear applicant,\nYour application 2001/3 has been closed.\nView your application: http://example.com/#/application/7"}
+                :subject "Application closed (2001/3)",
+                :body "Dear applicant,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}
                {:to-user "member",
-                :subject "Your application has been closed",
-                :body "Dear member,\nYour application 2001/3 has been closed.\nView your application: http://example.com/#/application/7"}
+                :subject "Application closed (2001/3)",
+                :body "Dear member,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}
                {:to-user "somebody",
-                :subject "Your application has been closed",
-                :body "Dear somebody,\nYour application 2001/3 has been closed.\nView your application: http://example.com/#/application/7"}]]
+                :subject "Application closed (2001/3)",
+                :body "Dear somebody,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}]]
              (events-to-emails events))))
     (let [events (conj base-events
                        {:application/id 7
@@ -160,22 +160,22 @@
                         :event/actor "handler"})]
       (is (= [[]
               [{:to-user "assistant",
-                :subject "A new application has been submitted",
-                :body "Dear assistant,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://example.com/#/application/7"}
+                :subject "New application (applicant: 2001/3)",
+                :body "Dear assistant,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "A new application has been submitted",
-                :body "Dear handler,\nUser applicant has submitted a new application 2001/3 for the resource(s) en title 11, en title 21.\nView the application: http://example.com/#/application/7"}]
-              [{:subject "Your application has been rejected",
-                :body "Dear applicant,\nYour application 2001/3 has been rejected.\nView your application: http://example.com/#/application/7",
+                :subject "New application (applicant: 2001/3)",
+                :body "Dear handler,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+              [{:subject "Application rejected (2001/3)",
+                :body "Dear applicant,\n\nYour application 2001/3 has been rejected.\n\nView application: http://example.com/#/application/7",
                 :to-user "applicant"}]]
              (events-to-emails events))))
     (testing "id field can be overrided"
       (with-redefs [rems.config/env (assoc rems.config/env :application-id-column :id)]
         (is (= [[]
                 [{:to-user "assistant"
-                  :subject "A new application has been submitted"
-                  :body "Dear assistant,\nUser applicant has submitted a new application 7 for the resource(s) en title 11, en title 21.\nView the application: http://example.com/#/application/7"}
+                  :subject "New application (applicant: 7)"
+                  :body "Dear assistant,\n\napplicant has submitted a new application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
                  {:to-user "handler"
-                  :subject "A new application has been submitted"
-                  :body "Dear handler,\nUser applicant has submitted a new application 7 for the resource(s) en title 11, en title 21.\nView the application: http://example.com/#/application/7"}]]
+                  :subject "New application (applicant: 7)"
+                  :body "Dear handler,\n\napplicant has submitted a new application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]]
                (events-to-emails base-events)))))))
