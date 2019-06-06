@@ -265,8 +265,8 @@
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
-          :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen."]
-                  [:p "Ole hyvä ja kirjaudu sisään ensin."]]
+          :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "#/extra-pages/about"} "Info-sivulla"] "."]
+                  [:p "Ole hyvä ja kirjaudu sisään."]]
           :text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
