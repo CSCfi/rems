@@ -1,12 +1,1 @@
-{:t
- {:actions {:resource "Kielivara"}
-  :administration {:catalogue-item "Kielivara"
-                   :catalogue-items "Kielivarat"
-                   :create-catalogue-item "Uusi kielivara"}
-  :cart {:apply-for-bundle "Hae näitä kielivaroja (%1 kpl) yhdessä "
-         :header "%1 kielivaraa korissa"}
-  :catalogue {:catalogue "Kielivarat"
-              :header "Kielivarat"
-              :intro "Tällä sivulla on listattuna kaikki kielivarat joita voit tästä järjestelmästä hakea."
-              :apply-resources "Hae uusia kielivaroja"}
-  :navigation {:catalogue "Kielivarat"}}}
+{:t {}}

@@ -94,7 +94,7 @@
                                                    :translations-directory "translations/"
                                                    :theme-path "./example-theme/theme.edn"})]
       (is (= "Catalogue" (getx-in translations [:en :t :administration :catalogue-items])))
-      (is (= "Licence text" (getx-in translations [:en :t :create-license :license-text])))))
+      (is (= "Text" (getx-in translations [:en :t :create-license :license-text])))))
   (testing "extra translations don't override keys that are not defined in extras"
     (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
