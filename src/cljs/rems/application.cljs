@@ -389,7 +389,7 @@
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
 
-(defn- application-header [application]
+(defn- application-state [application]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
         event-groups (->> (:application/events application)
@@ -402,13 +402,13 @@
                           (map #(map format-event %)))]
     [collapsible/component
      {:id "header"
-      :title [:span#application-state
-              (str
-               (text :t.applications/state)
-               (str ": " (localize-state state)))]
+      :title (text :t.applications/state)
       :always (into [:div
                      [:div.mb-3 {:class (str "state-" (name state))}
                       (phases (get-application-phases state))]
+                     [:h3#application-state
+                      (str (text :t.applications/state) ": ")
+                      (localize-state state)]
                      [:h3 (text-format :t.applications/latest-activity (localize-time last-activity))]]
                     (when-let [g (first event-groups)]
                       (into [[:h3 (text :t.form/events)]]
@@ -583,7 +583,7 @@
      [document-title (text :t.applications/application)]
      (text :t.applications/intro)
      (into [:div] messages)
-     [application-header application]
+     [application-state application]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
      [:div.my-3 [application-fields application edit-application]]

@@ -134,7 +134,7 @@
                           :returned "Returned"
                           :submitted "Applied"
                           :unknown "Unknown"}
-                 :latest-activity "Latest activity %1"
+                 :latest-activity "Latest activity: %1"
                  :view "View"}
   :autocomplete {:no-results "No results"
                  :placeholder "Choose or type"}

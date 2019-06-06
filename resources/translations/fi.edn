@@ -134,7 +134,7 @@
                           :returned "Palautettu"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
-                 :latest-activity "Viimeisin toimenpide %1"
+                 :latest-activity "Viimeisin toimenpide: %1"
                  :view "Näytä"}
   :autocomplete {:no-results "Ei tuloksia"
                  :placeholder "Valitse tai kirjoita"}
