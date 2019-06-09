@@ -3,7 +3,7 @@
             [cljs-time.core :as time]
             [cljs-time.format :as format]
             [rems.text :refer [time-format localize-time]]
-            [rems.util :refer [decode-option-keys encode-option-keys normalize-option-key linkify parse-int]]))
+            [rems.util :refer [decode-option-keys encode-option-keys normalize-option-key linkify parse-int remove-empty-keys]]))
 
 (def test-time #inst "1980-01-02T13:45:00.000Z")
 
@@ -49,3 +49,9 @@
   (testing "change link strings to hiccup links"
     (is (= (linkify "a http://www.abc.com c")
         ["a" " " [:a {:href "http://www.abc.com"} "http://www.abc.com"] " " "c"]))))
+
+(deftest test-remove-empty-keys
+  (is (= (remove-empty-keys {}) {}))
+  (is (= (remove-empty-keys {:a :b}) {:a :b}))
+  (is (= (remove-empty-keys {:a nil}) {}))
+  (is (= (remove-empty-keys {:a {:b {:c nil} :d {:e :f}}}) {:a {:d {:e :f}}})))

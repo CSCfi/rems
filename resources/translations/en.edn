@@ -246,6 +246,7 @@
          :user "User"
          :validation {:errors "There were problems. Check the following fields."
                       :invalid-user "Invalid user."
+                      :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
                       :toolong "Answer to field \"%1\" is too long."}}
   :header {:title "Welcome to REMS"}
