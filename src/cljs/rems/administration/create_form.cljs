@@ -8,20 +8,39 @@
             [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
+            [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! post! normalize-option-key parse-int remove-empty-keys]]))
+            [rems.util :refer [dispatch! fetch post! normalize-option-key parse-int remove-empty-keys]]))
 
 (rf/reg-event-fx
  ::enter-page
- (fn [{:keys [db]}]
-   {:db (assoc db ::form {:fields []})}))
+ (fn [{:keys [db]} [_ form-id]]
+   {:db (assoc db
+               ::form {:fields []}
+               ::loading? (not (nil? form-id)))
+    ::fetch-form form-id}))
+
+(rf/reg-fx
+ ::fetch-form
+ (fn [form-id]
+   (when form-id
+     (fetch (str "/api/forms/" form-id)
+            {:handler #(rf/dispatch [::fetch-form-result %])}))))
+
+(rf/reg-event-db
+ ::fetch-form-result
+ (fn [db [_ form]]
+   (-> db
+       (assoc ::form form)
+       (dissoc ::loading?))))
 
 ;;;; form state
 
 ;; TODO rename item->field
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
+(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
@@ -305,26 +324,29 @@
                     [field-preview field]))}])
 
 (defn create-form-page []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        loading? @(rf/subscribe [::loading?])]
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-form)]
-     [:div.container-fluid.editor-content
-      [:div.row
-       [:div.col-lg
-        [collapsible/component
-         {:id "create-form"
-          :title (text :t.administration/create-form)
-          :always [:div
-                   [form-organization-field]
-                   [form-title-field]
-                   [form-fields (:fields form)]
+     (if loading?
+       [:div [spinner/big]]
+       [:div.container-fluid.editor-content
+        [:div.row
+         [:div.col-lg
+          [collapsible/component
+           {:id "create-form"
+            :title (text :t.administration/create-form)
+            :always [:div
+                     [form-organization-field]
+                     [form-title-field]
+                     [form-fields (:fields form)]
 
-                   [:div.form-field.new-form-field
-                    [add-form-field-button]]
+                     [:div.form-field.new-form-field
+                      [add-form-field-button]]
 
-                   [:div.col.commands
-                    [cancel-button]
-                    [save-form-button #(rf/dispatch [::create-form %])]]]}]]
-       [:div.col-lg
-        [form-preview form]]]]]))
+                     [:div.col.commands
+                      [cancel-button]
+                      [save-form-button #(rf/dispatch [::create-form %])]]]}]]
+         [:div.col-lg
+          [form-preview form]]]])]))

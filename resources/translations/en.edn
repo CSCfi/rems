@@ -55,6 +55,7 @@
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
+                   :copy-as-new "Copy as new"
                    :create-catalogue-item "Create catalogue item"
                    :create-form "Create form"
                    :create-license "Create license"

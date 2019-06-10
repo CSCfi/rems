@@ -55,6 +55,7 @@
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
+                   :copy-as-new "Kopioi uudeksi"
                    :create-catalogue-item "Lisää aineisto"
                    :create-form "Uusi lomake"
                    :create-license "Uusi lisenssi"
