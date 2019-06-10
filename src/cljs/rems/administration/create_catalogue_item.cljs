@@ -41,24 +41,39 @@
 (rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
 (rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
 
+(defn- valid-localization? [localization]
+  (and (not (str/blank? (:langcode localization)))
+       (not (str/blank? (:title localization)))))
+
 (defn- valid-request? [request]
   (and (not (str/blank? (:title request)))
        (number? (:wfid request))
        (number? (:resid request))
-       (number? (:form request))))
+       (number? (:form request))
+       (every? valid-localization? (:localizations request))))
 
 (defn build-request [form languages]
   (let [request {:title (get (:title form) (first languages))
                  :wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
-                 :form (get-in form [:form :id])}]
+                 :form (get-in form [:form :id])
+                 :localizations (for [language languages]
+                                  {:langcode (name language)
+                                   :title (get (:title form) language)})}]
     (when (valid-request? request)
       request)))
 
 (defn- create-catalogue-item! [_ [_ request]]
   (status-modal/common-pending-handler! (text :t.administration/create-catalogue-item))
-  (post! "/api/catalogue-items/create" {:params (assoc request :enabled false) ;; create disabled catalogue items by default
-                                        :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/catalogue-items/" (:id %))))
+  (post! "/api/catalogue-items/create" {:params (-> request
+                                                    (assoc :enabled false) ;; create disabled catalogue items by default
+                                                    (dissoc :localizations))
+                                        :handler (partial status-modal/common-success-handler!
+                                                          (fn [response]
+                                                            (doseq [localization (:localizations request)]
+                                                              ;; XXX: no error handling & possible partial failure due to how cumbersome to old API is to use
+                                                              (post! "/api/catalogue-items/create-localization" {:params (assoc localization :id (:id response))}))
+                                                            (dispatch! (str "#/administration/catalogue-items/" (:id response)))))
                                         :error-handler status-modal/common-error-handler!})
   {})
 

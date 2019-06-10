@@ -17,11 +17,17 @@
       (is (= {:title "en title"
               :wfid 123
               :resid 456
-              :form 789}
+              :form 789
+              :localizations [{:langcode "en"
+                               :title "en title"}
+                              {:langcode "fi"
+                               :title "fi title"}]}
              (build-request form languages))))
 
     (testing "missing title"
       (is (nil? (build-request (assoc-in form [:title :en] "")
+                               languages)))
+      (is (nil? (build-request (assoc-in form [:title :fi] "")
                                languages))))
     (testing "missing workflow"
       (is (nil? (build-request (assoc form :workflow nil)
