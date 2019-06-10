@@ -187,7 +187,6 @@
                         (rf/dispatch [::set-filtering table (-> filtering
                                                                 (update :show-filters not)
                                                                 (assoc :filters ""))]))]
-
         (if (:show-filters filtering)
           [:div.rems-table-search-toggle.d-flex.flex-row
            [:div.flex-grow-1.d-flex
