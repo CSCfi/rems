@@ -69,7 +69,9 @@
 (reg-sub
  :languages
  (fn [db _]
-   (:languages db)))
+   ;; default language first
+   (sort (comp not= (:default-language db))
+         (:languages db))))
 
 (reg-sub
  :default-language
