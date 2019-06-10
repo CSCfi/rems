@@ -6,7 +6,7 @@
             :add-licenses "Add terms of use"
             :add-member "Add member"
             :bundling-error "Application bundling not possible."
-            :bundling-warning "Applications of different resources can't be bundled into one application if they have different forms or workflows."
+            :bundling-warning "Applications of the resources can't normally be bundled into one application if they have different forms or workflows."
             :change-form-error "The resources can't be applied for with this application. Change them or make a new application."
             :change-form-warning "The form differs from the original application."
             :change-workflow-error "The resources can't be applied for with this application. Change them or make a new application."
@@ -67,7 +67,7 @@
                    :edit-workflow "Edit workflow"
                    :enable "Enable"
                    :end "End"
-                   :errors {:duplicate-resid "Duplicate resource."
+                   :errors {:duplicate-resid "Resource already exists in the organization."
                             :form-in-use "Form in use:"
                             :license-in-use "License in use:"
                             :resource-in-use "Resource in use:"
@@ -218,7 +218,7 @@
          :actions "Actions"
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
-         :alert-disabled-resources "Resources not available."
+         :alert-disabled-resources "Resources no longer available."
          :application "Application"
          :attachment-remove "Remove"
          :checkbox-checked "Yes"
@@ -234,7 +234,7 @@
          :has-accepted-licenses "Terms of use accepted."
          :licenses "Terms of use"
          :maxlength "(max %1 characters)"
-         :must-accept-licenses "Accepting the terms of use is required to access the resources."
+         :must-accept-licenses "Each member is required to accept the terms of use to access the resources."
          :no-attachment "No attachment"
          :optional "(optional)"
          :resources "Resources"
@@ -247,7 +247,7 @@
          :validation {:errors "Submission failed. Check the following fields."
                       :invalid-user "Invalid user."
                       :required "Field \"%1\" is required."
-                      :toolong "Input in field \"%1\" too long."}}
+                      :toolong "Text in field \"%1\" too long."}}
   :header {:title "Welcome to REMS"}
   :item-lists {:move-down "Move down"
                :move-up "Move up"
@@ -272,7 +272,7 @@
                :logout "Sign out"
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
-                   :page-was-not-found "Page not found."}
+                   :page-was-not-found "This page was not found."}
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"
@@ -286,6 +286,6 @@
            :open-search "Open search"
            :search-parameters "Search parameters"}
   :unauthorized-page {:unauthorized "Unauthorized"
-                      :you-are-unauthorized "Unauthorized."}
+                      :you-are-unauthorized "You're unauthorized to access this page."}
   :forbidden-page {:forbidden "Forbidden"
-                   :you-are-forbidden "Access forbidden."}}}
+                   :you-are-forbidden "Access to the page is forbidden."}}}

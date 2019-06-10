@@ -6,7 +6,7 @@
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
             :bundling-error "Resursseja ei voi hakea samalla hakemuksella."
-            :bundling-warning "Resursseja ei voi hakea samalla hakemuksella, jos niillä on eri lomake tai työvuo."
+            :bundling-warning "Resursseja ei tavallisesti voi hakea samalla hakemuksella, jos niillä on eri lomake tai työvuo."
             :change-form-error "Resursseja ei voi hakea tällä hakemuksella. Muuta niitä tai tee uusi hakemus."
             :change-form-warning "Lomake on eri kuin alkuperäisessä hakemuksessa."
             :change-workflow-error "Resursseja ei voi hakea tällä hakemuksella. Muuta niitä tai tee uusi hakemus."
@@ -67,7 +67,7 @@
                    :edit-workflow "Muokkaa työvuota"
                    :enable "Ota käyttöön"
                    :end "Loppu"
-                   :errors {:duplicate-resid "Resurssi on jo olemassa."
+                   :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
                             :form-in-use "Lomake on käytössä:"
                             :license-in-use "Lisenssi käytössä:"
                             :resource-in-use "Resurssi on käytössä:"
@@ -218,7 +218,7 @@
          :actions "Toiminnot"
          :add-comments-not-shown-to-applicant "Kommentoi (ei näy hakijalle)"
          :add-comments-shown-to-applicant "Kommentoi (näkyy hakijalle)"
-         :alert-disabled-resources "Resurssit eivät ole haettavissa."
+         :alert-disabled-resources "Resurssit eivät ole enää saatavilla."
          :application "Tiedot"
          :attachment-remove "Poista"
          :checkbox-checked "Kyllä"
@@ -234,7 +234,7 @@
          :has-accepted-licenses "Käyttöehdot hyväksytty."
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
-         :must-accept-licenses "Hakijan on hyväksyttävät käyttöehdot käyttääkseen resursseja."
+         :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
          :no-attachment "Ei liitetiedostoa"
          :optional "(ei pakollinen)"
          :previous-value "Edellinen"
@@ -271,8 +271,8 @@
                :home "Etusivu"
                :logout "Kirjaudu ulos"
                :skip-navigation "Siirry sivun pääsisältöön"}
-  :not-found-page {:not-found "Sivua ei löytynyt"
-                   :page-was-not-found "Sivua ei löydy."}
+  :not-found-page {:not-found "Ei löytynyt"
+                   :page-was-not-found "Tätä sivua ei löytynyt."}
   :phases {:apply "Hae"
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
@@ -285,7 +285,7 @@
   :search {:close-search "Sulje haku"
            :open-search "Avaa haku"
            :search-parameters "Hakutermit"}
-  :unauthorized-page {:unauthorized "Ei käyttöoikeuksia"
-                      :you-are-unauthorized "Ei sivun käyttöoikeuksia."}
+  :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
+                      :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :forbidden-page {:forbidden "Kielletty"
-                   :you-are-forbidden "Sivun käyttö kielletty."}}}
+                   :you-are-forbidden "Sivun käyttö on kielletty."}}}
