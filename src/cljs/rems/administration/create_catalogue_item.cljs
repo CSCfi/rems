@@ -47,8 +47,8 @@
        (number? (:resid request))
        (number? (:form request))))
 
-(defn build-request [form]
-  (let [request {:title (:title form)
+(defn build-request [form languages]
+  (let [request {:title (get (:title form) (first languages))
                  :wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
                  :form (get-in form [:form :id])}]
@@ -112,9 +112,10 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
-(defn- catalogue-item-title-field []
-  [text-field context {:keys [:title]
-                       :label (text :t.create-catalogue-item/title)
+(defn- catalogue-item-title-field [language]
+  [text-field context {:keys [:title language]
+                       :label (str (text :t.create-catalogue-item/title)
+                                   " (" (name language) ")")
                        :placeholder (text :t.create-catalogue-item/title-placeholder)}])
 
 (defn- catalogue-item-workflow-field []
@@ -171,8 +172,8 @@
     :on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
-(defn- save-catalogue-item-button [form on-click]
-  (let [request (build-request form)]
+(defn- save-catalogue-item-button [form languages on-click]
+  (let [request (build-request form languages)]
     [:button.btn.btn-primary
      {:type :button
       :on-click #(on-click request)
@@ -180,7 +181,8 @@
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
-  (let [loading? @(rf/subscribe [::loading?])
+  (let [languages @(rf/subscribe [:languages])
+        loading? @(rf/subscribe [::loading?])
         form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
@@ -192,11 +194,12 @@
                 (if loading?
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
-                   [catalogue-item-title-field]
+                   (for [language languages]
+                     ^{:key language} [catalogue-item-title-field language])
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
 
                    [:div.col.commands
                     [cancel-button]
-                    [save-catalogue-item-button form #(rf/dispatch [::create-catalogue-item %])]]])]}]]))
+                    [save-catalogue-item-button form languages #(rf/dispatch [::create-catalogue-item %])]]])]}]]))
