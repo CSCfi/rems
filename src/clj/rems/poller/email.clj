@@ -191,7 +191,10 @@
                                    (:to-user email-spec)))))]
         ;; TODO check that :to is set
         (log/info "sending email:" (pr-str email))
-        (postal/send-message {:host host :port port} email)))))
+        (try
+          (postal/send-message {:host host :port port} email)
+          (catch com.sun.mail.smtp.SMTPAddressFailedException e ; email address does not exist
+            (log/warn e "failed sending email, skipping:" (pr-str email))))))))
 
 (defn run []
   (common/run-event-poller ::poller (fn [event]
