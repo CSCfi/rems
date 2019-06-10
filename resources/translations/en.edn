@@ -204,8 +204,8 @@
                               :message "Dear %1,\n\n%2 has requested a comment on application %3.\n\nComment: %4"}
           :commented {:subject "Comment added (%2: %3)"
                       :message "Dear %1,\n\n%2 has commented application %3.\n\nView application: %4"}
-          :decided {:subject "Application resolved (%2: %3)"
-                    :message "Dear %1,\n\n%2 has resolved application %3.\n\nView application: %4"}
+          :decided {:subject "Application decided (%2: %3)"
+                    :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %4"}
           :decision-requested {:subject "Decision requested (%2: %3)"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3.\n\nView application: %4"}
           :footer "\n\nPlease don't reply to this automatically generated message."

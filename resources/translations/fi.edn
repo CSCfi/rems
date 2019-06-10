@@ -199,15 +199,15 @@
           :application-closed {:subject "Hakemus suljettu (%2)"
                                :message "Hyvä %1,\n\nHakemuksesi %2 on suljettu.\n\nTarkastele hakemusta: %3"}
           :application-submitted {:subject "Uusi hakemus (%2: %3)"
-                                  :message "Hyvä %1,\n\nKäyttäjä %2 on lähettänyt uuden käyttöoikeushakemuksen (%3): %4.\n\nTarkastele hakemusta: %5"}
+                                  :message "Hyvä %1,\n\n%2 on lähettänyt uuden käyttöoikeushakemuksen (%3): %4.\n\nTarkastele hakemusta: %5"}
           :comment-requested {:subject "Kommenttipyyntö (%2: %3)"
                               :message "Hyvä %1,\n\nKäyttäjä %2 on pyytänyt kommentoimaan hakemusta %3.\n\nKommentoi: %4"}
           :commented {:subject "Hakemusta kommentoitu (%2: %3)"
                       :message "Hyvä %1,\n\nKäyttäjä %2 on kommentoinut hakemusta %3.\n\nTarkastele hakemusta: %4"}
-          :decided {:subject "Hakemus käsitelty (%2: %3)"
-                    :message "Hyvä %1,\n\nKäyttäjä %2 on käsitellyt hakemuksen %3.\n\nTarkastele hakemusta: %4"}
-          :decision-requested {:subject "Käsittelypyyntö (%2: %3)"
-                               :message "Hyvä %1,\n\nKäyttäjä %2 on pyytänyt sinua käsittelemään hakemuksen %3.\n\nTarkastele hakemusta: %4"}
+          :decided {:subject "Hakemus päätetty (%2: %3)"
+                    :message "Hyvä %1,\n\nKäyttäjä %2 on päättänyt hakemuksen %3.\n\nTarkastele hakemusta: %4"}
+          :decision-requested {:subject "Päätöspyyntö (%2: %3)"
+                               :message "Hyvä %1,\n\nKäyttäjä %2 on pyytänyt sinua tekemään päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %4"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
           :member-added {:subject "Lisätty hakemuksen jäseneksi (%2)"
                          :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %2 jäseneksi.\n\nTarkastele hakemusta: %3"}
