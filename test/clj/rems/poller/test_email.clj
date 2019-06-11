@@ -130,11 +130,11 @@
                 :subject "Decision requested (assistant: 2001/3)",
                 :body "Dear decider,\n\nassistant has requested your decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "assistant",
-                :subject "Application resolved (decider: 2001/3)",
-                :body "Dear assistant,\n\ndecider has resolved application 2001/3.\n\nView application: http://example.com/#/application/7"}
+                :subject "Application decided (decider: 2001/3)",
+                :body "Dear assistant,\n\ndecider has made a decision application 2001/3.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "Application resolved (decider: 2001/3)",
-                :body "Dear handler,\n\ndecider has resolved application 2001/3.\n\nView application: http://example.com/#/application/7"}]
+                :subject "Application decided (decider: 2001/3)",
+                :body "Dear handler,\n\ndecider has made a decision application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "applicant",
                 :subject "Application approved (2001/3)",
                 :body "Dear applicant,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
