@@ -16,31 +16,30 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ form-id]]
-   {:db (assoc db
-               ::form {:fields []}
-               ::loading? (not (nil? form-id)))
-    ::fetch-form form-id}))
+   {:db (assoc db ::form {:fields []})
+    :dispatch-n [[::fetch-form form-id]]}))
 
-(rf/reg-fx
+(rf/reg-event-fx
  ::fetch-form
- (fn [form-id]
+ (fn [{:keys [db]} [_ form-id]]
    (when form-id
      (fetch (str "/api/forms/" form-id)
-            {:handler #(rf/dispatch [::fetch-form-result %])}))))
+            {:handler #(rf/dispatch [::fetch-form-result %])})
+     {:db (assoc db ::loading-form? true)})))
 
 (rf/reg-event-db
  ::fetch-form-result
  (fn [db [_ form]]
    (-> db
        (assoc ::form form)
-       (dissoc ::loading?))))
+       (dissoc ::loading-form?))))
 
 ;;;; form state
 
 ;; TODO rename item->field
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
-(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+(rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
@@ -325,11 +324,11 @@
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
-        loading? @(rf/subscribe [::loading?])]
+        loading-form? @(rf/subscribe [::loading-form?])]
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-form)]
-     (if loading?
+     (if loading-form?
        [:div [spinner/big]]
        [:div.container-fluid.editor-content
         [:div.row
