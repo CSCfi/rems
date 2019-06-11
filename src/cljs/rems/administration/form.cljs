@@ -38,6 +38,12 @@
     :on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/back)])
 
+(defn- copy-as-new-button [id]
+  [:button.btn.btn-primary
+   {:type :button
+    :on-click #(dispatch! (str "/#/administration/create-form/" id))}
+   (text :t.administration/copy-as-new)])
+
 (defn form-view [form language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -49,7 +55,7 @@
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
-   [:div.col.commands [back-button]]
+   [:div.col.commands [back-button] [copy-as-new-button (:id form)]]
    [form-preview form]])
 ;; TODO Do we support form licenses?
 
