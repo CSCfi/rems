@@ -62,6 +62,11 @@
    {:href (str "/#/administration/workflows/" workflow-id)}
    (text :t.administration/view)])
 
+(defn- to-edit-workflow [workflow-id]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/edit-workflow/" workflow-id)}
+   (text :t.administration/edit)])
+
 (rf/reg-sub
  ::workflows-table-rows
  (fn [_ _]
@@ -83,6 +88,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]
+                           [to-edit-workflow (:id workflow)]
                            [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]
                            [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]]}})
         workflows)))
