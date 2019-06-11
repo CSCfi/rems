@@ -102,11 +102,11 @@
                     :event/actor "assistant"}])]
       (is (= [[]
               [{:to-user "assistant",
-                :subject "New application (applicant: 2001/3)",
-                :body "Dear assistant,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                :subject "Application submitted (applicant: 2001/3)",
+                :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "New application (applicant: 2001/3)",
-                :body "Dear handler,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+                :subject "Application submitted (applicant: 2001/3)",
+                :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
               [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
                 :body "Hello,\n\nThis email address (somebody@example.com) has been invited to participate in an application.\n\nParticipate: http://example.com/accept-invitation?token=abc"}]
@@ -130,11 +130,11 @@
                 :subject "Decision requested (assistant: 2001/3)",
                 :body "Dear decider,\n\nassistant has requested your decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "assistant",
-                :subject "Application decided (decider: 2001/3)",
-                :body "Dear assistant,\n\ndecider has made a decision application 2001/3.\n\nView application: http://example.com/#/application/7"}
+                :subject "Decision made (decider: 2001/3)",
+                :body "Dear assistant,\n\ndecider has made a decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "Application decided (decider: 2001/3)",
-                :body "Dear handler,\n\ndecider has made a decision application 2001/3.\n\nView application: http://example.com/#/application/7"}]
+                :subject "Decision made (decider: 2001/3)",
+                :body "Dear handler,\n\ndecider has made a decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "applicant",
                 :subject "Application approved (2001/3)",
                 :body "Dear applicant,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
@@ -160,11 +160,11 @@
                         :event/actor "handler"})]
       (is (= [[]
               [{:to-user "assistant",
-                :subject "New application (applicant: 2001/3)",
-                :body "Dear assistant,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                :subject "Application submitted (applicant: 2001/3)",
+                :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "New application (applicant: 2001/3)",
-                :body "Dear handler,\n\napplicant has submitted a new application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+                :subject "Application submitted (applicant: 2001/3)",
+                :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
               [{:subject "Application rejected (2001/3)",
                 :body "Dear applicant,\n\nYour application 2001/3 has been rejected.\n\nView application: http://example.com/#/application/7",
                 :to-user "applicant"}]]
@@ -173,9 +173,9 @@
       (with-redefs [rems.config/env (assoc rems.config/env :application-id-column :id)]
         (is (= [[]
                 [{:to-user "assistant"
-                  :subject "New application (applicant: 7)"
-                  :body "Dear assistant,\n\napplicant has submitted a new application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                  :subject "Application submitted (applicant: 7)"
+                  :body "Dear assistant,\n\napplicant has submitted an application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
                  {:to-user "handler"
-                  :subject "New application (applicant: 7)"
-                  :body "Dear handler,\n\napplicant has submitted a new application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]]
+                  :subject "Application submitted (applicant: 7)"
+                  :body "Dear handler,\n\napplicant has submitted an application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]]
                (events-to-emails base-events)))))))

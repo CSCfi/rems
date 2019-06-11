@@ -198,13 +198,13 @@
                                  :message "Dear %1,\n\nYour application %2 has been rejected.\n\nView application: %3"}
           :application-closed {:subject "Application closed (%2)"
                                :message "Dear %1,\n\nYour application %2 has been closed.\n\nView application: %3"}
-          :application-submitted {:subject "New application (%2: %3)"
-                                  :message "Dear %1,\n\n%2 has submitted a new application (%3): %4.\n\nView application: %5"}
+          :application-submitted {:subject "Application submitted (%2: %3)"
+                                  :message "Dear %1,\n\n%2 has submitted an application (%3): %4.\n\nView application: %5"}
           :comment-requested {:subject "Comment requested (%2: %3)"
                               :message "Dear %1,\n\n%2 has requested a comment on application %3.\n\nComment: %4"}
           :commented {:subject "Comment added (%2: %3)"
                       :message "Dear %1,\n\n%2 has commented application %3.\n\nView application: %4"}
-          :decided {:subject "Application decided (%2: %3)"
+          :decided {:subject "Decision made (%2: %3)"
                     :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %4"}
           :decision-requested {:subject "Decision requested (%2: %3)"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3.\n\nView application: %4"}
