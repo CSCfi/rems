@@ -15,8 +15,11 @@
 
 (rf/reg-event-fx
  ::enter-page
- (fn [{:keys [db]} [_ form-id]]
-   {:db (assoc db ::form {:fields []})
+ (fn [{:keys [db]} [_ form-id edit-form?]]
+   {:db (assoc db
+               ::form {:fields []}
+               ::form-id form-id
+               ::edit-form? edit-form?)
     :dispatch-n [[::fetch-form form-id]]}))
 
 (rf/reg-event-fx
@@ -40,6 +43,7 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
 (rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
+(rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
@@ -149,15 +153,23 @@
              {:fields (apply merge (mapv #(validate-field %1 %2 languages) (form :fields) (range)))})
       remove-empty-keys))
 
+(defn- page-title [edit-form?]
+  (if edit-form?
+    (text :t.administration/edit-form)
+    (text :t.administration/create-form)))
+
 (rf/reg-event-fx
  ::create-form
  (fn [{:keys [db]} [_ request]]
-   (let [form-errors (validate-form (db ::form) (db :languages))]
+   (let [form-errors (validate-form (db ::form) (db :languages))
+         edit-form? (db ::edit-form?)]
      (when (empty? form-errors)
-       (status-modal/common-pending-handler! (text :t.administration/create-form))
-       (post! "/api/forms/create" {:params request
-                                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
-                                   :error-handler status-modal/common-error-handler!}))
+       (status-modal/common-pending-handler! (page-title edit-form?))
+       (post! "/api/forms/create"
+              {:params (merge request {:edit-form? (boolean edit-form?)
+                                       :form-id (db ::form-id)})
+               :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
+               :error-handler status-modal/common-error-handler!}))
      {:db (assoc db ::form-errors form-errors)})))
 
 ;;;; UI
@@ -324,10 +336,11 @@
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
+        edit-form? @(rf/subscribe [::edit-form?])
         loading-form? @(rf/subscribe [::loading-form?])]
     [:div
      [administration-navigator-container]
-     [document-title (text :t.administration/create-form)]
+     [document-title (page-title edit-form?)]
      (if loading-form?
        [:div [spinner/big]]
        [:div.container-fluid.editor-content
@@ -335,7 +348,7 @@
          [:div.col-lg
           [collapsible/component
            {:id "create-form"
-            :title (text :t.administration/create-form)
+            :title (page-title edit-form?)
             :always [:div
                      [form-organization-field]
                      [form-title-field]

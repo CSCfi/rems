@@ -379,6 +379,10 @@
   (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id)])
   (rf/dispatch [:set-active-page :rems.administration/create-form]))
 
+(secretary/defroute "/administration/edit-form/:form-id" [form-id]
+  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id) true])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
+
 (secretary/defroute "/administration/create-license" []
   (rf/dispatch [:rems.administration.create-license/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/create-license]))

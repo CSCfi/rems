@@ -56,12 +56,14 @@
    (for [wf (form/get-form-templates filters)]
      (format-form wf))))
 
-(s/defschema CreateFormCommand
-  {:organization s/Str
+(s/defschema FormCommand
+  {:edit-form? s/Bool
+   (s/optional-key :form-id) s/Num
+   :organization s/Str
    :title s/Str
    :fields [FormField]})
 
-(s/defschema CreateFormResponse
+(s/defschema FormResponse
   {:success s/Bool
    :id s/Num})
 
@@ -88,15 +90,22 @@
       (ok (form/get-form-template form-id)))
 
     (POST "/create" []
-      :summary "Create form"
+      :summary "Create or edit form"
       :roles #{:owner}
-      :body [command CreateFormCommand]
-      :return CreateFormResponse
-      (ok (form/create-form! (getx-user-id) command)))
+      :body [command FormCommand]
+      :return FormResponse
+      (ok (form/create-or-edit-form! (getx-user-id) command)))
 
     (PUT "/update" []
-      :summary "Update form"
+      :summary "Update form state"
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (ok (form/update-form! command)))))
+      (ok (form/update-form-state! command)))
+
+    (GET "/:form-id/editable" []
+      :summary "Check if the form is editable"
+      :roles #{:owner}
+      :path-params [form-id :- (describe s/Num "form-id")]
+      :return SuccessResponse
+      (ok (form/form-editable form-id)))))

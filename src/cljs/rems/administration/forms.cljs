@@ -46,6 +46,16 @@
    {}))
 
 (rf/reg-event-fx
+ ::edit-form
+ (fn [_ [_ id]]
+   (fetch (str "/api/forms/" id "/editable")
+          {:handler
+           (fn [response]
+             (status-flags/common-update-handler!
+              #(dispatch! (str "/#/administration/edit-form/" id)) response true))
+           :error-handler status-modal/common-error-handler!})))
+
+(rf/reg-event-fx
  ::set-display-old?
  (fn [{:keys [db]} [_ display-old?]]
    {:db (assoc db ::display-old? display-old?)
@@ -62,6 +72,12 @@
   [:a.btn.btn-primary
    {:href (str "/#/administration/forms/" (:id form))}
    (text :t.administration/view)])
+
+(defn- to-edit-form [form]
+  [:button.btn.btn-primary
+   {:type :button
+    :on-click #(rf/dispatch [::edit-form (:id form)])}
+   (text :t.administration/edit)])
 
 (defn- copy-as-new-form [form]
   [:a.btn.btn-primary
@@ -89,6 +105,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-form form]
+                           [to-edit-form form]
                            [copy-as-new-form form]
                            [status-flags/enabled-toggle form #(rf/dispatch [::update-form %1 %2])]
                            [status-flags/archived-toggle form #(rf/dispatch [::update-form %1 %2])]]}})

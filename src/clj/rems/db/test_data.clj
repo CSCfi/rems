@@ -98,8 +98,8 @@
 (defn- create-archived-form! []
   ;; only used from create-test-data!
   (let [yesterday (time/minus (time/now) (time/days 1))
-        id (:id (form/create-form! (+fake-users+ :owner) {:organization "nbn" :title "Archived form, should not be seen by applicants" :fields []}))]
-    (form/update-form! {:id id :enabled true :archived true})))
+        id (:id (form/create-or-edit-form! (+fake-users+ :owner) {:edit-form? false :organization "nbn" :title "Archived form, should not be seen by applicants" :fields []}))]
+    (form/update-form-state! {:id id :enabled true :archived true})))
 
 (defn- create-expired-license! []
   (let [owner (+fake-users+ :owner) ; only used from create-test-data!
@@ -109,9 +109,10 @@
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   [users]
-  (:id (form/create-form!
+  (:id (form/create-or-edit-form!
         (users :owner)
-        {:organization "nbn"
+        {:edit-form? false
+         :organization "nbn"
          :title "Basic form"
          :fields [;; all form field types
                   {:title {:en "Project name"
@@ -181,9 +182,10 @@
 
 (defn create-thl-demo-form!
   [users]
-  (:id (form/create-form!
+  (:id (form/create-or-edit-form!
         (users :owner)
-        {:organization "nbn"
+        {:edit-form? false
+         :organization "nbn"
          :title "THL form"
          :fields [{:title {:en "Application title"
                            :fi "Hakemuksen otsikko"}
@@ -657,9 +659,10 @@
                                                      :title "Performance tests"
                                                      :type :dynamic
                                                      :handlers handlers}))
-        form-id (:id (form/create-form!
+        form-id (:id (form/create-or-edit-form!
                       owner
-                      {:organization "perf"
+                      {:edit-form? false
+                       :organization "perf"
                        :title "Performance tests"
                        :fields [{:title {:en "Project name"
                                          :fi "Projektin nimi"}

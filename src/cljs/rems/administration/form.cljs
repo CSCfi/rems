@@ -38,6 +38,12 @@
     :on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/back)])
 
+(defn- edit-button [id]
+  [:button.btn.btn-primary
+   {:type :button
+    :on-click #(dispatch! (str "/#/administration/edit-form/" id))}
+   (text :t.administration/edit)])
+
 (defn- copy-as-new-button [id]
   [:button.btn.btn-primary
    {:type :button
@@ -55,7 +61,10 @@
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
-   [:div.col.commands [back-button] [copy-as-new-button (:id form)]]
+   [:div.col.commands
+    [back-button]
+    [edit-button (:id form)]
+    [copy-as-new-button (:id form)]]
    [form-preview form]])
 ;; TODO Do we support form licenses?
 

@@ -32,10 +32,11 @@
                                                      :title ""
                                                      :type :dynamic
                                                      :handlers []}))
-        form-id (:id (form/create-form! user-id
-                                        {:organization ""
-                                         :title ""
-                                         :fields []}))
+        form-id (:id (form/create-or-edit-form! user-id
+                                                {:edit-form? false
+                                                 :organization ""
+                                                 :title ""
+                                                 :fields []}))
         res-id (:id (resource/create-resource! {:resid (str "urn:uuid:" (UUID/randomUUID))
                                                 :organization ""
                                                 :licenses []}
