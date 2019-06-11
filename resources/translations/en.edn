@@ -192,27 +192,27 @@
                     :round-n "Round %1"
                     :rounds-workflow "Round-based workflow"
                     :title "Title"}
-  :email {:application-approved {:subject "Your application has been approved"
-                                 :message "Dear %1,\nYour application %2 has been approved.\nView your application: %3"}
-          :application-rejected {:subject "Your application has been rejected"
-                                 :message "Dear %1,\nYour application %2 has been rejected.\nView your application: %3"}
-          :application-closed {:subject "Your application has been closed"
-                               :message "Dear %1,\nYour application %2 has been closed.\nView your application: %3"}
-          :application-submitted {:subject "A new application has been submitted"
-                                  :message "Dear %1,\nUser %2 has submitted a new application %3 for the resource(s) %4.\nView the application: %5"}
-          :comment-requested {:subject "Comment request"
-                              :message "Dear %1,\nUser %2 has requested your comment on application %3.\nComment here: %4"}
-          :commented {:subject "New comment notification"
-                      :message "Dear %1,\nUser %2 has posted a comment on application %3.\nView the application: %4"}
-          :decided {:subject "New decision notification"
-                    :message "Dear %1,\nUser %2 has sent a decision on application %3.\nView the application: %4"}
-          :decision-requested {:subject "Decision request"
-                               :message "Dear %1,\nUser %2 has requested your decision on application %3.\nView the application: %4"}
-          :footer "\nPlease do not reply to this automatically generated message."
-          :member-added {:subject "You've been added as a member to an application"
-                         :message "Dear %1,\nYou've been added as a member to application %2.\nView the application: %3"}
+  :email {:application-approved {:subject "Application approved (%2)"
+                                 :message "Dear %1,\n\nYour application %2 has been approved.\n\nView application: %3"}
+          :application-rejected {:subject "Application rejected (%2)"
+                                 :message "Dear %1,\n\nYour application %2 has been rejected.\n\nView application: %3"}
+          :application-closed {:subject "Application closed (%2)"
+                               :message "Dear %1,\n\nYour application %2 has been closed.\n\nView application: %3"}
+          :application-submitted {:subject "Application submitted (%2: %3)"
+                                  :message "Dear %1,\n\n%2 has submitted an application (%3): %4.\n\nView application: %5"}
+          :comment-requested {:subject "Comment requested (%2: %3)"
+                              :message "Dear %1,\n\n%2 has requested a comment on application %3.\n\nComment: %4"}
+          :commented {:subject "Comment added (%2: %3)"
+                      :message "Dear %1,\n\n%2 has commented application %3.\n\nView application: %4"}
+          :decided {:subject "Decision made (%2: %3)"
+                    :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %4"}
+          :decision-requested {:subject "Decision requested (%2: %3)"
+                               :message "Dear %1,\n\n%2 has requested your decision on application %3.\n\nView application: %4"}
+          :footer "\n\nPlease don't reply to this automatically generated message."
+          :member-added {:subject "Added as a member of an application (%2)"
+                         :message "Dear %1,\n\nYou've been added as a member of application %2.\n\nView application: %3"}
           :member-invited {:subject "Invitation to participate in an application"
-                           :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nParticipate with this link: %2"}}
+                           :message "Hello,\n\nThis email address (%1) has been invited to participate in an application.\n\nParticipate: %2"}}
   :footer "Powered by CSC - IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"
