@@ -142,4 +142,4 @@
 
                    [:div.col.commands
                     [cancel-button]
-                    [save-resource-button form #(dispatch! "/#/administration/resources")]]])]}]]))
+                    [save-resource-button form]]])]}]]))
