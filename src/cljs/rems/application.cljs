@@ -407,6 +407,14 @@
                      [:div.mb-3 {:class (str "state-" (name state))}
                       (phases (get-application-phases state))]
                      [info-field
+                      (text :t.applications/application)
+                      [:span#application-id (:application/external-id application)]
+                      {:inline? true}]
+                     [info-field
+                      (text :t.actions/description)
+                      (:application/description application)
+                      {:inline? true}]
+                     [info-field
                       (text :t.applications/state)
                       [:span#application-state (localize-state state)]
                       {:inline? true}]
@@ -584,7 +592,7 @@
                               :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
-     [document-title (text :t.applications/application)]
+     [document-title [:span (text :t.applications/application) " " (:application/external-id application)]]
      (text :t.applications/intro)
      (into [:div] messages)
      [application-state application]
