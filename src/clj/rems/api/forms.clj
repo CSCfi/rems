@@ -9,7 +9,7 @@
   (:import (org.joda.time DateTime)))
 
 (s/defschema Form
-  {:id s/Num
+  {:id s/Int
    :organization s/Str
    :title s/Str
    :start DateTime
@@ -63,7 +63,7 @@
 
 (s/defschema FormResponse
   {:success s/Bool
-   :id s/Num})
+   :id s/Int})
 
 (def forms-api
   (context "/forms" []
@@ -90,7 +90,7 @@
     (GET "/:form-id" []
       :summary "Get form by id"
       :roles #{:owner}
-      :path-params [form-id :- (describe s/Num "form-id")]
+      :path-params [form-id :- (describe s/Int "form-id")]
       :return FullForm
       (ok (form/get-form-template form-id)))
 
