@@ -15,7 +15,7 @@
 
 (def ^:private element-atom-to-be-focused (atom nil))
 
-(defn- grab-focus []
+(defn- check-if-need-to-focus []
   (when-let [element-atom @element-atom-to-be-focused]
     (when-let [element @element-atom]
       (.focus element)
@@ -23,8 +23,8 @@
 
 (defn set-focus [element-atom]
   (reset! element-atom-to-be-focused element-atom)
-  (grab-focus))
+  (check-if-need-to-focus))
 
 (defn ref-changed [element-atom element]
   (reset! element-atom element)
-  (grab-focus))
+  (check-if-need-to-focus))
