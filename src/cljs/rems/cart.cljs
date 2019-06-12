@@ -82,7 +82,7 @@
               (let [key-fn #(select-vals % [:wfid :formid])]
                 (apply concat
                        (for [group (vals (into (sorted-map) (group-by key-fn items)))]
-                         (group-view (sort-by get-catalogue-item-title group) language)))))]]]]
+                         (group-view (sort-by get-localized-title group) language)))))]]]]
     (text :t.cart/empty)))
 
 (defn cart-list-container []
