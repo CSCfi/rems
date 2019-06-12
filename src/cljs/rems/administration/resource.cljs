@@ -48,26 +48,33 @@
          [:h3 (text-format :t.administration/license-field (get-in license [:localizations language :title]))]
          [inline-info-field (text :t.administration/title) (:title license)]]
         (concat (for [[langcode localization] (:localizations license)]
-                  [inline-info-field (str (text :t.administration/title)
-                                          " "
-                                          (str/upper-case (name langcode))) (:title localization)])
+                  [inline-info-field
+                   (str (text :t.administration/title)
+                        " (" (str/upper-case (name langcode)) ")")
+                   (:title localization)])
                 [[inline-info-field (text :t.administration/type) (:licensetype license)]
                  (case (:licensetype license)
-                   "link" [inline-info-field (text :t.create-license/external-link) [:a {:target :_blank :href (:textcontent license)} (:textcontent license) " " [external-link]]]
-                   "text" [inline-info-field (text :t.create-license/license-text) (:textcontent license)]
+                   "link" [inline-info-field
+                           (text :t.create-license/external-link)
+                           [:a {:target :_blank :href (:textcontent license)}
+                            (:textcontent license) " " [external-link]]]
+                   "text" [inline-info-field
+                           (text :t.create-license/license-text)
+                           (:textcontent license)]
                    nil)]
                 (when (= "link" (:licensetype license))
                   (for [[langcode localization] (:localizations license)]
-                    [inline-info-field (str (text :t.create-license/external-link)
-                                            " "
-                                            (str/upper-case (name langcode))) [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]]))
+                    [inline-info-field
+                     (str (text :t.create-license/external-link)
+                          " (" (str/upper-case (name langcode)) ")")
+                     [:a {:target :_blank :href (:textcontent localization)}
+                      (:textcontent localization) " " [external-link]]]))
                 (when (= "attachment" (:licensetype license))
                   (for [[langcode localization] (:localizations license)]
                     (when (:attachment-id localization)
                       [inline-info-field
                        (str (text :t.create-license/license-attachment)
-                            " "
-                            (str/upper-case (name langcode)))
+                            " (" (str/upper-case (name langcode)) ")")
                        [attachment-link (:attachment-id localization) (:title localization)]
                        {:box? false}])))
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]

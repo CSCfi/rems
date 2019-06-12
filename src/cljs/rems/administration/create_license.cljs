@@ -196,8 +196,7 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [default-language @(rf/subscribe [:default-language])
-        languages @(rf/subscribe [:languages])]
+  (let [languages @(rf/subscribe [:languages])]
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-license)]
@@ -206,20 +205,13 @@
        :title (text :t.administration/create-license)
        :always [:div
                 [license-type-radio-group]
-                [language-heading default-language]
-                [license-title-field default-language]
-                [license-link-field default-language]
-                [license-text-field default-language]
-                [license-attachment-field default-language]
-
-                (doall (for [language (remove #(= % default-language) languages)]
-                         [:div {:key language}
-                          [language-heading language]
-                          [license-title-field language]
-                          [license-link-field language]
-                          [license-text-field language]
-                          [license-attachment-field language]]))
-
+                (for [language languages]
+                  [:div {:key language}
+                   [language-heading language]
+                   [license-title-field language]
+                   [license-link-field language]
+                   [license-text-field language]
+                   [license-attachment-field language]])
                 [:div.col.commands
                  [cancel-button]
                  [save-license-button #(rf/dispatch [::create-license %])]]]}]]))
