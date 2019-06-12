@@ -9,7 +9,11 @@
                     {:id :integration
                      :ns-patterns ["rems"]
                      :test-paths ["src" "test"]
-                     :focus-meta [:integration]}]
+                     :focus-meta [:integration]}
+                    {:id :focused
+                     :ns-patterns ["rems"]
+                     :test-paths ["src" "test"]
+                     :focus-meta [:focused]}]
             :kaocha/reporter kaocha.report/dots
             :plugins [:kaocha.plugin/print-invocations
                       :kaocha.plugin/notifier
