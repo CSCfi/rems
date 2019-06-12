@@ -124,7 +124,7 @@
                           :returned "Changes requested"
                           :submitted "Applied"
                           :unknown "Unknown"}
-                 :intro [:div.intro [:p "By filling and sending in this application, all the applicants may be granted the applied resources. All the applicable licenses must also be accepted before or after applying."]]
+                 :intro [:div.intro [:p "By filling and sending in this application, the applicants may be granted the applied resources. All the applicable terms of use must also be accepted before or after applying by all the applicants."]]
                  :my-applications "My Applications"
                  :state "State"
                  :states {:approved "Approved"
@@ -143,7 +143,7 @@
          :apply-for-bundle "Apply for these %1 resources as a bundle "
          :empty [:div.intro [:p "Select resources to apply for."]]
          :header "%1 resources in cart"
-         :intro [:div.intro [:p "Here are all the resources that you have picked. If the resources can be applied with the same application, they will be automatically grouped into a bundle."]]
+         :intro [:div.intro [:p "Here are the resources that you have selected. If the resources can be applied to with the same application, they will be automatically grouped into a bundle."]]
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"

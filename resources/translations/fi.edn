@@ -124,7 +124,7 @@
                           :returned "Palautettu muokattavaksi"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
-                 :intro [:div.intro [:p "Täyttämällä ja lähettämällä tämän hakemuksen, kaikki hakijat voivat saada oikeuden haettuihin resursseihin. Kaikkien on sen lisäksi hyväksyttävä kaikki käyttöehdot viimeistään hakemuksen käsittelyn jälkeen saadakseen käyttöoikeudet."]]
+                 :intro [:div.intro [:p "Täyttämällä ja lähettämällä tämän hakemuksen, kaikki hakijat voivat saada oikeuden haettuihin resursseihin. Kaikkien hakijoiden on sen lisäksi hyväksyttävä kaikki käyttöehdot viimeistään hakemuksen käsittelyn jälkeen saadakseen käyttöoikeudet."]]
                  :my-applications "Omat hakemukset"
                  :state "Tila"
                  :states {:approved "Hyväksytty"
