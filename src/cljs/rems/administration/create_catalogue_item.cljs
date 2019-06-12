@@ -130,7 +130,7 @@
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]
                        :label (str (text :t.create-catalogue-item/title)
-                                   " (" (name language) ")")
+                                   " (" (str/upper-case (name language)) ")")
                        :placeholder (text :t.create-catalogue-item/title-placeholder)}])
 
 (defn- catalogue-item-workflow-field []
