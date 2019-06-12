@@ -33,8 +33,8 @@
   (testing "error: field input too long"
     (is (= [{:type :t.form.validation/toolong :field-id 2}]
            (validate-fields [{:field/id 1
-                              :field/maxlength 5
+                              :field/max-length 5
                               :field/value "abcde"}
                              {:field/id 2
-                              :field/maxlength 5
+                              :field/max-length 5
                               :field/value "abcdef"}])))))

@@ -7,8 +7,8 @@
       ;; TODO: use field/id in output
       {:field-id (:field/id field)
        :type :t.form.validation/required})
-    (when (and (:field/maxlength field)
-               (> (count (:field/value field)) (:field/maxlength field)))
+    (when (and (:field/max-length field)
+               (> (count (:field/value field)) (:field/max-length field)))
       {:field-id (:field/id field)
        :type :t.form.validation/toolong})))
 
