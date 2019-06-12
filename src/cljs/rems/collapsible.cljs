@@ -13,7 +13,9 @@
    [:a {:href "#"
         :on-click (fn [event]
                     (.preventDefault event)
-                    (.collapse (js/$ (str "#" id "collapse")) "show")
+                    (let [element (js/$ (str "#" id "collapse"))]
+                      (.collapse element "show")
+                      (.focus element))
                     (.collapse (js/$ (str "." id "more")) "hide")
                     (when callback
                       (callback))
@@ -37,7 +39,10 @@
    (when (seq content-hideable)
      [:div
       (when top-less-button? [show-less-button id expanded])
-      [:div.collapse {:id (str id "collapse") :class (when expanded "show")} content-hideable]
+      [:div.collapse {:id (str id "collapse")
+                      :class (when expanded "show")
+                      :tabIndex "-1"}
+       content-hideable]
       [show-more-button id expanded callback]
       (when-not (false? bottom-less-button?) [show-less-button id expanded])])
    content-footer])
