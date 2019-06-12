@@ -592,7 +592,7 @@
                               :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
-     [document-title [:span (text :t.applications/application) " " (:application/external-id application)]]
+     [document-title (str (text :t.applications/application) " " (:application/external-id application))]
      (text :t.applications/intro)
      (into [:div] messages)
      [application-state application]
