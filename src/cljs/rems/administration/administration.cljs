@@ -93,15 +93,7 @@
        [document-title (text :t.navigation/administration)]
        (if @loading?
          [spinner/big]
-         [:div.spaced-sections
-          {:style {:display :flex
-                   :flex-direction :column
-                   :max-width "15rem"}}
-          [to-catalogue-items [:btn :btn-primary]]
-          [to-resources [:btn :btn-primary]]
-          [to-forms [:btn :btn-primary]]
-          [to-workflows [:btn :btn-primary]]
-          [to-licenses [:btn :btn-primary]]])])))
+         (text :t.administration/intro))])))
 
 
 (defn guide []

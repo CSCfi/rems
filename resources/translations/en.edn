@@ -75,6 +75,7 @@
                             :workflow-in-use "Workflow is in use by:"}
                    :form "Form"
                    :forms "Forms"
+                   :intro [:div.intro [:p "From here you can manage the REMS datasets. See the menu above."]]
                    :license "License"
                    :license-field "License \"%1\""
                    :licenses "Licenses"

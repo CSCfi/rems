@@ -75,6 +75,7 @@
                             :workflow-in-use "Työvuo on käytössä täällä:"}
                    :form "Lomake"
                    :forms "Lomakkeet"
+                   :intro [:div.intro [:p "Täällä voit hallinnoida REMSin aineistoja. Valitse alue valikoista yläpuolelta."]]
                    :license "Lisenssi"
                    :license-field "License \"%1\""
                    :licenses "Lisenssit"
