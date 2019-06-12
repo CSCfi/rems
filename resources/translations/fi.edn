@@ -256,7 +256,7 @@
                       :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" vastaus on liian pitkä."}}
-  :header {:title "Tervetuloa REMSiin"}
+  :header {:title "REMS"}
   :item-lists {:move-down "Siirrä alaspäin"
                :move-up "Siirrä ylöspäin"
                :remove "Poista"}

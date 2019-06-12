@@ -256,7 +256,7 @@
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
                       :toolong "Answer to field \"%1\" is too long."}}
-  :header {:title "Welcome to REMS"}
+  :header {:title "REMS"}
   :item-lists {:move-down "Move down"
                :move-up "Move up"
                :remove "Remove"}
