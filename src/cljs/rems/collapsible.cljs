@@ -11,6 +11,7 @@
   [id expanded callback]
   [:div.mb-3.collapse.collapse-toggle {:class (str (str id "more ") (when-not expanded "show"))}
    [:a {:href "#"
+        :id (str id "-more-link")
         :on-click (fn [event]
                     (.preventDefault event)
                     (let [element (js/$ (str "#" id "collapse"))]
@@ -30,7 +31,8 @@
                     (.preventDefault event)
                     (.collapse (js/$ (str "#" id "collapse")) "hide")
                     (.collapse (js/$ (str "." id "more")) "show")
-                    (.collapse (js/$ (str "." id "less")) "hide"))}
+                    (.collapse (js/$ (str "." id "less")) "hide")
+                    (.focus (js/$ (str "#" id "more-link"))))}
     (text :t.collapse/show-less)]])
 
 (defn- block [id expanded callback content-always content-hideable content-footer top-less-button? bottom-less-button?]
