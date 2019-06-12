@@ -51,9 +51,10 @@
                    (concat
                     [[inline-info-field (text :t.administration/title) (:title catalogue-item)]]
                     (for [[langcode localization] (:localizations catalogue-item)]
-                      [inline-info-field (str (text :t.administration/title)
-                                              " "
-                                              (str/upper-case (name langcode))) (:title localization)])
+                      [inline-info-field
+                       (str (text :t.administration/title)
+                            " (" (str/upper-case (name langcode)) ")")
+                       (:title localization)])
                     [[inline-info-field (text :t.administration/resource)
                       [:a {:href (str "#/administration/resources/" (:resource-id catalogue-item))}
                        (:resource-name catalogue-item)]]

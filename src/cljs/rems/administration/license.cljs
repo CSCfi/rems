@@ -52,8 +52,7 @@
                     [[inline-info-field (text :t.administration/title) (:title license)]]
                     (for [[langcode localization] (:localizations license)]
                       [inline-info-field (str (text :t.administration/title)
-                                              " "
-                                              (str/upper-case (name langcode)))
+                                              " (" (str/upper-case (name langcode)) ")")
                        (:title localization)])
                     [[inline-info-field (text :t.administration/type) (:licensetype license)]]
                     (when (= "link" (:licensetype license))
@@ -61,23 +60,20 @@
                         (when (:textcontent localization)
                           [inline-info-field
                            (str (text :t.create-license/external-link)
-                                " "
-                                (str/upper-case (name langcode)))
+                                " (" (str/upper-case (name langcode)) ")")
                            [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]])))
                     (when (= "text" (:licensetype license))
                       (for [[langcode localization] (:localizations license)]
                         (when (:textcontent localization)
                           [inline-info-field (str (text :t.create-license/license-text)
-                                                  " "
-                                                  (str/upper-case (name langcode)))
+                                                  " (" (str/upper-case (name langcode)) ")")
                            (:textcontent localization)])))
                     (when (= "attachment" (:licensetype license))
                       (for [[langcode localization] (:localizations license)]
                         (when (:attachment-id localization)
                           [inline-info-field
                            (str (text :t.create-license/license-attachment)
-                                " "
-                                (str/upper-case (name langcode)))
+                                " (" (str/upper-case (name langcode)) ")")
                            [attachment-link (:attachment-id localization) (:title localization)]
                            {:box? false}])))
                     [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
