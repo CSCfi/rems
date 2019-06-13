@@ -1,6 +1,7 @@
 (ns rems.administration.forms
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.form :as form]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
@@ -38,22 +39,13 @@
 (rf/reg-event-fx
  ::update-form
  (fn [_ [_ item description]]
+   (print "description " description)
    (status-modal/common-pending-handler! description)
    (put! "/api/forms/update"
          {:params (select-keys item [:id :enabled :archived])
           :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-forms]))
           :error-handler status-modal/common-error-handler!})
    {}))
-
-(rf/reg-event-fx
- ::edit-form
- (fn [_ [_ id]]
-   (fetch (str "/api/forms/" id "/editable")
-          {:handler
-           (fn [response]
-             (status-flags/common-update-handler!
-              #(dispatch! (str "/#/administration/edit-form/" id)) response true))
-           :error-handler status-modal/common-error-handler!})))
 
 (rf/reg-event-fx
  ::set-display-old?
@@ -69,14 +61,14 @@
    (text :t.administration/create-form)])
 
 (defn- to-view-form [form]
-  [:a.btn.btn-primary
+   [:a.btn.btn-primary
    {:href (str "/#/administration/forms/" (:id form))}
    (text :t.administration/view)])
 
 (defn- to-edit-form [form]
   [:button.btn.btn-primary
    {:type :button
-    :on-click #(rf/dispatch [::edit-form (:id form)])}
+    :on-click #(rf/dispatch [:rems.administration.form/edit-form (:id form)])}
    (text :t.administration/edit)])
 
 (defn- copy-as-new-form [form]

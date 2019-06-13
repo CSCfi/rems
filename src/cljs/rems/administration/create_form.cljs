@@ -5,6 +5,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.administration.items :as items]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
@@ -158,18 +159,34 @@
     (text :t.administration/edit-form)
     (text :t.administration/create-form)))
 
+(defn- post-to-form-api [command form languages params title]
+  (let [form-errors (validate-form form languages)]
+    (when (empty? form-errors)
+      (status-modal/common-pending-handler! title)
+      (post! (str "/api/forms/" command)
+             {:params params
+              :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
+              :error-handler status-modal/common-error-handler!}))
+    form-errors))
+
 (rf/reg-event-fx
  ::create-form
  (fn [{:keys [db]} [_ request]]
-   (let [form-errors (validate-form (db ::form) (db :languages))
-         edit-form? (db ::edit-form?)]
-     (when (empty? form-errors)
-       (status-modal/common-pending-handler! (page-title edit-form?))
-       (post! "/api/forms/create"
-              {:params (merge request {:edit-form? (boolean edit-form?)
-                                       :form-id (db ::form-id)})
-               :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
-               :error-handler status-modal/common-error-handler!}))
+   (let [form-errors (post-to-form-api "create"
+                                        (db ::form)
+                                        (db ::languages)
+                                        request
+                                        (page-title false))]
+     {:db (assoc db ::form-errors form-errors)})))
+
+(rf/reg-event-fx
+ ::edit-form
+ (fn [{:keys [db]} [_ request]]
+   (let [form-errors (post-to-form-api (str (db ::form-id) "/edit")
+                                       (db ::form)
+                                       (db ::languages)
+                                       request
+                                       (page-title true))]
      {:db (assoc db ::form-errors form-errors)})))
 
 ;;;; UI
@@ -359,6 +376,9 @@
 
                      [:div.col.commands
                       [cancel-button]
-                      [save-form-button #(rf/dispatch [::create-form %])]]]}]]
+                      [save-form-button #(rf/dispatch [(if edit-form?
+                                                         ::edit-form
+                                                         ::create-form)
+                                                       %])]]]}]]
          [:div.col-lg
           [form-preview form]]]])]))

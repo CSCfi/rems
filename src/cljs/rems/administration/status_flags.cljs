@@ -73,9 +73,10 @@
   (into [:div]
         (map format-update-error errors)))
 
-(defn common-update-handler! [on-close response & [disable-success-popup]]
+(defn update-error-handler! [response]
+  (status-modal/set-error! {:error-content (format-update-failure response)}))
+
+(defn common-update-handler! [on-close response]
   (if (:success response)
-    (if disable-success-popup
-      (on-close)
-      (status-modal/set-success! {:on-close on-close}))
-    (status-modal/set-error! {:error-content (format-update-failure response)})))
+    (status-modal/set-success! {:on-close on-close})
+    (update-error-handler! response)))

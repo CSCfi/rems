@@ -45,26 +45,38 @@
                                :inputprompt (get input-prompt lang)}))
     item-id))
 
-(defn create-or-edit-form! [user-id {:keys [edit-form? form-id organization title fields] :as form}]
+(defn- catalogue-items-for-form [id]
+  (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
+       (map #(select-keys % [:id :title :localizations]))))
+
+(defn form-editable [form-id]
+  (let [catalogue-items (catalogue-items-for-form form-id)]
+    (if (seq catalogue-items)
+      {:success false
+       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
+      {:success true})))
+
+(defn- generate-fields-with-ids [user-id form-id fields]
+  ;; Mirror field ids to form template so that form templates
+  ;; can be cross-referenced with form answers. Once old-style
+  ;; forms are gone, will need to allocate ids here (just use
+  ;; order, or generate UUIDs)
+  (map-indexed (fn [order field]
+                 (let [id (create-form-item! user-id form-id order field)]
+                   (assoc field :id id)))
+               fields))
+
+(defn create-form! [user-id {:keys [organization title fields] :as form}]
   ;; FIXME Remove saving old style forms only when we have a db migration.
   ;;       Otherwise it will get reeealy tricky to return both versions in get-api.
   (let [;; NB: Legacy forms (created by db/create-form!) are not updated
         ;;   when the form is edited. This is on purpose: this whole legacy
         ;;   codepath will be removed soon.
-        form-id (if edit-form?
-                  form-id
-                  (:id (db/create-form! {:organization organization
-                                         :title title
-                                         :user user-id})))
-        ;; Mirror field ids to form template so that form templates
-        ;; can be cross-referenced with form answers. Once old-style
-        ;; forms are gone, will need to allocate ids here (just use
-        ;; order, or generate UUIDs)
-        fields-with-ids (map-indexed (fn [order field]
-                                       (let [id (create-form-item! user-id form-id order field)]
-                                         (assoc field :id id)))
-                                     fields)]
-    ((if edit-form? db/edit-form-template! db/save-form-template!)
+        form-id (:id (db/create-form! {:organization organization
+                                       :title title
+                                       :user user-id}))
+        fields-with-ids (generate-fields-with-ids user-id form-id fields)]
+    (db/save-form-template!
      (assoc form
             :id form-id
             :user user-id
@@ -72,11 +84,19 @@
     {:success (not (nil? form-id))
      :id form-id}))
 
-(defn- catalogue-items-for-form [id]
-  (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
-       (map #(select-keys % [:id :title :localizations]))))
+(defn edit-form! [user-id form-id {:keys [organization title fields] :as form}]
+  (let [fields-with-ids (generate-fields-with-ids user-id form-id fields)
+        editable? (:success (form-editable form-id))]
+    (when editable?
+      (db/edit-form-template!
+       (assoc form
+              :id form-id
+              :user user-id
+              :fields (json/generate-string fields-with-ids))))
+    {:success editable?
+     :id form-id}))
 
-(defn update-form-state! [command]
+(defn update-form! [command]
   (let [catalogue-items (catalogue-items-for-form (:id command))]
     (if (and (:archived command) (seq catalogue-items))
       {:success false
@@ -85,10 +105,3 @@
         (db/set-form-state! command)
         (db/set-form-template-state! command)
         {:success true}))))
-
-(defn form-editable [form-id]
-  (let [catalogue-items (catalogue-items-for-form form-id)]
-    (if (seq catalogue-items)
-      {:success false
-       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
-      {:success true})))

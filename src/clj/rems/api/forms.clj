@@ -57,9 +57,7 @@
      (format-form wf))))
 
 (s/defschema FormCommand
-  {:edit-form? s/Bool
-   (s/optional-key :form-id) s/Num
-   :organization s/Str
+  {:organization s/Str
    :title s/Str
    :fields [FormField]})
 
@@ -82,6 +80,13 @@
                                      (when-not disabled {:enabled true})
                                      (when-not archived {:archived false})))))
 
+    (POST "/create" []
+      :summary "Create form"
+      :roles #{:owner}
+      :body [command FormCommand]
+      :return FormResponse
+      (ok (form/create-form! (getx-user-id) command)))
+
     (GET "/:form-id" []
       :summary "Get form by id"
       :roles #{:owner}
@@ -89,23 +94,31 @@
       :return FullForm
       (ok (form/get-form-template form-id)))
 
-    (POST "/create" []
-      :summary "Create or edit form"
-      :roles #{:owner}
-      :body [command FormCommand]
-      :return FormResponse
-      (ok (form/create-or-edit-form! (getx-user-id) command)))
-
-    (PUT "/update" []
-      :summary "Update form state"
-      :roles #{:owner}
-      :body [command UpdateStateCommand]
-      :return SuccessResponse
-      (ok (form/update-form-state! command)))
-
     (GET "/:form-id/editable" []
       :summary "Check if the form is editable"
       :roles #{:owner}
       :path-params [form-id :- (describe s/Num "form-id")]
       :return SuccessResponse
-      (ok (form/form-editable form-id)))))
+      (ok (form/form-editable form-id)))
+
+    (POST "/:form-id/edit" []
+      :summary "Edit form"
+      :roles #{:owner}
+      :path-params [form-id :- (describe s/Num "form-id")]
+      :body [command FormCommand]
+      :return FormResponse
+      (ok (form/edit-form! (getx-user-id) form-id command)))
+
+    ;; TODO: Change endpoint for updating form to be consistent with
+    ;;   the endpoint for editing form (/:form-id/edit). Also change
+    ;;   terminology to be less easily confused with form editing, e.g.,
+    ;;   from /update to /:form-id/update-state.
+    ;;
+    ;;   For consistency, do similar change for catalogue items, licenses,
+    ;;   and resources.
+    (PUT "/update" []
+      :summary "Update form"
+      :roles #{:owner}
+      :body [command UpdateStateCommand]
+      :return SuccessResponse
+      (ok (form/update-form! command)))))

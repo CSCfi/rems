@@ -26,8 +26,7 @@
 (defn- create-form-with-fields [form-fields]
   (-> (request :post "/api/forms/create")
       (authenticate "42" "owner")
-      (json-body {:edit-form? false
-                  :organization "abc"
+      (json-body {:organization "abc"
                   :title ""
                   :fields form-fields})
       handler
