@@ -6,7 +6,7 @@
             :add-licenses "Add terms of use"
             :add-member "Add member"
             :bundling-error "Application bundling not possible."
-            :bundling-warning "Applications of the resources can't normally be bundled into one application if they have different forms or workflows."
+            :bundling-warning "The resources can't normally be bundled into one application because they have different forms or workflows."
             :change-form-error "The resources can't be applied for with this application. Change them or make a new application."
             :change-form-warning "The form differs from the original application."
             :change-workflow-error "The resources can't be applied for with this application. Change them or make a new application."
