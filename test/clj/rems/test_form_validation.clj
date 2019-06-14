@@ -1,4 +1,5 @@
 (ns rems.test-form-validation
+  (:refer-clojure :exclude [validate-fields])
   (:require [clojure.test :refer :all]
             [rems.form-validation :refer [validate-fields]]))
 
@@ -9,11 +10,19 @@
                                  :field/value "a"}]))))
 
 
-  (testing "optional fields"
+  (testing "optional fields do not need to be filled"
     (is (nil? (validate-fields [{:field/title "A"
                                  :field/optional true
                                  :field/value nil}
                                 {:field/title "B"
+                                 :field/optional true
+                                 :field/value ""}]))))
+
+  (testing "labels are always effectively optional"
+    (is (nil? (validate-fields [{:field/type :label
+                                 :field/optional false
+                                 :field/value ""}
+                                {:field/type :label
                                  :field/optional true
                                  :field/value ""}]))))
 

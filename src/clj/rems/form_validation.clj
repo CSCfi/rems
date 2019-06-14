@@ -3,7 +3,8 @@
 
 (defn- validate-field [field]
   (if (empty? (:field/value field))
-    (when-not (or (:field/optional field) (= "label" (:field/type field)))
+    (when-not (or (:field/optional field)
+                  (= :label (:field/type field)))
       ;; TODO: use field/id in output
       {:field-id (:field/id field)
        :type :t.form.validation/required})
