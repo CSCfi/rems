@@ -1,16 +1,16 @@
 {:t
  {:actions {:accept-invitation "Accept invitation"
-            :accept-invitation-success [:div [:p "Joining the application was successful."] [:p "Next you will be taken to the application."]]
-            :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Next you will be taken to the application."]]
+            :accept-invitation-success [:div [:p "Successfully joined the application."] [:p "Proceed to the application."]]
+            :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Proceed to the application."]]
             :accept-licenses "Accept terms of use"
             :add-licenses "Add terms of use"
             :add-member "Add member"
-            :bundling-error "The resources can't be bundled into one application."
+            :bundling-error "Application bundling not possible."
             :bundling-warning "The resources can't normally be bundled into one application because they have different forms or workflows."
-            :change-form-error "The resources can't be applied with this application. Change them or make a new application."
-            :change-form-warning "Form is different from the form of the original application."
-            :change-workflow-error "The resources can't be applied with this application. Change them or make a new application."
-            :change-workflow-warning "Workflow is different from the workflow of the original application."
+            :change-form-error "The resources can't be applied for with this application. Change them or make a new application."
+            :change-form-warning "The form differs from the original application."
+            :change-workflow-error "The resources can't be applied for with this application. Change them or make a new application."
+            :change-workflow-warning "The workflow differs from the original application."
             :change-resources "Change resources"
             :applicant "Applicant"
             :approve "Approve"
@@ -22,28 +22,28 @@
             :created "Created"
             :decide "Decide"
             :description "Description"
-            :empty "You don't have any applications to process."
+            :empty "No applications to process."
             :errors {:invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]}
-            :export-entitlements "Export entitlements as csv"
+            :export-entitlements "Export entitlements as CSV"
             :handled-applications "Processed applications"
             :id "Id"
             :invite-member "Invite member"
             :last-activity "Last activity"
-            :licenses-selection "Require following additional terms of use"
+            :licenses-selection "Add terms of use"
             :load-application-states "Load application states"
             :member "Member"
             :member-name "Name"
             :member-email "Email"
-            :no-handled-yet "You have not processed any applications yet."
-            :ok "Ok"
+            :no-handled-yet "No processed applications."
+            :ok "OK"
             :todo-applications "Open applications"
             :reject "Reject"
             :remove-member "Remove member"
             :request-comment "Request comment"
             :request-decision "Request decision"
-            :request-selection "Send request to users"
+            :request-selection "Send requests"
             :resource "Resource"
-            :resources-selection "Following resources will be included in the application"
+            :resources-selection "Resources included in the application"
             :return "Return to applicant"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
@@ -68,11 +68,11 @@
                    :edit-workflow "Edit workflow"
                    :enable "Enable"
                    :end "End"
-                   :errors {:duplicate-resid "Duplicate resource for organization."
-                            :form-in-use "Form is in use by:"
-                            :license-in-use "License is in use by:"
-                            :resource-in-use "Resource is in use by:"
-                            :workflow-in-use "Workflow is in use by:"}
+                   :errors {:duplicate-resid "Resource already exists in the organization."
+                            :form-in-use "Form in use:"
+                            :license-in-use "License in use:"
+                            :resource-in-use "Resource in use:"
+                            :workflow-in-use "Workflow in use:"}
                    :form "Form"
                    :forms "Forms"
                    :intro [:div.intro [:p "From here you can manage the REMS datasets. See the menu above."]]
@@ -101,10 +101,10 @@
                    :member "Member"
                    :name "Name"
                    :username "Username"}
-  :applications {:all-applications "All Applications"
+  :applications {:all-applications "All applications"
                  :application "Application"
                  :applications "Applications"
-                 :empty "You don't have any applications."
+                 :empty "No applications."
                  :events {:approved "Approved"
                           :closed "Deleted"
                           :comment-requested "Comment requested"
@@ -141,9 +141,9 @@
                  :placeholder "Choose or type"}
   :cart {:add "Add to cart"
          :apply "Apply"
-         :apply-for-bundle "Apply for these %1 resources as a bundle "
-         :empty [:div.intro [:p "Select resources to apply for."]]
-         :header "%1 resources in cart"
+         :apply-for-bundle "Apply for %1 resources as a bundle "
+         :empty [:div.intro [:p "Select resources to apply."]]
+         :header "%1 resources in the cart"
          :intro [:div.intro [:p "Here are the resources that you have selected. If the resources can be applied to with the same application, they will be automatically grouped into a bundle."]]
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
@@ -184,16 +184,16 @@
                    :license-attachment "Attachment"
                    :license-text "License text"
                    :license-type "License type"
-                   :link-to-license "Link to the license"
+                   :link-to-license "License link"
                    :title "License name"}
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:approvers "Approvers"
                     :auto-approve-workflow "Auto-approve"
-                    :auto-approve-workflow-description "The application will be approved immediately without human intervention."
+                    :auto-approve-workflow-description "The application is approved immediately without human intervention."
                     :dynamic-workflow "Dynamic workflow"
-                    :dynamic-workflow-description "The handler will decide on a case by case basis that who needs to review or approve the application."
+                    :dynamic-workflow-description "The handler decides on a case-by-case basis who needs to review or approve the application."
                     :handlers "Handlers"
                     :reviewers "Reviewers"
                     :round-n "Round %1"
@@ -220,12 +220,12 @@
                          :message "Dear %1,\n\nYou've been added as a member of application %2.\n\nView application: %3"}
           :member-invited {:subject "Invitation to participate in an application"
                            :message "Hello,\n\nThis email address (%1) has been invited to participate in an application.\n\nParticipate: %2"}}
-  :footer "Powered by CSC - IT Center for Science"
+  :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
-         :alert-disabled-resources "The following resources can't be applied anymore."
+         :alert-disabled-resources "Resources no longer available."
          :application "Application"
          :attachment-remove "Remove"
          :checkbox-checked "Yes"
@@ -238,10 +238,10 @@
          :event "Event"
          :events "Events"
          :failed "Failed"
-         :has-accepted-licenses "You have accepted the terms of use."
-         :licenses "Terms of Use"
+         :has-accepted-licenses "Terms of use accepted."
+         :licenses "Terms of use"
          :maxlength "(max %1 characters)"
-         :must-accept-licenses "To be eligible to the resources of this application, each member must accept the following terms of use."
+         :must-accept-licenses "Each member is required to accept the terms of use to access the resources."
          :no-attachment "No attachment"
          :optional "(optional)"
          :resources "Resources"
@@ -251,11 +251,11 @@
          :previous-value "Previous"
          :upload "Upload an attachment"
          :user "User"
-         :validation {:errors "There were problems. Check the following fields."
+         :validation {:errors "Submission failed. Check the following fields."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
-                      :toolong "Answer to field \"%1\" is too long."}}
+                      :toolong "Text in field \"%1\" too long."}}
   :header {:title "REMS"}
   :item-lists {:move-down "Move down"
                :move-up "Move up"
@@ -266,11 +266,11 @@
          :title "LDAP Login"
          :username "Username"}
   :link {:download-file "Download file"
-         :opens-in-new-window "Opens in new window"}
-  :login {:alternative "Other sign in options"
-          :intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information available on the " [:a {:href "#/extra-pages/about"} "About"] " page."]
+         :opens-in-new-window "Opens in a new window"}
+:login {:alternative "Other login options"
+:intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information available on the " [:a {:href "#/extra-pages/about"} "About"] " page."]
                   [:p "Please, login to access REMS."]]
-          :text "Login by using your Haka credentials"
+          :text "Login with Haka credentials"
           :title "Login"}
   :missing "Missing translation %1"
   :modal {:close-dialog "Close dialog"}
@@ -282,7 +282,7 @@
                :logout "Sign out"
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
-                   :page-was-not-found "Page was not found."}
+                   :page-was-not-found "This page was not found."}
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"
@@ -296,6 +296,6 @@
            :open-search "Open search"
            :search-parameters "Search parameters"}
   :unauthorized-page {:unauthorized "Unauthorized"
-                      :you-are-unauthorized "You are unauthorized to use this page."}
+                      :you-are-unauthorized "You're unauthorized to access this page."}
   :forbidden-page {:forbidden "Forbidden"
-                   :you-are-forbidden "You are not allowed to use this page."}}}
+                   :you-are-forbidden "Access to the page is forbidden."}}}
