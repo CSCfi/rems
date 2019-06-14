@@ -28,16 +28,20 @@
 
   (testing "error: field required"
     (is (= [{:type :t.form.validation/required :field-id 2}
-            {:type :t.form.validation/required :field-id 3}]
+            {:type :t.form.validation/required :field-id 3}
+            {:type :t.form.validation/required :field-id 4}]
            (validate-fields [{:field/id 1
                               :field/optional true
                               :field/value nil}
                              {:field/id 2
                               :field/optional false
-                              :field/value ""}
+                              :field/value nil}
                              {:field/id 3
                               :field/optional false
-                              :field/value nil}]))))
+                              :field/value ""}
+                             {:field/id 4
+                              :field/optional false
+                              :field/value "    "}]))))
 
   (testing "error: field input too long"
     (is (= [{:type :t.form.validation/toolong :field-id 2}]
