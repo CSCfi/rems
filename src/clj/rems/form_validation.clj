@@ -1,15 +1,20 @@
 (ns rems.form-validation
   "Pure functions for form validation logic")
 
+(defn- required? [field]
+  (not (or (:field/optional field)
+           (= :label (:field/type field)))))
+
+(defn- too-long? [field]
+  (and (:field/max-length field)
+       (> (count (:field/value field)) (:field/max-length field))))
+
 (defn- validate-field [field]
   (if (empty? (:field/value field))
-    (when-not (or (:field/optional field)
-                  (= :label (:field/type field)))
-      ;; TODO: use field/id in output
+    (when (required? field)
       {:field-id (:field/id field)
        :type :t.form.validation/required})
-    (when (and (:field/max-length field)
-               (> (count (:field/value field)) (:field/max-length field)))
+    (when (too-long? field)
       {:field-id (:field/id field)
        :type :t.form.validation/toolong})))
 
