@@ -1,8 +1,6 @@
 (ns ^:integration rems.api.test-forms
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
@@ -69,7 +67,7 @@
                   (is (= (select-keys command [:title :organization])
                          (select-keys form-template [:title :organization])))
                   (is (= (:fields command)
-                         (mapv #(dissoc % :id) (:fields form-template)))))))))))))
+                         (mapv #(dissoc % :field/id) (:fields form-template)))))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
@@ -126,7 +124,7 @@
             (is (= (select-keys form-spec [:organization :title])
                    (select-keys form [:organization :title])))
             (is (= (:fields form-spec)
-                   (mapv #(dissoc % :id) (:fields form))))))))))
+                   (mapv #(dissoc % :field/id) (:fields form))))))))))
 
 (deftest form-editable-test
   (let [api-key "42"
@@ -258,7 +256,7 @@
                          handler
                          read-ok-body)]
             (is (= (:fields command)
-                   (mapv #(dissoc % :id) (:fields form))))))))))
+                   (mapv #(dissoc % :field/id) (:fields form))))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:archived true})

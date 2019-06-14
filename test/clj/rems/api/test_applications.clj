@@ -282,13 +282,13 @@
         (testing "add licenses"
           (let [application (get-application application-id user-id)]
             (is (= #{1 2} (license-ids-for-application application)))
-           (is (= {:success true} (send-command handler-id
-                                                {:type :application.command/add-licenses
-                                                 :application-id application-id
-                                                 :licenses [license-id]
-                                                 :comment "Please approve these new terms"})))
-           (let [application (get-application application-id user-id)]
-             (is (= #{1 2 5} (license-ids-for-application application))))))
+            (is (= {:success true} (send-command handler-id
+                                                 {:type :application.command/add-licenses
+                                                  :application-id application-id
+                                                  :licenses [license-id]
+                                                  :comment "Please approve these new terms"})))
+            (let [application (get-application application-id user-id)]
+              (is (= #{1 2 5} (license-ids-for-application application))))))
         (testing "applicant accepts the additional licenses"
           (is (= {:success true} (send-command user-id
                                                {:type :application.command/accept-licenses
@@ -300,19 +300,19 @@
           (is (= #{9} (catalogue-item-ids-for-application application)))
           ;; License #5 was added previously by the handler.
           (is (= #{1 2 5} (license-ids-for-application application)))
-         (is (= {:success true} (send-command handler-id
-                                              {:type :application.command/change-resources
-                                               :application-id application-id
-                                               :catalogue-item-ids [9 10]
-                                               :comment "Here are the correct resources"})))
-         (let [application (get-application application-id user-id)]
-           (is (= #{9 10} (catalogue-item-ids-for-application application)))
-           ;; License #4 is added by the catalogue-item #10, whereas
-           ;; the previously added license #5 is dropped from the list.
-           ;;
-           ;; TODO: The previously added licenses should probably be retained
-           ;; in the licenses after changing resources.
-           (is (= #{1 2 4} (license-ids-for-application application))))))
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/change-resources
+                                                :application-id application-id
+                                                :catalogue-item-ids [9 10]
+                                                :comment "Here are the correct resources"})))
+          (let [application (get-application application-id user-id)]
+            (is (= #{9 10} (catalogue-item-ids-for-application application)))
+            ;; License #4 is added by the catalogue-item #10, whereas
+            ;; the previously added license #5 is dropped from the list.
+            ;;
+            ;; TODO: The previously added licenses should probably be retained
+            ;; in the licenses after changing resources.
+            (is (= #{1 2 4} (license-ids-for-application application))))))
 
       (testing "changing resources back as handler"
         (is (= {:success true} (send-command handler-id
@@ -447,7 +447,7 @@
                                            :optional true}])
         [req-id opt-id] (->> (form/get-form-template form-id)
                              :fields
-                             (map :id))
+                             (map :field/id))
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)]
     (testing "set value of optional field"

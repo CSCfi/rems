@@ -424,7 +424,7 @@
   (let [form (get-form-template (:form/id app-form))
         app-fields (:form/fields app-form)
         rich-fields (map (fn [field]
-                           {:field/id (:id field)
+                           {:field/id (:field/id field)
                             :field/value "" ; default for new forms
                             :field/type (keyword (:type field))
                             :field/title (:title field)

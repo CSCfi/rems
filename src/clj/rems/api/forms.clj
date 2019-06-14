@@ -31,7 +31,7 @@
 
 (s/defschema FormFieldWithId
   (merge FormField
-         {:id s/Int}))
+         {:field/id s/Int}))
 
 (s/defschema FullForm
   (merge Form
@@ -40,21 +40,10 @@
 (s/defschema Forms
   [Form])
 
-(defn- format-form
-  [{:keys [id organization title start end expired enabled archived]}]
-  {:id id
-   :organization organization
-   :title title
-   :start start
-   :end end
-   :expired expired
-   :enabled enabled
-   :archived archived})
-
 (defn- get-form-templates [filters]
   (doall
-   (for [wf (form/get-form-templates filters)]
-     (format-form wf))))
+   (for [form (form/get-form-templates filters)]
+     (select-keys form [:id :organization :title :start :end :expired :enabled :archived]))))
 
 (s/defschema FormCommand
   {:organization s/Str

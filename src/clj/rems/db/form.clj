@@ -65,7 +65,7 @@
   ;; order, or generate UUIDs)
   (map-indexed (fn [order field]
                  (let [id (create-form-item! user-id form-id order field)]
-                   (assoc field :id id)))
+                   (assoc field :field/id id)))
                fields))
 
 (defn create-form! [user-id {:keys [organization title fields] :as form}]
