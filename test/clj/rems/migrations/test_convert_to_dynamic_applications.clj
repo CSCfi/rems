@@ -3,13 +3,12 @@
             [clojure.pprint :refer [pprint]]
             [clojure.test :refer :all]
             [conman.core :as conman]
-            [rems.db.applications :as applications]
+            [rems.api.testing :refer [api-fixture]]
             [rems.db.applications.legacy :as legacy]
             [rems.db.core :refer [*db*]]
             [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
             [rems.migrations.convert-to-dynamic-applications :refer :all]
-            [rems.api.testing :refer [api-fixture]]
             [rems.validate :as validate])
   (:import [java.util UUID]))
 
@@ -143,11 +142,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "draft application"
                                                            2 "draft application"
                                                            3 "draft application"
-                                                           4 ""
-                                                           5 "draft application"
+                                                           4 "draft application"
+                                                           5 ""
                                                            6 "draft application"
-                                                           7 "draft appl"
-                                                           8 "draft application"}}
+                                                           7 "draft application"
+                                                           8 "draft appl"
+                                                           9 "draft application"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
@@ -184,11 +184,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "applied application"
                                                            2 "applied application"
                                                            3 "applied application"
-                                                           4 ""
-                                                           5 "applied application"
+                                                           4 "applied application"
+                                                           5 ""
                                                            6 "applied application"
-                                                           7 "applied ap"
-                                                           8 "applied application"}}
+                                                           7 "applied application"
+                                                           8 "applied ap"
+                                                           9 "applied application"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
@@ -230,11 +231,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "rejected application"
                                                            2 "rejected application"
                                                            3 "rejected application"
-                                                           4 ""
-                                                           5 "rejected application"
+                                                           4 "rejected application"
+                                                           5 ""
                                                            6 "rejected application"
-                                                           7 "rejected a"
-                                                           8 "rejected application"}}
+                                                           7 "rejected application"
+                                                           8 "rejected a"
+                                                           9 "rejected application"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
@@ -282,11 +284,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "accepted application"
                                                            2 "accepted application"
                                                            3 "accepted application"
-                                                           4 ""
-                                                           5 "accepted application"
+                                                           4 "accepted application"
+                                                           5 ""
                                                            6 "accepted application"
-                                                           7 "accepted a"
-                                                           8 "accepted application"}}
+                                                           7 "accepted application"
+                                                           8 "accepted a"
+                                                           9 "accepted application"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
@@ -334,11 +337,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "returned application"
                                                            2 "returned application"
                                                            3 "returned application"
-                                                           4 ""
-                                                           5 "returned application"
+                                                           4 "returned application"
+                                                           5 ""
                                                            6 "returned application"
-                                                           7 "returned a"
-                                                           8 "returned application"}}
+                                                           7 "returned application"
+                                                           8 "returned a"
+                                                           9 "returned application"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "developer"
@@ -389,11 +393,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "bundled application"
                                                            2 "bundled application"
                                                            3 "bundled application"
-                                                           4 ""
-                                                           5 "bundled application"
+                                                           4 "bundled application"
+                                                           5 ""
                                                            6 "bundled application"
-                                                           7 "bundled ap"
-                                                           8 "bundled application"}}
+                                                           7 "bundled application"
+                                                           8 "bundled ap"
+                                                           9 "bundled application"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "alice"
@@ -446,11 +451,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "application with review"
                                                            2 "application with review"
                                                            3 "application with review"
-                                                           4 ""
-                                                           5 "application with review"
+                                                           4 "application with review"
+                                                           5 ""
                                                            6 "application with review"
-                                                           7 "applicatio"
-                                                           8 "application with review"}}
+                                                           7 "application with review"
+                                                           8 "applicatio"
+                                                           9 "application with review"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "alice"
@@ -505,11 +511,12 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                 :application/field-values {1 "application in review"
                                                            2 "application in review"
                                                            3 "application in review"
-                                                           4 ""
-                                                           5 "application in review"
+                                                           4 "application in review"
+                                                           5 ""
                                                            6 "application in review"
-                                                           7 "applicatio"
-                                                           8 "application in review"}}
+                                                           7 "application in review"
+                                                           8 "applicatio"
+                                                           9 "application in review"}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time test-data/creation-time
                                 :event/actor "alice"
@@ -555,7 +562,8 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}}
+                                                           8 ""
+                                                           9 ""}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"
@@ -609,7 +617,8 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}}
+                                                           8 ""
+                                                           9 ""}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"
@@ -670,7 +679,8 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}}
+                                                           8 ""
+                                                           9 ""}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"
@@ -722,7 +732,8 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 24, 'a
                                                            5 ""
                                                            6 ""
                                                            7 ""
-                                                           8 ""}}
+                                                           8 ""
+                                                           9 ""}}
                                {:event/type :application.event/licenses-accepted
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/actor "alice"

@@ -121,6 +121,11 @@
                    :input-prompt {:en "Project"
                                   :fi "Projekti"}}
 
+                  {:title {:en "Here would be some helpful instructions."
+                           :fi "Tässä olisi jotain täyttöohjeita."}
+                   :optional false
+                   :type "label"}
+
                   {:title {:en "Purpose of the project"
                            :fi "Projektin tarkoitus"}
                    :optional false
