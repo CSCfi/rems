@@ -50,7 +50,8 @@
 
 (defn- format-update-error [{:keys [type catalogue-items resources workflows]}]
   (let [language @(rf/subscribe [:language])]
-    [:p (text type)
+    [:<>
+     [:p (text type)]
      (into [:ul]
            (for [ci catalogue-items]
              ;; TODO open in new tab?
