@@ -10,13 +10,15 @@
        (> (count (:field/value field)) (:field/max-length field))))
 
 (defn- validate-field [field]
-  (if (empty? (:field/value field))
-    (when (required? field)
-      {:field-id (:field/id field)
-       :type :t.form.validation/required})
-    (when (too-long? field)
-      {:field-id (:field/id field)
-       :type :t.form.validation/toolong})))
+  (cond
+    (and (required? field)
+         (empty? (:field/value field)))
+    {:field-id (:field/id field)
+     :type :t.form.validation/required}
+
+    (too-long? field)
+    {:field-id (:field/id field)
+     :type :t.form.validation/toolong}))
 
 (defn validate-fields [fields]
   (->> (sort-by :field/id fields)
