@@ -389,7 +389,14 @@
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
 
-(defn- application-state [application]
+(defn- application-id-value [config application]
+  (let [id-column (get config :application-id-column :id)]
+    (case id-column
+      :external-id (:application/external-id application)
+      :id (:application/id application)
+      (:application/id application))))
+
+(defn- application-state [application config]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
         event-groups (->> (:application/events application)
@@ -408,7 +415,7 @@
                       (phases (get-application-phases state))]
                      [info-field
                       (text :t.applications/application)
-                      [:span#application-id (:application/external-id application)]
+                      [:span#application-id (application-id-value config application)]
                       {:inline? true}]
                      [info-field
                       (text :t.actions/description)
@@ -583,7 +590,7 @@
                [:div#resource-action-forms
                 [change-resources-form application can-bundle-all? can-comment? (partial reload! application-id)]]]}]))
 
-(defn- render-application [application edit-application userid]
+(defn- render-application [application edit-application config userid]
   (let [messages (remove nil?
                          [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
                           (when-let [errors (:validation-errors edit-application)]
@@ -592,10 +599,10 @@
                               :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
-     [document-title (str (text :t.applications/application) " " (:application/external-id application))]
+     [document-title (str (text :t.applications/application) " " (application-id-value config application))]
      (text :t.applications/intro)
      (into [:div] messages)
-     [application-state application]
+     [application-state application config]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
      [:div.my-3 [application-fields application edit-application]]
@@ -605,7 +612,8 @@
 ;;;; Entrypoint
 
 (defn application-page []
-  (let [application @(rf/subscribe [::application])
+  (let [config @(rf/subscribe [:rems.config/config])
+        application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])
         loading? (not application)]
@@ -613,7 +621,7 @@
       [:div
        [document-title (text :t.applications/application)]
        [spinner/big]]
-      [render-application application edit-application userid])))
+      [render-application application edit-application config userid])))
 
 
 ;;;; Guide
