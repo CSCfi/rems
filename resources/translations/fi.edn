@@ -142,7 +142,7 @@
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
-         :empty [:div.intro [:p "Valitse resursseja haettavaksi."]]
+         :empty [:div.intro [:p "Valitse resursseja haettavaksi:"]]
          :header "%1 aineistoa korissa"
          :intro [:div.intro [:p "Tässä ovat valitsemasi resurssit. Samalla hakemuksella haettavat resurssit ryhmitellään automaattisesti yhteen."]]
          :remove "Poista"}
@@ -151,7 +151,7 @@
               :intro [:p "Aineistoluettelossa on listattuna kaikki resurssit joita voit tästä järjestelmästä hakea."]
               :more-info "Lisätietoja"
               :continue-existing-application "Jatka hakemusta"
-              :continue-existing-application-intro [:div.intro [:p "Sinulla on keskeneräisiä hakemuksia, joita voit jatkaa tästä."]]
+              :continue-existing-application-intro [:div.intro [:p "Sinulla on keskeneräisiä hakemuksia, joita voit jatkaa tästä:"]]
               :apply-resources "Hae uusia resursseja"}
   :collapse {:show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
