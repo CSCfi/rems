@@ -15,7 +15,8 @@
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.atoms :refer [info-field textarea]]))
+            [rems.atoms :refer [info-field textarea]]
+            [rems.text :refer [text-format]]))
 
 (defn- key-to-id [key]
   (if (number? key)
@@ -27,20 +28,29 @@
        (map key-to-id)
        (str/join "-")))
 
+(defn- field-validation-message [error label]
+  [:div {:class "invalid-feedback"}
+   (when error (text-format error label))])
+
 (defn input-field [{:keys [keys label placeholder context type normalizer readonly]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)
-        normalizer (or normalizer identity)]
+        normalizer (or normalizer identity)
+        error (get-in form-errors keys)]
     [:div.form-group.field
      [:label {:for id} label]
      [:input.form-control {:type type
                            :id id
                            :disabled readonly
                            :placeholder placeholder
+                           :class (when error "is-invalid")
                            :value (get-in form keys)
                            :on-change #(rf/dispatch [(:update-form context)
                                                      keys
-                                                     (normalizer (.. % -target -value))])}]]))
+                                                     (normalizer (.. % -target -value))])}]
+     [field-validation-message error label]]))
 
 (defn text-field
   "A basic text field, full page width."
@@ -51,20 +61,28 @@
   "A basic textarea, full page width."
   [context {:keys [keys label placeholder]}]
   (let [form @(rf/subscribe [(:get-form context)])
-        id (keys-to-id keys)]
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
+        id (keys-to-id keys)
+        error (get-in form-errors keys)]
     [:div.form-group.field
      [:label {:for id} label]
      [textarea {:id id
                 :placeholder placeholder
                 :value (get-in form keys)
+                :class (when error "is-invalid")
                 :on-change #(rf/dispatch [(:update-form context)
                                           keys
-                                          (.. % -target -value)])}]]))
+                                          (.. % -target -value)])}]
+     [field-validation-message error label]]))
 
-(defn- localized-text-field-lang [context {:keys [keys-prefix lang]}]
+(defn- localized-text-field-lang [context {:keys [keys-prefix label lang]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
         keys (conj keys-prefix lang)
-        id (keys-to-id keys)]
+        id (keys-to-id keys)
+        error (get-in form-errors keys)]
     [:div.form-group.row
      [:label.col-sm-1.col-form-label {:for id}
       (str/upper-case (name lang))]
@@ -72,9 +90,11 @@
       [textarea {:id id
                  :min-rows 1
                  :value (get-in form keys)
+                 :class (when error "is-invalid")
                  :on-change #(rf/dispatch [(:update-form context)
                                            keys
-                                           (.. % -target -value)])}]]]))
+                                           (.. % -target -value)])}]
+      [field-validation-message error label]]]))
 
 (defn localized-text-field
   "A text field for inputting text in all supported languages.
@@ -86,6 +106,7 @@
            [:label label]]
           (for [lang languages]
             [localized-text-field-lang context {:keys-prefix keys
+                                                :label label
                                                 :lang lang}]))))
 
 (defn checkbox
@@ -106,14 +127,18 @@
 
 (defn- radio-button [context {:keys [keys value label orientation readonly]}]
   (let [form @(rf/subscribe [(:get-form context)])
+        form-errors (when (:get-form-errors context)
+                      @(rf/subscribe [(:get-form-errors context)]))
         name (keys-to-id keys)
-        id (keys-to-id (conj keys value))]
+        id (keys-to-id (conj keys value))
+        error (get-in form-errors keys)]
     [(case orientation
        :vertical :div.form-check
        :horizontal :div.form-check.form-check-inline)
      [:input.form-check-input {:id id
                                :type "radio"
                                :disabled readonly
+                               :class (when error "is-invalid")
                                :name name
                                :value value
                                :checked (= value (get-in form keys))

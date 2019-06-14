@@ -48,7 +48,12 @@
   (vec
    (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
      {:to-user handler
-      :subject (text :t.email.application-submitted/subject)
+      :subject (text-format :t.email.application-submitted/subject
+                            handler
+                            (:application/applicant application)
+                            (application-id-for-email application)
+                            (resources-for-email application)
+                            (link-to-application (:application/id application)))
       :body (text-format :t.email.application-submitted/message
                          handler
                          (:application/applicant application)
@@ -67,7 +72,10 @@
   (vec
    (for [member (applicant-and-members application)]
      {:to-user (:userid member)
-      :subject (text :t.email.application-approved/subject)
+      :subject (text-format :t.email.application-approved/subject
+                            (:userid member)
+                            (application-id-for-email application)
+                            (link-to-application (:application/id event)))
       :body (text-format :t.email.application-approved/message
                          (:userid member)
                          (application-id-for-email application)
@@ -77,7 +85,10 @@
   (vec
    (for [member (applicant-and-members application)]
      {:to-user (:userid member)
-      :subject (text :t.email.application-rejected/subject)
+      :subject (text-format :t.email.application-rejected/subject
+                            (:userid member)
+                            (application-id-for-email application)
+                            (link-to-application (:application/id event)))
       :body (text-format :t.email.application-rejected/message
                          (:userid member)
                          (application-id-for-email application)
@@ -87,7 +98,10 @@
   (vec
    (for [member (applicant-and-members application)]
      {:to-user (:userid member)
-      :subject (text :t.email.application-closed/subject)
+      :subject (text-format :t.email.application-closed/subject
+                            (:userid member)
+                            (application-id-for-email application)
+                            (link-to-application (:application/id event)))
       :body (text-format :t.email.application-closed/message
                          (:userid member)
                          (application-id-for-email application)
@@ -97,7 +111,11 @@
   (vec
    (for [commenter (:application/commenters event)]
      {:to-user commenter
-      :subject (text :t.email.comment-requested/subject)
+      :subject (text-format :t.email.comment-requested/subject
+                            commenter
+                            (:event/actor event)
+                            (application-id-for-email application)
+                            (link-to-application (:application/id event)))
       :body (text-format :t.email.comment-requested/message
                          commenter
                          (:event/actor event)
@@ -108,7 +126,11 @@
   (vec
    (for [decider (:application/deciders event)]
      {:to-user decider
-      :subject (text :t.email.decision-requested/subject)
+      :subject (text-format :t.email.decision-requested/subject
+                            decider
+                            (:event/actor event)
+                            (application-id-for-email application)
+                            (link-to-application (:application/id event)))
       :body (text-format :t.email.decision-requested/message
                          decider
                          (:event/actor event)
@@ -119,7 +141,11 @@
   (vec
    (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
      {:to-user handler
-      :subject (text :t.email.commented/subject)
+      :subject (text-format :t.email.commented/subject
+                            handler
+                            (:event/actor event)
+                            (application-id-for-email application)
+                            (link-to-application (:application/id event)))
       :body (text-format :t.email.commented/message
                          handler
                          (:event/actor event)
@@ -130,7 +156,11 @@
   (vec
    (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
      {:to-user handler
-      :subject (text :t.email.decided/subject)
+      :subject (text-format :t.email.decided/subject
+                            handler
+                            (:event/actor event)
+                            (application-id-for-email application)
+                            (link-to-application (:application/id event)))
       :body (text-format :t.email.decided/message
                          handler
                          (:event/actor event)
@@ -140,7 +170,10 @@
 (defmethod event-to-emails-impl :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
   [{:to-user (:userid (:application/member event))
-    :subject (text :t.email.member-added/subject)
+    :subject (text-format :t.email.member-added/subject
+                          (:userid (:application/member event))
+                          (application-id-for-email application)
+                          (link-to-application (:application/id event)))
     :body (text-format :t.email.member-added/message
                        (:userid (:application/member event))
                        (application-id-for-email application)
@@ -148,7 +181,9 @@
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))
-    :subject (text :t.email.member-invited/subject)
+    :subject (text-format :t.email.member-invited/subject
+                          (:email (:application/member event))
+                          (invitation-link (:invitation/token event)))
     :body (text-format :t.email.member-invited/message
                        (:email (:application/member event))
                        (invitation-link (:invitation/token event)))}])
@@ -191,7 +226,10 @@
                                    (:to-user email-spec)))))]
         ;; TODO check that :to is set
         (log/info "sending email:" (pr-str email))
-        (postal/send-message {:host host :port port} email)))))
+        (try
+          (postal/send-message {:host host :port port} email)
+          (catch com.sun.mail.smtp.SMTPAddressFailedException e ; email address does not exist
+            (log/warn e "failed sending email, skipping:" (pr-str email))))))))
 
 (defn run []
   (common/run-event-poller ::poller (fn [event]

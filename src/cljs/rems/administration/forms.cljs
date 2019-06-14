@@ -63,6 +63,11 @@
    {:href (str "/#/administration/forms/" (:id form))}
    (text :t.administration/view)])
 
+(defn- copy-as-new-form [form]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/create-form/" (:id form))}
+   (text :t.administration/copy-as-new)])
+
 (rf/reg-sub
  ::forms-table-rows
  (fn [_ _]
@@ -84,6 +89,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-form form]
+                           [copy-as-new-form form]
                            [status-flags/enabled-toggle form #(rf/dispatch [::update-form %1 %2])]
                            [status-flags/archived-toggle form #(rf/dispatch [::update-form %1 %2])]]}})
         forms)))

@@ -69,7 +69,9 @@
 (reg-sub
  :languages
  (fn [db _]
-   (:languages db)))
+   ;; default language first
+   (sort (comp not= (:default-language db))
+         (:languages db))))
 
 (reg-sub
  :default-language
@@ -373,6 +375,10 @@
 
 (secretary/defroute "/administration/create-form" []
   (rf/dispatch [:rems.administration.create-form/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
+
+(secretary/defroute "/administration/create-form/:form-id" [form-id]
+  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id)])
   (rf/dispatch [:set-active-page :rems.administration/create-form]))
 
 (secretary/defroute "/administration/create-license" []

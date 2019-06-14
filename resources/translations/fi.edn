@@ -55,6 +55,7 @@
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
+                   :copy-as-new "Kopioi uudeksi"
                    :create-catalogue-item "Uusi aineisto"
                    :create-form "Uusi lomake"
                    :create-license "Uusi lisenssi"
@@ -192,27 +193,27 @@
                     :round-n "Kierros %1"
                     :rounds-workflow "Kierrospohjainen työvuo"
                     :title "Työvuon nimi"}
-  :email {:application-approved {:subject "Hakemuksesi on hyväksytty"
-                                 :message "Hyvä %1,\nHakemuksesi %2 on hyväksytty.\nKatsele hakemusta: %3"}
-          :application-rejected {:subject "Hakemuksesi on hylätty"
-                                 :message "Hyvä %1,\nHakemuksesi %2 on hylätty.\nKatsele hakemusta: %3"}
-          :application-closed {:subject "Hakemuksesi on suljettu"
-                               :message "Hyvä %1,\nHakemuksesi %2 on suljettu.\nKatsele hakemusta: %3"}
-          :application-submitted {:subject "Uusi hakemus"
-                                  :message "Hyvä %1,\nKäyttäjä %2 on lähettänyt uuden hakemuksen %3 resurss(e)ille %4.\nKatsele hakemusta: %5"}
-          :comment-requested {:subject "Kommenttipyyntö"
-                              :message "Hyvä %1,\nKäyttäjä %2 on pyytänyt sinulta kommenttia hakemukseen %3.\nKommentoi täällä: %4"}
-          :commented {:subject "Uusi kommentti"
-                      :message "Hyvä %1,\nKäyttäjä %2 on kommentoinut hakemusta %3.\nKatsele hakemusta: %4"}
-          :decided {:subject "Uusi päätös"
-                    :message "Hyvä %1,\nKäyttäjä %2 on tehnyt päätöksen hakemuksesta %3.\nKatsele hakemusta: %4"}
-          :decision-requested {:subject "Päätöspyyntö"
-                               :message "Hyvä %1,\nKäyttäjä %2 on pyytänyt sinulta päätöstä hakemukseen %3.\nKatsele hakemusta: %4"}
-          :footer "\nTämä on automaattinen viesti. Älä vastaa tähän."
-          :member-added {:subject "Sinut on lisätty hakemukseen"
-                         :message "Hyvä %1,\nSinut on lisätty jäseneksi hakemukseen %2.\nKatsele hakemusta: %3"}
+  :email {:application-approved {:subject "Hakemus hyväksytty (%2)"
+                                 :message "Hyvä %1,\n\nHakemuksesi %2 on hyväksytty.\n\nTarkastele hakemusta: %3"}
+          :application-rejected {:subject "Hakemus hylätty (%2)"
+                                 :message "Hyvä %1,\n\nHakemuksesi %2 on hylätty.\n\nTarkastele hakemusta: %3"}
+          :application-closed {:subject "Hakemus suljettu (%2)"
+                               :message "Hyvä %1,\n\nHakemuksesi %2 on suljettu.\n\nTarkastele hakemusta: %3"}
+          :application-submitted {:subject "Hakemus lähetetty (%2: %3)"
+                                  :message "Hyvä %1,\n\n%2 on lähettänyt käyttöoikeushakemuksen (%3): %4.\n\nTarkastele hakemusta: %5"}
+          :comment-requested {:subject "Kommenttipyyntö (%2: %3)"
+                              :message "Hyvä %1,\n\n%2 on pyytänyt kommentoimaan hakemusta %3.\n\nKommentoi: %4"}
+          :commented {:subject "Hakemusta kommentoitu (%2: %3)"
+                      :message "Hyvä %1,\n\n%2 on kommentoinut hakemusta %3.\n\nTarkastele hakemusta: %4"}
+          :decided {:subject "Päätös tehty (%2: %3)"
+                    :message "Hyvä %1,\n\n%2 on tehnyt päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %4"}
+          :decision-requested {:subject "Päätöspyyntö (%2: %3)"
+                               :message "Hyvä %1,\n\n%2 on pyytänyt sinua tekemään päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %4"}
+          :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
+          :member-added {:subject "Lisätty hakemuksen jäseneksi (%2)"
+                         :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %2 jäseneksi.\n\nTarkastele hakemusta: %3"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen"
-                           :message "Hei,\nTämä sähköpostiosoite (%1) on kutsuttu osallistumaan hakemukseen.\nOsallistumislinkki: %2"}}
+                           :message "Hei,\n\nTämä sähköpostiosoite (%1) on kutsuttu osallistumaan kielivarojen käyttöoikeushakemukseen.\n\nOsallistumislinkki: %2"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
   :form {:accepted-licenses "Käyttöehdot hyväksytty"
          :actions "Toiminnot"
@@ -246,6 +247,7 @@
          :user "Käyttäjä"
          :validation {:errors "Lähettäminen epäonnistui. Tarkasta seuraavat kentät."
                       :invalid-user "Käyttäjä ei kelpaa."
+                      :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" sisältö on liian pitkä."}}
   :header {:title "Tervetuloa REMSiin"}

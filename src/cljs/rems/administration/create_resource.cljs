@@ -117,10 +117,10 @@
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
-(defn- cancel-button [on-click]
+(defn- cancel-button []
   [:button.btn.btn-secondary
    {:type :button
-    :on-click on-click}
+    :on-click #(dispatch! "/#/administration/resources")}
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
@@ -142,4 +142,4 @@
 
                    [:div.col.commands
                     [cancel-button]
-                    [save-resource-button form #(dispatch! "/#/administration/resources")]]])]}]]))
+                    [save-resource-button form]]])]}]]))

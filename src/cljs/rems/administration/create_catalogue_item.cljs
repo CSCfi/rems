@@ -41,24 +41,39 @@
 (rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
 (rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
 
+(defn- valid-localization? [localization]
+  (and (not (str/blank? (:langcode localization)))
+       (not (str/blank? (:title localization)))))
+
 (defn- valid-request? [request]
   (and (not (str/blank? (:title request)))
        (number? (:wfid request))
        (number? (:resid request))
-       (number? (:form request))))
+       (number? (:form request))
+       (every? valid-localization? (:localizations request))))
 
-(defn build-request [form]
-  (let [request {:title (:title form)
+(defn build-request [form languages]
+  (let [request {:title (get (:title form) (first languages))
                  :wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
-                 :form (get-in form [:form :id])}]
+                 :form (get-in form [:form :id])
+                 :localizations (for [language languages]
+                                  {:langcode (name language)
+                                   :title (get (:title form) language)})}]
     (when (valid-request? request)
       request)))
 
 (defn- create-catalogue-item! [_ [_ request]]
   (status-modal/common-pending-handler! (text :t.administration/create-catalogue-item))
-  (post! "/api/catalogue-items/create" {:params (assoc request :enabled false) ;; create disabled catalogue items by default
-                                        :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/catalogue-items/" (:id %))))
+  (post! "/api/catalogue-items/create" {:params (-> request
+                                                    (assoc :enabled false) ;; create disabled catalogue items by default
+                                                    (dissoc :localizations))
+                                        :handler (partial status-modal/common-success-handler!
+                                                          (fn [response]
+                                                            (doseq [localization (:localizations request)]
+                                                              ;; XXX: no error handling & possible partial failure due to how cumbersome to old API is to use
+                                                              (post! "/api/catalogue-items/create-localization" {:params (assoc localization :id (:id response))}))
+                                                            (dispatch! (str "#/administration/catalogue-items/" (:id response)))))
                                         :error-handler status-modal/common-error-handler!})
   {})
 
@@ -66,8 +81,7 @@
 
 
 (defn- fetch-workflows []
-  (fetch "/api/workflows" {:url-params {:active true}
-                           :handler #(rf/dispatch [::fetch-workflows-result %])}))
+  (fetch "/api/workflows" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
 
 (rf/reg-fx ::fetch-workflows fetch-workflows)
 
@@ -80,8 +94,7 @@
 (rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 
 (defn- fetch-resources []
-  (fetch "/api/resources" {:url-params {:active true}
-                           :handler #(rf/dispatch [::fetch-resources-result %])}))
+  (fetch "/api/resources" {:handler #(rf/dispatch [::fetch-resources-result %])}))
 
 (rf/reg-fx ::fetch-resources fetch-resources)
 
@@ -95,8 +108,7 @@
 
 
 (defn- fetch-forms []
-  (fetch "/api/forms" {:url-params {:active true}
-                       :handler #(rf/dispatch [::fetch-forms-result %])}))
+  (fetch "/api/forms" {:handler #(rf/dispatch [::fetch-forms-result %])}))
 
 (rf/reg-fx ::fetch-forms fetch-forms)
 
@@ -115,9 +127,10 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
-(defn- catalogue-item-title-field []
-  [text-field context {:keys [:title]
-                       :label (text :t.create-catalogue-item/title)
+(defn- catalogue-item-title-field [language]
+  [text-field context {:keys [:title language]
+                       :label (str (text :t.create-catalogue-item/title)
+                                   " (" (str/upper-case (name language)) ")")
                        :placeholder (text :t.create-catalogue-item/title-placeholder)}])
 
 (defn- catalogue-item-workflow-field []
@@ -174,8 +187,8 @@
     :on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
-(defn- save-catalogue-item-button [form on-click]
-  (let [request (build-request form)]
+(defn- save-catalogue-item-button [form languages on-click]
+  (let [request (build-request form languages)]
     [:button.btn.btn-primary
      {:type :button
       :on-click #(on-click request)
@@ -183,7 +196,8 @@
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
-  (let [loading? @(rf/subscribe [::loading?])
+  (let [languages @(rf/subscribe [:languages])
+        loading? @(rf/subscribe [::loading?])
         form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
@@ -195,11 +209,12 @@
                 (if loading?
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
-                   [catalogue-item-title-field]
+                   (for [language languages]
+                     ^{:key language} [catalogue-item-title-field language])
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
 
                    [:div.col.commands
                     [cancel-button]
-                    [save-catalogue-item-button form #(rf/dispatch [::create-catalogue-item %])]]])]}]]))
+                    [save-catalogue-item-button form languages #(rf/dispatch [::create-catalogue-item %])]]])]}]]))

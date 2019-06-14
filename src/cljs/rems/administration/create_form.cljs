@@ -8,19 +8,38 @@
             [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
+            [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! post! normalize-option-key parse-int]]))
+            [rems.util :refer [dispatch! fetch post! normalize-option-key parse-int remove-empty-keys]]))
 
 (rf/reg-event-fx
  ::enter-page
- (fn [{:keys [db]}]
-   {:db (assoc db ::form {:fields []})}))
+ (fn [{:keys [db]} [_ form-id]]
+   {:db (assoc db ::form {:fields []})
+    :dispatch-n [[::fetch-form form-id]]}))
+
+(rf/reg-event-fx
+ ::fetch-form
+ (fn [{:keys [db]} [_ form-id]]
+   (when form-id
+     (fetch (str "/api/forms/" form-id)
+            {:handler #(rf/dispatch [::fetch-form-result %])})
+     {:db (assoc db ::loading-form? true)})))
+
+(rf/reg-event-db
+ ::fetch-form-result
+ (fn [db [_ form]]
+   (-> db
+       (assoc ::form form)
+       (dissoc ::loading-form?))))
 
 ;;;; form state
 
 ;; TODO rename item->field
 (rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
+(rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
@@ -48,7 +67,6 @@
  (fn [db [_ field-index option-index]]
    (update-in db [::form :fields field-index :options] items/move-down option-index)))
 
-
 ;;;; form submit
 
 (defn- supports-optional? [field]
@@ -62,47 +80,6 @@
 
 (defn- supports-options? [field]
   (contains? #{"option" "multiselect"} (:type field)))
-
-(defn- localized-string? [lstr languages]
-  (and (= (set (keys lstr))
-          (set languages))
-       (every? string? (vals lstr))))
-
-(defn- valid-required-localized-string? [lstr languages]
-  (and (localized-string? lstr languages)
-       (every? #(not (str/blank? %))
-               (vals lstr))))
-
-(defn- valid-optional-localized-string? [lstr languages]
-  (and (localized-string? lstr languages)
-       ;; partial translations are not allowed
-       (or (every? #(not (str/blank? %))
-                   (vals lstr))
-           (every? str/blank?
-                   (vals lstr)))))
-
-(defn- valid-option? [option languages]
-  (and (not (str/blank? (:key option)))
-       (valid-required-localized-string? (:label option) languages)))
-
-(defn- valid-request-field? [field languages]
-  (and (valid-required-localized-string? (:title field) languages)
-       (not (str/blank? (:type field)))
-       (boolean? (:optional field))
-       (if (supports-input-prompt? field)
-         (valid-optional-localized-string? (:input-prompt field) languages)
-         (nil? (:input-prompt field)))
-       (if (supports-maxlength? field)
-         (not (neg? (:maxlength field)))
-         (nil? (:maxlength field)))
-       (if (supports-options? field)
-         (every? #(valid-option? % languages) (:options field))
-         (nil? (:options field)))))
-
-(defn- valid-request? [request languages]
-  (and (not (str/blank? (:organization request)))
-       (not (str/blank? (:title request)))
-       (every? #(valid-request-field? % languages) (:fields request))))
 
 (defn build-localized-string [lstr languages]
   (into {} (for [language languages]
@@ -124,26 +101,70 @@
                         :label (build-localized-string label languages)})})))
 
 (defn build-request [form languages]
-  (let [request {:organization (:organization form)
-                 :title (:title form)
-                 :fields (mapv #(build-request-field % languages) (:fields form))}]
-    (when (valid-request? request languages)
-      request)))
+  {:organization (:organization form)
+   :title (:title form)
+   :fields (mapv #(build-request-field % languages) (:fields form))})
+
+;;;; form validation
+
+(defn- validate-text-field [m key]
+  (when (str/blank? (get m key))
+    {key :t.form.validation/required}))
+
+(defn- validate-localized-text-field [m key languages]
+  {key (apply merge (mapv #(validate-text-field (get m key) %) languages))})
+
+(defn- validate-optional-localized-field [m key languages]
+  (let [validated (mapv #(validate-text-field (get m key) %) languages)]
+    ;; partial translations are not allowed
+    (when (not-empty (remove identity validated))
+      {key (apply merge validated)})))
+
+(def ^:private maxlength-range [0 32767])
+
+(defn- validate-maxlength [maxlength]
+  (when-not (str/blank? maxlength)
+    (let [parsed (parse-int maxlength)]
+      (when (or (nil? parsed)
+                (not (<= (first maxlength-range) parsed (second maxlength-range))))
+        {:maxlength :t.form.validation/invalid-value}))))
+
+(defn- validate-option [option id languages]
+  {id (merge (validate-text-field option :key)
+             (validate-localized-text-field option :label languages))})
+
+(defn- validate-options [options languages]
+  {:options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
+
+(defn- validate-field [field id languages]
+  {id (merge (validate-text-field field :type)
+             (validate-localized-text-field field :title languages)
+             (validate-optional-localized-field field :input-prompt languages)
+             (validate-maxlength (:maxlength field))
+             (validate-options (:options field) languages))})
+
+(defn validate-form [form languages]
+  (-> (merge (validate-text-field form :organization)
+             (validate-text-field form :title)
+             {:fields (apply merge (mapv #(validate-field %1 %2 languages) (form :fields) (range)))})
+      remove-empty-keys))
 
 (rf/reg-event-fx
  ::create-form
- (fn [_ [_ request]]
-   (status-modal/common-pending-handler! (text :t.administration/create-form))
-   (post! "/api/forms/create" {:params request
-                               :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
-                               :error-handler status-modal/common-error-handler!})
-   {}))
-
+ (fn [{:keys [db]} [_ request]]
+   (let [form-errors (validate-form (db ::form) (db :languages))]
+     (when (empty? form-errors)
+       (status-modal/common-pending-handler! (text :t.administration/create-form))
+       (post! "/api/forms/create" {:params request
+                                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
+                                   :error-handler status-modal/common-error-handler!}))
+     {:db (assoc db ::form-errors form-errors)})))
 
 ;;;; UI
 
 (def ^:private context
   {:get-form ::form
+   :get-form-errors ::form-errors
    :update-form ::set-form-field})
 
 (defn- form-organization-field []
@@ -244,8 +265,7 @@
         request (build-request form languages)]
     [:button.btn.btn-primary
      {:type :button
-      :on-click #(on-click request)
-      :disabled (nil? request)}
+      :on-click #(on-click request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
@@ -303,26 +323,29 @@
                     [field-preview field]))}])
 
 (defn create-form-page []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        loading-form? @(rf/subscribe [::loading-form?])]
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-form)]
-     [:div.container-fluid.editor-content
-      [:div.row
-       [:div.col-lg
-        [collapsible/component
-         {:id "create-form"
-          :title (text :t.administration/create-form)
-          :always [:div
-                   [form-organization-field]
-                   [form-title-field]
-                   [form-fields (:fields form)]
+     (if loading-form?
+       [:div [spinner/big]]
+       [:div.container-fluid.editor-content
+        [:div.row
+         [:div.col-lg
+          [collapsible/component
+           {:id "create-form"
+            :title (text :t.administration/create-form)
+            :always [:div
+                     [form-organization-field]
+                     [form-title-field]
+                     [form-fields (:fields form)]
 
-                   [:div.form-field.new-form-field
-                    [add-form-field-button]]
+                     [:div.form-field.new-form-field
+                      [add-form-field-button]]
 
-                   [:div.col.commands
-                    [cancel-button]
-                    [save-form-button #(rf/dispatch [::create-form %])]]]}]]
-       [:div.col-lg
-        [form-preview form]]]]]))
+                     [:div.col.commands
+                      [cancel-button]
+                      [save-form-button #(rf/dispatch [::create-form %])]]]}]]
+         [:div.col-lg
+          [form-preview form]]]])]))
