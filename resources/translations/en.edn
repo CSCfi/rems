@@ -150,8 +150,8 @@
               :header "Resource"
               :intro [:p "The catalogue contains all the resources that you can apply for in this system."]
               :more-info "More info"
-              :continue-existing-application "Continue existing application"
-              :continue-existing-application-intro [:div.intro [:p "You have existing unfinished applications that you can continue from here."]]
+              :continue-existing-application "Continue application"
+              :continue-existing-application-intro [:div.intro [:p "You have unfinished applications that you can continue from here."]]
               :apply-resources "Apply for resources"}
   :collapse {:show-less "Show less"
              :show-more "Show more"}
