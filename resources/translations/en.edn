@@ -268,7 +268,7 @@
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
 :login {:alternative "Other login options"
-:intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information available on the " [:a {:href "#/extra-pages/about"} "About"] " page."]
+:intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information is available on " [:a {:href "#/extra-pages/about"} "About"] " page."]
                   [:p "Please, login to access REMS."]]
           :text "Login with Haka credentials"
           :title "Login"}
