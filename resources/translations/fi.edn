@@ -144,7 +144,7 @@
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
          :empty [:div.intro [:p "Valitse resursseja haettavaksi."]]
          :header "%1 aineistoa korissa"
-         :intro [:div.intro [:p "Tässä ovat kaikki resurssit jotka olet valinnut. Resurssit jotka voi hakea samalla hakemuksella ryhmitellään automaattisesti yhteen."]]
+         :intro [:div.intro [:p "Tässä ovat valitsemasi resurssit. Samalla hakemuksella haettavat resurssit ryhmitellään automaattisesti yhteen."]]
          :remove "Poista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
