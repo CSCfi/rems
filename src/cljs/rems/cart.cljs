@@ -69,18 +69,21 @@
 (defn cart-list
   "List of shopping cart items"
   [items language]
-  (when (seq items)
-    [:div.outer-cart.mb-3
-     [:div.inner-cart
-      [:div.cart-title
-       [:i.fa.fa-shopping-cart]
-       [:span (text-format :t.cart/header (count items))]]
-      [:table.rems-table.cart
-       (into [:tbody]
-             (let [key-fn #(select-vals % [:wfid :formid])]
-               (apply concat
-                      (for [group (vals (into (sorted-map) (group-by key-fn items)))]
-                        (group-view (sort-by get-localized-title group) language)))))]]]))
+  (if (seq items)
+    [:div
+     (text :t.cart/intro)
+     [:div.outer-cart.mb-3
+      [:div.inner-cart
+       [:div.cart-title
+        [:i.fa.fa-shopping-cart]
+        [:span (text-format :t.cart/header (count items))]]
+       [:table.rems-table.cart
+        (into [:tbody]
+              (let [key-fn #(select-vals % [:wfid :formid])]
+                (apply concat
+                       (for [group (vals (into (sorted-map) (group-by key-fn items)))]
+                         (group-view (sort-by get-localized-title group) language)))))]]]]
+    (text :t.cart/empty)))
 
 (defn cart-list-container []
   (let [language @(rf/subscribe [:language])

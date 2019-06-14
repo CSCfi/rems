@@ -75,6 +75,7 @@
                             :workflow-in-use "Workflow in use:"}
                    :form "Form"
                    :forms "Forms"
+                   :intro [:div.intro [:p "From here you can manage the REMS datasets. See the menu above."]]
                    :license "License"
                    :license-field "License \"%1\""
                    :licenses "Licenses"
@@ -124,6 +125,7 @@
                           :returned "Changes requested"
                           :submitted "Applied"
                           :unknown "Unknown"}
+                 :intro [:div.intro [:p "By filling and sending in this application, the applicants may be granted the applied resources. All the applicable terms of use must also be accepted by each applicant."]]
                  :my-applications "My Applications"
                  :state "State"
                  :states {:approved "Approved"
@@ -133,19 +135,23 @@
                           :returned "Returned"
                           :submitted "Applied"
                           :unknown "Unknown"}
-                 :latest-activity "Latest activity %1"
+                 :latest-activity "Latest activity"
                  :view "View"}
   :autocomplete {:no-results "No results"
                  :placeholder "Choose or type"}
   :cart {:add "Add to cart"
          :apply "Apply"
          :apply-for-bundle "Apply for %1 resources as a bundle "
+         :empty [:div.intro [:p "Select resources to apply:"]]
          :header "%1 resources in the cart"
+         :intro [:div.intro [:p "Here are the selected resources. If several resources can be applied to with the same application, they will be automatically grouped into a bundle."]]
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
+              :intro [:p "The catalogue contains all the resources that you can apply for in this system."]
               :more-info "More info"
-              :continue-existing-application "Continue existing application"
+              :continue-existing-application "Continue application"
+              :continue-existing-application-intro [:div.intro [:p "You have unfinished applications that you can continue from here:"]]
               :apply-resources "Apply for resources"}
   :collapse {:show-less "Show less"
              :show-more "Show more"}
@@ -250,7 +256,7 @@
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
                       :toolong "Text in field \"%1\" too long."}}
-  :header {:title "Welcome to REMS"}
+  :header {:title "REMS"}
   :item-lists {:move-down "Move down"
                :move-up "Move up"
                :remove "Remove"}
@@ -261,7 +267,9 @@
          :username "Username"}
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
-  :login {:alternative "Other login options"
+:login {:alternative "Other login options"
+:intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information is available on " [:a {:href "#/extra-pages/about"} "About"] " page."]
+                  [:p "Please, login to access REMS."]]
           :text "Login with Haka credentials"
           :title "Login"}
   :missing "Missing translation %1"

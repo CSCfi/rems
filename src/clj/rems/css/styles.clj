@@ -281,6 +281,7 @@
    [:h1 :h2 {:font-weight 400}]
    [:h1 :h2 :h3 {:letter-spacing (u/rem 0.17)}]
    [:h4 :h5 :h6 {:letter-spacing (u/rem 0.12)}]
+   [:h1 {:margin-bottom (u/rem 2)}]
    [:#app {:min-height (u/percent 100)
            :flex 1
            :display :flex}]
@@ -463,9 +464,8 @@
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"
-     :max-width (u/px 420)
-     :margin "30px auto"
      :color "#000"
+     :margin-top (u/rem 2)
      :border-style "solid"
      :border-width (u/px 1)
      :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
@@ -473,6 +473,7 @@
    [:.login-btn {:max-height (u/px 70)
                  :margin-bottom (u/px 20)}
     [:&:hover {:filter "brightness(80%)"}]]
+   [:.login-component {:max-width (u/px 420)}]
    (generate-rems-table-styles)
    [:.btn.disabled {:opacity 0.25}]
    [:.catalogue-item-link {:color "#fff"
@@ -577,6 +578,7 @@
    [:.new-form-field-option {:text-align "center"}]
 
    [:.full {:width "100%"}]
+   [:.intro {:margin-bottom (u/rem 2)}]
    [:.rectangle {:width (u/px 50)
                  :height (u/px 50)}]
    [:.color-1 {:background-color (util/get-theme-attribute :color1)}]
@@ -634,7 +636,7 @@
                              (-> (util/get-theme-attribute :color1)
                                  (c/saturate -50)
                                  (c/lighten 33)))}]
-   [:h2 {:margin [[(u/rem 1) 0]]}]
+   [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
 
    ;; application list
    [:.rems-table

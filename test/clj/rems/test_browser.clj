@@ -112,7 +112,7 @@
                               {:fn/text resource-name}
                               {:xpath "./ancestor::tr"}
                               {:css "button.apply-for-catalogue-items"}])
-  (wait-visible *driver* {:tag :h1, :fn/text "Application"})
+  (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "application-page.png")))
 
@@ -222,7 +222,7 @@
     (check-box "disease_prevention")
 
     (send-application)
-    (is (= "State: Applied" (get-element-text *driver* :application-state)))
+    (is (= "Applied" (get-element-text *driver* :application-state)))
 
     (accept-licenses)
 

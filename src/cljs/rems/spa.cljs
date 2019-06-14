@@ -191,7 +191,13 @@
     (do
       (rf/dispatch [:rems.catalogue/enter-page])
       [catalogue-page])
-    [auth/login-component]))
+    [:div
+     [:div.row.justify-content-center
+      [:div.col-md-6.row.justify-content-center
+       (text :t.login/intro)]]
+     [:div.row.justify-content-center
+      [:div.col-md-6.row.justify-content-center
+       [auth/login-component]]]]))
 
 (defn unauthorized-page []
   [:div

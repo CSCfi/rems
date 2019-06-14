@@ -100,6 +100,7 @@
     (when (seq @(rf/subscribe [applications]))
       [:div
        [:h2 (text :t.catalogue/continue-existing-application)]
+       (text :t.catalogue/continue-existing-application-intro)
        [application-list/component
         {:id applications
          :applications applications
@@ -126,6 +127,7 @@
         loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
      [document-title (text :t.catalogue/catalogue)]
+     (text :t.catalogue/intro)
      (if (or loading-catalogue? loading-drafts?)
        [spinner/big]
        [:div

@@ -6,12 +6,15 @@
 
 (defn login-component []
   (let [config @(rf/subscribe [:rems.config/config])
-        alternative-endpoint (:alternative-login-url config)]
-    (case (:authentication config)
-      :shibboleth (shibboleth/login-component alternative-endpoint)
-      :fake-shibboleth (shibboleth/login-component alternative-endpoint)
-      :ldap (ldap/login-component)
-      nil)))
+        alternative-endpoint (:alternative-login-url config)
+        login-component (case (:authentication config)
+                          :shibboleth (shibboleth/login-component alternative-endpoint)
+                          :fake-shibboleth (shibboleth/login-component alternative-endpoint)
+                          :ldap (ldap/login-component)
+                          nil)]
+    (when login-component
+      [:div.jumbotron.login-component
+       login-component])))
 
 (defn guide []
   [:div

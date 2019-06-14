@@ -75,6 +75,7 @@
                             :workflow-in-use "Työvuo on käytössä:"}
                    :form "Lomake"
                    :forms "Lomakkeet"
+                   :intro [:div.intro [:p "Täällä voit hallinnoida REMSin aineistoja. Valitse alue valikoista yläpuolelta."]]
                    :license "Lisenssi"
                    :license-field "Lisenssi \"%1\""
                    :licenses "Lisenssit"
@@ -124,6 +125,7 @@
                           :returned "Palautettu muokattavaksi"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
+                 :intro [:div.intro [:p "Täyttämällä ja lähettämällä tämän hakemuksen kaikki hakijat voivat saada oikeuden haettuihin resursseihin. Kunkin hakijan on lisäksi hyväksyttävä käyttöehdot viimeistään hakemuksen käsittelyn jälkeen."]]
                  :my-applications "Omat hakemukset"
                  :state "Tila"
                  :states {:approved "Hyväksytty"
@@ -133,19 +135,23 @@
                           :returned "Palautettu"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
-                 :latest-activity "Viimeisin toimenpide %1"
+                 :latest-activity "Viimeisin toimenpide"
                  :view "Näytä"}
   :autocomplete {:no-results "Ei tuloksia"
                  :placeholder "Valitse tai kirjoita"}
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
+         :empty [:div.intro [:p "Valitse resursseja haettavaksi:"]]
          :header "%1 aineistoa korissa"
+         :intro [:div.intro [:p "Tässä ovat valitsemasi resurssit. Samalla hakemuksella haettavat resurssit ryhmitellään automaattisesti yhteen."]]
          :remove "Poista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
+              :intro [:p "Aineistoluettelossa on listattuna kaikki resurssit joita voit tästä järjestelmästä hakea."]
               :more-info "Lisätietoja"
               :continue-existing-application "Jatka hakemusta"
+              :continue-existing-application-intro [:div.intro [:p "Sinulla on keskeneräisiä hakemuksia, joita voit jatkaa tästä:"]]
               :apply-resources "Hae uusia resursseja"}
   :collapse {:show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
@@ -250,7 +256,7 @@
                       :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" sisältö on liian pitkä."}}
-  :header {:title "Tervetuloa REMSiin"}
+  :header {:title "REMS"}
   :item-lists {:move-down "Siirrä alas"
                :move-up "Siirrä ylös"
                :remove "Poista"}
@@ -262,6 +268,8 @@
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
+          :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "#/extra-pages/about"} "Info-sivulla"] "."]
+                  [:p "Ole hyvä ja kirjaudu sisään."]]
           :text "Kirjaudu sisään Haka-tunnuksin"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
