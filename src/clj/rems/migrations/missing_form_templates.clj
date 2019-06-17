@@ -101,8 +101,10 @@ WHERE itemId = :item;
 
 (defn process-localizations [localizations]
   (reduce merge-maps (for [{:keys [langcode title inputprompt]} localizations]
-                       (merge (when title {:title {(keyword langcode) title}})
-                              (when inputprompt {:input-prompt {(keyword langcode) inputprompt}})))))
+                       (do (when (or title inputprompt)
+                             (assert langcode "Missing langcode in application_form_item_localization table!"))
+                           (merge (when title {:title {(keyword langcode) title}})
+                                  (when inputprompt {:input-prompt {(keyword langcode) inputprompt}}))))))
 
 (deftest process-localizations-test
   (is (= {:title {:fi "fi title" :en "en title" :es "es title"}
