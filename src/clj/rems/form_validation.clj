@@ -1,16 +1,23 @@
 (ns rems.form-validation
-  "Pure functions for form validation logic")
+  "Pure functions for form validation logic"
+  (:require [clojure.string :as str]))
+
+(defn- required? [field]
+  (and (not (:field/optional field))
+       (not= :label (:field/type field))
+       (str/blank? (:field/value field))))
+
+(defn- too-long? [field]
+  (and (:field/max-length field)
+       (> (count (:field/value field))
+          (:field/max-length field))))
 
 (defn- validate-field [field]
-  (if (empty? (:field/value field))
-    (when-not (or (:field/optional field) (= "label" (:field/type field)))
-      ;; TODO: use field/id in output
-      {:field-id (:field/id field)
-       :type :t.form.validation/required})
-    (when (and (:field/maxlength field)
-               (> (count (:field/value field)) (:field/maxlength field)))
-      {:field-id (:field/id field)
-       :type :t.form.validation/toolong})))
+  (cond
+    (required? field) {:field-id (:field/id field)
+                       :type :t.form.validation/required}
+    (too-long? field) {:field-id (:field/id field)
+                       :type :t.form.validation/toolong}))
 
 (defn validate-fields [fields]
   (->> (sort-by :field/id fields)
