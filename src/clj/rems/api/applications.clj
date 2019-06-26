@@ -233,11 +233,17 @@
       :return AcceptInvitationResult
       (ok (applications/accept-invitation (getx-user-id) invitation-token)))
 
+    (POST "/change-resources" []
+      :summary "Change resources of the application"
+      :roles #{:logged-in}
+      :body [request commands/ChangeResourcesCommand]
+      :return SuccessResponse
+      (ok (applications/change-resources (getx-user-id) request)))
+
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
     (command-endpoint :application.command/add-licenses commands/AddLicensesCommand)
     (command-endpoint :application.command/add-member commands/AddMemberCommand)
-    (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/approve commands/ApproveCommand)
     (command-endpoint :application.command/close commands/CloseCommand)

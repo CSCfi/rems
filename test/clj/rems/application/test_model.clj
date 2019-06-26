@@ -142,6 +142,22 @@
        :end nil
        :enabled true
        :expired false
+       :archived false}
+   34 {:id 34
+       :licensetype "attachment"
+       :title "non-localized title"
+       :textcontent "non-localized filename"
+       :attachment-id 3400
+       :localizations {:en {:title "en title"
+                            :textcontent "en filename"
+                            :attachment-id 3401}
+                       :fi {:title "fi title"
+                            :textcontent "fi filename"
+                            :attachment-id 3402}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :expired false
        :archived false}})
 
 (def ^:private get-user
@@ -348,7 +364,11 @@
                                       :application/id 1
                                       :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                               {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                                              {:catalogue-item/id 30 :resource/ext-id "urn:31"}]})
+                                                              {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                                      :application/licenses [{:license/id 30}
+                                                             {:license/id 31}
+                                                             {:license/id 32}
+                                                             {:license/id 34}]})
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 2600)
                                                           :application/modified (DateTime. 2600)
@@ -364,7 +384,24 @@
                                                                                         :catalogue-item/end nil
                                                                                         :catalogue-item/enabled true
                                                                                         :catalogue-item/expired false
-                                                                                        :catalogue-item/archived false})})]
+                                                                                        :catalogue-item/archived false})
+                                                          :application/licenses (conj (:application/licenses expected-application)
+                                                                                      {:license/id 34
+                                                                                       :license/type :attachment
+                                                                                       :license/title {:en "en title"
+                                                                                                       :fi "fi title"
+                                                                                                       :default "non-localized title"}
+                                                                                       :license/attachment-id {:en 3401
+                                                                                                               :fi 3402
+                                                                                                               :default 3400}
+                                                                                       :license/attachment-filename {:en "en filename"
+                                                                                                                     :fi "fi filename"
+                                                                                                                     :default "non-localized filename"}
+                                                                                       :license/start (DateTime. 100)
+                                                                                       :license/end nil
+                                                                                       :license/expired false
+                                                                                       :license/enabled true
+                                                                                       :license/archived false})})]
                     (is (= expected-application (apply-events events)))))
 
                 (testing "> submitted"
@@ -458,7 +495,11 @@
                                           :application/comment "You should include this resource."
                                           :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                                   {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                                                  {:catalogue-item/id 30 :resource/ext-id "urn:31"}]})
+                                                                  {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                                          :application/licenses [{:license/id 30}
+                                                                 {:license/id 31}
+                                                                 {:license/id 32}
+                                                                 {:license/id 34}]})
                             expected-application (deep-merge expected-application
                                                              {:application/last-activity (DateTime. 3400)
                                                               :application/modified (DateTime. 3400)
@@ -474,7 +515,24 @@
                                                                                             :catalogue-item/end nil
                                                                                             :catalogue-item/enabled true
                                                                                             :catalogue-item/expired false
-                                                                                            :catalogue-item/archived false})})]
+                                                                                            :catalogue-item/archived false})
+                                                              :application/licenses (conj (:application/licenses expected-application)
+                                                                                          {:license/id 34
+                                                                                           :license/type :attachment
+                                                                                           :license/title {:en "en title"
+                                                                                                           :fi "fi title"
+                                                                                                           :default "non-localized title"}
+                                                                                           :license/attachment-id {:en 3401
+                                                                                                                   :fi 3402
+                                                                                                                   :default 3400}
+                                                                                           :license/attachment-filename {:en "en filename"
+                                                                                                                         :fi "fi filename"
+                                                                                                                         :default "non-localized filename"}
+                                                                                           :license/start (DateTime. 100)
+                                                                                           :license/end nil
+                                                                                           :license/expired false
+                                                                                           :license/enabled true
+                                                                                           :license/archived false})})]
                         (is (= expected-application (apply-events events)))))
                     (testing "> licenses added"
                       (let [events (conj events
@@ -528,7 +586,13 @@
                                                   :application/id 1
                                                   :application/comment "I changed the resources"
                                                   :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
-                                                                          {:catalogue-item/id 30 :resource/ext-id "urn:31"}]})
+                                                                          {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                                                  :application/licenses [{:license/id 30}
+                                                                         {:license/id 31}
+                                                                         {:license/id 32}
+                                                                         ;; Include also the previously added license #33 in the new licenses.
+                                                                         {:license/id 33}
+                                                                         {:license/id 34}]})
                                     expected-application (deep-merge expected-application
                                                                      {:application/last-activity (DateTime. 4500)
                                                                       :application/modified (DateTime. 4500)
@@ -554,7 +618,24 @@
                                                                                                :catalogue-item/end nil
                                                                                                :catalogue-item/enabled true
                                                                                                :catalogue-item/expired false
-                                                                                               :catalogue-item/archived false}]})]
+                                                                                               :catalogue-item/archived false}]
+                                                                      :application/licenses (conj (:application/licenses expected-application)
+                                                                                                  {:license/id 34
+                                                                                                   :license/type :attachment
+                                                                                                   :license/title {:en "en title"
+                                                                                                                   :fi "fi title"
+                                                                                                                   :default "non-localized title"}
+                                                                                                   :license/attachment-id {:en 3401
+                                                                                                                           :fi 3402
+                                                                                                                           :default 3400}
+                                                                                                   :license/attachment-filename {:en "en filename"
+                                                                                                                                 :fi "fi filename"
+                                                                                                                                 :default "non-localized filename"}
+                                                                                                   :license/start (DateTime. 100)
+                                                                                                   :license/end nil
+                                                                                                   :license/expired false
+                                                                                                   :license/enabled true
+                                                                                                   :license/archived false})})]
                                 (is (= expected-application (apply-events events)))))
 
                             (testing "> licenses accepted"

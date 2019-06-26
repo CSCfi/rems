@@ -740,6 +740,7 @@
     (create-users-and-roles!)
     (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
           res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+          res-with-extra-license (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403263" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
           _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :end (time/minus (time/now) (time/years 1))}))
           form (create-basic-form! +fake-users+)
           _ (create-archived-form!)
@@ -763,6 +764,7 @@
                                            {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                             "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
       (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
+      (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
       (db/set-catalogue-item-state! {:id disabled :enabled false})
       (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
       (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
@@ -773,6 +775,8 @@
       (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                             {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
         (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
+      (create-catalogue-item! res-with-extra-license (:dynamic workflows) form
+                              {"en" "Dynamic workflow with extra license" "fi" "Dynaaminen työvuo ylimääräisellä lisenssillä"})
       (let [thlform (create-thl-demo-form! +fake-users+)
             thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
         (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))

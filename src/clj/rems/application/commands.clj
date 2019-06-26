@@ -353,7 +353,10 @@
                                               (mapv (:get-catalogue-item injections))
                                               (mapv (fn [catalogue-item]
                                                       {:catalogue-item/id (:id catalogue-item)
-                                                       :resource/ext-id (:resid catalogue-item)})))}
+                                                       :resource/ext-id (:resid catalogue-item)})))
+                  :application/licenses
+                  (mapv (fn [license] {:license/id (:id license)})
+                        ((:get-licenses injections) (:catalogue-item-ids cmd)))}
                  (when (:comment cmd)
                    {:application/comment (:comment cmd)})))))
 
