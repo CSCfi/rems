@@ -39,7 +39,6 @@
 (rf/reg-event-fx
  ::update-form
  (fn [_ [_ item description]]
-   (print "description " description)
    (status-modal/common-pending-handler! description)
    (put! "/api/forms/update"
          {:params (select-keys item [:id :enabled :archived])
