@@ -154,21 +154,22 @@
                 :subject "Application closed (2001/3)",
                 :body "Dear somebody,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}]]
              (events-to-emails events))))
-    (let [events (conj base-events
-                       {:application/id 7
-                        :event/type :application.event/rejected
-                        :event/actor "handler"})]
-      (is (= [[]
-              [{:to-user "assistant",
-                :subject "Application submitted (applicant: 2001/3)",
-                :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
-               {:to-user "handler",
-                :subject "Application submitted (applicant: 2001/3)",
-                :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
-              [{:subject "Application rejected (2001/3)",
-                :body "Dear applicant,\n\nYour application 2001/3 has been rejected.\n\nView application: http://example.com/#/application/7",
-                :to-user "applicant"}]]
-             (events-to-emails events))))
+    (testing "application rejected"
+      (let [events (conj base-events
+                         {:application/id 7
+                          :event/type :application.event/rejected
+                          :event/actor "handler"})]
+        (is (= [[]
+                [{:to-user "assistant",
+                  :subject "Application submitted (applicant: 2001/3)",
+                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                 {:to-user "handler",
+                  :subject "Application submitted (applicant: 2001/3)",
+                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+                [{:subject "Application rejected (2001/3)",
+                  :body "Dear applicant,\n\nYour application 2001/3 has been rejected.\n\nView application: http://example.com/#/application/7",
+                  :to-user "applicant"}]]
+               (events-to-emails events)))))
     (testing "id field can be overrided"
       (with-redefs [rems.config/env (assoc rems.config/env :application-id-column :id)]
         (is (= [[]
@@ -178,4 +179,30 @@
                  {:to-user "handler"
                   :subject "Application submitted (applicant: 7)"
                   :body "Dear handler,\n\napplicant has submitted an application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]]
-               (events-to-emails base-events)))))))
+               (events-to-emails base-events)))))
+    (testing "returning application to applicant and re-submitting"
+      (let [events (conj base-events
+                         {:application/id 7
+                          :event/type :application.event/returned
+                          :event/actor "handler"
+                          :application/comment ["requesting changes"]}
+                         {:application/id 7
+                          :event/type :application.event/submitted
+                          :event/actor "applicant"})]
+        (is (= [[]
+                [{:to-user "assistant",
+                  :subject "Application submitted (applicant: 2001/3)",
+                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                 {:to-user "handler",
+                  :subject "Application submitted (applicant: 2001/3)",
+                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+                [{:to-user "applicant",
+                  :subject "Application returned (2001/3)",
+                  :body "Dear applicant,\n\nYour application 2001/3 has been returned.\n\nView application: http://example.com/#/application/7"}]
+                [{:to-user "assistant",
+                  :subject "Application submitted (applicant: 2001/3)",
+                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                 {:to-user "handler",
+                  :subject "Application submitted (applicant: 2001/3)",
+                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]]
+               (events-to-emails events)))))))

@@ -206,6 +206,8 @@
                                  :message "Dear %1,\n\nYour application %2 has been rejected.\n\nView application: %3"}
           :application-closed {:subject "Application closed (%2)"
                                :message "Dear %1,\n\nYour application %2 has been closed.\n\nView application: %3"}
+          :application-returned {:subject "Application returned (%2)"
+                                 :message "Dear %1,\n\nYour application %2 has been returned.\n\nView application: %3"}
           :application-submitted {:subject "Application submitted (%2: %3)"
                                   :message "Dear %1,\n\n%2 has submitted an application (%3): %4.\n\nView application: %5"}
           :comment-requested {:subject "Comment requested (%2: %3)"

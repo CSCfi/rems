@@ -68,44 +68,38 @@
 ;; There's a slight inconsistency here: we look at current members, so
 ;; a member might get an email for an event that happens before he was
 ;; added.
-(defmethod event-to-emails-impl :application.event/approved [event application]
+(defn- emails-to-applicant-and-members [event application subject-text body-text]
   (vec
    (for [member (applicant-and-members application)]
      {:to-user (:userid member)
-      :subject (text-format :t.email.application-approved/subject
+      :subject (text-format subject-text
                             (:userid member)
                             (application-id-for-email application)
                             (link-to-application (:application/id event)))
-      :body (text-format :t.email.application-approved/message
+      :body (text-format body-text
                          (:userid member)
                          (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
+
+(defmethod event-to-emails-impl :application.event/approved [event application]
+  (emails-to-applicant-and-members event application
+                                   :t.email.application-approved/subject
+                                   :t.email.application-approved/message))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
-  (vec
-   (for [member (applicant-and-members application)]
-     {:to-user (:userid member)
-      :subject (text-format :t.email.application-rejected/subject
-                            (:userid member)
-                            (application-id-for-email application)
-                            (link-to-application (:application/id event)))
-      :body (text-format :t.email.application-rejected/message
-                         (:userid member)
-                         (application-id-for-email application)
-                         (link-to-application (:application/id event)))})))
+  (emails-to-applicant-and-members event application
+                                   :t.email.application-rejected/subject
+                                   :t.email.application-rejected/message))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
-  (vec
-   (for [member (applicant-and-members application)]
-     {:to-user (:userid member)
-      :subject (text-format :t.email.application-closed/subject
-                            (:userid member)
-                            (application-id-for-email application)
-                            (link-to-application (:application/id event)))
-      :body (text-format :t.email.application-closed/message
-                         (:userid member)
-                         (application-id-for-email application)
-                         (link-to-application (:application/id event)))})))
+  (emails-to-applicant-and-members event application
+                                   :t.email.application-closed/subject
+                                   :t.email.application-closed/message))
+
+(defmethod event-to-emails-impl :application.event/returned [event application]
+  (emails-to-applicant-and-members event application
+                                   :t.email.application-returned/subject
+                                   :t.email.application-returned/message))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
   (vec
