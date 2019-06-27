@@ -56,12 +56,12 @@
    (for [wf (form/get-form-templates filters)]
      (format-form wf))))
 
-(s/defschema CreateFormCommand
+(s/defschema FormCommand
   {:organization s/Str
    :title s/Str
    :fields [FormField]})
 
-(s/defschema CreateFormResponse
+(s/defschema FormResponse
   {:success s/Bool
    :id s/Num})
 
@@ -80,6 +80,13 @@
                                      (when-not disabled {:enabled true})
                                      (when-not archived {:archived false})))))
 
+    (POST "/create" []
+      :summary "Create form"
+      :roles #{:owner}
+      :body [command FormCommand]
+      :return FormResponse
+      (ok (form/create-form! (getx-user-id) command)))
+
     (GET "/:form-id" []
       :summary "Get form by id"
       :roles #{:owner}
@@ -87,13 +94,29 @@
       :return FullForm
       (ok (form/get-form-template form-id)))
 
-    (POST "/create" []
-      :summary "Create form"
+    (GET "/:form-id/editable" []
+      :summary "Check if the form is editable"
       :roles #{:owner}
-      :body [command CreateFormCommand]
-      :return CreateFormResponse
-      (ok (form/create-form! (getx-user-id) command)))
+      :path-params [form-id :- (describe s/Num "form-id")]
+      :return SuccessResponse
+      (ok (form/form-editable form-id)))
 
+    ;; TODO: PATCH would be more appropriate, but we use PUT elsewhere in the API
+    (PUT "/:form-id/edit" []
+      :summary "Edit form"
+      :roles #{:owner}
+      :path-params [form-id :- (describe s/Num "form-id")]
+      :body [command FormCommand]
+      :return SuccessResponse
+      (ok (form/edit-form! (getx-user-id) form-id command)))
+
+    ;; TODO: Change endpoint for updating form to be consistent with
+    ;;   the endpoint for editing form (/:form-id/edit). Also change
+    ;;   terminology to be less easily confused with form editing, e.g.,
+    ;;   from /update to /:form-id/update-state.
+    ;;
+    ;;   For consistency, do similar change for catalogue items, licenses,
+    ;;   and resources.
     (PUT "/update" []
       :summary "Update form"
       :roles #{:owner}

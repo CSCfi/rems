@@ -3,12 +3,14 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.create-form :refer [form-preview]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -32,11 +34,28 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
+(rf/reg-event-fx
+ ::edit-form
+ (fn [_ [_ id]]
+   (status-modal/set-pending! {:title (text :t.administration/edit)})
+   (fetch (str "/api/forms/" id "/editable")
+          {:handler #(if (:success %)
+                       (dispatch! (str "/#/administration/edit-form/" id))
+                       (status-flags/update-error-handler! %))
+           :error-handler status-modal/common-error-handler!})
+   {}))
+
 (defn- back-button []
   [:button.btn.btn-secondary
    {:type :button
     :on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/back)])
+
+(defn- edit-button [id]
+  [:button.btn.btn-primary
+   {:type :button
+    :on-click #(rf/dispatch [::edit-form id])}
+   (text :t.administration/edit)])
 
 (defn- copy-as-new-button [id]
   [:button.btn.btn-primary
@@ -55,7 +74,10 @@
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
-   [:div.col.commands [back-button] [copy-as-new-button (:id form)]]
+   [:div.col.commands
+    [back-button]
+    [edit-button (:id form)]
+    [copy-as-new-button (:id form)]]
    [form-preview form]])
 ;; TODO Do we support form licenses?
 

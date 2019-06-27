@@ -65,6 +65,7 @@
                    :disable "Disable"
                    :display-old "Display old"
                    :edit "Edit"
+                   :edit-form "Edit form"
                    :edit-workflow "Edit workflow"
                    :enable "Enable"
                    :end "End"

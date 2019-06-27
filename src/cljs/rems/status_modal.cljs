@@ -1,10 +1,10 @@
 (ns rems.status-modal
   "Component for showing a status modal dialog.
 
-  There should only be one `status-modal` at the root of the component hieararchy.
+  There should only be one `status-modal` at the root of the component hierarchy.
 
   Use the functions `set-pending!`, `set-success!` and `set-error!` to control its state.
-  See `rems.status-modal/status-model` for values to use in the calls."
+  See `rems.status-modal/status-modal` for values to use in the calls."
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.common-util :refer [deep-merge]]
@@ -42,6 +42,7 @@
 
    `initial-state` can contain:
 
+  `:open?`         - A boolean indicating if the modal is shown or not.
   `:result`        - Either {:success? true} one of {:error ...} or {:errors ...}
                      Shows the status based on the values or a spinner while neither.
     `:error`       - error that may contain `:key`, `:type`, `:status` and `:status-text`
@@ -80,7 +81,7 @@
 
   The modal will be shown."
   [state]
-  (rf/dispatch [::set-state (merge {:open? true} state)]))
+  (rf/dispatch [::set-state state]))
 
 (defn set-success!
   "Globally set the modal state to reflect a successful operation.
@@ -106,9 +107,11 @@
                                           state)]))
 
 (defn common-pending-handler!
-  "Common variant of `set-pending!` where you only wish to customize the `title`."
+  "Common variant of `set-pending!` where you wish to open the modal and
+  customize the `title`."
   [title]
-  (set-pending! {:title title}))
+  (set-pending! {:open? true
+                 :title title}))
 
 (defn common-success-handler!
   "Common variant of `set-success!` where you only wish to customize the `on-close`

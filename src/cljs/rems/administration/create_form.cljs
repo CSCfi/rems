@@ -5,18 +5,22 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.administration.items :as items]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch post! normalize-option-key parse-int remove-empty-keys]]))
+            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys]]))
 
 (rf/reg-event-fx
  ::enter-page
- (fn [{:keys [db]} [_ form-id]]
-   {:db (assoc db ::form {:fields []})
+ (fn [{:keys [db]} [_ form-id edit-form?]]
+   {:db (assoc db
+               ::form {:fields []}
+               ::form-id form-id
+               ::edit-form? edit-form?)
     :dispatch-n [[::fetch-form form-id]]}))
 
 (rf/reg-event-fx
@@ -40,6 +44,7 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
 (rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
+(rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
@@ -149,16 +154,27 @@
              {:fields (apply merge (mapv #(validate-field %1 %2 languages) (form :fields) (range)))})
       remove-empty-keys))
 
+(defn- page-title [edit-form?]
+  (if edit-form?
+    (text :t.administration/edit-form)
+    (text :t.administration/create-form)))
+
 (rf/reg-event-fx
- ::create-form
- (fn [{:keys [db]} [_ request]]
-   (let [form-errors (validate-form (db ::form) (db :languages))]
+ ::send-form
+ (fn [{:keys [db]} [_]]
+   (let [edit? (db ::edit-form?)
+         form-errors (validate-form (db ::form) (db :languages))
+         send-verb (if edit? put! post!)]
      (when (empty? form-errors)
-       (status-modal/common-pending-handler! (text :t.administration/create-form))
-       (post! "/api/forms/create" {:params request
-                                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
-                                   :error-handler status-modal/common-error-handler!}))
-     {:db (assoc db ::form-errors form-errors)})))
+       (status-modal/common-pending-handler! (page-title edit?))
+       (send-verb (str "/api/forms/"
+                       (if edit?
+                         (str (db ::form-id) "/edit")
+                         "create"))
+                  {:params (build-request (db ::form) (db :languages))
+                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
+                   :error-handler status-modal/common-error-handler!})
+      {:db (assoc db ::form-errors form-errors)}))))
 
 ;;;; UI
 
@@ -260,13 +276,10 @@
   [items/move-down-button #(rf/dispatch [::move-form-field-down field-index])])
 
 (defn- save-form-button [on-click]
-  (let [form @(rf/subscribe [::form])
-        languages @(rf/subscribe [:languages])
-        request (build-request form languages)]
-    [:button.btn.btn-primary
-     {:type :button
-      :on-click #(on-click request)}
-     (text :t.administration/save)]))
+  [:button.btn.btn-primary
+   {:type :button
+    :on-click on-click}
+   (text :t.administration/save)])
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
@@ -324,10 +337,11 @@
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
+        edit-form? @(rf/subscribe [::edit-form?])
         loading-form? @(rf/subscribe [::loading-form?])]
     [:div
      [administration-navigator-container]
-     [document-title (text :t.administration/create-form)]
+     [document-title (page-title edit-form?)]
      (if loading-form?
        [:div [spinner/big]]
        [:div.container-fluid.editor-content
@@ -335,7 +349,7 @@
          [:div.col-lg
           [collapsible/component
            {:id "create-form"
-            :title (text :t.administration/create-form)
+            :title (page-title edit-form?)
             :always [:div
                      [form-organization-field]
                      [form-title-field]
@@ -346,6 +360,6 @@
 
                      [:div.col.commands
                       [cancel-button]
-                      [save-form-button #(rf/dispatch [::create-form %])]]]}]]
+                      [save-form-button #(rf/dispatch [::send-form])]]]}]]
          [:div.col-lg
           [form-preview form]]]])]))

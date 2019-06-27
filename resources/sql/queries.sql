@@ -237,6 +237,16 @@ VALUES
  :fields::jsonb
 );
 
+-- :name edit-form-template! :!
+UPDATE form_template
+SET (organization, title, modifierUserId, fields) =
+(:organization,
+ :title,
+ :user,
+ :fields::jsonb)
+WHERE
+id = :id;
+
 -- :name set-form-template-state! :!
 -- TODO set modifieruserid?
 UPDATE form_template

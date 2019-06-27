@@ -128,6 +128,65 @@
             (is (= (:fields form-spec)
                    (mapv #(dissoc % :id) (:fields form))))))))))
 
+(deftest form-editable-test
+  (let [api-key "42"
+        user-id "owner"
+        form-id (-> (request :post "/api/forms/create")
+                    (authenticate api-key user-id)
+                    (json-body {:organization "abc" :title "form editable test"
+                                :fields []})
+                    handler
+                    read-ok-body
+                    :id)]
+    (testing "New form is editable"
+      (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
+                        (authenticate api-key user-id)
+                        handler
+                        read-ok-body))))
+    (let [data (-> (request :post "/api/catalogue-items/create")
+                   (authenticate api-key user-id)
+                   (json-body {:title "test-item-title"
+                               :form form-id
+                               :resid 1
+                               :wfid 1
+                               :archived false})
+                   handler
+                   read-body)]
+      (testing "Form is non-editable after in use by a catalogue item"
+        (is (not (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
+                               (authenticate api-key user-id)
+                               handler
+                               read-ok-body))))))))
+
+(deftest form-edit-test
+  (let [api-key "42"
+        user-id "owner"
+        form-id (-> (request :post "/api/forms/create")
+                    (authenticate api-key user-id)
+                    (json-body {:organization "abc" :title "form edit test"
+                                :fields []})
+                    handler
+                    read-ok-body
+                    :id)]
+    (testing "form content before editing"
+      (let [form (-> (request :get (str "/api/forms/" form-id))
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)]
+        (is (= (form :organization) "abc")))
+     (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
+                        (authenticate api-key user-id)
+                        (json-body {:organization "def" :title "form edit test"
+                                    :fields []})
+                        handler
+                        read-ok-body)]
+       (testing "form content after editing"
+         (let [form (-> (request :get (str "/api/forms/" form-id))
+                        (authenticate api-key user-id)
+                        handler
+                        read-ok-body)]
+           (is (= (form :organization) "def"))))))))
+
 (deftest form-update-test
   (let [api-key "42"
         user-id "owner"
