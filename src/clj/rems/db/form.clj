@@ -49,14 +49,17 @@
   (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
        (map #(select-keys % [:id :title :localizations]))))
 
-(defn form-editable [form-id]
+(defn- form-in-use-error [form-id]
   (let [catalogue-items (catalogue-items-for-form form-id)]
-    (if (seq catalogue-items)
+    (when (seq catalogue-items)
       {:success false
-       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
-      {:success true})))
+       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]})))
 
-(defn- generate-fields-with-ids [user-id form-id fields]
+(defn form-editable [form-id]
+    (or (form-in-use-error form-id)
+        {:success true}))
+
+(defn- generate-fields-with-ids! [user-id form-id fields]
   ;; Mirror field ids to form template so that form templates
   ;; can be cross-referenced with form answers. Once old-style
   ;; forms are gone, will need to allocate ids here (just use
@@ -75,7 +78,7 @@
         form-id (:id (db/create-form! {:organization organization
                                        :title title
                                        :user user-id}))
-        fields-with-ids (generate-fields-with-ids user-id form-id fields)]
+        fields-with-ids (generate-fields-with-ids! user-id form-id fields)]
     (db/save-form-template!
      (assoc form
             :id form-id
@@ -84,17 +87,14 @@
     {:success (not (nil? form-id))
      :id form-id}))
 
-(defn edit-form! [user-id form-id {:keys [organization title fields] :as form}]
-  (let [fields-with-ids (generate-fields-with-ids user-id form-id fields)
-        editable? (:success (form-editable form-id))]
-    (when editable?
-      (db/edit-form-template!
-       (assoc form
-              :id form-id
-              :user user-id
-              :fields (json/generate-string fields-with-ids))))
-    {:success editable?
-     :id form-id}))
+(defn edit-form! [user-id form-id {:keys [fields] :as form}]
+  (or (form-in-use-error form-id)
+      (do (db/edit-form-template!
+           (assoc form
+                  :id form-id
+                  :user user-id
+                  :fields (json/generate-string (generate-fields-with-ids! user-id form-id fields))))
+          {:success true})))
 
 (defn update-form! [command]
   (let [catalogue-items (catalogue-items-for-form (:id command))]

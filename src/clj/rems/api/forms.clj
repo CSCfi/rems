@@ -101,12 +101,13 @@
       :return SuccessResponse
       (ok (form/form-editable form-id)))
 
-    (POST "/:form-id/edit" []
+    ;; TODO: PATCH would be more appropriate, but we use PUT elsewhere in the API
+    (PUT "/:form-id/edit" []
       :summary "Edit form"
       :roles #{:owner}
       :path-params [form-id :- (describe s/Num "form-id")]
       :body [command FormCommand]
-      :return FormResponse
+      :return SuccessResponse
       (ok (form/edit-form! (getx-user-id) form-id command)))
 
     ;; TODO: Change endpoint for updating form to be consistent with

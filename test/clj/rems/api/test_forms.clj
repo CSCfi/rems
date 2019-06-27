@@ -174,19 +174,18 @@
                      handler
                      read-ok-body)]
         (is (= (form :organization) "abc")))
-    (let [response (-> (request :post (str "/api/forms/" form-id "/edit"))
-                       (authenticate api-key user-id)
-                       (json-body {:organization "def" :title "form edit test"
-                                   :fields []})
-                       handler
-                       read-ok-body)]
-      (testing "form content after editing"
-        (let [form (-> (request :get (str "/api/forms/" form-id))
-                       (authenticate api-key user-id)
-                       handler
-                       read-ok-body)]
-          (is (= (response :id) form-id))
-          (is (= (form :organization) "def"))))))))
+     (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
+                        (authenticate api-key user-id)
+                        (json-body {:organization "def" :title "form edit test"
+                                    :fields []})
+                        handler
+                        read-ok-body)]
+       (testing "form content after editing"
+         (let [form (-> (request :get (str "/api/forms/" form-id))
+                        (authenticate api-key user-id)
+                        handler
+                        read-ok-body)]
+           (is (= (form :organization) "def"))))))))
 
 (deftest form-update-test
   (let [api-key "42"

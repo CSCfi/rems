@@ -12,7 +12,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch post! normalize-option-key parse-int remove-empty-keys]]))
+            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -159,35 +159,22 @@
     (text :t.administration/edit-form)
     (text :t.administration/create-form)))
 
-(defn- post-to-form-api [command form languages params title]
-  (let [form-errors (validate-form form languages)]
-    (when (empty? form-errors)
-      (status-modal/common-pending-handler! title)
-      (post! (str "/api/forms/" command)
-             {:params params
-              :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
-              :error-handler status-modal/common-error-handler!}))
-    form-errors))
-
 (rf/reg-event-fx
- ::create-form
- (fn [{:keys [db]} [_ request]]
-   (let [form-errors (post-to-form-api "create"
-                                        (db ::form)
-                                        (db ::languages)
-                                        request
-                                        (page-title false))]
-     {:db (assoc db ::form-errors form-errors)})))
-
-(rf/reg-event-fx
- ::edit-form
- (fn [{:keys [db]} [_ request]]
-   (let [form-errors (post-to-form-api (str (db ::form-id) "/edit")
-                                       (db ::form)
-                                       (db ::languages)
-                                       request
-                                       (page-title true))]
-     {:db (assoc db ::form-errors form-errors)})))
+ ::send-form
+ (fn [{:keys [db]} [_]]
+   (let [edit? (db ::edit-form?)
+         form-errors (validate-form (db ::form) (db ::languages))
+         send-verb (if edit? put! post!)]
+     (when (empty? form-errors)
+       (status-modal/common-pending-handler! (page-title edit?))
+       (send-verb (str "/api/forms/"
+                       (if edit?
+                         (str (db ::form-id) "/edit")
+                         "create"))
+                  {:params (build-request (db ::form) (db ::languages))
+                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
+                   :error-handler status-modal/common-error-handler!})
+      {:db (assoc db ::form-errors form-errors)}))))
 
 ;;;; UI
 
@@ -289,13 +276,10 @@
   [items/move-down-button #(rf/dispatch [::move-form-field-down field-index])])
 
 (defn- save-form-button [on-click]
-  (let [form @(rf/subscribe [::form])
-        languages @(rf/subscribe [:languages])
-        request (build-request form languages)]
-    [:button.btn.btn-primary
-     {:type :button
-      :on-click #(on-click request)}
-     (text :t.administration/save)]))
+  [:button.btn.btn-primary
+   {:type :button
+    :on-click on-click}
+   (text :t.administration/save)])
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
@@ -376,9 +360,6 @@
 
                      [:div.col.commands
                       [cancel-button]
-                      [save-form-button #(rf/dispatch [(if edit-form?
-                                                         ::edit-form
-                                                         ::create-form)
-                                                       %])]]]}]]
+                      [save-form-button #(rf/dispatch ::send-form)]]]}]]
          [:div.col-lg
           [form-preview form]]]])]))
