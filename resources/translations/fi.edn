@@ -205,6 +205,8 @@
                                  :message "Hyvä %1,\n\nHakemuksesi %2 on hylätty.\n\nTarkastele hakemusta: %3"}
           :application-closed {:subject "Hakemus suljettu (%2)"
                                :message "Hyvä %1,\n\nHakemuksesi %2 on suljettu.\n\nTarkastele hakemusta: %3"}
+          :application-returned {:subject "Hakemus palautettu (%2)"
+                               :message "Hyvä %1,\n\nHakemuksesi %2 on palautettu.\n\nTarkastele hakemusta: %3"}
           :application-submitted {:subject "Hakemus lähetetty (%2: %3)"
                                   :message "Hyvä %1,\n\n%2 on lähettänyt käyttöoikeushakemuksen (%3): %4.\n\nTarkastele hakemusta: %5"}
           :comment-requested {:subject "Kommenttipyyntö (%2: %3)"
