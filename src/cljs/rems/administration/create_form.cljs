@@ -163,7 +163,7 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (db ::edit-form?)
-         form-errors (validate-form (db ::form) (db ::languages))
+         form-errors (validate-form (db ::form) (db :languages))
          send-verb (if edit? put! post!)]
      (when (empty? form-errors)
        (status-modal/common-pending-handler! (page-title edit?))
@@ -171,8 +171,8 @@
                        (if edit?
                          (str (db ::form-id) "/edit")
                          "create"))
-                  {:params (build-request (db ::form) (db ::languages))
-                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
+                  {:params (build-request (db ::form) (db :languages))
+                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
                    :error-handler status-modal/common-error-handler!})
       {:db (assoc db ::form-errors form-errors)}))))
 
@@ -360,6 +360,6 @@
 
                      [:div.col.commands
                       [cancel-button]
-                      [save-form-button #(rf/dispatch ::send-form)]]]}]]
+                      [save-form-button #(rf/dispatch [::send-form])]]]}]]
          [:div.col-lg
           [form-preview form]]]])]))
