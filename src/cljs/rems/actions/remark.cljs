@@ -53,7 +53,6 @@
                   :id "public"
                   :name "public"
                   :value public
-                  ;:checked (contains? selected-keys key)
                   :on-change #(on-set-public (.. % -target -checked))}]
          [:label.form-check-label {:for "public"}
           (text :t.actions/remark-public)]]])

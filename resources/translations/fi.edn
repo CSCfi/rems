@@ -231,7 +231,7 @@
          :actions "Toiminnot"
          :add-comments-not-shown-to-applicant "Kommentoi (ei näy hakijalle)"
          :add-comments-shown-to-applicant "Kommentoi (näkyy hakijalle)"
-         :add-remark "Lisää merkintä (näytetään tai piilotetaan hakijalta)"
+         :add-remark "Lisää huomio (näytetään tai piilotetaan hakijalta)"
          :alert-disabled-resources "Resurssit eivät ole enää saatavilla."
          :application "Tiedot"
          :attachment-remove "Poista"

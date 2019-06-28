@@ -568,7 +568,7 @@
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div (into [:div.commands]
+        :always (into [:div (into [:div#action-commands]
                                   actions)]
                       forms)}])))
 

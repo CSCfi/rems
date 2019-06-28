@@ -547,6 +547,11 @@
     {:margin-left (u/em 0.5)}]
    [".btn-opens-more::after" {:content "'...'"}]
 
+   [:#action-commands {:display "flex"
+                       :flex-flow "row wrap"}]
+   [(s/> :#action-commands :button)
+    {:margin-bottom (u/em 0.5)}]
+
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
 
