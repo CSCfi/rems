@@ -152,16 +152,6 @@
       {:success false
        :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
 
-(defn change-resources [user-id request]
-  (let [errors (command! (assoc request
-                                :type :application.command/change-resources
-                                :actor user-id
-                                :time (time/now)))]
-    (if errors
-      {:success false
-       :errors (:errors errors)}
-      {:success true})))
-
 ;;; Fetching applications (for API) (incl. caching)
 
 (def ^:private injections
