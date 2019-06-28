@@ -38,6 +38,8 @@
             :ok "OK"
             :todo-applications "Avoimet hakemukset"
             :reject "Hylkää"
+            :remark "Kirjaa huomio"
+            :remark-public "Näytä huomio hakijalle"
             :remove-member "Poista jäsen"
             :request-comment "Pyydä kommenttia"
             :request-decision "Pyydä päätöstä"
@@ -110,6 +112,7 @@
                           :closed "Poistettu"
                           :comment-requested "Kommenttia pyydetty"
                           :commented "Kommentoitu"
+                          :remarked "Huomio kirjattu"
                           :created "Luotu"
                           :decided "Päätetty"
                           :decision-requested "Päätöstä pyydetty"
@@ -207,7 +210,7 @@
           :application-closed {:subject "Hakemus suljettu (%2)"
                                :message "Hyvä %1,\n\nHakemuksesi %2 on suljettu.\n\nTarkastele hakemusta: %3"}
           :application-returned {:subject "Hakemus palautettu (%2)"
-                               :message "Hyvä %1,\n\nHakemuksesi %2 on palautettu.\n\nTarkastele hakemusta: %3"}
+                                 :message "Hyvä %1,\n\nHakemuksesi %2 on palautettu.\n\nTarkastele hakemusta: %3"}
           :application-submitted {:subject "Hakemus lähetetty (%2: %3)"
                                   :message "Hyvä %1,\n\n%2 on lähettänyt käyttöoikeushakemuksen (%3): %4.\n\nTarkastele hakemusta: %5"}
           :comment-requested {:subject "Kommenttipyyntö (%2: %3)"
@@ -228,6 +231,7 @@
          :actions "Toiminnot"
          :add-comments-not-shown-to-applicant "Kommentoi (ei näy hakijalle)"
          :add-comments-shown-to-applicant "Kommentoi (näkyy hakijalle)"
+         :add-remark "Lisää merkintä (näytetään tai piilotetaan hakijalta)"
          :alert-disabled-resources "Resurssit eivät ole enää saatavilla."
          :application "Tiedot"
          :attachment-remove "Poista"

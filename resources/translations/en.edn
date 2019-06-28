@@ -38,6 +38,8 @@
             :ok "OK"
             :todo-applications "Open applications"
             :reject "Reject"
+            :remark "Remark"
+            :remark-public "Show to applicant"
             :remove-member "Remove member"
             :request-comment "Request comment"
             :request-decision "Request decision"
@@ -110,6 +112,7 @@
                           :closed "Deleted"
                           :comment-requested "Comment requested"
                           :commented "Commented"
+                          :remarked "Remarked"
                           :created "Created"
                           :decided "Decided"
                           :decision-requested "Decision requested"
@@ -228,6 +231,7 @@
          :actions "Actions"
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
+         :add-remark "Add remark (shown or hidden to applicant)"
          :alert-disabled-resources "Resources no longer available."
          :application "Application"
          :attachment-remove "Remove"
@@ -270,8 +274,8 @@
          :username "Username"}
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
-:login {:alternative "Other login options"
-:intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information is available on " [:a {:href "#/extra-pages/about"} "About"] " page."]
+  :login {:alternative "Other login options"
+          :intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information is available on " [:a {:href "#/extra-pages/about"} "About"] " page."]
                   [:p "Please, login to access REMS."]]
           :text "Login with Haka credentials"
           :title "Login"}
@@ -302,3 +306,4 @@
                       :you-are-unauthorized "You're unauthorized to access this page."}
   :forbidden-page {:forbidden "Forbidden"
                    :you-are-forbidden "Access to the page is forbidden."}}}
+
