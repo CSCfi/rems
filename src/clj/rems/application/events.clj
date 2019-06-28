@@ -111,7 +111,8 @@
          :event/type (s/enum :application.event/resources-changed)
          (s/optional-key :application/comment) s/Str
          :application/resources [{:catalogue-item/id s/Int
-                                  :resource/ext-id s/Str}]))
+                                  :resource/ext-id s/Str}]
+         :application/licenses [{:license/id s/Int}]))
 (s/defschema ReturnedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/returned)

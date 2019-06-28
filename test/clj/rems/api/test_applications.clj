@@ -73,6 +73,12 @@
 (defn- get-ids [applications]
   (set (map :application/id applications)))
 
+(defn- license-ids-for-application [application]
+  (set (map :license/id (:application/licenses application))))
+
+(defn- catalogue-item-ids-for-application [application]
+  (set (map :catalogue-item/id (:application/resources application))))
+
 (defn- get-my-applications [user-id]
   (-> (request :get "/api/my-applications")
       (authenticate "42" user-id)
@@ -274,23 +280,50 @@
 
       (testing "adding and then accepting additional licenses"
         (testing "add licenses"
-          (is (= {:success true} (send-command handler-id
-                                               {:type :application.command/add-licenses
-                                                :application-id application-id
-                                                :licenses [license-id]
-                                                :comment "Please approve these new terms"}))))
-        (testing "applicant can now accept licenses"
+          (let [application (get-application application-id user-id)]
+            (is (= #{1 2} (license-ids-for-application application)))
+           (is (= {:success true} (send-command handler-id
+                                                {:type :application.command/add-licenses
+                                                 :application-id application-id
+                                                 :licenses [license-id]
+                                                 :comment "Please approve these new terms"})))
+           (let [application (get-application application-id user-id)]
+             (is (= #{1 2 5} (license-ids-for-application application))))))
+        (testing "applicant accepts the additional licenses"
           (is (= {:success true} (send-command user-id
                                                {:type :application.command/accept-licenses
                                                 :application-id application-id
                                                 :accepted-licenses [license-id]})))))
 
       (testing "changing resources as handler"
+        (let [application (get-application application-id user-id)]
+          (is (= #{9} (catalogue-item-ids-for-application application)))
+          ;; License #5 was added previously by the handler.
+          (is (= #{1 2 5} (license-ids-for-application application)))
+         (is (= {:success true} (send-command handler-id
+                                              {:type :application.command/change-resources
+                                               :application-id application-id
+                                               :catalogue-item-ids [9 10]
+                                               :comment "Here are the correct resources"})))
+         (let [application (get-application application-id user-id)]
+           (is (= #{9 10} (catalogue-item-ids-for-application application)))
+           ;; License #4 is added by the catalogue-item #10, whereas
+           ;; the previously added license #5 is dropped from the list.
+           ;;
+           ;; TODO: The previously added licenses should probably be retained
+           ;; in the licenses after changing resources.
+           (is (= #{1 2 4} (license-ids-for-application application))))))
+
+      (testing "changing resources back as handler"
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/change-resources
                                               :application-id application-id
-                                              :catalogue-item-ids [9 10]
-                                              :comment "Here are the correct resources"}))))
+                                              :catalogue-item-ids [9]})))
+        (let [application (get-application application-id user-id)]
+          (is (= #{9} (catalogue-item-ids-for-application application)))
+          ;; After changing resources back, the license #4 added by the
+          ;; now-missing resource is gone, as well.
+          (is (= #{1 2} (license-ids-for-application application)))))
 
       (testing "request-decision"
         (is (= {:success true} (send-command handler-id
@@ -338,6 +371,7 @@
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
                     "application.event/resources-changed"
+                    "application.event/resources-changed"
                     "application.event/decision-requested"
                     "application.event/decided"
                     "application.event/remarked"
@@ -354,6 +388,7 @@
                     "application.event/submitted"
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
+                    "application.event/resources-changed"
                     "application.event/resources-changed"
                     "application.event/remarked"
                     "application.event/approved"]
