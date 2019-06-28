@@ -222,7 +222,7 @@
           :member-added {:subject "Lisätty hakemuksen jäseneksi (%2)"
                          :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %2 jäseneksi.\n\nTarkastele hakemusta: %3"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen"
-                           :message "Hei,\n\nTämä sähköpostiosoite (%1) on kutsuttu osallistumaan kielivarojen käyttöoikeushakemukseen.\n\nOsallistumislinkki: %2"}}
+                           :message "Hei,\n\nTämä sähköpostiosoite (%1) on kutsuttu osallistumaan resurssien käyttöoikeushakemukseen.\n\nOsallistumislinkki: %2"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
   :form {:accepted-licenses "Käyttöehdot hyväksytty"
          :actions "Toiminnot"
