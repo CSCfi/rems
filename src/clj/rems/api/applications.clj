@@ -75,12 +75,26 @@
       (str/blank? (:commonName u))
       (str/blank? (:mail u))))
 
+;; XXX: Adding these attributes is not done consistently when retrieving
+;;   the data for a user.
 (defn format-user [u]
   {:userid (:eppn u)
    :name (:commonName u)
    :email (:mail u)})
 
 ;; TODO Filter applicant, requesting user
+;;
+;; XXX: Removing invalid users is not done consistently. It seems that
+;;   only the following API calls are affected:
+;;
+;;     /applications/commenters
+;;     /applications/members
+;;     /applications/deciders
+;;     /workflows/actors
+;;
+;;   For example, a user without commonName is able to log in and send an
+;;   application, and the application is visible to the handler and can
+;;   be approved.
 (defn get-users []
   (->> (users/get-all-users)
        (remove invalid-user?)
