@@ -107,6 +107,11 @@
 
 ;;; Running commands
 
+(defn- get-licenses-for-catalogue-items [catalogue-item-ids]
+  (db/get-licenses
+   {:wfid (get-workflow-id-for-catalogue-items catalogue-item-ids)
+    :items catalogue-item-ids}))
+
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
@@ -114,7 +119,8 @@
   {:valid-user? valid-user?
    :validate-fields form-validation/validate-fields
    :secure-token secure-token
-   :get-catalogue-item catalogue/get-localized-catalogue-item})
+   :get-catalogue-item catalogue/get-localized-catalogue-item
+   :get-licenses get-licenses-for-catalogue-items})
 
 (declare get-unrestricted-application)
 
@@ -125,7 +131,7 @@
   ;; lots of transaction conflicts when there is contention. This lock
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
-  (let [app (get-unrestricted-application  (:application-id cmd))
+  (let [app (get-unrestricted-application (:application-id cmd))
         result (commands/handle-command cmd app db-injections)]
     (if (:success result)
       (events/add-event! (:result result))

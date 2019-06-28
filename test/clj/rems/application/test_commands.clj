@@ -4,6 +4,7 @@
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
+            [rems.common-util :refer [distinct-by]]
             [rems.form-validation :as form-validation]
             [rems.util :refer [assert-ex getx]])
   (:import [java.util UUID]
@@ -189,17 +190,28 @@
                                                  :event/actor handler-user-id
                                                  :application/comment "This is good"
                                                  :application/id 123}])
+        catalogue-item-to-license {1 1
+                                   2 2
+                                   3 3
+                                   4 1}
         injections {:get-catalogue-item {1 {:id 1 :resid "abc" :formid 1 :wfid 1}
                                          2 {:id 2 :resid "efg" :formid 1 :wfid 1}
                                          3 {:id 3 :resid "hij" :formid 1 :wfid 2}
-                                         4 {:id 4 :resid "klm" :formid 2 :wfid 1}}}]
+                                         4 {:id 4 :resid "klm" :formid 2 :wfid 1}}
+                    :get-licenses
+                    (fn [catalogue-item-ids]
+                      (->> catalogue-item-ids
+                           (mapv (fn [id] {:id (catalogue-item-to-license id)}))
+                           (distinct-by :id)))}]
     (testing "applicant can change draft resources"
       (is (= {:event/type :application.event/resources-changed
               :event/time test-time
               :event/actor applicant-user-id
               :application/id 123
               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
-                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]}
+                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]
+              :application/licenses [{:license/id 1}
+                                     {:license/id 2}]}
              (ok-command application
                          {:type :application.command/change-resources
                           :actor applicant-user-id
@@ -249,7 +261,9 @@
               :application/id 123
               :application/comment "Changed these for you"
               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
-                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]}
+                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]
+              :application/licenses [{:license/id 1}
+                                     {:license/id 2}]}
              (ok-command submitted-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
@@ -265,7 +279,10 @@
               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
                                       {:catalogue-item/id 2 :resource/ext-id "efg"}
                                       {:catalogue-item/id 3 :resource/ext-id "hij"}
-                                      {:catalogue-item/id 4 :resource/ext-id "klm"}]}
+                                      {:catalogue-item/id 4 :resource/ext-id "klm"}]
+              :application/licenses [{:license/id 1}
+                                     {:license/id 2}
+                                     {:license/id 3}]}
              (ok-command submitted-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
@@ -280,7 +297,9 @@
               :application/id 123
               :application/comment "Changed these for you"
               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
-                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]}
+                                      {:catalogue-item/id 2 :resource/ext-id "efg"}]
+              :application/licenses [{:license/id 1}
+                                     {:license/id 2}]}
              (ok-command approved-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
@@ -296,7 +315,10 @@
               :application/resources [{:catalogue-item/id 1 :resource/ext-id "abc"}
                                       {:catalogue-item/id 2 :resource/ext-id "efg"}
                                       {:catalogue-item/id 3 :resource/ext-id "hij"}
-                                      {:catalogue-item/id 4 :resource/ext-id "klm"}]}
+                                      {:catalogue-item/id 4 :resource/ext-id "klm"}]
+              :application/licenses [{:license/id 1}
+                                     {:license/id 2}
+                                     {:license/id 3}]}
              (ok-command approved-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
