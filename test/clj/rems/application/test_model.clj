@@ -783,11 +783,11 @@
                                                               :application/commenters ["commenter1" "commenter2"]}])
           commented (reduce model/calculate-permissions requested [{:event/type :application.event/commented
                                                                     :event/actor "commenter1"}])]
-      (is (= #{:see-everything :application.command/comment}
+      (is (= #{:see-everything :application.command/comment :application.command/remark}
              (permissions/user-permissions requested "commenter1")))
-      (is (= #{:see-everything}
+      (is (= #{:see-everything :application.command/remark}
              (permissions/user-permissions commented "commenter1")))
-      (is (= #{:see-everything :application.command/comment}
+      (is (= #{:see-everything :application.command/comment :application.command/remark}
              (permissions/user-permissions commented "commenter2")))))
 
   (testing "decider may decide only once"
@@ -800,9 +800,9 @@
                                                               :application/deciders ["decider"]}])
           decided (reduce model/calculate-permissions requested [{:event/type :application.event/decided
                                                                   :event/actor "decider"}])]
-      (is (= #{:see-everything :application.command/decide}
+      (is (= #{:see-everything :application.command/decide :application.command/remark}
              (permissions/user-permissions requested "decider")))
-      (is (= #{:see-everything}
+      (is (= #{:see-everything :application.command/remark}
              (permissions/user-permissions decided "decider")))))
 
   (testing "everyone can accept invitation"
@@ -841,9 +841,15 @@
 
     (let [all-events [{:event/type :application.event/created}
                       {:event/type :application.event/submitted}
-                      {:event/type :application.event/comment-requested}]
+                      {:event/type :application.event/comment-requested}
+                      {:event/type :application.event/remarked
+                       :application/public true}
+                      {:event/type :application.event/remarked
+                       :application/public false}]
           restricted-events [{:event/type :application.event/created}
-                             {:event/type :application.event/submitted}]
+                             {:event/type :application.event/submitted}
+                             {:event/type :application.event/remarked
+                              :application/public true}]
           application (-> application
                           (assoc :application/events all-events)
                           (permissions/set-role-permissions {:role-1 [:see-everything]}))]

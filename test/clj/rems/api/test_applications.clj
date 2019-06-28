@@ -199,6 +199,7 @@
         (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
+                 "application.command/remark"
                  "application.command/reject"
                  "application.command/approve"
                  "application.command/return"
@@ -271,7 +272,7 @@
               (is (= (:application/request-id request-event)
                      (:application/request-id comment-event)))))))
 
-      (testing "adding and then accepting additonal licenses"
+      (testing "adding and then accepting additional licenses"
         (testing "add licenses"
           (is (= {:success true} (send-command handler-id
                                                {:type :application.command/add-licenses
@@ -303,6 +304,16 @@
                                               :application-id application-id
                                               :decision :approved
                                               :comment ""}))))
+      (testing "hidden remark"
+        (is (= {:success true} (send-command handler-id {:type :application.command/remark
+                                                         :application-id application-id
+                                                         :comment ""
+                                                         :public false}))))
+      (testing "public remark"
+        (is (= {:success true} (send-command handler-id {:type :application.command/remark
+                                                         :application-id application-id
+                                                         :comment ""
+                                                         :public true}))))
       (testing "approve"
         (is (= {:success true} (send-command handler-id {:type :application.command/approve
                                                          :application-id application-id
@@ -329,6 +340,8 @@
                     "application.event/resources-changed"
                     "application.event/decision-requested"
                     "application.event/decided"
+                    "application.event/remarked"
+                    "application.event/remarked"
                     "application.event/approved"]
                    handler-event-types)))
           (testing "applicant cannot see all events"
@@ -342,6 +355,7 @@
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
                     "application.event/resources-changed"
+                    "application.event/remarked"
                     "application.event/approved"]
                    applicant-event-types))))))))
 

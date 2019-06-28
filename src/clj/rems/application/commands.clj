@@ -71,6 +71,11 @@
   (assoc CommandBase
          :comment s/Str))
 
+(s/defschema RemarkCommand
+  (assoc CommandBase
+         :comment s/Str
+         :public s/Bool))
+
 (s/defschema AddLicensesCommand
   (assoc CommandBase
          :comment s/Str
@@ -117,6 +122,7 @@
    :application.command/close CloseCommand
    :application.command/comment CommentCommand
    :application.command/decide DecideCommand
+   :application.command/remark RemarkCommand
    :application.command/reject RejectCommand
    :application.command/request-comment RequestCommentCommand
    :application.command/request-decision RequestDecisionCommand
@@ -333,6 +339,12 @@
              ;; on any request they have gotten.
              :application/request-id last-request-for-actor
              :application/comment (:comment cmd)}))))
+
+(defmethod command-handler :application.command/remark
+  [cmd _application _injections]
+  (ok {:event/type :application.event/remarked
+       :application/comment (:comment cmd)
+       :application/public (:public cmd)}))
 
 (defmethod command-handler :application.command/add-licenses
   [cmd _application injections]

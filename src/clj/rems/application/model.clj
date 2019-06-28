@@ -29,14 +29,20 @@
                :application.command/change-resources]
    :member [:application.command/accept-licenses]
    :handler [:see-everything
+             :application.command/remark
              :application.command/remove-member
              :application.command/uninvite-member]
-   :commenter [:see-everything]
-   :decider [:see-everything]
+   :commenter [:see-everything
+               :application.command/remark]
+   :decider [:see-everything
+             :application.command/remark]
    ;; roles whose permissions don't change
-   :reporter [:see-everything]
-   :past-commenter [:see-everything]
-   :past-decider [:see-everything]
+   :reporter [:see-everything
+              :application.command/remark]
+   :past-commenter [:see-everything
+                    :application.command/remark]
+   :past-decider [:see-everything
+                  :application.command/remark]
    ;; member before accepting an invitation
    :everyone-else [:application.command/accept-invitation]})
 
@@ -46,6 +52,7 @@
                :application.command/accept-licenses]
    :member [:application.command/accept-licenses]
    :handler [:see-everything
+             :application.command/remark
              :application.command/add-licenses
              :application.command/add-member
              :application.command/change-resources
@@ -58,8 +65,12 @@
              :application.command/approve
              :application.command/reject]
    :commenter [:see-everything
+               :application.command/remark
                :application.command/comment]
+   :past-commenter [:see-everything
+                    :application.command/remark]
    :decider [:see-everything
+             :application.command/remark
              :application.command/decide]})
 
 (def ^:private approved-permissions
@@ -68,6 +79,7 @@
                :application.command/accept-licenses]
    :member [:application.command/accept-licenses]
    :handler [:see-everything
+             :application.command/remark
              :application.command/add-member
              :application.command/change-resources
              :application.command/remove-member
@@ -75,8 +87,12 @@
              :application.command/uninvite-member
              :application.command/close]
    :commenter [:see-everything
+               :application.command/remark
                :application.command/comment]
+   :past-commenter [:see-everything
+                    :application.command/remark]
    :decider [:see-everything
+             :application.command/remark
              :application.command/decide]})
 
 (def ^:private closed-permissions
@@ -284,6 +300,10 @@
   [application event]
   (-> application
       (update ::latest-decision-request-by-user dissoc (:event/actor event))))
+
+(defmethod event-type-specific-application-view :application.event/remarked
+  [application _event]
+  application)
 
 (defmethod event-type-specific-application-view :application.event/approved
   [application event]
@@ -538,7 +558,10 @@
                        :application.event/commented
                        :application.event/decided
                        :application.event/decision-requested}
-                     :event/type))))
+                     :event/type))
+       (remove #(and (= :application.event/remarked
+                        (:event/type %))
+                     (not (:application/public %))))))
 
 (defn- hide-sensitive-information [application]
   (-> application
