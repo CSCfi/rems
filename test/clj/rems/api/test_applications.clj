@@ -205,6 +205,7 @@
         (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
+                 "application.command/remark"
                  "application.command/reject"
                  "application.command/approve"
                  "application.command/return"
@@ -281,13 +282,13 @@
         (testing "add licenses"
           (let [application (get-application application-id user-id)]
             (is (= #{1 2} (license-ids-for-application application)))
-          (is (= {:success true} (send-command handler-id
-                                               {:type :application.command/add-licenses
-                                                :application-id application-id
-                                                :licenses [license-id]
-                                                :comment "Please approve these new terms"})))
-          (let [application (get-application application-id user-id)]
-            (is (= #{1 2 5} (license-ids-for-application application))))))
+           (is (= {:success true} (send-command handler-id
+                                                {:type :application.command/add-licenses
+                                                 :application-id application-id
+                                                 :licenses [license-id]
+                                                 :comment "Please approve these new terms"})))
+           (let [application (get-application application-id user-id)]
+             (is (= #{1 2 5} (license-ids-for-application application))))))
         (testing "applicant accepts the additional licenses"
           (is (= {:success true} (send-command user-id
                                                {:type :application.command/accept-licenses
@@ -299,19 +300,19 @@
           (is (= #{9} (catalogue-item-ids-for-application application)))
           ;; License #5 was added previously by the handler.
           (is (= #{1 2 5} (license-ids-for-application application)))
-        (is (= {:success true} (send-command handler-id
-                                             {:type :application.command/change-resources
-                                              :application-id application-id
-                                              :catalogue-item-ids [9 10]
-                                              :comment "Here are the correct resources"})))
-        (let [application (get-application application-id user-id)]
-          (is (= #{9 10} (catalogue-item-ids-for-application application)))
-          ;; License #4 is added by the catalogue-item #10, whereas
-          ;; the previously added license #5 is dropped from the list.
-          ;;
-          ;; TODO: The previously added licenses should probably be retained
-          ;; in the licenses after changing resources.
-          (is (= #{1 2 4} (license-ids-for-application application))))))
+         (is (= {:success true} (send-command handler-id
+                                              {:type :application.command/change-resources
+                                               :application-id application-id
+                                               :catalogue-item-ids [9 10]
+                                               :comment "Here are the correct resources"})))
+         (let [application (get-application application-id user-id)]
+           (is (= #{9 10} (catalogue-item-ids-for-application application)))
+           ;; License #4 is added by the catalogue-item #10, whereas
+           ;; the previously added license #5 is dropped from the list.
+           ;;
+           ;; TODO: The previously added licenses should probably be retained
+           ;; in the licenses after changing resources.
+           (is (= #{1 2 4} (license-ids-for-application application))))))
 
       (testing "changing resources back as handler"
         (is (= {:success true} (send-command handler-id
@@ -336,6 +337,16 @@
                                               :application-id application-id
                                               :decision :approved
                                               :comment ""}))))
+      (testing "hidden remark"
+        (is (= {:success true} (send-command handler-id {:type :application.command/remark
+                                                         :application-id application-id
+                                                         :comment ""
+                                                         :public false}))))
+      (testing "public remark"
+        (is (= {:success true} (send-command handler-id {:type :application.command/remark
+                                                         :application-id application-id
+                                                         :comment ""
+                                                         :public true}))))
       (testing "approve"
         (is (= {:success true} (send-command handler-id {:type :application.command/approve
                                                          :application-id application-id
@@ -363,6 +374,8 @@
                     "application.event/resources-changed"
                     "application.event/decision-requested"
                     "application.event/decided"
+                    "application.event/remarked"
+                    "application.event/remarked"
                     "application.event/approved"]
                    handler-event-types)))
           (testing "applicant cannot see all events"
@@ -377,6 +390,7 @@
                     "application.event/licenses-accepted"
                     "application.event/resources-changed"
                     "application.event/resources-changed"
+                    "application.event/remarked"
                     "application.event/approved"]
                    applicant-event-types))))))))
 

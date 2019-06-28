@@ -1033,3 +1033,86 @@
                               :actor "commenter2"
                               :comment "..."}
                              injections))))))))
+
+(deftest test-remark
+  (let [application (apply-events nil
+                                  [dummy-created-event
+                                   {:event/type :application.event/submitted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id 123}])
+        injections {:valid-user? #{"commenter"}}]
+    (testing "handler can remark"
+      (let [event (ok-command application
+                              {:type :application.command/remark
+                               :actor handler-user-id
+                               :comment "handler's remark"
+                               :public false}
+                              injections)
+            application (apply-events application [event])]
+        (is (= {:event/type :application.event/remarked
+                :event/time test-time
+                :event/actor handler-user-id
+                :application/id 123
+                :application/comment "handler's remark"
+                :application/public false}
+               event))))
+    (testing "applicants cannot remark"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           {:type :application.command/remark
+                            :actor applicant-user-id
+                            :comment ""
+                            :public false}
+                           injections))))
+    (testing "commenter cannot remark before becoming commenter"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           {:type :application.command/remark
+                            :actor "commenter"
+                            :comment ""
+                            :public false}
+                           injections))))
+    (let [event-1 (ok-command application
+                              {:type :application.command/request-comment
+                               :actor handler-user-id
+                               :commenters ["commenter"]
+                               :comment ""}
+                              injections)
+          application (apply-events application [event-1])
+          event-2 (ok-command application
+                              {:type :application.command/remark
+                               :actor "commenter"
+                               :comment "first remark"
+                               :public false}
+                              injections)
+          application (apply-events application [event-2])]
+      (testing "commenter can remark before"
+        (is (= {:event/type :application.event/remarked
+                :event/time test-time
+                :event/actor "commenter"
+                :application/id 123
+                :application/comment "first remark"
+                :application/public false}
+               event-2))
+        (let [event-1 (ok-command application
+                                  {:type :application.command/comment
+                                   :actor "commenter"
+                                   :comment "..."}
+                                  injections)
+              application (apply-events application [event-1])
+              event-2 (ok-command application
+                                  {:type :application.command/remark
+                                   :actor "commenter"
+                                   :comment "second remark"
+                                   :public false}
+                                  injections)
+              application (apply-events application [event-2])]
+          (testing "and after commenting"
+            (is (= {:event/type :application.event/remarked
+                    :event/time test-time
+                    :event/actor "commenter"
+                    :application/id 123
+                    :application/comment "second remark"
+                    :application/public false}
+                   event-2))))))))

@@ -241,6 +241,7 @@
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/approve commands/ApproveCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
+    (command-endpoint :application.command/remark commands/RemarkCommand)
     (command-endpoint :application.command/comment commands/CommentCommand)
     (command-endpoint :application.command/decide commands/DecideCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)

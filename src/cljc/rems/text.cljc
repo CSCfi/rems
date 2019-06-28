@@ -69,6 +69,7 @@
    :application.event/closed :t.applications.events/closed
    :application.event/comment-requested :t.applications.events/comment-requested
    :application.event/commented :t.applications.events/commented
+   :application.event/remarked :t.applications.events/remarked
    :application.event/created :t.applications.events/created
    :application.event/decided :t.applications.events/decided
    :application.event/decision-requested :t.applications.events/decision-requested

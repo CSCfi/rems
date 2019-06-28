@@ -101,6 +101,11 @@
   (assoc EventBase
          :event/type (s/enum :application.event/rejected)
          :application/comment s/Str))
+(s/defschema RemarkedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/remarked)
+         :application/comment s/Str
+         :application/public s/Bool))
 (s/defschema ResourcesChangedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/resources-changed)
@@ -133,6 +138,7 @@
    :application.event/member-removed MemberRemovedEvent
    :application.event/member-uninvited MemberUninvitedEvent
    :application.event/rejected RejectedEvent
+   :application.event/remarked RemarkedEvent
    :application.event/resources-changed ResourcesChangedEvent
    :application.event/returned ReturnedEvent
    :application.event/submitted SubmittedEvent})
