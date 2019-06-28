@@ -320,6 +320,8 @@
                                               :catalogue-item-ids [9]})))
         (let [application (get-application application-id user-id)]
           (is (= #{9} (catalogue-item-ids-for-application application)))
+          ;; After changing resources back, the license #4 added by the
+          ;; now-missing resource is gone, as well.
           (is (= #{1 2} (license-ids-for-application application)))))
 
       (testing "request-decision"
