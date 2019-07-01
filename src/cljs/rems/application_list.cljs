@@ -23,10 +23,10 @@
          :title (:application/description app)}
    (:application/description app)])
 
-(defn- format-applicant [app]
+(defn- format-applicant [applicant]
   [:div {:class "application-applicant"
-         :title (:application/applicant app)}
-   (:application/applicant app)])
+         :title applicant}
+     applicant])
 
 (rf/reg-sub
  ::table-rows
@@ -43,8 +43,10 @@
            :description {:value (:application/description app)
                          :td [:td.description (format-description app)]}
            :resource {:value (format-catalogue-items app)}
-           :applicant {:value (:application/applicant app)
-                       :td [:td.applicant (format-applicant app)]}
+           :applicant
+           (let [applicant (application-util/get-applicant-name app)]
+             {:value applicant
+              :td [:td.applicant (format-applicant applicant)]})
            :state (let [value (localize-state (:application/state app))]
                     {:value value
                      :td [:td.state
@@ -109,12 +111,16 @@
        :application/resources [{:catalogue-item/title {:en "Item 5"}}]
        :application/state :application.state/draft
        :application/applicant "alice"
+       :application/applicant-attributes {:eppn "alice"
+                                          :commonName "Alice Applicant"}
        :application/created "1980-01-02T13:45:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 2
        :application/resources [{:catalogue-item/title {:en "Item 3"}}]
        :application/state :application.state/submitted
        :application/applicant "bob"
+       :application/applicant-attributes {:eppn "bob"
+                                          :commonName "Bob Tester"}
        :application/created "1971-02-03T23:59:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 3
@@ -122,18 +128,24 @@
                                {:catalogue-item/title {:en "Item 5"}}]
        :application/state :application.state/approved
        :application/applicant "charlie"
+       :application/applicant-attributes {:eppn "charlie"
+                                          :commonName "Charlie Tester"}
        :application/created "1980-01-01T01:01:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 4
        :application/resources [{:catalogue-item/title {:en "Item 2"}}]
        :application/state :application.state/rejected
        :application/applicant "david"
+       :application/applicant-attributes {:eppn "david"
+                                          :commonName "David Newuser"}
        :application/created "1972-12-12T12:12:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 5
        :application/resources [{:catalogue-item/title {:en "Item 2"}}]
        :application/state :application.state/closed
        :application/applicant "ernie"
+       :application/applicant-attributes {:eppn "ernie"
+                                          :commonName "Ernie Tester"}
        :application/created "1972-12-12T12:12:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}]))
 

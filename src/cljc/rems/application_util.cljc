@@ -11,3 +11,10 @@
   (contains? (or (:possible-commands application) ;; TODO: remove v1 api usage
                  (:application/permissions application))
              :application.command/save-draft))
+
+(def ^:private applicant-name-order [:commonName :displayName :eppn])
+
+(defn get-applicant-name [application]
+  (let [attributes (:application/applicant-attributes application)]
+    (when attributes
+      (first (filter identity (map attributes applicant-name-order))))))
