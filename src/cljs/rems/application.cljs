@@ -461,8 +461,8 @@
        [:h3 (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
                   (:userid attributes) (text :t.applicant-info/member)
                   :else (text :t.applicant-info/invited-member))]
-;;       (when-let [applicant-name (get-applicant-name application)]
-;;         [info-field (text :t.applicant-info/name) applicant-name {:inline? true}])
+       (when-let [applicant-name (get-applicant-name application)]
+         [info-field (text :t.applicant-info/name) applicant-name {:inline? true}])
        (when user-id
          [info-field (text :t.applicant-info/username) user-id {:inline? true}])
        (when-let [mail (or (:mail attributes) (:email attributes))]
