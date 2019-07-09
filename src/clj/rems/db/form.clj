@@ -1,8 +1,10 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
+            [rems.api.schema :refer [FormFieldWithId]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.json :as json]))
+            [rems.json :as json]
+            [schema.core :as s]))
 
 ;;; form api related code – form "templates"
 
@@ -76,13 +78,14 @@
         ;;   codepath will be removed soon.
         form-id (:id (db/create-form! {:organization organization
                                        :title title
-                                       :user user-id}))
-        fields-with-ids (generate-fields-with-ids! user-id form-id fields)]
+                                       :user user-id}))]
     (db/save-form-template!
      (assoc form
             :id form-id
             :user user-id
-            :fields (json/generate-string fields-with-ids)))
+            :fields (->> (generate-fields-with-ids! user-id form-id fields)
+                         (s/validate [FormFieldWithId])
+                         (json/generate-string))))
     {:success (not (nil? form-id))
      :id form-id}))
 
@@ -92,7 +95,9 @@
            (assoc form
                   :id form-id
                   :user user-id
-                  :fields (json/generate-string (generate-fields-with-ids! user-id form-id fields))))
+                  :fields (->> (generate-fields-with-ids! user-id form-id fields)
+                               (s/validate [FormFieldWithId])
+                               (json/generate-string))))
           {:success true})))
 
 (defn update-form! [command]

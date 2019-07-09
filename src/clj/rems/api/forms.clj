@@ -1,44 +1,11 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [SuccessResponse UpdateStateCommand]]
+            [rems.api.schema :refer [SuccessResponse UpdateStateCommand Forms FormField FullForm]]
             [rems.api.util]
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
-  (:import (org.joda.time DateTime)))
-
-(s/defschema Form
-  {:id s/Int
-   :organization s/Str
-   :title s/Str
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
-   :enabled s/Bool
-   :archived s/Bool})
-
-(def not-neg? (partial <= 0))
-
-(s/defschema FormField
-  {:title {s/Keyword s/Str}
-   :optional s/Bool
-   :type (s/enum "attachment" "date" "description" "label" "multiselect" "option" "text" "texta")
-   (s/optional-key :maxlength) (s/maybe (s/constrained s/Int not-neg?))
-   (s/optional-key :options) [{:key s/Str
-                               :label {s/Keyword s/Str}}]
-   (s/optional-key :input-prompt) {s/Keyword s/Str}})
-
-(s/defschema FormFieldWithId
-  (merge FormField
-         {:field/id s/Int}))
-
-(s/defschema FullForm
-  (merge Form
-         {:fields [FormFieldWithId]}))
-
-(s/defschema Forms
-  [Form])
+            [schema.core :as s]))
 
 (defn- get-form-templates [filters]
   (doall

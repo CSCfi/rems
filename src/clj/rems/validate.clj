@@ -9,7 +9,7 @@
 
 (defn validate-forms []
   (doseq [template (form/get-form-templates {})]
-    (s/validate rems.api.forms/FullForm template)))
+    (s/validate rems.api.schema/FullForm template)))
 
 (defn validate []
   (log/info "Validating data")
