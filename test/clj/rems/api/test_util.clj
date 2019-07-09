@@ -2,8 +2,6 @@
   (:require [clojure.test :refer :all]
             [compojure.api.sweet :refer :all]
             [rems.api.util :refer :all]
-            [rems.auth.ForbiddenException]
-            [rems.auth.NotAuthorizedException]
             [rems.context :as context]
             [ring.util.http-response :refer :all])
   (:import (rems.auth ForbiddenException NotAuthorizedException)))

@@ -69,6 +69,7 @@
   :min-lein-version "2.0.0"
 
   :source-paths ["src/clj" "src/cljc"]
+  :java-source-paths ["src/java"]
   :test-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ;; also run tests from src files
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
@@ -114,6 +115,7 @@
              :prep-tasks [["shell" "sh" "-c" "mkdir -p target/uberjar/resources"]
                           ["shell" "sh" "-c" "git describe --tags --long --always --dirty=-custom > target/uberjar/resources/git-describe.txt"]
                           ["shell" "sh" "-c" "git rev-parse HEAD > target/uberjar/resources/git-revision.txt"]
+                          "javac"
                           "compile"
                           ["cljsbuild" "once" "min"]]
              :cljsbuild {:builds {:min {:source-paths ["src/cljc" "src/cljs"]
@@ -151,7 +153,6 @@
                  :plugins [[lein-ancient "0.6.15"]
                            [lein-doo "0.1.11"]
                            [lein-figwheel "0.5.18"]]
-                 :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf"] ; needed by clj-memory-meter on Java 9+

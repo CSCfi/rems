@@ -1,10 +1,9 @@
 (ns rems.db.attachments
   (:require [rems.application-util :refer [form-fields-editable?]]
-            [rems.InvalidRequestException]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db])
-  (:import [java.io ByteArrayOutputStream FileInputStream File ByteArrayInputStream]
-           rems.InvalidRequestException))
+  (:import [java.io ByteArrayOutputStream FileInputStream File]
+           [rems InvalidRequestException]))
 
 (defn check-attachment-content-type
   "Checks that content-type matches the allowed ones listed on the UI side:

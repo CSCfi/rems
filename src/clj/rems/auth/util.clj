@@ -1,13 +1,12 @@
 (ns rems.auth.util
-  (:require [rems.auth.ForbiddenException]
-            [rems.auth.NotAuthorizedException]))
+  (:import [rems.auth NotAuthorizedException ForbiddenException]))
 
 (defn throw-unauthorized
   "Helper for throwing `NotAuthorizedException`."
   []
-  (throw (rems.auth.NotAuthorizedException.)))
+  (throw (NotAuthorizedException.)))
 
 (defn throw-forbidden
   "Helper for throwing `ForbiddenException`."
   []
-  (throw (rems.auth.ForbiddenException.)))
+  (throw (ForbiddenException.)))

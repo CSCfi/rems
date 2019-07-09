@@ -24,9 +24,9 @@
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.http-response :refer [unauthorized]]
-            [ring.util.response :refer [redirect header]]
-            [taoensso.tempura :as tempura])
-  (:import (javax.servlet ServletContext)))
+            [ring.util.response :refer [redirect header]])
+  (:import [javax.servlet ServletContext]
+           [rems.auth ForbiddenException NotAuthorizedException]))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
@@ -159,9 +159,9 @@
   (fn [req]
     (try
       (handler req)
-      (catch rems.auth.NotAuthorizedException e
+      (catch NotAuthorizedException e
         (on-unauthorized-error req))
-      (catch rems.auth.ForbiddenException e
+      (catch ForbiddenException e
         (on-forbidden-error req)))))
 
 (defn wrap-logging

@@ -1,23 +1,23 @@
 (ns rems.db.applications.legacy
   "Functions for dealing with old round-based applications."
-  (:require [clojure.test :refer :all]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
+            [clojure.test :refer :all]
             [cprop.tools :refer [merge-maps]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.application.commands :as commands]
             [rems.application.model :as model]
-            [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
+            [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.events :as events]
-            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.json :as json]
-            [rems.permissions :as permissions]))
+            [rems.permissions :as permissions])
+  (:import [rems InvalidRequestException]))
 
 (declare get-application-state)
 
@@ -202,7 +202,7 @@
 
 (defn- get-dynamic-application-state [application-id]
   (let [application (or (first (db/get-applications {:id application-id}))
-                        (throw (rems.InvalidRequestException.
+                        (throw (InvalidRequestException.
                                 (str "Application " application-id " not found"))))
         events (events/get-application-events application-id)
         application (assoc application

@@ -1,6 +1,5 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
-            [rems.InvalidRequestException]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]))
@@ -56,8 +55,8 @@
        :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]})))
 
 (defn form-editable [form-id]
-    (or (form-in-use-error form-id)
-        {:success true}))
+  (or (form-in-use-error form-id)
+      {:success true}))
 
 (defn- generate-fields-with-ids! [user-id form-id fields]
   ;; Mirror field ids to form template so that form templates
