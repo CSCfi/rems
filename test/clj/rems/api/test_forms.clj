@@ -24,8 +24,8 @@
     (testing "create"
       (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
-                     :fields [{:title {:en "en title"
-                                       :fi "fi title"}
+                     :fields [{:field/title {:en "en title"
+                                             :fi "fi title"}
                                :optional true
                                :type "text"
                                :input-prompt {:en "en prompt"
@@ -76,37 +76,37 @@
         localized {:en "en" :fi "fi"}
         form-spec {:organization "abc" :title "all field types test"
                    :fields [{:type "text"
-                             :title localized
+                             :field/title localized
                              :optional false}
                             {:type "texta"
-                             :title localized
+                             :field/title localized
                              :optional true
                              :maxlength 300
                              :input-prompt localized}
                             {:type "description"
-                             :title localized
+                             :field/title localized
                              :optional false}
                             {:type "option"
-                             :title localized
+                             :field/title localized
                              :optional true
                              :options [{:key "a" :label localized}
                                        {:key "b" :label localized}
                                        {:key "c" :label localized}]}
                             {:type "multiselect"
-                             :title localized
+                             :field/title localized
                              :optional false
                              :options [{:key "a" :label localized}
                                        {:key "b" :label localized}
                                        {:key "c" :label localized}
                                        {:key "d" :label localized}]}
                             {:type "label"
-                             :title localized
+                             :field/title localized
                              :optional true}
                             {:type "date"
-                             :title localized
+                             :field/title localized
                              :optional true}
                             {:type "attachment"
-                             :title localized
+                             :field/title localized
                              :optional false}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
@@ -172,18 +172,18 @@
                      handler
                      read-ok-body)]
         (is (= (form :organization) "abc")))
-     (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
-                        (authenticate api-key user-id)
-                        (json-body {:organization "def" :title "form edit test"
-                                    :fields []})
-                        handler
-                        read-ok-body)]
-       (testing "form content after editing"
-         (let [form (-> (request :get (str "/api/forms/" form-id))
-                        (authenticate api-key user-id)
-                        handler
-                        read-ok-body)]
-           (is (= (form :organization) "def"))))))))
+      (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
+                         (authenticate api-key user-id)
+                         (json-body {:organization "def" :title "form edit test"
+                                     :fields []})
+                         handler
+                         read-ok-body)]
+        (testing "form content after editing"
+          (let [form (-> (request :get (str "/api/forms/" form-id))
+                         (authenticate api-key user-id)
+                         handler
+                         read-ok-body)]
+            (is (= (form :organization) "def"))))))))
 
 (deftest form-update-test
   (let [api-key "42"
@@ -233,8 +233,8 @@
     (testing "create"
       (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
-                     :fields [{:title {:en "en title"
-                                       :fi "fi title"}
+                     :fields [{:field/title {:en "en title"
+                                             :fi "fi title"}
                                :optional true
                                :type "option"
                                :options [{:key "yes"

@@ -91,7 +91,7 @@
              [language (get lstr language "")])))
 
 (defn- build-request-field [field languages]
-  (merge {:title (build-localized-string (:title field) languages)
+  (merge {:field/title (build-localized-string (:field/title field) languages)
           :type (:type field)
           :optional (if (supports-optional? field)
                       (boolean (:optional field))
@@ -143,7 +143,7 @@
 
 (defn- validate-field [field id languages]
   {id (merge (validate-text-field field :type)
-             (validate-localized-text-field field :title languages)
+             (validate-localized-text-field field :field/title languages)
              (validate-optional-localized-field field :input-prompt languages)
              (validate-maxlength (:maxlength field))
              (validate-options (:options field) languages))})
@@ -174,7 +174,7 @@
                   {:params (build-request (db ::form) (db :languages))
                    :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
                    :error-handler status-modal/common-error-handler!})
-      {:db (assoc db ::form-errors form-errors)}))))
+       {:db (assoc db ::form-errors form-errors)}))))
 
 ;;;; UI
 
@@ -193,7 +193,7 @@
                        :label (text :t.create-form/title)}])
 
 (defn- form-field-title-field [field-index]
-  [localized-text-field context {:keys [:fields field-index :title]
+  [localized-text-field context {:keys [:fields field-index :field/title]
                                  :label (text :t.create-form/field-title)}])
 
 (defn- form-field-input-prompt-field [field-index]
@@ -314,7 +314,7 @@
   "Convert a field from the form create model to the application view model."
   [field]
   (merge {:field/type (keyword (:type field))
-          :field/title (:title field)}
+          :field/title (:field/title field)}
          (when (supports-optional? field)
            {:field/optional (:optional field)})
          (when (supports-input-prompt? field)

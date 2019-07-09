@@ -62,15 +62,15 @@
       (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field 2"])
       (is (= {:fields [{:type "text" :foo "field 0"}
-                      {:type "text" :foo "field 1"}
-                      {:type "text" :foo "field 2"}]}
+                       {:type "text" :foo "field 1"}
+                       {:type "text" :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/remove-form-field 1])
 
       (is (= {:fields [{:type "text" :foo "field 0"}
-                      {:type "text" :foo "field 2"}]}
+                       {:type "text" :foo "field 2"}]}
              @form)
           "after"))))
 
@@ -85,24 +85,24 @@
       (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field X"])
       (is (= {:fields [{:type "text" :foo "field 0"}
-                      {:type "text" :foo "field 1"}
-                      {:type "text" :foo "field X"}]}
+                       {:type "text" :foo "field 1"}
+                       {:type "text" :foo "field X"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-field-up 2])
 
       (is (= {:fields [{:type "text" :foo "field 0"}
-                      {:type "text" :foo "field X"}
-                      {:type "text" :foo "field 1"}]}
+                       {:type "text" :foo "field X"}
+                       {:type "text" :foo "field 1"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-field-up 1])
 
       (is (= {:fields [{:type "text" :foo "field X"}
-                      {:type "text" :foo "field 0"}
-                      {:type "text" :foo "field 1"}]}
+                       {:type "text" :foo "field 0"}
+                       {:type "text" :foo "field 1"}]}
              @form)
           "after move 2")
 
@@ -110,8 +110,8 @@
         (rf/dispatch-sync [::f/move-form-field-up 0])
 
         (is (= {:fields [{:type "text" :foo "field X"}
-                        {:type "text" :foo "field 0"}
-                        {:type "text" :foo "field 1"}]}
+                         {:type "text" :foo "field 0"}
+                         {:type "text" :foo "field 1"}]}
                @form)
             "after move 3")))))
 
@@ -126,24 +126,24 @@
       (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field 2"])
       (is (= {:fields [{:type "text" :foo "field X"}
-                      {:type "text" :foo "field 1"}
-                      {:type "text" :foo "field 2"}]}
+                       {:type "text" :foo "field 1"}
+                       {:type "text" :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-field-down 0])
 
       (is (= {:fields [{:type "text" :foo "field 1"}
-                      {:type "text" :foo "field X"}
-                      {:type "text" :foo "field 2"}]}
+                       {:type "text" :foo "field X"}
+                       {:type "text" :foo "field 2"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-field-down 1])
 
       (is (= {:fields [{:type "text" :foo "field 1"}
-                      {:type "text" :foo "field 2"}
-                      {:type "text" :foo "field X"}]}
+                       {:type "text" :foo "field 2"}
+                       {:type "text" :foo "field X"}]}
              @form)
           "after move 2")
 
@@ -151,28 +151,28 @@
         (rf/dispatch-sync [::f/move-form-field-down 2])
 
         (is (= {:fields [{:type "text" :foo "field 1"}
-                        {:type "text" :foo "field 2"}
-                        {:type "text" :foo "field X"}]}
+                         {:type "text" :foo "field 2"}
+                         {:type "text" :foo "field X"}]}
                @form)
             "after move 3")))))
 
 (deftest build-request-test
   (let [form {:organization "abc"
               :title "the title"
-              :fields [{:title {:en "en title"
-                                :fi "fi title"}
-                       :optional true
-                       :type "text"
-                       :maxlength "12"
-                       :input-prompt {:en "en prompt"
-                                      :fi "fi prompt"}}]}
+              :fields [{:field/title {:en "en title"
+                                      :fi "fi title"}
+                        :optional true
+                        :type "text"
+                        :maxlength "12"
+                        :input-prompt {:en "en prompt"
+                                       :fi "fi prompt"}}]}
         languages [:en :fi]]
 
     (testing "basic form"
       (is (= {:organization "abc"
               :title "the title"
-              :fields [{:title {:en "en title"
-                                :fi "fi title"}
+              :fields [{:field/title {:en "en title"
+                                      :fi "fi title"}
                         :optional true
                         :type "text"
                         :maxlength 12
@@ -190,8 +190,8 @@
       (let [form (assoc-in form [:fields 0 :type] "date")]
         (is (= {:organization "abc"
                 :title "the title"
-                :fields [{:title {:en "en title"
-                                  :fi "fi title"}
+                :fields [{:field/title {:en "en title"
+                                        :fi "fi title"}
                           :optional true
                           :type "date"}]}
                (build-request form languages)))))
@@ -226,8 +226,8 @@
                                                               :fi "fi no"}}]))]
         (is (= {:organization "abc"
                 :title "the title"
-                :fields [{:title {:en "en title"
-                                  :fi "fi title"}
+                :fields [{:field/title {:en "en title"
+                                        :fi "fi title"}
                           :optional true
                           :type "option"
                           :options [{:key "yes"
@@ -249,8 +249,8 @@
                                                               :fi "Pekonia"}}]))]
         (is (= {:organization "abc"
                 :title "the title"
-                :fields [{:title {:en "en title"
-                                  :fi "fi title"}
+                :fields [{:field/title {:en "en title"
+                                        :fi "fi title"}
                           :optional true
                           :type "multiselect"
                           :options [{:key "egg"
@@ -264,13 +264,13 @@
 (deftest validate-form-test
   (let [form {:organization "abc"
               :title "the title"
-              :fields [{:title {:en "en title"
-                                :fi "fi title"}
-                       :optional true
-                       :type "text"
-                       :maxlength "12"
-                       :input-prompt {:en "en prompt"
-                                      :fi "fi prompt"}}]}
+              :fields [{:field/title {:en "en title"
+                                      :fi "fi title"}
+                        :optional true
+                        :type "text"
+                        :maxlength "12"
+                        :input-prompt {:en "en prompt"
+                                       :fi "fi prompt"}}]}
         languages [:en :fi]]
 
     (testing "valid form"
@@ -288,13 +288,13 @@
       (is (empty? (validate-form (assoc-in form [:fields] []) languages))))
 
     (testing "missing field title"
-      (let [nil-title (validate-form (assoc-in form [:fields 0 :title] nil) languages)]
-        (is (= (get-in (validate-form (assoc-in form [:fields 0 :title :en] "") languages)
-                       [:fields 0 :title :en])
-               (get-in (validate-form (update-in form [:fields 0 :title] dissoc :en) languages)
-                       [:fields 0 :title :en])
-               (get-in nil-title [:fields 0 :title :en])
-               (get-in nil-title [:fields 0 :title :fi])
+      (let [nil-title (validate-form (assoc-in form [:fields 0 :field/title] nil) languages)]
+        (is (= (get-in (validate-form (assoc-in form [:fields 0 :field/title :en] "") languages)
+                       [:fields 0 :field/title :en])
+               (get-in (validate-form (update-in form [:fields 0 :field/title] dissoc :en) languages)
+                       [:fields 0 :field/title :en])
+               (get-in nil-title [:fields 0 :field/title :en])
+               (get-in nil-title [:fields 0 :field/title :fi])
                :t.form.validation/required))))
 
     (testing "missing field type"

@@ -178,7 +178,7 @@
 (def not-neg? (partial <= 0))
 
 (s/defschema FormField
-  {:title {s/Keyword s/Str}
+  {:field/title {s/Keyword s/Str}
    :optional s/Bool
    :type (s/enum "attachment" "date" "description" "label" "multiselect" "option" "text" "texta")
    (s/optional-key :maxlength) (s/maybe (s/constrained s/Int not-neg?))

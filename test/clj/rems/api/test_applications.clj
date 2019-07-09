@@ -439,10 +439,10 @@
 (deftest test-application-validation
   (let [user-id "alice"
         workflow-id (create-dynamic-workflow)
-        form-id (create-form-with-fields [{:title {:en "req"}
+        form-id (create-form-with-fields [{:field/title {:en "req"}
                                            :type "text"
                                            :optional false}
-                                          {:title {:en "opt"}
+                                          {:field/title {:en "opt"}
                                            :type "text"
                                            :optional true}])
         [req-id opt-id] (->> (form/get-form-template form-id)
@@ -489,7 +489,7 @@
   (let [api-key "42"
         user-id "alice"
         workflow-id (create-dynamic-workflow)
-        form-id (create-form-with-fields [{:title {:en "some attachment"}
+        form-id (create-form-with-fields [{:field/title {:en "some attachment"}
                                            :type "attachment"
                                            :optional true}])
         cat-id (create-catalogue-item form-id workflow-id)

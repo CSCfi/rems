@@ -427,7 +427,7 @@
                            {:field/id (:field/id field)
                             :field/value "" ; default for new forms
                             :field/type (keyword (:type field))
-                            :field/title (:title field)
+                            :field/title (:field/title field)
                             :field/placeholder (get field :input-prompt {})
                             :field/optional (:optional field)
                             :field/options (:options field)
