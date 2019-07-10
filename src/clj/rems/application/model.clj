@@ -426,7 +426,7 @@
         rich-fields (map (fn [field]
                            {:field/id (:field/id field)
                             :field/value "" ; default for new forms
-                            :field/type (keyword (:type field))
+                            :field/type (:field/type field)
                             :field/title (:field/title field)
                             :field/placeholder (get field :input-prompt {})
                             :field/optional (:field/optional field)

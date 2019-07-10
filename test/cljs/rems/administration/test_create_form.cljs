@@ -20,7 +20,7 @@
 
       (rf/dispatch-sync [::f/add-form-field])
 
-      (is (= {:fields [{:type "text"}]}
+      (is (= {:fields [{:field/type :text}]}
              @form)
           "after"))
 
@@ -28,13 +28,13 @@
       (reset-form)
       (rf/dispatch-sync [::f/add-form-field])
       (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "old field"])
-      (is (= {:fields [{:type "text" :foo "old field"}]}
+      (is (= {:fields [{:field/type :text :foo "old field"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/add-form-field])
 
-      (is (= {:fields [{:type "text" :foo "old field"} {:type "text"}]}
+      (is (= {:fields [{:field/type :text :foo "old field"} {:field/type :text}]}
              @form)
           "after"))))
 
@@ -43,7 +43,7 @@
     (testing "removes fields"
       (reset-form)
       (rf/dispatch-sync [::f/add-form-field])
-      (is (= {:fields [{:type "text"}]}
+      (is (= {:fields [{:field/type :text}]}
              @form)
           "before")
 
@@ -61,16 +61,16 @@
       (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "field 0"])
       (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field 2"])
-      (is (= {:fields [{:type "text" :foo "field 0"}
-                       {:type "text" :foo "field 1"}
-                       {:type "text" :foo "field 2"}]}
+      (is (= {:fields [{:field/type :text :foo "field 0"}
+                       {:field/type :text :foo "field 1"}
+                       {:field/type :text :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/remove-form-field 1])
 
-      (is (= {:fields [{:type "text" :foo "field 0"}
-                       {:type "text" :foo "field 2"}]}
+      (is (= {:fields [{:field/type :text :foo "field 0"}
+                       {:field/type :text :foo "field 2"}]}
              @form)
           "after"))))
 
@@ -84,34 +84,34 @@
       (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "field 0"])
       (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field X"])
-      (is (= {:fields [{:type "text" :foo "field 0"}
-                       {:type "text" :foo "field 1"}
-                       {:type "text" :foo "field X"}]}
+      (is (= {:fields [{:field/type :text :foo "field 0"}
+                       {:field/type :text :foo "field 1"}
+                       {:field/type :text :foo "field X"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-field-up 2])
 
-      (is (= {:fields [{:type "text" :foo "field 0"}
-                       {:type "text" :foo "field X"}
-                       {:type "text" :foo "field 1"}]}
+      (is (= {:fields [{:field/type :text :foo "field 0"}
+                       {:field/type :text :foo "field X"}
+                       {:field/type :text :foo "field 1"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-field-up 1])
 
-      (is (= {:fields [{:type "text" :foo "field X"}
-                       {:type "text" :foo "field 0"}
-                       {:type "text" :foo "field 1"}]}
+      (is (= {:fields [{:field/type :text :foo "field X"}
+                       {:field/type :text :foo "field 0"}
+                       {:field/type :text :foo "field 1"}]}
              @form)
           "after move 2")
 
       (testing "unless already first"
         (rf/dispatch-sync [::f/move-form-field-up 0])
 
-        (is (= {:fields [{:type "text" :foo "field X"}
-                         {:type "text" :foo "field 0"}
-                         {:type "text" :foo "field 1"}]}
+        (is (= {:fields [{:field/type :text :foo "field X"}
+                         {:field/type :text :foo "field 0"}
+                         {:field/type :text :foo "field 1"}]}
                @form)
             "after move 3")))))
 
@@ -125,34 +125,34 @@
       (rf/dispatch-sync [::f/set-form-field [:fields 0 :foo] "field X"])
       (rf/dispatch-sync [::f/set-form-field [:fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:fields 2 :foo] "field 2"])
-      (is (= {:fields [{:type "text" :foo "field X"}
-                       {:type "text" :foo "field 1"}
-                       {:type "text" :foo "field 2"}]}
+      (is (= {:fields [{:field/type :text :foo "field X"}
+                       {:field/type :text :foo "field 1"}
+                       {:field/type :text :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-field-down 0])
 
-      (is (= {:fields [{:type "text" :foo "field 1"}
-                       {:type "text" :foo "field X"}
-                       {:type "text" :foo "field 2"}]}
+      (is (= {:fields [{:field/type :text :foo "field 1"}
+                       {:field/type :text :foo "field X"}
+                       {:field/type :text :foo "field 2"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-field-down 1])
 
-      (is (= {:fields [{:type "text" :foo "field 1"}
-                       {:type "text" :foo "field 2"}
-                       {:type "text" :foo "field X"}]}
+      (is (= {:fields [{:field/type :text :foo "field 1"}
+                       {:field/type :text :foo "field 2"}
+                       {:field/type :text :foo "field X"}]}
              @form)
           "after move 2")
 
       (testing "unless already last"
         (rf/dispatch-sync [::f/move-form-field-down 2])
 
-        (is (= {:fields [{:type "text" :foo "field 1"}
-                         {:type "text" :foo "field 2"}
-                         {:type "text" :foo "field X"}]}
+        (is (= {:fields [{:field/type :text :foo "field 1"}
+                         {:field/type :text :foo "field 2"}
+                         {:field/type :text :foo "field X"}]}
                @form)
             "after move 3")))))
 
@@ -162,7 +162,7 @@
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
                         :field/optional true
-                        :type "text"
+                        :field/type :text
                         :maxlength "12"
                         :input-prompt {:en "en prompt"
                                        :fi "fi prompt"}}]}
@@ -174,7 +174,7 @@
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
                         :field/optional true
-                        :type "text"
+                        :field/type :text
                         :maxlength 12
                         :input-prompt {:en "en prompt"
                                        :fi "fi prompt"}}]}
@@ -187,13 +187,13 @@
              (build-request (assoc-in form [:fields] []) languages))))
 
     (testing "date fields"
-      (let [form (assoc-in form [:fields 0 :type] "date")]
+      (let [form (assoc-in form [:fields 0 :field/type] :date)]
         (is (= {:organization "abc"
                 :title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
-                          :type "date"}]}
+                          :field/type :date}]}
                (build-request form languages)))))
 
     (testing "missing optional implies false"
@@ -217,7 +217,7 @@
 
     (testing "option fields"
       (let [form (-> form
-                     (assoc-in [:fields 0 :type] "option")
+                     (assoc-in [:fields 0 :field/type] :option)
                      (assoc-in [:fields 0 :options] [{:key "yes"
                                                       :label {:en "en yes"
                                                               :fi "fi yes"}}
@@ -229,7 +229,7 @@
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
-                          :type "option"
+                          :field/type :option
                           :options [{:key "yes"
                                      :label {:en "en yes"
                                              :fi "fi yes"}}
@@ -240,7 +240,7 @@
 
     (testing "multiselect fields"
       (let [form (-> form
-                     (assoc-in [:fields 0 :type] "multiselect")
+                     (assoc-in [:fields 0 :field/type] :multiselect)
                      (assoc-in [:fields 0 :options] [{:key "egg"
                                                       :label {:en "Egg"
                                                               :fi "Munaa"}}
@@ -252,7 +252,7 @@
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
-                          :type "multiselect"
+                          :field/type :multiselect
                           :options [{:key "egg"
                                      :label {:en "Egg"
                                              :fi "Munaa"}}
@@ -267,7 +267,7 @@
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
                         :field/optional true
-                        :type "text"
+                        :field/type :text
                         :maxlength "12"
                         :input-prompt {:en "en prompt"
                                        :fi "fi prompt"}}]}
@@ -298,8 +298,8 @@
                :t.form.validation/required))))
 
     (testing "missing field type"
-      (is (get-in (validate-form (assoc-in form [:fields 0 :type] nil) language)
-                  [:fields 0 :type])
+      (is (get-in (validate-form (assoc-in form [:fields 0 :field/type] nil) languages)
+                  [:fields 0 :field/type])
           :t.form.validation/required))
 
     (testing "if you use input prompt, you must fill in all the languages"
@@ -311,7 +311,7 @@
 
     (testing "option fields"
       (let [form (-> form
-                     (assoc-in [:fields 0 :type] "option")
+                     (assoc-in [:fields 0 :field/type] :option)
                      (assoc-in [:fields 0 :options] [{:key "yes"
                                                       :label {:en "en yes"
                                                               :fi "fi yes"}}
@@ -339,7 +339,7 @@
 
     (testing "multiselect fields"
       (let [form (-> form
-                     (assoc-in [:fields 0 :type] "multiselect")
+                     (assoc-in [:fields 0 :field/type] :multiselect)
                      (assoc-in [:fields 0 :options] [{:key "egg"
                                                       :label {:en "Egg"
                                                               :fi "Munaa"}}

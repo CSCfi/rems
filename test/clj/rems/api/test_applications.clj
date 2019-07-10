@@ -440,10 +440,10 @@
   (let [user-id "alice"
         workflow-id (create-dynamic-workflow)
         form-id (create-form-with-fields [{:field/title {:en "req"}
-                                           :type "text"
+                                           :field/type :text
                                            :field/optional false}
                                           {:field/title {:en "opt"}
-                                           :type "text"
+                                           :field/type :text
                                            :field/optional true}])
         [req-id opt-id] (->> (form/get-form-template form-id)
                              :fields
@@ -490,7 +490,7 @@
         user-id "alice"
         workflow-id (create-dynamic-workflow)
         form-id (create-form-with-fields [{:field/title {:en "some attachment"}
-                                           :type "attachment"
+                                           :field/type :attachment
                                            :field/optional true}])
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)

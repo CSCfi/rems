@@ -9,6 +9,12 @@
   :once
   api-fixture)
 
+(defn fixup-field-to-match-command [field]
+  (-> field
+      (dissoc :field/id)
+      ;; XXX: these tests use the JSON API, so keywords are not maintained
+      (update :field/type keyword)))
+
 (deftest forms-api-test
   (let [api-key "42"
         user-id "owner"]
@@ -27,7 +33,7 @@
                      :fields [{:field/title {:en "en title"
                                              :fi "fi title"}
                                :field/optional true
-                               :type "text"
+                               :field/type :text
                                :input-prompt {:en "en prompt"
                                               :fi "fi prompt"}}]}]
 
@@ -67,7 +73,7 @@
                   (is (= (select-keys command [:title :organization])
                          (select-keys form-template [:title :organization])))
                   (is (= (:fields command)
-                         (mapv #(dissoc % :field/id) (:fields form-template)))))))))))))
+                         (mapv fixup-field-to-match-command (:fields form-template)))))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
@@ -75,37 +81,37 @@
         ;;"attachment" "date" "description" "label" "multiselect" "option" "text" "texta"
         localized {:en "en" :fi "fi"}
         form-spec {:organization "abc" :title "all field types test"
-                   :fields [{:type "text"
+                   :fields [{:field/type :text
                              :field/title localized
                              :field/optional false}
-                            {:type "texta"
+                            {:field/type :texta
                              :field/title localized
                              :field/optional true
                              :maxlength 300
                              :input-prompt localized}
-                            {:type "description"
+                            {:field/type :description
                              :field/title localized
                              :field/optional false}
-                            {:type "option"
+                            {:field/type :option
                              :field/title localized
                              :field/optional true
                              :options [{:key "a" :label localized}
                                        {:key "b" :label localized}
                                        {:key "c" :label localized}]}
-                            {:type "multiselect"
+                            {:field/type :multiselect
                              :field/title localized
                              :field/optional false
                              :options [{:key "a" :label localized}
                                        {:key "b" :label localized}
                                        {:key "c" :label localized}
                                        {:key "d" :label localized}]}
-                            {:type "label"
+                            {:field/type :label
                              :field/title localized
                              :field/optional true}
-                            {:type "date"
+                            {:field/type :date
                              :field/title localized
                              :field/optional true}
-                            {:type "attachment"
+                            {:field/type :attachment
                              :field/title localized
                              :field/optional false}]}]
     (testing "creating"
@@ -124,7 +130,7 @@
             (is (= (select-keys form-spec [:organization :title])
                    (select-keys form [:organization :title])))
             (is (= (:fields form-spec)
-                   (mapv #(dissoc % :field/id) (:fields form))))))))))
+                   (mapv fixup-field-to-match-command (:fields form))))))))))
 
 (deftest form-editable-test
   (let [api-key "42"
@@ -236,7 +242,7 @@
                      :fields [{:field/title {:en "en title"
                                              :fi "fi title"}
                                :field/optional true
-                               :type "option"
+                               :field/type :option
                                :options [{:key "yes"
                                           :label {:en "Yes"
                                                   :fi "Kyllä"}}
@@ -256,7 +262,7 @@
                          handler
                          read-ok-body)]
             (is (= (:fields command)
-                   (mapv #(dissoc % :field/id) (:fields form))))))))))
+                   (mapv fixup-field-to-match-command (:fields form))))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:archived true})

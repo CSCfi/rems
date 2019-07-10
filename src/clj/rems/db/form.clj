@@ -4,13 +4,26 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]
+            [schema.coerce :as coerce]
             [schema.core :as s]))
 
 ;;; form api related code – form "templates"
 
+(s/defschema Fields
+  [FormFieldWithId])
+
+(def ^:private fields-coercer
+  (coerce/coercer Fields coerce/string-coercion-matcher))
+
+(defn- coerce-fields [fields]
+  (let [result (fields-coercer fields)]
+    (if (schema.utils/error? result)
+      (throw (ex-info "Failed to coerce fields" {:fields fields :error result}))
+      result)))
+
 (defn- parse-db-row [row]
   (-> row
-      (update :fields json/parse-string)
+      (update :fields #(coerce-fields (json/parse-string %)))
       db/assoc-expired))
 
 (defn get-form-templates [filters]
@@ -22,9 +35,9 @@
   (-> (db/get-form-template {:id id})
       parse-db-row))
 
-(defn- create-form-item! [user-id form-id item-index {:keys [type input-prompt maxlength options]
-                                                      :field/keys [title optional]}]
-  (let [item-id (:id (db/create-form-item! {:type type
+(defn- create-form-item! [user-id form-id item-index {:keys [input-prompt maxlength options]
+                                                      :field/keys [title optional type]}]
+  (let [item-id (:id (db/create-form-item! {:type (name type)
                                             :user user-id
                                             :value 0}))]
     (doseq [[index option] (map-indexed vector options)]
@@ -85,7 +98,7 @@
             :id form-id
             :user user-id
             :fields (->> (generate-fields-with-ids! user-id form-id fields)
-                         (s/validate [FormFieldWithId])
+                         (s/validate Fields)
                          (json/generate-string))))
     {:success (not (nil? form-id))
      :id form-id}))
@@ -97,7 +110,7 @@
                   :id form-id
                   :user user-id
                   :fields (->> (generate-fields-with-ids! user-id form-id fields)
-                               (s/validate [FormFieldWithId])
+                               (s/validate Fields)
                                (json/generate-string))))
           {:success true})))
 

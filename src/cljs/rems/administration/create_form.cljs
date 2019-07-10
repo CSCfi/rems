@@ -47,7 +47,7 @@
 (rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
+(rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:field/type :text})))
 (rf/reg-event-db ::remove-form-field (fn [db [_ field-index]] (update-in db [::form :fields] items/remove field-index)))
 (rf/reg-event-db ::move-form-field-up (fn [db [_ field-index]] (update-in db [::form :fields] items/move-up field-index)))
 (rf/reg-event-db ::move-form-field-down (fn [db [_ field-index]] (update-in db [::form :fields] items/move-down field-index)))
@@ -75,16 +75,16 @@
 ;;;; form submit
 
 (defn- supports-optional? [field]
-  (not= "label" (:type field)))
+  (not= :label (:field/type field)))
 
 (defn- supports-input-prompt? [field]
-  (contains? #{"text" "texta" "description"} (:type field)))
+  (contains? #{:text :texta :description} (:field/type field)))
 
 (defn- supports-maxlength? [field]
-  (contains? #{"text" "texta"} (:type field)))
+  (contains? #{:text :texta} (:field/type field)))
 
 (defn- supports-options? [field]
-  (contains? #{"option" "multiselect"} (:type field)))
+  (contains? #{:option :multiselect} (:field/type field)))
 
 (defn build-localized-string [lstr languages]
   (into {} (for [language languages]
@@ -92,7 +92,7 @@
 
 (defn- build-request-field [field languages]
   (merge {:field/title (build-localized-string (:field/title field) languages)
-          :type (:type field)
+          :field/type (:field/type field)
           :field/optional (if (supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
@@ -142,7 +142,7 @@
   {:options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
 
 (defn- validate-field [field id languages]
-  {id (merge (validate-text-field field :type)
+  {id (merge (validate-text-field field :field/type)
              (validate-localized-text-field field :field/title languages)
              (validate-optional-localized-field field :input-prompt languages)
              (validate-maxlength (:maxlength field))
@@ -244,16 +244,16 @@
 
 (defn- form-field-type-radio-group [field-index]
   [radio-button-group context {:id (str "radio-group-" field-index)
-                               :keys [:fields field-index :type]
+                               :keys [:fields field-index :field/type]
                                :orientation :vertical
-                               :options [{:value "text", :label (text :t.create-form/type-text)}
-                                         {:value "texta", :label (text :t.create-form/type-texta)}
-                                         {:value "description", :label (text :t.create-form/type-description)}
-                                         {:value "option", :label (text :t.create-form/type-option)}
-                                         {:value "multiselect", :label (text :t.create-form/type-multiselect)}
-                                         {:value "date", :label (text :t.create-form/type-date)}
-                                         {:value "attachment", :label (text :t.create-form/type-attachment)}
-                                         {:value "label", :label (text :t.create-form/type-label)}]}])
+                               :options [{:value :text, :label (text :t.create-form/type-text)}
+                                         {:value :texta, :label (text :t.create-form/type-texta)}
+                                         {:value :description, :label (text :t.create-form/type-description)}
+                                         {:value :option, :label (text :t.create-form/type-option)}
+                                         {:value :multiselect, :label (text :t.create-form/type-multiselect)}
+                                         {:value :date, :label (text :t.create-form/type-date)}
+                                         {:value :attachment, :label (text :t.create-form/type-attachment)}
+                                         {:value :label, :label (text :t.create-form/type-label)}]}])
 
 (defn- form-field-optional-checkbox [field-index]
   [checkbox context {:keys [:fields field-index :field/optional]
@@ -313,7 +313,7 @@
 (defn- form-field-to-application-field
   "Convert a field from the form create model to the application view model."
   [field]
-  (merge {:field/type (keyword (:type field))
+  (merge {:field/type (:field/type field)
           :field/title (:field/title field)}
          (when (supports-optional? field)
            {:field/optional (:field/optional field)})

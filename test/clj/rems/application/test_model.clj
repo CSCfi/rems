@@ -17,14 +17,14 @@
                  :field/optional false
                  :options []
                  :maxlength 100
-                 :type "description"}
+                 :field/type :description}
                 {:field/id 42
                  :field/title {:en "en title" :fi "fi title"}
                  :input-prompt {:en "en placeholder" :fi "fi placeholder"}
                  :field/optional false
                  :options []
                  :maxlength 100
-                 :type "text"}]
+                 :field/type :text}]
        :start (DateTime. 100)
        :end nil}})
 
