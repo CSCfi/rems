@@ -39,13 +39,13 @@
 
         (testing "invalid create"
           ;; TODO: silence the logging for this expected error
-          (let [command-with-invalid-maxlength (assoc-in command [:fields 0 :maxlength] -1)
+          (let [command-with-invalid-max-length (assoc-in command [:fields 0 :field/max-length] -1)
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
-                             (json-body command-with-invalid-maxlength)
+                             (json-body command-with-invalid-max-length)
                              handler)]
             (is (= 400 (:status response))
-                "can't send negative maxlength")))
+                "can't send negative max length")))
 
         (testing "invalid create: field too long"
           (let [command-with-long-prompt (assoc-in command [:fields 0 :input-prompt :en]
@@ -87,7 +87,7 @@
                             {:field/type :texta
                              :field/title localized
                              :field/optional true
-                             :maxlength 300
+                             :field/max-length 300
                              :input-prompt localized}
                             {:field/type :description
                              :field/title localized

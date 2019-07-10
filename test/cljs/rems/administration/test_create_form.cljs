@@ -163,7 +163,7 @@
                                       :fi "fi title"}
                         :field/optional true
                         :field/type :text
-                        :maxlength "12"
+                        :field/max-length "12"
                         :input-prompt {:en "en prompt"
                                        :fi "fi prompt"}}]}
         languages [:en :fi]]
@@ -175,7 +175,7 @@
                                       :fi "fi title"}
                         :field/optional true
                         :field/type :text
-                        :maxlength 12
+                        :field/max-length 12
                         :input-prompt {:en "en prompt"
                                        :fi "fi prompt"}}]}
              (build-request form languages))))
@@ -209,11 +209,11 @@
              (getx-in (build-request (assoc-in form [:fields 0 :input-prompt] {:en "" :fi ""}) languages)
                       [:fields 0 :input-prompt]))))
 
-    (testing "maxlength is optional"
-      (is (nil? (getx-in (build-request (assoc-in form [:fields 0 :maxlength] "") languages)
-                         [:fields 0 :maxlength])))
-      (is (nil? (getx-in (build-request (assoc-in form [:fields 0 :maxlength] nil) languages)
-                         [:fields 0 :maxlength]))))
+    (testing "max length is optional"
+      (is (nil? (getx-in (build-request (assoc-in form [:fields 0 :field/max-length] "") languages)
+                         [:fields 0 :field/max-length])))
+      (is (nil? (getx-in (build-request (assoc-in form [:fields 0 :field/max-length] nil) languages)
+                         [:fields 0 :field/max-length]))))
 
     (testing "option fields"
       (let [form (-> form
@@ -268,7 +268,7 @@
                                       :fi "fi title"}
                         :field/optional true
                         :field/type :text
-                        :maxlength "12"
+                        :field/max-length "12"
                         :input-prompt {:en "en prompt"
                                        :fi "fi prompt"}}]}
         languages [:en :fi]]

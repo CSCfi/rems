@@ -35,8 +35,8 @@
   (-> (db/get-form-template {:id id})
       parse-db-row))
 
-(defn- create-form-item! [user-id form-id item-index {:keys [input-prompt maxlength options]
-                                                      :field/keys [title optional type]}]
+(defn- create-form-item! [user-id form-id item-index {:keys [input-prompt options]
+                                                      :field/keys [title optional type max-length]}]
   (let [item-id (:id (db/create-form-item! {:type (name type)
                                             :user user-id
                                             :value 0}))]
@@ -50,7 +50,7 @@
     (db/link-form-item! {:form form-id
                          :itemorder item-index
                          :optional optional
-                         :maxlength maxlength
+                         :maxlength max-length
                          :item item-id
                          :user user-id})
     (doseq [lang (keys title)]

@@ -80,7 +80,7 @@
 (defn- supports-input-prompt? [field]
   (contains? #{:text :texta :description} (:field/type field)))
 
-(defn- supports-maxlength? [field]
+(defn- supports-max-length? [field]
   (contains? #{:text :texta} (:field/type field)))
 
 (defn- supports-options? [field]
@@ -98,8 +98,8 @@
                             false)}
          (when (supports-input-prompt? field)
            {:input-prompt (build-localized-string (:input-prompt field) languages)})
-         (when (supports-maxlength? field)
-           {:maxlength (parse-int (:maxlength field))})
+         (when (supports-max-length? field)
+           {:field/max-length (parse-int (:field/max-length field))})
          (when (supports-options? field)
            {:options (for [{:keys [key label]} (:options field)]
                        {:key key
@@ -125,14 +125,14 @@
     (when (not-empty (remove identity validated))
       {key (apply merge validated)})))
 
-(def ^:private maxlength-range [0 32767])
+(def ^:private max-length-range [0 32767])
 
-(defn- validate-maxlength [maxlength]
-  (when-not (str/blank? maxlength)
-    (let [parsed (parse-int maxlength)]
+(defn- validate-max-length [max-length]
+  (when-not (str/blank? max-length)
+    (let [parsed (parse-int max-length)]
       (when (or (nil? parsed)
-                (not (<= (first maxlength-range) parsed (second maxlength-range))))
-        {:maxlength :t.form.validation/invalid-value}))))
+                (not (<= (first max-length-range) parsed (second max-length-range))))
+        {:max-length :t.form.validation/invalid-value}))))
 
 (defn- validate-option [option id languages]
   {id (merge (validate-text-field option :key)
@@ -145,7 +145,7 @@
   {id (merge (validate-text-field field :field/type)
              (validate-localized-text-field field :field/title languages)
              (validate-optional-localized-field field :input-prompt languages)
-             (validate-maxlength (:maxlength field))
+             (validate-max-length (:field/max-length field))
              (validate-options (:options field) languages))})
 
 (defn validate-form [form languages]
@@ -200,8 +200,8 @@
   [localized-text-field context {:keys [:fields field-index :input-prompt]
                                  :label (text :t.create-form/input-prompt)}])
 
-(defn- form-field-maxlength-field [field-index]
-  [text-field context {:keys [:fields field-index :maxlength]
+(defn- form-field-max-length-field [field-index]
+  [text-field context {:keys [:fields field-index :field/max-length]
                        :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-field-option-button [field-index]
@@ -304,8 +304,8 @@
                           [form-field-optional-checkbox field-index])
                         (when (supports-input-prompt? field)
                           [form-field-input-prompt-field field-index])
-                        (when (supports-maxlength? field)
-                          [form-field-maxlength-field field-index])
+                        (when (supports-max-length? field)
+                          [form-field-max-length-field field-index])
                         (when (supports-options? field)
                           [form-field-option-fields field-index])])
                      fields)))
@@ -319,8 +319,8 @@
            {:field/optional (:field/optional field)})
          (when (supports-input-prompt? field)
            {:field/placeholder (:input-prompt field)})
-         (when (supports-maxlength? field)
-           {:field/max-length (parse-int (:maxlength field))})
+         (when (supports-max-length? field)
+           {:field/max-length (parse-int (:field/max-length field))})
          (when (supports-options? field)
            {:field/options (:options field)})))
 
