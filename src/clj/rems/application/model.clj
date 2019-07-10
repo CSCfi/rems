@@ -429,7 +429,7 @@
                             :field/type (keyword (:type field))
                             :field/title (:field/title field)
                             :field/placeholder (get field :input-prompt {})
-                            :field/optional (:optional field)
+                            :field/optional (:field/optional field)
                             :field/options (:options field)
                             :field/max-length (:maxlength field)})
                          (:fields form))

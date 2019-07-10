@@ -1,6 +1,5 @@
 (ns rems.application.test-commands
-  (:require [clojure.string :as str]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
@@ -26,11 +25,7 @@
                                     :workflow/id 1
                                     :workflow/type :workflow/dynamic})
 (def ^:private dummy-workflows {1 {:workflow {:handlers [handler-user-id]}}})
-
-(def ^:private dummy-forms {1 {:items [{:id 41
-                                        :optional false}
-                                       {:id 42
-                                        :optional false}]}})
+(def ^:private dummy-forms {1 {}})
 
 (def ^:private injections
   {:get-workflow dummy-workflows

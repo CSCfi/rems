@@ -93,9 +93,9 @@
 (defn- build-request-field [field languages]
   (merge {:field/title (build-localized-string (:field/title field) languages)
           :type (:type field)
-          :optional (if (supports-optional? field)
-                      (boolean (:optional field))
-                      false)}
+          :field/optional (if (supports-optional? field)
+                            (boolean (:field/optional field))
+                            false)}
          (when (supports-input-prompt? field)
            {:input-prompt (build-localized-string (:input-prompt field) languages)})
          (when (supports-maxlength? field)
@@ -256,7 +256,7 @@
                                          {:value "label", :label (text :t.create-form/type-label)}]}])
 
 (defn- form-field-optional-checkbox [field-index]
-  [checkbox context {:keys [:fields field-index :optional]
+  [checkbox context {:keys [:fields field-index :field/optional]
                      :label (text :t.create-form/optional)}])
 
 (defn- add-form-field-button []
@@ -316,7 +316,7 @@
   (merge {:field/type (keyword (:type field))
           :field/title (:field/title field)}
          (when (supports-optional? field)
-           {:field/optional (:optional field)})
+           {:field/optional (:field/optional field)})
          (when (supports-input-prompt? field)
            {:field/placeholder (:input-prompt field)})
          (when (supports-maxlength? field)

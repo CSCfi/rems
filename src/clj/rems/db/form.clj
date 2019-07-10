@@ -22,8 +22,8 @@
   (-> (db/get-form-template {:id id})
       parse-db-row))
 
-(defn- create-form-item! [user-id form-id item-index {:keys [optional type input-prompt maxlength options]
-                                                      :field/keys [title]}]
+(defn- create-form-item! [user-id form-id item-index {:keys [type input-prompt maxlength options]
+                                                      :field/keys [title optional]}]
   (let [item-id (:id (db/create-form-item! {:type type
                                             :user user-id
                                             :value 0}))]

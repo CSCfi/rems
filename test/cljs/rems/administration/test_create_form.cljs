@@ -161,7 +161,7 @@
               :title "the title"
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
-                        :optional true
+                        :field/optional true
                         :type "text"
                         :maxlength "12"
                         :input-prompt {:en "en prompt"
@@ -173,7 +173,7 @@
               :title "the title"
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
-                        :optional true
+                        :field/optional true
                         :type "text"
                         :maxlength 12
                         :input-prompt {:en "en prompt"
@@ -192,13 +192,13 @@
                 :title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
-                          :optional true
+                          :field/optional true
                           :type "date"}]}
                (build-request form languages)))))
 
     (testing "missing optional implies false"
-      (is (false? (getx-in (build-request (assoc-in form [:fields 0 :optional] nil) languages)
-                           [:fields 0 :optional]))))
+      (is (false? (getx-in (build-request (assoc-in form [:fields 0 :field/optional] nil) languages)
+                           [:fields 0 :field/optional]))))
 
     (testing "input prompt is optional"
       (is (= {:en "" :fi ""}
@@ -228,7 +228,7 @@
                 :title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
-                          :optional true
+                          :field/optional true
                           :type "option"
                           :options [{:key "yes"
                                      :label {:en "en yes"
@@ -251,7 +251,7 @@
                 :title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
-                          :optional true
+                          :field/optional true
                           :type "multiselect"
                           :options [{:key "egg"
                                      :label {:en "Egg"
@@ -266,7 +266,7 @@
               :title "the title"
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
-                        :optional true
+                        :field/optional true
                         :type "text"
                         :maxlength "12"
                         :input-prompt {:en "en prompt"

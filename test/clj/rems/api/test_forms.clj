@@ -26,7 +26,7 @@
                      :title (str "form title " (UUID/randomUUID))
                      :fields [{:field/title {:en "en title"
                                              :fi "fi title"}
-                               :optional true
+                               :field/optional true
                                :type "text"
                                :input-prompt {:en "en prompt"
                                               :fi "fi prompt"}}]}]
@@ -77,37 +77,37 @@
         form-spec {:organization "abc" :title "all field types test"
                    :fields [{:type "text"
                              :field/title localized
-                             :optional false}
+                             :field/optional false}
                             {:type "texta"
                              :field/title localized
-                             :optional true
+                             :field/optional true
                              :maxlength 300
                              :input-prompt localized}
                             {:type "description"
                              :field/title localized
-                             :optional false}
+                             :field/optional false}
                             {:type "option"
                              :field/title localized
-                             :optional true
+                             :field/optional true
                              :options [{:key "a" :label localized}
                                        {:key "b" :label localized}
                                        {:key "c" :label localized}]}
                             {:type "multiselect"
                              :field/title localized
-                             :optional false
+                             :field/optional false
                              :options [{:key "a" :label localized}
                                        {:key "b" :label localized}
                                        {:key "c" :label localized}
                                        {:key "d" :label localized}]}
                             {:type "label"
                              :field/title localized
-                             :optional true}
+                             :field/optional true}
                             {:type "date"
                              :field/title localized
-                             :optional true}
+                             :field/optional true}
                             {:type "attachment"
                              :field/title localized
-                             :optional false}]}]
+                             :field/optional false}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)
@@ -235,7 +235,7 @@
                      :title (str "form title " (UUID/randomUUID))
                      :fields [{:field/title {:en "en title"
                                              :fi "fi title"}
-                               :optional true
+                               :field/optional true
                                :type "option"
                                :options [{:key "yes"
                                           :label {:en "Yes"

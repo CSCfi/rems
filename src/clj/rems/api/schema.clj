@@ -179,7 +179,7 @@
 
 (s/defschema FormField
   {:field/title {s/Keyword s/Str}
-   :optional s/Bool
+   :field/optional s/Bool
    :type (s/enum "attachment" "date" "description" "label" "multiselect" "option" "text" "texta")
    (s/optional-key :maxlength) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :options) [{:key s/Str

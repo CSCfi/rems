@@ -441,10 +441,10 @@
         workflow-id (create-dynamic-workflow)
         form-id (create-form-with-fields [{:field/title {:en "req"}
                                            :type "text"
-                                           :optional false}
+                                           :field/optional false}
                                           {:field/title {:en "opt"}
                                            :type "text"
-                                           :optional true}])
+                                           :field/optional true}])
         [req-id opt-id] (->> (form/get-form-template form-id)
                              :fields
                              (map :field/id))
@@ -491,7 +491,7 @@
         workflow-id (create-dynamic-workflow)
         form-id (create-form-with-fields [{:field/title {:en "some attachment"}
                                            :type "attachment"
-                                           :optional true}])
+                                           :field/optional true}])
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)
         upload-request (fn [file]
