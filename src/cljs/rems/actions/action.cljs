@@ -24,7 +24,7 @@
     :id (str "cancel-" id)
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))
-    :on-click #(.focus (js/$ (str "#" (action-button-id id))))}
+    :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
 
 (defn action-comment [{:keys [id label comment on-comment]}]
