@@ -48,7 +48,12 @@
                   :title-class title-class
                   :always [:div.full
                            ;; max-height in order to keep header and controls visible
-                           [:div.modal--content {:style {:max-height "70vh" :overflow :auto}} content]
+                           [:div.modal--content
+                            {:style {:max-height "70vh" :overflow :auto}
+                             :ref (fn [elem] (when elem
+                                               (.focus elem)))
+                             :tabIndex "-1"}
+                            content]
                            (into [:div.modal--commands.commands {:style {:padding 0}}]
                                  commands)]
                   :open? true}]]
