@@ -32,8 +32,9 @@
        (db/apply-filters filters)))
 
 (defn get-form-template [id]
-  (-> (db/get-form-template {:id id})
-      parse-db-row))
+  (let [row (db/get-form-template {:id id})]
+    (when row
+      (parse-db-row row))))
 
 (defn- create-form-item! [user-id form-id item-index {:keys [input-prompt options]
                                                       :field/keys [title optional type max-length]}]

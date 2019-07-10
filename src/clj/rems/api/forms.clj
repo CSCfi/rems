@@ -1,7 +1,7 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer [SuccessResponse UpdateStateCommand Forms FormField FullForm]]
-            [rems.api.util]
+            [rems.api.util :refer [not-found-json-response]]
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -48,7 +48,10 @@
       :roles #{:owner}
       :path-params [form-id :- (describe s/Int "form-id")]
       :return FullForm
-      (ok (form/get-form-template form-id)))
+      (let [form (form/get-form-template form-id)]
+        (if form
+          (ok form)
+          (not-found-json-response))))
 
     (GET "/:form-id/editable" []
       :summary "Check if the form is editable"

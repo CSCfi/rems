@@ -27,6 +27,20 @@
                      read-body)]
         (is (:id (first data)))))
 
+    (testing "get one"
+      (let [data (-> (request :get "/api/forms/1")
+                     (authenticate api-key user-id)
+                     handler
+                     assert-response-is-ok
+                     read-body)]
+        (is (:id data))))
+
+    (testing "not found"
+      (let [response (-> (request :get "/api/forms/0")
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (= 404 (:status response)))))
+
     (testing "create"
       (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
