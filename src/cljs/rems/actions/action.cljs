@@ -42,7 +42,12 @@
   `buttons` - the actions that can be executed
   `:collapse-id` - optionally the collapse group the action is part of"
   [id title buttons content & [{:keys [collapse-id]}]]
-  [:div.collapse {:id (action-collapse-id id) :data-parent (if collapse-id (str "#" collapse-id) "#actions-forms")}
+  (.on (js/$ (str "#" (action-collapse-id id)))
+       "shown.bs.collapse"
+       #(.focus (js/$ (str "#" (action-collapse-id id)))))
+  [:div.collapse {:id (action-collapse-id id)
+                  :data-parent (if collapse-id (str "#" collapse-id) "#actions-forms")
+                  :tabIndex "-1"}
    [:h3.mt-5 title]
    content
    (into [:div.col.commands.mr-3 [cancel-action-button id]] buttons)])
