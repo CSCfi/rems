@@ -249,7 +249,13 @@
                                      :aria-expanded "false"
                                      :aria-controls collapse-id}
         title]]
-      [:div.collapse {:id collapse-id}
+      [:div.collapse {:id collapse-id
+                      :ref (fn [elem]
+                             (when elem
+                               (.on (js/$ elem)
+                                    "shown.bs.collapse"
+                                    #(.focus elem))))
+                      :tabIndex "-1"}
        [:div.license-block (str/trim (str text))]]]]))
 
 (defn- attachment-license [opts]
