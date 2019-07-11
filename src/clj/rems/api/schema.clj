@@ -108,22 +108,44 @@
    :license/expired s/Bool
    :license/archived s/Bool})
 
-(s/defschema V2Field
+(def not-neg? (partial <= 0))
+
+(s/defschema FieldTemplate
   {:field/id s/Int
-   :field/value s/Str
-   (s/optional-key :field/previous-value) s/Str
    :field/type (s/enum :attachment :date :description :label :multiselect :option :text :texta)
    :field/title LocalizedString
-   :field/placeholder LocalizedString
+   (s/optional-key :field/placeholder) LocalizedString
    :field/optional s/Bool
-   :field/options [{:key s/Str
-                    :label LocalizedString}]
-   :field/max-length (s/maybe s/Int)})
+   (s/optional-key :field/options) [{:key s/Str
+                                     :label LocalizedString}]
+   (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))})
 
-(s/defschema V2Form
+(s/defschema NewFieldTemplate
+  (dissoc FieldTemplate :field/id))
+
+(s/defschema Field
+  (assoc FieldTemplate
+         :field/value s/Str
+         (s/optional-key :field/previous-value) s/Str))
+
+(s/defschema FormTemplate ; TODO: use prefixed keys
+  {:id s/Int
+   :organization s/Str
+   :title s/Str
+   :fields [FieldTemplate]
+   :start DateTime
+   :end (s/maybe DateTime)
+   :expired s/Bool
+   :enabled s/Bool
+   :archived s/Bool})
+
+(s/defschema FormTemplateOverview
+  (dissoc FormTemplate :fields))
+
+(s/defschema Form
   {:form/id s/Int
    :form/title s/Str
-   :form/fields [V2Field]})
+   :form/fields [Field]})
 
 (s/defschema ApplicationAttachment
   {:attachment/id s/Num
@@ -149,7 +171,7 @@
    :application/accepted-licenses (s/maybe {s/Str #{s/Num}})
    :application/events [Event]
    :application/description s/Str
-   :application/form V2Form
+   :application/form Form
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) #{s/Str}}
@@ -162,37 +184,3 @@
           :application/form
           :application/events
           :application/licenses))
-
-;;; old form schemas
-
-(s/defschema Form
-  {:id s/Int
-   :organization s/Str
-   :title s/Str
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
-   :enabled s/Bool
-   :archived s/Bool})
-
-(def not-neg? (partial <= 0))
-
-(s/defschema FormField
-  {:field/title {s/Keyword s/Str}
-   :field/optional s/Bool
-   :field/type (s/enum :attachment :date :description :label :multiselect :option :text :texta)
-   (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
-   (s/optional-key :field/options) [{:key s/Str
-                                     :label {s/Keyword s/Str}}]
-   (s/optional-key :field/placeholder) {s/Keyword s/Str}})
-
-(s/defschema FormFieldWithId
-  (merge FormField
-         {:field/id s/Int}))
-
-(s/defschema FullForm
-  (merge Form
-         {:fields [FormFieldWithId]}))
-
-(s/defschema Forms
-  [Form])

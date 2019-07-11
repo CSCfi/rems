@@ -1,19 +1,14 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
-            [rems.api.schema :refer [FormFieldWithId]]
+            [rems.api.schema :refer [FieldTemplate]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s]))
 
-;;; form api related code – form "templates"
-
-(s/defschema Fields
-  [FormFieldWithId])
-
 (def ^:private fields-coercer
-  (coerce/coercer Fields coerce/string-coercion-matcher))
+  (coerce/coercer [FieldTemplate] coerce/string-coercion-matcher))
 
 (defn- coerce-fields [fields]
   (let [result (fields-coercer fields)]
@@ -98,7 +93,7 @@
             :id form-id
             :user user-id
             :fields (->> (generate-fields-with-ids! user-id form-id fields)
-                         (s/validate Fields)
+                         (s/validate [FieldTemplate])
                          (json/generate-string))))
     {:success (not (nil? form-id))
      :id form-id}))
@@ -110,7 +105,7 @@
                   :id form-id
                   :user user-id
                   :fields (->> (generate-fields-with-ids! user-id form-id fields)
-                               (s/validate Fields)
+                               (s/validate [FieldTemplate])
                                (json/generate-string))))
           {:success true})))
 

@@ -1,6 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [SuccessResponse UpdateStateCommand Forms FormField FullForm]]
+            [rems.api.schema :refer [SuccessResponse UpdateStateCommand FormTemplateOverview NewFieldTemplate FormTemplate]]
             [rems.api.util :refer [not-found-json-response]]
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
@@ -15,7 +15,7 @@
 (s/defschema FormCommand
   {:organization s/Str
    :title s/Str
-   :fields [FormField]})
+   :fields [NewFieldTemplate]})
 
 (s/defschema FormResponse
   {:success s/Bool
@@ -31,7 +31,7 @@
       :query-params [{disabled :- (describe s/Bool "whether to include disabled forms") false}
                      {expired :- (describe s/Bool "whether to include expired forms") false}
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
-      :return Forms
+      :return [FormTemplateOverview]
       (ok (get-form-templates (merge (when-not expired {:expired false})
                                      (when-not disabled {:enabled true})
                                      (when-not archived {:archived false})))))
@@ -47,7 +47,7 @@
       :summary "Get form by id"
       :roles #{:owner}
       :path-params [form-id :- (describe s/Int "form-id")]
-      :return FullForm
+      :return FormTemplate
       (let [form (form/get-form-template form-id)]
         (if form
           (ok form)
