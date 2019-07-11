@@ -44,16 +44,16 @@
     (testing "create"
       (let [command {:organization "abc"
                      :form/title (str "form title " (UUID/randomUUID))
-                     :fields [{:field/title {:en "en title"
-                                             :fi "fi title"}
-                               :field/optional true
-                               :field/type :text
-                               :field/placeholder {:en "en placeholder"
-                                                   :fi "fi placeholder"}}]}]
+                     :form/fields [{:field/title {:en "en title"
+                                                  :fi "fi title"}
+                                    :field/optional true
+                                    :field/type :text
+                                    :field/placeholder {:en "en placeholder"
+                                                        :fi "fi placeholder"}}]}]
 
         (testing "invalid create"
           ;; TODO: silence the logging for this expected error
-          (let [command-with-invalid-max-length (assoc-in command [:fields 0 :field/max-length] -1)
+          (let [command-with-invalid-max-length (assoc-in command [:form/fields 0 :field/max-length] -1)
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
                              (json-body command-with-invalid-max-length)
@@ -62,7 +62,7 @@
                 "can't send negative max length")))
 
         (testing "invalid create: field too long"
-          (let [command-with-long-placeholder (assoc-in command [:fields 0 :field/placeholder :en]
+          (let [command-with-long-placeholder (assoc-in command [:form/fields 0 :field/placeholder :en]
                                                         (apply str (repeat 10000 "x")))
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
@@ -86,8 +86,8 @@
                 (testing "result matches input"
                   (is (= (select-keys command [:title :organization])
                          (select-keys form-template [:title :organization])))
-                  (is (= (:fields command)
-                         (mapv fixup-field-to-match-command (:fields form-template)))))))))))))
+                  (is (= (:form/fields command)
+                         (mapv fixup-field-to-match-command (:form/fields form-template)))))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
@@ -96,39 +96,39 @@
         localized {:en "en" :fi "fi"}
         form-spec {:organization "abc"
                    :form/title "all field types test"
-                   :fields [{:field/type :text
-                             :field/title localized
-                             :field/optional false}
-                            {:field/type :texta
-                             :field/title localized
-                             :field/optional true
-                             :field/max-length 300
-                             :field/placeholder localized}
-                            {:field/type :description
-                             :field/title localized
-                             :field/optional false}
-                            {:field/type :option
-                             :field/title localized
-                             :field/optional true
-                             :field/options [{:key "a" :label localized}
-                                             {:key "b" :label localized}
-                                             {:key "c" :label localized}]}
-                            {:field/type :multiselect
-                             :field/title localized
-                             :field/optional false
-                             :field/options [{:key "a" :label localized}
-                                             {:key "b" :label localized}
-                                             {:key "c" :label localized}
-                                             {:key "d" :label localized}]}
-                            {:field/type :label
-                             :field/title localized
-                             :field/optional true}
-                            {:field/type :date
-                             :field/title localized
-                             :field/optional true}
-                            {:field/type :attachment
-                             :field/title localized
-                             :field/optional false}]}]
+                   :form/fields [{:field/type :text
+                                  :field/title localized
+                                  :field/optional false}
+                                 {:field/type :texta
+                                  :field/title localized
+                                  :field/optional true
+                                  :field/max-length 300
+                                  :field/placeholder localized}
+                                 {:field/type :description
+                                  :field/title localized
+                                  :field/optional false}
+                                 {:field/type :option
+                                  :field/title localized
+                                  :field/optional true
+                                  :field/options [{:key "a" :label localized}
+                                                  {:key "b" :label localized}
+                                                  {:key "c" :label localized}]}
+                                 {:field/type :multiselect
+                                  :field/title localized
+                                  :field/optional false
+                                  :field/options [{:key "a" :label localized}
+                                                  {:key "b" :label localized}
+                                                  {:key "c" :label localized}
+                                                  {:key "d" :label localized}]}
+                                 {:field/type :label
+                                  :field/title localized
+                                  :field/optional true}
+                                 {:field/type :date
+                                  :field/title localized
+                                  :field/optional true}
+                                 {:field/type :attachment
+                                  :field/title localized
+                                  :field/optional false}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)
@@ -144,8 +144,8 @@
                          read-ok-body)]
             (is (= (select-keys form-spec [:organization :title])
                    (select-keys form [:organization :title])))
-            (is (= (:fields form-spec)
-                   (mapv fixup-field-to-match-command (:fields form))))))))))
+            (is (= (:form/fields form-spec)
+                   (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
 (deftest form-editable-test
   (let [api-key "42"
@@ -154,7 +154,7 @@
                     (authenticate api-key user-id)
                     (json-body {:organization "abc"
                                 :form/title "form editable test"
-                                :fields []})
+                                :form/fields []})
                     handler
                     read-ok-body
                     :id)]
@@ -185,7 +185,7 @@
                     (authenticate api-key user-id)
                     (json-body {:organization "abc"
                                 :form/title "form edit test"
-                                :fields []})
+                                :form/fields []})
                     handler
                     read-ok-body
                     :id)]
@@ -199,7 +199,7 @@
                          (authenticate api-key user-id)
                          (json-body {:organization "def"
                                      :form/title "form edit test"
-                                     :fields []})
+                                     :form/fields []})
                          handler
                          read-ok-body)]
         (testing "form content after editing"
@@ -216,7 +216,7 @@
                     (authenticate api-key user-id)
                     (json-body {:organization "abc"
                                 :form/title "form update test"
-                                :fields []})
+                                :form/fields []})
                     handler
                     read-ok-body
                     :id)]
@@ -258,16 +258,16 @@
     (testing "create"
       (let [command {:organization "abc"
                      :form/title (str "form title " (UUID/randomUUID))
-                     :fields [{:field/title {:en "en title"
-                                             :fi "fi title"}
-                               :field/optional true
-                               :field/type :option
-                               :field/options [{:key "yes"
-                                                :label {:en "Yes"
-                                                        :fi "Kyllä"}}
-                                               {:key "no"
-                                                :label {:en "No"
-                                                        :fi "Ei"}}]}]}
+                     :form/fields [{:field/title {:en "en title"
+                                                  :fi "fi title"}
+                                    :field/optional true
+                                    :field/type :option
+                                    :field/options [{:key "yes"
+                                                     :label {:en "Yes"
+                                                             :fi "Kyllä"}}
+                                                    {:key "no"
+                                                     :label {:en "No"
+                                                             :fi "Ei"}}]}]}
             id (-> (request :post "/api/forms/create")
                    (authenticate api-key user-id)
                    (json-body command)
@@ -280,8 +280,8 @@
                          (authenticate api-key user-id)
                          handler
                          read-ok-body)]
-            (is (= (:fields command)
-                   (mapv fixup-field-to-match-command (:fields form))))))))))
+            (is (= (:form/fields command)
+                   (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:archived true})
@@ -312,7 +312,7 @@
       (let [response (-> (request :post "/api/forms/create")
                          (json-body {:organization "abc"
                                      :form/title "the title"
-                                     :fields []})
+                                     :form/fields []})
                          handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
@@ -330,7 +330,7 @@
                          (authenticate "42" "alice")
                          (json-body {:organization "abc"
                                      :form/title "the title"
-                                     :fields []})
+                                     :form/fields []})
                          handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

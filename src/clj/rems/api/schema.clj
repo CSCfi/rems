@@ -132,7 +132,7 @@
   {:form/id s/Int
    :organization s/Str
    :form/title s/Str
-   :fields [FieldTemplate]
+   :form/fields [FieldTemplate]
    :start DateTime
    :end (s/maybe DateTime)
    :expired s/Bool
@@ -140,7 +140,7 @@
    :archived s/Bool})
 
 (s/defschema FormTemplateOverview
-  (dissoc FormTemplate :fields))
+  (dissoc FormTemplate :form/fields))
 
 (s/defschema Form
   {:form/id s/Int

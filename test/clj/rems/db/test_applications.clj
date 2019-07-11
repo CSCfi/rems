@@ -65,7 +65,7 @@
         _ (assert wf-id)
         form-id (:id (form/create-form! "owner" {:organization "abc"
                                                  :form/title ""
-                                                 :items []}))
+                                                 :form/fields []}))
         _ (assert form-id)
         res-id (:id (resource/create-resource! {:resid "res1"
                                                 :organization "abc"
@@ -141,7 +141,7 @@
     (testing "error: catalogue items with different forms"
       (let [form-id2 (:id (form/create-form! "owner" {:organization "abc"
                                                       :form/title ""
-                                                      :items []}))
+                                                      :form/fields []}))
             _ (assert form-id2)
             res-id2 (:id (resource/create-resource! {:resid "res2+"
                                                      :organization "abc"

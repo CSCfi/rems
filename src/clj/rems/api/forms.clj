@@ -15,7 +15,7 @@
 (s/defschema CreateFormCommand
   {:organization s/Str
    :form/title s/Str
-   :fields [NewFieldTemplate]})
+   :form/fields [NewFieldTemplate]})
 
 (s/defschema CreateFormResponse
   {:success s/Bool

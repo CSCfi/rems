@@ -28,7 +28,7 @@
       (authenticate "42" "owner")
       (json-body {:organization "abc"
                   :form/title ""
-                  :fields form-fields})
+                  :form/fields form-fields})
       handler
       read-ok-body
       :id))
@@ -446,7 +446,7 @@
                                            :field/type :text
                                            :field/optional true}])
         [req-id opt-id] (->> (form/get-form-template form-id)
-                             :fields
+                             :form/fields
                              (map :field/id))
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)]

@@ -35,7 +35,7 @@
         form-id (:id (form/create-form! user-id
                                         {:organization ""
                                          :form/title ""
-                                         :fields []}))
+                                         :form/fields []}))
         res-id (:id (resource/create-resource! {:resid (str "urn:uuid:" (UUID/randomUUID))
                                                 :organization ""
                                                 :licenses []}

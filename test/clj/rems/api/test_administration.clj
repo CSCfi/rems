@@ -20,7 +20,7 @@
                                   api-key user-id))
         resource-id (:id (api-call :post "/api/resources/create" {:resid "test" :organization "abc" :licenses [license-id]}
                                    api-key user-id))
-        form-id (:id (api-call :post "/api/forms/create" {:organization "abc" :form/title "form update test" :fields []}
+        form-id (:id (api-call :post "/api/forms/create" {:organization "abc" :form/title "form update test" :form/fields []}
                                api-key user-id))
         workflow-id (:id (api-call :post "/api/workflows/create"
                                    {:organization "abc" :title "dynamic workflow"

@@ -24,7 +24,7 @@
       (->> (map-keys {:id :form/id
                       :organization :organization
                       :title :form/title
-                      :fields :fields
+                      :fields :form/fields
                       :start :start
                       :end :end
                       :expired :expired
@@ -89,32 +89,32 @@
                    (assoc field :field/id id)))
                fields))
 
-(defn create-form! [user-id {:keys [organization fields] :as form}]
+(defn create-form! [user-id form]
   ;; FIXME Remove saving old style forms only when we have a db migration.
   ;;       Otherwise it will get reeealy tricky to return both versions in get-api.
   (let [;; NB: Legacy forms (created by db/create-form!) are not updated
         ;;   when the form is edited. This is on purpose: this whole legacy
         ;;   codepath will be removed soon.
-        form-id (:id (db/create-form! {:organization organization
+        form-id (:id (db/create-form! {:organization (:organization form)
                                        :title (:form/title form)
                                        :user user-id}))]
     (db/save-form-template! {:id form-id
-                             :organization organization
+                             :organization (:organization form)
                              :title (:form/title form)
                              :user user-id
-                             :fields (->> (generate-fields-with-ids! user-id form-id fields)
+                             :fields (->> (generate-fields-with-ids! user-id form-id (:form/fields form))
                                           (s/validate [FieldTemplate])
                                           (json/generate-string))})
     {:success (not (nil? form-id))
      :id form-id}))
 
-(defn edit-form! [user-id form-id {:keys [fields] :as form}]
+(defn edit-form! [user-id form-id form]
   (or (form-in-use-error form-id)
       (do (db/edit-form-template! {:id form-id
                                    :organization (:organization form)
                                    :title (:form/title form)
                                    :user user-id
-                                   :fields (->> (generate-fields-with-ids! user-id form-id fields)
+                                   :fields (->> (generate-fields-with-ids! user-id form-id (:form/fields form))
                                                 (s/validate [FieldTemplate])
                                                 (json/generate-string))})
           {:success true})))

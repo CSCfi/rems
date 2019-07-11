@@ -11,20 +11,20 @@
   {40 {:form/id 40
        :organization "org"
        :form/title "form title"
-       :fields [{:field/id 41
-                 :field/title {:en "en title" :fi "fi title"}
-                 :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                 :field/optional false
-                 :field/options []
-                 :field/max-length 100
-                 :field/type :description}
-                {:field/id 42
-                 :field/title {:en "en title" :fi "fi title"}
-                 :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                 :field/optional false
-                 :field/options []
-                 :field/max-length 100
-                 :field/type :text}]
+       :form/fields [{:field/id 41
+                      :field/title {:en "en title" :fi "fi title"}
+                      :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                      :field/optional false
+                      :field/options []
+                      :field/max-length 100
+                      :field/type :description}
+                     {:field/id 42
+                      :field/title {:en "en title" :fi "fi title"}
+                      :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                      :field/optional false
+                      :field/options []
+                      :field/max-length 100
+                      :field/type :text}]
        :start (DateTime. 100)
        :end nil}})
 

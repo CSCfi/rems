@@ -423,7 +423,7 @@
 (defn- enrich-form [form get-form-template]
   (let [form-template (get-form-template (:form/id form))
         default-fields (map #(assoc % :field/value "")
-                            (:fields form-template))
+                            (:form/fields form-template))
         fields (merge-lists-by :field/id
                                default-fields
                                (:form/fields form))]
