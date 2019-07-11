@@ -147,29 +147,29 @@
                                  :fi "Projektitiimin koko"}
                    :field/optional true
                    :field/type :option
-                   :options [{:key "1-5"
-                              :label {:en "1-5 persons"
-                                      :fi "1-5 henkilöä"}}
-                             {:key "6-20"
-                              :label {:en "6-20 persons"
-                                      :fi "6-20 henkilöä"}}
-                             {:key "20+"
-                              :label {:en "over 20 persons"
-                                      :fi "yli 20 henkilöä"}}]}
+                   :field/options [{:key "1-5"
+                                    :label {:en "1-5 persons"
+                                            :fi "1-5 henkilöä"}}
+                                   {:key "6-20"
+                                    :label {:en "6-20 persons"
+                                            :fi "6-20 henkilöä"}}
+                                   {:key "20+"
+                                    :label {:en "over 20 persons"
+                                            :fi "yli 20 henkilöä"}}]}
 
                   {:field/title {:en "Where will the data be used?"
                                  :fi "Missä dataa tullaan käyttämään?"}
                    :field/optional true
                    :field/type :multiselect
-                   :options [{:key "EU"
-                              :label {:en "Inside EU"
-                                      :fi "EU:n sisällä"}}
-                             {:key "USA"
-                              :label {:en "Inside USA"
-                                      :fi "Yhdysvalloissa"}}
-                             {:key "Other"
-                              :label {:en "Elsewhere"
-                                      :fi "Muualla"}}]}
+                   :field/options [{:key "EU"
+                                    :label {:en "Inside EU"
+                                            :fi "EU:n sisällä"}}
+                                   {:key "USA"
+                                    :label {:en "Inside USA"
+                                            :fi "Yhdysvalloissa"}}
+                                   {:key "Other"
+                                    :label {:en "Elsewhere"
+                                            :fi "Muualla"}}]}
 
                   ;; fields which support maxlength
                   {:field/title {:en "Project acronym"
@@ -205,12 +205,12 @@
                                  :fi "2. Hakemus täydentää edellistä hakemusta"}
                    :field/optional false
                    :field/type :option
-                   :options [{:key "false"
-                              :label {:en "no"
-                                      :fi "ei"}}
-                             {:key "true"
-                              :label {:en "yes"
-                                      :fi "kyllä"}}]}
+                   :field/options [{:key "false"
+                                    :label {:en "no"
+                                            :fi "ei"}}
+                                   {:key "true"
+                                    :label {:en "yes"
+                                            :fi "kyllä"}}]}
                   {:field/title {:en "If yes, what were the previous project permit code/s?"
                                  :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"}
                    :field/optional true
@@ -289,12 +289,12 @@
                                  :fi "16. Pyydetäänkö biologisia näytteitä?"}
                    :field/optional false
                    :field/type :option
-                   :options [{:key "false"
-                              :label {:en "no"
-                                      :fi "ei"}}
-                             {:key "true"
-                              :label {:en "yes"
-                                      :fi "kyllä"}}]}
+                   :field/options [{:key "false"
+                                    :label {:en "no"
+                                            :fi "ei"}}
+                                   {:key "true"
+                                    :label {:en "yes"
+                                            :fi "kyllä"}}]}
                   {:field/title {:en "The type and amount of biological samples requested"
                                  :fi "Biologisten näytteiden tyypit ja määrät."}
                    :input-prompt {:en "Type and amount of samples and any additional specific criteria."
@@ -359,24 +359,24 @@
                                  :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"}
                    :field/optional false
                    :field/type :multiselect
-                   :options [{:key "population_health"
-                              :label {:en "Promoting the population's health"
-                                      :fi "Edistää kansanterveytttä"}}
-                             {:key "disease_mechanisms"
-                              :label {:en "Identifying factors involved in disease mechanisms"
-                                      :fi "Tunnistaa tautien mekanismeja"}}
-                             {:key "disease_prevention"
-                              :label {:en "Disease prevention"
-                                      :fi "Estää tautien leviämistä"}}
-                             {:key "health_product_development"
-                              :label {:en "Developing products that promote the welfare and health of the population"
-                                      :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."}}
-                             {:key "treatment_development"
-                              :label {:en "Developing products and treatments for diseases"
-                                      :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"}}
-                             {:key "other"
-                              :label {:en "Other"
-                                      :fi "Muuta"}}]}
+                   :field/options [{:key "population_health"
+                                    :label {:en "Promoting the population's health"
+                                            :fi "Edistää kansanterveytttä"}}
+                                   {:key "disease_mechanisms"
+                                    :label {:en "Identifying factors involved in disease mechanisms"
+                                            :fi "Tunnistaa tautien mekanismeja"}}
+                                   {:key "disease_prevention"
+                                    :label {:en "Disease prevention"
+                                            :fi "Estää tautien leviämistä"}}
+                                   {:key "health_product_development"
+                                    :label {:en "Developing products that promote the welfare and health of the population"
+                                            :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."}}
+                                   {:key "treatment_development"
+                                    :label {:en "Developing products and treatments for diseases"
+                                            :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"}}
+                                   {:key "other"
+                                    :label {:en "Other"
+                                            :fi "Muuta"}}]}
                   {:field/title {:en "Other, specify"
                                  :fi "Muuta, tarkenna"}
                    :field/optional true

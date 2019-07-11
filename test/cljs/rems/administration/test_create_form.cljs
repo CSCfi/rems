@@ -218,47 +218,47 @@
     (testing "option fields"
       (let [form (-> form
                      (assoc-in [:fields 0 :field/type] :option)
-                     (assoc-in [:fields 0 :options] [{:key "yes"
-                                                      :label {:en "en yes"
-                                                              :fi "fi yes"}}
-                                                     {:key "no"
-                                                      :label {:en "en no"
-                                                              :fi "fi no"}}]))]
+                     (assoc-in [:fields 0 :field/options] [{:key "yes"
+                                                            :label {:en "en yes"
+                                                                    :fi "fi yes"}}
+                                                           {:key "no"
+                                                            :label {:en "en no"
+                                                                    :fi "fi no"}}]))]
         (is (= {:organization "abc"
                 :title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
                           :field/type :option
-                          :options [{:key "yes"
-                                     :label {:en "en yes"
-                                             :fi "fi yes"}}
-                                    {:key "no"
-                                     :label {:en "en no"
-                                             :fi "fi no"}}]}]}
+                          :field/options [{:key "yes"
+                                           :label {:en "en yes"
+                                                   :fi "fi yes"}}
+                                          {:key "no"
+                                           :label {:en "en no"
+                                                   :fi "fi no"}}]}]}
                (build-request form languages)))))
 
     (testing "multiselect fields"
       (let [form (-> form
                      (assoc-in [:fields 0 :field/type] :multiselect)
-                     (assoc-in [:fields 0 :options] [{:key "egg"
-                                                      :label {:en "Egg"
-                                                              :fi "Munaa"}}
-                                                     {:key "bacon"
-                                                      :label {:en "Bacon"
-                                                              :fi "Pekonia"}}]))]
+                     (assoc-in [:fields 0 :field/options] [{:key "egg"
+                                                            :label {:en "Egg"
+                                                                    :fi "Munaa"}}
+                                                           {:key "bacon"
+                                                            :label {:en "Bacon"
+                                                                    :fi "Pekonia"}}]))]
         (is (= {:organization "abc"
                 :title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
                           :field/type :multiselect
-                          :options [{:key "egg"
-                                     :label {:en "Egg"
-                                             :fi "Munaa"}}
-                                    {:key "bacon"
-                                     :label {:en "Bacon"
-                                             :fi "Pekonia"}}]}]}
+                          :field/options [{:key "egg"
+                                           :label {:en "Egg"
+                                                   :fi "Munaa"}}
+                                          {:key "bacon"
+                                           :label {:en "Bacon"
+                                                   :fi "Pekonia"}}]}]}
                (build-request form languages)))))))
 
 (deftest validate-form-test
@@ -312,57 +312,57 @@
     (testing "option fields"
       (let [form (-> form
                      (assoc-in [:fields 0 :field/type] :option)
-                     (assoc-in [:fields 0 :options] [{:key "yes"
-                                                      :label {:en "en yes"
-                                                              :fi "fi yes"}}
-                                                     {:key "no"
-                                                      :label {:en "en no"
-                                                              :fi "fi no"}}]))]
+                     (assoc-in [:fields 0 :field/options] [{:key "yes"
+                                                            :label {:en "en yes"
+                                                                    :fi "fi yes"}}
+                                                           {:key "no"
+                                                            :label {:en "en no"
+                                                                    :fi "fi no"}}]))]
         (testing "valid form"
           (is (empty? (validate-form form languages))))
 
         (testing "missing option key"
-          (is (= (get-in (validate-form (assoc-in form [:fields 0 :options 0 :key] "") languages)
-                         [:fields 0 :options 0 :key])
-                 (get-in (validate-form (assoc-in form [:fields 0 :options 0 :key] nil) languages)
-                         [:fields 0 :options 0 :key])
+          (is (= (get-in (validate-form (assoc-in form [:fields 0 :field/options 0 :key] "") languages)
+                         [:fields 0 :field/options 0 :key])
+                 (get-in (validate-form (assoc-in form [:fields 0 :field/options 0 :key] nil) languages)
+                         [:fields 0 :field/options 0 :key])
                  :t.form.validation/required)))
 
         (testing "missing option label"
-          (let [empty-label (validate-form (assoc-in form [:fields 0 :options 0 :label] {:en "" :fi ""}) languages)
-                nil-label (validate-form (assoc-in form [:fields 0 :options 0 :label] nil) languages)]
-            (is (= (get-in empty-label [:fields 0 :options 0 :label :en])
-                   (get-in empty-label [:fields 0 :options 0 :label :fi])
-                   (get-in nil-label [:fields 0 :options 0 :label :en])
-                   (get-in nil-label [:fields 0 :options 0 :label :fi])
+          (let [empty-label (validate-form (assoc-in form [:fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
+                nil-label (validate-form (assoc-in form [:fields 0 :field/options 0 :label] nil) languages)]
+            (is (= (get-in empty-label [:fields 0 :field/options 0 :label :en])
+                   (get-in empty-label [:fields 0 :field/options 0 :label :fi])
+                   (get-in nil-label [:fields 0 :field/options 0 :label :en])
+                   (get-in nil-label [:fields 0 :field/options 0 :label :fi])
                    :t.form.validation/required))))))
 
     (testing "multiselect fields"
       (let [form (-> form
                      (assoc-in [:fields 0 :field/type] :multiselect)
-                     (assoc-in [:fields 0 :options] [{:key "egg"
-                                                      :label {:en "Egg"
-                                                              :fi "Munaa"}}
-                                                     {:key "bacon"
-                                                      :label {:en "Bacon"
-                                                              :fi "Pekonia"}}]))]
+                     (assoc-in [:fields 0 :field/options] [{:key "egg"
+                                                            :label {:en "Egg"
+                                                                    :fi "Munaa"}}
+                                                           {:key "bacon"
+                                                            :label {:en "Bacon"
+                                                                    :fi "Pekonia"}}]))]
         (testing "valid form"
           (is (empty? (validate-form form languages))))
 
         (testing "missing option key"
-          (is (= (get-in (validate-form (assoc-in form [:fields 0 :options 0 :key] "") languages)
-                         [:fields 0 :options 0 :key])
-                 (get-in (validate-form (assoc-in form [:fields 0 :options 0 :key] nil) languages)
-                         [:fields 0 :options 0 :key])
+          (is (= (get-in (validate-form (assoc-in form [:fields 0 :field/options 0 :key] "") languages)
+                         [:fields 0 :field/options 0 :key])
+                 (get-in (validate-form (assoc-in form [:fields 0 :field/options 0 :key] nil) languages)
+                         [:fields 0 :field/options 0 :key])
                  :t.form.validation/required)))
 
         (testing "missing option label"
-          (let [empty-label (validate-form (assoc-in form [:fields 0 :options 0 :label] {:en "" :fi ""}) languages)
-                nil-label (validate-form (assoc-in form [:fields 0 :options 0 :label] nil) languages)]
-            (is (= (get-in empty-label [:fields 0 :options 0 :label :en])
-                   (get-in empty-label [:fields 0 :options 0 :label :fi])
-                   (get-in nil-label [:fields 0 :options 0 :label :en])
-                   (get-in nil-label [:fields 0 :options 0 :label :fi])
+          (let [empty-label (validate-form (assoc-in form [:fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
+                nil-label (validate-form (assoc-in form [:fields 0 :field/options 0 :label] nil) languages)]
+            (is (= (get-in empty-label [:fields 0 :field/options 0 :label :en])
+                   (get-in empty-label [:fields 0 :field/options 0 :label :fi])
+                   (get-in nil-label [:fields 0 :field/options 0 :label :en])
+                   (get-in nil-label [:fields 0 :field/options 0 :label :fi])
                    :t.form.validation/required))))))))
 
 (deftest build-localized-string-test

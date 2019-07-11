@@ -36,8 +36,8 @@
     (when row
       (parse-db-row row))))
 
-(defn- create-form-item! [user-id form-id item-index {:keys [input-prompt options]
-                                                      :field/keys [title optional type max-length]}]
+(defn- create-form-item! [user-id form-id item-index {:keys [input-prompt]
+                                                      :field/keys [title optional type max-length options]}]
   (let [item-id (:id (db/create-form-item! {:type (name type)
                                             :user user-id
                                             :value 0}))]

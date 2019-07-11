@@ -55,22 +55,22 @@
 (rf/reg-event-db
  ::add-form-field-option
  (fn [db [_ field-index]]
-   (update-in db [::form :fields field-index :options] items/add {})))
+   (update-in db [::form :fields field-index :field/options] items/add {})))
 
 (rf/reg-event-db
  ::remove-form-field-option
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :fields field-index :options] items/remove option-index)))
+   (update-in db [::form :fields field-index :field/options] items/remove option-index)))
 
 (rf/reg-event-db
  ::move-form-field-option-up
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :fields field-index :options] items/move-up option-index)))
+   (update-in db [::form :fields field-index :field/options] items/move-up option-index)))
 
 (rf/reg-event-db
  ::move-form-field-option-down
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :fields field-index :options] items/move-down option-index)))
+   (update-in db [::form :fields field-index :field/options] items/move-down option-index)))
 
 ;;;; form submit
 
@@ -101,9 +101,9 @@
          (when (supports-max-length? field)
            {:field/max-length (parse-int (:field/max-length field))})
          (when (supports-options? field)
-           {:options (for [{:keys [key label]} (:options field)]
-                       {:key key
-                        :label (build-localized-string label languages)})})))
+           {:field/options (for [{:keys [key label]} (:field/options field)]
+                             {:key key
+                              :label (build-localized-string label languages)})})))
 
 (defn build-request [form languages]
   {:organization (:organization form)
@@ -139,14 +139,14 @@
              (validate-localized-text-field option :label languages))})
 
 (defn- validate-options [options languages]
-  {:options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
+  {:field/options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
 
 (defn- validate-field [field id languages]
   {id (merge (validate-text-field field :field/type)
              (validate-localized-text-field field :field/title languages)
              (validate-optional-localized-field field :input-prompt languages)
              (validate-max-length (:field/max-length field))
-             (validate-options (:options field) languages))})
+             (validate-options (:field/options field) languages))})
 
 (defn validate-form [form languages]
   (-> (merge (validate-text-field form :organization)
@@ -228,16 +228,16 @@
      [move-form-field-option-up-button field-index option-index]
      [move-form-field-option-down-button field-index option-index]
      [remove-form-field-option-button field-index option-index]]]
-   [text-field context {:keys [:fields field-index :options option-index :key]
+   [text-field context {:keys [:fields field-index :field/options option-index :key]
                         :label (text :t.create-form/option-key)
                         :normalizer normalize-option-key}]
-   [localized-text-field context {:keys [:fields field-index :options option-index :label]
+   [localized-text-field context {:keys [:fields field-index :field/options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
 (defn- form-field-option-fields [field-index]
   (let [form @(rf/subscribe [::form])]
     (into (into [:div]
-                (for [option-index (range (count (get-in form [:fields field-index :options])))]
+                (for [option-index (range (count (get-in form [:fields field-index :field/options])))]
                   [form-field-option-field field-index option-index]))
           [[:div.form-field-option.new-form-field-option
             [add-form-field-option-button field-index]]])))
@@ -322,7 +322,7 @@
          (when (supports-max-length? field)
            {:field/max-length (parse-int (:field/max-length field))})
          (when (supports-options? field)
-           {:field/options (:options field)})))
+           {:field/options (:field/options field)})))
 
 (defn- field-preview [field]
   [fields/field (form-field-to-application-field field)])

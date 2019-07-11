@@ -109,16 +109,16 @@
                             {:field/type :option
                              :field/title localized
                              :field/optional true
-                             :options [{:key "a" :label localized}
-                                       {:key "b" :label localized}
-                                       {:key "c" :label localized}]}
+                             :field/options [{:key "a" :label localized}
+                                             {:key "b" :label localized}
+                                             {:key "c" :label localized}]}
                             {:field/type :multiselect
                              :field/title localized
                              :field/optional false
-                             :options [{:key "a" :label localized}
-                                       {:key "b" :label localized}
-                                       {:key "c" :label localized}
-                                       {:key "d" :label localized}]}
+                             :field/options [{:key "a" :label localized}
+                                             {:key "b" :label localized}
+                                             {:key "c" :label localized}
+                                             {:key "d" :label localized}]}
                             {:field/type :label
                              :field/title localized
                              :field/optional true}
@@ -257,12 +257,12 @@
                                              :fi "fi title"}
                                :field/optional true
                                :field/type :option
-                               :options [{:key "yes"
-                                          :label {:en "Yes"
-                                                  :fi "Kyllä"}}
-                                         {:key "no"
-                                          :label {:en "No"
-                                                  :fi "Ei"}}]}]}
+                               :field/options [{:key "yes"
+                                                :label {:en "Yes"
+                                                        :fi "Kyllä"}}
+                                               {:key "no"
+                                                :label {:en "No"
+                                                        :fi "Ei"}}]}]}
             id (-> (request :post "/api/forms/create")
                    (authenticate api-key user-id)
                    (json-body command)

@@ -15,14 +15,14 @@
                  :field/title {:en "en title" :fi "fi title"}
                  :input-prompt {:en "en placeholder" :fi "fi placeholder"}
                  :field/optional false
-                 :options []
+                 :field/options []
                  :field/max-length 100
                  :field/type :description}
                 {:field/id 42
                  :field/title {:en "en title" :fi "fi title"}
                  :input-prompt {:en "en placeholder" :fi "fi placeholder"}
                  :field/optional false
-                 :options []
+                 :field/options []
                  :field/max-length 100
                  :field/type :text}]
        :start (DateTime. 100)

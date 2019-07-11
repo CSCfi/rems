@@ -182,8 +182,8 @@
    :field/optional s/Bool
    :field/type (s/enum :attachment :date :description :label :multiselect :option :text :texta)
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
-   (s/optional-key :options) [{:key s/Str
-                               :label {s/Keyword s/Str}}]
+   (s/optional-key :field/options) [{:key s/Str
+                                     :label {s/Keyword s/Str}}]
    (s/optional-key :input-prompt) {s/Keyword s/Str}})
 
 (s/defschema FormFieldWithId

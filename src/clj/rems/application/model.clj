@@ -430,7 +430,7 @@
                             :field/title (:field/title field)
                             :field/placeholder (get field :input-prompt {})
                             :field/optional (:field/optional field)
-                            :field/options (:options field)
+                            :field/options (:field/options field)
                             :field/max-length (:field/max-length field)})
                          (:fields form))
         fields (merge-lists-by :field/id rich-fields app-fields)]
