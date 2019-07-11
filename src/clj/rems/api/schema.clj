@@ -184,7 +184,7 @@
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :field/options) [{:key s/Str
                                      :label {s/Keyword s/Str}}]
-   (s/optional-key :input-prompt) {s/Keyword s/Str}})
+   (s/optional-key :field/placeholder) {s/Keyword s/Str}})
 
 (s/defschema FormFieldWithId
   (merge FormField

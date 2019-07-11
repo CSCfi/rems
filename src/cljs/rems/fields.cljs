@@ -289,54 +289,54 @@
             [:form
              [field {:field/type :text
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])
+                     :field/placeholder {:en "placeholder"}}]])
    (example "field of type \"text\" with maximum length"
             [:form
              [field {:field/type :text
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
+                     :field/placeholder {:en "placeholder"}
                      :field/max-length 10}]])
    (example "field of type \"text\" with validation error"
             [:form
              [field {:field/type :text
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
+                     :field/placeholder {:en "placeholder"}
                      :validation {:type :t.form.validation/required}}]])
    (example "non-editable field of type \"text\" without text"
             [:form
              [field {:field/type :text
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
+                     :field/placeholder {:en "placeholder"}
                      :readonly true}]])
    (example "non-editable field of type \"text\" with text"
             [:form
              [field {:field/type :text
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
+                     :field/placeholder {:en "placeholder"}
                      :readonly true
                      :field/value lipsum-short}]])
    (example "field of type \"texta\""
             [:form
              [field {:field/type :texta
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])
+                     :field/placeholder {:en "placeholder"}}]])
    (example "field of type \"texta\" with maximum length"
             [:form
              [field {:field/type :texta
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
+                     :field/placeholder {:en "placeholder"}
                      :field/max-length 10}]])
    (example "field of type \"texta\" with validation error"
             [:form
              [field {:field/type :texta
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
+                     :field/placeholder {:en "placeholder"}
                      :validation {:type :t.form.validation/required}}]])
    (example "non-editable field of type \"texta\""
             [:form
              [field {:field/type :texta
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}
+                     :field/placeholder {:en "placeholder"}
                      :readonly true
                      :field/value lipsum-paragraphs}]])
    (let [previous-lipsum-paragraphs (-> lipsum-paragraphs
@@ -347,14 +347,14 @@
                [:form
                 [field {:field/type :texta
                         :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
+                        :field/placeholder {:en "placeholder"}
                         :field/value lipsum-paragraphs
                         :field/previous-value previous-lipsum-paragraphs}]])
       (example "editable field of type \"texta\" with previous value, diff shown"
                [:form
                 [field {:field/type :texta
                         :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
+                        :field/placeholder {:en "placeholder"}
                         :field/value lipsum-paragraphs
                         :field/previous-value previous-lipsum-paragraphs
                         :diff true}]])
@@ -362,7 +362,7 @@
                [:form
                 [field {:field/type :texta
                         :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
+                        :field/placeholder {:en "placeholder"}
                         :readonly true
                         :field/value lipsum-paragraphs
                         :field/previous-value previous-lipsum-paragraphs}]])
@@ -370,7 +370,7 @@
                [:form
                 [field {:field/type :texta
                         :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
+                        :field/placeholder {:en "placeholder"}
                         :readonly true
                         :field/value lipsum-paragraphs
                         :field/previous-value previous-lipsum-paragraphs
@@ -379,7 +379,7 @@
                [:form
                 [field {:field/type :texta
                         :field/title {:en "Title"}
-                        :field/placeholder {:en "prompt"}
+                        :field/placeholder {:en "placeholder"}
                         :readonly true
                         :field/value lipsum-paragraphs
                         :field/previous-value lipsum-paragraphs}]])])
@@ -501,7 +501,7 @@
              [field {:field/type :texta
                      :field/optional true
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])
+                     :field/placeholder {:en "placeholder"}}]])
    (example "field of type \"label\""
             [:form
              [field {:field/type :label
@@ -510,4 +510,4 @@
             [:form
              [field {:field/type :description
                      :field/title {:en "Title"}
-                     :field/placeholder {:en "prompt"}}]])])
+                     :field/placeholder {:en "placeholder"}}]])])

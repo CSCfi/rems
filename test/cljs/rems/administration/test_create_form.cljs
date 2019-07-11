@@ -164,8 +164,8 @@
                         :field/optional true
                         :field/type :text
                         :field/max-length "12"
-                        :input-prompt {:en "en prompt"
-                                       :fi "fi prompt"}}]}
+                        :field/placeholder {:en "en placeholder"
+                                            :fi "fi placeholder"}}]}
         languages [:en :fi]]
 
     (testing "basic form"
@@ -176,8 +176,8 @@
                         :field/optional true
                         :field/type :text
                         :field/max-length 12
-                        :input-prompt {:en "en prompt"
-                                       :fi "fi prompt"}}]}
+                        :field/placeholder {:en "en placeholder"
+                                            :fi "fi placeholder"}}]}
              (build-request form languages))))
 
     (testing "zero fields"
@@ -200,14 +200,14 @@
       (is (false? (getx-in (build-request (assoc-in form [:fields 0 :field/optional] nil) languages)
                            [:fields 0 :field/optional]))))
 
-    (testing "input prompt is optional"
+    (testing "placeholder is optional"
       (is (= {:en "" :fi ""}
-             (getx-in (build-request (assoc-in form [:fields 0 :input-prompt] nil) languages)
-                      [:fields 0 :input-prompt])
-             (getx-in (build-request (assoc-in form [:fields 0 :input-prompt] {:en ""}) languages)
-                      [:fields 0 :input-prompt])
-             (getx-in (build-request (assoc-in form [:fields 0 :input-prompt] {:en "" :fi ""}) languages)
-                      [:fields 0 :input-prompt]))))
+             (getx-in (build-request (assoc-in form [:fields 0 :field/placeholder] nil) languages)
+                      [:fields 0 :field/placeholder])
+             (getx-in (build-request (assoc-in form [:fields 0 :field/placeholder] {:en ""}) languages)
+                      [:fields 0 :field/placeholder])
+             (getx-in (build-request (assoc-in form [:fields 0 :field/placeholder] {:en "" :fi ""}) languages)
+                      [:fields 0 :field/placeholder]))))
 
     (testing "max length is optional"
       (is (nil? (getx-in (build-request (assoc-in form [:fields 0 :field/max-length] "") languages)
@@ -269,8 +269,8 @@
                         :field/optional true
                         :field/type :text
                         :field/max-length "12"
-                        :input-prompt {:en "en prompt"
-                                       :fi "fi prompt"}}]}
+                        :field/placeholder {:en "en placeholder"
+                                            :fi "fi placeholder"}}]}
         languages [:en :fi]]
 
     (testing "valid form"
@@ -302,11 +302,11 @@
                   [:fields 0 :field/type])
           :t.form.validation/required))
 
-    (testing "if you use input prompt, you must fill in all the languages"
-      (is (= (get-in (validate-form (assoc-in form [:fields 0 :input-prompt] {:en "en prompt" :fi ""}) languages)
-                     [:fields 0 :input-prompt :fi])
-             (get-in (validate-form (assoc-in form [:fields 0 :input-prompt] {:en "en prompt"}) languages)
-                     [:fields 0 :input-prompt :fi])
+    (testing "if you use a placeholder, you must fill in all the languages"
+      (is (= (get-in (validate-form (assoc-in form [:fields 0 :field/placeholder] {:en "en placeholder" :fi ""}) languages)
+                     [:fields 0 :field/placeholder :fi])
+             (get-in (validate-form (assoc-in form [:fields 0 :field/placeholder] {:en "en placeholder"}) languages)
+                     [:fields 0 :field/placeholder :fi])
              :t.form.validation/required)))
 
     (testing "option fields"

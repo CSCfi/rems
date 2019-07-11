@@ -36,8 +36,7 @@
     (when row
       (parse-db-row row))))
 
-(defn- create-form-item! [user-id form-id item-index {:keys [input-prompt]
-                                                      :field/keys [title optional type max-length options]}]
+(defn- create-form-item! [user-id form-id item-index {:field/keys [title optional type max-length options placeholder]}]
   (let [item-id (:id (db/create-form-item! {:type (name type)
                                             :user user-id
                                             :value 0}))]
@@ -58,7 +57,7 @@
       (db/localize-form-item! {:item item-id
                                :langcode (name lang)
                                :title (get title lang)
-                               :inputprompt (get input-prompt lang)}))
+                               :inputprompt (get placeholder lang)}))
     item-id))
 
 (defn- catalogue-items-for-form [id]

@@ -118,8 +118,8 @@
                                  :fi "Projektin nimi"}
                    :field/optional false
                    :field/type :description
-                   :input-prompt {:en "Project"
-                                  :fi "Projekti"}}
+                   :field/placeholder {:en "Project"
+                                       :fi "Projekti"}}
 
                   {:field/title {:en "Here would be some helpful instructions."
                                  :fi "Tässä olisi jotain täyttöohjeita."}
@@ -130,8 +130,8 @@
                                  :fi "Projektin tarkoitus"}
                    :field/optional false
                    :field/type :texta
-                   :input-prompt {:en "The purpose of the project is to..."
-                                  :fi "Projektin tarkoitus on..."}}
+                   :field/placeholder {:en "The purpose of the project is to..."
+                                       :fi "Projektin tarkoitus on..."}}
 
                   {:field/title {:en "Start date of the project"
                                  :fi "Projektin aloituspäivä"}
@@ -194,8 +194,8 @@
                                  :fi "Hakemuksen otsikko"}
                    :field/optional true
                    :field/type :description
-                   :input-prompt {:en "Study of.."
-                                  :fi "Tutkimus aiheesta.."}}
+                   :field/placeholder {:en "Study of.."
+                                       :fi "Tutkimus aiheesta.."}}
                   {:field/title {:en "1. Research project full title"
                                  :fi "1. Tutkimusprojektin täysi nimi"}
                    :field/optional false
@@ -245,43 +245,43 @@
                    :field/max-length 100}
                   {:field/title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
                                  :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
-                   :input-prompt {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
-                                  :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
+                   :field/placeholder {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
+                                       :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "10. Place/plces of research, including place of sample and/or data analysis."
                                  :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."}
-                   :input-prompt {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
-                                  :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."}
+                   :field/placeholder {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
+                                       :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "11. Description of other research group members and their role in the applied project."
                                  :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
-                   :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
-                                  :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
+                   :field/placeholder {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
+                                       :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "12. Specify selection criteria of study participants (if applicable)"
                                  :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"}
-                   :input-prompt {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
-                                  :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."}
+                   :field/placeholder {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
+                                       :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)"
                                  :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"}
-                   :input-prompt {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
-                                  :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."}
+                   :field/placeholder {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
+                                       :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "14. Specify requested genomics or other omics data (if applicable)"
                                  :fi "14. Kuvaile tarvittava genomiikkadata."}
-                   :input-prompt {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
-                                  :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
+                   :field/placeholder {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
+                                       :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
@@ -297,15 +297,15 @@
                                             :fi "kyllä"}}]}
                   {:field/title {:en "The type and amount of biological samples requested"
                                  :fi "Biologisten näytteiden tyypit ja määrät."}
-                   :input-prompt {:en "Type and amount of samples and any additional specific criteria."
-                                  :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."}
+                   :field/placeholder {:en "Type and amount of samples and any additional specific criteria."
+                                       :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "17. What study results will be returned to THL Biobank (if any)?"
                                  :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"}
-                   :input-prompt {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
-                                  :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"}
+                   :field/placeholder {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
+                                       :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
@@ -315,43 +315,43 @@
                    :field/type :date}
                   {:field/title {:en "18. Ethical aspects of the project"
                                  :fi "18. Tutkimuksen eettiset puolet"}
-                   :input-prompt {:en "If you have any documents from an ethical board, please provide them as an attachment."
-                                  :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."}
+                   :field/placeholder {:en "If you have any documents from an ethical board, please provide them as an attachment."
+                                       :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "19. Project keywords (max 5)"
                                  :fi "19. Projektin avainsanat (maks. 5)"}
-                   :input-prompt {:en "List a few keywords that are related to this research project (please separate with comma)"
-                                  :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."}
+                   :field/placeholder {:en "List a few keywords that are related to this research project (please separate with comma)"
+                                       :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "20. Planned publications (max 3)"
                                  :fi "20. Suunnitellut julkaisut (maks. 3)"}
-                   :input-prompt {:en "Planned publication titles / research topics"
-                                  :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"}
+                   :field/placeholder {:en "Planned publication titles / research topics"
+                                       :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "21. Funding information"
                                  :fi "21. Rahoitus"}
-                   :input-prompt {:en "List all funding sources which will be used for this research project."
-                                  :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"}
+                   :field/placeholder {:en "List all funding sources which will be used for this research project."
+                                       :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)"
                                  :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"}
-                   :input-prompt {:en "Electronic invoice address when possible + invoicing reference"
-                                  :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."}
+                   :field/placeholder {:en "Electronic invoice address when possible + invoicing reference"
+                                       :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "23. Other information"
                                  :fi "23. Muuta"}
-                   :input-prompt {:en "Any other relevant information for the application"
-                                  :fi "Muuta hakemukseen liittyvää oleellista tietoa"}
+                   :field/placeholder {:en "Any other relevant information for the application"
+                                       :fi "Muuta hakemukseen liittyvää oleellista tietoa"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
@@ -673,15 +673,15 @@
                                                :fi "Projektin nimi"}
                                  :field/optional false
                                  :field/type :description
-                                 :input-prompt {:en "Project"
-                                                :fi "Projekti"}}
+                                 :field/placeholder {:en "Project"
+                                                     :fi "Projekti"}}
 
                                 {:field/title {:en "Project description"
                                                :fi "Projektin kuvaus"}
                                  :field/optional false
                                  :field/type :texta
-                                 :input-prompt {:en "The purpose of the project is to..."
-                                                :fi "Projektin tarkoitus on..."}}]}))
+                                 :field/placeholder {:en "The purpose of the project is to..."
+                                                     :fi "Projektin tarkoitus on..."}}]}))
         form (form/get-form-template form-id)
         license-id (:id (licenses/create-license!
                          {:licensetype "text"

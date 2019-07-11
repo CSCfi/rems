@@ -428,7 +428,7 @@
                             :field/value "" ; default for new forms
                             :field/type (:field/type field)
                             :field/title (:field/title field)
-                            :field/placeholder (get field :input-prompt {})
+                            :field/placeholder (get field :field/placeholder {})
                             :field/optional (:field/optional field)
                             :field/options (:field/options field)
                             :field/max-length (:field/max-length field)})

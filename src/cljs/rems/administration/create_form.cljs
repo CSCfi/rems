@@ -77,7 +77,7 @@
 (defn- supports-optional? [field]
   (not= :label (:field/type field)))
 
-(defn- supports-input-prompt? [field]
+(defn- supports-placeholder? [field]
   (contains? #{:text :texta :description} (:field/type field)))
 
 (defn- supports-max-length? [field]
@@ -96,8 +96,8 @@
           :field/optional (if (supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (supports-input-prompt? field)
-           {:input-prompt (build-localized-string (:input-prompt field) languages)})
+         (when (supports-placeholder? field)
+           {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
          (when (supports-max-length? field)
            {:field/max-length (parse-int (:field/max-length field))})
          (when (supports-options? field)
@@ -132,7 +132,7 @@
     (let [parsed (parse-int max-length)]
       (when (or (nil? parsed)
                 (not (<= (first max-length-range) parsed (second max-length-range))))
-        {:max-length :t.form.validation/invalid-value}))))
+        {:field/max-length :t.form.validation/invalid-value}))))
 
 (defn- validate-option [option id languages]
   {id (merge (validate-text-field option :key)
@@ -144,7 +144,7 @@
 (defn- validate-field [field id languages]
   {id (merge (validate-text-field field :field/type)
              (validate-localized-text-field field :field/title languages)
-             (validate-optional-localized-field field :input-prompt languages)
+             (validate-optional-localized-field field :field/placeholder languages)
              (validate-max-length (:field/max-length field))
              (validate-options (:field/options field) languages))})
 
@@ -196,9 +196,9 @@
   [localized-text-field context {:keys [:fields field-index :field/title]
                                  :label (text :t.create-form/field-title)}])
 
-(defn- form-field-input-prompt-field [field-index]
-  [localized-text-field context {:keys [:fields field-index :input-prompt]
-                                 :label (text :t.create-form/input-prompt)}])
+(defn- form-field-placeholder-field [field-index]
+  [localized-text-field context {:keys [:fields field-index :field/placeholder]
+                                 :label (text :t.create-form/placeholder)}])
 
 (defn- form-field-max-length-field [field-index]
   [text-field context {:keys [:fields field-index :field/max-length]
@@ -302,8 +302,8 @@
                         [form-field-type-radio-group field-index]
                         (when (supports-optional? field)
                           [form-field-optional-checkbox field-index])
-                        (when (supports-input-prompt? field)
-                          [form-field-input-prompt-field field-index])
+                        (when (supports-placeholder? field)
+                          [form-field-placeholder-field field-index])
                         (when (supports-max-length? field)
                           [form-field-max-length-field field-index])
                         (when (supports-options? field)
@@ -317,8 +317,8 @@
           :field/title (:field/title field)}
          (when (supports-optional? field)
            {:field/optional (:field/optional field)})
-         (when (supports-input-prompt? field)
-           {:field/placeholder (:input-prompt field)})
+         (when (supports-placeholder? field)
+           {:field/placeholder (:field/placeholder field)})
          (when (supports-max-length? field)
            {:field/max-length (parse-int (:field/max-length field))})
          (when (supports-options? field)

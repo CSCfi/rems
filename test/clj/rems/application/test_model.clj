@@ -13,14 +13,14 @@
        :title "form title"
        :fields [{:field/id 41
                  :field/title {:en "en title" :fi "fi title"}
-                 :input-prompt {:en "en placeholder" :fi "fi placeholder"}
+                 :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                  :field/optional false
                  :field/options []
                  :field/max-length 100
                  :field/type :description}
                 {:field/id 42
                  :field/title {:en "en title" :fi "fi title"}
-                 :input-prompt {:en "en placeholder" :fi "fi placeholder"}
+                 :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                  :field/optional false
                  :field/options []
                  :field/max-length 100

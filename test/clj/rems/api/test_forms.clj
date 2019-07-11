@@ -48,8 +48,8 @@
                                              :fi "fi title"}
                                :field/optional true
                                :field/type :text
-                               :input-prompt {:en "en prompt"
-                                              :fi "fi prompt"}}]}]
+                               :field/placeholder {:en "en placeholder"
+                                                   :fi "fi placeholder"}}]}]
 
         (testing "invalid create"
           ;; TODO: silence the logging for this expected error
@@ -62,11 +62,11 @@
                 "can't send negative max length")))
 
         (testing "invalid create: field too long"
-          (let [command-with-long-prompt (assoc-in command [:fields 0 :input-prompt :en]
-                                                   (apply str (repeat 10000 "x")))
+          (let [command-with-long-placeholder (assoc-in command [:fields 0 :field/placeholder :en]
+                                                        (apply str (repeat 10000 "x")))
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
-                             (json-body command-with-long-prompt)
+                             (json-body command-with-long-placeholder)
                              handler)]
             (is (= 500 (:status response)))))
 
@@ -102,7 +102,7 @@
                              :field/title localized
                              :field/optional true
                              :field/max-length 300
-                             :input-prompt localized}
+                             :field/placeholder localized}
                             {:field/type :description
                              :field/title localized
                              :field/optional false}
