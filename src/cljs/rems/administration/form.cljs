@@ -63,7 +63,7 @@
     :on-click #(dispatch! (str "/#/administration/create-form/" id))}
    (text :t.administration/copy-as-new)])
 
-(defn form-view [form language]
+(defn form-view [form]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
@@ -76,14 +76,13 @@
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
    [:div.col.commands
     [back-button]
-    [edit-button (:id form)]
-    [copy-as-new-button (:id form)]]
+    [edit-button (:form/id form)]
+    [copy-as-new-button (:form/id form)]]
    [form-preview form]])
 ;; TODO Do we support form licenses?
 
 (defn form-page []
   (let [form (rf/subscribe [::form])
-        language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
@@ -91,4 +90,4 @@
        [document-title (text :t.administration/form)]
        (if @loading?
          [spinner/big]
-         [form-view @form @language])])))
+         [form-view @form])])))

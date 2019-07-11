@@ -1,5 +1,6 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
+            [medley.core :refer [map-keys]]
             [rems.api.schema :refer [FieldTemplate]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
@@ -19,7 +20,16 @@
 (defn- parse-db-row [row]
   (-> row
       (update :fields #(coerce-fields (json/parse-string %)))
-      db/assoc-expired))
+      db/assoc-expired
+      (->> (map-keys {:id :form/id
+                      :organization :organization
+                      :title :title
+                      :fields :fields
+                      :start :start
+                      :end :end
+                      :expired :expired
+                      :enabled :enabled
+                      :archived :archived}))))
 
 (defn get-form-templates [filters]
   (->> (db/get-form-templates)

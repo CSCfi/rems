@@ -129,7 +129,7 @@
          (s/optional-key :field/previous-value) s/Str))
 
 (s/defschema FormTemplate ; TODO: use prefixed keys
-  {:id s/Int
+  {:form/id s/Int
    :organization s/Str
    :title s/Str
    :fields [FieldTemplate]

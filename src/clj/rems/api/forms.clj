@@ -10,7 +10,7 @@
 (defn- get-form-templates [filters]
   (doall
    (for [form (form/get-form-templates filters)]
-     (select-keys form [:id :organization :title :start :end :expired :enabled :archived]))))
+     (select-keys form [:form/id :organization :title :start :end :expired :enabled :archived]))))
 
 (s/defschema FormCommand
   {:organization s/Str

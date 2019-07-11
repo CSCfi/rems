@@ -174,7 +174,7 @@
       {:value (when selected-form #{selected-form})
        :items forms
        :value->text #(:title %2)
-       :item->key :id
+       :item->key :form/id
        :item->text :title
        :item->value identity
        :search-fields [:title]

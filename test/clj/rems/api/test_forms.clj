@@ -25,7 +25,7 @@
                      handler
                      assert-response-is-ok
                      read-body)]
-        (is (:id (first data)))))
+        (is (:form/id (first data)))))
 
     (testing "get one"
       (let [data (-> (request :get "/api/forms/1")
@@ -33,7 +33,7 @@
                      handler
                      assert-response-is-ok
                      read-body)]
-        (is (:id data))))
+        (is (:form/id data))))
 
     (testing "not found"
       (let [response (-> (request :get "/api/forms/0")
