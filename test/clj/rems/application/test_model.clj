@@ -10,7 +10,7 @@
 (def ^:private get-form-template
   {40 {:form/id 40
        :organization "org"
-       :title "form title"
+       :form/title "form title"
        :fields [{:field/id 41
                  :field/title {:en "en title" :fi "fi title"}
                  :field/placeholder {:en "en placeholder" :fi "fi placeholder"}

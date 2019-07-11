@@ -158,7 +158,7 @@
 
 (deftest build-request-test
   (let [form {:organization "abc"
-              :title "the title"
+              :form/title "the title"
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
                         :field/optional true
@@ -170,7 +170,7 @@
 
     (testing "basic form"
       (is (= {:organization "abc"
-              :title "the title"
+              :form/title "the title"
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
                         :field/optional true
@@ -182,14 +182,14 @@
 
     (testing "zero fields"
       (is (= {:organization "abc"
-              :title "the title"
+              :form/title "the title"
               :fields []}
              (build-request (assoc-in form [:fields] []) languages))))
 
     (testing "date fields"
       (let [form (assoc-in form [:fields 0 :field/type] :date)]
         (is (= {:organization "abc"
-                :title "the title"
+                :form/title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
@@ -225,7 +225,7 @@
                                                             :label {:en "en no"
                                                                     :fi "fi no"}}]))]
         (is (= {:organization "abc"
-                :title "the title"
+                :form/title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
@@ -248,7 +248,7 @@
                                                             :label {:en "Bacon"
                                                                     :fi "Pekonia"}}]))]
         (is (= {:organization "abc"
-                :title "the title"
+                :form/title "the title"
                 :fields [{:field/title {:en "en title"
                                         :fi "fi title"}
                           :field/optional true
@@ -263,7 +263,7 @@
 
 (deftest validate-form-test
   (let [form {:organization "abc"
-              :title "the title"
+              :form/title "the title"
               :fields [{:field/title {:en "en title"
                                       :fi "fi title"}
                         :field/optional true
@@ -281,7 +281,7 @@
              :t.form.validation/required)))
 
     (testing "missing title"
-      (is (= (:title (validate-form (assoc-in form [:title] "") languages))
+      (is (= (:form/title (validate-form (assoc-in form [:form/title] "") languages))
              :t.form.validation/required)))
 
     (testing "zero fields is ok"

@@ -428,7 +428,7 @@
                                default-fields
                                (:form/fields form))]
     (assoc form
-           :form/title (:title form-template)
+           :form/title (:form/title form-template)
            :form/fields fields)))
 
 (defn- set-application-description [application]

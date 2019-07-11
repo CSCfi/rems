@@ -85,7 +85,7 @@
    (map (fn [form]
           {:key (:form/id form)
            :organization {:value (:organization form)}
-           :title {:value (:title form)}
+           :title {:value (:form/title form)}
            :start (let [value (:start form)]
                     {:value value
                      :display-value (localize-time value)})

@@ -67,10 +67,10 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
-     :title [:span (andstr (:organization form) "/") (:title form)]
+     :title [:span (andstr (:organization form) "/") (:form/title form)]
      :always [:div
               [inline-info-field (text :t.administration/organization) (:organization form)]
-              [inline-info-field (text :t.administration/title) (:title form)]
+              [inline-info-field (text :t.administration/title) (:form/title form)]
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]

@@ -10,14 +10,14 @@
 (defn- get-form-templates [filters]
   (doall
    (for [form (form/get-form-templates filters)]
-     (select-keys form [:form/id :organization :title :start :end :expired :enabled :archived]))))
+     (select-keys form [:form/id :organization :form/title :start :end :expired :enabled :archived]))))
 
-(s/defschema FormCommand
+(s/defschema CreateFormCommand
   {:organization s/Str
-   :title s/Str
+   :form/title s/Str
    :fields [NewFieldTemplate]})
 
-(s/defschema FormResponse
+(s/defschema CreateFormResponse
   {:success s/Bool
    :id s/Int})
 
@@ -39,8 +39,8 @@
     (POST "/create" []
       :summary "Create form"
       :roles #{:owner}
-      :body [command FormCommand]
-      :return FormResponse
+      :body [command CreateFormCommand]
+      :return CreateFormResponse
       (ok (form/create-form! (getx-user-id) command)))
 
     (GET "/:form-id" []
@@ -65,7 +65,7 @@
       :summary "Edit form"
       :roles #{:owner}
       :path-params [form-id :- (describe s/Num "form-id")]
-      :body [command FormCommand]
+      :body [command CreateFormCommand]
       :return SuccessResponse
       (ok (form/edit-form! (getx-user-id) form-id command)))
 

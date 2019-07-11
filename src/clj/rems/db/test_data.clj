@@ -98,7 +98,7 @@
 (defn- create-archived-form! []
   ;; only used from create-test-data!
   (let [yesterday (time/minus (time/now) (time/days 1))
-        id (:id (form/create-form! (+fake-users+ :owner) {:organization "nbn" :title "Archived form, should not be seen by applicants" :fields []}))]
+        id (:id (form/create-form! (+fake-users+ :owner) {:organization "nbn" :form/title "Archived form, should not be seen by applicants" :fields []}))]
     (form/update-form! {:id id :enabled true :archived true})))
 
 (defn- create-expired-license! []
@@ -112,7 +112,7 @@
   (:id (form/create-form!
         (users :owner)
         {:organization "nbn"
-         :title "Basic form"
+         :form/title "Basic form"
          :fields [;; all form field types
                   {:field/title {:en "Project name"
                                  :fi "Projektin nimi"}
@@ -189,7 +189,7 @@
   (:id (form/create-form!
         (users :owner)
         {:organization "nbn"
-         :title "THL form"
+         :form/title "THL form"
          :fields [{:field/title {:en "Application title"
                                  :fi "Hakemuksen otsikko"}
                    :field/optional true
@@ -668,7 +668,7 @@
         form-id (:id (form/create-form!
                       owner
                       {:organization "perf"
-                       :title "Performance tests"
+                       :form/title "Performance tests"
                        :fields [{:field/title {:en "Project name"
                                                :fi "Projektin nimi"}
                                  :field/optional false

@@ -107,7 +107,7 @@
 
 (defn build-request [form languages]
   {:organization (:organization form)
-   :title (:title form)
+   :form/title (:form/title form)
    :fields (mapv #(build-request-field % languages) (:fields form))})
 
 ;;;; form validation
@@ -150,7 +150,7 @@
 
 (defn validate-form [form languages]
   (-> (merge (validate-text-field form :organization)
-             (validate-text-field form :title)
+             (validate-text-field form :form/title)
              {:fields (apply merge (mapv #(validate-field %1 %2 languages) (form :fields) (range)))})
       remove-empty-keys))
 
@@ -189,7 +189,7 @@
                        :placeholder (text :t.administration/organization-placeholder)}])
 
 (defn- form-title-field []
-  [text-field context {:keys [:title]
+  [text-field context {:keys [:form/title]
                        :label (text :t.create-form/title)}])
 
 (defn- form-field-title-field [field-index]
