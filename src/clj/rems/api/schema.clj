@@ -130,7 +130,7 @@
 
 (s/defschema FormTemplate ; TODO: use prefixed keys
   {:form/id s/Int
-   :organization s/Str
+   :form/organization s/Str
    :form/title s/Str
    :form/fields [FieldTemplate]
    :start DateTime

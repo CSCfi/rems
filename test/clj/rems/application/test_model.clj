@@ -1,15 +1,17 @@
 (ns rems.application.test-model
   (:require [clojure.test :refer :all]
+            [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.common-util :refer [deep-merge]]
-            [rems.permissions :as permissions])
+            [rems.permissions :as permissions]
+            [schema.core :as s])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
 (def ^:private get-form-template
   {40 {:form/id 40
-       :organization "org"
+       :form/organization "org"
        :form/title "form title"
        :form/fields [{:field/id 41
                       :field/title {:en "en title" :fi "fi title"}
@@ -81,8 +83,7 @@
        :end nil
        :enabled true
        :archived false
-       :expired false
-       :state "enabled"}})
+       :expired false}})
 
 (def ^:private get-license
   {30 {:id 30

@@ -106,7 +106,7 @@
                               :label (build-localized-string label languages)})})))
 
 (defn build-request [form languages]
-  {:organization (:organization form)
+  {:form/organization (:form/organization form)
    :form/title (:form/title form)
    :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
@@ -149,7 +149,7 @@
              (validate-options (:field/options field) languages))})
 
 (defn validate-form [form languages]
-  (-> (merge (validate-text-field form :organization)
+  (-> (merge (validate-text-field form :form/organization)
              (validate-text-field form :form/title)
              {:form/fields (apply merge (mapv #(validate-field %1 %2 languages) (:form/fields form) (range)))})
       remove-empty-keys))
@@ -184,7 +184,7 @@
    :update-form ::set-form-field})
 
 (defn- form-organization-field []
-  [text-field context {:keys [:organization]
+  [text-field context {:keys [:form/organization]
                        :label (text :t.administration/organization)
                        :placeholder (text :t.administration/organization-placeholder)}])
 

@@ -22,7 +22,7 @@
       (update :fields #(coerce-fields (json/parse-string %)))
       db/assoc-expired
       (->> (map-keys {:id :form/id
-                      :organization :organization
+                      :organization :form/organization
                       :title :form/title
                       :fields :form/fields
                       :start :start
@@ -95,11 +95,11 @@
   (let [;; NB: Legacy forms (created by db/create-form!) are not updated
         ;;   when the form is edited. This is on purpose: this whole legacy
         ;;   codepath will be removed soon.
-        form-id (:id (db/create-form! {:organization (:organization form)
+        form-id (:id (db/create-form! {:organization (:form/organization form)
                                        :title (:form/title form)
                                        :user user-id}))]
     (db/save-form-template! {:id form-id
-                             :organization (:organization form)
+                             :organization (:form/organization form)
                              :title (:form/title form)
                              :user user-id
                              :fields (->> (generate-fields-with-ids! user-id form-id (:form/fields form))
@@ -111,7 +111,7 @@
 (defn edit-form! [user-id form-id form]
   (or (form-in-use-error form-id)
       (do (db/edit-form-template! {:id form-id
-                                   :organization (:organization form)
+                                   :organization (:form/organization form)
                                    :title (:form/title form)
                                    :user user-id
                                    :fields (->> (generate-fields-with-ids! user-id form-id (:form/fields form))

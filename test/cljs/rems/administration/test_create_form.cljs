@@ -157,7 +157,7 @@
             "after move 3")))))
 
 (deftest build-request-test
-  (let [form {:organization "abc"
+  (let [form {:form/organization "abc"
               :form/title "the title"
               :form/fields [{:field/title {:en "en title"
                                            :fi "fi title"}
@@ -169,7 +169,7 @@
         languages [:en :fi]]
 
     (testing "basic form"
-      (is (= {:organization "abc"
+      (is (= {:form/organization "abc"
               :form/title "the title"
               :form/fields [{:field/title {:en "en title"
                                            :fi "fi title"}
@@ -181,14 +181,14 @@
              (build-request form languages))))
 
     (testing "zero fields"
-      (is (= {:organization "abc"
+      (is (= {:form/organization "abc"
               :form/title "the title"
               :form/fields []}
              (build-request (assoc-in form [:form/fields] []) languages))))
 
     (testing "date fields"
       (let [form (assoc-in form [:form/fields 0 :field/type] :date)]
-        (is (= {:organization "abc"
+        (is (= {:form/organization "abc"
                 :form/title "the title"
                 :form/fields [{:field/title {:en "en title"
                                              :fi "fi title"}
@@ -224,7 +224,7 @@
                                                                 {:key "no"
                                                                  :label {:en "en no"
                                                                          :fi "fi no"}}]))]
-        (is (= {:organization "abc"
+        (is (= {:form/organization "abc"
                 :form/title "the title"
                 :form/fields [{:field/title {:en "en title"
                                              :fi "fi title"}
@@ -247,7 +247,7 @@
                                                                 {:key "bacon"
                                                                  :label {:en "Bacon"
                                                                          :fi "Pekonia"}}]))]
-        (is (= {:organization "abc"
+        (is (= {:form/organization "abc"
                 :form/title "the title"
                 :form/fields [{:field/title {:en "en title"
                                              :fi "fi title"}
@@ -262,7 +262,7 @@
                (build-request form languages)))))))
 
 (deftest validate-form-test
-  (let [form {:organization "abc"
+  (let [form {:form/organization "abc"
               :form/title "the title"
               :form/fields [{:field/title {:en "en title"
                                            :fi "fi title"}
@@ -277,7 +277,7 @@
       (is (empty? (validate-form form languages))))
 
     (testing "missing organization"
-      (is (= (:organization (validate-form (assoc-in form [:organization] "") languages))
+      (is (= (:form/organization (validate-form (assoc-in form [:form/organization] "") languages))
              :t.form.validation/required)))
 
     (testing "missing title"

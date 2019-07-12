@@ -99,7 +99,7 @@
   ;; only used from create-test-data!
   (let [yesterday (time/minus (time/now) (time/days 1))
         id (:id (form/create-form! (+fake-users+ :owner)
-                                   {:organization "nbn"
+                                   {:form/organization "nbn"
                                     :form/title "Archived form, should not be seen by applicants"
                                     :form/fields []}))]
     (form/update-form! {:id id :enabled true :archived true})))
@@ -114,7 +114,7 @@
   [users]
   (:id (form/create-form!
         (users :owner)
-        {:organization "nbn"
+        {:form/organization "nbn"
          :form/title "Basic form"
          :form/fields [;; all form field types
                        {:field/title {:en "Project name"
@@ -191,7 +191,7 @@
   [users]
   (:id (form/create-form!
         (users :owner)
-        {:organization "nbn"
+        {:form/organization "nbn"
          :form/title "THL form"
          :form/fields [{:field/title {:en "Application title"
                                       :fi "Hakemuksen otsikko"}
@@ -670,7 +670,7 @@
                                                      :handlers handlers}))
         form-id (:id (form/create-form!
                       owner
-                      {:organization "perf"
+                      {:form/organization "perf"
                        :form/title "Performance tests"
                        :form/fields [{:field/title {:en "Project name"
                                                     :fi "Projektin nimi"}

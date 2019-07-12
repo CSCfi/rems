@@ -84,7 +84,7 @@
  (fn [[forms] _]
    (map (fn [form]
           {:key (:form/id form)
-           :organization {:value (:organization form)}
+           :organization {:value (:form/organization form)}
            :title {:value (:form/title form)}
            :start (let [value (:start form)]
                     {:value value

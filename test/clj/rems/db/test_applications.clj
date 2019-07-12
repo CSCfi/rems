@@ -63,7 +63,7 @@
                                                :handlers []
                                                :user-id "owner"}))
         _ (assert wf-id)
-        form-id (:id (form/create-form! "owner" {:organization "abc"
+        form-id (:id (form/create-form! "owner" {:form/organization "abc"
                                                  :form/title ""
                                                  :form/fields []}))
         _ (assert form-id)
@@ -139,7 +139,7 @@
                                                         :actor "alice"}))))
 
     (testing "error: catalogue items with different forms"
-      (let [form-id2 (:id (form/create-form! "owner" {:organization "abc"
+      (let [form-id2 (:id (form/create-form! "owner" {:form/organization "abc"
                                                       :form/title ""
                                                       :form/fields []}))
             _ (assert form-id2)

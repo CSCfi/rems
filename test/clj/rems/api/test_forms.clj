@@ -42,7 +42,7 @@
         (is (= 404 (:status response)))))
 
     (testing "create"
-      (let [command {:organization "abc"
+      (let [command {:form/organization "abc"
                      :form/title (str "form title " (UUID/randomUUID))
                      :form/fields [{:field/title {:en "en title"
                                                   :fi "fi title"}
@@ -84,17 +84,16 @@
                                       handler
                                       read-ok-body)]
                 (testing "result matches input"
-                  (is (= (select-keys command [:title :organization])
-                         (select-keys form-template [:title :organization])))
+                  (is (= (select-keys command [:form/organization :form/title])
+                         (select-keys form-template [:form/organization :form/title])))
                   (is (= (:form/fields command)
                          (mapv fixup-field-to-match-command (:form/fields form-template)))))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
         user-id "owner"
-        ;;"attachment" "date" "description" "label" "multiselect" "option" "text" "texta"
         localized {:en "en" :fi "fi"}
-        form-spec {:organization "abc"
+        form-spec {:form/organization "abc"
                    :form/title "all field types test"
                    :form/fields [{:field/type :text
                                   :field/title localized
@@ -142,8 +141,8 @@
                          (authenticate api-key user-id)
                          handler
                          read-ok-body)]
-            (is (= (select-keys form-spec [:organization :title])
-                   (select-keys form [:organization :title])))
+            (is (= (select-keys form-spec [:form/organization :form/title])
+                   (select-keys form [:form/organization :form/title])))
             (is (= (:form/fields form-spec)
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
@@ -152,7 +151,7 @@
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:organization "abc"
+                    (json-body {:form/organization "abc"
                                 :form/title "form editable test"
                                 :form/fields []})
                     handler
@@ -183,7 +182,7 @@
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:organization "abc"
+                    (json-body {:form/organization "abc"
                                 :form/title "form edit test"
                                 :form/fields []})
                     handler
@@ -194,10 +193,10 @@
                      (authenticate api-key user-id)
                      handler
                      read-ok-body)]
-        (is (= (form :organization) "abc")))
+        (is (= (:form/organization form) "abc")))
       (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
                          (authenticate api-key user-id)
-                         (json-body {:organization "def"
+                         (json-body {:form/organization "def"
                                      :form/title "form edit test"
                                      :form/fields []})
                          handler
@@ -207,14 +206,14 @@
                          (authenticate api-key user-id)
                          handler
                          read-ok-body)]
-            (is (= (form :organization) "def"))))))))
+            (is (= (:form/organization form) "def"))))))))
 
 (deftest form-update-test
   (let [api-key "42"
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:organization "abc"
+                    (json-body {:form/organization "abc"
                                 :form/title "form update test"
                                 :form/fields []})
                     handler
@@ -256,7 +255,7 @@
   (let [api-key "42"
         user-id "owner"]
     (testing "create"
-      (let [command {:organization "abc"
+      (let [command {:form/organization "abc"
                      :form/title (str "form title " (UUID/randomUUID))
                      :form/fields [{:field/title {:en "en title"
                                                   :fi "fi title"}
@@ -310,7 +309,7 @@
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
-                         (json-body {:organization "abc"
+                         (json-body {:form/organization "abc"
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]
@@ -328,7 +327,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
                          (authenticate "42" "alice")
-                         (json-body {:organization "abc"
+                         (json-body {:form/organization "abc"
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]
