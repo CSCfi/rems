@@ -28,7 +28,10 @@
                       :field/max-length 100
                       :field/type :text}]
        :start (DateTime. 100)
-       :end nil}})
+       :end nil
+       :enabled true
+       :archived false
+       :expired false}})
 
 (def ^:private get-catalogue-item
   {10 {:id 10
@@ -47,8 +50,7 @@
        :end nil
        :enabled true
        :archived false
-       :expired false
-       :state "enabled"}
+       :expired false}
    20 {:id 20
        :resource-id 21
        :resid "urn:21"
@@ -65,8 +67,7 @@
        :end nil
        :enabled true
        :archived false
-       :expired false
-       :state "enabled"}
+       :expired false}
    30 {:id 30
        :resource-id 31
        :resid "urn:31"
@@ -190,6 +191,14 @@
 ;; no attachments here for now
 (defn ^:private get-attachments-for-application [id]
   [])
+
+(deftest test-dummies-schema
+  (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
+                                        ["catalogue item" schema/CatalogueItem get-catalogue-item]
+                                        ["license" schema/License get-license]]]
+    (doseq [[id dummy] dummies]
+      (testing (str description " " id)
+        (is (s/validate schema dummy))))))
 
 (deftest test-application-view
   (let [injections {:get-form-template get-form-template
