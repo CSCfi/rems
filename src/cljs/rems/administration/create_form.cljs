@@ -310,30 +310,13 @@
                           [form-field-option-fields field-index])])
                      fields)))
 
-(defn- form-field-to-application-field
-  "Convert a field from the form create model to the application view model."
-  [field]
-  (merge {:field/type (:field/type field)
-          :field/title (:field/title field)}
-         (when (supports-optional? field)
-           {:field/optional (:field/optional field)})
-         (when (supports-placeholder? field)
-           {:field/placeholder (:field/placeholder field)})
-         (when (supports-max-length? field)
-           {:field/max-length (parse-int (:field/max-length field))})
-         (when (supports-options? field)
-           {:field/options (:field/options field)})))
-
-(defn- field-preview [field]
-  [fields/field (form-field-to-application-field field)])
-
 (defn form-preview [form]
   [collapsible/component
    {:id "preview-form"
     :title (text :t.administration/preview)
     :always (into [:div]
                   (for [field (:form/fields form)]
-                    [field-preview field]))}])
+                    [fields/field field]))}])
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
