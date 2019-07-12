@@ -108,6 +108,45 @@
    :license/expired s/Bool
    :license/archived s/Bool})
 
+(def UserId s/Str)
+
+(s/defschema Actor
+  {:actoruserid UserId
+   :round s/Num
+   :role (s/enum "approver" "reviewer")})
+
+(s/defschema WorkflowLicense
+  {:type s/Str
+   :start DateTime
+   :textcontent s/Str
+   :localizations [s/Any]
+   :end (s/maybe DateTime)})
+
+(s/defschema WorkflowDB ; TODO: unify workflow schemas
+  {:id s/Num
+   :organization s/Str
+   :owneruserid UserId
+   :modifieruserid UserId
+   :title s/Str
+   :fnlround s/Num
+   :workflow s/Any
+   :licenses s/Any
+   :visibility s/Str
+   :start DateTime
+   :end (s/maybe DateTime)
+   :expired s/Bool
+   :enabled s/Bool
+   :archived s/Bool})
+
+(s/defschema Workflow
+  (-> WorkflowDB
+      (dissoc :fnlround
+              :licenses
+              :visibility)
+      (assoc :final-round s/Num
+             :actors [Actor]
+             :licenses [WorkflowLicense])))
+
 (def not-neg? (partial <= 0))
 
 (s/defschema FieldTemplate
