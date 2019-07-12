@@ -167,11 +167,12 @@
          :field/value s/Str
          (s/optional-key :field/previous-value) s/Str))
 
-(s/defschema FormTemplate ; TODO: use prefixed keys
+(s/defschema FormTemplate
   {:form/id s/Int
    :form/organization s/Str
    :form/title s/Str
    :form/fields [FieldTemplate]
+   ;; TODO: rename the following to use :status/ namespace (also in all other entities)
    :start DateTime
    :end (s/maybe DateTime)
    :expired s/Bool
