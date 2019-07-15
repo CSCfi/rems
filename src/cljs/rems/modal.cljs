@@ -58,6 +58,11 @@
                                  commands)]
                   :open? true}]]
     [:div.modal--container
+     {:on-key-press
+      (fn [e]
+        (if (= (.-key e) "Enter")
+          (on-close)))
+      :tabIndex "-1"}
      (if (false? shade?)
        content
        [shade-wrapper content on-close])]))
