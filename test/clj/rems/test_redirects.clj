@@ -1,10 +1,10 @@
 (ns ^:integration rems.test-redirects
   (:require [clojure.test :refer :all]
+            [rems.api.testing :refer :all]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.resource :as resource]
             [rems.handler :refer [handler]]
-            [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
 (use-fixtures

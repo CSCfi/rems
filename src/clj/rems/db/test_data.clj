@@ -87,9 +87,7 @@
     (create-user! (users :reporter) :reporter)))
 
 (defn- create-archived-form! []
-  ;; only used from create-test-data!
-  (let [yesterday (time/minus (time/now) (time/days 1))
-        id (:id (form/create-form! (+fake-users+ :owner)
+  (let [id (:id (form/create-form! (+fake-users+ :owner)
                                    {:form/organization "nbn"
                                     :form/title "Archived form, should not be seen by applicants"
                                     :form/fields []}))]

@@ -134,17 +134,6 @@ INSERT INTO catalogue_item_localization
   (catid, langcode, title)
 VALUES (:id, :langcode, :title);
 
--- :name get-forms :? :*
-SELECT
-  id,
-  organization,
-  title,
-  start,
-  endt as "end",
-  enabled,
-  archived
-FROM application_form;
-
 -- :name get-form-for-application :? :1
 SELECT
   form.id as formid,
@@ -170,18 +159,6 @@ LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
 WHERE form.id = :id AND item.id IS NOT NULL
 ORDER BY itemorder;
-
--- :name get-form :? :1
-SELECT
-  form.id as id,
-  form.organization as organization,
-  form.title as title,
-  form.start as start,
-  form.endt as "end",
-  form.enabled,
-  form.archived
-FROM application_form form
-WHERE form.id = :id;
 
 -- :name get-all-form-items :? :*
 SELECT id, type, value, visibility, start, endt as "end", owneruserid, modifieruserid
@@ -226,10 +203,9 @@ WHERE id = :id;
 
 -- :name save-form-template! :insert
 INSERT INTO form_template
-(id, organization, title, modifierUserId, ownerUserId, visibility, fields)
+(organization, title, modifierUserId, ownerUserId, visibility, fields)
 VALUES
-(:id,
- :organization,
+(:organization,
  :title,
  :user,
  :user,
