@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :as atoms :refer [document-title]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
@@ -182,16 +182,17 @@
        :remove-fn #(rf/dispatch [::set-selected-form nil])}]]))
 
 (defn- cancel-button []
-  [:button.btn.btn-secondary
-   {:type :button
-    :on-click #(dispatch! "/#/administration/catalogue-items")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/catalogue-items"
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button [form languages on-click]
   (let [request (build-request form languages)]
     [:button.btn.btn-primary
      {:type :button
-      :on-click #(on-click request)
+      :on-click (fn []
+                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (on-click request))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 

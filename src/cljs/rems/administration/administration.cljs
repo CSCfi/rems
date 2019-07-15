@@ -1,6 +1,6 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :as atoms :refer [document-title]]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch!]])
@@ -17,34 +17,22 @@
    (::loading? db)))
 
 (defn- to-administration [class]
-  [:a {:class class
-       :href "/#/administration "}
-   (text :t.navigation/administration)])
+  [atoms/link {:class class} "/#/administration" (text :t.navigation/administration)])
 
 (defn- to-catalogue-items [class]
-  [:a {:class class
-       :href "/#/administration/catalogue-items"}
-   (text :t.administration/catalogue-items)])
+  [atoms/link {:class class} "/#/administration/catalogue-items" (text :t.administration/catalogue-items)])
 
 (defn- to-resources [class]
-  [:a {:class class
-       :href "/#/administration/resources"}
-   (text :t.administration/resources)])
+  [atoms/link {:class class} "/#/administration/resources" (text :t.administration/resources)])
 
 (defn- to-forms [class]
-  [:a {:class class
-       :href "/#/administration/forms"}
-   (text :t.administration/forms)])
+  [atoms/link {:class class} "/#/administration/forms" (text :t.administration/forms)])
 
 (defn- to-workflows [class]
-  [:a {:class class
-       :href "/#/administration/workflows"}
-   (text :t.administration/workflows)])
+  [atoms/link {:class class} "/#/administration/workflows" (text :t.administration/workflows)])
 
 (defn- to-licenses [class]
-  [:a {:class class
-       :href "/#/administration/licenses"}
-   (text :t.administration/licenses)])
+  [atoms/link {:class class} "/#/administration/licenses" (text :t.administration/licenses)])
 
 (defn administration-navigator [selected]
   [:div.navbar.mb-4.mr-auto.ml-auto

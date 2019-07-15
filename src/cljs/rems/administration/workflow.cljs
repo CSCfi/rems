@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
+            [rems.atoms :as atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -33,15 +33,13 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (defn- back-button []
-  [:button.btn.btn-secondary
-   {:type :button
-    :on-click #(dispatch! "/#/administration/workflows")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/workflows"
    (text :t.administration/back)])
 
 (defn- edit-button [id]
-  [:button.btn.btn-primary
-   {:type :button
-    :on-click #(dispatch! (str "/#/administration/edit-workflow/" id))}
+  [atoms/link {:class "btn btn-secondary"}
+   (str "/#/administration/edit-workflow/" id)
    (text :t.administration/edit)])
 
 (defn get-localized-value [field key language]
@@ -60,14 +58,20 @@
                 [[inline-info-field (text :t.administration/type) (:type license)]
                  (when (:textcontent license)
                    (case (:type license)
-                     "link" [inline-info-field (text :t.create-license/external-link) [:a {:target :_blank :href (:textcontent license)} (:textcontent license) " " [external-link]]]
+                     "link" [inline-info-field (text :t.create-license/external-link)
+                             [:a {:target :_blank
+                                  :href (:textcontent license)}
+                              (:textcontent license) " " [external-link]]]
                      "text" [inline-info-field (text :t.create-license/license-text) (:textcontent license)]
                      nil))]
                 (when (= "link" (:type license))
                   (for [localization (:localizations license)]
                     [inline-info-field (str (text :t.create-license/external-link)
                                             " "
-                                            (str/upper-case (:langcode localization))) [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]]))
+                                            (str/upper-case (:langcode localization)))
+                     [:a {:target :_blank
+                          :href (:textcontent localization)}
+                      (:textcontent localization) " " [external-link]]]))
                 (when (= "attachment" (:licensetype license))
                   (for [localization (:localizations license)]
                     (when (:attachment-id localization)

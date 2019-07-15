@@ -54,10 +54,6 @@
              (for [resource resources]
                [:li (localized (:catalogue-item/title resource))]))])))
 
-(defn apply-for [items]
-  (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
-    (dispatch! url)))
-
 (defn navigate-to
   "Navigates to the application with the given id.
 

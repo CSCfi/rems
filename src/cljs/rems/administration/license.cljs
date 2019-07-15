@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [attachment-link external-link readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
@@ -32,15 +32,9 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (defn- back-button []
-  [:button.btn.btn-secondary
-   {:type :button
-    :on-click #(dispatch! "/#/administration/licenses")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/licenses"
    (text :t.administration/back)])
-
-(defn- to-create-license []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-license"}
-   (text :t.administration/create-license)])
 
 (defn license-view [license language]
   [:div.spaced-vertically-3

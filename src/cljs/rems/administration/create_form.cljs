@@ -5,8 +5,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.administration.items :as items]
-            [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
             [rems.spinner :as spinner]
@@ -278,13 +277,14 @@
 (defn- save-form-button [on-click]
   [:button.btn.btn-primary
    {:type :button
-    :on-click on-click}
+    :on-click (fn []
+                (rf/dispatch [:rems.spa/user-triggered-navigation])
+                (on-click))}
    (text :t.administration/save)])
 
 (defn- cancel-button []
-  [:button.btn.btn-secondary
-   {:button "type"
-    :on-click #(dispatch! "/#/administration/forms")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/forms"
    (text :t.administration/cancel)])
 
 (defn- form-fields [fields]
