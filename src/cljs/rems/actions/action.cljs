@@ -5,6 +5,9 @@
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
 
+(defn- action-button-id [action-id]
+  (str action-id "-action-button"))
+
 (defn button-wrapper [{:keys [text class] :as props}]
   [:button.btn
    (merge {:type :button
@@ -20,7 +23,8 @@
    {:type :button
     :id (str "cancel-" id)
     :data-toggle "collapse"
-    :data-target (str "#" (action-collapse-id id))}
+    :data-target (str "#" (action-collapse-id id))
+    :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
    (text :t.actions/cancel)])
 
 (defn action-comment [{:keys [id label comment on-comment]}]
@@ -50,7 +54,7 @@
 (defn action-button [{:keys [id text class on-click]}]
   [:button.btn.mr-3
    {:type :button
-    :id (str id "-action-button")
+    :id (action-button-id id)
     :class (str (or class "btn-secondary")
                 " btn-opens-more")
     :data-toggle "collapse"
