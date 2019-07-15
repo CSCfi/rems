@@ -30,6 +30,7 @@
                  [luminus/ring-ttl-session "0.3.2"]
                  [macroz/hiccup-find "0.6.1"]
                  [markdown-clj "1.0.7"]
+                 [medley "1.2.0"]
                  [metosin/compojure-api "2.0.0-alpha28" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
                  [metosin/jsonista "0.2.2"]
                  [metosin/komponentit "0.3.7"]
