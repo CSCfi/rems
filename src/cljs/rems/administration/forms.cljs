@@ -38,10 +38,12 @@
 
 (rf/reg-event-fx
  ::update-form
- (fn [_ [_ item description]]
+ (fn [_ [_ form description]]
    (status-modal/common-pending-handler! description)
    (put! "/api/forms/update"
-         {:params (select-keys item [:id :enabled :archived])
+         {:params {:id (:form/id form)
+                   :enabled (:enabled form)
+                   :archived (:archived form)}
           :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-forms]))
           :error-handler status-modal/common-error-handler!})
    {}))
@@ -60,19 +62,19 @@
    (text :t.administration/create-form)])
 
 (defn- to-view-form [form]
-   [:a.btn.btn-primary
-   {:href (str "/#/administration/forms/" (:id form))}
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/forms/" (:form/id form))}
    (text :t.administration/view)])
 
 (defn- to-edit-form [form]
   [:button.btn.btn-primary
    {:type :button
-    :on-click #(rf/dispatch [:rems.administration.form/edit-form (:id form)])}
+    :on-click #(rf/dispatch [:rems.administration.form/edit-form (:form/id form)])}
    (text :t.administration/edit)])
 
 (defn- copy-as-new-form [form]
   [:a.btn.btn-primary
-   {:href (str "/#/administration/create-form/" (:id form))}
+   {:href (str "/#/administration/create-form/" (:form/id form))}
    (text :t.administration/copy-as-new)])
 
 (rf/reg-sub
@@ -81,9 +83,9 @@
    [(rf/subscribe [::forms])])
  (fn [[forms] _]
    (map (fn [form]
-          {:key (:id form)
-           :organization {:value (:organization form)}
-           :title {:value (:title form)}
+          {:key (:form/id form)
+           :organization {:value (:form/organization form)}
+           :title {:value (:form/title form)}
            :start (let [value (:start form)]
                     {:value value
                      :display-value (localize-time value)})

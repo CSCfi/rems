@@ -3,7 +3,7 @@
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
             [rems.api.applications :refer [User get-users format-user]]
-            [rems.api.schema :refer [SuccessResponse]]
+            [rems.api.schema :refer [SuccessResponse UserId Workflow]]
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.users :as users]
@@ -12,20 +12,6 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime DateTimeZone]))
-
-(def UserId s/Str)
-
-(s/defschema Actor
-  {:actoruserid UserId
-   :round s/Num
-   :role (s/enum "approver" "reviewer")})
-
-(s/defschema WorkflowLicense
-  {:type s/Str
-   :start DateTime
-   :textcontent s/Str
-   :localizations [s/Any]
-   :end (s/maybe DateTime)})
 
 (defn parse-db-time [s]
   (when s
@@ -42,25 +28,6 @@
       (select-keys [:type :textcontent :localizations])
       (assoc :start (parse-db-time (:start license)))
       (assoc :end (parse-db-time (:end license)))))
-
-(s/defschema Workflow
-  {:id s/Num
-   :organization s/Str
-   :owneruserid UserId
-   :modifieruserid UserId
-   :title s/Str
-   :final-round s/Num
-   :workflow s/Any
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
-   :enabled s/Bool
-   :archived s/Bool
-   :actors [Actor]
-   :licenses [WorkflowLicense]})
-
-(s/defschema Workflows
-  [Workflow])
 
 (defn- format-workflow
   [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses actors]}]
@@ -129,7 +96,7 @@
       :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
                      {expired :- (describe s/Bool "whether to include expired workflows") false}
                      {archived :- (describe s/Bool "whether to include archived workflows") false}]
-      :return Workflows
+      :return [Workflow]
       (ok (get-workflows (merge (when-not expired {:expired false})
                                 (when-not disabled {:enabled true})
                                 (when-not archived {:archived false})))))

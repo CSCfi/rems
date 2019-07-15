@@ -26,9 +26,9 @@
 (defn- create-form-with-fields [form-fields]
   (-> (request :post "/api/forms/create")
       (authenticate "42" "owner")
-      (json-body {:organization "abc"
-                  :title ""
-                  :fields form-fields})
+      (json-body {:form/organization "abc"
+                  :form/title ""
+                  :form/fields form-fields})
       handler
       read-ok-body
       :id))
@@ -282,13 +282,13 @@
         (testing "add licenses"
           (let [application (get-application application-id user-id)]
             (is (= #{1 2} (license-ids-for-application application)))
-           (is (= {:success true} (send-command handler-id
-                                                {:type :application.command/add-licenses
-                                                 :application-id application-id
-                                                 :licenses [license-id]
-                                                 :comment "Please approve these new terms"})))
-           (let [application (get-application application-id user-id)]
-             (is (= #{1 2 5} (license-ids-for-application application))))))
+            (is (= {:success true} (send-command handler-id
+                                                 {:type :application.command/add-licenses
+                                                  :application-id application-id
+                                                  :licenses [license-id]
+                                                  :comment "Please approve these new terms"})))
+            (let [application (get-application application-id user-id)]
+              (is (= #{1 2 5} (license-ids-for-application application))))))
         (testing "applicant accepts the additional licenses"
           (is (= {:success true} (send-command user-id
                                                {:type :application.command/accept-licenses
@@ -300,19 +300,19 @@
           (is (= #{9} (catalogue-item-ids-for-application application)))
           ;; License #5 was added previously by the handler.
           (is (= #{1 2 5} (license-ids-for-application application)))
-         (is (= {:success true} (send-command handler-id
-                                              {:type :application.command/change-resources
-                                               :application-id application-id
-                                               :catalogue-item-ids [9 10]
-                                               :comment "Here are the correct resources"})))
-         (let [application (get-application application-id user-id)]
-           (is (= #{9 10} (catalogue-item-ids-for-application application)))
-           ;; License #4 is added by the catalogue-item #10, whereas
-           ;; the previously added license #5 is dropped from the list.
-           ;;
-           ;; TODO: The previously added licenses should probably be retained
-           ;; in the licenses after changing resources.
-           (is (= #{1 2 4} (license-ids-for-application application))))))
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/change-resources
+                                                :application-id application-id
+                                                :catalogue-item-ids [9 10]
+                                                :comment "Here are the correct resources"})))
+          (let [application (get-application application-id user-id)]
+            (is (= #{9 10} (catalogue-item-ids-for-application application)))
+            ;; License #4 is added by the catalogue-item #10, whereas
+            ;; the previously added license #5 is dropped from the list.
+            ;;
+            ;; TODO: The previously added licenses should probably be retained
+            ;; in the licenses after changing resources.
+            (is (= #{1 2 4} (license-ids-for-application application))))))
 
       (testing "changing resources back as handler"
         (is (= {:success true} (send-command handler-id
@@ -439,15 +439,15 @@
 (deftest test-application-validation
   (let [user-id "alice"
         workflow-id (create-dynamic-workflow)
-        form-id (create-form-with-fields [{:title {:en "req"}
-                                           :type "text"
-                                           :optional false}
-                                          {:title {:en "opt"}
-                                           :type "text"
-                                           :optional true}])
+        form-id (create-form-with-fields [{:field/title {:en "req"}
+                                           :field/type :text
+                                           :field/optional false}
+                                          {:field/title {:en "opt"}
+                                           :field/type :text
+                                           :field/optional true}])
         [req-id opt-id] (->> (form/get-form-template form-id)
-                             :fields
-                             (map :id))
+                             :form/fields
+                             (map :field/id))
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)]
     (testing "set value of optional field"
@@ -489,9 +489,9 @@
   (let [api-key "42"
         user-id "alice"
         workflow-id (create-dynamic-workflow)
-        form-id (create-form-with-fields [{:title {:en "some attachment"}
-                                           :type "attachment"
-                                           :optional true}])
+        form-id (create-form-with-fields [{:field/title {:en "some attachment"}
+                                           :field/type :attachment
+                                           :field/optional true}])
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-application [cat-id] user-id)
         upload-request (fn [file]

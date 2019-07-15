@@ -173,11 +173,11 @@
      [autocomplete/component
       {:value (when selected-form #{selected-form})
        :items forms
-       :value->text #(:title %2)
-       :item->key :id
-       :item->text :title
+       :value->text #(:form/title %2)
+       :item->key :form/id
+       :item->text :form/title
        :item->value identity
-       :search-fields [:title]
+       :search-fields [:form/title]
        :add-fn #(rf/dispatch [::set-selected-form %])
        :remove-fn #(rf/dispatch [::set-selected-form nil])}]]))
 

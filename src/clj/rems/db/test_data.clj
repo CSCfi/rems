@@ -98,7 +98,10 @@
 (defn- create-archived-form! []
   ;; only used from create-test-data!
   (let [yesterday (time/minus (time/now) (time/days 1))
-        id (:id (form/create-form! (+fake-users+ :owner) {:organization "nbn" :title "Archived form, should not be seen by applicants" :fields []}))]
+        id (:id (form/create-form! (+fake-users+ :owner)
+                                   {:form/organization "nbn"
+                                    :form/title "Archived form, should not be seen by applicants"
+                                    :form/fields []}))]
     (form/update-form! {:id id :enabled true :archived true})))
 
 (defn- create-expired-license! []
@@ -111,281 +114,281 @@
   [users]
   (:id (form/create-form!
         (users :owner)
-        {:organization "nbn"
-         :title "Basic form"
-         :fields [;; all form field types
-                  {:title {:en "Project name"
-                           :fi "Projektin nimi"}
-                   :optional false
-                   :type "description"
-                   :input-prompt {:en "Project"
-                                  :fi "Projekti"}}
+        {:form/organization "nbn"
+         :form/title "Basic form"
+         :form/fields [;; all form field types
+                       {:field/title {:en "Project name"
+                                      :fi "Projektin nimi"}
+                        :field/optional false
+                        :field/type :description
+                        :field/placeholder {:en "Project"
+                                            :fi "Projekti"}}
 
-                  {:title {:en "Here would be some helpful instructions."
-                           :fi "Tässä olisi jotain täyttöohjeita."}
-                   :optional false
-                   :type "label"}
+                       {:field/title {:en "Here would be some helpful instructions."
+                                      :fi "Tässä olisi jotain täyttöohjeita."}
+                        :field/optional false
+                        :field/type :label}
 
-                  {:title {:en "Purpose of the project"
-                           :fi "Projektin tarkoitus"}
-                   :optional false
-                   :type "texta"
-                   :input-prompt {:en "The purpose of the project is to..."
-                                  :fi "Projektin tarkoitus on..."}}
+                       {:field/title {:en "Purpose of the project"
+                                      :fi "Projektin tarkoitus"}
+                        :field/optional false
+                        :field/type :texta
+                        :field/placeholder {:en "The purpose of the project is to..."
+                                            :fi "Projektin tarkoitus on..."}}
 
-                  {:title {:en "Start date of the project"
-                           :fi "Projektin aloituspäivä"}
-                   :optional true
-                   :type "date"}
+                       {:field/title {:en "Start date of the project"
+                                      :fi "Projektin aloituspäivä"}
+                        :field/optional true
+                        :field/type :date}
 
-                  {:title {:en "Project plan"
-                           :fi "Projektisuunnitelma"}
-                   :optional true
-                   :type "attachment"}
+                       {:field/title {:en "Project plan"
+                                      :fi "Projektisuunnitelma"}
+                        :field/optional true
+                        :field/type :attachment}
 
-                  {:title {:en "Project team size"
-                           :fi "Projektitiimin koko"}
-                   :optional true
-                   :type "option"
-                   :options [{:key "1-5"
-                              :label {:en "1-5 persons"
-                                      :fi "1-5 henkilöä"}}
-                             {:key "6-20"
-                              :label {:en "6-20 persons"
-                                      :fi "6-20 henkilöä"}}
-                             {:key "20+"
-                              :label {:en "over 20 persons"
-                                      :fi "yli 20 henkilöä"}}]}
+                       {:field/title {:en "Project team size"
+                                      :fi "Projektitiimin koko"}
+                        :field/optional true
+                        :field/type :option
+                        :field/options [{:key "1-5"
+                                         :label {:en "1-5 persons"
+                                                 :fi "1-5 henkilöä"}}
+                                        {:key "6-20"
+                                         :label {:en "6-20 persons"
+                                                 :fi "6-20 henkilöä"}}
+                                        {:key "20+"
+                                         :label {:en "over 20 persons"
+                                                 :fi "yli 20 henkilöä"}}]}
 
-                  {:title {:en "Where will the data be used?"
-                           :fi "Missä dataa tullaan käyttämään?"}
-                   :optional true
-                   :type "multiselect"
-                   :options [{:key "EU"
-                              :label {:en "Inside EU"
-                                      :fi "EU:n sisällä"}}
-                             {:key "USA"
-                              :label {:en "Inside USA"
-                                      :fi "Yhdysvalloissa"}}
-                             {:key "Other"
-                              :label {:en "Elsewhere"
-                                      :fi "Muualla"}}]}
+                       {:field/title {:en "Where will the data be used?"
+                                      :fi "Missä dataa tullaan käyttämään?"}
+                        :field/optional true
+                        :field/type :multiselect
+                        :field/options [{:key "EU"
+                                         :label {:en "Inside EU"
+                                                 :fi "EU:n sisällä"}}
+                                        {:key "USA"
+                                         :label {:en "Inside USA"
+                                                 :fi "Yhdysvalloissa"}}
+                                        {:key "Other"
+                                         :label {:en "Elsewhere"
+                                                 :fi "Muualla"}}]}
 
-                  ;; fields which support maxlength
-                  {:title {:en "Project acronym"
-                           :fi "Projektin lyhenne"}
-                   :optional true
-                   :type "text"
-                   :maxlength 10}
+                       ;; fields which support maxlength
+                       {:field/title {:en "Project acronym"
+                                      :fi "Projektin lyhenne"}
+                        :field/optional true
+                        :field/type :text
+                        :field/max-length 10}
 
-                  {:title {:en "Research plan"
-                           :fi "Tutkimussuunnitelma"}
-                   :optional true
-                   :type "texta"
-                   :maxlength 100}]})))
+                       {:field/title {:en "Research plan"
+                                      :fi "Tutkimussuunnitelma"}
+                        :field/optional true
+                        :field/type :texta
+                        :field/max-length 100}]})))
 
 (defn create-thl-demo-form!
   [users]
   (:id (form/create-form!
         (users :owner)
-        {:organization "nbn"
-         :title "THL form"
-         :fields [{:title {:en "Application title"
-                           :fi "Hakemuksen otsikko"}
-                   :optional true
-                   :type "description"
-                   :input-prompt {:en "Study of.."
-                                  :fi "Tutkimus aiheesta.."}}
-                  {:title {:en "1. Research project full title"
-                           :fi "1. Tutkimusprojektin täysi nimi"}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "2. This is an amendment of a previous approved application"
-                           :fi "2. Hakemus täydentää edellistä hakemusta"}
-                   :optional false
-                   :type "option"
-                   :options [{:key "false"
-                              :label {:en "no"
-                                      :fi "ei"}}
-                             {:key "true"
-                              :label {:en "yes"
-                                      :fi "kyllä"}}]}
-                  {:title {:en "If yes, what were the previous project permit code/s?"
-                           :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"}
-                   :optional true
-                   :type "text"}
-                  {:title {:en "3. Study PIs (name, titile, affiliation, email)"
-                           :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "4. Contact person for application if different than applicant (name, email)"
-                           :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"}
-                   :optional true
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "5. Research project start date"
-                           :fi "5. Projektin aloituspäivä"}
-                   :optional false
-                   :type "date"}
-                  {:title {:en "6. Research project end date"
-                           :fi "6. Projektin lopetuspäivä"}
-                   :optional false
-                   :type "date"}
-                  {:title {:en "7. Describe in detail the aims of the study and analysis plan"
-                           :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "8. If this is an amendment, please describe briefly what is new"
-                           :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."}
-                   :optional true
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
-                           :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
-                   :input-prompt {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
-                                  :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "10. Place/plces of research, including place of sample and/or data analysis."
-                           :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."}
-                   :input-prompt {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
-                                  :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "11. Description of other research group members and their role in the applied project."
-                           :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
-                   :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
-                                  :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "12. Specify selection criteria of study participants (if applicable)"
-                           :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"}
-                   :input-prompt {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
-                                  :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)"
-                           :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"}
-                   :input-prompt {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
-                                  :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "14. Specify requested genomics or other omics data (if applicable)"
-                           :fi "14. Kuvaile tarvittava genomiikkadata."}
-                   :input-prompt {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
-                                  :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
-                   :optional true
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "16. Are biological samples requested?"
-                           :fi "16. Pyydetäänkö biologisia näytteitä?"}
-                   :optional false
-                   :type "option"
-                   :options [{:key "false"
-                              :label {:en "no"
-                                      :fi "ei"}}
-                             {:key "true"
-                              :label {:en "yes"
-                                      :fi "kyllä"}}]}
-                  {:title {:en "The type and amount of biological samples requested"
-                           :fi "Biologisten näytteiden tyypit ja määrät."}
-                   :input-prompt {:en "Type and amount of samples and any additional specific criteria."
-                                  :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."}
-                   :optional true
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "17. What study results will be returned to THL Biobank (if any)?"
-                           :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"}
-                   :input-prompt {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
-                                  :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "Expected date for return of study results"
-                           :fi "Odotettu tutkimustuloksien palautuspäivämäärä"}
-                   :optional true
-                   :type "date"}
-                  {:title {:en "18. Ethical aspects of the project"
-                           :fi "18. Tutkimuksen eettiset puolet"}
-                   :input-prompt {:en "If you have any documents from an ethical board, please provide them as an attachment."
-                                  :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "19. Project keywords (max 5)"
-                           :fi "19. Projektin avainsanat (maks. 5)"}
-                   :input-prompt {:en "List a few keywords that are related to this research project (please separate with comma)"
-                                  :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "20. Planned publications (max 3)"
-                           :fi "20. Suunnitellut julkaisut (maks. 3)"}
-                   :input-prompt {:en "Planned publication titles / research topics"
-                                  :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "21. Funding information"
-                           :fi "21. Rahoitus"}
-                   :input-prompt {:en "List all funding sources which will be used for this research project."
-                                  :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)"
-                           :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"}
-                   :input-prompt {:en "Electronic invoice address when possible + invoicing reference"
-                                  :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."}
-                   :optional false
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "23. Other information"
-                           :fi "23. Muuta"}
-                   :input-prompt {:en "Any other relevant information for the application"
-                                  :fi "Muuta hakemukseen liittyvää oleellista tietoa"}
-                   :optional true
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "THL Biobank's registered area/s of operation to which the research project complies:"
-                           :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"}
-                   :optional false
-                   :type "multiselect"
-                   :options [{:key "population_health"
-                              :label {:en "Promoting the population's health"
-                                      :fi "Edistää kansanterveytttä"}}
-                             {:key "disease_mechanisms"
-                              :label {:en "Identifying factors involved in disease mechanisms"
-                                      :fi "Tunnistaa tautien mekanismeja"}}
-                             {:key "disease_prevention"
-                              :label {:en "Disease prevention"
-                                      :fi "Estää tautien leviämistä"}}
-                             {:key "health_product_development"
-                              :label {:en "Developing products that promote the welfare and health of the population"
-                                      :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."}}
-                             {:key "treatment_development"
-                              :label {:en "Developing products and treatments for diseases"
-                                      :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"}}
-                             {:key "other"
-                              :label {:en "Other"
-                                      :fi "Muuta"}}]}
-                  {:title {:en "Other, specify"
-                           :fi "Muuta, tarkenna"}
-                   :optional true
-                   :type "texta"
-                   :maxlength 100}
-                  {:title {:en "Data management plan (pdf)"
-                           :fi "Datanhallintasuunnitelma (pdf)"}
-                   :optional true
-                   :type "attachment"}]})))
+        {:form/organization "nbn"
+         :form/title "THL form"
+         :form/fields [{:field/title {:en "Application title"
+                                      :fi "Hakemuksen otsikko"}
+                        :field/optional true
+                        :field/type :description
+                        :field/placeholder {:en "Study of.."
+                                            :fi "Tutkimus aiheesta.."}}
+                       {:field/title {:en "1. Research project full title"
+                                      :fi "1. Tutkimusprojektin täysi nimi"}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "2. This is an amendment of a previous approved application"
+                                      :fi "2. Hakemus täydentää edellistä hakemusta"}
+                        :field/optional false
+                        :field/type :option
+                        :field/options [{:key "false"
+                                         :label {:en "no"
+                                                 :fi "ei"}}
+                                        {:key "true"
+                                         :label {:en "yes"
+                                                 :fi "kyllä"}}]}
+                       {:field/title {:en "If yes, what were the previous project permit code/s?"
+                                      :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"}
+                        :field/optional true
+                        :field/type :text}
+                       {:field/title {:en "3. Study PIs (name, titile, affiliation, email)"
+                                      :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "4. Contact person for application if different than applicant (name, email)"
+                                      :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"}
+                        :field/optional true
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "5. Research project start date"
+                                      :fi "5. Projektin aloituspäivä"}
+                        :field/optional false
+                        :field/type :date}
+                       {:field/title {:en "6. Research project end date"
+                                      :fi "6. Projektin lopetuspäivä"}
+                        :field/optional false
+                        :field/type :date}
+                       {:field/title {:en "7. Describe in detail the aims of the study and analysis plan"
+                                      :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "8. If this is an amendment, please describe briefly what is new"
+                                      :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."}
+                        :field/optional true
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
+                                      :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                        :field/placeholder {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
+                                            :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "10. Place/plces of research, including place of sample and/or data analysis."
+                                      :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."}
+                        :field/placeholder {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
+                                            :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "11. Description of other research group members and their role in the applied project."
+                                      :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
+                        :field/placeholder {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
+                                            :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "12. Specify selection criteria of study participants (if applicable)"
+                                      :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"}
+                        :field/placeholder {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
+                                            :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)"
+                                      :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"}
+                        :field/placeholder {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
+                                            :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "14. Specify requested genomics or other omics data (if applicable)"
+                                      :fi "14. Kuvaile tarvittava genomiikkadata."}
+                        :field/placeholder {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
+                                            :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
+                        :field/optional true
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "16. Are biological samples requested?"
+                                      :fi "16. Pyydetäänkö biologisia näytteitä?"}
+                        :field/optional false
+                        :field/type :option
+                        :field/options [{:key "false"
+                                         :label {:en "no"
+                                                 :fi "ei"}}
+                                        {:key "true"
+                                         :label {:en "yes"
+                                                 :fi "kyllä"}}]}
+                       {:field/title {:en "The type and amount of biological samples requested"
+                                      :fi "Biologisten näytteiden tyypit ja määrät."}
+                        :field/placeholder {:en "Type and amount of samples and any additional specific criteria."
+                                            :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."}
+                        :field/optional true
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "17. What study results will be returned to THL Biobank (if any)?"
+                                      :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"}
+                        :field/placeholder {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
+                                            :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "Expected date for return of study results"
+                                      :fi "Odotettu tutkimustuloksien palautuspäivämäärä"}
+                        :field/optional true
+                        :field/type :date}
+                       {:field/title {:en "18. Ethical aspects of the project"
+                                      :fi "18. Tutkimuksen eettiset puolet"}
+                        :field/placeholder {:en "If you have any documents from an ethical board, please provide them as an attachment."
+                                            :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "19. Project keywords (max 5)"
+                                      :fi "19. Projektin avainsanat (maks. 5)"}
+                        :field/placeholder {:en "List a few keywords that are related to this research project (please separate with comma)"
+                                            :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "20. Planned publications (max 3)"
+                                      :fi "20. Suunnitellut julkaisut (maks. 3)"}
+                        :field/placeholder {:en "Planned publication titles / research topics"
+                                            :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "21. Funding information"
+                                      :fi "21. Rahoitus"}
+                        :field/placeholder {:en "List all funding sources which will be used for this research project."
+                                            :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)"
+                                      :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"}
+                        :field/placeholder {:en "Electronic invoice address when possible + invoicing reference"
+                                            :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."}
+                        :field/optional false
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "23. Other information"
+                                      :fi "23. Muuta"}
+                        :field/placeholder {:en "Any other relevant information for the application"
+                                            :fi "Muuta hakemukseen liittyvää oleellista tietoa"}
+                        :field/optional true
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "THL Biobank's registered area/s of operation to which the research project complies:"
+                                      :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"}
+                        :field/optional false
+                        :field/type :multiselect
+                        :field/options [{:key "population_health"
+                                         :label {:en "Promoting the population's health"
+                                                 :fi "Edistää kansanterveytttä"}}
+                                        {:key "disease_mechanisms"
+                                         :label {:en "Identifying factors involved in disease mechanisms"
+                                                 :fi "Tunnistaa tautien mekanismeja"}}
+                                        {:key "disease_prevention"
+                                         :label {:en "Disease prevention"
+                                                 :fi "Estää tautien leviämistä"}}
+                                        {:key "health_product_development"
+                                         :label {:en "Developing products that promote the welfare and health of the population"
+                                                 :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."}}
+                                        {:key "treatment_development"
+                                         :label {:en "Developing products and treatments for diseases"
+                                                 :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"}}
+                                        {:key "other"
+                                         :label {:en "Other"
+                                                 :fi "Muuta"}}]}
+                       {:field/title {:en "Other, specify"
+                                      :fi "Muuta, tarkenna"}
+                        :field/optional true
+                        :field/type :texta
+                        :field/max-length 100}
+                       {:field/title {:en "Data management plan (pdf)"
+                                      :fi "Datanhallintasuunnitelma (pdf)"}
+                        :field/optional true
+                        :field/type :attachment}]})))
 
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
@@ -650,6 +653,9 @@
         application (create-draft! applicant item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
     (legacy/submit-application applicant application)))
 
+(defn- assert-no-error [error]
+  (assert (nil? error) {:error error}))
+
 (defn create-performance-test-data! []
   (let [resource-count 1000
         application-count 1000
@@ -664,21 +670,21 @@
                                                      :handlers handlers}))
         form-id (:id (form/create-form!
                       owner
-                      {:organization "perf"
-                       :title "Performance tests"
-                       :fields [{:title {:en "Project name"
-                                         :fi "Projektin nimi"}
-                                 :optional false
-                                 :type "description"
-                                 :input-prompt {:en "Project"
-                                                :fi "Projekti"}}
+                      {:form/organization "perf"
+                       :form/title "Performance tests"
+                       :form/fields [{:field/title {:en "Project name"
+                                                    :fi "Projektin nimi"}
+                                      :field/optional false
+                                      :field/type :description
+                                      :field/placeholder {:en "Project"
+                                                          :fi "Projekti"}}
 
-                                {:title {:en "Project description"
-                                         :fi "Projektin kuvaus"}
-                                 :optional false
-                                 :type "texta"
-                                 :input-prompt {:en "The purpose of the project is to..."
-                                                :fi "Projektin tarkoitus on..."}}]}))
+                                     {:field/title {:en "Project description"
+                                                    :fi "Projektin kuvaus"}
+                                      :field/optional false
+                                      :field/type :texta
+                                      :field/placeholder {:en "The purpose of the project is to..."
+                                                          :fi "Projektin tarkoitus on..."}}]}))
         form (form/get-form-template form-id)
         license-id (:id (licenses/create-license!
                          {:licensetype "text"
@@ -713,30 +719,33 @@
             user-id (rand-nth user-ids)
             handler (rand-nth handlers)
             app-id (:application-id (applications/create-application! user-id [cat-item-id]))]
-        (assert (nil? (applications/command!
-                       {:type :application.command/save-draft
-                        :actor user-id
-                        :time (time/now)
-                        :application-id app-id
-                        :field-values [{:field (:id (first (:fields form)))
-                                        :value (str "Performance test application " (UUID/randomUUID))}
-                                       {:field (:id (second (:fields form)))
-                                        ;; 5000 characters (10 KB) of lorem ipsum generated with www.lipsum.com
-                                        ;; to increase the memory requirements of an application
-                                        :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
-                                                    ;; prevent string interning, just to be sure
-                                                    (UUID/randomUUID))}]})))
-        (assert (nil? (applications/command!
-                       {:type :application.command/submit
-                        :actor user-id
-                        :time (time/now)
-                        :application-id app-id})))
-        (assert (nil? (applications/command!
-                       {:type :application.command/approve
-                        :actor handler
-                        :time (time/now)
-                        :application-id app-id
-                        :comment "Looks fine."})))))))
+        (assert-no-error
+         (applications/command!
+          {:type :application.command/save-draft
+           :actor user-id
+           :time (time/now)
+           :application-id app-id
+           :field-values [{:field (:field/id (first (:form/fields form)))
+                           :value (str "Performance test application " (UUID/randomUUID))}
+                          {:field (:field/id (second (:form/fields form)))
+                           ;; 5000 characters (10 KB) of lorem ipsum generated with www.lipsum.com
+                           ;; to increase the memory requirements of an application
+                           :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
+                                       ;; prevent string interning, just to be sure
+                                       (UUID/randomUUID))}]}))
+        (assert-no-error
+         (applications/command!
+          {:type :application.command/submit
+           :actor user-id
+           :time (time/now)
+           :application-id app-id}))
+        (assert-no-error
+         (applications/command!
+          {:type :application.command/approve
+           :actor handler
+           :time (time/now)
+           :application-id app-id
+           :comment "Looks fine."}))))))
 
 (defn create-test-data! []
   (DateTimeUtils/setCurrentMillisFixed (.getMillis creation-time))

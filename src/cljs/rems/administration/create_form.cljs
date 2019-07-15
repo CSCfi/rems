@@ -18,7 +18,7 @@
  ::enter-page
  (fn [{:keys [db]} [_ form-id edit-form?]]
    {:db (assoc db
-               ::form {:fields []}
+               ::form {:form/fields []}
                ::form-id form-id
                ::edit-form? edit-form?)
     :dispatch-n [[::fetch-form form-id]]}))
@@ -47,68 +47,68 @@
 (rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :fields] items/add {:type "text"})))
-(rf/reg-event-db ::remove-form-field (fn [db [_ field-index]] (update-in db [::form :fields] items/remove field-index)))
-(rf/reg-event-db ::move-form-field-up (fn [db [_ field-index]] (update-in db [::form :fields] items/move-up field-index)))
-(rf/reg-event-db ::move-form-field-down (fn [db [_ field-index]] (update-in db [::form :fields] items/move-down field-index)))
+(rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :form/fields] items/add {:field/type :text})))
+(rf/reg-event-db ::remove-form-field (fn [db [_ field-index]] (update-in db [::form :form/fields] items/remove field-index)))
+(rf/reg-event-db ::move-form-field-up (fn [db [_ field-index]] (update-in db [::form :form/fields] items/move-up field-index)))
+(rf/reg-event-db ::move-form-field-down (fn [db [_ field-index]] (update-in db [::form :form/fields] items/move-down field-index)))
 
 (rf/reg-event-db
  ::add-form-field-option
  (fn [db [_ field-index]]
-   (update-in db [::form :fields field-index :options] items/add {})))
+   (update-in db [::form :form/fields field-index :field/options] items/add {})))
 
 (rf/reg-event-db
  ::remove-form-field-option
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :fields field-index :options] items/remove option-index)))
+   (update-in db [::form :form/fields field-index :field/options] items/remove option-index)))
 
 (rf/reg-event-db
  ::move-form-field-option-up
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :fields field-index :options] items/move-up option-index)))
+   (update-in db [::form :form/fields field-index :field/options] items/move-up option-index)))
 
 (rf/reg-event-db
  ::move-form-field-option-down
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :fields field-index :options] items/move-down option-index)))
+   (update-in db [::form :form/fields field-index :field/options] items/move-down option-index)))
 
 ;;;; form submit
 
 (defn- supports-optional? [field]
-  (not= "label" (:type field)))
+  (not= :label (:field/type field)))
 
-(defn- supports-input-prompt? [field]
-  (contains? #{"text" "texta" "description"} (:type field)))
+(defn- supports-placeholder? [field]
+  (contains? #{:text :texta :description} (:field/type field)))
 
-(defn- supports-maxlength? [field]
-  (contains? #{"text" "texta"} (:type field)))
+(defn- supports-max-length? [field]
+  (contains? #{:text :texta} (:field/type field)))
 
 (defn- supports-options? [field]
-  (contains? #{"option" "multiselect"} (:type field)))
+  (contains? #{:option :multiselect} (:field/type field)))
 
 (defn build-localized-string [lstr languages]
   (into {} (for [language languages]
              [language (get lstr language "")])))
 
 (defn- build-request-field [field languages]
-  (merge {:title (build-localized-string (:title field) languages)
-          :type (:type field)
-          :optional (if (supports-optional? field)
-                      (boolean (:optional field))
-                      false)}
-         (when (supports-input-prompt? field)
-           {:input-prompt (build-localized-string (:input-prompt field) languages)})
-         (when (supports-maxlength? field)
-           {:maxlength (parse-int (:maxlength field))})
+  (merge {:field/title (build-localized-string (:field/title field) languages)
+          :field/type (:field/type field)
+          :field/optional (if (supports-optional? field)
+                            (boolean (:field/optional field))
+                            false)}
+         (when (supports-placeholder? field)
+           {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
+         (when (supports-max-length? field)
+           {:field/max-length (parse-int (:field/max-length field))})
          (when (supports-options? field)
-           {:options (for [{:keys [key label]} (:options field)]
-                       {:key key
-                        :label (build-localized-string label languages)})})))
+           {:field/options (for [{:keys [key label]} (:field/options field)]
+                             {:key key
+                              :label (build-localized-string label languages)})})))
 
 (defn build-request [form languages]
-  {:organization (:organization form)
-   :title (:title form)
-   :fields (mapv #(build-request-field % languages) (:fields form))})
+  {:form/organization (:form/organization form)
+   :form/title (:form/title form)
+   :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
 ;;;; form validation
 
@@ -125,33 +125,33 @@
     (when (not-empty (remove identity validated))
       {key (apply merge validated)})))
 
-(def ^:private maxlength-range [0 32767])
+(def ^:private max-length-range [0 32767])
 
-(defn- validate-maxlength [maxlength]
-  (when-not (str/blank? maxlength)
-    (let [parsed (parse-int maxlength)]
+(defn- validate-max-length [max-length]
+  (when-not (str/blank? max-length)
+    (let [parsed (parse-int max-length)]
       (when (or (nil? parsed)
-                (not (<= (first maxlength-range) parsed (second maxlength-range))))
-        {:maxlength :t.form.validation/invalid-value}))))
+                (not (<= (first max-length-range) parsed (second max-length-range))))
+        {:field/max-length :t.form.validation/invalid-value}))))
 
 (defn- validate-option [option id languages]
   {id (merge (validate-text-field option :key)
              (validate-localized-text-field option :label languages))})
 
 (defn- validate-options [options languages]
-  {:options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
+  {:field/options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
 
 (defn- validate-field [field id languages]
-  {id (merge (validate-text-field field :type)
-             (validate-localized-text-field field :title languages)
-             (validate-optional-localized-field field :input-prompt languages)
-             (validate-maxlength (:maxlength field))
-             (validate-options (:options field) languages))})
+  {id (merge (validate-text-field field :field/type)
+             (validate-localized-text-field field :field/title languages)
+             (validate-optional-localized-field field :field/placeholder languages)
+             (validate-max-length (:field/max-length field))
+             (validate-options (:field/options field) languages))})
 
 (defn validate-form [form languages]
-  (-> (merge (validate-text-field form :organization)
-             (validate-text-field form :title)
-             {:fields (apply merge (mapv #(validate-field %1 %2 languages) (form :fields) (range)))})
+  (-> (merge (validate-text-field form :form/organization)
+             (validate-text-field form :form/title)
+             {:form/fields (apply merge (mapv #(validate-field %1 %2 languages) (:form/fields form) (range)))})
       remove-empty-keys))
 
 (defn- page-title [edit-form?]
@@ -174,7 +174,7 @@
                   {:params (build-request (db ::form) (db :languages))
                    :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
                    :error-handler status-modal/common-error-handler!})
-      {:db (assoc db ::form-errors form-errors)}))))
+       {:db (assoc db ::form-errors form-errors)}))))
 
 ;;;; UI
 
@@ -184,24 +184,24 @@
    :update-form ::set-form-field})
 
 (defn- form-organization-field []
-  [text-field context {:keys [:organization]
+  [text-field context {:keys [:form/organization]
                        :label (text :t.administration/organization)
                        :placeholder (text :t.administration/organization-placeholder)}])
 
 (defn- form-title-field []
-  [text-field context {:keys [:title]
+  [text-field context {:keys [:form/title]
                        :label (text :t.create-form/title)}])
 
 (defn- form-field-title-field [field-index]
-  [localized-text-field context {:keys [:fields field-index :title]
+  [localized-text-field context {:keys [:form/fields field-index :field/title]
                                  :label (text :t.create-form/field-title)}])
 
-(defn- form-field-input-prompt-field [field-index]
-  [localized-text-field context {:keys [:fields field-index :input-prompt]
-                                 :label (text :t.create-form/input-prompt)}])
+(defn- form-field-placeholder-field [field-index]
+  [localized-text-field context {:keys [:form/fields field-index :field/placeholder]
+                                 :label (text :t.create-form/placeholder)}])
 
-(defn- form-field-maxlength-field [field-index]
-  [text-field context {:keys [:fields field-index :maxlength]
+(defn- form-field-max-length-field [field-index]
+  [text-field context {:keys [:form/fields field-index :field/max-length]
                        :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-field-option-button [field-index]
@@ -228,35 +228,35 @@
      [move-form-field-option-up-button field-index option-index]
      [move-form-field-option-down-button field-index option-index]
      [remove-form-field-option-button field-index option-index]]]
-   [text-field context {:keys [:fields field-index :options option-index :key]
+   [text-field context {:keys [:form/fields field-index :field/options option-index :key]
                         :label (text :t.create-form/option-key)
                         :normalizer normalize-option-key}]
-   [localized-text-field context {:keys [:fields field-index :options option-index :label]
+   [localized-text-field context {:keys [:form/fields field-index :field/options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
 (defn- form-field-option-fields [field-index]
   (let [form @(rf/subscribe [::form])]
     (into (into [:div]
-                (for [option-index (range (count (get-in form [:fields field-index :options])))]
+                (for [option-index (range (count (get-in form [:form/fields field-index :field/options])))]
                   [form-field-option-field field-index option-index]))
           [[:div.form-field-option.new-form-field-option
             [add-form-field-option-button field-index]]])))
 
 (defn- form-field-type-radio-group [field-index]
   [radio-button-group context {:id (str "radio-group-" field-index)
-                               :keys [:fields field-index :type]
+                               :keys [:form/fields field-index :field/type]
                                :orientation :vertical
-                               :options [{:value "text", :label (text :t.create-form/type-text)}
-                                         {:value "texta", :label (text :t.create-form/type-texta)}
-                                         {:value "description", :label (text :t.create-form/type-description)}
-                                         {:value "option", :label (text :t.create-form/type-option)}
-                                         {:value "multiselect", :label (text :t.create-form/type-multiselect)}
-                                         {:value "date", :label (text :t.create-form/type-date)}
-                                         {:value "attachment", :label (text :t.create-form/type-attachment)}
-                                         {:value "label", :label (text :t.create-form/type-label)}]}])
+                               :options [{:value :text, :label (text :t.create-form/type-text)}
+                                         {:value :texta, :label (text :t.create-form/type-texta)}
+                                         {:value :description, :label (text :t.create-form/type-description)}
+                                         {:value :option, :label (text :t.create-form/type-option)}
+                                         {:value :multiselect, :label (text :t.create-form/type-multiselect)}
+                                         {:value :date, :label (text :t.create-form/type-date)}
+                                         {:value :attachment, :label (text :t.create-form/type-attachment)}
+                                         {:value :label, :label (text :t.create-form/type-label)}]}])
 
 (defn- form-field-optional-checkbox [field-index]
-  [checkbox context {:keys [:fields field-index :optional]
+  [checkbox context {:keys [:form/fields field-index :field/optional]
                      :label (text :t.create-form/optional)}])
 
 (defn- add-form-field-button []
@@ -302,38 +302,21 @@
                         [form-field-type-radio-group field-index]
                         (when (supports-optional? field)
                           [form-field-optional-checkbox field-index])
-                        (when (supports-input-prompt? field)
-                          [form-field-input-prompt-field field-index])
-                        (when (supports-maxlength? field)
-                          [form-field-maxlength-field field-index])
+                        (when (supports-placeholder? field)
+                          [form-field-placeholder-field field-index])
+                        (when (supports-max-length? field)
+                          [form-field-max-length-field field-index])
                         (when (supports-options? field)
                           [form-field-option-fields field-index])])
                      fields)))
-
-(defn- form-field-to-application-field
-  "Convert a field from the form create model to the application view model."
-  [field]
-  (merge {:field/type (keyword (:type field))
-          :field/title (:title field)}
-         (when (supports-optional? field)
-           {:field/optional (:optional field)})
-         (when (supports-input-prompt? field)
-           {:field/placeholder (:input-prompt field)})
-         (when (supports-maxlength? field)
-           {:field/max-length (parse-int (:maxlength field))})
-         (when (supports-options? field)
-           {:field/options (:options field)})))
-
-(defn- field-preview [field]
-  [fields/field (form-field-to-application-field field)])
 
 (defn form-preview [form]
   [collapsible/component
    {:id "preview-form"
     :title (text :t.administration/preview)
     :always (into [:div]
-                  (for [field (:fields form)]
-                    [field-preview field]))}])
+                  (for [field (:form/fields form)]
+                    [fields/field field]))}])
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
@@ -353,7 +336,7 @@
             :always [:div
                      [form-organization-field]
                      [form-title-field]
-                     [form-fields (:fields form)]
+                     [form-fields (:form/fields form)]
 
                      [:div.form-field.new-form-field
                       [add-form-field-button]]

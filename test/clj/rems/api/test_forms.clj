@@ -1,8 +1,6 @@
 (ns ^:integration rems.api.test-forms
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
@@ -10,6 +8,12 @@
 (use-fixtures
   :once
   api-fixture)
+
+(defn fixup-field-to-match-command [field]
+  (-> field
+      (dissoc :field/id)
+      ;; XXX: these tests use the JSON API, so keywords are not maintained
+      (update :field/type keyword)))
 
 (deftest forms-api-test
   (let [api-key "42"
@@ -21,34 +25,48 @@
                      handler
                      assert-response-is-ok
                      read-body)]
-        (is (:id (first data)))))
+        (is (:form/id (first data)))))
+
+    (testing "get one"
+      (let [data (-> (request :get "/api/forms/1")
+                     (authenticate api-key user-id)
+                     handler
+                     assert-response-is-ok
+                     read-body)]
+        (is (:form/id data))))
+
+    (testing "not found"
+      (let [response (-> (request :get "/api/forms/0")
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (= 404 (:status response)))))
 
     (testing "create"
-      (let [command {:organization "abc"
-                     :title (str "form title " (UUID/randomUUID))
-                     :fields [{:title {:en "en title"
-                                       :fi "fi title"}
-                               :optional true
-                               :type "text"
-                               :input-prompt {:en "en prompt"
-                                              :fi "fi prompt"}}]}]
+      (let [command {:form/organization "abc"
+                     :form/title (str "form title " (UUID/randomUUID))
+                     :form/fields [{:field/title {:en "en title"
+                                                  :fi "fi title"}
+                                    :field/optional true
+                                    :field/type :text
+                                    :field/placeholder {:en "en placeholder"
+                                                        :fi "fi placeholder"}}]}]
 
         (testing "invalid create"
           ;; TODO: silence the logging for this expected error
-          (let [command-with-invalid-maxlength (assoc-in command [:fields 0 :maxlength] -1)
+          (let [command-with-invalid-max-length (assoc-in command [:form/fields 0 :field/max-length] -1)
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
-                             (json-body command-with-invalid-maxlength)
+                             (json-body command-with-invalid-max-length)
                              handler)]
             (is (= 400 (:status response))
-                "can't send negative maxlength")))
+                "can't send negative max length")))
 
         (testing "invalid create: field too long"
-          (let [command-with-long-prompt (assoc-in command [:fields 0 :input-prompt :en]
-                                                   (apply str (repeat 10000 "x")))
+          (let [command-with-long-placeholder (assoc-in command [:form/fields 0 :field/placeholder :en]
+                                                        (apply str (repeat 10000 "x")))
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
-                             (json-body command-with-long-prompt)
+                             (json-body command-with-long-placeholder)
                              handler)]
             (is (= 500 (:status response)))))
 
@@ -66,50 +84,50 @@
                                       handler
                                       read-ok-body)]
                 (testing "result matches input"
-                  (is (= (select-keys command [:title :organization])
-                         (select-keys form-template [:title :organization])))
-                  (is (= (:fields command)
-                         (mapv #(dissoc % :id) (:fields form-template)))))))))))))
+                  (is (= (select-keys command [:form/organization :form/title])
+                         (select-keys form-template [:form/organization :form/title])))
+                  (is (= (:form/fields command)
+                         (mapv fixup-field-to-match-command (:form/fields form-template)))))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
         user-id "owner"
-        ;;"attachment" "date" "description" "label" "multiselect" "option" "text" "texta"
         localized {:en "en" :fi "fi"}
-        form-spec {:organization "abc" :title "all field types test"
-                   :fields [{:type "text"
-                             :title localized
-                             :optional false}
-                            {:type "texta"
-                             :title localized
-                             :optional true
-                             :maxlength 300
-                             :input-prompt localized}
-                            {:type "description"
-                             :title localized
-                             :optional false}
-                            {:type "option"
-                             :title localized
-                             :optional true
-                             :options [{:key "a" :label localized}
-                                       {:key "b" :label localized}
-                                       {:key "c" :label localized}]}
-                            {:type "multiselect"
-                             :title localized
-                             :optional false
-                             :options [{:key "a" :label localized}
-                                       {:key "b" :label localized}
-                                       {:key "c" :label localized}
-                                       {:key "d" :label localized}]}
-                            {:type "label"
-                             :title localized
-                             :optional true}
-                            {:type "date"
-                             :title localized
-                             :optional true}
-                            {:type "attachment"
-                             :title localized
-                             :optional false}]}]
+        form-spec {:form/organization "abc"
+                   :form/title "all field types test"
+                   :form/fields [{:field/type :text
+                                  :field/title localized
+                                  :field/optional false}
+                                 {:field/type :texta
+                                  :field/title localized
+                                  :field/optional true
+                                  :field/max-length 300
+                                  :field/placeholder localized}
+                                 {:field/type :description
+                                  :field/title localized
+                                  :field/optional false}
+                                 {:field/type :option
+                                  :field/title localized
+                                  :field/optional true
+                                  :field/options [{:key "a" :label localized}
+                                                  {:key "b" :label localized}
+                                                  {:key "c" :label localized}]}
+                                 {:field/type :multiselect
+                                  :field/title localized
+                                  :field/optional false
+                                  :field/options [{:key "a" :label localized}
+                                                  {:key "b" :label localized}
+                                                  {:key "c" :label localized}
+                                                  {:key "d" :label localized}]}
+                                 {:field/type :label
+                                  :field/title localized
+                                  :field/optional true}
+                                 {:field/type :date
+                                  :field/title localized
+                                  :field/optional true}
+                                 {:field/type :attachment
+                                  :field/title localized
+                                  :field/optional false}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)
@@ -123,18 +141,19 @@
                          (authenticate api-key user-id)
                          handler
                          read-ok-body)]
-            (is (= (select-keys form-spec [:organization :title])
-                   (select-keys form [:organization :title])))
-            (is (= (:fields form-spec)
-                   (mapv #(dissoc % :id) (:fields form))))))))))
+            (is (= (select-keys form-spec [:form/organization :form/title])
+                   (select-keys form [:form/organization :form/title])))
+            (is (= (:form/fields form-spec)
+                   (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
 (deftest form-editable-test
   (let [api-key "42"
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:organization "abc" :title "form editable test"
-                                :fields []})
+                    (json-body {:form/organization "abc"
+                                :form/title "form editable test"
+                                :form/fields []})
                     handler
                     read-ok-body
                     :id)]
@@ -163,8 +182,9 @@
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:organization "abc" :title "form edit test"
-                                :fields []})
+                    (json-body {:form/organization "abc"
+                                :form/title "form edit test"
+                                :form/fields []})
                     handler
                     read-ok-body
                     :id)]
@@ -173,27 +193,29 @@
                      (authenticate api-key user-id)
                      handler
                      read-ok-body)]
-        (is (= (form :organization) "abc")))
-     (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
-                        (authenticate api-key user-id)
-                        (json-body {:organization "def" :title "form edit test"
-                                    :fields []})
-                        handler
-                        read-ok-body)]
-       (testing "form content after editing"
-         (let [form (-> (request :get (str "/api/forms/" form-id))
-                        (authenticate api-key user-id)
-                        handler
-                        read-ok-body)]
-           (is (= (form :organization) "def"))))))))
+        (is (= (:form/organization form) "abc")))
+      (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
+                         (authenticate api-key user-id)
+                         (json-body {:form/organization "def"
+                                     :form/title "form edit test"
+                                     :form/fields []})
+                         handler
+                         read-ok-body)]
+        (testing "form content after editing"
+          (let [form (-> (request :get (str "/api/forms/" form-id))
+                         (authenticate api-key user-id)
+                         handler
+                         read-ok-body)]
+            (is (= (:form/organization form) "def"))))))))
 
 (deftest form-update-test
   (let [api-key "42"
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:organization "abc" :title "form update test"
-                                :fields []})
+                    (json-body {:form/organization "abc"
+                                :form/title "form update test"
+                                :form/fields []})
                     handler
                     read-ok-body
                     :id)]
@@ -233,18 +255,18 @@
   (let [api-key "42"
         user-id "owner"]
     (testing "create"
-      (let [command {:organization "abc"
-                     :title (str "form title " (UUID/randomUUID))
-                     :fields [{:title {:en "en title"
-                                       :fi "fi title"}
-                               :optional true
-                               :type "option"
-                               :options [{:key "yes"
-                                          :label {:en "Yes"
-                                                  :fi "Kyllä"}}
-                                         {:key "no"
-                                          :label {:en "No"
-                                                  :fi "Ei"}}]}]}
+      (let [command {:form/organization "abc"
+                     :form/title (str "form title " (UUID/randomUUID))
+                     :form/fields [{:field/title {:en "en title"
+                                                  :fi "fi title"}
+                                    :field/optional true
+                                    :field/type :option
+                                    :field/options [{:key "yes"
+                                                     :label {:en "Yes"
+                                                             :fi "Kyllä"}}
+                                                    {:key "no"
+                                                     :label {:en "No"
+                                                             :fi "Ei"}}]}]}
             id (-> (request :post "/api/forms/create")
                    (authenticate api-key user-id)
                    (json-body command)
@@ -257,8 +279,8 @@
                          (authenticate api-key user-id)
                          handler
                          read-ok-body)]
-            (is (= (:fields command)
-                   (mapv #(dissoc % :id) (:fields form))))))))))
+            (is (= (:form/fields command)
+                   (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:archived true})
@@ -287,9 +309,9 @@
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
-                         (json-body {:organization "abc"
-                                     :title "the title"
-                                     :fields []})
+                         (json-body {:form/organization "abc"
+                                     :form/title "the title"
+                                     :form/fields []})
                          handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
@@ -305,9 +327,9 @@
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
                          (authenticate "42" "alice")
-                         (json-body {:organization "abc"
-                                     :title "the title"
-                                     :fields []})
+                         (json-body {:form/organization "abc"
+                                     :form/title "the title"
+                                     :form/fields []})
                          handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

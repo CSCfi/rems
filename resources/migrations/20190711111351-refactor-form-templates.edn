@@ -1,0 +1,3 @@
+{:ns rems.migrations.refactor-form-templates
+ :up-fn migrate-up
+ :down-fn nil}

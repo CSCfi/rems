@@ -1,32 +1,37 @@
 (ns rems.application.test-model
   (:require [clojure.test :refer :all]
+            [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.common-util :refer [deep-merge]]
-            [rems.permissions :as permissions])
+            [rems.permissions :as permissions]
+            [schema.core :as s])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
 (def ^:private get-form-template
-  {40 {:id 40
-       :organization "org"
-       :title "form title"
-       :fields [{:id 41
-                 :title {:en "en title" :fi "fi title"}
-                 :input-prompt {:en "en placeholder" :fi "fi placeholder"}
-                 :optional false
-                 :options []
-                 :maxlength 100
-                 :type "description"}
-                {:id 42
-                 :title {:en "en title" :fi "fi title"}
-                 :input-prompt {:en "en placeholder" :fi "fi placeholder"}
-                 :optional false
-                 :options []
-                 :maxlength 100
-                 :type "text"}]
+  {40 {:form/id 40
+       :form/organization "org"
+       :form/title "form title"
+       :form/fields [{:field/id 41
+                      :field/title {:en "en title" :fi "fi title"}
+                      :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                      :field/optional false
+                      :field/options []
+                      :field/max-length 100
+                      :field/type :description}
+                     {:field/id 42
+                      :field/title {:en "en title" :fi "fi title"}
+                      :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                      :field/optional false
+                      :field/options []
+                      :field/max-length 100
+                      :field/type :text}]
        :start (DateTime. 100)
-       :end nil}})
+       :end nil
+       :enabled true
+       :archived false
+       :expired false}})
 
 (def ^:private get-catalogue-item
   {10 {:id 10
@@ -45,8 +50,7 @@
        :end nil
        :enabled true
        :archived false
-       :expired false
-       :state "enabled"}
+       :expired false}
    20 {:id 20
        :resource-id 21
        :resid "urn:21"
@@ -63,8 +67,7 @@
        :end nil
        :enabled true
        :archived false
-       :expired false
-       :state "enabled"}
+       :expired false}
    30 {:id 30
        :resource-id 31
        :resid "urn:31"
@@ -81,8 +84,7 @@
        :end nil
        :enabled true
        :archived false
-       :expired false
-       :state "enabled"}})
+       :expired false}})
 
 (def ^:private get-license
   {30 {:id 30
@@ -189,6 +191,15 @@
 ;; no attachments here for now
 (defn ^:private get-attachments-for-application [id]
   [])
+
+(deftest test-dummies-schema
+  (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
+                                        ["catalogue item" schema/CatalogueItem get-catalogue-item]
+                                        ["license" schema/License get-license]
+                                        ["workflow" schema/WorkflowDB get-workflow]]]
+    (doseq [[id dummy] dummies]
+      (testing (str description " " id)
+        (is (s/validate schema dummy))))))
 
 (deftest test-application-view
   (let [injections {:get-form-template get-form-template

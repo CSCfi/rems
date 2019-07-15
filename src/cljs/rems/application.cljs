@@ -737,7 +737,7 @@
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
                                                 :field/title {:en "Field 1"}
-                                                :field/placeholder {:en "prompt 1"}}
+                                                :field/placeholder {:en "placeholder 1"}}
                                                {:field/id 2
                                                 :field/type :label
                                                 :title "Please input your wishes below."}
@@ -745,11 +745,11 @@
                                                 :field/type :texta
                                                 :field/optional true
                                                 :field/title {:en "Field 2"}
-                                                :field/placeholder {:en "prompt 2"}}
+                                                :field/placeholder {:en "placeholder 2"}}
                                                {:field/id 4
                                                 :field/type :unsupported
                                                 :field/title {:en "Field 3"}
-                                                :field/placeholder {:en "prompt 3"}}
+                                                :field/placeholder {:en "placeholder 3"}}
                                                {:field/id 5
                                                 :field/type :date
                                                 :field/title {:en "Field 4"}}]}
@@ -773,7 +773,7 @@
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
                                                 :field/title {:en "Field 1"}
-                                                :field/placeholder {:en "prompt 1"}}]}
+                                                :field/placeholder {:en "placeholder 1"}}]}
               :application/licenses [{:license/id 4
                                       :license/type :text
                                       :license/title {:en "A Text License"}
@@ -791,7 +791,7 @@
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
                                                 :field/title {:en "Field 1"}
-                                                :field/placeholder {:en "prompt 1"}}]}
+                                                :field/placeholder {:en "placeholder 1"}}]}
               :application/licenses [{:license/id 4
                                       :license/type :text
                                       :license/title {:en "A Text License"}

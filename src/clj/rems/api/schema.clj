@@ -108,17 +108,79 @@
    :license/expired s/Bool
    :license/archived s/Bool})
 
-(s/defschema Field
+(def UserId s/Str)
+
+(s/defschema Actor
+  {:actoruserid UserId
+   :round s/Num
+   :role (s/enum "approver" "reviewer")})
+
+(s/defschema WorkflowLicense
+  {:type s/Str
+   :start DateTime
+   :textcontent s/Str
+   :localizations [s/Any]
+   :end (s/maybe DateTime)})
+
+(s/defschema WorkflowDB ; TODO: unify workflow schemas
+  {:id s/Num
+   :organization s/Str
+   :owneruserid UserId
+   :modifieruserid UserId
+   :title s/Str
+   :fnlround s/Num
+   :workflow s/Any
+   :licenses s/Any
+   :visibility s/Str
+   :start DateTime
+   :end (s/maybe DateTime)
+   :expired s/Bool
+   :enabled s/Bool
+   :archived s/Bool})
+
+(s/defschema Workflow
+  (-> WorkflowDB
+      (dissoc :fnlround
+              :licenses
+              :visibility)
+      (assoc :final-round s/Num
+             :actors [Actor]
+             :licenses [WorkflowLicense])))
+
+(def not-neg? (partial <= 0))
+
+(s/defschema FieldTemplate
   {:field/id s/Int
-   :field/value s/Str
-   (s/optional-key :field/previous-value) s/Str
    :field/type (s/enum :attachment :date :description :label :multiselect :option :text :texta)
    :field/title LocalizedString
-   :field/placeholder LocalizedString
+   (s/optional-key :field/placeholder) LocalizedString
    :field/optional s/Bool
-   :field/options [{:key s/Str
-                    :label LocalizedString}]
-   :field/max-length (s/maybe s/Int)})
+   (s/optional-key :field/options) [{:key s/Str
+                                     :label LocalizedString}]
+   (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))})
+
+(s/defschema NewFieldTemplate
+  (dissoc FieldTemplate :field/id))
+
+(s/defschema Field
+  (assoc FieldTemplate
+         :field/value s/Str
+         (s/optional-key :field/previous-value) s/Str))
+
+(s/defschema FormTemplate
+  {:form/id s/Int
+   :form/organization s/Str
+   :form/title s/Str
+   :form/fields [FieldTemplate]
+   ;; TODO: rename the following to use :status/ namespace (also in all other entities)
+   :start DateTime
+   :end (s/maybe DateTime)
+   :expired s/Bool
+   :enabled s/Bool
+   :archived s/Bool})
+
+(s/defschema FormTemplateOverview
+  (dissoc FormTemplate :form/fields))
 
 (s/defschema Form
   {:form/id s/Int

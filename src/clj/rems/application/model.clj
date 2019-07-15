@@ -420,22 +420,15 @@
          (localization-for :title {:localizations {:en {}
                                                    :fi {}}}))))
 
-(defn- enrich-form [app-form get-form-template]
-  (let [form (get-form-template (:form/id app-form))
-        app-fields (:form/fields app-form)
-        rich-fields (map (fn [field]
-                           {:field/id (:id field)
-                            :field/value "" ; default for new forms
-                            :field/type (keyword (:type field))
-                            :field/title (:title field)
-                            :field/placeholder (get field :input-prompt {})
-                            :field/optional (:optional field)
-                            :field/options (:options field)
-                            :field/max-length (:maxlength field)})
-                         (:fields form))
-        fields (merge-lists-by :field/id rich-fields app-fields)]
-    (assoc app-form
-           :form/title (:title form)
+(defn- enrich-form [form get-form-template]
+  (let [form-template (get-form-template (:form/id form))
+        default-fields (map #(assoc % :field/value "")
+                            (:form/fields form-template))
+        fields (merge-lists-by :field/id
+                               default-fields
+                               (:form/fields form))]
+    (assoc form
+           :form/title (:form/title form-template)
            :form/fields fields)))
 
 (defn- set-application-description [application]
