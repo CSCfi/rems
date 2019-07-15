@@ -11,6 +11,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
@@ -46,7 +47,7 @@
 (deftest test-form
   (binding [context/*lang* :en]
     (let [uid "test-user"
-          form-id (:id (db/create-form! {:organization "abc" :title "internal-title" :user uid}))
+          form-id (:id (form/create-form! uid {:form/organization "abc" :form/title "internal-title" :form/fields []}))
           wf-id (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
           license-id (:id (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"}))
           _ (db/create-license-localization! {:licid license-id :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
@@ -174,7 +175,7 @@
         wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
         res1 (:id (db/create-resource! {:resid "resid111" :organization "abc" :owneruserid uid :modifieruserid uid}))
         res2 (:id (db/create-resource! {:resid "resid222" :organization "abc" :owneruserid uid :modifieruserid uid}))
-        form-id (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
+        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
         item1 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res1 :wfid wfid}))
         item2 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res2 :wfid wfid}))
         app-id (legacy/create-new-draft uid wfid)]
@@ -622,11 +623,11 @@
   (db/add-user! {:user "jill" :userattrs nil})
   (let [workflow {:type :workflow/dynamic :handlers ["handler"]}
         wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
-        formid (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
+        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
         res1 (:id (db/create-resource! {:resid "resource1" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
         res2 (:id (db/create-resource! {:resid "resource2" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
-        item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wf}))
-        item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wf}))
+        item1 (:id (db/create-catalogue-item! {:title "item1" :form form-id :resid res1 :wfid wf}))
+        item2 (:id (db/create-catalogue-item! {:title "item2" :form form-id :resid res2 :wfid wf}))
         jack-app (:application-id (applications/create-application! "jack" [item1]))
         jill-app (:application-id (applications/create-application! "jill" [item1 item2]))]
     (is (nil? (applications/command! {:type :application.command/submit

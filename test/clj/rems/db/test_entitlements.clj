@@ -5,6 +5,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
@@ -85,7 +86,7 @@
         organization "foo"
         workflow {:type :workflow/dynamic :handlers [admin]}
         wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
-        formid (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
+        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
         lic-id1 (:id (licenses/create-license! {:licensetype "text"
                                                 :title "license1"
                                                 :textcontent "license1 text"
@@ -99,9 +100,9 @@
         res1 (:id (resource/create-resource! {:resid "resource1" :organization organization :licenses [lic-id1]} "owner"))
         res2 (:id (resource/create-resource! {:resid "resource2" :organization organization :licenses [lic-id2]} "owner"))
         res3 (:id (resource/create-resource! {:resid "resource3" :organization organization :licenses [lic-id1]} "owner"))
-        item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wfid}))
-        item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))
-        item3 (:id (db/create-catalogue-item! {:title "item3" :form formid :resid res3 :wfid wfid}))]
+        item1 (:id (db/create-catalogue-item! {:title "item1" :form form-id :resid res1 :wfid wfid}))
+        item2 (:id (db/create-catalogue-item! {:title "item2" :form form-id :resid res2 :wfid wfid}))
+        item3 (:id (db/create-catalogue-item! {:title "item3" :form form-id :resid res3 :wfid wfid}))]
     (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
     (db/add-user! {:user memberid :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
     (db/add-user! {:user admin :userattrs nil})
