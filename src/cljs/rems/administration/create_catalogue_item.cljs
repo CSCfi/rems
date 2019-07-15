@@ -56,7 +56,7 @@
   (let [request {:title (get (:title form) (first languages))
                  :wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
-                 :form (get-in form [:form :id])
+                 :form (get-in form [:form :form/id])
                  :localizations (for [language languages]
                                   {:langcode (name language)
                                    :title (get (:title form) language)})}]
