@@ -166,6 +166,7 @@
 (rf/reg-event-db
  ::user-triggered-navigation
  (fn [db [_]]
+   (.scrollTo js/window 0 0)
    (assoc db ::grab-focus? true)))
 
 (rf/reg-event-db

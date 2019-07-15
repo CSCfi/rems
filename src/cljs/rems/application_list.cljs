@@ -2,14 +2,15 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application-util :as application-util]
+            [rems.atoms :as atoms]
             [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- view-button [app]
-  [:a.btn.btn-primary
-   {:href (str "#/application/" (:application/id app))}
+  [atoms/link {:class "btn btn-primary"}
+   (str "#/application/" (:application/id app))
    (text :t.applications/view)])
 
 (defn- format-catalogue-items [app]
@@ -26,7 +27,7 @@
 (defn- format-applicant [applicant]
   [:div {:class "application-applicant"
          :title applicant}
-     applicant])
+   applicant])
 
 (rf/reg-sub
  ::table-rows
