@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.form :as form]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
@@ -13,7 +14,7 @@
 
 (deftest test-update-catalogue-item!
   (let [uid "test-user"
-        form-id (:id (db/create-form! {:organization "org" :title "form with max lengths" :user uid}))
+        form-id (:id (form/create-form! uid {:form/organization "org" :form/title "" :form/fields []}))
         wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
         item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))
         item-id2 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
@@ -72,7 +73,7 @@
 
 (deftest test-get-localized-catalogue-items
   (let [uid "test-user"
-        form-id (:id (db/create-form! {:organization "org" :title "form with max lengths" :user uid}))
+        form-id (:id (form/create-form! uid {:form/organization "org" :form/title "" :form/fields []}))
         wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
         item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
 
