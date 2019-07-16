@@ -24,9 +24,11 @@
   [:img (merge opts {:src src})])
 
 (defn sort-symbol [sort-order]
-  [:i.fa {:class (case sort-order
-                   :asc "fa-arrow-up"
-                   :desc "fa-arrow-down")}])
+  (let [[class label] (case sort-order
+                        :asc ["fa-arrow-up" :t.table/ascending-order]
+                        :desc ["fa-arrow-down" :t.table/descending-order])]
+    [:i.fa {:class class
+            :aria-label (text label)}]))
 
 (defn search-symbol []
   [:i.fa {:class "fa-search"}])

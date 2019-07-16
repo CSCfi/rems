@@ -302,6 +302,8 @@
   :search {:close-search "Sulje haku"
            :open-search "Avaa haku"
            :search-parameters "Hakutermit"}
+  :table {:ascending-order "Nouseva järjestys"
+          :descending-order "Laskeva järjestys"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :forbidden-page {:forbidden "Kielletty"

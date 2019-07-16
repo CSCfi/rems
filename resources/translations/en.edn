@@ -302,6 +302,8 @@
   :search {:close-search "Close search"
            :open-search "Open search"
            :search-parameters "Search parameters"}
+  :table {:ascending-order "Ascending order"
+          :descending-order "Descending order"}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You're unauthorized to access this page."}
   :forbidden-page {:forbidden "Forbidden"
