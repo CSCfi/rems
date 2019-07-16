@@ -62,7 +62,7 @@
       (fn [e]
         (if (= (.-key e) "Enter")
           (on-close)))
-      :tabIndex "-1"}
+      :tab-index "-1"}
      (if (false? shade?)
        content
        [shade-wrapper content on-close])]))

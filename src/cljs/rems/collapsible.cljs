@@ -43,7 +43,7 @@
       (when top-less-button? [show-less-button id expanded])
       [:div.collapse {:id (str id "collapse")
                       :class (when expanded "show")
-                      :tabIndex "-1"}
+                      :tab-index "-1"}
        content-hideable]
       [show-more-button id expanded callback]
       (when-not (false? bottom-less-button?) [show-less-button id expanded])])
