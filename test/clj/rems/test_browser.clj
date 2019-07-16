@@ -105,13 +105,13 @@
   (scroll-and-click *driver* [{:css "table.catalogue"}
                               {:fn/text resource-name}
                               {:xpath "./ancestor::tr"}
-                              {:css "button.add-to-cart"}]))
+                              {:css ".add-to-cart"}]))
 
 (defn apply-for-resource [resource-name]
   (scroll-and-click *driver* [{:css "table.cart"}
                               {:fn/text resource-name}
                               {:xpath "./ancestor::tr"}
-                              {:css "button.apply-for-catalogue-items"}])
+                              {:css ".apply-for-catalogue-items"}])
   (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "application-page.png")))

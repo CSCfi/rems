@@ -2,7 +2,7 @@
   (:require [cljs.tools.reader.edn :as edn]
             [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.application :as application]
+            [rems.atoms :as atoms]
             [rems.common-util :refer [select-vals]]
             [rems.text :refer [text text-format get-localized-title]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -46,9 +46,8 @@
        (mapv edn/read-string)))
 
 (defn- apply-button [items]
-  [:button.btn.btn-primary.apply-for-catalogue-items
-   {:type :button
-    :on-click #(application/apply-for items)}
+  [atoms/link {:class "btn btn-primary apply-for-catalogue-items"}
+   (str "#/application?items=" (str/join "," (sort (map :id items))))
    (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]

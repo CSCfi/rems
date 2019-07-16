@@ -54,21 +54,23 @@
      [:p (text type)]
      (into [:ul]
            (for [ci catalogue-items]
-             ;; TODO open in new tab?
              [:li
               (text :t.administration/catalogue-item) ": "
-              [:a {:href (str "#/administration/catalogue-items/" (:id ci))}
+              [:a {:target :_blank
+                   :href (str "#/administration/catalogue-items/" (:id ci))}
                (get-localized-title ci language)]]))
      (into [:ul]
            (for [r resources]
              [:li
               (text :t.administration/resource) ": "
-              [:a {:href (str "#/administration/resources/" (:id r))} (:resid r)]]))
+              [:a {:target :_blank
+                   :href (str "#/administration/resources/" (:id r))} (:resid r)]]))
      (into [:ul]
            (for [w workflows]
              [:li
               (text :t.administration/workflow) ": "
-              [:a {:href (str "#/administration/workflows/" (:id w))} (:title w)]]))]))
+              [:a {:target :_blank
+                   :href (str "#/administration/workflows/" (:id w))} (:title w)]]))]))
 
 (defn- format-update-failure [{:keys [errors]}]
   (into [:div]

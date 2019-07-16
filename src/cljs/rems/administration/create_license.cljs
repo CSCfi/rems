@@ -3,11 +3,11 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
-            [rems.atoms :refer [file-download document-title]]
+            [rems.atoms :as atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! post!]]
-            [rems.status-modal :as status-modal]))
+            [rems.util :refer [dispatch! post!]]))
 
 (rf/reg-event-db
  ::enter-page
@@ -185,14 +185,15 @@
         request (build-request form default-language languages)]
     [:button.btn.btn-primary
      {:type :button
-      :on-click #(on-click request)
+      :on-click (fn []
+                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (on-click request))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
-  [:button.btn.btn-secondary
-   {:type :button
-    :on-click #(dispatch! "/#/administration/licenses")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/licenses"
    (text :t.administration/cancel)])
 
 (defn create-license-page []

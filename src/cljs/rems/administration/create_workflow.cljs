@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field]]
-            [rems.atoms :refer [enrich-user document-title]]
+            [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
@@ -165,16 +165,17 @@
                   (build-create-request form))]
     [:button.btn.btn-primary
      {:type :button
-      :on-click #(if id
-                   (rf/dispatch [::update-workflow (build-update-request id form)])
-                   (rf/dispatch [::create-workflow (build-create-request form)]))
+      :on-click (fn []
+                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (if id
+                    (rf/dispatch [::update-workflow (build-update-request id form)])
+                    (rf/dispatch [::create-workflow (build-create-request form)])))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
-  [:button.btn.btn-secondary
-   {:type :button
-    :on-click #(dispatch! "/#/administration/workflows")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/workflows"
    (text :t.administration/cancel)])
 
 (defn workflow-type-description [description]

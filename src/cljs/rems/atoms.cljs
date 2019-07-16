@@ -15,7 +15,7 @@
   [:i {:class "fa fa-file-download"
        :aria-label (text :t.link/download-file)}])
 
-(defn link-to [opts uri title]
+(defn link [opts uri title]
   [:a (merge opts {:href uri
                    :on-click (fn [] (rf/dispatch [:rems.spa/user-triggered-navigation]))})
    title])

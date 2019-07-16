@@ -1,6 +1,5 @@
 (ns rems.auth.shibboleth
-  (:require [rems.atoms :as atoms]
-            [rems.atoms :refer [document-title]]
+  (:require [rems.atoms :as atoms :refer [document-title]]
             [rems.navbar :as nav]
             [rems.text :refer [text]]))
 
@@ -9,10 +8,10 @@
    [document-title (text :t.login/title)]
    [:p (text :t.login/text)]
    [:div
-    [atoms/link-to nil
-                   (nav/url-dest "/Shibboleth.sso/Login")
-                   [atoms/image {:class "login-btn" :alt "Haka"} "/img/haka-logo.jpg"]]]
+    [atoms/link nil
+     (nav/url-dest "/Shibboleth.sso/Login")
+     [atoms/image {:class "login-btn" :alt "Haka"} "/img/haka-logo.jpg"]]]
    (when alternative-endpoint
-    [atoms/link-to nil
-                   (nav/url-dest alternative-endpoint)
-                   (text :t.login/alternative)])])
+     [atoms/link nil
+      (nav/url-dest alternative-endpoint)
+      (text :t.login/alternative)])])

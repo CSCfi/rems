@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -54,13 +54,13 @@
 (rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
 (defn- to-create-resource []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-resource"}
+  [atoms/link {:class "btn btn-primary"}
+   "/#/administration/create-resource"
    (text :t.administration/create-resource)])
 
 (defn- to-view-resource [resource-id]
-  [:a.btn.btn-primary
-   {:href (str "/#/administration/resources/" resource-id)}
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/resources/" resource-id)
    (text :t.administration/view)])
 
 (rf/reg-sub

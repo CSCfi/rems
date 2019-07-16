@@ -3,11 +3,10 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :as atoms :refer [document-title]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
@@ -113,14 +112,15 @@
   (let [request (build-request form)]
     [:button.btn.btn-primary
      {:type :button
-      :on-click #(rf/dispatch [::create-resource request])
+      :on-click (fn []
+                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (rf/dispatch [::create-resource request]))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
-  [:button.btn.btn-secondary
-   {:type :button
-    :on-click #(dispatch! "/#/administration/resources")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/resources"
    (text :t.administration/cancel)])
 
 (defn create-resource-page []

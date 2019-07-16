@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -53,18 +53,18 @@
 (rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
 (defn- to-create-workflow []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-workflow"}
+  [atoms/link {:class "btn btn-primary"}
+   "/#/administration/create-workflow"
    (text :t.administration/create-workflow)])
 
 (defn- to-view-workflow [workflow-id]
-  [:a.btn.btn-primary
-   {:href (str "/#/administration/workflows/" workflow-id)}
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/workflows/" workflow-id)
    (text :t.administration/view)])
 
 (defn- to-edit-workflow [workflow-id]
-  [:a.btn.btn-primary
-   {:href (str "/#/administration/edit-workflow/" workflow-id)}
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/edit-workflow/" workflow-id)
    (text :t.administration/edit)])
 
 (rf/reg-sub

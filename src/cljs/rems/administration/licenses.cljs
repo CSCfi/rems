@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -53,14 +53,14 @@
 
 (rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
-(defn- to-create-licenses []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-license"}
+(defn- to-create-license []
+  [atoms/link {:class "btn btn-primary"}
+   "/#/administration/create-license"
    (text :t.administration/create-license)])
 
 (defn- to-view-license [license-id]
-  [:a.btn.btn-primary
-   {:href (str "/#/administration/licenses/" license-id)}
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/licenses/" license-id)
    (text :t.administration/view)])
 
 (rf/reg-sub
@@ -117,7 +117,7 @@
          [document-title (text :t.administration/licenses)]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[to-create-licenses]
+          [[to-create-license]
            [status-flags/display-old-toggle
             @(rf/subscribe [::display-old?])
             #(rf/dispatch [::set-display-old? %])]

@@ -1,9 +1,8 @@
 (ns rems.administration.forms
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
-            [rems.administration.form :as form]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -57,24 +56,26 @@
 (rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
 (defn- to-create-form []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-form"}
+  [atoms/link {:class "btn btn-primary"}
+   "/#/administration/create-form"
    (text :t.administration/create-form)])
 
 (defn- to-view-form [form]
-  [:a.btn.btn-primary
-   {:href (str "/#/administration/forms/" (:form/id form))}
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/forms/" (:form/id form))
    (text :t.administration/view)])
 
 (defn- to-edit-form [form]
   [:button.btn.btn-primary
    {:type :button
-    :on-click #(rf/dispatch [:rems.administration.form/edit-form (:form/id form)])}
+    :on-click (fn []
+                (rf/dispatch [:rems.spa/user-triggered-navigation])
+                (rf/dispatch [:rems.administration.form/edit-form (:form/id form)]))}
    (text :t.administration/edit)])
 
 (defn- copy-as-new-form [form]
-  [:a.btn.btn-primary
-   {:href (str "/#/administration/create-form/" (:form/id form))}
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/create-form/" (:form/id form))
    (text :t.administration/copy-as-new)])
 
 (rf/reg-sub

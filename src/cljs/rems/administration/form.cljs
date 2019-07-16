@@ -4,7 +4,7 @@
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.create-form :refer [form-preview]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :refer [info-field readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -46,21 +46,21 @@
    {}))
 
 (defn- back-button []
-  [:button.btn.btn-secondary
-   {:type :button
-    :on-click #(dispatch! "/#/administration/forms")}
+  [atoms/link {:class "btn btn-secondary"}
+   "/#/administration/forms"
    (text :t.administration/back)])
 
 (defn- edit-button [id]
   [:button.btn.btn-primary
    {:type :button
-    :on-click #(rf/dispatch [::edit-form id])}
+    :on-click (fn []
+                (rf/dispatch [:rems.spa/user-triggered-navigation])
+                (rf/dispatch [::edit-form id]))}
    (text :t.administration/edit)])
 
 (defn- copy-as-new-button [id]
-  [:button.btn.btn-primary
-   {:type :button
-    :on-click #(dispatch! (str "/#/administration/create-form/" id))}
+  [atoms/link {:class "btn btn-secondary"}
+   (str "/#/administration/create-form/" id)
    (text :t.administration/copy-as-new)])
 
 (defn form-view [form]
