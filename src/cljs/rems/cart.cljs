@@ -51,20 +51,24 @@
    (str "#/application?items=" (str/join "," (sort (map :id items))))
    (text :t.cart/apply)])
 
-(defn- item-view [item language & [apply-button?]]
-  [:tr.cart-item {:class (if apply-button? "separator" "")}
+(defn- item-view [item language apply-button?]
+  [:tr.cart-item
    [:td.title (get-localized-title item language)]
    [:td.commands
     [remove-from-cart-button item]
     (when apply-button? [apply-button [item]])]])
 
-(defn group-view
-  "Returns a seq of items that can be applied with the same application."
-  [items language]
-  (if (= 1 (count items))
-    [[item-view (first items) language true]]
-    (concat (map #(item-view % language) items)
-            [[:tr.separator [:td.commands.text-right {:col-span 2} (text-format :t.cart/apply-for-bundle (count items)) [:span.mr-3] [apply-button items]]]])))
+(defn- bundle-view [items language]
+  (let [many-items? (< 1 (count items))]
+    (into [:tbody.cart-bundle]
+          (concat (map (fn [item]
+                         [item-view item language (not many-items?)])
+                       items)
+                  (when many-items?
+                    [[:tr [:td.commands.text-right {:col-span 2}
+                           (text-format :t.cart/apply-for-bundle (count items))
+                           [:span.mr-3]
+                           [apply-button items]]]])))))
 
 (defn cart-list
   "List of shopping cart items"
@@ -78,12 +82,10 @@
                        :aria-atomic true}
       [:i.fa.fa-shopping-cart]
       [:span (text-format :t.cart/header (count items))]]
-     [:table.rems-table.cart
-      (into [:tbody]
-            (let [key-fn #(select-vals % [:wfid :formid])]
-              (apply concat
-                     (for [group (vals (into (sorted-map) (group-by key-fn items)))]
-                       (group-view (sort-by get-localized-title group) language)))))]]]])
+     (into [:table.rems-table.cart]
+           (for [group (vals (into (sorted-map)
+                                   (group-by (juxt :wfid :formid) items)))]
+             [bundle-view (sort-by get-localized-title group) language]))]]])
 
 (defn cart-list-container []
   (let [language @(rf/subscribe [:language])
@@ -95,20 +97,17 @@
    (component-info item-view)
    (example "item-view, single"
             [:table.rems-table.cart
-             [:tbody
-              [item-view {:title "Item title"} nil true]]])
+             [item-view {:title "Item title"} nil true]])
    (example "item-view, one of many has no apply button"
             [:table.rems-table.cart
-             [:tbody
-              [item-view {:title "Item title"} nil false]]])
+             [item-view {:title "Item title"} nil false]])
 
-   (component-info group-view)
-   (example "group-view"
+   (component-info bundle-view)
+   (example "bundle-view"
             [:table.rems-table.cart
-             (into [:tbody]
-                   (group-view [{:title "Item title 1"}
-                                {:title "Item title 2"}
-                                {:title "Item title 3"}] nil))])
+             [bundle-view [{:title "Item title 1"}
+                           {:title "Item title 2"}
+                           {:title "Item title 3"}] nil]])
 
    (component-info cart-list)
    (example "cart-list empty"
@@ -117,6 +116,14 @@
             [cart-list [{:title "Item title" :wfid 1}
                         {:title "Another title" :wfid 2}] nil])
    (example "cart-list with three items of same workflow and two of different"
-            [cart-list [{:title "First title" :wfid 2} {:title "Second title" :wfid 1} {:title "Third title" :wfid 1} {:title "Fourth title" :wfid 1} {:title "Fifth title" :wfid 3}] nil])
+            [cart-list [{:title "First title" :wfid 2}
+                        {:title "Second title" :wfid 1}
+                        {:title "Third title" :wfid 1}
+                        {:title "Fourth title" :wfid 1}
+                        {:title "Fifth title" :wfid 3}] nil])
    (example "cart-list with five items of same workflow but of two different forms"
-            [cart-list [{:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1}] nil])])
+            [cart-list [{:title "First form" :wfid 1 :formid 1}
+                        {:title "Second form" :wfid 1 :formid 2}
+                        {:title "First form" :wfid 1 :formid 1}
+                        {:title "Second form" :wfid 1 :formid 2}
+                        {:title "First form" :wfid 1 :formid 1}] nil])])
