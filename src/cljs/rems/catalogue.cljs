@@ -87,12 +87,11 @@
     (rf/subscribe [:language])])
  (fn [[catalogue language] _]
    (map (fn [item]
-          (let [title (get-localized-title item language)]
-            {:key (:id item)
-             :name {:value title}
-             :commands {:td [:td.commands
-                             [catalogue-item-more-info item {}]
-                             [cart/add-to-cart-button item]]}}))
+          {:key (:id item)
+           :name {:value (get-localized-title item language)}
+           :commands {:td [:td.commands
+                           [catalogue-item-more-info item {}]
+                           [cart/add-to-cart-button item language]]}})
         catalogue)))
 
 (defn draft-application-list []

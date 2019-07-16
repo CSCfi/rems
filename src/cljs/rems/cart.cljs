@@ -26,10 +26,11 @@
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
-  [item]
+  [item language]
   [:button.btn.btn-primary.add-to-cart
    {:type :button
-    :on-click #(rf/dispatch [::add-item item])}
+    :on-click #(rf/dispatch [::add-item item])
+    :aria-label (str (text :t.cart/add) ": " (get-localized-title item language))}
    (text :t.cart/add)])
 
 (defn remove-from-cart-button
