@@ -146,9 +146,8 @@
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
-         :empty [:div.intro [:p "Valitse resursseja haettavaksi:"]]
          :header "%1 aineistoa korissa"
-         :intro [:div.intro [:p "Tässä ovat valitsemasi resurssit. Samalla hakemuksella haettavat resurssit ryhmitellään automaattisesti yhteen."]]
+         :intro [:div.intro [:p "Lisää resursseja koriin hakeaksesi niitä. Samalla hakemuksella haettavat resurssit ryhmitellään automaattisesti yhteen."]]
          :remove "Poista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
