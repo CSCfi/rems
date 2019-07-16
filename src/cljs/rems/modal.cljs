@@ -38,7 +38,10 @@
                  {:title [:div.modal--title {:style {:display :flex
                                                      :justify-content
                                                      :space-between
-                                                     :align-items :center}}
+                                                     :align-items :center}
+                                             :ref (fn [elem] (when elem
+                                                               (.focus elem)))
+                                             :tab-index "-1"}
                           title
                           [:button.btn.btn-link.link.ml-3
                            {:type :button
@@ -49,10 +52,7 @@
                   :always [:div.full
                            ;; max-height in order to keep header and controls visible
                            [:div.modal--content
-                            {:style {:max-height "70vh" :overflow :auto}
-                             :ref (fn [elem] (when elem
-                                               (.focus elem)))
-                             :tabIndex "-1"}
+                            {:style {:max-height "70vh" :overflow :auto}}
                             content]
                            (into [:div.modal--commands.commands {:style {:padding 0}}]
                                  commands)]
