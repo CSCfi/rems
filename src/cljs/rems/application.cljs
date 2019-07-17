@@ -149,7 +149,8 @@
                         (:field-values edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application! [application description application-id field-values]
+(defn- submit-application! [application description application-id field-values
+                            userid]
   ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
@@ -157,16 +158,18 @@
                    :field-values (field-values-to-api field-values)}
           :handler (fn [response]
                      (if (:success response)
-                       (post! "/api/applications/submit"
-                              {:params {:application-id application-id}
-                               :handler (fn [response]
-                                          (if (:success response)
-                                            (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id])})
-                                            (do
-                                              (status-modal/set-error! {:result response
-                                                                        :error-content (format-validation-errors application (:errors response))})
-                                              (rf/dispatch [::set-validation-errors (:errors response)]))))
-                               :error-handler status-modal/common-error-handler!})
+                       (if (accepted-licenses? application userid)
+                         (post! "/api/applications/submit"
+                                {:params {:application-id application-id}
+                                 :handler (fn [response]
+                                            (if (:success response)
+                                              (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id])})
+                                              (do
+                                                (status-modal/set-error! {:result response
+                                                                          :error-content (format-validation-errors application (:errors response))})
+                                                (rf/dispatch [::set-validation-errors (:errors response)]))))
+                                 :error-handler status-modal/common-error-handler!})
+                         (status-modal/set-error! {:error-content (text :t.actions/licenses-not-accepted-error)}))
                        (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!}))
 
@@ -178,7 +181,8 @@
      (submit-application! application
                           description
                           (:application/id application)
-                          (:field-values edit-application)))
+                          (:field-values edit-application)
+                          (get-in (:identity db) [:user :eppn])))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]

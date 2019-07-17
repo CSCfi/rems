@@ -221,10 +221,9 @@
     (fill-form-field "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)" "Test")
     (check-box "disease_prevention")
 
+    (accept-licenses)
     (send-application)
     (is (= "Applied" (get-element-text *driver* :application-state)))
-
-    (accept-licenses)
 
     (let [application-id (get-application-id)]
       (go-to-applications)
