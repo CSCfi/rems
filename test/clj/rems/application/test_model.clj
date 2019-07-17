@@ -918,7 +918,7 @@
                         (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
-                        (permissions/set-role-permissions {:role-1 []
+                        (permissions/update-role-permissions {:role-1 []
                                                            :role-2 [:foo :bar]}))]
     (testing "users with a role can see the application"
       (is (not (nil? (model/apply-user-permissions application "user-1")))))
@@ -944,7 +944,7 @@
                               :application/public true}]
           application (-> application
                           (assoc :application/events all-events)
-                          (permissions/set-role-permissions {:role-1 [:see-everything]}))]
+                          (permissions/update-role-permissions {:role-1 [:see-everything]}))]
       (testing "privileged users"
         (let [application (model/apply-user-permissions application "user-1")]
           (testing "see all events"

@@ -66,7 +66,7 @@
       (is (= #{:role-2} (user-roles app "user-2")))
       (is (= #{:everyone-else} (user-roles app "user-3"))))))
 
-(defn set-role-permissions
+(defn update-role-permissions
   "Sets role specific permissions for the application.
 
    In `permission-map`, the key is the role (a keyword), and the value
@@ -81,39 +81,39 @@
           application
           permission-map))
 
-(deftest test-set-role-permissions
+(deftest test-update-role-permissions
   (testing "adding"
     (is (= {::role-permissions {:role #{:foo :bar}}}
            (-> {}
-               (set-role-permissions {:role [:foo :bar]})))))
+               (update-role-permissions {:role [:foo :bar]})))))
   (testing "updating"
     (is (= {::role-permissions {:role #{:gazonk}}}
            (-> {}
-               (set-role-permissions {:role [:foo :bar]})
-               (set-role-permissions {:role [:gazonk]})))))
+               (update-role-permissions {:role [:foo :bar]})
+               (update-role-permissions {:role [:gazonk]})))))
   (testing "removing"
     (is (= {::role-permissions {:role #{}}}
            (-> {}
-               (set-role-permissions {:role [:foo :bar]})
-               (set-role-permissions {:role []}))))
+               (update-role-permissions {:role [:foo :bar]})
+               (update-role-permissions {:role []}))))
     (is (= {::role-permissions {:role #{}}}
            (-> {}
-               (set-role-permissions {:role [:foo :bar]})
-               (set-role-permissions {:role nil})))))
+               (update-role-permissions {:role [:foo :bar]})
+               (update-role-permissions {:role nil})))))
 
   (testing "can set permissions for multiple roles"
     (is (= {::role-permissions {:role-1 #{:foo}
                                 :role-2 #{:bar}}}
            (-> {}
-               (set-role-permissions {:role-1 [:foo]
+               (update-role-permissions {:role-1 [:foo]
                                       :role-2 [:bar]})))))
   (testing "does not alter unrelated roles"
     (is (= {::role-permissions {:unrelated #{:foo}
                                 :role #{:gazonk}}}
            (-> {}
-               (set-role-permissions {:unrelated [:foo]
+               (update-role-permissions {:unrelated [:foo]
                                       :role [:bar]})
-               (set-role-permissions {:role [:gazonk]}))))))
+               (update-role-permissions {:role [:gazonk]}))))))
 
 (defn remove-permission-from-all [application permission]
   (let [roles (keys (::role-permissions application))]
@@ -127,18 +127,19 @@
     (is (= {::role-permissions {:role-1 #{}
                                 :role-2 #{}}}
            (-> {}
-               (set-role-permissions {:role-1 [:foo]
+               (update-role-permissions {:role-1 [:foo]
                                       :role-2 [:foo]})
                (remove-permission-from-all :foo)))))
   (testing "leaves unrelated permissions unchanged"
     (is (= {::role-permissions {:role #{:bar}}}
            (-> {}
-               (set-role-permissions {:role [:foo :bar]})
+               (update-role-permissions {:role [:foo :bar]})
                (remove-permission-from-all :foo))))))
 
 (defn user-permissions
-  "Returns the specified user's permissions to this application.
-   Union of all role specific permissions."
+  "Returns a set of the specified user's permissions to this application.
+   Union of all role specific permissions. Returns an empty set if no
+   permissions are set for the user."
   [application user]
   (->> (user-roles application user)
        (mapcat (fn [role]
@@ -153,15 +154,15 @@
     (is (= #{:foo}
            (-> {}
                (give-role-to-user :role-1 "user")
-               (set-role-permissions {:role-1 #{:foo}})
+               (update-role-permissions {:role-1 #{:foo}})
                (user-permissions "user")))))
   (testing "multiple roles"
     (is (= #{:foo :bar}
            (-> {}
                (give-role-to-user :role-1 "user")
                (give-role-to-user :role-2 "user")
-               (set-role-permissions {:role-1 #{:foo}
-                                      :role-2 #{:bar}})
+               (update-role-permissions {:role-1 #{:foo}
+                                         :role-2 #{:bar}})
                (user-permissions "user"))))))
 
 (defn cleanup [application]

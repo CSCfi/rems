@@ -18,52 +18,50 @@
   [application _event]
   application)
 
-(def ^:private draft-permissions
-  {:applicant [:application.command/save-draft
-               :application.command/submit
-               :application.command/close
-               :application.command/remove-member
-               :application.command/invite-member
-               :application.command/uninvite-member
-               :application.command/accept-licenses
-               :application.command/change-resources]
+(def ^:private submittable-application-commands
+  [:application.command/save-draft
+   :application.command/submit
+   :application.command/close
+   :application.command/remove-member
+   :application.command/invite-member
+   :application.command/uninvite-member
+   :application.command/accept-licenses
+   :application.command/change-resources])
+
+(def ^:private non-submittable-application-commands
+  [:application.command/remove-member
+   :application.command/uninvite-member
+   :application.command/accept-licenses])
+
+(def ^:private handler-all-commands
+  [:application.command/remark
+   :application.command/add-licenses
+   :application.command/add-member
+   :application.command/change-resources
+   :application.command/remove-member
+   :application.command/invite-member
+   :application.command/uninvite-member
+   :application.command/request-comment
+   :application.command/request-decision
+   :application.command/return
+   :application.command/approve
+   :application.command/reject])
+
+(def ^:private handler-returned-commands
+  (vec (remove #(= % :application.command/return) handler-all-commands)))
+
+(def ^:private created-permissions
+  {:applicant submittable-application-commands
    :member [:application.command/accept-licenses]
-   :handler [:see-everything
-             :application.command/remark
-             :application.command/remove-member
-             :application.command/uninvite-member]
-   :commenter [:see-everything
-               :application.command/remark]
-   :decider [:see-everything
-             :application.command/remark]
-   ;; roles whose permissions don't change
    :reporter [:see-everything
               :application.command/remark]
-   :past-commenter [:see-everything
-                    :application.command/remark]
-   :past-decider [:see-everything
-                  :application.command/remark]
    ;; member before accepting an invitation
    :everyone-else [:application.command/accept-invitation]})
 
 (def ^:private submitted-permissions
-  {:applicant [:application.command/remove-member
-               :application.command/uninvite-member
-               :application.command/accept-licenses]
-   :member [:application.command/accept-licenses]
-   :handler [:see-everything
-             :application.command/remark
-             :application.command/add-licenses
-             :application.command/add-member
-             :application.command/change-resources
-             :application.command/remove-member
-             :application.command/invite-member
-             :application.command/uninvite-member
-             :application.command/request-comment
-             :application.command/request-decision
-             :application.command/return
-             :application.command/approve
-             :application.command/reject]
+  {:applicant non-submittable-application-commands
+   :handler (conj handler-all-commands
+                  :see-everything)
    :commenter [:see-everything
                :application.command/remark
                :application.command/comment]
@@ -71,13 +69,17 @@
                     :application.command/remark]
    :decider [:see-everything
              :application.command/remark
-             :application.command/decide]})
+             :application.command/decide]
+   :past-decider [:see-everything
+                  :application.command/remark]})
+
+(def ^:private returned-permissions
+  {:applicant submittable-application-commands
+   :handler (conj handler-returned-commands
+                  :see-everything)})
 
 (def ^:private approved-permissions
-  {:applicant [:application.command/remove-member
-               :application.command/uninvite-member
-               :application.command/accept-licenses]
-   :member [:application.command/accept-licenses]
+  {:applicant non-submittable-application-commands
    :handler [:see-everything
              :application.command/remark
              :application.command/add-member
@@ -85,15 +87,7 @@
              :application.command/remove-member
              :application.command/invite-member
              :application.command/uninvite-member
-             :application.command/close]
-   :commenter [:see-everything
-               :application.command/remark
-               :application.command/comment]
-   :past-commenter [:see-everything
-                    :application.command/remark]
-   :decider [:see-everything
-             :application.command/remark
-             :application.command/decide]})
+             :application.command/close]})
 
 (def ^:private closed-permissions
   {:applicant []
@@ -107,7 +101,7 @@
   [application event]
   (-> application
       (permissions/give-role-to-users :applicant [(:event/actor event)])
-      (permissions/set-role-permissions draft-permissions)))
+      (permissions/update-role-permissions created-permissions)))
 
 (defmethod calculate-permissions :application.event/member-added
   [application event]
@@ -127,12 +121,12 @@
 (defmethod calculate-permissions :application.event/submitted
   [application _event]
   (-> application
-      (permissions/set-role-permissions submitted-permissions)))
+      (permissions/update-role-permissions submitted-permissions)))
 
 (defmethod calculate-permissions :application.event/returned
   [application _event]
   (-> application
-      (permissions/set-role-permissions draft-permissions)))
+      (permissions/update-role-permissions returned-permissions)))
 
 (defmethod calculate-permissions :application.event/comment-requested
   [application event]
@@ -159,17 +153,17 @@
 (defmethod calculate-permissions :application.event/approved
   [application _event]
   (-> application
-      (permissions/set-role-permissions approved-permissions)))
+      (permissions/update-role-permissions approved-permissions)))
 
 (defmethod calculate-permissions :application.event/rejected
   [application _event]
   (-> application
-      (permissions/set-role-permissions closed-permissions)))
+      (permissions/update-role-permissions closed-permissions)))
 
 (defmethod calculate-permissions :application.event/closed
   [application _event]
   (-> application
-      (permissions/set-role-permissions closed-permissions)))
+      (permissions/update-role-permissions closed-permissions)))
 
 
 ;;;; Application
