@@ -19,19 +19,19 @@
   application)
 
 (def ^:private submittable-application-commands
-  [:application.command/save-draft
-   :application.command/submit
-   :application.command/close
-   :application.command/remove-member
-   :application.command/invite-member
-   :application.command/uninvite-member
-   :application.command/accept-licenses
-   :application.command/change-resources])
+  #{:application.command/save-draft
+    :application.command/submit
+    :application.command/close
+    :application.command/remove-member
+    :application.command/invite-member
+    :application.command/uninvite-member
+    :application.command/accept-licenses
+    :application.command/change-resources})
 
 (def ^:private non-submittable-application-commands
-  [:application.command/remove-member
-   :application.command/uninvite-member
-   :application.command/accept-licenses])
+  #{:application.command/remove-member
+    :application.command/uninvite-member
+    :application.command/accept-licenses})
 
 (def ^:private handler-all-commands
   #{:application.command/remark
@@ -52,48 +52,48 @@
 
 (def ^:private created-permissions
   {:applicant submittable-application-commands
-   :member [:application.command/accept-licenses]
-   :reporter [:see-everything
-              :application.command/remark]
+   :member #{:application.command/accept-licenses}
+   :reporter #{:see-everything
+               :application.command/remark}
    ;; member before accepting an invitation
-   :everyone-else [:application.command/accept-invitation]})
+   :everyone-else #{:application.command/accept-invitation}})
 
 (def ^:private submitted-permissions
   {:applicant non-submittable-application-commands
-   :handler (vec (conj handler-all-commands :see-everything))
-   :commenter [:see-everything
-               :application.command/remark
-               :application.command/comment]
-   :past-commenter [:see-everything
-                    :application.command/remark]
-   :decider [:see-everything
-             :application.command/remark
-             :application.command/decide]
-   :past-decider [:see-everything
-                  :application.command/remark]})
+   :handler (conj handler-all-commands :see-everything)
+   :commenter #{:see-everything
+                :application.command/remark
+                :application.command/comment}
+   :past-commenter #{:see-everything
+                     :application.command/remark}
+   :decider #{:see-everything
+              :application.command/remark
+              :application.command/decide}
+   :past-decider #{:see-everything
+                   :application.command/remark}})
 
 (def ^:private returned-permissions
   {:applicant submittable-application-commands
-   :handler (vec (conj handler-returned-commands :see-everything))})
+   :handler (conj handler-returned-commands :see-everything)})
 
 (def ^:private approved-permissions
   {:applicant non-submittable-application-commands
-   :handler [:see-everything
-             :application.command/remark
-             :application.command/add-member
-             :application.command/change-resources
-             :application.command/remove-member
-             :application.command/invite-member
-             :application.command/uninvite-member
-             :application.command/close]})
+   :handler #{:see-everything
+              :application.command/remark
+              :application.command/add-member
+              :application.command/change-resources
+              :application.command/remove-member
+              :application.command/invite-member
+              :application.command/uninvite-member
+              :application.command/close}})
 
 (def ^:private closed-permissions
-  {:applicant []
-   :member []
-   :handler [:see-everything]
-   :commenter [:see-everything]
-   :decider [:see-everything]
-   :everyone-else []})
+  {:applicant #{}
+   :member #{}
+   :handler #{:see-everything}
+   :commenter #{:see-everything}
+   :decider #{:see-everything}
+   :everyone-else #{}})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
