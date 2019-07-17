@@ -511,7 +511,8 @@
                            :group? (or (seq members)
                                        (seq invited-members))
                            :can-remove? false
-                           :accepted-licenses? (accepted-licenses? application (:userid applicant))}]]
+                           :accepted-licenses? (when (not= :application.state/draft (:application/state application))
+                                                 (accepted-licenses? application (:userid applicant)))}]]
             (concat
              (for [member members]
                [member-info {:element-id id
