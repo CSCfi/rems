@@ -448,13 +448,11 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (or (:eppn attributes) (:userid attributes))
-        sanitized-user-id (-> (or user-id (:email attributes) "") ;; use email for invited members
-                              str/lower-case
-                              (str/replace #"[^a-z]" ""))
+        user-id-or-email (or user-id (:email attributes) "") ; use email for invited members
         other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
-        user-actions-id (str element-id "-" sanitized-user-id "-actions")]
+        user-actions-id (str element-id "-" user-id-or-email "-actions")]
     [collapsible/minimal
-     {:id (str element-id "-" sanitized-user-id "-info")
+     {:id (str element-id "-" user-id-or-email "-info")
       :class (when group? "group")
       :always
       [:div
