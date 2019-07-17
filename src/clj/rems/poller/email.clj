@@ -101,6 +101,11 @@
                                    :t.email.application-returned/subject
                                    :t.email.application-returned/message))
 
+(defmethod event-to-emails-impl :application.event/licenses-added [event application]
+  (emails-to-applicant-and-members event application
+                                   :t.email.application-licenses-added/subject
+                                   :t.email.application-licenses-added/message))
+
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
   (vec
    (for [commenter (:application/commenters event)]

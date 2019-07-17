@@ -212,6 +212,8 @@
                                :message "Dear %1,\n\nYour application %2 has been closed.\n\nView application: %3"}
           :application-returned {:subject "Application returned (%2)"
                                  :message "Dear %1,\n\nYour application %2 has been returned.\n\nView application: %3"}
+          :application-licenses-added {:subject "Terms of use added to application (%2)"
+                                       :message "Dear %1,\n\nTerms of use have been added to your application %2.\n\nView application: %3"}
           :application-submitted {:subject "Application submitted (%2: %3)"
                                   :message "Dear %1,\n\n%2 has submitted an application (%3): %4.\n\nView application: %5"}
           :comment-requested {:subject "Comment requested (%2: %3)"
