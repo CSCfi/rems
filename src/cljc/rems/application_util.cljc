@@ -12,7 +12,7 @@
                  (:application/permissions application))
              :application.command/save-draft))
 
-(def ^:private name-attribute-priority [:commonName :displayName :eppn])
+(def ^:private name-attribute-priority [:name :commonName :displayName :eppn])
 
 (defn get-member-name [attributes]
   (when attributes
