@@ -30,6 +30,7 @@
             :invite-member "Kutsu jäsen"
             :last-activity "Muokattu"
             :licenses-selection "Lisää käyttöehtoja"
+            :licenses-not-accepted-error "Käyttöehtoja ei ole hyväksytty."
             :load-application-states "Lataa hakemusten tilat"
             :member "Jäsen"
             :member-name "Nimi"

@@ -30,6 +30,7 @@
             :invite-member "Invite member"
             :last-activity "Last activity"
             :licenses-selection "Add terms of use"
+            :licenses-not-accepted-error "Terms of use not accepted."
             :load-application-states "Load application states"
             :member "Member"
             :member-name "Name"
