@@ -12,9 +12,13 @@
                  (:application/permissions application))
              :application.command/save-draft))
 
-(def ^:private applicant-name-order [:commonName :displayName :eppn])
+(def ^:private name-attribute-priority [:commonName :displayName :eppn])
+
+(defn get-member-name [attributes]
+  (when attributes
+    (->> (map attributes name-attribute-priority)
+         (remove nil?)
+         first)))
 
 (defn get-applicant-name [application]
-  (let [attributes (:application/applicant-attributes application)]
-    (when attributes
-      (first (filter identity (map attributes applicant-name-order))))))
+  (get-member-name (:application/applicant-attributes application)))
