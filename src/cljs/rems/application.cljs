@@ -611,8 +611,8 @@
      [application-state application config]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
-     [:div.my-3 [application-fields application edit-application]]
      [:div.my-3 [application-licenses application edit-application userid]]
+     [:div.my-3 [application-fields application edit-application]]
      [:div.mb-3 [actions-form application]]]))
 
 ;;;; Entrypoint
