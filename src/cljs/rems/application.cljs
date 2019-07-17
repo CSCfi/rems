@@ -474,7 +474,7 @@
       :footer [:div {:id user-actions-id}
                (when can-remove?
                  [:div.commands
-                  [remove-member-action-button user-actions-id]])
+                  [remove-member-action-button user-actions-id (:userid attributes)]])
                (when can-remove?
                  [remove-member-form application-id user-actions-id attributes (partial reload! application-id)])]}]))
 
