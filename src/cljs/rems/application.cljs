@@ -450,27 +450,26 @@
         user-id (or (:eppn attributes) (:userid attributes))
         user-id-or-email (or user-id (:email attributes) "") ; use email for invited members
         other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
-        user-actions-id (str element-id "-" user-id-or-email "-actions")]
+        user-actions-id (str element-id "-" user-id-or-email "-actions")
+        title (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
+                    (:userid attributes) (text :t.applicant-info/member)
+                    :else (text :t.applicant-info/invited-member))]
     [collapsible/minimal
      {:id (str element-id "-" user-id-or-email "-info")
       :class (when group? "group")
-      :always
-      [:div
-       [:h3 (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
-                  (:userid attributes) (text :t.applicant-info/member)
-                  :else (text :t.applicant-info/invited-member))]
-       (when-let [name (get-member-name attributes)]
-         [info-field (text :t.applicant-info/name) name {:inline? true}])
-       (when user-id
-         [info-field (text :t.applicant-info/username) user-id {:inline? true}])
-       (when-let [mail (or (:mail attributes) (:email attributes))]
-         [info-field (text :t.applicant-info/email) mail {:inline? true}])
-       (when-not (nil? accepted-licenses?)
-         [info-field (text :t.form/accepted-licenses) [readonly-checkbox accepted-licenses?] {:inline? true}])]
-      :collapse (when (seq other-attributes)
-                  (into [:div]
-                        (for [[k v] other-attributes]
-                          [info-field k v])))
+      :always [:div
+               [:h3 title]
+               (when-let [name (get-member-name attributes)]
+                 [info-field (text :t.applicant-info/name) name {:inline? true}])
+               (when-not (nil? accepted-licenses?)
+                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox accepted-licenses?] {:inline? true}])]
+      :collapse (into [:div
+                       (when user-id
+                         [info-field (text :t.applicant-info/username) user-id {:inline? true}])
+                       (when-let [mail (or (:mail attributes) (:email attributes))]
+                         [info-field (text :t.applicant-info/email) mail {:inline? true}])]
+                      (for [[k v] other-attributes]
+                        [info-field k v {:inline? true}]))
       :footer [:div {:id user-actions-id}
                (when can-remove?
                  [:div.commands
