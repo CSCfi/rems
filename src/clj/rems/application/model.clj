@@ -34,21 +34,21 @@
    :application.command/accept-licenses])
 
 (def ^:private handler-all-commands
-  [:application.command/remark
-   :application.command/add-licenses
-   :application.command/add-member
-   :application.command/change-resources
-   :application.command/remove-member
-   :application.command/invite-member
-   :application.command/uninvite-member
-   :application.command/request-comment
-   :application.command/request-decision
-   :application.command/return
-   :application.command/approve
-   :application.command/reject])
+  #{:application.command/remark
+    :application.command/add-licenses
+    :application.command/add-member
+    :application.command/change-resources
+    :application.command/remove-member
+    :application.command/invite-member
+    :application.command/uninvite-member
+    :application.command/request-comment
+    :application.command/request-decision
+    :application.command/return
+    :application.command/approve
+    :application.command/reject})
 
 (def ^:private handler-returned-commands
-  (vec (remove #(= % :application.command/return) handler-all-commands)))
+  (disj handler-all-commands :application.command/return))
 
 (def ^:private created-permissions
   {:applicant submittable-application-commands
@@ -60,8 +60,7 @@
 
 (def ^:private submitted-permissions
   {:applicant non-submittable-application-commands
-   :handler (conj handler-all-commands
-                  :see-everything)
+   :handler (vec (conj handler-all-commands :see-everything))
    :commenter [:see-everything
                :application.command/remark
                :application.command/comment]
@@ -75,8 +74,7 @@
 
 (def ^:private returned-permissions
   {:applicant submittable-application-commands
-   :handler (conj handler-returned-commands
-                  :see-everything)})
+   :handler (vec (conj handler-returned-commands :see-everything))})
 
 (def ^:private approved-permissions
   {:applicant non-submittable-application-commands
