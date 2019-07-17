@@ -436,6 +436,14 @@
                   (into [:div]
                         (render-event-groups g)))}]))
 
+(defn- sanitize-css-identifier [s]
+  ;; We need to remove characters that are not allowed in a CSS identifier
+  ;; (see https://www.w3.org/TR/CSS21/syndata.html#value-def-identifier)
+  ;; but we also must avoid two different input strings producing the same
+  ;; output, which would mess up the UI.
+  (-> (js/encodeURIComponent s)
+      (str/replace #"[^a-zA-Z0-9_-]" "")))
+
 (defn member-info
   "Renders a applicant, member or invited member of an application
 
@@ -448,14 +456,15 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (or (:eppn attributes) (:userid attributes))
-        user-id-or-email (or user-id (:email attributes) "") ; use email for invited members
+        sanitized-user-id (sanitize-css-identifier
+                           (or user-id (:email attributes) "")) ; use email for invited members
         other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
-        user-actions-id (str element-id "-" user-id-or-email "-actions")
+        user-actions-id (str element-id "-" sanitized-user-id "-actions")
         title (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))]
     [collapsible/minimal
-     {:id (str element-id "-" user-id-or-email "-info")
+     {:id (str element-id "-" sanitized-user-id "-info")
       :class (when group? "group")
       :always [:div
                [:h3 title]
