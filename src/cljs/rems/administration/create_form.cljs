@@ -244,10 +244,11 @@
 (defn- form-field-type-radio-group [field-index]
   [radio-button-group context {:id (str "radio-group-" field-index)
                                :keys [:form/fields field-index :field/type]
+                               :label (text :t.create-form/field-type)
                                :orientation :vertical
-                               :options [{:value :text, :label (text :t.create-form/type-text)}
+                               :options [{:value :description, :label (text :t.create-form/type-description)}
+                                         {:value :text, :label (text :t.create-form/type-text)}
                                          {:value :texta, :label (text :t.create-form/type-texta)}
-                                         {:value :description, :label (text :t.create-form/type-description)}
                                          {:value :option, :label (text :t.create-form/type-option)}
                                          {:value :multiselect, :label (text :t.create-form/type-multiselect)}
                                          {:value :date, :label (text :t.create-form/type-date)}
