@@ -3,7 +3,6 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [luminus-migrations.core :as migrations]
-            [rems.migrations.convert-to-dynamic-applications :as convert-to-dynamic]
             [luminus.http-server :as http]
             [luminus.repl-server :as repl]
             [mount.core :as mount]
@@ -62,7 +61,6 @@
      \"migrate\" -- migrate database
      \"rollback\" -- roll back database migration
      \"reset\" -- empties database and runs migrations to empty db
-     \"convert-to-dynamic\" -- convert legacy applications to use dynamic workflow
      \"test-data\" -- insert test data into database
      \"demo-data\" -- insert data for demoing purposes into database
      \"validate\" -- validate data in db"
@@ -80,14 +78,6 @@
           (println "Running reset")
           (mount/start #'rems.config/env)
           (migrations/migrate args (select-keys env [:database-url])))))
-    (= "convert-to-dynamic" (first args))
-    (do
-      (when-not (= 2 (count args))
-        (println "Usage: convert-to-dynamic <new-workflow-id>")
-        (System/exit 1))
-      (let [new-workflow-id (Long/parseLong (second args))]
-        (mount/start #'rems.config/env #'rems.db.core/*db*)
-        (convert-to-dynamic/migrate-all-applications! new-workflow-id)))
     (= "test-data" (first args))
     (do
       (mount/start #'rems.config/env #'rems.db.core/*db*)
