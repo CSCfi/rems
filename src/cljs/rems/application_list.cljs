@@ -70,23 +70,23 @@
 (defn component [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]
                   :or {visible-columns (constantly true) filterable? true}}]
   (let [all-columns [{:key :id
-                      :title (text :t.actions/id)}
+                      :title (text :t.applications/id)}
                      {:key :external-id
-                      :title (text :t.actions/id)}
+                      :title (text :t.applications/id)}
                      {:key :description
-                      :title (text :t.actions/description)}
+                      :title (text :t.applications/description)}
                      {:key :resource
-                      :title (text :t.actions/resource)}
+                      :title (text :t.applications/resource)}
                      {:key :applicant
-                      :title (text :t.actions/applicant)}
+                      :title (text :t.applications/applicant)}
                      {:key :state
-                      :title (text :t.actions/state)}
+                      :title (text :t.applications/state)}
                      {:key :created
-                      :title (text :t.actions/created)}
+                      :title (text :t.applications/created)}
                      {:key :submitted
-                      :title (text :t.actions/submitted)}
+                      :title (text :t.applications/submitted)}
                      {:key :last-activity
-                      :title (text :t.actions/last-activity)}
+                      :title (text :t.applications/last-activity)}
                      {:key :view
                       :sortable? false
                       :filterable? false}]
