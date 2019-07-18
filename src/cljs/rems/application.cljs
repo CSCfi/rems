@@ -252,7 +252,7 @@
                                (.on (js/$ elem)
                                     "shown.bs.collapse"
                                     #(.focus elem))))
-                      :tabIndex "-1"}
+                      :tab-index "-1"}
        [:div.license-block (str/trim (str text))]]]]))
 
 (defn- attachment-license [opts]

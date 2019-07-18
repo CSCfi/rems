@@ -48,7 +48,7 @@
   [id title buttons content & [{:keys [collapse-id]}]]
   [:div.collapse {:id (action-collapse-id id)
                   :data-parent (if collapse-id (str "#" collapse-id) "#actions-forms")
-                  :tabIndex "-1"
+                  :tab-index "-1"
                   :ref (fn [elem]
                          (when elem
                            (.on (js/$ elem) "shown.bs.collapse" #(.focus elem))))}

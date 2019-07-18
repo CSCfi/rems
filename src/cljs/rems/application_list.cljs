@@ -9,7 +9,8 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- view-button [app]
-  [atoms/link {:class "btn btn-primary"}
+  [atoms/link {:class "btn btn-primary"
+               :aria-label (str (text :t.applications/view) ": " (:application/description app))}
    (str "#/application/" (:application/id app))
    (text :t.applications/view)])
 
