@@ -1,6 +1,5 @@
 (ns rems.application.model
-  (:require [clojure.set :as set]
-            [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application.events :as events]
             [rems.permissions :as permissions]

@@ -7,21 +7,15 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
+            [rems.db.legacy-workflow-actors :as actors]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.db.workflow-actors :as actors]
-            [rems.locales :as locales]
-            [rems.poller.email :as email]
             [rems.poller.entitlements :as entitlements-poller]
-            [ring.util.http-response :refer [bad-request!]]
-            [rems.poller.entitlements :as entitlements-poller])
-  (:import [java.util UUID]
-           [org.joda.time DateTimeUtils DateTime]))
-
-(def ^DateTime creation-time (time/now)) ; TODO: no more used, remove?
+            [ring.util.http-response :refer [bad-request!]])
+  (:import [java.util UUID]))
 
 (def +fake-users+
   {:applicant1 "alice"
@@ -748,63 +742,59 @@
            :comment "Looks fine."}))))))
 
 (defn create-test-data! []
-  (DateTimeUtils/setCurrentMillisFixed (.getMillis creation-time))
-  (try
-    (db/add-api-key! {:apikey 42 :comment "test data"})
-    (create-users-and-roles!)
-    (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-          res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-          res-with-extra-license (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403263" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-          _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :end (time/minus (time/now) (time/years 1))}))
-          form (create-basic-form! +fake-users+)
-          _ (create-archived-form!)
-          workflows (create-workflows! +fake-users+)
-          _ (create-catalogue-item! res1 (:minimal workflows) form
-                                    {"en" "ELFA Corpus, direct approval"
-                                     "fi" "ELFA-korpus, suora hyväksyntä"})
-          simple (create-catalogue-item! res1 (:simple workflows) form
-                                         {"en" "ELFA Corpus, one approval"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä"})
-          bundlable (create-catalogue-item! res2 (:simple workflows) form
-                                            {"en" "ELFA Corpus, one approval (extra data)"
-                                             "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
-          with-review (create-catalogue-item! res1 (:with-review workflows) form
-                                              {"en" "ELFA Corpus, with review"
-                                               "fi" "ELFA-korpus, katselmoinnilla"})
-          _ (create-catalogue-item! res1 (:different workflows) form
-                                    {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                                     "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
-          disabled (create-catalogue-item! res1 (:simple workflows) form
-                                           {"en" "ELFA Corpus, one approval (extra data, disabled)"
-                                            "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
-      (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
-      (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
-      (db/set-catalogue-item-state! {:id disabled :enabled false})
-      (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-      (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
-      (create-review-applications! with-review (:with-review workflows) +fake-users+)
-      (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
-      (create-application-before-new-resource-license! (:simple workflows) form +fake-users+)
-      (create-expired-license!)
-      (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
-                                            {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-        (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
-      (create-catalogue-item! res-with-extra-license (:dynamic workflows) form
-                              {"en" "Dynamic workflow with extra license" "fi" "Dynaaminen työvuo ylimääräisellä lisenssillä"})
-      (let [thlform (create-thl-demo-form! +fake-users+)
-            thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
-        (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
-      (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
-                                                     {"en" "Dynamic workflow (disabled)"
-                                                      "fi" "Dynaaminen työvuo (pois käytöstä)"})]
-        (create-disabled-applications! dynamic-disabled (:dynamic workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-        (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))
-      (let [dynamic-expired (create-catalogue-item! res1 (:dynamic workflows) form
-                                                    {"en" "Dynamic workflow (expired)"
-                                                     "fi" "Dynaaminen työvuo (vanhentunut)"})]
-        (db/set-catalogue-item-state! {:id dynamic-expired :end (time/now)})))
-    (finally
-      (DateTimeUtils/setCurrentMillisSystem))))
+  (db/add-api-key! {:apikey 42 :comment "test data"})
+  (create-users-and-roles!)
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+        res-with-extra-license (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403263" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+        _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :end (time/minus (time/now) (time/years 1))}))
+        form (create-basic-form! +fake-users+)
+        _ (create-archived-form!)
+        workflows (create-workflows! +fake-users+)
+        _ (create-catalogue-item! res1 (:minimal workflows) form
+                                  {"en" "ELFA Corpus, direct approval"
+                                   "fi" "ELFA-korpus, suora hyväksyntä"})
+        simple (create-catalogue-item! res1 (:simple workflows) form
+                                       {"en" "ELFA Corpus, one approval"
+                                        "fi" "ELFA-korpus, yksi hyväksyntä"})
+        bundlable (create-catalogue-item! res2 (:simple workflows) form
+                                          {"en" "ELFA Corpus, one approval (extra data)"
+                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
+        with-review (create-catalogue-item! res1 (:with-review workflows) form
+                                            {"en" "ELFA Corpus, with review"
+                                             "fi" "ELFA-korpus, katselmoinnilla"})
+        _ (create-catalogue-item! res1 (:different workflows) form
+                                  {"en" "ELFA Corpus, two rounds of approval by different approvers"
+                                   "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
+        disabled (create-catalogue-item! res1 (:simple workflows) form
+                                         {"en" "ELFA Corpus, one approval (extra data, disabled)"
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+    (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
+    (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
+    (db/set-catalogue-item-state! {:id disabled :enabled false})
+    (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
+    (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
+    (create-review-applications! with-review (:with-review workflows) +fake-users+)
+    (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
+    (create-application-before-new-resource-license! (:simple workflows) form +fake-users+)
+    (create-expired-license!)
+    (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
+                                          {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
+      (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
+    (create-catalogue-item! res-with-extra-license (:dynamic workflows) form
+                            {"en" "Dynamic workflow with extra license" "fi" "Dynaaminen työvuo ylimääräisellä lisenssillä"})
+    (let [thlform (create-thl-demo-form! +fake-users+)
+          thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
+      (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
+    (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
+                                                   {"en" "Dynamic workflow (disabled)"
+                                                    "fi" "Dynaaminen työvuo (pois käytöstä)"})]
+      (create-disabled-applications! dynamic-disabled (:dynamic workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
+      (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))
+    (let [dynamic-expired (create-catalogue-item! res1 (:dynamic workflows) form
+                                                  {"en" "Dynamic workflow (expired)"
+                                                   "fi" "Dynaaminen työvuo (vanhentunut)"})]
+      (db/set-catalogue-item-state! {:id dynamic-expired :end (time/now)}))))
 
 (defn create-demo-data! []
   (db/add-api-key! {:apikey 55 :comment "Finna"})

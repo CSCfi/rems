@@ -16,7 +16,7 @@
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.users :as users]
-            [rems.db.workflow-actors :as actors]
+            [rems.db.legacy-workflow-actors :as actors]
             [rems.poller.entitlements :as entitlements-poller]
             [rems.testing-tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [get-user-id]])
