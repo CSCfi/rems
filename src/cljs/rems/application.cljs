@@ -288,7 +288,7 @@
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
     [collapsible/component
-     {:id "form"
+     {:id "application-fields"
       :title (text :t.form/application)
       :always
       [:div
@@ -318,7 +318,7 @@
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
       [collapsible/component
-       {:id "form"
+       {:id "application-licenses"
         :title (text :t.form/licenses)
         :always
         [:div
@@ -607,8 +607,8 @@
      [application-state application config]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
-     [:div.my-3 [application-fields application edit-application]]
      [:div.my-3 [application-licenses application edit-application userid]]
+     [:div.my-3 [application-fields application edit-application]]
      [:div.mb-3 [actions-form application]]]))
 
 ;;;; Entrypoint
