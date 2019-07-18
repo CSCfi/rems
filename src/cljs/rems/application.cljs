@@ -17,7 +17,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [accepted-licenses? form-fields-editable? get-applicant-name]]
+            [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
@@ -452,43 +452,38 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (or (:eppn attributes) (:userid attributes))
-        sanitized-user-id (-> (or user-id (:email attributes) "") ;; use email for invited members
-                              str/lower-case
-                              (str/replace #"[^a-z]" ""))
         other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
-        user-actions-id (str element-id "-" sanitized-user-id "-actions")]
+        title (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
+                    (:userid attributes) (text :t.applicant-info/member)
+                    :else (text :t.applicant-info/invited-member))]
     [collapsible/minimal
-     {:id (str element-id "-" sanitized-user-id "-info")
+     {:id (str element-id "-info")
       :class (when group? "group")
-      :always
-      [:div
-       [:h3 (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
-                  (:userid attributes) (text :t.applicant-info/member)
-                  :else (text :t.applicant-info/invited-member))]
-       (when-let [applicant-name (get-applicant-name application)]
-         [info-field (text :t.applicant-info/name) applicant-name {:inline? true}])
-       (when user-id
-         [info-field (text :t.applicant-info/username) user-id {:inline? true}])
-       (when-let [mail (or (:mail attributes) (:email attributes))]
-         [info-field (text :t.applicant-info/email) mail {:inline? true}])
-       (when-not (nil? accepted-licenses?)
-         [info-field (text :t.form/accepted-licenses) [readonly-checkbox accepted-licenses?] {:inline? true}])]
-      :collapse (when (seq other-attributes)
-                  (into [:div]
-                        (for [[k v] other-attributes]
-                          [info-field k v])))
-      :footer [:div {:id user-actions-id}
-               (when can-remove?
-                 [:div.commands
-                  [remove-member-action-button user-actions-id]])
-               (when can-remove?
-                 [remove-member-form application-id user-actions-id attributes (partial reload! application-id)])]}]))
+      :always [:div
+               [:h3 title]
+               (when-let [name (get-member-name attributes)]
+                 [info-field (text :t.applicant-info/name) name {:inline? true}])
+               (when-not (nil? accepted-licenses?)
+                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox accepted-licenses?] {:inline? true}])]
+      :collapse (into [:div
+                       (when user-id
+                         [info-field (text :t.applicant-info/username) user-id {:inline? true}])
+                       (when-let [mail (or (:mail attributes) (:email attributes))]
+                         [info-field (text :t.applicant-info/email) mail {:inline? true}])]
+                      (for [[k v] other-attributes]
+                        [info-field k v {:inline? true}]))
+      :footer (let [element-id (str element-id "-remove-member")]
+                [:div {:id element-id}
+                 (when can-remove?
+                   [:div.commands
+                    [remove-member-action-button element-id]])
+                 (when can-remove?
+                   [remove-member-form element-id attributes application-id (partial reload! application-id)])])}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
   [application]
-  (let [id "applicants-info"
-        application-id (:application/id application)
+  (let [application-id (:application/id application)
         applicant (merge {:userid (:application/applicant application)}
                          (:application/applicant-attributes application))
         members (:application/members application)
@@ -499,27 +494,28 @@
         can-invite? (contains? possible-commands :application.command/invite-member)
         can-uninvite? (contains? possible-commands :application.command/uninvite-member)]
     [collapsible/component
-     {:id id
+     {:id "applicants-info"
       :title (text :t.applicant-info/applicants)
       :always
       (into [:div
-             [member-info {:element-id id
+             [member-info {:element-id "applicant"
                            :attributes applicant
                            :application application
                            :group? (or (seq members)
                                        (seq invited-members))
                            :can-remove? false
-                           :accepted-licenses? (accepted-licenses? application (:userid applicant))}]]
+                           :accepted-licenses? (when (not= :application.state/draft (:application/state application))
+                                                 (accepted-licenses? application (:userid applicant)))}]]
             (concat
-             (for [member members]
-               [member-info {:element-id id
+             (for [[index member] (map-indexed vector members)]
+               [member-info {:element-id (str "member" index)
                              :attributes member
                              :application application
                              :group? true
                              :can-remove? can-remove?
                              :accepted-licenses? (accepted-licenses? application (:userid member))}])
-             (for [invited-member invited-members]
-               [member-info {:element-id id
+             (for [[index invited-member] (map-indexed vector invited-members)]
+               [member-info {:element-id (str "invite" index)
                              :attributes invited-member
                              :application application
                              :group? true
