@@ -7,17 +7,14 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
+            [rems.db.legacy-workflow-actors :as actors]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.db.legacy-workflow-actors :as actors]
-            [rems.locales :as locales]
-            [rems.poller.email :as email]
             [rems.poller.entitlements :as entitlements-poller]
-            [ring.util.http-response :refer [bad-request!]]
-            [rems.poller.entitlements :as entitlements-poller])
+            [ring.util.http-response :refer [bad-request!]])
   (:import [java.util UUID]
            [org.joda.time DateTimeUtils DateTime]))
 

@@ -6,7 +6,6 @@
   Use the functions `set-pending!`, `set-success!` and `set-error!` to control its state.
   See `rems.status-modal/status-modal` for values to use in the calls."
   (:require [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.common-util :refer [deep-merge]]
             [rems.guide-functions]
             [rems.modal :as modal]

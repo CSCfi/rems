@@ -1,7 +1,7 @@
 (ns rems.read-gitlog
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.java.shell :as sh]))
+            [clojure.string :as str])
+  (:import [java.io IOException]))
 
 (def ^:private version-description-file "git-describe.txt")
 (def ^:private version-revision-file "git-revision.txt")
@@ -21,4 +21,4 @@
         {:version version
          :revision revision
          :repo-url repo-url}))
-    (catch java.io.IOException _ nil)))
+    (catch IOException _ nil)))
