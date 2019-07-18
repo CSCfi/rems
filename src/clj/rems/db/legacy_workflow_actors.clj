@@ -1,4 +1,4 @@
-(ns rems.db.workflow-actors
+(ns rems.db.legacy-workflow-actors
   (:require [rems.db.core :as db]))
 
 (defn add-approver!

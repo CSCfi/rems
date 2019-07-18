@@ -12,7 +12,7 @@
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.db.workflow-actors :as actors]
+            [rems.db.legacy-workflow-actors :as actors]
             [rems.locales :as locales]
             [rems.poller.email :as email]
             [rems.poller.entitlements :as entitlements-poller]

@@ -14,7 +14,7 @@
             [rems.db.events :as events]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.db.workflow-actors :as actors]
+            [rems.db.legacy-workflow-actors :as actors]
             [rems.json :as json]
             [rems.permissions :as permissions])
   (:import [rems InvalidRequestException]))
