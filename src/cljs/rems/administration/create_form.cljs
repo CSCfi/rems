@@ -172,8 +172,8 @@
                          "create"))
                   {:params (build-request (db ::form) (db :languages))
                    :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
-                   :error-handler status-modal/common-error-handler!})
-       {:db (assoc db ::form-errors form-errors)}))))
+                   :error-handler status-modal/common-error-handler!}))
+     {:db (assoc db ::form-errors form-errors)})))
 
 ;;;; UI
 
