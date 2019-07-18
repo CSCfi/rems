@@ -612,17 +612,6 @@
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-decision :deciders [reviewer] :comment ""}))))
 
-(defn- create-review-applications! [catid wfid users]
-  (let [applicant (users :applicant1)
-        approver (users :approver1)
-        reviewer (users :reviewer)]
-    (let [app-id (create-draft! applicant catid wfid "application with review")]
-      (legacy/submit-application applicant app-id)
-      (legacy/review-application reviewer app-id 0 "comment for review")
-      (legacy/approve-application approver app-id 1 "comment for approval")) ; already reviewed and approved
-    (let [app-id (create-draft! applicant catid wfid "application in review")]
-      (legacy/submit-application applicant app-id)))) ; still in review
-
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
         owner (users :owner)
@@ -774,7 +763,6 @@
     (db/set-catalogue-item-state! {:id disabled :enabled false})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
     (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
-    (create-review-applications! with-review (:with-review workflows) +fake-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
     (create-application-before-new-resource-license! (:simple workflows) form +fake-users+)
     (create-expired-license!)
