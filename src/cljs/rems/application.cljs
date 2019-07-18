@@ -288,7 +288,7 @@
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
     [collapsible/component
-     {:id "form"
+     {:id "application-fields"
       :title (text :t.form/application)
       :always
       [:div
@@ -318,7 +318,7 @@
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
       [collapsible/component
-       {:id "form"
+       {:id "application-licenses"
         :title (text :t.form/licenses)
         :always
         [:div

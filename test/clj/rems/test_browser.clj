@@ -119,14 +119,14 @@
 ;;; application page
 
 (defn fill-form-field [label text]
-  (let [id (get-element-attr *driver* [:form
+  (let [id (get-element-attr *driver* [:application-fields
                                        {:tag :label, :fn/text label}]
                              :for)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (fill-human *driver* {:id id} text)))
 
 (defn set-date [label date]
-  (let [id (get-element-attr *driver* [:form
+  (let [id (get-element-attr *driver* [:application-fields
                                        {:tag :label, :fn/text label}]
                              :for)]
     ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
@@ -155,7 +155,7 @@
                 id date)))
 
 (defn select-option [label option]
-  (let [id (get-element-attr *driver* [:form
+  (let [id (get-element-attr *driver* [:application-fields
                                        {:tag :label, :fn/text label}]
                              :for)]
     (fill *driver* {:id id} option)))
