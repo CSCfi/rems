@@ -12,23 +12,18 @@
             :change-workflow-error "The resources can't be applied for with this application. Change them or make a new application."
             :change-workflow-warning "The workflow differs from the original application."
             :change-resources "Change resources"
-            :applicant "Applicant"
             :approve "Approve"
             :approve-reject "Approve or reject"
             :cancel "Cancel"
             :close "Delete"
             :comment "Comment"
             :comment-placeholder "Comment"
-            :created "Created"
             :decide "Decide"
-            :description "Description"
             :empty "No applications to process."
             :errors {:invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]}
             :export-entitlements "Export entitlements as CSV"
             :handled-applications "Processed applications"
-            :id "Id"
             :invite-member "Invite member"
-            :last-activity "Last activity"
             :licenses-selection "Add terms of use"
             :licenses-not-accepted-error "Terms of use not accepted."
             :load-application-states "Load application states"
@@ -45,13 +40,10 @@
             :request-comment "Request comment"
             :request-decision "Request decision"
             :request-selection "Send requests"
-            :resource "Resource"
             :resources-selection "Resources included in the application"
             :return "Return to applicant"
             :show-publications "Show publications"
-            :show-throughput-times "Show throughput times"
-            :state "State"
-            :submitted "Sent"}
+            :show-throughput-times "Show throughput times"}
   :administration {:active "Active"
                    :archive "Archive"
                    :back "Back"
@@ -106,8 +98,13 @@
                    :name "Name"
                    :username "Username"}
   :applications {:all-applications "All applications"
+                 :applicant "Applicant"
                  :application "Application"
                  :applications "Applications"
+                 :created "Created"
+                 ;; TODO: Once the terms have stabilized, convert db and the
+                 ;;   code to match the term in UI.
+                 :description "Title"
                  :empty "No applications."
                  :events {:approved "Approved"
                           :closed "Deleted"
@@ -130,8 +127,11 @@
                           :returned "Changes requested"
                           :submitted "Applied"
                           :unknown "Unknown"}
+                 :id "Id"
                  :intro [:div.intro [:p "By filling and sending in this application, the applicants may be granted the applied resources. All the applicable terms of use must also be accepted by each applicant."]]
+                 :last-activity "Last activity"
                  :my-applications "My Applications"
+                 :resource "Resource"
                  :state "State"
                  :states {:approved "Approved"
                           :closed "Deleted"
@@ -140,6 +140,7 @@
                           :returned "Returned"
                           :submitted "Applied"
                           :unknown "Unknown"}
+                 :submitted "Sent"
                  :latest-activity "Latest activity"
                  :view "View"}
   :autocomplete {:no-results "No results"
@@ -177,7 +178,7 @@
                 :title "Form name"
                 :type-attachment "Attachment"
                 :type-date "Date field"
-                :type-description "Description"
+                :type-description "Application title"
                 :type-label "Label"
                 :type-multiselect "Multi-select list"
                 :type-option "Option list"

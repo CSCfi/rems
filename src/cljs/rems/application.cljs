@@ -422,7 +422,7 @@
                       [:span#application-id (application-id-value config application)]
                       {:inline? true}]
                      [info-field
-                      (text :t.actions/description)
+                      (text :t.applications/description)
                       (:application/description application)
                       {:inline? true}]
                      [info-field
