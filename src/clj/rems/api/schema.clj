@@ -5,14 +5,14 @@
   (:import (org.joda.time DateTime)))
 
 (s/defschema CatalogueItem
-  {:id s/Num
+  {:id s/Int
    :title s/Str
-   :wfid s/Num
+   :wfid s/Int
    (s/optional-key :workflow-name) s/Str
-   :formid s/Num
+   :formid s/Int
    (s/optional-key :form-name) s/Str
    :resid s/Str
-   :resource-id s/Num
+   :resource-id s/Int
    (s/optional-key :resource-name) s/Str
    (s/optional-key :langcode) s/Keyword
    :start DateTime
@@ -23,7 +23,7 @@
    :localizations (s/maybe {s/Any s/Any})})
 
 (s/defschema License
-  {:id s/Num
+  {:id s/Int
    :licensetype (s/enum "text" "link" "attachment")
    :start DateTime
    :end (s/maybe DateTime)
@@ -32,10 +32,10 @@
    :expired s/Bool
    :title s/Str
    :textcontent s/Str
-   (s/optional-key :attachment-id) (s/maybe s/Num)
+   (s/optional-key :attachment-id) (s/maybe s/Int)
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str
-                              (s/optional-key :attachment-id) (s/maybe s/Num)}}})
+                              (s/optional-key :attachment-id) (s/maybe s/Int)}}})
 
 (s/defschema Licenses
   [License])
@@ -48,7 +48,7 @@
           :approved s/Bool}))
 
 (s/defschema Item
-  {:id s/Num
+  {:id s/Int
    :localizations {s/Keyword {:title s/Str :inputprompt (s/maybe s/Str)}}
    :optional s/Bool
    :options [{:key s/Str :label {s/Keyword s/Str}}]
@@ -63,13 +63,13 @@
 
 (s/defschema Entitlement
   {:resource s/Str
-   :application-id s/Num
+   :application-id s/Int
    :start DateTime
    :end (s/maybe DateTime)
    :mail s/Str})
 
 (s/defschema UpdateStateCommand
-  {:id s/Num
+  {:id s/Int
    :enabled s/Bool
    :archived s/Bool})
 
@@ -112,7 +112,7 @@
 
 (s/defschema Actor
   {:actoruserid UserId
-   :round s/Num
+   :round s/Int
    :role (s/enum "approver" "reviewer")})
 
 (s/defschema WorkflowLicense
@@ -123,12 +123,12 @@
    :end (s/maybe DateTime)})
 
 (s/defschema WorkflowDB ; TODO: unify workflow schemas
-  {:id s/Num
+  {:id s/Int
    :organization s/Str
    :owneruserid UserId
    :modifieruserid UserId
    :title s/Str
-   :fnlround s/Num
+   :fnlround s/Int
    :workflow s/Any
    :licenses s/Any
    :visibility s/Str
@@ -143,7 +143,7 @@
       (dissoc :fnlround
               :licenses
               :visibility)
-      (assoc :final-round s/Num
+      (assoc :final-round s/Int
              :actors [Actor]
              :licenses [WorkflowLicense])))
 
@@ -188,7 +188,7 @@
    :form/fields [Field]})
 
 (s/defschema ApplicationAttachment
-  {:attachment/id s/Num
+  {:attachment/id s/Int
    :attachment/filename s/Str
    :attachment/type s/Str})
 
@@ -208,7 +208,7 @@
                                    :email s/Str}}
    :application/resources [V2Resource]
    :application/licenses [V2License]
-   :application/accepted-licenses (s/maybe {s/Str #{s/Num}})
+   :application/accepted-licenses (s/maybe {s/Str #{s/Int}})
    :application/events [Event]
    :application/description s/Str
    :application/form Form

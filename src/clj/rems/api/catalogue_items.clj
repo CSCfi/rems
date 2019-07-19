@@ -15,18 +15,18 @@
 ;; Should we take the string id instead?
 (s/defschema CreateCatalogueItemCommand
   {:title s/Str
-   :form s/Num
-   :resid s/Num
-   :wfid s/Num
+   :form s/Int
+   :resid s/Int
+   :wfid s/Int
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool})
 
 (s/defschema CreateCatalogueItemResponse
   {:success s/Bool
-   :id s/Num})
+   :id s/Int})
 
 (s/defschema CreateCatalogueItemLocalizationCommand
-  {:id s/Num
+  {:id s/Int
    :langcode s/Str
    :title s/Str})
 
@@ -54,7 +54,7 @@
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"
-      :path-params [item-id :- (describe s/Num "catalogue item")]
+      :path-params [item-id :- (describe s/Int "catalogue item")]
       :responses {200 {:schema CatalogueItem}
                   404 {:schema s/Any :description "Not found"}}
 

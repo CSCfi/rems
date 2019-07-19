@@ -61,12 +61,12 @@
 
 (s/defschema AcceptInvitationResult
   {:success s/Bool
-   (s/optional-key :application-id) s/Num
+   (s/optional-key :application-id) s/Int
    (s/optional-key :errors) [s/Any]})
 
 (s/defschema SaveAttachmentResponse
   (merge SuccessResponse
-         {(s/optional-key :id) s/Num}))
+         {(s/optional-key :id) s/Int}))
 
 ;; Api implementation
 
@@ -271,7 +271,7 @@
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
+      :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema Application}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications/get-application (getx-user-id) application-id)]
@@ -281,7 +281,7 @@
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"
       :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
+      :path-params [application-id :- (describe s/Int "application id")]
       :produces ["application/pdf"]
       (if-let [app (applications/get-application (getx-user-id) application-id)]
         (with-language context/*lang*

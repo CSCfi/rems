@@ -26,7 +26,7 @@
 (s/defschema SaveDraftCommand
   (assoc CommandBase
          ;; {s/Num s/Str} is what we want, but that isn't nicely representable as JSON
-         :field-values [{:field s/Num
+         :field-values [{:field s/Int
                          :value s/Str}]))
 
 (s/defschema AcceptLicensesCommand
@@ -79,7 +79,7 @@
 (s/defschema AddLicensesCommand
   (assoc CommandBase
          :comment s/Str
-         :licenses [s/Num]))
+         :licenses [s/Int]))
 
 (s/defschema AddMemberCommand
   (assoc CommandBase
@@ -88,7 +88,7 @@
 (s/defschema ChangeResourcesCommand
   (assoc CommandBase
          (s/optional-key :comment) s/Str
-         :catalogue-item-ids [s/Num]))
+         :catalogue-item-ids [s/Int]))
 
 (s/defschema InviteMemberCommand
   (assoc CommandBase

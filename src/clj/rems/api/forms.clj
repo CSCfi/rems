@@ -56,7 +56,7 @@
     (GET "/:form-id/editable" []
       :summary "Check if the form is editable"
       :roles #{:owner}
-      :path-params [form-id :- (describe s/Num "form-id")]
+      :path-params [form-id :- (describe s/Int "form-id")]
       :return SuccessResponse
       (ok (form/form-editable form-id)))
 
@@ -64,7 +64,7 @@
     (PUT "/:form-id/edit" []
       :summary "Edit form"
       :roles #{:owner}
-      :path-params [form-id :- (describe s/Num "form-id")]
+      :path-params [form-id :- (describe s/Int "form-id")]
       :body [command CreateFormCommand]
       :return SuccessResponse
       (ok (form/edit-form! (getx-user-id) form-id command)))

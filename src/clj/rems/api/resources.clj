@@ -11,7 +11,7 @@
 
 ;; TODO convert to V2Resource
 (s/defschema Resource
-  {:id s/Num
+  {:id s/Int
    :owneruserid s/Str
    :modifieruserid s/Str
    :organization s/Str
@@ -29,11 +29,11 @@
 (s/defschema CreateResourceCommand
   {:resid s/Str
    :organization s/Str
-   :licenses [s/Num]})
+   :licenses [s/Int]})
 
 (s/defschema CreateResourceResponse
   {:success s/Bool
-   (s/optional-key :id) s/Num
+   (s/optional-key :id) s/Int
    (s/optional-key :errors) [s/Any]})
 
 (defn- format-resource
@@ -79,7 +79,7 @@
     (GET "/:resource-id" []
       :summary "Get resource by id"
       :roles #{:owner}
-      :path-params [resource-id :- (describe s/Num "resource id")]
+      :path-params [resource-id :- (describe s/Int "resource id")]
       :return Resource
       (ok (get-resource resource-id)))
 
