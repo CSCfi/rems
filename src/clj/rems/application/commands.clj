@@ -31,7 +31,7 @@
 
 (s/defschema AcceptLicensesCommand
   (assoc CommandBase
-         :accepted-licenses s/Any))
+         :accepted-licenses [s/Int]))
 
 (s/defschema SubmitCommand
   CommandBase)
