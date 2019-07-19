@@ -2,12 +2,8 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
-            [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
             [rems.application.events :as events]
-            [rems.config :refer [env]]
-            [rems.db.applications :refer :all]
-            [rems.db.applications.legacy :as legacy]
+            [rems.db.applications :refer [application-created-event application-external-id!]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
@@ -16,7 +12,6 @@
             [rems.db.resource :as resource]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.db.workflow :as workflow]
-            [rems.test-db :as test-db]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
@@ -27,11 +22,6 @@
   test-db-fixture
   rollback-db-fixture
   test-data-fixture)
-
-(deftest can-act-as?-test
-  (is (legacy/can-act-as? "developer" (legacy/get-application-state 10) "approver"))
-  (is (not (legacy/can-act-as? "developer" (legacy/get-application-state 10) "reviewer")))
-  (is (not (legacy/can-act-as? "alice" (legacy/get-application-state 10) "approver"))))
 
 (deftest test-event-serialization
   (testing "round trip serialization"
