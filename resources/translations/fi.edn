@@ -253,6 +253,7 @@
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
          :no-attachment "Ei liitetiedostoa"
          :optional "(ei pakollinen)"
+         :required "*"
          :previous-value "Edellinen"
          :resources "Resurssit"
          :save "Tallenna luonnos"

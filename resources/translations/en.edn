@@ -255,6 +255,7 @@
          :must-accept-licenses "Each member is required to accept the terms of use to access the resources."
          :no-attachment "No attachment"
          :optional "(optional)"
+         :required "*"
          :resources "Resources"
          :save "Save as draft"
          :submit "Send application"
