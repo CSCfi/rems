@@ -80,7 +80,7 @@
   (contains? #{:text :texta :description} (:field/type field)))
 
 (defn- supports-max-length? [field]
-  (contains? #{:text :texta} (:field/type field)))
+  (contains? #{:description :text :texta} (:field/type field)))
 
 (defn- supports-options? [field]
   (contains? #{:option :multiselect} (:field/type field)))
