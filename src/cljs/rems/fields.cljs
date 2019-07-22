@@ -79,8 +79,9 @@
       (when max-length
         (text-format :t.form/maxlength (str max-length)))
       " "
-      (when optional
-        (text :t.form/optional))]
+      (if optional
+        (text :t.form/optional)
+        (text :t.form/required))]
      (when (and previous-value
                 (not= value previous-value))
        [toggle-diff-button id diff on-toggle-diff])
