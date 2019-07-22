@@ -38,145 +38,130 @@
        (map #(get-in % [:catalogue-item/title context/*lang*]))
        (str/join ", ")))
 
+;; There's a slight inconsistency here: we look at current members, so
+;; a member might get an email for an event that happens before he was
+;; added.
+(defn- applicant-and-members [application]
+  (conj (map :userid (:application/members application))
+        (:application/applicant application)))
+
+(defn- handlers [application]
+  (get-in application [:application/workflow :workflow.dynamic/handlers]))
+
+(defn- other-handlers [event application]
+  (filter #(not= % (:event/actor event)) (handlers application)))
+
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
 
 (defmethod event-to-emails-impl :default [_event _application]
   [])
 
-(defmethod event-to-emails-impl :application.event/submitted [_event application]
+(defn- emails-to-recipients [recipients event application subject-text body-text]
   (vec
-   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
-     {:to-user handler
-      :subject (text-format :t.email.application-submitted/subject
-                            handler
-                            (:application/applicant application)
-                            (application-id-for-email application)
-                            (resources-for-email application)
-                            (link-to-application (:application/id application)))
-      :body (text-format :t.email.application-submitted/message
-                         handler
-                         (:application/applicant application)
-                         (application-id-for-email application)
-                         (resources-for-email application)
-                         (link-to-application (:application/id application)))})))
-
-(defn- applicant-and-members [application]
-  (conj (:application/members application)
-        {:userid (:application/applicant application)}))
-
-;; There's a slight inconsistency here: we look at current members, so
-;; a member might get an email for an event that happens before he was
-;; added.
-(defn- emails-to-applicant-and-members [event application subject-text body-text]
-  (vec
-   (for [member (applicant-and-members application)]
-     {:to-user (:userid member)
+   (for [recipient recipients]
+     {:to-user recipient
       :subject (text-format subject-text
-                            (:userid member)
+                            recipient
+                            (:event/actor event)
                             (application-id-for-email application)
+                            (:application/applicant application)
+                            (resources-for-email application)
                             (link-to-application (:application/id event)))
       :body (text-format body-text
-                         (:userid member)
+                         recipient
+                         (:event/actor event)
                          (application-id-for-email application)
+                         (:application/applicant application)
+                         (resources-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
-  (emails-to-applicant-and-members event application
-                                   :t.email.application-approved/subject
-                                   :t.email.application-approved/message))
+  (concat (emails-to-recipients (applicant-and-members application)
+                                event application
+                                :t.email.application-approved/subject
+                                :t.email.application-approved/message-to-applicant)
+          (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.application-approved/subject
+                                :t.email.application-approved/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
-  (emails-to-applicant-and-members event application
-                                   :t.email.application-rejected/subject
-                                   :t.email.application-rejected/message))
+  (concat (emails-to-recipients (applicant-and-members application)
+                                event application
+                                :t.email.application-rejected/subject
+                                :t.email.application-rejected/message-to-applicant)
+          (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.application-rejected/subject
+                                :t.email.application-rejected/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
-  (emails-to-applicant-and-members event application
-                                   :t.email.application-closed/subject
-                                   :t.email.application-closed/message))
+  (concat (emails-to-recipients (applicant-and-members application)
+                                event application
+                                :t.email.application-closed/subject
+                                :t.email.application-closed/message-to-applicant)
+          (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.application-closed/subject
+                                :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/returned [event application]
-  (emails-to-applicant-and-members event application
-                                   :t.email.application-returned/subject
-                                   :t.email.application-returned/message))
+  (concat (emails-to-recipients (applicant-and-members application)
+                                event application
+                                :t.email.application-returned/subject
+                                :t.email.application-returned/message-to-applicant)
+          (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.application-returned/subject
+                                :t.email.application-returned/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/licenses-added [event application]
-  (emails-to-applicant-and-members event application
-                                   :t.email.application-licenses-added/subject
-                                   :t.email.application-licenses-added/message))
+  (concat (emails-to-recipients (applicant-and-members application)
+                                event application
+                                :t.email.application-licenses-added/subject
+                                :t.email.application-licenses-added/message-to-applicant)
+          (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.application-licenses-added/subject
+                                :t.email.application-licenses-added/message-to-handler)))
+
+(defmethod event-to-emails-impl :application.event/submitted [event application]
+  (emails-to-recipients (handlers application)
+                        event application
+                        :t.email.application-submitted/subject
+                        :t.email.application-submitted/message))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
-  (vec
-   (for [commenter (:application/commenters event)]
-     {:to-user commenter
-      :subject (text-format :t.email.comment-requested/subject
-                            commenter
-                            (:event/actor event)
-                            (application-id-for-email application)
-                            (link-to-application (:application/id event)))
-      :body (text-format :t.email.comment-requested/message
-                         commenter
-                         (:event/actor event)
-                         (application-id-for-email application)
-                         (link-to-application (:application/id event)))})))
-
-(defmethod event-to-emails-impl :application.event/decision-requested [event application]
-  (vec
-   (for [decider (:application/deciders event)]
-     {:to-user decider
-      :subject (text-format :t.email.decision-requested/subject
-                            decider
-                            (:event/actor event)
-                            (application-id-for-email application)
-                            (link-to-application (:application/id event)))
-      :body (text-format :t.email.decision-requested/message
-                         decider
-                         (:event/actor event)
-                         (application-id-for-email application)
-                         (link-to-application (:application/id event)))})))
+  (emails-to-recipients (:application/commenters event)
+                        event application
+                        :t.email.comment-requested/subject
+                        :t.email.comment-requested/message))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
-  (vec
-   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
-     {:to-user handler
-      :subject (text-format :t.email.commented/subject
-                            handler
-                            (:event/actor event)
-                            (application-id-for-email application)
-                            (link-to-application (:application/id event)))
-      :body (text-format :t.email.commented/message
-                         handler
-                         (:event/actor event)
-                         (application-id-for-email application)
-                         (link-to-application (:application/id event)))})))
+  (emails-to-recipients (handlers application)
+                        event application
+                        :t.email.commented/subject
+                        :t.email.commented/message))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
-  (vec
-   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
-     {:to-user handler
-      :subject (text-format :t.email.decided/subject
-                            handler
-                            (:event/actor event)
-                            (application-id-for-email application)
-                            (link-to-application (:application/id event)))
-      :body (text-format :t.email.decided/message
-                         handler
-                         (:event/actor event)
-                         (application-id-for-email application)
-                         (link-to-application (:application/id event)))})))
+  (emails-to-recipients (handlers application)
+                        event application
+                        :t.email.decided/subject
+                        :t.email.decided/message))
+
+(defmethod event-to-emails-impl :application.event/decision-requested [event application]
+  (emails-to-recipients (:application/deciders event)
+                        event application
+                        :t.email.decision-requested/subject
+                        :t.email.decision-requested/message))
 
 (defmethod event-to-emails-impl :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
-  [{:to-user (:userid (:application/member event))
-    :subject (text-format :t.email.member-added/subject
-                          (:userid (:application/member event))
-                          (application-id-for-email application)
-                          (link-to-application (:application/id event)))
-    :body (text-format :t.email.member-added/message
-                       (:userid (:application/member event))
-                       (application-id-for-email application)
-                       (link-to-application (:application/id event)))}])
+  (emails-to-recipients [(:userid (:application/member event))]
+                        event application
+                        :t.email.member-added/subject
+                        :t.email.member-added/message))
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))

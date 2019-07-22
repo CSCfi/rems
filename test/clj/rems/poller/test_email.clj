@@ -138,6 +138,9 @@
               [{:to-user "applicant",
                 :subject "Application approved (2001/3)",
                 :body "Dear applicant,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
+               {:to-user "assistant"
+                :subject "Application approved (2001/3)"
+                :body "Dear assistant,\n\nhandler has approved the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"}
                {:to-user "member",
                 :subject "Application approved (2001/3)",
                 :body "Dear member,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
@@ -147,6 +150,9 @@
               [{:to-user "applicant",
                 :subject "Application closed (2001/3)",
                 :body "Dear applicant,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}
+               {:to-user "handler"
+                :subject "Application closed (2001/3)"
+                :body "Dear handler,\n\nassistant has closed the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"}
                {:to-user "member",
                 :subject "Application closed (2001/3)",
                 :body "Dear member,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}
@@ -168,7 +174,10 @@
                   :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
                 [{:subject "Application rejected (2001/3)",
                   :body "Dear applicant,\n\nYour application 2001/3 has been rejected.\n\nView application: http://example.com/#/application/7",
-                  :to-user "applicant"}]]
+                  :to-user "applicant"}
+                 {:subject "Application rejected (2001/3)"
+                  :body "Dear assistant,\n\nhandler has rejected the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"
+                  :to-user "assistant"}]]
                (events-to-emails events)))))
     (testing "id field can be overrided"
       (with-redefs [rems.config/env (assoc rems.config/env :application-id-column :id)]
@@ -198,7 +207,10 @@
                   :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
                 [{:to-user "applicant",
                   :subject "Application returned (2001/3)",
-                  :body "Dear applicant,\n\nYour application 2001/3 has been returned.\n\nView application: http://example.com/#/application/7"}]
+                  :body "Dear applicant,\n\nYour application 2001/3 has been returned.\n\nView application: http://example.com/#/application/7"}
+                 {:to-user "assistant",
+                  :subject "Application returned (2001/3)",
+                  :body "Dear assistant,\n\nhandler has returned the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"}]
                 [{:to-user "assistant",
                   :subject "Application submitted (applicant: 2001/3)",
                   :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
