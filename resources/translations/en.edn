@@ -205,16 +205,21 @@
                     :round-n "Round %1"
                     :rounds-workflow "Round-based workflow"
                     :title "Title"}
-  :email {:application-approved {:subject "Application approved (%2)"
-                                 :message "Dear %1,\n\nYour application %2 has been approved.\n\nView application: %3"}
-          :application-rejected {:subject "Application rejected (%2)"
-                                 :message "Dear %1,\n\nYour application %2 has been rejected.\n\nView application: %3"}
-          :application-closed {:subject "Application closed (%2)"
-                               :message "Dear %1,\n\nYour application %2 has been closed.\n\nView application: %3"}
-          :application-returned {:subject "Application returned (%2)"
-                                 :message "Dear %1,\n\nYour application %2 has been returned.\n\nView application: %3"}
-          :application-licenses-added {:subject "Terms of use added to application (%2)"
-                                       :message "Dear %1,\n\nTerms of use have been added to your application %2. They need to be accepted before gaining access to the resources.\n\nView application: %3"}
+  :email {:application-approved {:subject "Application approved (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nView application: %5"
+                                 :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nView application: %5"}
+          :application-rejected {:subject "Application rejected (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been rejected.\n\nView application: %5"
+                                 :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nView application: %5"}
+          :application-closed {:subject "Application closed (%3)"
+                               :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nView application: %5"
+                               :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nView application: %5"}
+          :application-returned {:subject "Application returned (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been returned.\n\nView application: %5"
+                                 :message-to-handler "Dear %1,\n\n%2 has returned the application %3 from %4.\n\nView application: %5"}
+          :application-licenses-added {:subject "Terms of use added to application (%3)"
+                                       :message-to-applicant "Dear %1,\n\nTerms of use have been added to your application %3. They need to be accepted before gaining access to the resources.\n\nView application: %5"
+                                       :message-to-handler "Dear %1,\n\n%2 has added terms of use to the application %3 from %4.\n\nView application: %5"}
           :application-submitted {:subject "Application submitted (%2: %3)"
                                   :message "Dear %1,\n\n%2 has submitted an application (%3): %4.\n\nView application: %5"}
           :comment-requested {:subject "Comment requested (%2: %3)"

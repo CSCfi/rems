@@ -203,16 +203,21 @@
                     :round-n "Kierros %1"
                     :rounds-workflow "Kierrospohjainen työvuo"
                     :title "Työvuon nimi"}
-  :email {:application-approved {:subject "Hakemus hyväksytty (%2)"
-                                 :message "Hyvä %1,\n\nHakemuksesi %2 on hyväksytty.\n\nTarkastele hakemusta: %3"}
-          :application-rejected {:subject "Hakemus hylätty (%2)"
-                                 :message "Hyvä %1,\n\nHakemuksesi %2 on hylätty.\n\nTarkastele hakemusta: %3"}
-          :application-closed {:subject "Hakemus suljettu (%2)"
-                               :message "Hyvä %1,\n\nHakemuksesi %2 on suljettu.\n\nTarkastele hakemusta: %3"}
-          :application-returned {:subject "Hakemus palautettu (%2)"
-                                 :message "Hyvä %1,\n\nHakemuksesi %2 on palautettu.\n\nTarkastele hakemusta: %3"}
-          :application-licenses-added {:subject "Hakemukseen lisätty käyttöehtoja (%2)"
-                                       :message "Hyvä %1,\n\nHakemukseesi %2 on lisätty käyttöehtoja. Käyttöehdot täytyy hyväksyä ennen käyttöoikeuden saamista.\n\nTarkastele hakemusta: %3"}
+  :email {:application-approved {:subject "Hakemus hyväksytty (%3)"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nTarkastele hakemusta: %5"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
+          :application-rejected {:subject "Hakemus hylätty (%3)"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nTarkastele hakemusta: %5"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
+          :application-closed {:subject "Hakemus suljettu (%3)"
+                               :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nTarkastele hakemusta: %5"
+                               :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
+          :application-returned {:subject "Hakemus palautettu (%3)"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu.\n\nTarkastele hakemusta: %5"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
+          :application-licenses-added {:subject "Hakemukseen lisätty käyttöehtoja (%3)"
+                                       :message-to-applicant "Hyvä %1,\n\nHakemukseesi %3 on lisätty käyttöehtoja. Käyttöehdot täytyy hyväksyä ennen käyttöoikeuden saamista.\n\nTarkastele hakemusta: %5"
+                                       :message-to-handler "Hyvä %1,\n\n%2 on lisännyt käyttöehtoja käyttäjän %4 hakemukseen %3.\n\nTarkastele hakemusta: %5"}
           :application-submitted {:subject "Hakemus lähetetty (%2: %3)"
                                   :message "Hyvä %1,\n\n%2 on lähettänyt käyttöoikeushakemuksen (%3): %4.\n\nTarkastele hakemusta: %5"}
           :comment-requested {:subject "Kommenttipyyntö (%2: %3)"
