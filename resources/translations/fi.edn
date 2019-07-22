@@ -218,19 +218,19 @@
           :application-licenses-added {:subject "Hakemukseen lisätty käyttöehtoja (%3)"
                                        :message-to-applicant "Hyvä %1,\n\nHakemukseesi %3 on lisätty käyttöehtoja. Käyttöehdot täytyy hyväksyä ennen käyttöoikeuden saamista.\n\nTarkastele hakemusta: %5"
                                        :message-to-handler "Hyvä %1,\n\n%2 on lisännyt käyttöehtoja käyttäjän %4 hakemukseen %3.\n\nTarkastele hakemusta: %5"}
-          :application-submitted {:subject "Hakemus lähetetty (%2: %3)"
-                                  :message "Hyvä %1,\n\n%2 on lähettänyt käyttöoikeushakemuksen (%3): %4.\n\nTarkastele hakemusta: %5"}
+          :application-submitted {:subject "Hakemus lähetetty (%4: %3)"
+                                  :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen (%3): %5.\n\nTarkastele hakemusta: %6"}
           :comment-requested {:subject "Kommenttipyyntö (%2: %3)"
-                              :message "Hyvä %1,\n\n%2 on pyytänyt kommentoimaan hakemusta %3.\n\nKommentoi: %4"}
+                              :message "Hyvä %1,\n\n%2 on pyytänyt kommentoimaan hakemusta %3.\n\nKommentoi: %6"}
           :commented {:subject "Hakemusta kommentoitu (%2: %3)"
-                      :message "Hyvä %1,\n\n%2 on kommentoinut hakemusta %3.\n\nTarkastele hakemusta: %4"}
+                      :message "Hyvä %1,\n\n%2 on kommentoinut hakemusta %3.\n\nTarkastele hakemusta: %6"}
           :decided {:subject "Päätös tehty (%2: %3)"
-                    :message "Hyvä %1,\n\n%2 on tehnyt päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %4"}
+                    :message "Hyvä %1,\n\n%2 on tehnyt päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
           :decision-requested {:subject "Päätöspyyntö (%2: %3)"
-                               :message "Hyvä %1,\n\n%2 on pyytänyt sinua tekemään päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %4"}
+                               :message "Hyvä %1,\n\n%2 on pyytänyt sinua tekemään päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
-          :member-added {:subject "Lisätty hakemuksen jäseneksi (%2)"
-                         :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %2 jäseneksi.\n\nTarkastele hakemusta: %3"}
+          :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
+                         :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nTarkastele hakemusta: %6"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen"
                            :message "Hei,\n\nTämä sähköpostiosoite (%1) on kutsuttu osallistumaan resurssien käyttöoikeushakemukseen.\n\nOsallistumislinkki: %2"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
