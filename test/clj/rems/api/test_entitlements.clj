@@ -16,6 +16,7 @@
        (time-format/parse (time-format/formatters :date-time) x)))
 
 (deftest entitlements-test
+  ;; TODO: create applications inside the test
   (entitlements-poller/run)
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/entitlements"))
@@ -25,24 +26,21 @@
   (let [api-key "42"
         check-alice-entitlement (fn [x]
                                   (is (= {:resource "urn:nbn:fi:lb-201403262"
-                                          :application-id 12
                                           :end nil
                                           :mail "alice@example.com"}
-                                         (dissoc x :start)))
+                                         (dissoc x :start :application-id)))
                                   (is (valid-date? (:start x))))
         check-alice-expired-entitlement (fn [x]
                                           (is (= {:resource "urn:nbn:fi:lb-201403262"
-                                                  :application-id 13
                                                   :mail "alice@example.com"}
-                                                 (dissoc x :start :end)))
+                                                 (dissoc x :start :end :application-id)))
                                           (is (valid-date? (:start x)))
                                           (is (valid-date? (:end x))))
         check-developer-entitlement (fn [x]
                                       (is (= {:resource "urn:nbn:fi:lb-201403262"
-                                              :application-id 20
                                               :end nil
                                               :mail "developer@example.com"}
-                                             (dissoc x :start)))
+                                             (dissoc x :start :application-id)))
                                       (is (valid-date? (:start x))))]
     (testing "all"
       (let [data (-> (request :get "/api/entitlements")

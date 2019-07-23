@@ -4,7 +4,8 @@
             [rems.db.form :as form]
             [rems.handler :refer [handler]]
             [rems.json]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all])
+  (:import [java.util UUID]))
 
 (use-fixtures
   :once
@@ -36,12 +37,33 @@
 (defn- create-empty-form []
   (create-form-with-fields []))
 
-(defn- create-catalogue-item [form-id workflow-id]
+(defn- create-license []
+  (-> (request :post "/api/licenses/create")
+      (authenticate "42" "owner")
+      (json-body {:licensetype "text"
+                  :title (str (UUID/randomUUID))
+                  :textcontent ""
+                  :localizations {}})
+      handler
+      read-ok-body
+      :id))
+
+(defn- create-resource [& license-ids]
+  (-> (request :post "/api/resources/create")
+      (authenticate "42" "owner")
+      (json-body {:resid (str (UUID/randomUUID))
+                  :organization "abc"
+                  :licenses license-ids})
+      handler
+      read-ok-body
+      :id))
+
+(defn- create-catalogue-item [form-id workflow-id resource-id]
   (-> (request :post "/api/catalogue-items/create")
       (authenticate "42" "owner")
       (json-body {:title ""
                   :form form-id
-                  :resid 1
+                  :resid resource-id
                   :wfid workflow-id})
       handler
       read-ok-body
@@ -49,8 +71,9 @@
 
 (defn- create-dymmy-catalogue-item []
   (let [form-id (create-empty-form)
-        workflow-id (create-dynamic-workflow)]
-    (create-catalogue-item form-id workflow-id)))
+        workflow-id (create-dynamic-workflow)
+        resource-id (create-resource)]
+    (create-catalogue-item form-id workflow-id resource-id)))
 
 (defn- send-command [actor cmd]
   (-> (request :post (str "/api/applications/" (name (:type cmd))))
@@ -184,8 +207,33 @@
         handler-id "developer"
         commenter-id "carl"
         decider-id "bob"
-        license-id 5 ;; additional licenses from test data
-        application-id 11] ;; submitted dynamic application from test data
+        license-id1 (create-license)
+        license-id2 (create-license)
+        license-id3 (create-license)
+        license-id4 (create-license)
+        form-id (create-empty-form)
+        workflow-id (create-dynamic-workflow)
+        cat-item-id1 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
+        cat-item-id2 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
+        cat-item-id3 (create-catalogue-item form-id workflow-id (create-resource license-id3))
+        application-id (create-application [cat-item-id1] user-id)]
+
+    (testing "accept licenses"
+      (is (= {:success true} (send-command user-id
+                                           {:type :application.command/accept-licenses
+                                            :application-id application-id
+                                            :accepted-licenses []}))))
+
+    (testing "save draft"
+      (is (= {:success true} (send-command user-id
+                                           {:type :application.command/save-draft
+                                            :application-id application-id
+                                            :field-values []}))))
+
+    (testing "submit"
+      (is (= {:success true} (send-command user-id
+                                           {:type :application.command/submit
+                                            :application-id application-id}))))
 
     (testing "getting dynamic application as applicant"
       (let [application (get-application application-id user-id)]
@@ -244,7 +292,7 @@
       (is (= {:success true} (send-command user-id
                                            {:type :application.command/change-resources
                                             :application-id application-id
-                                            :catalogue-item-ids [9]}))))
+                                            :catalogue-item-ids [cat-item-id2]}))))
 
     (testing "submitting again"
       (is (= {:success true} (send-command user-id
@@ -281,49 +329,42 @@
       (testing "adding and then accepting additional licenses"
         (testing "add licenses"
           (let [application (get-application application-id user-id)]
-            (is (= #{1 2} (license-ids-for-application application)))
+            (is (= #{license-id1 license-id2} (license-ids-for-application application)))
             (is (= {:success true} (send-command handler-id
                                                  {:type :application.command/add-licenses
                                                   :application-id application-id
-                                                  :licenses [license-id]
+                                                  :licenses [license-id4]
                                                   :comment "Please approve these new terms"})))
             (let [application (get-application application-id user-id)]
-              (is (= #{1 2 5} (license-ids-for-application application))))))
+              (is (= #{license-id1 license-id2 license-id4} (license-ids-for-application application))))))
         (testing "applicant accepts the additional licenses"
           (is (= {:success true} (send-command user-id
                                                {:type :application.command/accept-licenses
                                                 :application-id application-id
-                                                :accepted-licenses [license-id]})))))
+                                                :accepted-licenses [license-id4]})))))
 
       (testing "changing resources as handler"
         (let [application (get-application application-id user-id)]
-          (is (= #{9} (catalogue-item-ids-for-application application)))
-          ;; License #5 was added previously by the handler.
-          (is (= #{1 2 5} (license-ids-for-application application)))
+          (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
+          (is (= #{license-id1 license-id2 license-id4} (license-ids-for-application application)))
           (is (= {:success true} (send-command handler-id
                                                {:type :application.command/change-resources
                                                 :application-id application-id
-                                                :catalogue-item-ids [9 10]
+                                                :catalogue-item-ids [cat-item-id3]
                                                 :comment "Here are the correct resources"})))
           (let [application (get-application application-id user-id)]
-            (is (= #{9 10} (catalogue-item-ids-for-application application)))
-            ;; License #4 is added by the catalogue-item #10, whereas
-            ;; the previously added license #5 is dropped from the list.
-            ;;
-            ;; TODO: The previously added licenses should probably be retained
-            ;; in the licenses after changing resources.
-            (is (= #{1 2 4} (license-ids-for-application application))))))
+            (is (= #{cat-item-id3} (catalogue-item-ids-for-application application)))
+            ;; TODO: The previously added licenses should probably be retained in the licenses after changing resources.
+            (is (= #{license-id3} (license-ids-for-application application))))))
 
       (testing "changing resources back as handler"
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/change-resources
                                               :application-id application-id
-                                              :catalogue-item-ids [9]})))
+                                              :catalogue-item-ids [cat-item-id2]})))
         (let [application (get-application application-id user-id)]
-          (is (= #{9} (catalogue-item-ids-for-application application)))
-          ;; After changing resources back, the license #4 added by the
-          ;; now-missing resource is gone, as well.
-          (is (= #{1 2} (license-ids-for-application application)))))
+          (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
+          (is (= #{license-id1 license-id2} (license-ids-for-application application)))))
 
       (testing "request-decision"
         (is (= {:success true} (send-command handler-id
@@ -448,7 +489,7 @@
         [req-id opt-id] (->> (form/get-form-template form-id)
                              :form/fields
                              (map :field/id))
-        cat-id (create-catalogue-item form-id workflow-id)
+        cat-id (create-catalogue-item form-id workflow-id 1)
         app-id (create-application [cat-id] user-id)]
     (testing "set value of optional field"
       (is (= {:success true}
@@ -492,7 +533,7 @@
         form-id (create-form-with-fields [{:field/title {:en "some attachment"}
                                            :field/type :attachment
                                            :field/optional true}])
-        cat-id (create-catalogue-item form-id workflow-id)
+        cat-id (create-catalogue-item form-id workflow-id 1)
         app-id (create-application [cat-id] user-id)
         upload-request (fn [file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
