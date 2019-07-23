@@ -1,8 +1,9 @@
 (ns ^:integration rems.api.test-workflows
   (:require [clojure.test :refer :all]
-            [rems.common-util :refer [index-by]]
-            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
+            [rems.common-util :refer [index-by]]
+            [rems.db.workflow :as workflow]
+            [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -15,19 +16,8 @@
                    (authenticate "42" "owner")
                    handler
                    assert-response-is-ok
-                   read-body)
-          wfs (index-by [:title] data)
-          simple (get wfs "simple")]
-      (is (coll-is-not-empty? data))
-      (is simple)
-      (is (= 0 (:final-round simple)))
-      (is (= [{:actoruserid "developer"
-               :round 0
-               :role "approver"}
-              {:actoruserid "bob"
-               :round 0
-               :role "approver"}]
-             (:actors simple)))))
+                   read-body)]
+      (is (coll-is-not-empty? data))))
 
   (testing "create auto-approved workflow"
     (let [body (-> (request :post (str "/api/workflows/create"))
@@ -151,21 +141,32 @@
              (fetch))))))
 
 (deftest workflows-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/workflows" {:expired true})
-                       (authenticate "42" "owner")
-                       handler
-                       assert-response-is-ok
-                       read-body)
-        filtered (-> (request :get "/api/workflows")
-                     (authenticate "42" "owner")
-                     handler
-                     assert-response-is-ok
-                     read-body)]
-    (is (coll-is-not-empty? unfiltered))
-    (is (coll-is-not-empty? filtered))
-    (is (every? #(contains? % :expired) unfiltered))
-    (is (not-any? :expired filtered))
-    (is (< (count filtered) (count unfiltered)))))
+  (let [enabled-wf (:id (workflow/create-workflow! {:user-id "owner"
+                                                    :organization "abc"
+                                                    :title ""
+                                                    :type :dynamic
+                                                    :handlers []}))
+        disabled-wf (:id (workflow/create-workflow! {:user-id "owner"
+                                                     :organization "abc"
+                                                     :title ""
+                                                     :type :dynamic
+                                                     :handlers []}))
+        _ (workflow/update-workflow! {:id disabled-wf
+                                      :enabled false})
+        enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})
+                                                   (authenticate "42" "owner")
+                                                   handler
+                                                   assert-response-is-ok
+                                                   read-body)))
+        enabled-wfs (set (map :id (-> (request :get "/api/workflows")
+                                      (authenticate "42" "owner")
+                                      handler
+                                      assert-response-is-ok
+                                      read-body)))]
+    (is (contains? enabled-and-disabled-wfs enabled-wf))
+    (is (contains? enabled-and-disabled-wfs disabled-wf))
+    (is (contains? enabled-wfs enabled-wf))
+    (is (not (contains? enabled-wfs disabled-wf)))))
 
 (deftest workflows-api-security-test
   (testing "without authentication"

@@ -36,7 +36,7 @@
                      read-body)]
         (is (= {:id id
                 :title "test-item-title"
-                :workflow-name "minimal"
+                :workflow-name "dynamic workflow"
                 :form-name "Basic form"
                 :resource-name "urn:nbn:fi:lb-201403262"}
                (select-keys data [:id :title :workflow-name :form-name :resource-name])))))

@@ -7,7 +7,6 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
-            [rems.db.legacy-workflow-actors :as actors]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.roles :as roles]
@@ -386,32 +385,12 @@
 
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
-        approver2 (users :approver2)
-        reviewer (users :reviewer)
         owner (users :owner)
-        minimal (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "minimal" :fnlround 0}))
-        simple (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "simple" :fnlround 0}))
-        with-review (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
-        two-round (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
-        different (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
-        expired (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :end (time/minus (time/now) (time/years 1))}))
         dynamic (:id (workflow/create-workflow! {:user-id owner
                                                  :organization "nbn"
                                                  :title "dynamic workflow"
                                                  :type :dynamic
                                                  :handlers [approver1]}))]
-    ;; either approver1 or approver2 can approve
-    (actors/add-approver! simple approver1 0)
-    (actors/add-approver! simple approver2 0)
-    ;; first reviewer reviews, then approver1 can approve
-    (actors/add-reviewer! with-review reviewer 0)
-    (actors/add-approver! with-review approver1 1)
-    ;; only approver1 can approve
-    (actors/add-approver! two-round approver1 0)
-    (actors/add-approver! two-round approver1 1)
-    ;; first approver2, then approver1
-    (actors/add-approver! different approver2 0)
-    (actors/add-approver! different approver1 1)
 
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
@@ -433,20 +412,13 @@
        {:licid text :langcode "en" :title "General Terms of Use"
         :textcontent (apply str (repeat 10 "License text in English. "))})
 
-      (doseq [wfid [minimal simple with-review two-round different dynamic]]
+      (doseq [wfid [dynamic]]
         (db/create-workflow-license! {:wfid wfid :licid link :round 0})
         (db/create-workflow-license! {:wfid wfid :licid text :round 0})
         (db/set-workflow-license-validity! {:licid link :start (time/minus (time/now) (time/years 1)) :end nil})
         (db/set-workflow-license-validity! {:licid text :start (time/minus (time/now) (time/years 1)) :end nil})))
 
-    {:minimal minimal
-     :simple simple
-     :with-review with-review
-     :dynamic-with-review dynamic
-     :two-round two-round
-     :different different
-     :expired expired
-     :dynamic dynamic}))
+    {:dynamic dynamic}))
 
 (defn- create-resource-license! [resid text owner]
   (let [licid (:id (db/create-license!
@@ -473,6 +445,11 @@
   (if (and maxlength (> (count value) maxlength))
     (subs value 0 maxlength)
     value))
+
+(defn- run-and-check-dynamic-command! [cmd]
+  (let [result (applications/command! cmd)]
+    (assert (nil? result) {:actual result})
+    result))
 
 (defn- create-draft! [user-id catids wfid field-value & [now]]
   (let [app-id (legacy/create-new-draft-at-time user-id wfid (or now (time/now)))
@@ -518,25 +495,6 @@
       (let [error (applications/command! @save-draft-command)]
         (assert (nil? error) error)))
     app-id))
-
-(defn- create-applications! [catid wfid applicant approver]
-  (create-draft! applicant catid wfid "draft application")
-  (let [application (create-draft! applicant catid wfid "applied application")]
-    (legacy/submit-application applicant application))
-  (let [application (create-draft! applicant catid wfid "rejected application")]
-    (legacy/submit-application applicant application)
-    (legacy/reject-application approver application 0 "comment for rejection"))
-  (let [application (create-draft! applicant catid wfid "accepted application")]
-    (legacy/submit-application applicant application)
-    (legacy/approve-application approver application 0 "comment for approval"))
-  (let [application (create-draft! applicant catid wfid "returned application")]
-    (legacy/submit-application applicant application)
-    (legacy/return-application approver application 0 "comment for return")))
-
-(defn- run-and-check-dynamic-command! [& args]
-  (let [result (apply applications/command! args)]
-    (assert (nil? result) {:actual result})
-    result))
 
 (defn- create-disabled-applications! [catid wfid applicant approver]
   (create-draft! applicant catid wfid "draft with disabled item")
@@ -586,55 +544,45 @@
                                        :type :application.command/add-member
                                        :member member}))))
 
-(defn- create-dynamic-applications! [catid wfid users]
+(defn- create-applications! [catid wfid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
-    (let [app-id (create-draft! applicant [catid] wfid "dynamic application")]
+
+    (create-draft! applicant catid wfid "draft application")
+
+    (let [app-id (create-draft! applicant [catid] wfid "applied")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}))
-    (let [app-id (create-draft! applicant catid wfid "application with comment")] ; approved with comment
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}) ; submit
+
+    (let [app-id (create-draft! applicant catid wfid "approved with comment")]
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"}))
 
-    (let [app-id (create-draft! applicant catid wfid "approved application that is closed")] ; approved then closed
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}) ; submit
+    (let [app-id (create-draft! applicant catid wfid "rejected")]
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/reject :comment "Never going to happen"}))
+
+    (let [app-id (create-draft! applicant catid wfid "returned")]
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/return :comment "Need more details"}))
+
+    (let [app-id (create-draft! applicant catid wfid "approved & closed")]
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"})
       (entitlements-poller/run)
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
-    (let [app-id (create-draft! applicant catid wfid "application in commenting")] ; still in commenting
+
+    (let [app-id (create-draft! applicant catid wfid "waiting for comment")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment ""}))
-    (let [app-id (create-draft! applicant catid wfid "application in deciding")] ; still in deciding
+
+    (let [app-id (create-draft! applicant catid wfid "waiting for decision")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-decision :deciders [reviewer] :comment ""}))))
-
-(defn- create-application-with-expired-resource-license! [wfid form users]
-  (let [applicant (users :applicant1)
-        owner (users :owner)
-        resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :organization "nbn" :owneruserid owner :modifieruserid owner}))
-        year-ago (time/minus (time/now) (time/years 1))
-        yesterday (time/minus (time/now) (time/days 1))
-        licid-expired (create-resource-license! resource-id "License that has expired" owner)
-        _ (db/set-resource-license-validity! {:licid licid-expired :start year-ago :end yesterday})
-        item-with-expired-license (create-catalogue-item! resource-id wfid form {"en" "Resource with expired resource license"
-                                                                                 "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
-    (let [application (create-draft! applicant item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))]
-      (legacy/submit-application applicant application))))
-
-(defn- create-application-before-new-resource-license! [wfid form users]
-  (let [applicant (users :applicant1)
-        owner (users :owner)
-        resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :organization "nbn" :owneruserid owner :modifieruserid owner}))
-        licid-new (create-resource-license! resource-id "License that was just created" owner)
-        _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
-        item-without-new-license (create-catalogue-item! resource-id wfid form {"en" "Resource with just created new resource license"
-                                                                                "fi" "Resurssi jolla on uusi resurssilisenssi"})
-        application (create-draft! applicant item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
-    (legacy/submit-application applicant application)))
 
 (defn- assert-no-error [error]
   (assert (nil? error) {:error error}))
@@ -739,36 +687,13 @@
         _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :end (time/minus (time/now) (time/years 1))}))
         form (create-basic-form! +fake-users+)
         _ (create-archived-form!)
-        workflows (create-workflows! +fake-users+)
-        _ (create-catalogue-item! res1 (:minimal workflows) form
-                                  {"en" "ELFA Corpus, direct approval"
-                                   "fi" "ELFA-korpus, suora hyväksyntä"})
-        simple (create-catalogue-item! res1 (:simple workflows) form
-                                       {"en" "ELFA Corpus, one approval"
-                                        "fi" "ELFA-korpus, yksi hyväksyntä"})
-        bundlable (create-catalogue-item! res2 (:simple workflows) form
-                                          {"en" "ELFA Corpus, one approval (extra data)"
-                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
-        with-review (create-catalogue-item! res1 (:with-review workflows) form
-                                            {"en" "ELFA Corpus, with review"
-                                             "fi" "ELFA-korpus, katselmoinnilla"})
-        _ (create-catalogue-item! res1 (:different workflows) form
-                                  {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                                   "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
-        disabled (create-catalogue-item! res1 (:simple workflows) form
-                                         {"en" "ELFA Corpus, one approval (extra data, disabled)"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+        workflows (create-workflows! +fake-users+)]
     (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
     (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
-    (db/set-catalogue-item-state! {:id disabled :enabled false})
-    (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-    (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
-    (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
-    (create-application-before-new-resource-license! (:simple workflows) form +fake-users+)
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
+      (create-applications! dynamic (:dynamic workflows) +fake-users+))
     (create-catalogue-item! res-with-extra-license (:dynamic workflows) form
                             {"en" "Dynamic workflow with extra license" "fi" "Dynaaminen työvuo ylimääräisellä lisenssillä"})
     (let [thlform (create-thl-demo-form! +fake-users+)
@@ -795,7 +720,7 @@
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))
+      (create-applications! dynamic (:dynamic workflows) +demo-users+))
     (let [thlform (create-thl-demo-form! +demo-users+)
           thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
       (create-member-applications! thl-catid (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))
