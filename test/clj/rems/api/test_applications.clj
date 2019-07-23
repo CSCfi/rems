@@ -224,7 +224,7 @@
                                             :application-id application-id
                                             :accepted-licenses []}))))
 
-    (testing "safe draft"
+    (testing "save draft"
       (is (= {:success true} (send-command user-id
                                            {:type :application.command/save-draft
                                             :application-id application-id
