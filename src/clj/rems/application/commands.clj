@@ -25,7 +25,7 @@
 
 (s/defschema SaveDraftCommand
   (assoc CommandBase
-         ;; {s/Num s/Str} is what we want, but that isn't nicely representable as JSON
+         ;; {s/Int s/Str} is what we want, but that isn't nicely representable as JSON
          :field-values [{:field s/Int
                          :value s/Str}]))
 
