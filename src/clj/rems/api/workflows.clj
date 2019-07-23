@@ -53,7 +53,7 @@
    (s/optional-key :handlers) [UserId]})
 
 (s/defschema UpdateWorkflowCommand
-  {:id s/Num
+  {:id s/Int
    (s/optional-key :title) s/Str
    (s/optional-key :handlers) [UserId]
    ;; type can't change
@@ -62,7 +62,7 @@
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool
-   :id s/Num})
+   :id s/Int})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableActor User)
@@ -124,6 +124,6 @@
     (GET "/:workflow-id" []
       :summary "Get workflow by id"
       :roles #{:owner}
-      :path-params [workflow-id :- (describe s/Num "workflow-id")]
+      :path-params [workflow-id :- (describe s/Int "workflow-id")]
       :return Workflow
       (ok (get-workflow workflow-id)))))

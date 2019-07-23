@@ -142,7 +142,7 @@
            (ok-command application
                        {:type :application.command/accept-licenses
                         :actor applicant-user-id
-                        :accepted-licenses #{1 2}})))))
+                        :accepted-licenses [1 2]})))))
 
 (deftest test-add-licenses
   (let [application (apply-events nil [dummy-created-event

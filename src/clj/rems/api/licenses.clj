@@ -15,17 +15,17 @@
   {:licensetype (s/enum "link" "text" "attachment")
    :title s/Str
    :textcontent s/Str
-   (s/optional-key :attachment-id) (s/maybe s/Num)
+   (s/optional-key :attachment-id) (s/maybe s/Int)
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str
-                              (s/optional-key :attachment-id) (s/maybe s/Num)}}})
+                              (s/optional-key :attachment-id) (s/maybe s/Int)}}})
 
 (s/defschema AttachmentMetadata
-  {:id s/Num})
+  {:id s/Int})
 
 (s/defschema CreateLicenseResponse
   {:success s/Bool
-   :id s/Num})
+   :id s/Int})
 
 (def licenses-api
   (context "/licenses" []
@@ -45,7 +45,7 @@
     (GET "/:license-id" []
       :summary "Get license"
       :roles #{:owner}
-      :path-params [license-id :- (describe s/Num "license id")]
+      :path-params [license-id :- (describe s/Int "license id")]
       :return License
       (ok (licenses/get-license license-id)))
 
