@@ -1,7 +1,8 @@
 (ns rems.db.workflow
   (:require [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.json :as json]))
+            [rems.json :as json])
+  (:import [org.apache.commons.lang3 NotImplementedException]))
 
 (defn- parse-workflow-body [json]
   (json/parse-string json))
@@ -25,12 +26,7 @@
 (defn- create-auto-approve-workflow! [{:keys [user-id organization title]}]
   (assert user-id)
   ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-  (let [wfid (:id (db/create-workflow! {:organization organization,
-                                        :owneruserid user-id,
-                                        :modifieruserid user-id,
-                                        :title title,
-                                        :fnlround 0}))]
-    {:id wfid}))
+  (throw (NotImplementedException. "auto-approve workflows are not yet implemented")))
 
 (defn- create-dynamic-workflow! [{:keys [user-id organization title handlers]}]
   (assert user-id)

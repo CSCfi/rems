@@ -1,9 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
-            [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.applications.legacy :as legacy]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -441,93 +439,57 @@
       (catalogue/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
-(defn trim-value-if-longer-than-fields-maxlength [value maxlength]
-  (if (and maxlength (> (count value) maxlength))
-    (subs value 0 maxlength)
-    value))
-
 (defn- run-and-check-dynamic-command! [cmd]
   (let [result (applications/command! cmd)]
     (assert (nil? result) {:actual result})
     result))
 
-(defn- create-draft! [user-id catids wfid field-value & [now]]
-  (let [app-id (legacy/create-new-draft-at-time user-id wfid (or now (time/now)))
-        catids (if (vector? catids) catids [catids])
-        _ (doseq [catid catids]
-            (db/add-application-item! {:application app-id :item catid}))
-        ;; TODO don't use legacy get-form-for
-        form (binding [context/*lang* :en]
-               (legacy/get-form-for user-id app-id))
-        dynamic-workflow? (= :workflow/dynamic (get-in form [:application :workflow :type]))
-        save-draft-command (atom {:type :application.command/save-draft
-                                  :actor user-id
-                                  :application-id app-id
-                                  :time (get-in form [:application :start])
-                                  :field-values []})]
-    (when dynamic-workflow?
-      (applications/add-application-created-event! {:application-id app-id
-                                                    :catalogue-item-ids catids
-                                                    :time (get-in form [:application :start])
-                                                    :actor user-id}))
-    (doseq [{item-id :id maxlength :maxlength} (:items form)
-            :let [trimmed-value (trim-value-if-longer-than-fields-maxlength field-value maxlength)]]
-      (db/save-field-value! {:application app-id :form (:id form)
-                             :item item-id :user user-id :value trimmed-value})
-      (swap! save-draft-command
-             update :field-values
-             conj {:field item-id :value trimmed-value}))
-    (db/update-application-description! {:id app-id :description field-value})
-    (when-not dynamic-workflow?
-      (doseq [{license-id :id} (:licenses form)]
-        (db/save-license-approval! {:catappid app-id
-                                    :round 0
-                                    :licid license-id
-                                    :actoruserid user-id
-                                    :state "approved"})))
-    (when dynamic-workflow?
-      (let [error (applications/command! {:type :application.command/accept-licenses
-                                          :actor user-id
-                                          :application-id app-id
-                                          :accepted-licenses (map :id (:licenses form))
-                                          :time (time/now)})]
-        (assert (nil? error) error))
-      (let [error (applications/command! @save-draft-command)]
-        (assert (nil? error) error)))
+(defn- create-draft! [applicant cat-items description]
+  (let [app-id (:application-id (applications/create-application! applicant cat-items))
+        app (applications/get-application applicant app-id)
+        command (fn [cmd]
+                  (merge {:application-id app-id
+                          :actor applicant
+                          :time (time/now)}
+                         cmd))]
+    (run-and-check-dynamic-command! (command {:type :application.command/save-draft
+                                              :field-values (->> (:form/fields (:application/form app))
+                                                                 (filter #(not (:field/optional %)))
+                                                                 (map (fn [field]
+                                                                        {:field (:field/id field)
+                                                                         :value description})))}))
+    (run-and-check-dynamic-command! (command {:type :application.command/accept-licenses
+                                              :accepted-licenses (map :license/id (:application/licenses app))}))
     app-id))
 
-(defn- create-disabled-applications! [catid wfid applicant approver]
-  (create-draft! applicant catid wfid "draft with disabled item")
-  (let [appid1 (create-draft! applicant catid wfid "approved application with disabled item")]
+(defn- create-disabled-applications! [catid applicant approver]
+  (create-draft! applicant [catid] "draft with disabled item")
+
+  (let [appid1 (create-draft! applicant [catid] "approved application with disabled item")]
     (run-and-check-dynamic-command! {:application-id appid1
                                      :actor applicant
                                      :time (time/now)
                                      :type :application.command/submit}))
-  (let [appid2 (create-draft! applicant catid wfid "submitted application with disabled item")]
+
+  (let [appid2 (create-draft! applicant [catid] "submitted application with disabled item")]
     (run-and-check-dynamic-command! {:application-id appid2
                                      :actor applicant
                                      :time (time/now)
                                      :type :application.command/submit})
     (run-and-check-dynamic-command! {:application-id appid2
-                                     :actor applicant
+                                     :actor approver
                                      :time (time/now)
                                      :type :application.command/approve
                                      :comment "Looking good"})))
 
-(defn- create-bundled-application! [catid catid2 wfid applicant approver]
-  (let [app-id (create-draft! applicant [catid catid2] wfid "bundled application")]
-    (legacy/submit-application applicant app-id)
-    (legacy/return-application approver app-id 0 "comment for return")
-    (legacy/submit-application applicant app-id)))
-
-(defn- create-member-applications! [catid wfid applicant approver members]
-  (let [appid1 (create-draft! applicant catid wfid "draft with invited members")]
+(defn- create-member-applications! [catid applicant approver members]
+  (let [appid1 (create-draft! applicant [catid] "draft with invited members")]
     (run-and-check-dynamic-command! {:application-id appid1
                                      :actor applicant
                                      :time (time/now)
                                      :type :application.command/invite-member
                                      :member {:name "John Smith" :email "john.smith@example.org"}}))
-  (let [appid2 (create-draft! applicant catid wfid "submitted with members")]
+  (let [appid2 (create-draft! applicant [catid] "submitted with members")]
     (run-and-check-dynamic-command! {:application-id appid2
                                      :actor applicant
                                      :time (time/now)
@@ -544,31 +506,31 @@
                                        :type :application.command/add-member
                                        :member member}))))
 
-(defn- create-applications! [catid wfid users]
+(defn- create-applications! [catid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
 
-    (create-draft! applicant catid wfid "draft application")
+    (create-draft! applicant [catid] "draft application")
 
-    (let [app-id (create-draft! applicant [catid] wfid "applied")]
+    (let [app-id (create-draft! applicant [catid] "applied")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}))
 
-    (let [app-id (create-draft! applicant catid wfid "approved with comment")]
+    (let [app-id (create-draft! applicant [catid] "approved with comment")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"}))
 
-    (let [app-id (create-draft! applicant catid wfid "rejected")]
+    (let [app-id (create-draft! applicant [catid] "rejected")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/reject :comment "Never going to happen"}))
 
-    (let [app-id (create-draft! applicant catid wfid "returned")]
+    (let [app-id (create-draft! applicant [catid] "returned")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/return :comment "Need more details"}))
 
-    (let [app-id (create-draft! applicant catid wfid "approved & closed")]
+    (let [app-id (create-draft! applicant [catid] "approved & closed")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
@@ -576,11 +538,11 @@
       (entitlements-poller/run)
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
 
-    (let [app-id (create-draft! applicant catid wfid "waiting for comment")]
+    (let [app-id (create-draft! applicant [catid] "waiting for comment")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment ""}))
 
-    (let [app-id (create-draft! applicant catid wfid "waiting for decision")]
+    (let [app-id (create-draft! applicant [catid] "waiting for decision")]
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-decision :deciders [reviewer] :comment ""}))))
 
@@ -693,16 +655,16 @@
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-applications! dynamic (:dynamic workflows) +fake-users+))
+      (create-applications! dynamic +fake-users+))
     (create-catalogue-item! res-with-extra-license (:dynamic workflows) form
                             {"en" "Dynamic workflow with extra license" "fi" "Dynaaminen työvuo ylimääräisellä lisenssillä"})
     (let [thlform (create-thl-demo-form! +fake-users+)
           thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
-      (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
+      (create-member-applications! thl-catid (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
     (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
                                                    {"en" "Dynamic workflow (disabled)"
                                                     "fi" "Dynaaminen työvuo (pois käytöstä)"})]
-      (create-disabled-applications! dynamic-disabled (:dynamic workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
+      (create-disabled-applications! dynamic-disabled (+fake-users+ :approver1) (+fake-users+ :approver1))
       (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))
     (let [dynamic-expired (create-catalogue-item! res1 (:dynamic workflows) form
                                                   {"en" "Dynamic workflow (expired)"
@@ -720,12 +682,12 @@
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-applications! dynamic (:dynamic workflows) +demo-users+))
+      (create-applications! dynamic +demo-users+))
     (let [thlform (create-thl-demo-form! +demo-users+)
           thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
-      (create-member-applications! thl-catid (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))
+      (create-member-applications! thl-catid (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))
     (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
                                                    {"en" "Dynamic workflow (disabled)"
                                                     "fi" "Dynaaminen työvuo (pois käytöstä)"})]
-      (create-disabled-applications! dynamic-disabled (:dynamic workflows) (+demo-users+ :approver1) (+demo-users+ :approver1))
+      (create-disabled-applications! dynamic-disabled (+demo-users+ :approver1) (+demo-users+ :approver1))
       (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))))

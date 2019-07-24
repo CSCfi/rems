@@ -19,30 +19,31 @@
                    read-body)]
       (is (coll-is-not-empty? data))))
 
-  (testing "create auto-approved workflow"
-    (let [body (-> (request :post (str "/api/workflows/create"))
-                   (json-body {:organization "abc"
-                               :title "auto-approved workflow"
-                               :type :auto-approve})
-                   (authenticate "42" "owner")
-                   handler
-                   assert-response-is-ok
-                   read-body)
-          id (:id body)]
-      (is (< 0 id))
-      (testing "and fetch"
-        (let [workflows (-> (request :get "/api/workflows")
-                            (authenticate "42" "owner")
-                            handler
-                            assert-response-is-ok
-                            read-body)
-              workflow (first (filter #(= id (:id %)) workflows))]
-          (is (= {:id id
-                  :organization "abc"
-                  :title "auto-approved workflow"
-                  :final-round 0
-                  :actors []}
-                 (select-keys workflow [:id :organization :title :final-round :actors])))))))
+  ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
+  #_(testing "create auto-approved workflow"
+      (let [body (-> (request :post (str "/api/workflows/create"))
+                     (json-body {:organization "abc"
+                                 :title "auto-approved workflow"
+                                 :type :auto-approve})
+                     (authenticate "42" "owner")
+                     handler
+                     assert-response-is-ok
+                     read-body)
+            id (:id body)]
+        (is (< 0 id))
+        (testing "and fetch"
+          (let [workflows (-> (request :get "/api/workflows")
+                              (authenticate "42" "owner")
+                              handler
+                              assert-response-is-ok
+                              read-body)
+                workflow (first (filter #(= id (:id %)) workflows))]
+            (is (= {:id id
+                    :organization "abc"
+                    :title "auto-approved workflow"
+                    :final-round 0
+                    :actors []}
+                   (select-keys workflow [:id :organization :title :final-round :actors])))))))
 
   (testing "create dynamic workflow"
     (let [body (-> (request :post "/api/workflows/create")
