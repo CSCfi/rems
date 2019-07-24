@@ -1,7 +1,7 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer [SuccessResponse UpdateStateCommand FormTemplateOverview NewFieldTemplate FormTemplate]]
-            [rems.api.util :refer [not-found-json-response]]
+            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]

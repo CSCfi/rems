@@ -4,7 +4,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.applications :refer [User get-users format-user]]
             [rems.api.schema :refer [SuccessResponse UserId Workflow]]
-            [rems.api.util]
+            [rems.api.util] ; required for route :roles
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]

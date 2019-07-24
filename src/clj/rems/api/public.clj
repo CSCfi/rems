@@ -1,5 +1,6 @@
 (ns rems.api.public
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.util] ; required for route :roles
             [rems.config :refer [env]]
             [rems.locales :as locales]
             [ring.util.http-response :refer :all]

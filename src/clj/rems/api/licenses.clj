@@ -1,7 +1,7 @@
 (ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :as api-util]
+            [rems.api.util :as api-util] ; required for route :roles
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]

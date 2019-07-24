@@ -1,7 +1,7 @@
 (ns rems.api.entitlements
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util]
+            [rems.api.util] ; required for route :roles
             [rems.db.entitlements :as entitlements]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
