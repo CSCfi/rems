@@ -28,7 +28,7 @@
      (if user-id
        (rf/dispatch [:rems.user-settings/update-user-settings user-id {:language language}])
        {:db (assoc db :language language)}))))
-       
+
 (defn- update-css [language]
   (let [localized-css (str "/css/" (name language) "/screen.css")]
     ;; Figwheel replaces the linked stylesheet

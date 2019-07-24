@@ -16,4 +16,9 @@
   (testing "add a user setting"
     (user-settings/update-user-settings! "user1" {:language :en})
     (is (= (user-settings/get-user-settings "user1")
-           {:language :en}))))
+           {:language :en})))
+
+  (testing "modify user setting"
+    (user-settings/update-user-settings! "user1" {:language :fi})
+    (is (= (user-settings/get-user-settings "user1")
+           {:language :fi}))))
