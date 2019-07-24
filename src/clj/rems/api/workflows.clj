@@ -74,8 +74,6 @@
 (defn- enrich-and-format-workflow [wf]
   (-> wf
       (update-present :workflow update :handlers #(mapv get-user %))
-      ;; TODO should this be in db.workflow?
-      (assoc :actors (db/get-workflow-actors {:wfid (:id wf)}))
       format-workflow))
 
 (defn- get-workflows [filters]

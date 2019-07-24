@@ -134,48 +134,6 @@ INSERT INTO catalogue_item_localization
   (catid, langcode, title)
 VALUES (:id, :langcode, :title);
 
--- :name get-form-for-application :? :1
-SELECT
-  form.id as formid,
-  form.organization as organization,
-  form.title as formtitle,
-  form.visibility as formvisibility
-FROM catalogue_item_application_items ciai
-LEFT OUTER JOIN catalogue_item ci ON ci.id = ciai.catItemId
-LEFT OUTER JOIN application_form form ON form.id = ci.formId
-WHERE ciai.catAppId = :application;
-
--- :name get-form-items :? :*
-SELECT
-  item.id,
-  formitemoptional,
-  type,
-  value,
-  itemorder,
-  item.visibility,
-  itemmap.maxlength
-FROM application_form form
-LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
-LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
-WHERE form.id = :id AND item.id IS NOT NULL
-ORDER BY itemorder;
-
--- :name get-all-form-items :? :*
-SELECT id, type, value, visibility, start, endt as "end", owneruserid, modifieruserid
-FROM application_form_item;
-
--- :name get-form-item-localizations :? :*
-SELECT
-  langCode,
-  title,
-  inputprompt
-FROM application_form_item_localization
-WHERE 1=1
-/*~ (when (:item params) */
-  AND itemId = :item
-/*~ ) ~*/
-;
-
 -- :name get-form-templates :? :*
 SELECT
   id,
@@ -230,55 +188,6 @@ SET (enabled, archived) = (:enabled, :archived)
 WHERE
 id = :id;
 
--- :name create-form! :insert
-INSERT INTO application_form
-(organization, title, modifierUserId, ownerUserId, visibility, endt)
-VALUES
-(:organization,
- :title,
- :user,
- :user,
- 'public',
- /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
-);
-
--- :name set-form-state! :!
--- TODO set modifieruserid?
-UPDATE application_form
-SET (enabled, archived) = (:enabled, :archived)
-WHERE
-id = :id;
-
--- :name create-form-item! :insert
-INSERT INTO application_form_item
-(type, value, modifierUserId, ownerUserId, visibility)
-VALUES
-(CAST (:type as itemtype), :value, :user, :user, 'public');
-
--- :name link-form-item! :insert
-INSERT INTO application_form_item_map
-(formId, formItemId, modifierUserId, itemOrder, formItemOptional, maxlength)
-VALUES
-(:form, :item, :user, :itemorder, :optional,
-/*~ (if (:maxlength params) */ :maxlength /*~*/ NULL /*~ ) ~*/
-);
-
--- :name localize-form-item! :insert
-INSERT INTO application_form_item_localization
-(itemId, langCode, title, inputPrompt)
-VALUES
-(:item, :langcode, :title, :inputprompt);
-
--- :name create-form-item-option! :insert
-INSERT INTO application_form_item_options
-  (itemId, key, langCode, label, displayOrder)
-VALUES (:itemId, :key, :langCode, :label, :displayOrder);
-
--- :name get-form-item-options :? :*
-SELECT itemId, key, langCode, label, displayOrder
-FROM application_form_item_options
-WHERE itemId = :item;
-
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application
 (applicantUserId, wfid, start)
@@ -286,49 +195,6 @@ VALUES (:user, :wfid,
 /*~ (if (:start params) */ :start /*~*/ now() /*~ ) ~*/
 )
 RETURNING id;
-
--- :name add-application-item! :insert
-INSERT INTO catalogue_item_application_items
-(catAppId, catItemId)
-VALUES
-(:application, :item)
-RETURNING catAppId, catItemId;
-
--- :name get-applications :? :*
--- :doc
--- - Pass in no arguments to get all applications.
--- - Use {:id id} to get a specific application
--- - Use {:applicant user} to filter by applicant
-SELECT
-  app.id, app.applicantUserId, app.start, app.description, wf.id as wfid, wf.fnlround, wf.workflowBody::TEXT as workflow
-FROM catalogue_item_application app
-LEFT OUTER JOIN workflow wf ON app.wfid = wf.id
-WHERE 1=1
-/*~ (when (:id params) */
-  AND app.id = :id
-/*~ ) ~*/
-/*~ (when (:applicant params) */
-  AND app.applicantUserId = :applicant
-/*~ ) ~*/
-;
-
--- :name update-application-description! :!
-UPDATE catalogue_item_application
-SET description = :description
-WHERE id = :id;
-
--- :name get-application-items :? :*
--- :doc
--- - Use {:application id} to pass application
-SELECT
-  catAppId AS application,
-  catItemId AS item
-FROM catalogue_item_application_items ciai
-WHERE 1=1
-/*~ (when (:application params) */
-  AND ciai.catAppId = :application
-/*~ ) ~*/
-;
 
 -- :name add-entitlement! :!
 INSERT INTO entitlement (catAppId, userId, resId)
@@ -371,49 +237,19 @@ WHERE 1=1
 /*~ ) ~*/
 ;
 
--- :name save-field-value! :!
-INSERT INTO application_text_values
-(catAppId, modifierUserId, value, formMapId)
-VALUES
-(:application, :user, :value,
- (SELECT id FROM application_form_item_map
-  WHERE formId = :form AND formItemId = :item))
-ON CONFLICT (catAppId, formMapId)
-DO UPDATE
-SET (modifierUserId, value) = (:user, :value);
-
 -- :name save-attachment! :insert
 INSERT INTO attachment
 (appId, modifierUserId, filename, type, data)
 VALUES
-(:application, :user, :filename, :type, :data)
+(:application, :user, :filename, :type, :data);
 
 -- :name get-attachment :? :1
 SELECT appid, filename, type, data FROM attachment
-WHERE id = :id
+WHERE id = :id;
 
 -- :name get-attachments-for-application :? :*
 SELECT id, filename, type, modifierUserId FROM attachment
-WHERE appid = :application-id
-
--- :name save-license-approval! :!
--- NB: this is not atomic
-INSERT INTO application_license_approval_values
-(catappid,formmapid, licid, modifieruserid, state)
-SELECT
-:catappid, NULL as formmapid, :licid, :actoruserid, CAST(:state AS license_status)
-WHERE NOT exists
-(SELECT id, catappid, licid, modifieruserid
-FROM application_license_approval_values
-WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid);
-
--- :name delete-license-approval! :!
-DELETE FROM application_license_approval_values
-WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid;
-
--- :name get-application-license-approval :? :1
-SELECT state FROM application_license_approval_values
-WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid;
+WHERE appid = :application-id;
 
 -- :name create-license! :insert
 INSERT INTO license
@@ -486,61 +322,19 @@ INSERT INTO resource_licenses
 VALUES
 (:resid, :licid);
 
+-- TODO: only used in test data; consider removing
 -- :name set-resource-license-validity! :insert
 -- :doc set license expiration
 UPDATE resource_licenses rl
 SET start = :start, endt = :end
 WHERE rl.licid = :licid;
 
+-- TODO: only used in test data; consider removing
 -- :name set-workflow-license-validity! :insert
 -- :doc set license expiration
 UPDATE workflow_licenses wl
 SET start = :start, endt = :end
 WHERE wl.licid = :licid;
-
--- :name create-workflow-actor! :insert
-INSERT INTO workflow_actors
-(wfid, actoruserid, role, round)
-VALUES
-(:wfid, :actoruserid, CAST (:role as workflow_actor_role), :round);
-
--- :name get-actors-for-applications :? :*
--- :doc
--- Get actors, joined with applications
--- - :wfid filter by workflow
--- - :application filter by application
--- - :round filter by round
--- - :role filter by role
-SELECT
-  wfa.actoruserid,
-  wfa.role,
-  app.id
-/*~ (when (:wfid params) */
-, wfa.round
-/*~ ) ~*/
-FROM workflow_actors wfa
-LEFT OUTER JOIN workflow wf on wf.id = wfa.wfid
-LEFT OUTER JOIN catalogue_item_application app ON app.wfid = wf.id
-WHERE 1=1
-/*~ (when (:application params) */
-  AND app.id = :application
-/*~ ) ~*/
-/*~ (when (:wfid params) */
-  AND wfa.wfid = :wfid
-/*~ ) ~*/
-/*~ (when (:round params) */
-  AND wfa.round = :round
-/*~ ) ~*/
-/*~ (when (:role params) */
-  AND wfa.role = CAST (:role as workflow_actor_role)
-/*~ ) ~*/
-;
-
--- :name get-workflow-actors :? :*
-SELECT
-  actoruserid, role, round
-FROM workflow_actors
-WHERE wfid = :wfid;
 
 -- :name get-workflow :? :1
 SELECT
@@ -571,21 +365,6 @@ SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt as "end",
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf;
-
--- :name clear-field-value! :!
-DELETE FROM application_text_values
-WHERE catAppId = :application
-  AND formMapId = (SELECT id FROM application_form_item_map
-                   WHERE formId = :form AND formItemId = :item);
-
--- :name get-field-value :? :n
-SELECT
-  value
-FROM application_text_values textvalues
-LEFT OUTER JOIN application_form_item_map itemmap ON textvalues.formMapId = itemmap.id
-WHERE textvalues.catAppId = :application
-  AND itemmap.formItemId = :item
-  AND itemmap.formId = :form;
 
 -- :name get-licenses :? :*
 -- :doc
@@ -697,7 +476,7 @@ WHERE apiKey = :apikey;
 SELECT app.id
 FROM catalogue_item_application app
 JOIN application_event evt ON (app.id = evt.appid)
-WHERE evt.eventdata->>'invitation/token' = :token
+WHERE evt.eventdata->>'invitation/token' = :token;
 
 -- :name get-poller-state :? :1
 SELECT state::TEXT FROM poller_state
