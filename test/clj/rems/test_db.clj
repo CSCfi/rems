@@ -7,8 +7,6 @@
             [rems.config]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.applications.legacy :as legacy]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.form :as form]
@@ -16,7 +14,6 @@
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.users :as users]
-            [rems.db.legacy-workflow-actors :as actors]
             [rems.poller.entitlements :as entitlements-poller]
             [rems.testing-tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [get-user-id]])
@@ -55,17 +52,7 @@
         form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
         item1 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res1 :wfid wfid}))
         item2 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res2 :wfid wfid}))
-        app-id (legacy/create-new-draft uid wfid)]
-    ;; apply for two items at the same time
-    (db/add-application-item! {:application app-id :item item1})
-    (db/add-application-item! {:application app-id :item item2})
-    (applications/add-application-created-event!
-     {:application-id app-id
-      ;; These do nothing right now, but in the future we can get rid of add-application-item! in this test
-      :catalogue-item-ids [item1 item2]
-      :time (time/now)
-      :actor uid})
-
+        app-id (:application-id (applications/create-application! uid [item1 item2]))]
     (is (nil? (applications/command! {:type :application.command/submit
                                       :actor uid
                                       :application-id app-id
@@ -80,120 +67,6 @@
     (entitlements-poller/run)
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
         "should create entitlements for both resources")))
-
-(deftest test-phases
-  ;; TODO add review when reviewing is supported
-  (db/add-user! {:user "approver1" :userattrs nil})
-  (db/add-user! {:user "approver2" :userattrs nil})
-  (db/add-user! {:user "applicant" :userattrs nil})
-  (testing "approval flow"
-    (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
-          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (legacy/create-new-draft "applicant" wf)
-          get-phases (fn [] (legacy/get-application-phases (:state (legacy/get-application-state app))))]
-      (db/add-application-item! {:application app :item item})
-      (actors/add-approver! wf "approver1" 0)
-      (actors/add-approver! wf "approver2" 1)
-
-      (testing "initially the application is in draft phase"
-        (is (= [{:phase :apply :active? true :text :t.phases/apply}
-                {:phase :approve :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/submit-application "applicant" app)
-
-      (testing "after submission the application is in first approval round"
-        (is (= [{:phase :apply :completed? true :text :t.phases/apply}
-                {:phase :approve :active? true :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/approve-application "approver1" app 0 "it's good")
-
-      (testing "after first approval the application is in the second approval round"
-        (is (= [{:phase :apply :completed? true :text :t.phases/apply}
-                {:phase :approve :active? true :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/approve-application "approver2" app 1 "it's good")
-
-      (testing "after both approvals the application is in approved phase"
-        (is (= [{:phase :apply :completed? true :text :t.phases/apply}
-                {:phase :approve :completed? true :approved? true :text :t.phases/approve}
-                {:phase :result :completed? true :approved? true :text :t.phases/approved}]
-               (get-phases))))))
-
-  (testing "return flow"
-    (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
-          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (legacy/create-new-draft "applicant" wf)
-          get-phases (fn [] (legacy/get-application-phases (:state (legacy/get-application-state app))))]
-      (db/add-application-item! {:application app :item item})
-      (actors/add-approver! wf "approver1" 0)
-      (actors/add-approver! wf "approver2" 1)
-
-      (testing "initially the application is in draft phase"
-        (is (= [{:phase :apply :active? true :text :t.phases/apply}
-                {:phase :approve :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/submit-application "applicant" app)
-
-      (testing "after submission the application is in first approval round"
-        (is (= [{:phase :apply :completed? true :text :t.phases/apply}
-                {:phase :approve :active? true :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/return-application "approver1" app 0 "it must be changed")
-
-      (testing "after return the application is in the draft phase again"
-        (is (= [{:phase :apply :active? true :text :t.phases/apply}
-                {:phase :approve :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))))
-
-  (testing "rejection flow"
-    (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
-          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (legacy/create-new-draft "applicant" wf)
-          get-phases (fn [] (legacy/get-application-phases (:state (legacy/get-application-state app))))]
-      (db/add-application-item! {:application app :item item})
-      (actors/add-approver! wf "approver1" 0)
-      (actors/add-approver! wf "approver2" 1)
-
-      (testing "initially the application is in draft phase"
-        (is (= [{:phase :apply :active? true :text :t.phases/apply}
-                {:phase :approve :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/submit-application "applicant" app)
-
-      (testing "after submission the application is in first approval round"
-        (is (= [{:phase :apply :completed? true :text :t.phases/apply}
-                {:phase :approve :active? true :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/approve-application "approver1" app 0 "it's good")
-
-      (testing "after first approval the application is in the second approval round"
-        (is (= [{:phase :apply :completed? true :text :t.phases/apply}
-                {:phase :approve :active? true :text :t.phases/approve}
-                {:phase :result :text :t.phases/approved}]
-               (get-phases))))
-
-      (legacy/reject-application "approver2" app 1 "is no good")
-
-      (testing "after second round rejection the application is in rejected phase"
-        (is (= [{:phase :apply :completed? true :text :t.phases/apply}
-                {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
-                {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
-               (get-phases)))))))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})
