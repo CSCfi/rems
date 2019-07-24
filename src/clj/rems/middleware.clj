@@ -13,6 +13,7 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.roles :as roles]
+            [rems.db.user-settings :as user-settings]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tempura-config]]
@@ -138,8 +139,8 @@
   "Sets context/*lang*"
   [handler]
   (fn [request]
-    (binding [context/*lang* (or (get-in request [:params :lang])
-                                 (get-in request [:session :language])
+    (binding [context/*lang* (or (when context/*user*
+                                   (:language (user-settings/get-user-settings (getx-user-id))))
                                  (:default-language env))]
       (handler request))))
 

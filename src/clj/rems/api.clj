@@ -13,6 +13,7 @@
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
+            [rems.api.user-settings :refer [user-settings-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
             [rems.json :refer [muuntaja]]
@@ -113,5 +114,6 @@
       forms-api
       licenses-api
       resources-api
+      user-settings-api
       users-api
       workflows-api)))

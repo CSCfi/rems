@@ -38,6 +38,7 @@
             [rems.roles :as roles]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
+            [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [dispatch! fetch parse-int]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
@@ -61,23 +62,6 @@
  (fn [db _]
    (:translations db)))
 
-(reg-sub
- :language
- (fn [db _]
-   (:language db)))
-
-(reg-sub
- :languages
- (fn [db _]
-   ;; default language first
-   (sort (comp not= (:default-language db))
-         (:languages db))))
-
-(reg-sub
- :default-language
- (fn [db _]
-   (:default-language db)))
-
 ;; TODO: possibly move theme out
 (reg-sub
  :theme
@@ -90,7 +74,6 @@
  :initialize-db
  (fn [_ _]
    {:page :home
-    :language :en
     :languages [:en]
     :default-language :en
     :translations {}
@@ -115,23 +98,6 @@
  :loaded-theme
  (fn [db [_ theme]]
    (assoc db :theme theme)))
-
-(reg-event-fx
- :set-current-language
- (fn [{:keys [db]} [_ language]]
-   {:db (assoc db :language language)
-    :update-document-language (name language)}))
-
-(reg-fx
- :update-document-language
- (fn [language]
-   (let [localized-css (str "/css/" (name language) "/screen.css")]
-     (set! (.. js/document -documentElement -lang) language)
-     ;; Figwheel replaces the linked stylesheet
-     ;; so we need to search dynamically
-     (doseq [element (array-seq (.getElementsByTagName js/document "link"))]
-       (when (str/includes? (.-href element) "screen.css")
-         (set! (.-href element) localized-css))))))
 
 (reg-event-fx
  :unauthorized!
@@ -181,15 +147,16 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    ;; TODO this is a hack to show something useful on the home page
-    ;; when we are logged in. We can't really perform a dispatch!
-    ;; here, because that would be a race condition with #fragment
-    ;; handling in hook-history-navigation!
-    ;;
-    ;; One possibility is to have a separate :init default page that
-    ;; does the navigation/redirect logic, instead of using :home as
-    ;; the default.
     (do
+      (fetch-user-settings!)
+      ;; TODO this is a hack to show something useful on the home page
+      ;; when we are logged in. We can't really perform a dispatch!
+      ;; here, because that would be a race condition with #fragment
+      ;; handling in hook-history-navigation!
+      ;;
+      ;; One possibility is to have a separate :init default page that
+      ;; does the navigation/redirect logic, instead of using :home as
+      ;; the default.
       (rf/dispatch [:rems.catalogue/enter-page])
       [catalogue-page])
     [:div
