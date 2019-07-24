@@ -85,7 +85,7 @@
         admin "owner"
         organization "foo"
         workflow {:type :workflow/dynamic :handlers [admin]}
-        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
+        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
         form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
         lic-id1 (:id (licenses/create-license! {:licensetype "text"
                                                 :title "license1"

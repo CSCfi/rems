@@ -58,9 +58,5 @@
 
 (defn add-event! [event]
   (db/add-application-event! {:application (:application/id event)
-                              :user (:event/actor event)
-                              :comment nil
-                              :round -1
-                              :event (str (:event/type event))
                               :eventdata (event->json event)})
   nil)

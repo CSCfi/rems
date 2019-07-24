@@ -218,7 +218,7 @@
                                                     :handlers []
                                                     :user-id "owner"}))
             _ (assert wf-id2)
-            _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id :round 0})
+            _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id})
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id
                                                             :form form-id

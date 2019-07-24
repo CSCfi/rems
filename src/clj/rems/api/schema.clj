@@ -128,10 +128,8 @@
    :owneruserid UserId
    :modifieruserid UserId
    :title s/Str
-   :fnlround s/Int
    :workflow s/Any
    :licenses s/Any
-   :visibility s/Str
    :start DateTime
    :end (s/maybe DateTime)
    :expired s/Bool
@@ -140,11 +138,8 @@
 
 (s/defschema Workflow
   (-> WorkflowDB
-      (dissoc :fnlround
-              :licenses
-              :visibility)
-      (assoc :final-round s/Int
-             :actors [Actor]
+      (dissoc :licenses)
+      (assoc :actors [Actor]
              :licenses [WorkflowLicense])))
 
 (def not-neg? (partial <= 0))

@@ -5,36 +5,19 @@
             [rems.application.events-cache :as events-cache]
             [rems.db.core :as db]
             [rems.db.events :as events]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
-            [rems.db.users :as users])
-  (:import [java.util UUID]))
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
-(defn- create-dummy-user []
-  (let [user-id (str (UUID/randomUUID))]
-    (users/add-user! user-id {})
-    user-id))
-
 (defn- create-dummy-application []
-  (let [workflow-id (:id (db/create-workflow! {:organization ""
-                                               :owneruserid ""
-                                               :modifieruserid ""
-                                               :title ""
-                                               :fnlround 1
-                                               :workflow "{}"}))
-        app-id (:id (db/create-application! {:user ""
-                                             :wfid workflow-id
-                                             :start (time/now)}))]
-    app-id))
+  (:id (db/create-application! {})))
 
 (defn- add-dummy-event! []
-  (let [user-id (create-dummy-user)
-        app-id (create-dummy-application)
+  (let [app-id (create-dummy-application)
         event {:event/type :application.event/submitted
                :event/time (time/now)
-               :event/actor user-id
+               :event/actor ""
                :application/id app-id}]
     (events/add-event! event)
     event))

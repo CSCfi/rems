@@ -161,13 +161,12 @@ WHERE id = :id;
 
 -- :name save-form-template! :insert
 INSERT INTO form_template
-(organization, title, modifierUserId, ownerUserId, visibility, fields)
+(organization, title, modifierUserId, ownerUserId, fields)
 VALUES
 (:organization,
  :title,
  :user,
  :user,
- 'public',
  :fields::jsonb
 );
 
@@ -189,11 +188,8 @@ WHERE
 id = :id;
 
 -- :name create-application! :insert
-INSERT INTO catalogue_item_application
-(applicantUserId, wfid, start)
-VALUES (:user, :wfid,
-/*~ (if (:start params) */ :start /*~*/ now() /*~ ) ~*/
-)
+INSERT INTO catalogue_item_application (id)
+VALUES (nextval('catalogue_item_application_id_seq'))
 RETURNING id;
 
 -- :name add-entitlement! :!
@@ -288,13 +284,12 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(organization, ownerUserId, modifierUserId, title, fnlround, endt, workflowBody)
+(organization, ownerUserId, modifierUserId, title, endt, workflowBody)
 VALUES
 (:organization,
  :owneruserid,
  :modifieruserid,
  :title,
- :fnlround,
  /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/,
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
@@ -311,9 +306,9 @@ WHERE id = :id;
 
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
-(wfid, licid, round)
+(wfid, licid)
 VALUES
-(:wfid, :licid, :round);
+(:wfid, :licid);
 
 -- TODO: consider renaming this to link-resource-license!
 -- :name create-resource-license! :insert
@@ -338,7 +333,7 @@ WHERE wl.licid = :licid;
 
 -- :name get-workflow :? :1
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt AS "end",
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.start, wf.endt AS "end",
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived,
   (SELECT json_agg(joined)
    FROM (SELECT *, (SELECT json_agg(licloc)
@@ -362,7 +357,7 @@ AND ci.id = :catid
 
 -- :name get-workflows :? :*
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt as "end",
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.start, wf.endt as "end",
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf;
 
@@ -440,7 +435,7 @@ FROM users
 WHERE userId = :user;
 
 -- :name get-application-events :? :*
-SELECT id, appId, userId, round, event, comment, eventData::TEXT, time
+SELECT id, eventdata::TEXT
 FROM application_event
 WHERE 1=1
 /*~ (when (:application params) */
@@ -455,10 +450,8 @@ WHERE id > :id
 ORDER BY id ASC;
 
 -- :name add-application-event! :insert
-INSERT INTO application_event (appId, userId, round, event, comment, eventData)
-VALUES (:application, :user, :round, :event, :comment,
-/*~ (if (:eventdata params) */ :eventdata::jsonb /*~*/ NULL /*~ ) ~*/
-);
+INSERT INTO application_event (appId, eventData)
+VALUES (:application, :eventdata::jsonb);
 
 -- :name log-entitlement-post! :insert
 INSERT INTO entitlement_post_log (payload, status)

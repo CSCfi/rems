@@ -15,7 +15,7 @@
 (deftest test-update-catalogue-item!
   (let [uid "test-user"
         form-id (:id (form/create-form! uid {:form/organization "org" :form/title "" :form/fields []}))
-        wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
+        wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow"}))
         item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))
         item-id2 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
 
@@ -74,7 +74,7 @@
 (deftest test-get-localized-catalogue-items
   (let [uid "test-user"
         form-id (:id (form/create-form! uid {:form/organization "org" :form/title "" :form/fields []}))
-        wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
+        wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow"}))
         item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
 
     (testing "find all"

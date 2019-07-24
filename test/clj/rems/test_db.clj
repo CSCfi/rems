@@ -46,7 +46,7 @@
   (let [uid "test-user"
         workflow {:type :workflow/dynamic
                   :handlers ["handler"]}
-        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
+        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
         res1 (:id (db/create-resource! {:resid "resid111" :organization "abc" :owneruserid uid :modifieruserid uid}))
         res2 (:id (db/create-resource! {:resid "resid222" :organization "abc" :owneruserid uid :modifieruserid uid}))
         form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
@@ -92,7 +92,7 @@
   (db/add-user! {:user "jack" :userattrs nil})
   (db/add-user! {:user "jill" :userattrs nil})
   (let [workflow {:type :workflow/dynamic :handlers ["handler"]}
-        wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
+        wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
         form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
         res1 (:id (db/create-resource! {:resid "resource1" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
         res2 (:id (db/create-resource! {:resid "resource2" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))

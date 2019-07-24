@@ -409,8 +409,8 @@
         :textcontent (apply str (repeat 10 "License text in English. "))})
 
       (doseq [wfid [dynamic]]
-        (db/create-workflow-license! {:wfid wfid :licid link :round 0})
-        (db/create-workflow-license! {:wfid wfid :licid text :round 0})
+        (db/create-workflow-license! {:wfid wfid :licid link})
+        (db/create-workflow-license! {:wfid wfid :licid text})
         (db/set-workflow-license-validity! {:licid link :start (time/minus (time/now) (time/years 1)) :end nil})
         (db/set-workflow-license-validity! {:licid text :start (time/minus (time/now) (time/years 1)) :end nil})))
 
