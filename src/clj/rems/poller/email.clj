@@ -9,6 +9,7 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.events :as events]
+            [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.poller.common :as common]
             [rems.scheduler :as scheduler]
@@ -60,21 +61,23 @@
 (defn- emails-to-recipients [recipients event application subject-text body-text]
   (vec
    (for [recipient recipients]
-     {:to-user recipient
-      :subject (text-format subject-text
-                            recipient
-                            (:event/actor event)
-                            (application-id-for-email application)
-                            (:application/applicant application)
-                            (resources-for-email application)
-                            (link-to-application (:application/id event)))
-      :body (text-format body-text
-                         recipient
-                         (:event/actor event)
-                         (application-id-for-email application)
-                         (:application/applicant application)
-                         (resources-for-email application)
-                         (link-to-application (:application/id event)))})))
+     (with-language (:language (user-settings/get-user-settings recipient))
+       (fn []
+         {:to-user recipient
+          :subject (text-format subject-text
+                                recipient
+                                (:event/actor event)
+                                (application-id-for-email application)
+                                (:application/applicant application)
+                                (resources-for-email application)
+                                (link-to-application (:application/id event)))
+          :body (text-format body-text
+                             recipient
+                             (:event/actor event)
+                             (application-id-for-email application)
+                             (:application/applicant application)
+                             (resources-for-email application)
+                             (link-to-application (:application/id event)))})))))
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (concat (emails-to-recipients (applicant-and-members application)
@@ -164,13 +167,15 @@
                         :t.email.member-added/message))
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
-  [{:to (:email (:application/member event))
-    :subject (text-format :t.email.member-invited/subject
-                          (:email (:application/member event))
-                          (invitation-link (:invitation/token event)))
-    :body (text-format :t.email.member-invited/message
-                       (:email (:application/member event))
-                       (invitation-link (:invitation/token event)))}])
+  (with-language (:default-language env)
+    (fn []
+      [{:to (:email (:application/member event))
+        :subject (text-format :t.email.member-invited/subject
+                              (:email (:application/member event))
+                              (invitation-link (:invitation/token event)))
+        :body (text-format :t.email.member-invited/message
+                           (:email (:application/member event))
+                           (invitation-link (:invitation/token event)))}])))
 
 ;; TODO member-joined?
 
@@ -217,9 +222,8 @@
 
 (defn run []
   (common/run-event-poller ::poller (fn [event]
-                                      (with-language (:default-language env)
-                                        #(doseq [mail (event-to-emails event)]
-                                           (send-email! mail))))))
+                                      (doseq [mail (event-to-emails event)]
+                                        (send-email! mail)))))
 
 (mount/defstate email-poller
   :start (scheduler/start! run (Duration/standardSeconds 10))

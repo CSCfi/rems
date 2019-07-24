@@ -3,6 +3,7 @@
             [mount.core :as mount]
             [rems.application.model :as model]
             [rems.config]
+            [rems.db.user-settings :as user-settings]
             [rems.locales]
             [rems.poller.email :refer :all]
             [rems.text :as text]))
@@ -43,9 +44,9 @@
                                                        :get-user get-nothing
                                                        :get-users-with-role get-nothing
                                                        :get-attachments-for-application get-nothing}))]
-    (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")]
-      (text/with-language :en
-        (fn [] (mapv #(sort-emails (#'rems.poller.email/event-to-emails-impl % application)) events))))))
+    (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
+                  user-settings/get-user-settings (constantly {:language :en})]
+      (mapv #(sort-emails (#'rems.poller.email/event-to-emails-impl % application)) events))))
 
 (deftest test-event-to-emails-impl
   (let [base-events [{:application/id 7
