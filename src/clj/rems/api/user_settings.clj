@@ -6,11 +6,8 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(s/defschema UpdateUserSettingsCommand
-  {(s/optional-key :language) s/Keyword})
-
 (s/defschema UserSettings
-  {(s/optional-key :language) s/Keyword})
+  {:language s/Keyword})
 
 (def user-settings-api
   (context "/user-settings" []
@@ -25,6 +22,6 @@
     (PUT "/" []
       :summary "Update user settings"
       :roles #{:logged-in}
-      :body [command UpdateUserSettingsCommand]
+      :body [settings UserSettings]
       :return SuccessResponse
-      (ok (user-settings/update-user-settings! (getx-user-id) command)))))
+      (ok (user-settings/update-user-settings! (getx-user-id) settings)))))

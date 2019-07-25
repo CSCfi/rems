@@ -16,15 +16,18 @@
   (merge (default-settings)
          (parse-settings (:settings (db/get-user-settings {:user user})))))
 
-(defn update-user-settings! [user {:keys [language]}]
+(defn- validate-settings [settings]
+  (let [{:keys [language]} settings]
+    (when (and language
+               (contains? (set (env :languages)) language))
+      settings)))
+
+(defn update-user-settings! [user new-settings]
   (assert user "User missing!")
-  (let [settings (get-user-settings user)
-        update-language? (and language
-                              (contains? (set (env :languages)) language))]
+  (let [old-settings (get-user-settings user)
+        validated (validate-settings new-settings)]
     (db/update-user-settings!
      {:user user
       :settings (json/generate-string
-                 (merge settings
-                        (when update-language?
-                          {:language language})))})
-    {:success update-language?}))
+                 (merge old-settings validated))})
+    {:success (some? validated)}))
