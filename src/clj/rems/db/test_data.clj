@@ -664,7 +664,9 @@
     (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
                                                    {"en" "Dynamic workflow (disabled)"
                                                     "fi" "Dynaaminen työvuo (pois käytöstä)"})]
-      (create-disabled-applications! dynamic-disabled (+fake-users+ :approver1) (+fake-users+ :approver1))
+      (create-disabled-applications! dynamic-disabled
+                                     (+fake-users+ :approver1) ; TODO: this should probably be :applicant1
+                                     (+fake-users+ :approver1))
       (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))
     (let [dynamic-expired (create-catalogue-item! res1 (:dynamic workflows) form
                                                   {"en" "Dynamic workflow (expired)"
@@ -689,5 +691,7 @@
     (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
                                                    {"en" "Dynamic workflow (disabled)"
                                                     "fi" "Dynaaminen työvuo (pois käytöstä)"})]
-      (create-disabled-applications! dynamic-disabled (+demo-users+ :approver1) (+demo-users+ :approver1))
+      (create-disabled-applications! dynamic-disabled
+                                     (+demo-users+ :approver1) ; TODO: this should probably be :applicant1
+                                     (+demo-users+ :approver1))
       (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))))
