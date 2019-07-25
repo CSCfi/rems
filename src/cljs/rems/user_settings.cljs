@@ -16,7 +16,7 @@
 (reg-event-fx
  ::update-user-settings
  (fn [{:keys [db]} [_ user-id settings]]
-   (put! "/api/user-settings/update"
-         {:params (merge settings {:user-id user-id})
+   (put! "/api/user-settings"
+         {:params settings
           :handler (fn [_] (fetch-user-settings!))
           :error-handler status-modal/common-error-handler!})))

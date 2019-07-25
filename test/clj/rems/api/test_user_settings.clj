@@ -14,31 +14,27 @@
    :commonName "David Newuser"})
 
 (def new-settings
-  {:user-id user-id
-   :language :en})
+  {:language :fi})
 
 (use-fixtures
   :once
   api-fixture)
 
 (deftest user-settings-api-test
-  (is (= {} (user-settings/get-user-settings user-id)))
   (-> (request :post "/api/users/create")
       (json-body new-user)
       (authenticate "42" "owner")
       handler
       assert-response-is-ok)
   (testing "update user settings"
-    (-> (request :put "/api/user-settings/update")
+    (-> (request :put "/api/user-settings")
         (json-body new-settings)
         (authenticate "42" user-id)
         handler
-        assert-response-is-ok)
-    (is (= {:language :en}
-           (user-settings/get-user-settings user-id))))
+        assert-response-is-ok))
   (testing "get user settings"
     (let [body (-> (request :get "/api/user-settings")
                    (authenticate "42" user-id)
                    handler
                    read-ok-body)]
-      (is (= body {:language "en"})))))
+      (is (= body {:language "fi"})))))

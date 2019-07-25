@@ -27,7 +27,8 @@
    (let [user-id (get-in db [:identity :user :eppn])]
      (if user-id
        (rf/dispatch [:rems.user-settings/update-user-settings user-id {:language language}])
-       {:db (assoc db :language language)}))))
+       (do (update-language language)
+           {:db (assoc db :language language)})))))
 
 (defn- update-css [language]
   (let [localized-css (str "/css/" (name language) "/screen.css")]
@@ -38,5 +39,5 @@
         (set! (.-href element) localized-css)))))
 
 (defn update-language [language]
-  (set! (.. js/document -documentElement -lang) language)
+  (set! (.. js/document -documentElement -lang) (name language))
   (update-css language))

@@ -9,16 +9,32 @@
 
 (deftest test-user-settings
   (users/add-user! "user1" {:eppn "user1"})
-  (testing "user settings are empty for a new user"
-    (is (= (user-settings/get-user-settings "user1")
-           {})))
+  (users/add-user! "user2" {:eppn "user2"})
 
-  (testing "add a user setting"
-    (user-settings/update-user-settings! "user1" {:language :en})
+  (testing "user settings have the default settings for a new user"
     (is (= (user-settings/get-user-settings "user1")
            {:language :en})))
 
-  (testing "modify user setting"
+  (testing "add a user setting"
     (user-settings/update-user-settings! "user1" {:language :fi})
     (is (= (user-settings/get-user-settings "user1")
-           {:language :fi}))))
+           {:language :fi})))
+
+  (testing "updating with empty settings does not change the setting"
+    (user-settings/update-user-settings! "user1" {})
+    (is (= (user-settings/get-user-settings "user1")
+           {:language :fi})))
+
+  (testing "updating with nil language does not change the setting"
+    (user-settings/update-user-settings! "user1" {:language nil})
+    (is (= (user-settings/get-user-settings "user1")
+           {:language :fi})))
+
+  (testing "updating with undefined language does not change the setting"
+    (user-settings/update-user-settings! "user1" {:language :de})
+    (is (= (user-settings/get-user-settings "user1")
+           {:language :fi})))
+
+  (testing "modifying a setting does not change setting for an unrelated user"
+    (is (= (user-settings/get-user-settings "user2")
+           {:language :en}))))
