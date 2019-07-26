@@ -18,33 +18,42 @@
 
 (defn run! [command]
   (let [result (applications/command! command)]
-    (assert (nil? result) {:command command :result result})
-    result))
+    (assert (nil? result) {:command command :result result})))
 
 (defn create-form! [{:keys [actor]
-                     :form/keys [organization title fields]}]
-  (:id (form/create-form! (or actor "owner")
-                          {:form/organization (or organization "abc")
-                           :form/title (or title "")
-                           :form/fields (or fields [])})))
+                     :form/keys [organization title fields]
+                     :as command}]
+  (let [result (form/create-form! (or actor "owner")
+                                  {:form/organization (or organization "abc")
+                                   :form/title (or title "")
+                                   :form/fields (or fields [])})]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
 
-(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]}]
+(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]
+                               :as command}]
   (assert resource-id)
   (assert form-id)
   (assert workflow-id)
-  (let [id (:id (catalogue/create-catalogue-item! {:title ""
-                                                   :resid resource-id
-                                                   :form form-id
-                                                   :wfid workflow-id}))]
+  (let [result (catalogue/create-catalogue-item! {:title ""
+                                                  :resid resource-id
+                                                  :form form-id
+                                                  :wfid workflow-id})
+        _ (assert (:success result) {:command command :result result})
+        id (:id result)]
     (when (map? title)
       (doseq [[lang text] title]
-        (catalogue/create-catalogue-item-localization! {:id id
-                                                        :langcode (name lang)
-                                                        :title text})))
+        (let [result (catalogue/create-catalogue-item-localization! {:id id
+                                                                     :langcode (name lang)
+                                                                     :title text})]
+          (assert (:success result) {:command [id lang text] :result result}))))
     id))
 
-(defn create-application! [{:keys [catalogue-item-ids actor]}]
-  (:application-id (applications/create-application! actor catalogue-item-ids)))
+(defn create-application! [{:keys [catalogue-item-ids actor]
+                            :as command}]
+  (let [result (applications/create-application! actor catalogue-item-ids)]
+    (assert (:success result) {:command command :result result})
+    (:application-id result)))
 
 (defn- command-defaults [{:keys [application-id actor time]}]
   (assert application-id)
