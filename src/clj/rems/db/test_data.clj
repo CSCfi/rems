@@ -33,6 +33,14 @@
                                      {:field (:field/id field)
                                       :value (or description "x")})))})))
 
+(defn accept-licenses! [{:keys [application-id actor]}]
+  (let [app (applications/get-application actor application-id)]
+    (run! {:type :application.command/accept-licenses
+           :application-id application-id
+           :actor actor
+           :time (time/now)
+           :accepted-licenses (map :license/id (:application/licenses app))})))
+
 ;;; test data
 
 (def +fake-users+
@@ -459,18 +467,12 @@
     id))
 
 (defn- create-draft! [applicant cat-items description]
-  (let [app-id (:application-id (applications/create-application! applicant cat-items))
-        app (applications/get-application applicant app-id)
-        command (fn [cmd]
-                  (merge {:application-id app-id
-                          :actor applicant
-                          :time (time/now)}
-                         cmd))]
+  (let [app-id (:application-id (applications/create-application! applicant cat-items))]
     (fill-form! {:application-id app-id
                  :actor applicant
                  :description description})
-    (run! (command {:type :application.command/accept-licenses
-                    :accepted-licenses (map :license/id (:application/licenses app))}))
+    (accept-licenses! {:application-id app-id
+                       :actor applicant})
     app-id))
 
 (defn- create-disabled-applications! [catid applicant approver]
