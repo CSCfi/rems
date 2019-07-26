@@ -21,6 +21,21 @@
     (assert (nil? result) {:command command :result result})
     result))
 
+(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]}]
+  (assert resource-id)
+  (assert form-id)
+  (assert workflow-id)
+  (let [id (:id (catalogue/create-catalogue-item! {:title ""
+                                                   :resid resource-id
+                                                   :form form-id
+                                                   :wfid workflow-id}))]
+    (when (map? title)
+      (doseq [[lang text] title]
+        (catalogue/create-catalogue-item-localization! {:id id
+                                                        :langcode (name lang)
+                                                        :title text})))
+    id))
+
 (defn create-application! [{:keys [catalogue-item-ids actor]}]
   (:application-id (applications/create-application! actor catalogue-item-ids)))
 
@@ -484,13 +499,6 @@
     (db/set-resource-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil})
     licid))
 
-(defn- create-catalogue-item! [resource workflow form localizations]
-  (let [id (:id (db/create-catalogue-item!
-                 {:title "non-localized title" :resid resource :wfid workflow :form form}))]
-    (doseq [[lang title] localizations]
-      (catalogue/create-catalogue-item-localization! {:id id :langcode lang :title title}))
-    id))
-
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
 
@@ -624,12 +632,11 @@
                                              :organization "perf"
                                              :licenses [license-id]}
                                             owner)
-                                  _ (assert (:success resource))
-                                  cat-item (catalogue/create-catalogue-item! {:title (str "Performance test resource " uuid)
-                                                                              :form form-id
-                                                                              :resid (:id resource)
-                                                                              :wfid workflow-id})]
-                              (:id cat-item))))
+                                  _ (assert (:success resource))]
+                              (create-catalogue-item! {:title (str "Performance test resource " uuid)
+                                                       :resource-id (:id resource)
+                                                       :form-id form-id
+                                                       :workflow-id workflow-id}))))
         user-ids (vec (for [n (range 1 (inc user-count))]
                         (let [user-id (str "perftester" n)]
                           (users/add-user! user-id {:eppn user-id
@@ -672,24 +679,38 @@
     (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
     (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
     (create-expired-license!)
-    (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
-                                          {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
+    (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
+                                                   :fi "Dynaaminen työvuo"}
+                                           :resource-id res1
+                                           :form-id form
+                                           :workflow-id (:dynamic workflows)})]
       (create-applications! dynamic +fake-users+))
-    (create-catalogue-item! res-with-extra-license (:dynamic workflows) form
-                            {"en" "Dynamic workflow with extra license" "fi" "Dynaaminen työvuo ylimääräisellä lisenssillä"})
+    (create-catalogue-item! {:title {:en "Dynamic workflow with extra license"
+                                     :fi "Dynaaminen työvuo ylimääräisellä lisenssillä"}
+                             :resource-id res-with-extra-license
+                             :form-id form
+                             :workflow-id (:dynamic workflows)})
     (let [thlform (create-thl-demo-form! +fake-users+)
-          thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
+          thl-catid (create-catalogue-item! {:title {:en "THL catalogue item"
+                                                     :fi "THL katalogi-itemi"}
+                                             :resource-id res1
+                                             :form-id thlform
+                                             :workflow-id (:dynamic workflows)})]
       (create-member-applications! thl-catid (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
-    (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
-                                                   {"en" "Dynamic workflow (disabled)"
-                                                    "fi" "Dynaaminen työvuo (pois käytöstä)"})]
+    (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
+                                                            :fi "Dynaaminen työvuo (pois käytöstä)"}
+                                                    :resource-id res1
+                                                    :form-id form
+                                                    :workflow-id (:dynamic workflows)})]
       (create-disabled-applications! dynamic-disabled
                                      (+fake-users+ :approver1) ; TODO: this should probably be :applicant1
                                      (+fake-users+ :approver1))
       (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))
-    (let [dynamic-expired (create-catalogue-item! res1 (:dynamic workflows) form
-                                                  {"en" "Dynamic workflow (expired)"
-                                                   "fi" "Dynaaminen työvuo (vanhentunut)"})]
+    (let [dynamic-expired (create-catalogue-item! {:title {:en "Dynamic workflow (expired)"
+                                                           :fi "Dynaaminen työvuo (vanhentunut)"}
+                                                   :resource-id res1
+                                                   :form-id form
+                                                   :workflow-id (:dynamic workflows)})]
       (db/set-catalogue-item-state! {:id dynamic-expired :end (time/now)}))))
 
 (defn create-demo-data! []
@@ -701,15 +722,24 @@
         workflows (create-workflows! +demo-users+)]
     (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
     (create-expired-license!)
-    (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
-                                          {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
+    (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
+                                                   :fi "Dynaaminen työvuo"}
+                                           :resource-id res1
+                                           :form-id form
+                                           :workflow-id (:dynamic workflows)})]
       (create-applications! dynamic +demo-users+))
     (let [thlform (create-thl-demo-form! +demo-users+)
-          thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
+          thl-catid (create-catalogue-item! {:title {:en "THL catalogue item"
+                                                     :fi "THL katalogi-itemi"}
+                                             :resource-id res1
+                                             :form-id thlform
+                                             :workflow-id (:dynamic workflows)})]
       (create-member-applications! thl-catid (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))
-    (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
-                                                   {"en" "Dynamic workflow (disabled)"
-                                                    "fi" "Dynaaminen työvuo (pois käytöstä)"})]
+    (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
+                                                            :fi "Dynaaminen työvuo (pois käytöstä)"}
+                                                    :resource-id res1
+                                                    :form-id form
+                                                    :workflow-id (:dynamic workflows)})]
       (create-disabled-applications! dynamic-disabled
                                      (+demo-users+ :approver1) ; TODO: this should probably be :applicant1
                                      (+demo-users+ :approver1))
