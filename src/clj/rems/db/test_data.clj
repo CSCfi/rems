@@ -44,7 +44,7 @@
            :time (time/now)
            :accepted-licenses (map :license/id (:application/licenses app))})))
 
-(defn- create-draft! [actor catalogue-item-ids description]
+(defn create-draft! [actor catalogue-item-ids description]
   (let [app-id (create-application! {:catalogue-item-ids catalogue-item-ids
                                      :actor actor})]
     (fill-form! {:application-id app-id
@@ -53,6 +53,12 @@
     (accept-licenses! {:application-id app-id
                        :actor actor})
     app-id))
+
+(defn submit! [{:keys [application-id actor]}]
+  (run! {:application-id application-id
+         :actor actor
+         :time (time/now)
+         :type :application.command/submit}))
 
 ;;; test data
 
@@ -483,16 +489,12 @@
   (create-draft! applicant [catid] "draft with disabled item")
 
   (let [appid1 (create-draft! applicant [catid] "approved application with disabled item")]
-    (run! {:application-id appid1
-           :actor applicant
-           :time (time/now)
-           :type :application.command/submit}))
+    (submit! {:application-id appid1
+              :actor applicant}))
 
   (let [appid2 (create-draft! applicant [catid] "submitted application with disabled item")]
-    (run! {:application-id appid2
-           :actor applicant
-           :time (time/now)
-           :type :application.command/submit})
+    (submit! {:application-id appid2
+              :actor applicant})
     (run! {:application-id appid2
            :actor approver
            :time (time/now)
@@ -512,10 +514,8 @@
            :time (time/now)
            :type :application.command/invite-member
            :member {:name "John Smith" :email "john.smith@example.org"}})
-    (run! {:application-id appid2
-           :actor applicant
-           :time (time/now)
-           :type :application.command/submit})
+    (submit! {:application-id appid2
+              :actor applicant})
     (doseq [member members]
       (run! {:application-id appid2
              :actor approver
@@ -531,24 +531,29 @@
     (create-draft! applicant [catid] "draft application")
 
     (let [app-id (create-draft! applicant [catid] "applied")]
-      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}))
+      (submit! {:application-id app-id
+                :actor applicant}))
 
     (let [app-id (create-draft! applicant [catid] "approved with comment")]
-      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (submit! {:application-id app-id
+                :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"}))
 
     (let [app-id (create-draft! applicant [catid] "rejected")]
-      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (submit! {:application-id app-id
+                :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/reject :comment "Never going to happen"}))
 
     (let [app-id (create-draft! applicant [catid] "returned")]
-      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (submit! {:application-id app-id
+                :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/return :comment "Need more details"}))
 
     (let [app-id (create-draft! applicant [catid] "approved & closed")]
-      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (submit! {:application-id app-id
+                :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"})
@@ -556,11 +561,13 @@
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for comment")]
-      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (submit! {:application-id app-id
+                :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment ""}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for decision")]
-      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (submit! {:application-id app-id
+                :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-decision :deciders [reviewer] :comment ""}))))
 
 (defn create-performance-test-data! []
@@ -639,10 +646,8 @@
                                :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
                                            ;; prevent string interning, just to be sure
                                            (UUID/randomUUID))}]})
-        (run! {:type :application.command/submit
-               :actor user-id
-               :time (time/now)
-               :application-id app-id})
+        (submit! {:application-id app-id
+                  :actor user-id})
         (run! {:type :application.command/approve
                :actor handler
                :time (time/now)
