@@ -670,6 +670,12 @@ VALUES (:user, :userattrs::jsonb)
 ON CONFLICT (userId)
 DO UPDATE SET userAttrs = :userattrs::jsonb;
 
+-- :name update-user-settings! :!
+INSERT INTO user_settings (userId, settings)
+VALUES (:user, :settings::jsonb)
+ON CONFLICT (userId)
+DO UPDATE SET settings = :settings::jsonb;
+
 -- :name get-users :? :*
 SELECT userId
 FROM users;
@@ -683,6 +689,11 @@ WHERE role = :role;
 SELECT userAttrs::TEXT
 FROM users
 WHERE userId = :user;
+
+-- :name get-user-settings :? :1
+SELECT settings::TEXT
+from user_settings
+where userId = :user;
 
 -- :name get-application-events :? :*
 SELECT id, appId, userId, round, event, comment, eventData::TEXT, time

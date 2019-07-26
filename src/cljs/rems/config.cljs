@@ -7,7 +7,6 @@
  (fn [db [_ config]]
    (assoc db :config config
              :default-language (get config :default-language)
-             :language (get config :default-language)
              :languages (get config :languages))))
 
 (rf/reg-sub
