@@ -14,6 +14,15 @@
             [ring.util.http-response :refer [bad-request!]])
   (:import [java.util UUID]))
 
+;;; helpers for generating test data
+
+(defn- run! [cmd]
+  (let [result (applications/command! cmd)]
+    (assert (nil? result) {:actual result})
+    result))
+
+;;; test data
+
 (def +fake-users+
   {:applicant1 "alice"
    :applicant2 "malice"
@@ -437,11 +446,6 @@
       (catalogue/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
-(defn- run-and-check-dynamic-command! [cmd]
-  (let [result (applications/command! cmd)]
-    (assert (nil? result) {:actual result})
-    result))
-
 (defn- create-draft! [applicant cat-items description]
   (let [app-id (:application-id (applications/create-application! applicant cat-items))
         app (applications/get-application applicant app-id)
@@ -450,59 +454,59 @@
                           :actor applicant
                           :time (time/now)}
                          cmd))]
-    (run-and-check-dynamic-command! (command {:type :application.command/save-draft
-                                              :field-values (->> (:form/fields (:application/form app))
-                                                                 (filter #(not (:field/optional %)))
-                                                                 (map (fn [field]
-                                                                        {:field (:field/id field)
-                                                                         :value description})))}))
-    (run-and-check-dynamic-command! (command {:type :application.command/accept-licenses
-                                              :accepted-licenses (map :license/id (:application/licenses app))}))
+    (run! (command {:type :application.command/save-draft
+                    :field-values (->> (:form/fields (:application/form app))
+                                       (filter #(not (:field/optional %)))
+                                       (map (fn [field]
+                                              {:field (:field/id field)
+                                               :value description})))}))
+    (run! (command {:type :application.command/accept-licenses
+                    :accepted-licenses (map :license/id (:application/licenses app))}))
     app-id))
 
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
 
   (let [appid1 (create-draft! applicant [catid] "approved application with disabled item")]
-    (run-and-check-dynamic-command! {:application-id appid1
-                                     :actor applicant
-                                     :time (time/now)
-                                     :type :application.command/submit}))
+    (run! {:application-id appid1
+           :actor applicant
+           :time (time/now)
+           :type :application.command/submit}))
 
   (let [appid2 (create-draft! applicant [catid] "submitted application with disabled item")]
-    (run-and-check-dynamic-command! {:application-id appid2
-                                     :actor applicant
-                                     :time (time/now)
-                                     :type :application.command/submit})
-    (run-and-check-dynamic-command! {:application-id appid2
-                                     :actor approver
-                                     :time (time/now)
-                                     :type :application.command/approve
-                                     :comment "Looking good"})))
+    (run! {:application-id appid2
+           :actor applicant
+           :time (time/now)
+           :type :application.command/submit})
+    (run! {:application-id appid2
+           :actor approver
+           :time (time/now)
+           :type :application.command/approve
+           :comment "Looking good"})))
 
 (defn- create-member-applications! [catid applicant approver members]
   (let [appid1 (create-draft! applicant [catid] "draft with invited members")]
-    (run-and-check-dynamic-command! {:application-id appid1
-                                     :actor applicant
-                                     :time (time/now)
-                                     :type :application.command/invite-member
-                                     :member {:name "John Smith" :email "john.smith@example.org"}}))
+    (run! {:application-id appid1
+           :actor applicant
+           :time (time/now)
+           :type :application.command/invite-member
+           :member {:name "John Smith" :email "john.smith@example.org"}}))
   (let [appid2 (create-draft! applicant [catid] "submitted with members")]
-    (run-and-check-dynamic-command! {:application-id appid2
-                                     :actor applicant
-                                     :time (time/now)
-                                     :type :application.command/invite-member
-                                     :member {:name "John Smith" :email "john.smith@example.org"}})
-    (run-and-check-dynamic-command! {:application-id appid2
-                                     :actor applicant
-                                     :time (time/now)
-                                     :type :application.command/submit})
+    (run! {:application-id appid2
+           :actor applicant
+           :time (time/now)
+           :type :application.command/invite-member
+           :member {:name "John Smith" :email "john.smith@example.org"}})
+    (run! {:application-id appid2
+           :actor applicant
+           :time (time/now)
+           :type :application.command/submit})
     (doseq [member members]
-      (run-and-check-dynamic-command! {:application-id appid2
-                                       :actor approver
-                                       :time (time/now)
-                                       :type :application.command/add-member
-                                       :member member}))))
+      (run! {:application-id appid2
+             :actor approver
+             :time (time/now)
+             :type :application.command/add-member
+             :member member}))))
 
 (defn- create-applications! [catid users]
   (let [applicant (users :applicant1)
@@ -512,37 +516,37 @@
     (create-draft! applicant [catid] "draft application")
 
     (let [app-id (create-draft! applicant [catid] "applied")]
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}))
+      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit}))
 
     (let [app-id (create-draft! applicant [catid] "approved with comment")]
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
-      (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"}))
+      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
+      (run! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"}))
 
     (let [app-id (create-draft! applicant [catid] "rejected")]
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/reject :comment "Never going to happen"}))
+      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/reject :comment "Never going to happen"}))
 
     (let [app-id (create-draft! applicant [catid] "returned")]
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/return :comment "Need more details"}))
+      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/return :comment "Need more details"}))
 
     (let [app-id (create-draft! applicant [catid] "approved & closed")]
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
-      (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"})
+      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
+      (run! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"})
       (entitlements-poller/run)
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for comment")]
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment ""}))
+      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment ""}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for decision")]
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-decision :deciders [reviewer] :comment ""}))))
+      (run! {:application-id app-id :actor applicant :time (time/now) :type :application.command/submit})
+      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-decision :deciders [reviewer] :comment ""}))))
 
 (defn- assert-no-error [error]
   (assert (nil? error) {:error error}))
