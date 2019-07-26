@@ -61,6 +61,11 @@
   (run! (merge (command-defaults command)
                {:type :application.command/submit})))
 
+(defn approve! [{:keys [comment] :as command}]
+  (run! (merge (command-defaults command)
+               {:type :application.command/approve
+                :comment (or comment "")})))
+
 ;;; test data
 
 (def +fake-users+
@@ -496,11 +501,9 @@
   (let [appid2 (create-draft! applicant [catid] "submitted application with disabled item")]
     (submit! {:application-id appid2
               :actor applicant})
-    (run! {:application-id appid2
-           :actor approver
-           :time (time/now)
-           :type :application.command/approve
-           :comment "Looking good"})))
+    (approve! {:application-id appid2
+               :actor approver
+               :comment "Looking good"})))
 
 (defn- create-member-applications! [catid applicant approver members]
   (let [appid1 (create-draft! applicant [catid] "draft with invited members")]
@@ -540,7 +543,9 @@
                 :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
-      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"}))
+      (approve! {:application-id app-id
+                 :actor approver
+                 :comment "Thank you! Approved!"}))
 
     (let [app-id (create-draft! applicant [catid] "rejected")]
       (submit! {:application-id app-id
@@ -557,7 +562,9 @@
                 :actor applicant})
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
       (run! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
-      (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/approve :comment "Thank you! Approved!"})
+      (approve! {:application-id app-id
+                 :actor approver
+                 :comment "Thank you! Approved!"})
       (entitlements-poller/run)
       (run! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
 
@@ -649,11 +656,8 @@
                                            (UUID/randomUUID))}]})
         (submit! {:application-id app-id
                   :actor user-id})
-        (run! {:type :application.command/approve
-               :actor handler
-               :time (time/now)
-               :application-id app-id
-               :comment "Looks fine."})))))
+        (approve! {:application-id app-id
+                   :actor handler})))))
 
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
