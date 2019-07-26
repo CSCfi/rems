@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.form :as form]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [rems.json]
             [ring.mock.request :refer :all])
@@ -82,16 +83,9 @@
       handler
       read-body))
 
-(defn- create-application [catalogue-item-ids user-id]
-  (-> (request :post "/api/applications/create")
-      (authenticate "42" user-id)
-      (json-body {:catalogue-item-ids catalogue-item-ids})
-      handler
-      read-ok-body
-      :application-id))
-
 (defn- create-dummy-application [user-id]
-  (create-application [(create-dymmy-catalogue-item)] user-id))
+  (test-data/create-application! {:catalogue-item-ids [(create-dymmy-catalogue-item)]
+                                  :actor user-id}))
 
 (defn- get-ids [applications]
   (set (map :application/id applications)))
@@ -216,7 +210,8 @@
         cat-item-id1 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
         cat-item-id2 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
         cat-item-id3 (create-catalogue-item form-id workflow-id (create-resource license-id3))
-        application-id (create-application [cat-item-id1] user-id)]
+        application-id (test-data/create-application! {:catalogue-item-ids [cat-item-id1]
+                                                       :actor user-id})]
 
     (testing "accept licenses"
       (is (= {:success true} (send-command user-id
@@ -438,7 +433,12 @@
 (deftest test-application-create
   (let [api-key "42"
         user-id "alice"
-        application-id (create-dummy-application user-id)]
+        application-id (-> (request :post "/api/applications/create")
+                           (authenticate "42" user-id)
+                           (json-body {:catalogue-item-ids [(create-dymmy-catalogue-item)]})
+                           handler
+                           read-ok-body
+                           :application-id)]
 
     (testing "creating"
       (is (some? application-id))
@@ -490,7 +490,9 @@
                              :form/fields
                              (map :field/id))
         cat-id (create-catalogue-item form-id workflow-id 1)
-        app-id (create-application [cat-id] user-id)]
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor user-id})]
+
     (testing "set value of optional field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/save-draft
@@ -534,7 +536,8 @@
                                            :field/type :attachment
                                            :field/optional true}])
         cat-id (create-catalogue-item form-id workflow-id 1)
-        app-id (create-application [cat-id] user-id)
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor user-id})
         upload-request (fn [file]
                          (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
                              (assoc :params {"file" file})
@@ -603,7 +606,8 @@
   (let [api-key "42"
         applicant "alice"
         cat-id (create-dymmy-catalogue-item)
-        app-id (create-application [cat-id] applicant)]
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor applicant})]
 
     (testing "fetch application without authentication"
       (let [req (request :get (str "/api/applications/" app-id))]
