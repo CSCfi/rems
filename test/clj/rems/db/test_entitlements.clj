@@ -83,7 +83,6 @@
   (let [uid "bob"
         memberid "elsa"
         admin "owner"
-        organization "foo"
         workflow {:type :workflow/dynamic :handlers [admin]}
         wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
         form-id (test-data/create-form! {})
@@ -97,9 +96,12 @@
                                                 :textcontent "license2 text"
                                                 :localizations {}}
                                                "owner"))
-        res1 (:id (resource/create-resource! {:resid "resource1" :organization organization :licenses [lic-id1]} "owner"))
-        res2 (:id (resource/create-resource! {:resid "resource2" :organization organization :licenses [lic-id2]} "owner"))
-        res3 (:id (resource/create-resource! {:resid "resource3" :organization organization :licenses [lic-id1]} "owner"))
+        res1 (test-data/create-resource! {:resource-ext-id "resource1"
+                                          :license-ids [lic-id1]})
+        res2 (test-data/create-resource! {:resource-ext-id "resource2"
+                                          :license-ids [lic-id2]})
+        res3 (test-data/create-resource! {:resource-ext-id "resource3"
+                                          :license-ids [lic-id1]})
         item1 (:id (db/create-catalogue-item! {:title "item1" :form form-id :resid res1 :wfid wfid}))
         item2 (:id (db/create-catalogue-item! {:title "item2" :form form-id :resid res2 :wfid wfid}))
         item3 (:id (db/create-catalogue-item! {:title "item3" :form form-id :resid res3 :wfid wfid}))]

@@ -33,10 +33,7 @@
                                                      :type :dynamic
                                                      :handlers []}))
         form-id (test-data/create-form! {})
-        res-id (:id (resource/create-resource! {:resid (str "urn:uuid:" (UUID/randomUUID))
-                                                :organization ""
-                                                :licenses []}
-                                               user-id))
+        res-id (test-data/create-resource! {})
         cat-id (:id (catalogue/create-catalogue-item! {:title ""
                                                        :form form-id
                                                        :resid res-id

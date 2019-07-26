@@ -54,11 +54,7 @@
                                                :user-id "owner"}))
         _ (assert wf-id)
         form-id (test-data/create-form! {})
-        res-id (:id (resource/create-resource! {:resid "res1"
-                                                :organization "abc"
-                                                :licenses []}
-                                               "owner"))
-        _ (assert res-id)
+        res-id (test-data/create-resource! {:resource-ext-id "res1"})
         cat-id (:id (catalogue/create-catalogue-item! {:title ""
                                                        :resid res-id
                                                        :form form-id
@@ -83,11 +79,7 @@
                                          :actor "alice"}))))
 
     (testing "multiple resources"
-      (let [res-id2 (:id (resource/create-resource! {:resid "res2"
-                                                     :organization "abc"
-                                                     :licenses []}
-                                                    "owner"))
-            _ (assert res-id2)
+      (let [res-id2 (test-data/create-resource! {:resource-ext-id "res2"})
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
                                                             :form form-id
@@ -127,11 +119,7 @@
 
     (testing "error: catalogue items with different forms"
       (let [form-id2 (test-data/create-form! {})
-            res-id2 (:id (resource/create-resource! {:resid "res2+"
-                                                     :organization "abc"
-                                                     :licenses []}
-                                                    "owner"))
-            _ (assert res-id2)
+            res-id2 (test-data/create-resource! {:resource-ext-id "res2+"})
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
                                                             :form form-id2
@@ -150,11 +138,7 @@
                                                     :handlers []
                                                     :user-id "owner"}))
             _ (assert wf-id2)
-            res-id2 (:id (resource/create-resource! {:resid "res2++"
-                                                     :organization "abc"
-                                                     :licenses []}
-                                                    "owner"))
-            _ (assert res-id2)
+            res-id2 (test-data/create-resource! {:resource-ext-id "res2++"})
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
                                                             :form form-id
@@ -173,11 +157,8 @@
                                                    :localizations {}}
                                                   "owner"))
             _ (assert lic-id)
-            res-id2 (:id (resource/create-resource! {:resid "res2+++"
-                                                     :organization "abc"
-                                                     :licenses [lic-id]}
-                                                    "owner"))
-            _ (assert res-id2)
+            res-id2 (test-data/create-resource! {:resource-ext-id "res2+++"
+                                                 :license-ids [lic-id]})
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
                                                             :form form-id

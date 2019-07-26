@@ -3,21 +3,13 @@
             [rems.api.testing :refer :all]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.db.resource :as resource]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
   api-fixture)
-
-(def test-user {:eppn "test-user"})
-
-(defn dummy-resource [resid]
-  (:id (resource/create-resource! {:resid resid
-                                   :organization "abc"
-                                   :licenses []}
-                                  (:eppn test-user))))
 
 (defn dummy-catalogue-item [resid]
   (:id (catalogue/create-catalogue-item! {:title ""
@@ -30,7 +22,7 @@
 
 (deftest redirect-to-new-application-test
   (testing "redirects to new application page for catalogue item matching the resource ID"
-    (let [resid (dummy-resource "urn:one-matching-resource")
+    (let [resid (test-data/create-resource! {:resource-ext-id "urn:one-matching-resource"})
           catid (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:one-matching-resource")
                        handler)]
@@ -44,7 +36,7 @@
       (is (= "Resource not found" (read-body response)))))
 
   (testing "fails if more than one catalogue item is found"
-    (let [resid (dummy-resource "urn:two-matching-resources")
+    (let [resid (test-data/create-resource! {:resource-ext-id "urn:two-matching-resources"})
           _ (dummy-catalogue-item resid)
           _ (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:two-matching-resources")
@@ -53,7 +45,7 @@
       (is (= "Resource ID is not unique" (read-body response)))))
 
   (testing "redirects to active catalogue item, ignoring disabled items for the same resource ID"
-    (let [resid (dummy-resource "urn:enabed-and-disabled-items")
+    (let [resid (test-data/create-resource! {:resource-ext-id "urn:enabed-and-disabled-items"})
           old-catid (dummy-catalogue-item resid)
           _ (disable-catalogue-item old-catid)
           new-catid (dummy-catalogue-item resid)

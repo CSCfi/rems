@@ -30,6 +30,15 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
+(defn create-resource! [{:keys [actor organization resource-ext-id license-ids]
+                         :as command}]
+  (let [result (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
+                                           :organization (or organization "abc")
+                                           :licenses (or license-ids [])}
+                                          (or actor "owner"))]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
+
 (defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]
                                :as command}]
   (assert resource-id)
@@ -640,16 +649,11 @@
                                           :fi {:title "Suorituskykylisenssi"
                                                :textcontent "Ole nopea."}}}
                          owner))
-        cat-item-ids (vec (for [_ (range resource-count)]
-                            (let [uuid (UUID/randomUUID)
-                                  resource (resource/create-resource!
-                                            {:resid (str "urn:uuid:" uuid)
-                                             :organization "perf"
-                                             :licenses [license-id]}
-                                            owner)
-                                  _ (assert (:success resource))]
-                              (create-catalogue-item! {:title (str "Performance test resource " uuid)
-                                                       :resource-id (:id resource)
+        cat-item-ids (vec (for [index (range resource-count)]
+                            (let [resource-id (create-resource! {:organization "perf"
+                                                                 :license-ids [license-id]})]
+                              (create-catalogue-item! {:title (str "Performance test resource " (inc index))
+                                                       :resource-id resource-id
                                                        :form-id form-id
                                                        :workflow-id workflow-id}))))
         user-ids (vec (for [n (range 1 (inc user-count))]

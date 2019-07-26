@@ -36,16 +36,6 @@
       read-ok-body
       :id))
 
-(defn- create-resource [& license-ids]
-  (-> (request :post "/api/resources/create")
-      (authenticate "42" "owner")
-      (json-body {:resid (str (UUID/randomUUID))
-                  :organization "abc"
-                  :licenses license-ids})
-      handler
-      read-ok-body
-      :id))
-
 (defn- create-catalogue-item [form-id workflow-id resource-id]
   (-> (request :post "/api/catalogue-items/create")
       (authenticate "42" "owner")
@@ -60,7 +50,7 @@
 (defn- create-dymmy-catalogue-item []
   (let [form-id (test-data/create-form! {})
         workflow-id (create-dynamic-workflow)
-        resource-id (create-resource)]
+        resource-id (test-data/create-resource! {})]
     (create-catalogue-item form-id workflow-id resource-id)))
 
 (defn- send-command [actor cmd]
@@ -194,9 +184,12 @@
         license-id4 (create-license)
         form-id (test-data/create-form! {})
         workflow-id (create-dynamic-workflow)
-        cat-item-id1 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
-        cat-item-id2 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
-        cat-item-id3 (create-catalogue-item form-id workflow-id (create-resource license-id3))
+        cat-item-id1 (create-catalogue-item form-id workflow-id (test-data/create-resource!
+                                                                 {:license-ids [license-id1 license-id2]}))
+        cat-item-id2 (create-catalogue-item form-id workflow-id (test-data/create-resource!
+                                                                 {:license-ids [license-id1 license-id2]}))
+        cat-item-id3 (create-catalogue-item form-id workflow-id (test-data/create-resource!
+                                                                 {:license-ids [license-id3]}))
         application-id (test-data/create-application! {:catalogue-item-ids [cat-item-id1]
                                                        :actor user-id})]
 
