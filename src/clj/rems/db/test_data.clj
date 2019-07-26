@@ -21,7 +21,10 @@
     (assert (nil? result) {:command command :result result})
     result))
 
-(defn fill-form! [{:keys [application-id actor description]}]
+(defn create-application! [{:keys [catalogue-item-ids actor]}]
+  (:application-id (applications/create-application! actor catalogue-item-ids)))
+
+(defn fill-form! [{:keys [application-id actor field-value]}]
   (let [app (applications/get-application actor application-id)]
     (run! {:type :application.command/save-draft
            :application-id application-id
@@ -31,7 +34,7 @@
                               (filter #(not (:field/optional %)))
                               (map (fn [field]
                                      {:field (:field/id field)
-                                      :value (or description "x")})))})))
+                                      :value (or field-value "x")})))})))
 
 (defn accept-licenses! [{:keys [application-id actor]}]
   (let [app (applications/get-application actor application-id)]
@@ -40,6 +43,16 @@
            :actor actor
            :time (time/now)
            :accepted-licenses (map :license/id (:application/licenses app))})))
+
+(defn- create-draft! [actor catalogue-item-ids description]
+  (let [app-id (create-application! {:catalogue-item-ids catalogue-item-ids
+                                     :actor actor})]
+    (fill-form! {:application-id app-id
+                 :actor actor
+                 :field-value description})
+    (accept-licenses! {:application-id app-id
+                       :actor actor})
+    app-id))
 
 ;;; test data
 
@@ -466,15 +479,6 @@
       (catalogue/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
-(defn- create-draft! [applicant cat-items description]
-  (let [app-id (:application-id (applications/create-application! applicant cat-items))]
-    (fill-form! {:application-id app-id
-                 :actor applicant
-                 :description description})
-    (accept-licenses! {:application-id app-id
-                       :actor applicant})
-    app-id))
-
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
 
@@ -621,7 +625,8 @@
       (let [cat-item-id (rand-nth cat-item-ids)
             user-id (rand-nth user-ids)
             handler (rand-nth handlers)
-            app-id (:application-id (applications/create-application! user-id [cat-item-id]))]
+            app-id (create-application! {:catalogue-item-ids [cat-item-id]
+                                         :actor user-id})]
         (run! {:type :application.command/save-draft
                :actor user-id
                :time (time/now)
