@@ -91,7 +91,7 @@
 
 (defn create-application! [user-id catalogue-item-ids]
   (let [start (time/now)
-        app-id (:id (db/create-application! {}))]
+        app-id (:id (db/create-application!))]
     (add-application-created-event! {:application-id app-id
                                      :catalogue-item-ids catalogue-item-ids
                                      :time start

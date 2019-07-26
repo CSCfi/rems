@@ -11,7 +11,7 @@
 (use-fixtures :each rollback-db-fixture)
 
 (defn- create-dummy-application []
-  (:id (db/create-application! {})))
+  (:id (db/create-application!)))
 
 (defn- add-dummy-event! []
   (let [app-id (create-dummy-application)
