@@ -24,25 +24,28 @@
 (defn create-application! [{:keys [catalogue-item-ids actor]}]
   (:application-id (applications/create-application! actor catalogue-item-ids)))
 
-(defn fill-form! [{:keys [application-id actor field-value]}]
-  (let [app (applications/get-application actor application-id)]
-    (run! {:type :application.command/save-draft
-           :application-id application-id
-           :actor actor
-           :time (time/now)
-           :field-values (->> (:form/fields (:application/form app))
-                              (filter #(not (:field/optional %)))
-                              (map (fn [field]
-                                     {:field (:field/id field)
-                                      :value (or field-value "x")})))})))
+(defn- command-defaults [{:keys [application-id actor time]}]
+  (assert application-id)
+  (assert actor)
+  {:application-id application-id
+   :actor actor
+   :time (or time (time/now))})
 
-(defn accept-licenses! [{:keys [application-id actor]}]
+(defn fill-form! [{:keys [application-id actor field-value] :as command}]
   (let [app (applications/get-application actor application-id)]
-    (run! {:type :application.command/accept-licenses
-           :application-id application-id
-           :actor actor
-           :time (time/now)
-           :accepted-licenses (map :license/id (:application/licenses app))})))
+    (run! (merge (command-defaults command)
+                 {:type :application.command/save-draft
+                  :field-values (->> (:form/fields (:application/form app))
+                                     (filter #(not (:field/optional %)))
+                                     (map (fn [field]
+                                            {:field (:field/id field)
+                                             :value (or field-value "x")})))}))))
+
+(defn accept-licenses! [{:keys [application-id actor] :as command}]
+  (let [app (applications/get-application actor application-id)]
+    (run! (merge (command-defaults command)
+                 {:type :application.command/accept-licenses
+                  :accepted-licenses (map :license/id (:application/licenses app))}))))
 
 (defn create-draft! [actor catalogue-item-ids description]
   (let [app-id (create-application! {:catalogue-item-ids catalogue-item-ids
@@ -54,11 +57,9 @@
                        :actor actor})
     app-id))
 
-(defn submit! [{:keys [application-id actor]}]
-  (run! {:application-id application-id
-         :actor actor
-         :time (time/now)
-         :type :application.command/submit}))
+(defn submit! [command]
+  (run! (merge (command-defaults command)
+               {:type :application.command/submit})))
 
 ;;; test data
 
