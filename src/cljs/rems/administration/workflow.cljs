@@ -84,28 +84,6 @@
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                  [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
 
-(defn round-view [actors]
-  [:div.form-item
-   [:h3 (text-format :t.create-workflow/round-n (inc (:round (first actors))))]
-   (let [{approvers "approver" reviewers "reviewer"} (group-by :role actors)]
-     [:div
-      (when (seq approvers)
-        [inline-info-field (text :t.create-workflow/approvers) (str/join ", " (map :actoruserid approvers))])
-      (when (seq reviewers)
-        [inline-info-field (text :t.create-workflow/reviewers) (str/join ", " (map :actoruserid reviewers))])])])
-
-(defn rounds-view [actors language]
-  (let [rounds (vals (group-by :round actors))]
-    (when (seq rounds)
-      [collapsible/component
-       {:id "rounds"
-        :title (text :t.administration/rounds)
-        :top-less-button? (> (count rounds) 5)
-        :open? (<= (count rounds 5))
-        :collapse (into [:div]
-                        (for [round rounds]
-                          [round-view round]))}])))
-
 (defn licenses-view [licenses language]
   [collapsible/component
    {:id "licenses"
@@ -128,18 +106,17 @@
               [inline-info-field (text :t.administration/organization) (:organization workflow)]
               [inline-info-field (text :t.administration/title) (:title workflow)]
               [inline-info-field (text :t.administration/type)
-               (cond (:workflow workflow) (text :t.create-workflow/dynamic-workflow)
-                     (seq (:actors workflow)) (text :t.create-workflow/rounds-workflow)
-                     :else (text :t.create-workflow/auto-approve-workflow))]
-              (when (:workflow workflow)
-                [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
-                                                                           (map enrich-user)
-                                                                           (map :display)
-                                                                           (str/join ", "))])
+               (if (:workflow workflow)
+                 (text :t.create-workflow/dynamic-workflow)
+                 ;; TODO: Not implemented.
+                 (text :t.create-workflow/auto-approve-workflow))]
+              [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
+                                                                         (map enrich-user)
+                                                                         (map :display)
+                                                                         (str/join ", "))]
               [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired workflow))]]]}]
-   [rounds-view (:actors workflow) language]
    [licenses-view (:licenses workflow) language]
    [:div.col.commands [back-button] [edit-button (:id workflow)]]])
 
