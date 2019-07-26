@@ -21,6 +21,18 @@
     (assert (nil? result) {:command command :result result})
     result))
 
+(defn fill-form! [{:keys [application-id actor description]}]
+  (let [app (applications/get-application actor application-id)]
+    (run! {:type :application.command/save-draft
+           :application-id application-id
+           :actor actor
+           :time (time/now)
+           :field-values (->> (:form/fields (:application/form app))
+                              (filter #(not (:field/optional %)))
+                              (map (fn [field]
+                                     {:field (:field/id field)
+                                      :value (or description "x")})))})))
+
 ;;; test data
 
 (def +fake-users+
@@ -454,12 +466,9 @@
                           :actor applicant
                           :time (time/now)}
                          cmd))]
-    (run! (command {:type :application.command/save-draft
-                    :field-values (->> (:form/fields (:application/form app))
-                                       (filter #(not (:field/optional %)))
-                                       (map (fn [field]
-                                              {:field (:field/id field)
-                                               :value description})))}))
+    (fill-form! {:application-id app-id
+                 :actor applicant
+                 :description description})
     (run! (command {:type :application.command/accept-licenses
                     :accepted-licenses (map :license/id (:application/licenses app))}))
     app-id))
