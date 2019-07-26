@@ -5,9 +5,9 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
-            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
+            [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.poller.entitlements :as entitlements-poller]
             [rems.testing-util :refer [suppress-logging]]
@@ -86,7 +86,7 @@
         organization "foo"
         workflow {:type :workflow/dynamic :handlers [admin]}
         wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
-        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
+        form-id (test-data/create-form! {})
         lic-id1 (:id (licenses/create-license! {:licensetype "text"
                                                 :title "license1"
                                                 :textcontent "license1 text"

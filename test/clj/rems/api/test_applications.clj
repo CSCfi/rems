@@ -25,19 +25,6 @@
       read-ok-body
       :id))
 
-(defn- create-form-with-fields [form-fields]
-  (-> (request :post "/api/forms/create")
-      (authenticate "42" "owner")
-      (json-body {:form/organization "abc"
-                  :form/title ""
-                  :form/fields form-fields})
-      handler
-      read-ok-body
-      :id))
-
-(defn- create-empty-form []
-  (create-form-with-fields []))
-
 (defn- create-license []
   (-> (request :post "/api/licenses/create")
       (authenticate "42" "owner")
@@ -71,7 +58,7 @@
       :id))
 
 (defn- create-dymmy-catalogue-item []
-  (let [form-id (create-empty-form)
+  (let [form-id (test-data/create-form! {})
         workflow-id (create-dynamic-workflow)
         resource-id (create-resource)]
     (create-catalogue-item form-id workflow-id resource-id)))
@@ -205,7 +192,7 @@
         license-id2 (create-license)
         license-id3 (create-license)
         license-id4 (create-license)
-        form-id (create-empty-form)
+        form-id (test-data/create-form! {})
         workflow-id (create-dynamic-workflow)
         cat-item-id1 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
         cat-item-id2 (create-catalogue-item form-id workflow-id (create-resource license-id1 license-id2))
@@ -480,12 +467,12 @@
 (deftest test-application-validation
   (let [user-id "alice"
         workflow-id (create-dynamic-workflow)
-        form-id (create-form-with-fields [{:field/title {:en "req"}
-                                           :field/type :text
-                                           :field/optional false}
-                                          {:field/title {:en "opt"}
-                                           :field/type :text
-                                           :field/optional true}])
+        form-id (test-data/create-form! {:form/fields [{:field/title {:en "req"}
+                                                        :field/type :text
+                                                        :field/optional false}
+                                                       {:field/title {:en "opt"}
+                                                        :field/type :text
+                                                        :field/optional true}]})
         [req-id opt-id] (->> (form/get-form-template form-id)
                              :form/fields
                              (map :field/id))
@@ -532,9 +519,9 @@
   (let [api-key "42"
         user-id "alice"
         workflow-id (create-dynamic-workflow)
-        form-id (create-form-with-fields [{:field/title {:en "some attachment"}
-                                           :field/type :attachment
-                                           :field/optional true}])
+        form-id (test-data/create-form! {:form/fields [{:field/title {:en "some attachment"}
+                                                        :field/type :attachment
+                                                        :field/optional true}]})
         cat-id (create-catalogue-item form-id workflow-id 1)
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor user-id})

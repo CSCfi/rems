@@ -7,8 +7,8 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
-            [rems.db.form :as form]
             [rems.db.resource :as resource]
+            [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow])
@@ -32,10 +32,7 @@
                                                      :title ""
                                                      :type :dynamic
                                                      :handlers []}))
-        form-id (:id (form/create-form! user-id
-                                        {:form/organization ""
-                                         :form/title ""
-                                         :form/fields []}))
+        form-id (test-data/create-form! {})
         res-id (:id (resource/create-resource! {:resid (str "urn:uuid:" (UUID/randomUUID))
                                                 :organization ""
                                                 :licenses []}

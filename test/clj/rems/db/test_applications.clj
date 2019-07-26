@@ -7,9 +7,9 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
-            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
+            [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.db.workflow :as workflow]
             [rems.util :refer [try-catch-ex]]
@@ -53,10 +53,7 @@
                                                :handlers []
                                                :user-id "owner"}))
         _ (assert wf-id)
-        form-id (:id (form/create-form! "owner" {:form/organization "abc"
-                                                 :form/title ""
-                                                 :form/fields []}))
-        _ (assert form-id)
+        form-id (test-data/create-form! {})
         res-id (:id (resource/create-resource! {:resid "res1"
                                                 :organization "abc"
                                                 :licenses []}
@@ -129,10 +126,7 @@
                                                         :actor "alice"}))))
 
     (testing "error: catalogue items with different forms"
-      (let [form-id2 (:id (form/create-form! "owner" {:form/organization "abc"
-                                                      :form/title ""
-                                                      :form/fields []}))
-            _ (assert form-id2)
+      (let [form-id2 (test-data/create-form! {})
             res-id2 (:id (resource/create-resource! {:resid "res2+"
                                                      :organization "abc"
                                                      :licenses []}

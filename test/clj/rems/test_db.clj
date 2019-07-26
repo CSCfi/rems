@@ -49,7 +49,7 @@
         wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
         res1 (:id (db/create-resource! {:resid "resid111" :organization "abc" :owneruserid uid :modifieruserid uid}))
         res2 (:id (db/create-resource! {:resid "resid222" :organization "abc" :owneruserid uid :modifieruserid uid}))
-        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
+        form-id (test-data/create-form! {})
         item1 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res1 :wfid wfid}))
         item2 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res2 :wfid wfid}))
         app-id (:application-id (applications/create-application! uid [item1 item2]))]
@@ -93,7 +93,7 @@
   (db/add-user! {:user "jill" :userattrs nil})
   (let [workflow {:type :workflow/dynamic :handlers ["handler"]}
         wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
-        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
+        form-id (test-data/create-form! {})
         res1 (:id (db/create-resource! {:resid "resource1" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
         res2 (:id (db/create-resource! {:resid "resource2" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
         item1 (:id (db/create-catalogue-item! {:title "item1" :form form-id :resid res1 :wfid wf}))
