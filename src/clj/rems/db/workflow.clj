@@ -37,7 +37,6 @@
                                         :owneruserid user-id,
                                         :modifieruserid user-id,
                                         :title title,
-                                        :fnlround 0
                                         :workflow (json/generate-string {:type :workflow/dynamic
                                                                          :handlers handlers})}))]
     {:id wfid}))

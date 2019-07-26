@@ -39,7 +39,7 @@
     (is catalogue-id)
 
     ;; no api for this yet
-    (db/create-workflow-license! {:wfid workflow-id :licid license-id :round 0})
+    (db/create-workflow-license! {:wfid workflow-id :licid license-id})
 
     (testing "can disable a resource"
       (is (:success (api-call :put "/api/resources/update" {:id resource-id :enabled false :archived false}

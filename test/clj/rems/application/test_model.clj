@@ -178,8 +178,6 @@
        :workflow {:type "workflow/dynamic"
                   :handlers ["handler"]}
        :licenses nil
-       :visibility "private"
-       :fnlround 0
        :owneruserid "owner"
        :modifieruserid "owner"
        :start (DateTime. 100)

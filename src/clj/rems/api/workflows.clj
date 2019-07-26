@@ -30,13 +30,12 @@
       (assoc :end (parse-db-time (:end license)))))
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start end expired enabled archived licenses actors]}]
+  [{:keys [id organization owneruserid modifieruserid title workflow start end expired enabled archived licenses actors]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
    :modifieruserid modifieruserid
    :title title
-   :final-round fnlround
    :workflow workflow
    :start start
    :end end
@@ -74,8 +73,6 @@
 (defn- enrich-and-format-workflow [wf]
   (-> wf
       (update-present :workflow update :handlers #(mapv get-user %))
-      ;; TODO should this be in db.workflow?
-      (assoc :actors (db/get-workflow-actors {:wfid (:id wf)}))
       format-workflow))
 
 (defn- get-workflows [filters]

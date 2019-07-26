@@ -1,8 +1,9 @@
 (ns ^:integration rems.api.test-catalogue-items
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
+            [rems.db.form :as form]
+            [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -11,7 +12,10 @@
 
 (deftest catalogue-items-api-test
   (let [api-key "42"
-        user-id "alice"]
+        user-id "alice"
+        form-id (:id (form/create-form! "owner" {:form/organization "abc"
+                                                 :form/title "Basic form"
+                                                 :form/fields []}))]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
                    handler
@@ -21,7 +25,7 @@
     (let [data (-> (request :post "/api/catalogue-items/create")
                    (authenticate api-key "owner")
                    (json-body {:title "test-item-title"
-                               :form 1
+                               :form form-id
                                :resid 1
                                :wfid 1
                                :archived true})

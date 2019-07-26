@@ -61,15 +61,6 @@
             (is (= 400 (:status response))
                 "can't send negative max length")))
 
-        (testing "invalid create: field too long"
-          (let [command-with-long-placeholder (assoc-in command [:form/fields 0 :field/placeholder :en]
-                                                        (apply str (repeat 10000 "x")))
-                response (-> (request :post "/api/forms/create")
-                             (authenticate api-key user-id)
-                             (json-body command-with-long-placeholder)
-                             handler)]
-            (is (= 500 (:status response)))))
-
         (testing "valid create"
           (let [id (-> (request :post "/api/forms/create")
                        (authenticate api-key user-id)

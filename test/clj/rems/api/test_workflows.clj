@@ -41,9 +41,8 @@
             (is (= {:id id
                     :organization "abc"
                     :title "auto-approved workflow"
-                    :final-round 0
                     :actors []}
-                   (select-keys workflow [:id :organization :title :final-round :actors])))))))
+                   (select-keys workflow [:id :organization :title :actors])))))))
 
   (testing "create dynamic workflow"
     (let [body (-> (request :post "/api/workflows/create")
