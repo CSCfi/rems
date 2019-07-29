@@ -72,9 +72,8 @@
                           (binding [commands/postprocess-command-result-for-tests mark-observed-app-version]
                             (test-data/command!
                              {:type :application.command/save-draft
-                              :time (time/now)
-                              :actor user-id
                               :application-id app-id
+                              :actor user-id
                               :field-values []})))
                         (catch Exception e
                           (if (transaction-conflict? e)

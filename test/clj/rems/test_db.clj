@@ -49,13 +49,11 @@
         app-id (test-data/create-application! {:catalogue-item-ids [item1 item2]
                                                :actor applicant})]
     (test-data/command! {:type :application.command/submit
-                         :actor applicant
                          :application-id app-id
-                         :time (time/now)})
+                         :actor applicant})
     (test-data/command! {:type :application.command/approve
-                         :actor "handler"
                          :application-id app-id
-                         :time (time/now)
+                         :actor "handler"
                          :comment ""})
     (is (= :application.state/approved (:application/state (applications/get-application applicant app-id))))
 
@@ -95,22 +93,18 @@
         jack-app (test-data/create-application! {:actor "jack" :catalogue-item-ids [item1]})
         jill-app (test-data/create-application! {:actor "jill" :catalogue-item-ids [item1 item2]})]
     (test-data/command! {:type :application.command/submit
-                         :time (time/now)
-                         :actor "jack"
-                         :application-id jack-app})
-    (test-data/command! {:type :application.command/approve
-                         :time (time/now)
-                         :actor "handler"
                          :application-id jack-app
+                         :actor "jack"})
+    (test-data/command! {:type :application.command/approve
+                         :application-id jack-app
+                         :actor "handler"
                          :comment ""})
     (test-data/command! {:type :application.command/submit
-                         :time (time/now)
-                         :actor "jill"
-                         :application-id jill-app})
-    (test-data/command! {:type :application.command/approve
-                         :time (time/now)
-                         :actor "handler"
                          :application-id jill-app
+                         :actor "jill"})
+    (test-data/command! {:type :application.command/approve
+                         :application-id jill-app
+                         :actor "handler"
                          :comment ""})
     (entitlements-poller/run)
 

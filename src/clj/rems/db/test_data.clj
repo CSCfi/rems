@@ -18,7 +18,9 @@
 ;;; helpers for generating test data
 
 (defn command! [command]
-  (let [result (applications/command! command)]
+  (let [command (merge {:time (time/now)}
+                       command)
+        result (applications/command! command)]
     (assert (nil? result) {:command command :result result})))
 
 (defn- transpose-localizations [m]
@@ -559,24 +561,21 @@
 
 (defn- create-member-applications! [catid applicant approver members]
   (let [appid1 (create-draft! applicant [catid] "draft with invited members")]
-    (command! {:application-id appid1
+    (command! {:type :application.command/invite-member
+               :application-id appid1
                :actor applicant
-               :time (time/now)
-               :type :application.command/invite-member
                :member {:name "John Smith" :email "john.smith@example.org"}}))
   (let [appid2 (create-draft! applicant [catid] "submitted with members")]
-    (command! {:application-id appid2
+    (command! {:type :application.command/invite-member
+               :application-id appid2
                :actor applicant
-               :time (time/now)
-               :type :application.command/invite-member
                :member {:name "John Smith" :email "john.smith@example.org"}})
     (submit! {:application-id appid2
               :actor applicant})
     (doseq [member members]
-      (command! {:application-id appid2
+      (command! {:type :application.command/add-member
+                 :application-id appid2
                  :actor approver
-                 :time (time/now)
-                 :type :application.command/add-member
                  :member member}))))
 
 (defn- create-applications! [catid users]
@@ -593,8 +592,15 @@
     (let [app-id (create-draft! applicant [catid] "approved with comment")]
       (submit! {:application-id app-id
                 :actor applicant})
-      (command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
-      (command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
+      (command! {:type :application.command/request-comment
+                 :application-id app-id
+                 :actor approver
+                 :commenters [reviewer]
+                 :comment "please have a look"})
+      (command! {:type :application.command/comment
+                 :application-id app-id
+                 :actor reviewer
+                 :comment "looking good"})
       (approve! {:application-id app-id
                  :actor approver
                  :comment "Thank you! Approved!"}))
@@ -602,33 +608,57 @@
     (let [app-id (create-draft! applicant [catid] "rejected")]
       (submit! {:application-id app-id
                 :actor applicant})
-      (command! {:application-id app-id :actor approver :time (time/now) :type :application.command/reject :comment "Never going to happen"}))
+      (command! {:type :application.command/reject
+                 :application-id app-id
+                 :actor approver
+                 :comment "Never going to happen"}))
 
     (let [app-id (create-draft! applicant [catid] "returned")]
       (submit! {:application-id app-id
                 :actor applicant})
-      (command! {:application-id app-id :actor approver :time (time/now) :type :application.command/return :comment "Need more details"}))
+      (command! {:type :application.command/return
+                 :application-id app-id
+                 :actor approver
+                 :comment "Need more details"}))
 
     (let [app-id (create-draft! applicant [catid] "approved & closed")]
       (submit! {:application-id app-id
                 :actor applicant})
-      (command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment "please have a look"})
-      (command! {:application-id app-id :actor reviewer :time (time/now) :type :application.command/comment :comment "looking good"})
+      (command! {:type :application.command/request-comment
+                 :application-id app-id
+                 :actor approver
+                 :commenters [reviewer]
+                 :comment "please have a look"})
+      (command! {:type :application.command/comment
+                 :application-id app-id
+                 :actor reviewer
+                 :comment "looking good"})
       (approve! {:application-id app-id
                  :actor approver
                  :comment "Thank you! Approved!"})
       (entitlements-poller/run)
-      (command! {:application-id app-id :actor approver :time (time/now) :type :application.command/close :comment "Research project complete, closing."}))
+      (command! {:type :application.command/close
+                 :application-id app-id
+                 :actor approver
+                 :comment "Research project complete, closing."}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for comment")]
       (submit! {:application-id app-id
                 :actor applicant})
-      (command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-comment :commenters [reviewer] :comment ""}))
+      (command! {:type :application.command/request-comment
+                 :application-id app-id
+                 :actor approver
+                 :commenters [reviewer]
+                 :comment ""}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for decision")]
       (submit! {:application-id app-id
                 :actor applicant})
-      (command! {:application-id app-id :actor approver :time (time/now) :type :application.command/request-decision :deciders [reviewer] :comment ""}))))
+      (command! {:type :application.command/request-decision
+                 :application-id app-id
+                 :actor approver
+                 :deciders [reviewer]
+                 :comment ""}))))
 
 (defn create-performance-test-data! []
   (let [resource-count 1000
@@ -686,9 +716,8 @@
             app-id (create-application! {:catalogue-item-ids [cat-item-id]
                                          :actor user-id})]
         (command! {:type :application.command/save-draft
-                   :actor user-id
-                   :time (time/now)
                    :application-id app-id
+                   :actor user-id
                    :field-values [{:field (:field/id (first (:form/fields form)))
                                    :value (str "Performance test application " (UUID/randomUUID))}
                                   {:field (:field/id (second (:form/fields form)))
