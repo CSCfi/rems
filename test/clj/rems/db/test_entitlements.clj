@@ -104,7 +104,7 @@
     (db/add-user! {:user member :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
     (db/add-user! {:user admin :userattrs nil})
 
-    (let [app-id (:application-id (applications/create-application! applicant [item1 item2]))]
+    (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
       (testing "submitted application should not yet cause entitlements"
         (with-stub-server server
           (test-data/run! {:type :application.command/submit

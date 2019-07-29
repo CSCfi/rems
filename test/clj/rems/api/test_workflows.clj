@@ -77,16 +77,9 @@
 (deftest workflows-update-test
   (let [api-key "42"
         user-id "owner"
-        wf-spec {:organization "abc"
-                 :title "dynamic workflow"
-                 :type :dynamic
-                 :handlers ["bob" "carl"]}
-        wfid (-> (request :post "/api/workflows/create")
-                 (json-body wf-spec)
-                 (authenticate api-key user-id)
-                 handler
-                 read-ok-body
-                 :id)
+        wfid (test-data/create-dynamic-workflow! {:organization "abc"
+                                                  :title "dynamic workflow"
+                                                  :handlers ["bob" "carl"]})
         ;; this is a subset of what we expect to get from the api
         expected {:id wfid
                   :organization "abc"

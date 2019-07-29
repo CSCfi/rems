@@ -91,7 +91,8 @@
 
 (defn create-application! [{:keys [catalogue-item-ids actor]
                             :as command}]
-  (let [result (applications/create-application! actor catalogue-item-ids)]
+  (let [result (applications/create-application! actor
+                                                 (or catalogue-item-ids [(create-catalogue-item! {})]))]
     (assert (:success result) {:command command :result result})
     (:application-id result)))
 
@@ -704,15 +705,27 @@
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-        res-with-extra-license (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403263" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-        _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :end (time/minus (time/now) (time/years 1))}))
+  (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
+                                :organization "nbn"
+                                :actor (+fake-users+ :owner)
+                                :license-ids []})
+        res2 (create-resource! {:resource-ext-id "Extra Data"
+                                :organization "nbn"
+                                :actor (+fake-users+ :owner)
+                                :license-ids []})
+        _ (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
+        res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
+                                                  :organization "nbn"
+                                                  :actor (+fake-users+ :owner)})
+        _ (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
+        _ (db/create-resource! {:resid "Expired Resource, should not be seen"
+                                :organization "nbn"
+                                :owneruserid (+fake-users+ :owner)
+                                :modifieruserid (+fake-users+ :owner)
+                                :end (time/minus (time/now) (time/years 1))})
         form (create-basic-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
-    (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
-    (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
@@ -751,11 +764,15 @@
 (defn create-demo-data! []
   (db/add-api-key! {:apikey 55 :comment "Finna"})
   (create-demo-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
+  (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
+                                :organization "nbn"
+                                :actor (+demo-users+ :owner)})
+        res2 (create-resource! {:resource-ext-id "Extra Data"
+                                :organization "nbn"
+                                :actor (+demo-users+ :owner)})
+        _ (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
         form (create-basic-form! +demo-users+)
         workflows (create-workflows! +demo-users+)]
-    (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}

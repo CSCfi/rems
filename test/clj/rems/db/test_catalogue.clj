@@ -13,11 +13,8 @@
       (select-keys [:enabled :archived])))
 
 (deftest test-update-catalogue-item!
-  (let [uid "test-user"
-        form-id (test-data/create-form! {})
-        wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow"}))
-        item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))
-        item-id2 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
+  (let [item-id (test-data/create-catalogue-item! {})
+        item-id2 (test-data/create-catalogue-item! {})]
 
     (testing "new catalogue items are enabled and not archived"
       (is (= {:enabled true
@@ -72,10 +69,7 @@
              (status-flags item-id2))))))
 
 (deftest test-get-localized-catalogue-items
-  (let [uid "test-user"
-        form-id (test-data/create-form! {})
-        wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow"}))
-        item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
+  (let [item-id (test-data/create-catalogue-item! {})]
 
     (testing "find all"
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items)))))

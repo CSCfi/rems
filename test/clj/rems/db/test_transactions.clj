@@ -3,7 +3,6 @@
             [clojure.test :refer :all]
             [conman.core :as conman]
             [rems.application.commands :as commands]
-            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.events :as events]
             [rems.db.test-data :as test-data]
@@ -21,12 +20,6 @@
   (let [user-id "user"]
     (users/add-user! user-id {:eppn user-id})
     user-id))
-
-(defn- create-dummy-application [user-id]
-  (let [cat-id (test-data/create-catalogue-item! {})
-        app-id (:application-id (applications/create-application! user-id [cat-id]))]
-    (assert app-id)
-    app-id))
 
 (defn- transaction-conflict? [^Exception e]
   (cond
@@ -62,7 +55,7 @@
         concurrent-readers 5
         user-id (create-dummy-user)
         app-ids (vec (for [_ (range applications-count)]
-                       (create-dummy-application user-id)))
+                       (test-data/create-application! {:actor user-id})))
         ;; Currently we only test that commands are not executed concurrently
         ;; for a single application. To guarantee that, we could add an app version
         ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
@@ -77,7 +70,7 @@
                       (try
                         (conman/with-transaction [db/*db* {:isolation :serializable}]
                           (binding [commands/postprocess-command-result-for-tests mark-observed-app-version]
-                            (applications/command!
+                            (test-data/run!
                              {:type :application.command/save-draft
                               :time (time/now)
                               :actor user-id
