@@ -4,7 +4,6 @@
             [conman.core :as conman]
             [rems.application.commands :as commands]
             [rems.db.applications :as applications]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
             [rems.db.test-data :as test-data]
@@ -24,13 +23,7 @@
     user-id))
 
 (defn- create-dummy-application [user-id]
-  (let [workflow-id (test-data/create-dynamic-workflow! {})
-        form-id (test-data/create-form! {})
-        res-id (test-data/create-resource! {})
-        cat-id (:id (catalogue/create-catalogue-item! {:title ""
-                                                       :form form-id
-                                                       :resid res-id
-                                                       :wfid workflow-id}))
+  (let [cat-id (test-data/create-catalogue-item! {})
         app-id (:application-id (applications/create-application! user-id [cat-id]))]
     (assert app-id)
     app-id))

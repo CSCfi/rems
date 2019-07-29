@@ -48,11 +48,9 @@
   (let [wf-id (test-data/create-dynamic-workflow! {})
         form-id (test-data/create-form! {})
         res-id (test-data/create-resource! {:resource-ext-id "res1"})
-        cat-id (:id (catalogue/create-catalogue-item! {:title ""
-                                                       :resid res-id
-                                                       :form form-id
-                                                       :wfid wf-id}))
-        _ (assert cat-id)]
+        cat-id (test-data/create-catalogue-item! {:resource-id res-id
+                                                  :form-id form-id
+                                                  :workflow-id wf-id})]
 
     (testing "minimal application"
       (is (= {:event/type :application.event/created
@@ -73,11 +71,9 @@
 
     (testing "multiple resources"
       (let [res-id2 (test-data/create-resource! {:resource-ext-id "res2"})
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id
-                                                            :wfid wf-id}))
-            _ (assert cat-id2)]
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id
+                                                       :workflow-id wf-id})]
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
@@ -113,11 +109,9 @@
     (testing "error: catalogue items with different forms"
       (let [form-id2 (test-data/create-form! {})
             res-id2 (test-data/create-resource! {:resource-ext-id "res2+"})
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id2
-                                                            :wfid wf-id}))
-            _ (assert cat-id2)]
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id2
+                                                       :workflow-id wf-id})]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
                               (application-created-event {:application-id 42
                                                           :catalogue-item-ids [cat-id cat-id2]
@@ -127,11 +121,9 @@
     (testing "error: catalogue items with different workflows"
       (let [wf-id2 (test-data/create-dynamic-workflow! {})
             res-id2 (test-data/create-resource! {:resource-ext-id "res2++"})
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id
-                                                            :wfid wf-id2}))
-            _ (assert cat-id2)]
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id
+                                                       :workflow-id wf-id2})]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
                               (application-created-event {:application-id 42
                                                           :catalogue-item-ids [cat-id cat-id2]
@@ -147,11 +139,9 @@
             _ (assert lic-id)
             res-id2 (test-data/create-resource! {:resource-ext-id "res2+++"
                                                  :license-ids [lic-id]})
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id
-                                                            :wfid wf-id}))
-            _ (assert cat-id2)]
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id
+                                                       :workflow-id wf-id})]
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
@@ -177,11 +167,9 @@
             _ (assert lic-id)
             wf-id2 (test-data/create-dynamic-workflow! {})
             _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id})
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id
-                                                            :form form-id
-                                                            :wfid wf-id2}))
-            _ (assert cat-id2)]
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id
+                                                       :form-id form-id
+                                                       :workflow-id wf-id2})]
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
