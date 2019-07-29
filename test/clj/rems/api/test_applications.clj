@@ -5,8 +5,7 @@
             [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [rems.json]
-            [ring.mock.request :refer :all])
-  (:import [java.util UUID]))
+            [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
@@ -14,55 +13,12 @@
 
 ;;; shared helpers
 
-(defn- create-dynamic-workflow []
-  (-> (request :post "/api/workflows/create")
-      (json-body {:organization "abc"
-                  :title "dynamic workflow"
-                  :type :dynamic
-                  :handlers ["developer"]})
-      (authenticate "42" "owner")
-      handler
-      read-ok-body
-      :id))
-
-(defn- create-license []
-  (-> (request :post "/api/licenses/create")
-      (authenticate "42" "owner")
-      (json-body {:licensetype "text"
-                  :title (str (UUID/randomUUID))
-                  :textcontent ""
-                  :localizations {}})
-      handler
-      read-ok-body
-      :id))
-
-(defn- create-catalogue-item [form-id workflow-id resource-id]
-  (-> (request :post "/api/catalogue-items/create")
-      (authenticate "42" "owner")
-      (json-body {:title ""
-                  :form form-id
-                  :resid resource-id
-                  :wfid workflow-id})
-      handler
-      read-ok-body
-      :id))
-
-(defn- create-dymmy-catalogue-item []
-  (let [form-id (test-data/create-form! {})
-        workflow-id (create-dynamic-workflow)
-        resource-id (test-data/create-resource! {})]
-    (create-catalogue-item form-id workflow-id resource-id)))
-
 (defn- send-command [actor cmd]
   (-> (request :post (str "/api/applications/" (name (:type cmd))))
       (authenticate "42" actor)
       (json-body (dissoc cmd :type))
       handler
       read-body))
-
-(defn- create-dummy-application [user-id]
-  (test-data/create-application! {:catalogue-item-ids [(create-dymmy-catalogue-item)]
-                                  :actor user-id}))
 
 (defn- get-ids [applications]
   (set (map :application/id applications)))
@@ -125,7 +81,7 @@
                  (header "Cookie" cookie)
                  handler
                  get-csrf-token)
-        cat-id (create-dymmy-catalogue-item)]
+        cat-id (test-data/create-catalogue-item! {})]
     (is cookie)
     (is csrf)
     (testing "save with session"
@@ -178,18 +134,25 @@
         handler-id "developer"
         commenter-id "carl"
         decider-id "bob"
-        license-id1 (create-license)
-        license-id2 (create-license)
-        license-id3 (create-license)
-        license-id4 (create-license)
+        license-id1 (test-data/create-license! {})
+        license-id2 (test-data/create-license! {})
+        license-id3 (test-data/create-license! {})
+        license-id4 (test-data/create-license! {})
         form-id (test-data/create-form! {})
-        workflow-id (create-dynamic-workflow)
-        cat-item-id1 (create-catalogue-item form-id workflow-id (test-data/create-resource!
-                                                                 {:license-ids [license-id1 license-id2]}))
-        cat-item-id2 (create-catalogue-item form-id workflow-id (test-data/create-resource!
-                                                                 {:license-ids [license-id1 license-id2]}))
-        cat-item-id3 (create-catalogue-item form-id workflow-id (test-data/create-resource!
-                                                                 {:license-ids [license-id3]}))
+        workflow-id (test-data/create-dynamic-workflow! {:handlers [handler-id]})
+        cat-item-id1 (test-data/create-catalogue-item! {:resource-id (test-data/create-resource!
+                                                                      {:license-ids [license-id1 license-id2]})
+                                                        :form-id form-id
+                                                        :workflow-id workflow-id})
+        cat-item-id2 (test-data/create-catalogue-item! {:resource-id (test-data/create-resource!
+                                                                      {:license-ids [license-id1 license-id2]})
+                                                        :form-id form-id
+                                                        :workflow-id workflow-id})
+
+        cat-item-id3 (test-data/create-catalogue-item! {:resource-id (test-data/create-resource!
+                                                                      {:license-ids [license-id3]})
+                                                        :form-id form-id
+                                                        :workflow-id workflow-id})
         application-id (test-data/create-application! {:catalogue-item-ids [cat-item-id1]
                                                        :actor user-id})]
 
@@ -415,7 +378,7 @@
         user-id "alice"
         application-id (-> (request :post "/api/applications/create")
                            (authenticate "42" user-id)
-                           (json-body {:catalogue-item-ids [(create-dymmy-catalogue-item)]})
+                           (json-body {:catalogue-item-ids [(test-data/create-catalogue-item! {})]})
                            handler
                            read-ok-body
                            :application-id)]
@@ -449,7 +412,7 @@
 
 (deftest test-application-close
   (let [user-id "alice"
-        application-id (create-dummy-application user-id)]
+        application-id (test-data/create-application! {:actor user-id})]
     (is (= {:success true}
            (send-command user-id {:type :application.command/close
                                   :application-id application-id
@@ -459,7 +422,6 @@
 
 (deftest test-application-validation
   (let [user-id "alice"
-        workflow-id (create-dynamic-workflow)
         form-id (test-data/create-form! {:form/fields [{:field/title {:en "req"}
                                                         :field/type :text
                                                         :field/optional false}
@@ -469,7 +431,7 @@
         [req-id opt-id] (->> (form/get-form-template form-id)
                              :form/fields
                              (map :field/id))
-        cat-id (create-catalogue-item form-id workflow-id 1)
+        cat-id (test-data/create-catalogue-item! {:form-id form-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor user-id})]
 
@@ -511,11 +473,10 @@
 (deftest test-application-api-attachments
   (let [api-key "42"
         user-id "alice"
-        workflow-id (create-dynamic-workflow)
         form-id (test-data/create-form! {:form/fields [{:field/title {:en "some attachment"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
-        cat-id (create-catalogue-item form-id workflow-id 1)
+        cat-id (test-data/create-catalogue-item! {:form-id form-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor user-id})
         upload-request (fn [file]
@@ -585,7 +546,7 @@
 (deftest test-applications-api-security
   (let [api-key "42"
         applicant "alice"
-        cat-id (create-dymmy-catalogue-item)
+        cat-id (test-data/create-catalogue-item! {})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})]
 
@@ -655,7 +616,7 @@
                                            handler)))))))
 
 (deftest test-application-listing
-  (let [app-id (create-dummy-application "alice")]
+  (let [app-id (test-data/create-application! {:actor "alice"})]
 
     (testing "list user applications"
       (is (contains? (get-ids (get-my-applications "alice"))
@@ -666,7 +627,7 @@
                      app-id)))))
 
 (deftest test-todos
-  (let [app-id (create-dummy-application "alice")]
+  (let [app-id (test-data/create-application! {:actor "alice"})]
 
     (testing "does not list drafts"
       (is (not (contains? (get-ids (get-todos "developer"))
