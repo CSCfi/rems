@@ -98,7 +98,7 @@
     (assert (:success result) {:command command :result result})
     (:application-id result)))
 
-(defn- command-defaults [{:keys [application-id actor time]}]
+(defn- base-command [{:keys [application-id actor time]}]
   (assert application-id)
   (assert actor)
   {:application-id application-id
@@ -107,19 +107,19 @@
 
 (defn fill-form! [{:keys [application-id actor field-value] :as command}]
   (let [app (applications/get-application actor application-id)]
-    (command! (merge (command-defaults command)
-                     {:type :application.command/save-draft
-                      :field-values (->> (:form/fields (:application/form app))
-                                         (filter #(not (:field/optional %)))
-                                         (map (fn [field]
-                                                {:field (:field/id field)
-                                                 :value (or field-value "x")})))}))))
+    (command! (assoc (base-command command)
+                     :type :application.command/save-draft
+                     :field-values (->> (:form/fields (:application/form app))
+                                        (filter #(not (:field/optional %)))
+                                        (map (fn [field]
+                                               {:field (:field/id field)
+                                                :value (or field-value "x")})))))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
   (let [app (applications/get-application actor application-id)]
-    (command! (merge (command-defaults command)
-                     {:type :application.command/accept-licenses
-                      :accepted-licenses (map :license/id (:application/licenses app))}))))
+    (command! (assoc (base-command command)
+                     :type :application.command/accept-licenses
+                     :accepted-licenses (map :license/id (:application/licenses app))))))
 
 (defn create-draft! [actor catalogue-item-ids description]
   (let [app-id (create-application! {:catalogue-item-ids catalogue-item-ids
@@ -130,15 +130,6 @@
     (accept-licenses! {:application-id app-id
                        :actor actor})
     app-id))
-
-(defn submit! [command]
-  (command! (merge (command-defaults command)
-                   {:type :application.command/submit})))
-
-(defn approve! [{:keys [comment] :as command}]
-  (command! (merge (command-defaults command)
-                   {:type :application.command/approve
-                    :comment (or comment "")})))
 
 ;;; test data
 
@@ -549,13 +540,16 @@
   (create-draft! applicant [catid] "draft with disabled item")
 
   (let [appid1 (create-draft! applicant [catid] "approved application with disabled item")]
-    (submit! {:application-id appid1
-              :actor applicant}))
+    (command! {:type :application.command/submit
+               :application-id appid1
+               :actor applicant}))
 
   (let [appid2 (create-draft! applicant [catid] "submitted application with disabled item")]
-    (submit! {:application-id appid2
-              :actor applicant})
-    (approve! {:application-id appid2
+    (command! {:type :application.command/submit
+               :application-id appid2
+               :actor applicant})
+    (command! {:type :application.command/approve
+               :application-id appid2
                :actor approver
                :comment "Looking good"})))
 
@@ -570,8 +564,9 @@
                :application-id appid2
                :actor applicant
                :member {:name "John Smith" :email "john.smith@example.org"}})
-    (submit! {:application-id appid2
-              :actor applicant})
+    (command! {:type :application.command/submit
+               :application-id appid2
+               :actor applicant})
     (doseq [member members]
       (command! {:type :application.command/add-member
                  :application-id appid2
@@ -586,12 +581,14 @@
     (create-draft! applicant [catid] "draft application")
 
     (let [app-id (create-draft! applicant [catid] "applied")]
-      (submit! {:application-id app-id
-                :actor applicant}))
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant}))
 
     (let [app-id (create-draft! applicant [catid] "approved with comment")]
-      (submit! {:application-id app-id
-                :actor applicant})
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
       (command! {:type :application.command/request-comment
                  :application-id app-id
                  :actor approver
@@ -601,29 +598,33 @@
                  :application-id app-id
                  :actor reviewer
                  :comment "looking good"})
-      (approve! {:application-id app-id
+      (command! {:type :application.command/approve
+                 :application-id app-id
                  :actor approver
                  :comment "Thank you! Approved!"}))
 
     (let [app-id (create-draft! applicant [catid] "rejected")]
-      (submit! {:application-id app-id
-                :actor applicant})
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
       (command! {:type :application.command/reject
                  :application-id app-id
                  :actor approver
                  :comment "Never going to happen"}))
 
     (let [app-id (create-draft! applicant [catid] "returned")]
-      (submit! {:application-id app-id
-                :actor applicant})
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
       (command! {:type :application.command/return
                  :application-id app-id
                  :actor approver
                  :comment "Need more details"}))
 
     (let [app-id (create-draft! applicant [catid] "approved & closed")]
-      (submit! {:application-id app-id
-                :actor applicant})
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
       (command! {:type :application.command/request-comment
                  :application-id app-id
                  :actor approver
@@ -633,7 +634,8 @@
                  :application-id app-id
                  :actor reviewer
                  :comment "looking good"})
-      (approve! {:application-id app-id
+      (command! {:type :application.command/approve
+                 :application-id app-id
                  :actor approver
                  :comment "Thank you! Approved!"})
       (entitlements-poller/run)
@@ -643,8 +645,9 @@
                  :comment "Research project complete, closing."}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for comment")]
-      (submit! {:application-id app-id
-                :actor applicant})
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
       (command! {:type :application.command/request-comment
                  :application-id app-id
                  :actor approver
@@ -652,8 +655,9 @@
                  :comment ""}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for decision")]
-      (submit! {:application-id app-id
-                :actor applicant})
+      (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant})
       (command! {:type :application.command/request-decision
                  :application-id app-id
                  :actor approver
@@ -726,10 +730,13 @@
                                    :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
                                                ;; prevent string interning, just to be sure
                                                (UUID/randomUUID))}]})
-        (submit! {:application-id app-id
-                  :actor user-id})
-        (approve! {:application-id app-id
-                   :actor handler})))))
+        (command! {:type :application.command/submit
+                   :application-id app-id
+                   :actor user-id})
+        (command! {:type :application.command/approve
+                   :application-id app-id
+                   :actor handler
+                   :comment ""})))))
 
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
