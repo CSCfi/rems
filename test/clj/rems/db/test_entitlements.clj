@@ -5,8 +5,6 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
-            [rems.db.licenses :as licenses]
-            [rems.db.resource :as resource]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.poller.entitlements :as entitlements-poller]
@@ -80,47 +78,44 @@
 
 (deftest test-entitlement-granting
   (entitlements-poller/run) ; clear previous entitlements
-  (let [uid "bob"
-        memberid "elsa"
+  (let [applicant "bob"
+        member "elsa"
         admin "owner"
-        workflow {:type :workflow/dynamic :handlers [admin]}
-        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
+        wfid (test-data/create-dynamic-workflow! {:handlers [admin]})
         form-id (test-data/create-form! {})
-        lic-id1 (:id (licenses/create-license! {:licensetype "text"
-                                                :title "license1"
-                                                :textcontent "license1 text"
-                                                :localizations {}}
-                                               "owner"))
-        lic-id2 (:id (licenses/create-license! {:licensetype "text"
-                                                :title "license2"
-                                                :textcontent "license2 text"
-                                                :localizations {}}
-                                               "owner"))
-        res1 (test-data/create-resource! {:resource-ext-id "resource1"
-                                          :license-ids [lic-id1]})
-        res2 (test-data/create-resource! {:resource-ext-id "resource2"
-                                          :license-ids [lic-id2]})
-        res3 (test-data/create-resource! {:resource-ext-id "resource3"
-                                          :license-ids [lic-id1]})
-        item1 (:id (db/create-catalogue-item! {:title "item1" :form form-id :resid res1 :wfid wfid}))
-        item2 (:id (db/create-catalogue-item! {:title "item2" :form form-id :resid res2 :wfid wfid}))
-        item3 (:id (db/create-catalogue-item! {:title "item3" :form form-id :resid res3 :wfid wfid}))]
-    (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
-    (db/add-user! {:user memberid :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
+        lic-id1 (test-data/create-license! {})
+        lic-id2 (test-data/create-license! {})
+        item1 (test-data/create-catalogue-item!
+               {:resource-id (test-data/create-resource! {:resource-ext-id "resource1"
+                                                          :license-ids [lic-id1]})
+                :form-id form-id
+                :workflow-id wfid})
+        item2 (test-data/create-catalogue-item!
+               {:resource-id (test-data/create-resource! {:resource-ext-id "resource2"
+                                                          :license-ids [lic-id2]})
+                :form-id form-id
+                :workflow-id wfid})
+        item3 (test-data/create-catalogue-item!
+               {:resource-id (test-data/create-resource! {:resource-ext-id "resource3"
+                                                          :license-ids [lic-id1]})
+                :form-id form-id
+                :workflow-id wfid})]
+    (db/add-user! {:user applicant :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
+    (db/add-user! {:user member :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
     (db/add-user! {:user admin :userattrs nil})
 
-    (let [app-id (:application-id (applications/create-application! uid [item1 item2]))]
+    (let [app-id (:application-id (applications/create-application! applicant [item1 item2]))]
       (testing "submitted application should not yet cause entitlements"
         (with-stub-server server
-          (is (nil? (applications/command! {:type :application.command/submit
-                                            :actor uid
-                                            :application-id app-id
-                                            :time (time/now)})))
-          (is (nil? (applications/command! {:type :application.command/add-member
-                                            :actor admin
-                                            :application-id app-id
-                                            :member {:userid memberid}
-                                            :time (time/now)})))
+          (test-data/run! {:type :application.command/submit
+                           :actor applicant
+                           :application-id app-id
+                           :time (time/now)})
+          (test-data/run! {:type :application.command/add-member
+                           :actor admin
+                           :application-id app-id
+                           :member {:userid member}
+                           :time (time/now)})
           (entitlements-poller/run)
 
           (is (empty? (db/get-entitlements {:application app-id})))
@@ -128,11 +123,11 @@
 
         (testing "approved application should not yet cause entitlements"
           (with-stub-server server
-            (is (nil? (applications/command! {:type :application.command/approve
-                                              :actor admin
-                                              :application-id app-id
-                                              :comment ""
-                                              :time (time/now)})))
+            (test-data/run! {:type :application.command/approve
+                             :actor admin
+                             :application-id app-id
+                             :comment ""
+                             :time (time/now)})
             (entitlements-poller/run)
 
             (is (empty? (db/get-entitlements {:application app-id})))
@@ -140,27 +135,27 @@
 
         (testing "approved application, licenses accepted by one user generates entitlements for that user"
           (with-stub-server server
-            (is (nil? (applications/command! {:type :application.command/accept-licenses
-                                              :actor uid
-                                              :application-id app-id
-                                              :accepted-licenses [lic-id1 lic-id2]
-                                              :time (time/now)})))
+            (test-data/run! {:type :application.command/accept-licenses
+                             :actor applicant
+                             :application-id app-id
+                             :accepted-licenses [lic-id1 lic-id2]
+                             :time (time/now)})
 
-            (is (nil? (applications/command! {:type :application.command/accept-licenses
-                                              :actor memberid
-                                              :application-id app-id
-                                              :accepted-licenses [lic-id1] ; only accept some licenses
-                                              :time (time/now)})))
+            (test-data/run! {:type :application.command/accept-licenses
+                             :actor member
+                             :application-id app-id
+                             :accepted-licenses [lic-id1] ; only accept some licenses
+                             :time (time/now)})
 
-            (is (= {uid #{lic-id1 lic-id2}
-                    memberid #{lic-id1}}
+            (is (= {applicant #{lic-id1 lic-id2}
+                    member #{lic-id1}}
                    (:application/accepted-licenses (applications/get-unrestricted-application app-id))))
 
             (entitlements-poller/run)
             (entitlements-poller/run) ;; run twice to check idempotence
             (is (= 2 (count (stub/recorded-requests server))))
             (testing "db"
-              (is (= [[uid "resource1"] [uid "resource2"]]
+              (is (= [[applicant "resource1"] [applicant "resource2"]]
                      (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
             (testing "POST"
               (let [data (take 2 (stub/recorded-requests server))
@@ -176,17 +171,17 @@
 
       (testing "approved application, more accepted licenses generates more entitlements"
         (with-stub-server server
-          (is (nil? (applications/command! {:type :application.command/accept-licenses
-                                            :actor memberid
-                                            :application-id app-id
-                                            :accepted-licenses [lic-id1 lic-id2] ; now accept all licenses
-                                            :time (time/now)})))
+          (test-data/run! {:type :application.command/accept-licenses
+                           :actor member
+                           :application-id app-id
+                           :accepted-licenses [lic-id1 lic-id2] ; now accept all licenses
+                           :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
           (testing "db"
-            (is (= [[uid "resource1"] [uid "resource2"]
-                    [memberid "resource1"] [memberid "resource2"]]
+            (is (= [[applicant "resource1"] [applicant "resource2"]
+                    [member "resource1"] [member "resource2"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
           (testing "POST"
             (let [data (stub/recorded-requests server)
@@ -202,17 +197,17 @@
 
       (testing "removing a member ends entitlements"
         (with-stub-server server
-          (is (nil? (applications/command! {:type :application.command/remove-member
-                                            :actor admin
-                                            :application-id app-id
-                                            :member {:userid memberid}
-                                            :comment "Left team"
-                                            :time (time/now)})))
+          (test-data/run! {:type :application.command/remove-member
+                           :actor admin
+                           :application-id app-id
+                           :member {:userid member}
+                           :comment "Left team"
+                           :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
           (testing "db"
-            (is (= [[uid "resource1"] [uid "resource2"]]
+            (is (= [[applicant "resource1"] [applicant "resource2"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
           (testing "POST"
             (let [data (stub/recorded-requests server)
@@ -228,17 +223,17 @@
 
       (testing "changing resources changes entitlements"
         (with-stub-server server
-          (is (nil? (applications/command! {:type :application.command/change-resources
-                                            :actor admin
-                                            :application-id app-id
-                                            :catalogue-item-ids [item1 item3]
-                                            :comment "Removed second resource, added third resource"
-                                            :time (time/now)})))
+          (test-data/run! {:type :application.command/change-resources
+                           :actor admin
+                           :application-id app-id
+                           :catalogue-item-ids [item1 item3]
+                           :comment "Removed second resource, added third resource"
+                           :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
           (testing "db"
-            (is (= [[uid "resource1"] [uid "resource3"]]
+            (is (= [[applicant "resource1"] [applicant "resource3"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
           (testing "POST"
             (let [data (stub/recorded-requests server)
@@ -249,11 +244,11 @@
 
       (testing "closed application should end entitlements"
         (with-stub-server server
-          (is (nil? (applications/command! {:type :application.command/close
-                                            :actor admin
-                                            :application-id app-id
-                                            :comment "Finished"
-                                            :time (time/now)})))
+          (test-data/run! {:type :application.command/close
+                           :actor admin
+                           :application-id app-id
+                           :comment "Finished"
+                           :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))

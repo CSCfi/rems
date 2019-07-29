@@ -4,10 +4,8 @@
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]
             [rems.db.applications :refer [application-created-event application-external-id!]]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
-            [rems.db.licenses :as licenses]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.util :refer [try-catch-ex]]
@@ -131,12 +129,7 @@
                                                           :actor "alice"})))))
 
     (testing "resource licenses"
-      (let [lic-id (:id (licenses/create-license! {:licensetype "text"
-                                                   :title ""
-                                                   :textcontent ""
-                                                   :localizations {}}
-                                                  "owner"))
-            _ (assert lic-id)
+      (let [lic-id (test-data/create-license! {})
             res-id2 (test-data/create-resource! {:resource-ext-id "res2+++"
                                                  :license-ids [lic-id]})
             cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
@@ -159,12 +152,7 @@
                                            :actor "alice"})))))
 
     (testing "workflow licenses"
-      (let [lic-id (:id (licenses/create-license! {:licensetype "text"
-                                                   :title ""
-                                                   :textcontent ""
-                                                   :localizations {}}
-                                                  "owner"))
-            _ (assert lic-id)
+      (let [lic-id (test-data/create-license! {})
             wf-id2 (test-data/create-dynamic-workflow! {})
             _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id})
             cat-id2 (test-data/create-catalogue-item! {:resource-id res-id

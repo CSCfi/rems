@@ -1,5 +1,6 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
+  (:refer-clojure :exclude [run!])
   (:require [clj-time.core :as time]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
@@ -19,6 +20,29 @@
 (defn run! [command]
   (let [result (applications/command! command)]
     (assert (nil? result) {:command command :result result})))
+
+(defn- transpose-localizations [m]
+  (->> m
+       (mapcat (fn [[k1 v]]
+                 (map (fn [[k2 v]]
+                        [k1 k2 v])
+                      v)))
+       (reduce (fn [m [k1 k2 v]]
+                 (assoc-in m [k2 k1] v))
+               {})))
+
+(defn create-license! [{:keys [actor]
+                        :license/keys [type title link text]
+                        :as command}]
+  (let [result (licenses/create-license! {:licensetype (name (or type :text))
+                                          :title ""
+                                          :textcontent ""
+                                          :localizations
+                                          (transpose-localizations {:title title
+                                                                    :textcontent (merge link text)})}
+                                         (or actor "owner"))]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
 
 (defn create-form! [{:keys [actor]
                      :form/keys [organization title fields]
@@ -488,43 +512,32 @@
                                            :handlers [approver1]})]
 
     ;; attach both kinds of licenses to all workflows
-    (let [link (:id (db/create-license!
-                     {:modifieruserid owner :owneruserid owner :title "non-localized link license"
-                      :type "link" :textcontent "http://invalid"}))
-          text (:id (db/create-license!
-                     {:modifieruserid owner :owneruserid owner :title "non-localized text license"
-                      :type "text" :textcontent "non-localized content"}))]
-      (db/create-license-localization!
-       {:licid link :langcode "en" :title "CC Attribution 4.0"
-        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode"})
-      (db/create-license-localization!
-       {:licid link :langcode "fi" :title "CC Nimeä 4.0"
-        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"})
-      (db/create-license-localization!
-       {:licid text :langcode "fi" :title "Yleiset käyttöehdot"
-        :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))})
-      (db/create-license-localization!
-       {:licid text :langcode "en" :title "General Terms of Use"
-        :textcontent (apply str (repeat 10 "License text in English. "))})
-
-      (doseq [wfid [dynamic]]
-        (db/create-workflow-license! {:wfid wfid :licid link})
-        (db/create-workflow-license! {:wfid wfid :licid text})
-        (db/set-workflow-license-validity! {:licid link :start (time/minus (time/now) (time/years 1)) :end nil})
-        (db/set-workflow-license-validity! {:licid text :start (time/minus (time/now) (time/years 1)) :end nil})))
+    (let [link (create-license! {:actor owner
+                                 :license/type :link
+                                 :license/title {:en "CC Attribution 4.0"
+                                                 :fi "CC Nimeä 4.0"}
+                                 :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                                :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"}})
+          text (create-license! {:actor owner
+                                 :license/type :text
+                                 :license/title {:en "General Terms of Use"
+                                                 :fi "Yleiset käyttöehdot"}
+                                 :license/text {:en (apply str (repeat 10 "License text in English. "))
+                                                :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))}})]
+      (doseq [licid [link text]]
+        (doseq [wfid [dynamic]]
+          (db/create-workflow-license! {:wfid wfid :licid licid})
+          (db/set-workflow-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil}))))
 
     {:dynamic dynamic}))
 
 (defn- create-resource-license! [resid text owner]
-  (let [licid (:id (db/create-license!
-                    {:modifieruserid owner :owneruserid owner :title "resource license"
-                     :type "link" :textcontent "http://invalid"}))]
-    (db/create-license-localization!
-     {:licid licid :langcode "en" :title (str text " (en)")
-      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
-    (db/create-license-localization!
-     {:licid licid :langcode "fi" :title (str text " (fi)")
-      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+  (let [licid (create-license! {:actor owner
+                                :license/type :link
+                                :license/title {:en (str text " (en)")
+                                                :fi (str text " (fi)")}
+                                :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                               :fi "https://www.apache.org/licenses/LICENSE-2.0"}})]
     (db/create-resource-license! {:resid resid :licid licid})
     (db/set-resource-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil})
     licid))
@@ -645,19 +658,17 @@
                                  :field/placeholder {:en "The purpose of the project is to..."
                                                      :fi "Projektin tarkoitus on..."}}]})
         form (form/get-form-template form-id)
-        license-id (:id (licenses/create-license!
-                         {:licensetype "text"
-                          :title "Performance License"
-                          :textcontent "Be fast."
-                          :localizations {:en {:title "Performance license"
-                                               :textcontent "Be fast."}
-                                          :fi {:title "Suorituskykylisenssi"
-                                               :textcontent "Ole nopea."}}}
-                         owner))
+        license-id (create-license! {:actor owner
+                                     :license/type :text
+                                     :license/title {:en "Performance License"
+                                                     :fi "Suorituskykylisenssi"}
+                                     :license/text {:en "Be fast."
+                                                    :fi "Ole nopea."}})
         cat-item-ids (vec (for [index (range resource-count)]
                             (let [resource-id (create-resource! {:organization "perf"
                                                                  :license-ids [license-id]})]
-                              (create-catalogue-item! {:title (str "Performance test resource " (inc index))
+                              (create-catalogue-item! {:title {:en (str "Performance test resource " (inc index))
+                                                               :fi (str "Suorituskykytestiresurssi " (inc index))}
                                                        :resource-id resource-id
                                                        :form-id form-id
                                                        :workflow-id workflow-id}))))
