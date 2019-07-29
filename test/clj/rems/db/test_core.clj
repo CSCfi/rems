@@ -12,14 +12,19 @@
   (is (not (contains-all-kv-pairs? {:a 1 :b 2} {:c 3}))))
 
 (deftest test-now-active?
-  (let [today (time/now)
-        yesterday (time/minus today (time/days 1))
-        tomorrow (time/plus today (time/days 1))]
-    (is (not (now-active? tomorrow nil)) "not yet active")
-    (is (now-active? yesterday nil) "already active")
-    (is (now-active? nil nil) "always active")
-    (is (now-active? nil tomorrow) "still active")
-    (is (not (now-active? nil yesterday)) "already expired")))
+  (let [now (time/now)
+        before (time/minus now (time/millis 1))
+        after (time/plus now (time/millis 1))]
+    (testing "start defined"
+      (is (not (now-active? now after nil)) "not yet active")
+      (is (now-active? now now nil) "just now activated")
+      (is (now-active? now before nil) "already active"))
+    (testing "no start & no end"
+      (is (now-active? now nil nil) "always active"))
+    (testing "end defined"
+      (is (now-active? now nil after) "still active")
+      (is (not (now-active? now nil now)) "just now expired")
+      (is (not (now-active? now nil before)) "already expired"))))
 
 (deftest test-assoc-expired
   (is (= {:expired false} (assoc-expired nil)))

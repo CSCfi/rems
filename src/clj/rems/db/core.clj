@@ -33,7 +33,7 @@
    (now-active? (time/now) start end))
   ([now start end]
    (and (or (nil? start)
-            (time/after? now start))
+            (not (time/before? now start)))
         (or (nil? end)
             (time/before? now end)))))
 
