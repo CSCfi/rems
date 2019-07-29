@@ -7,13 +7,10 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
-            [rems.db.resource :as resource]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow])
+            [rems.db.users :as users])
   (:import [java.sql SQLException]
-           [java.util UUID]
            [java.util.concurrent Executors Future TimeUnit ExecutorService]
            [org.postgresql.util PSQLException]))
 
@@ -27,11 +24,7 @@
     user-id))
 
 (defn- create-dummy-application [user-id]
-  (let [workflow-id (:id (workflow/create-workflow! {:user-id user-id
-                                                     :organization ""
-                                                     :title ""
-                                                     :type :dynamic
-                                                     :handlers []}))
+  (let [workflow-id (test-data/create-dynamic-workflow! {})
         form-id (test-data/create-form! {})
         res-id (test-data/create-resource! {})
         cat-id (:id (catalogue/create-catalogue-item! {:title ""

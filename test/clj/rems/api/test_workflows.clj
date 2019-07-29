@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.common-util :refer [index-by]]
+            [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -141,16 +142,8 @@
              (fetch))))))
 
 (deftest workflows-api-filtering-test
-  (let [enabled-wf (:id (workflow/create-workflow! {:user-id "owner"
-                                                    :organization "abc"
-                                                    :title ""
-                                                    :type :dynamic
-                                                    :handlers []}))
-        disabled-wf (:id (workflow/create-workflow! {:user-id "owner"
-                                                     :organization "abc"
-                                                     :title ""
-                                                     :type :dynamic
-                                                     :handlers []}))
+  (let [enabled-wf (test-data/create-dynamic-workflow! {})
+        disabled-wf (test-data/create-dynamic-workflow! {})
         _ (workflow/update-workflow! {:id disabled-wf
                                       :enabled false})
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})

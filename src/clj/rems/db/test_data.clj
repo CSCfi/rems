@@ -39,6 +39,16 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
+(defn create-dynamic-workflow! [{:keys [actor organization title handlers]
+                                 :as command}]
+  (let [result (workflow/create-workflow! {:user-id (or actor "owner")
+                                           :organization (or organization "abc")
+                                           :title (or title "")
+                                           :type :dynamic
+                                           :handlers (or handlers ["developer"])})]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
+
 (defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]
                                :as command}]
   (assert resource-id)
@@ -475,11 +485,10 @@
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
         owner (users :owner)
-        dynamic (:id (workflow/create-workflow! {:user-id owner
-                                                 :organization "nbn"
-                                                 :title "dynamic workflow"
-                                                 :type :dynamic
-                                                 :handlers [approver1]}))]
+        dynamic (create-dynamic-workflow! {:actor owner
+                                           :organization "nbn"
+                                           :title "dynamic workflow"
+                                           :handlers [approver1]})]
 
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
@@ -617,11 +626,10 @@
         handlers [(+fake-users+ :approver1)
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
-        workflow-id (:id (workflow/create-workflow! {:user-id owner
-                                                     :organization "perf"
-                                                     :title "Performance tests"
-                                                     :type :dynamic
-                                                     :handlers handlers}))
+        workflow-id (create-dynamic-workflow! {:actor owner
+                                               :organization "perf"
+                                               :title "Performance tests"
+                                               :handlers handlers})
         form-id (create-form!
                  {:actor owner
                   :form/organization "perf"

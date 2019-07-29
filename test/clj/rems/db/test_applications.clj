@@ -8,10 +8,8 @@
             [rems.db.core :as db]
             [rems.db.events :as db-events]
             [rems.db.licenses :as licenses]
-            [rems.db.resource :as resource]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
-            [rems.db.workflow :as workflow]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
@@ -47,12 +45,7 @@
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
 
 (deftest test-application-created-event
-  (let [wf-id (:id (workflow/create-workflow! {:type :dynamic
-                                               :organization "abc"
-                                               :title ""
-                                               :handlers []
-                                               :user-id "owner"}))
-        _ (assert wf-id)
+  (let [wf-id (test-data/create-dynamic-workflow! {})
         form-id (test-data/create-form! {})
         res-id (test-data/create-resource! {:resource-ext-id "res1"})
         cat-id (:id (catalogue/create-catalogue-item! {:title ""
@@ -132,12 +125,7 @@
                                                           :actor "alice"})))))
 
     (testing "error: catalogue items with different workflows"
-      (let [wf-id2 (:id (workflow/create-workflow! {:type :dynamic
-                                                    :organization "abc"
-                                                    :title ""
-                                                    :handlers []
-                                                    :user-id "owner"}))
-            _ (assert wf-id2)
+      (let [wf-id2 (test-data/create-dynamic-workflow! {})
             res-id2 (test-data/create-resource! {:resource-ext-id "res2++"})
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
@@ -187,12 +175,7 @@
                                                    :localizations {}}
                                                   "owner"))
             _ (assert lic-id)
-            wf-id2 (:id (workflow/create-workflow! {:type :dynamic
-                                                    :organization "abc"
-                                                    :title ""
-                                                    :handlers []
-                                                    :user-id "owner"}))
-            _ (assert wf-id2)
+            wf-id2 (test-data/create-dynamic-workflow! {})
             _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id})
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id
