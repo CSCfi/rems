@@ -107,15 +107,15 @@
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
       (testing "submitted application should not yet cause entitlements"
         (with-stub-server server
-          (test-data/run! {:type :application.command/submit
-                           :actor applicant
-                           :application-id app-id
-                           :time (time/now)})
-          (test-data/run! {:type :application.command/add-member
-                           :actor admin
-                           :application-id app-id
-                           :member {:userid member}
-                           :time (time/now)})
+          (test-data/command! {:type :application.command/submit
+                               :actor applicant
+                               :application-id app-id
+                               :time (time/now)})
+          (test-data/command! {:type :application.command/add-member
+                               :actor admin
+                               :application-id app-id
+                               :member {:userid member}
+                               :time (time/now)})
           (entitlements-poller/run)
 
           (is (empty? (db/get-entitlements {:application app-id})))
@@ -123,11 +123,11 @@
 
         (testing "approved application should not yet cause entitlements"
           (with-stub-server server
-            (test-data/run! {:type :application.command/approve
-                             :actor admin
-                             :application-id app-id
-                             :comment ""
-                             :time (time/now)})
+            (test-data/command! {:type :application.command/approve
+                                 :actor admin
+                                 :application-id app-id
+                                 :comment ""
+                                 :time (time/now)})
             (entitlements-poller/run)
 
             (is (empty? (db/get-entitlements {:application app-id})))
@@ -135,17 +135,17 @@
 
         (testing "approved application, licenses accepted by one user generates entitlements for that user"
           (with-stub-server server
-            (test-data/run! {:type :application.command/accept-licenses
-                             :actor applicant
-                             :application-id app-id
-                             :accepted-licenses [lic-id1 lic-id2]
-                             :time (time/now)})
+            (test-data/command! {:type :application.command/accept-licenses
+                                 :actor applicant
+                                 :application-id app-id
+                                 :accepted-licenses [lic-id1 lic-id2]
+                                 :time (time/now)})
 
-            (test-data/run! {:type :application.command/accept-licenses
-                             :actor member
-                             :application-id app-id
-                             :accepted-licenses [lic-id1] ; only accept some licenses
-                             :time (time/now)})
+            (test-data/command! {:type :application.command/accept-licenses
+                                 :actor member
+                                 :application-id app-id
+                                 :accepted-licenses [lic-id1] ; only accept some licenses
+                                 :time (time/now)})
 
             (is (= {applicant #{lic-id1 lic-id2}
                     member #{lic-id1}}
@@ -171,11 +171,11 @@
 
       (testing "approved application, more accepted licenses generates more entitlements"
         (with-stub-server server
-          (test-data/run! {:type :application.command/accept-licenses
-                           :actor member
-                           :application-id app-id
-                           :accepted-licenses [lic-id1 lic-id2] ; now accept all licenses
-                           :time (time/now)})
+          (test-data/command! {:type :application.command/accept-licenses
+                               :actor member
+                               :application-id app-id
+                               :accepted-licenses [lic-id1 lic-id2] ; now accept all licenses
+                               :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
@@ -197,12 +197,12 @@
 
       (testing "removing a member ends entitlements"
         (with-stub-server server
-          (test-data/run! {:type :application.command/remove-member
-                           :actor admin
-                           :application-id app-id
-                           :member {:userid member}
-                           :comment "Left team"
-                           :time (time/now)})
+          (test-data/command! {:type :application.command/remove-member
+                               :actor admin
+                               :application-id app-id
+                               :member {:userid member}
+                               :comment "Left team"
+                               :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
@@ -223,12 +223,12 @@
 
       (testing "changing resources changes entitlements"
         (with-stub-server server
-          (test-data/run! {:type :application.command/change-resources
-                           :actor admin
-                           :application-id app-id
-                           :catalogue-item-ids [item1 item3]
-                           :comment "Removed second resource, added third resource"
-                           :time (time/now)})
+          (test-data/command! {:type :application.command/change-resources
+                               :actor admin
+                               :application-id app-id
+                               :catalogue-item-ids [item1 item3]
+                               :comment "Removed second resource, added third resource"
+                               :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
@@ -244,11 +244,11 @@
 
       (testing "closed application should end entitlements"
         (with-stub-server server
-          (test-data/run! {:type :application.command/close
-                           :actor admin
-                           :application-id app-id
-                           :comment "Finished"
-                           :time (time/now)})
+          (test-data/command! {:type :application.command/close
+                               :actor admin
+                               :application-id app-id
+                               :comment "Finished"
+                               :time (time/now)})
           (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))

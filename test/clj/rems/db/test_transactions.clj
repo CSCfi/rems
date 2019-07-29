@@ -70,7 +70,7 @@
                       (try
                         (conman/with-transaction [db/*db* {:isolation :serializable}]
                           (binding [commands/postprocess-command-result-for-tests mark-observed-app-version]
-                            (test-data/run!
+                            (test-data/command!
                              {:type :application.command/save-draft
                               :time (time/now)
                               :actor user-id
