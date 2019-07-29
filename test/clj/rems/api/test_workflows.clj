@@ -3,6 +3,7 @@
             [rems.api.testing :refer :all]
             [rems.common-util :refer [index-by]]
             [rems.db.test-data :as test-data]
+            [rems.db.testing :refer [sync-with-database-time]]
             [rems.db.workflow :as workflow]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -57,6 +58,7 @@
                    read-body)
           id (:id body)]
       (is (< 0 id))
+      (sync-with-database-time)
       (testing "and fetch"
         (let [workflows (-> (request :get "/api/workflows")
                             (authenticate "42" "owner")
@@ -103,6 +105,7 @@
                     (authenticate api-key user-id)
                     handler
                     read-ok-body)]
+    (sync-with-database-time)
     (testing "before changes"
       (is (= expected (fetch))))
     (testing "disable and archive"

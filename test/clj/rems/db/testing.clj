@@ -1,12 +1,15 @@
 (ns rems.db.testing
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clj-time.core :as time]
+            [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :as log]
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]))
+            [rems.db.test-data :as test-data])
+  (:import [org.joda.time Duration ReadableInstant]))
 
 (defn test-db-fixture [f]
   (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down
@@ -35,3 +38,22 @@
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
     (f)))
+
+(defn get-database-time []
+  (:now (db/get-database-time)))
+
+(defn sync-with-database-time
+  "When the database runs on a different machine or VM than
+   the application (e.g. Docker for Mac), the database clock may be
+   ahead of the application clock, in which case newly created entities
+   may be incorrectly flagged as expired, because their creation time
+   seems to be in the future. This helper method can be called after
+   creating such entities in flaky tests to guarantee that the application
+   clock has caught up with the database clock."
+  []
+  (let [db-time (get-database-time)
+        app-time (time/now)
+        diff (.getMillis (Duration. ^ReadableInstant app-time ^ReadableInstant db-time))]
+    (when (pos? diff)
+      (log/info "The application clock is" diff "ms behind the database")
+      (Thread/sleep (+ 1 diff)))))

@@ -503,3 +503,6 @@ WHERE prefix = :prefix
 -- :name add-external-id! :!
 INSERT INTO external_application_id (prefix, suffix)
 VALUES (:prefix, :suffix);
+
+-- :name get-database-time :? :1
+SELECT now();
