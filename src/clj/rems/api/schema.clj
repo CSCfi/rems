@@ -42,21 +42,6 @@
 
 (s/defschema ResourceLicense License)
 
-(s/defschema ApplicationLicense
-  (merge License
-         {:type (s/eq "license") ;; TODO this is pretty redundant
-          :approved s/Bool}))
-
-(s/defschema Item
-  {:id s/Int
-   :localizations {s/Keyword {:title s/Str :inputprompt (s/maybe s/Str)}}
-   :optional s/Bool
-   :options [{:key s/Str :label {s/Keyword s/Str}}]
-   :maxlength (s/maybe s/Int)
-   :type s/Str
-   :value (s/maybe s/Str)
-   :previous-value (s/maybe s/Str)})
-
 (s/defschema Event
   (assoc events/EventBase
          s/Keyword s/Any))

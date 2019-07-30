@@ -55,10 +55,6 @@
 (s/defschema Deciders
   [Decider])
 
-(s/defschema Command
-  {:type s/Keyword
-   s/Any s/Any})
-
 (s/defschema AcceptInvitationResult
   {:success s/Bool
    (s/optional-key :application-id) s/Int
