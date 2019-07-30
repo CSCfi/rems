@@ -30,7 +30,7 @@
       (assoc :end (parse-db-time (:end license)))))
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title workflow start end expired enabled archived licenses actors]}]
+  [{:keys [id organization owneruserid modifieruserid title workflow start end expired enabled archived licenses]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -42,8 +42,7 @@
    :expired expired
    :enabled enabled
    :archived archived
-   :licenses (mapv format-license licenses)
-   :actors actors})
+   :licenses (mapv format-license licenses)})
 
 (s/defschema CreateWorkflowCommand
   {:organization s/Str

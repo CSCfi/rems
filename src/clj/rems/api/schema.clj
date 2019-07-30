@@ -95,11 +95,6 @@
 
 (def UserId s/Str)
 
-(s/defschema Actor
-  {:actoruserid UserId
-   :round s/Int
-   :role (s/enum "approver" "reviewer")})
-
 (s/defschema WorkflowLicense
   {:type s/Str
    :start DateTime
@@ -107,25 +102,19 @@
    :localizations [s/Any]
    :end (s/maybe DateTime)})
 
-(s/defschema WorkflowDB ; TODO: unify workflow schemas
+(s/defschema Workflow
   {:id s/Int
    :organization s/Str
    :owneruserid UserId
    :modifieruserid UserId
    :title s/Str
    :workflow s/Any
-   :licenses s/Any
+   :licenses [WorkflowLicense]
    :start DateTime
    :end (s/maybe DateTime)
    :expired s/Bool
    :enabled s/Bool
    :archived s/Bool})
-
-(s/defschema Workflow
-  (-> WorkflowDB
-      (dissoc :licenses)
-      (assoc :actors [Actor]
-             :licenses [WorkflowLicense])))
 
 (def not-neg? (partial <= 0))
 
