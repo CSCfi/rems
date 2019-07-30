@@ -1,7 +1,7 @@
 (ns ^:integration rems.db.test-resources
   (:require [clojure.test :refer :all]
             [rems.db.resource :as resources]
-            [rems.db.core :as db]
+            [rems.db.test-data :as test-data]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
@@ -12,9 +12,8 @@
       (select-keys [:enabled :archived])))
 
 (deftest test-update-resource!
-  (let [user-id "test-user"
-        res-id (:id (resources/create-resource! {:resid "res1" :organization "abc" :licenses []} user-id))
-        res-id2 (:id (resources/create-resource! {:resid "res2" :organization "abc" :licenses []} user-id))]
+  (let [res-id (test-data/create-resource! {})
+        res-id2 (test-data/create-resource! {})]
 
     (testing "new resources are enabled and not archived"
       (is (= {:enabled true

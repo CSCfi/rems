@@ -3,17 +3,12 @@
             [clojure.test :refer :all]
             [conman.core :as conman]
             [rems.application.commands :as commands]
-            [rems.db.applications :as applications]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
-            [rems.db.form :as form]
-            [rems.db.resource :as resource]
+            [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow])
+            [rems.db.users :as users])
   (:import [java.sql SQLException]
-           [java.util UUID]
            [java.util.concurrent Executors Future TimeUnit ExecutorService]
            [org.postgresql.util PSQLException]))
 
@@ -25,28 +20,6 @@
   (let [user-id "user"]
     (users/add-user! user-id {:eppn user-id})
     user-id))
-
-(defn- create-dummy-application [user-id]
-  (let [workflow-id (:id (workflow/create-workflow! {:user-id user-id
-                                                     :organization ""
-                                                     :title ""
-                                                     :type :dynamic
-                                                     :handlers []}))
-        form-id (:id (form/create-form! user-id
-                                        {:form/organization ""
-                                         :form/title ""
-                                         :form/fields []}))
-        res-id (:id (resource/create-resource! {:resid (str "urn:uuid:" (UUID/randomUUID))
-                                                :organization ""
-                                                :licenses []}
-                                               user-id))
-        cat-id (:id (catalogue/create-catalogue-item! {:title ""
-                                                       :form form-id
-                                                       :resid res-id
-                                                       :wfid workflow-id}))
-        app-id (:application-id (applications/create-application! user-id [cat-id]))]
-    (assert app-id)
-    app-id))
 
 (defn- transaction-conflict? [^Exception e]
   (cond
@@ -82,7 +55,7 @@
         concurrent-readers 5
         user-id (create-dummy-user)
         app-ids (vec (for [_ (range applications-count)]
-                       (create-dummy-application user-id)))
+                       (test-data/create-application! {:actor user-id})))
         ;; Currently we only test that commands are not executed concurrently
         ;; for a single application. To guarantee that, we could add an app version
         ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
@@ -97,11 +70,10 @@
                       (try
                         (conman/with-transaction [db/*db* {:isolation :serializable}]
                           (binding [commands/postprocess-command-result-for-tests mark-observed-app-version]
-                            (applications/command!
+                            (test-data/command!
                              {:type :application.command/save-draft
-                              :time (time/now)
-                              :actor user-id
                               :application-id app-id
+                              :actor user-id
                               :field-values []})))
                         (catch Exception e
                           (if (transaction-conflict? e)

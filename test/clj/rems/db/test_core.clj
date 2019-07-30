@@ -12,14 +12,32 @@
   (is (not (contains-all-kv-pairs? {:a 1 :b 2} {:c 3}))))
 
 (deftest test-now-active?
-  (let [today (time/now)
-        yesterday (time/minus today (time/days 1))
-        tomorrow (time/plus today (time/days 1))]
-    (is (not (now-active? tomorrow nil)) "not yet active")
-    (is (now-active? yesterday nil) "already active")
-    (is (now-active? nil nil) "always active")
-    (is (now-active? nil tomorrow) "still active")
-    (is (not (now-active? nil yesterday)) "already expired")))
+  (let [t0 (time/epoch)
+        t1 (time/plus t0 (time/millis 1))
+        t2 (time/plus t0 (time/millis 2))
+        t3 (time/plus t0 (time/millis 3))
+        t4 (time/plus t0 (time/millis 4))
+        t5 (time/plus t0 (time/millis 5))]
+    (testing "no start & no end"
+      (is (now-active? t1 nil nil) "always active"))
+    (testing "start defined"
+      (let [start t2]
+        (is (not (now-active? t1 start nil)) "before start")
+        (is (now-active? t2 start nil) "at start")
+        (is (now-active? t3 start nil) "after start")))
+    (testing "end defined"
+      (let [end t2]
+        (is (now-active? t1 nil end) "before end")
+        (is (not (now-active? t2 nil end)) "at end")
+        (is (not (now-active? t3 nil end)) "after end")))
+    (testing "start & end defined"
+      (let [start t2
+            end t4]
+        (is (not (now-active? t1 start end)) "before start")
+        (is (now-active? t2 start end) "at start")
+        (is (now-active? t3 start end) "between")
+        (is (not (now-active? t4 start end)) "at end")
+        (is (not (now-active? t5 start end)) "after end")))))
 
 (deftest test-assoc-expired
   (is (= {:expired false} (assoc-expired nil)))

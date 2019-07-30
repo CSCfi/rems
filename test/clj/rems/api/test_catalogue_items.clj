@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.form :as form]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -13,9 +13,7 @@
 (deftest catalogue-items-api-test
   (let [api-key "42"
         user-id "alice"
-        form-id (:id (form/create-form! "owner" {:form/organization "abc"
-                                                 :form/title "Basic form"
-                                                 :form/fields []}))]
+        form-id (test-data/create-form! {:form/title "form name"})]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
                    handler
@@ -41,7 +39,7 @@
         (is (= {:id id
                 :title "test-item-title"
                 :workflow-name "dynamic workflow"
-                :form-name "Basic form"
+                :form-name "form name"
                 :resource-name "urn:nbn:fi:lb-201403262"}
                (select-keys data [:id :title :workflow-name :form-name :resource-name])))))
     (testing "not found"

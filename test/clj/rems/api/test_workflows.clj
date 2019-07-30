@@ -2,6 +2,8 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.common-util :refer [index-by]]
+            [rems.db.test-data :as test-data]
+            [rems.db.testing :refer [sync-with-database-time]]
             [rems.db.workflow :as workflow]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -56,6 +58,7 @@
                    read-body)
           id (:id body)]
       (is (< 0 id))
+      (sync-with-database-time)
       (testing "and fetch"
         (let [workflows (-> (request :get "/api/workflows")
                             (authenticate "42" "owner")
@@ -76,16 +79,9 @@
 (deftest workflows-update-test
   (let [api-key "42"
         user-id "owner"
-        wf-spec {:organization "abc"
-                 :title "dynamic workflow"
-                 :type :dynamic
-                 :handlers ["bob" "carl"]}
-        wfid (-> (request :post "/api/workflows/create")
-                 (json-body wf-spec)
-                 (authenticate api-key user-id)
-                 handler
-                 read-ok-body
-                 :id)
+        wfid (test-data/create-dynamic-workflow! {:organization "abc"
+                                                  :title "dynamic workflow"
+                                                  :handlers ["bob" "carl"]})
         ;; this is a subset of what we expect to get from the api
         expected {:id wfid
                   :organization "abc"
@@ -109,6 +105,7 @@
                     (authenticate api-key user-id)
                     handler
                     read-ok-body)]
+    (sync-with-database-time)
     (testing "before changes"
       (is (= expected (fetch))))
     (testing "disable and archive"
@@ -141,16 +138,8 @@
              (fetch))))))
 
 (deftest workflows-api-filtering-test
-  (let [enabled-wf (:id (workflow/create-workflow! {:user-id "owner"
-                                                    :organization "abc"
-                                                    :title ""
-                                                    :type :dynamic
-                                                    :handlers []}))
-        disabled-wf (:id (workflow/create-workflow! {:user-id "owner"
-                                                     :organization "abc"
-                                                     :title ""
-                                                     :type :dynamic
-                                                     :handlers []}))
+  (let [enabled-wf (test-data/create-dynamic-workflow! {})
+        disabled-wf (test-data/create-dynamic-workflow! {})
         _ (workflow/update-workflow! {:id disabled-wf
                                       :enabled false})
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})

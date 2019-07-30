@@ -27,42 +27,35 @@
     (is (empty? (db/get-catalogue-items))))
 
   (testing "with two items"
-    (let [resid (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid 1 :modifieruserid 1}))]
-      (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid resid :wfid nil})
-      (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
-      (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
+    (let [item1 (test-data/create-catalogue-item! {})
+          item2 (test-data/create-catalogue-item! {})]
+      (is (= (set [item1 item2]) (set (map :id (db/get-catalogue-items))))
           "should find the two items")
-      (let [item-from-list (second (db/get-catalogue-items))
-            item-by-id (first (db/get-catalogue-items {:ids [(:id item-from-list)]}))]
-        (is (= item-from-list (dissoc item-by-id
-                                      :resource-name
-                                      :form-name
-                                      :workflow-name))
-            "should find same catalogue item by id")))))
+      (is (= item1 (:id (first (db/get-catalogue-items {:ids [item1]}))))
+          "should find same catalogue item by id")
+      (is (= item2 (:id (first (db/get-catalogue-items {:ids [item2]}))))
+          "should find same catalogue item by id"))))
 
 (deftest test-multi-applications
   (db/add-user! {:user "test-user" :userattrs nil})
   (db/add-user! {:user "handler" :userattrs nil})
-  (let [uid "test-user"
-        workflow {:type :workflow/dynamic
-                  :handlers ["handler"]}
-        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
-        res1 (:id (db/create-resource! {:resid "resid111" :organization "abc" :owneruserid uid :modifieruserid uid}))
-        res2 (:id (db/create-resource! {:resid "resid222" :organization "abc" :owneruserid uid :modifieruserid uid}))
-        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
-        item1 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res1 :wfid wfid}))
-        item2 (:id (db/create-catalogue-item! {:title "item" :form form-id :resid res2 :wfid wfid}))
-        app-id (:application-id (applications/create-application! uid [item1 item2]))]
-    (is (nil? (applications/command! {:type :application.command/submit
-                                      :actor uid
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (nil? (applications/command! {:type :application.command/approve
-                                      :actor "handler"
-                                      :application-id app-id
-                                      :time (time/now)
-                                      :comment ""})))
-    (is (= :application.state/approved (:application/state (applications/get-application uid app-id))))
+  (let [applicant "test-user"
+        wfid (test-data/create-dynamic-workflow! {:handlers ["handler"]})
+        res1 (test-data/create-resource! {:resource-ext-id "resid111"})
+        res2 (test-data/create-resource! {:resource-ext-id "resid222"})
+        form-id (test-data/create-form! {})
+        item1 (test-data/create-catalogue-item! {:form-id form-id :resource-id res1 :workflow-id wfid})
+        item2 (test-data/create-catalogue-item! {:form-id form-id :resource-id res2 :workflow-id wfid})
+        app-id (test-data/create-application! {:catalogue-item-ids [item1 item2]
+                                               :actor applicant})]
+    (test-data/command! {:type :application.command/submit
+                         :application-id app-id
+                         :actor applicant})
+    (test-data/command! {:type :application.command/approve
+                         :application-id app-id
+                         :actor "handler"
+                         :comment ""})
+    (is (= :application.state/approved (:application/state (applications/get-application applicant app-id))))
 
     (entitlements-poller/run)
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
@@ -91,33 +84,28 @@
   (db/add-user! {:user "handler" :userattrs nil})
   (db/add-user! {:user "jack" :userattrs nil})
   (db/add-user! {:user "jill" :userattrs nil})
-  (let [workflow {:type :workflow/dynamic :handlers ["handler"]}
-        wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :workflow (cheshire/generate-string workflow)}))
-        form-id (:id (form/create-form! "owner" {:form/organization "abc" :form/title "" :form/fields []}))
-        res1 (:id (db/create-resource! {:resid "resource1" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
-        res2 (:id (db/create-resource! {:resid "resource2" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
-        item1 (:id (db/create-catalogue-item! {:title "item1" :form form-id :resid res1 :wfid wf}))
-        item2 (:id (db/create-catalogue-item! {:title "item2" :form form-id :resid res2 :wfid wf}))
-        jack-app (:application-id (applications/create-application! "jack" [item1]))
-        jill-app (:application-id (applications/create-application! "jill" [item1 item2]))]
-    (is (nil? (applications/command! {:type :application.command/submit
-                                      :time (time/now)
-                                      :actor "jack"
-                                      :application-id jack-app})))
-    (is (nil? (applications/command! {:type :application.command/approve
-                                      :time (time/now)
-                                      :actor "handler"
-                                      :application-id jack-app
-                                      :comment ""})))
-    (is (nil? (applications/command! {:type :application.command/submit
-                                      :time (time/now)
-                                      :actor "jill"
-                                      :application-id jill-app})))
-    (is (nil? (applications/command! {:type :application.command/approve
-                                      :time (time/now)
-                                      :actor "handler"
-                                      :application-id jill-app
-                                      :comment ""})))
+  (let [wf (test-data/create-dynamic-workflow! {:handlers ["handler"]})
+        form-id (test-data/create-form! {})
+        res1 (test-data/create-resource! {:resource-ext-id "resource1"})
+        res2 (test-data/create-resource! {:resource-ext-id "resource2"})
+        item1 (test-data/create-catalogue-item! {:form-id form-id :resource-id res1 :workflow-id wf})
+        item2 (test-data/create-catalogue-item! {:form-id form-id :resource-id res2 :workflow-id wf})
+        jack-app (test-data/create-application! {:actor "jack" :catalogue-item-ids [item1]})
+        jill-app (test-data/create-application! {:actor "jill" :catalogue-item-ids [item1 item2]})]
+    (test-data/command! {:type :application.command/submit
+                         :application-id jack-app
+                         :actor "jack"})
+    (test-data/command! {:type :application.command/approve
+                         :application-id jack-app
+                         :actor "handler"
+                         :comment ""})
+    (test-data/command! {:type :application.command/submit
+                         :application-id jill-app
+                         :actor "jill"})
+    (test-data/command! {:type :application.command/approve
+                         :application-id jill-app
+                         :actor "handler"
+                         :comment ""})
     (entitlements-poller/run)
 
     (binding [context/*roles* #{:handler}]

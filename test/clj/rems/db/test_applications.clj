@@ -4,14 +4,10 @@
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]
             [rems.db.applications :refer [application-created-event application-external-id!]]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
-            [rems.db.form :as form]
-            [rems.db.licenses :as licenses]
-            [rems.db.resource :as resource]
+            [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
-            [rems.db.workflow :as workflow]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
@@ -47,26 +43,12 @@
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
 
 (deftest test-application-created-event
-  (let [wf-id (:id (workflow/create-workflow! {:type :dynamic
-                                               :organization "abc"
-                                               :title ""
-                                               :handlers []
-                                               :user-id "owner"}))
-        _ (assert wf-id)
-        form-id (:id (form/create-form! "owner" {:form/organization "abc"
-                                                 :form/title ""
-                                                 :form/fields []}))
-        _ (assert form-id)
-        res-id (:id (resource/create-resource! {:resid "res1"
-                                                :organization "abc"
-                                                :licenses []}
-                                               "owner"))
-        _ (assert res-id)
-        cat-id (:id (catalogue/create-catalogue-item! {:title ""
-                                                       :resid res-id
-                                                       :form form-id
-                                                       :wfid wf-id}))
-        _ (assert cat-id)]
+  (let [wf-id (test-data/create-dynamic-workflow! {})
+        form-id (test-data/create-form! {})
+        res-id (test-data/create-resource! {:resource-ext-id "res1"})
+        cat-id (test-data/create-catalogue-item! {:resource-id res-id
+                                                  :form-id form-id
+                                                  :workflow-id wf-id})]
 
     (testing "minimal application"
       (is (= {:event/type :application.event/created
@@ -86,16 +68,10 @@
                                          :actor "alice"}))))
 
     (testing "multiple resources"
-      (let [res-id2 (:id (resource/create-resource! {:resid "res2"
-                                                     :organization "abc"
-                                                     :licenses []}
-                                                    "owner"))
-            _ (assert res-id2)
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id
-                                                            :wfid wf-id}))
-            _ (assert cat-id2)]
+      (let [res-id2 (test-data/create-resource! {:resource-ext-id "res2"})
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id
+                                                       :workflow-id wf-id})]
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
@@ -129,20 +105,11 @@
                                                         :actor "alice"}))))
 
     (testing "error: catalogue items with different forms"
-      (let [form-id2 (:id (form/create-form! "owner" {:form/organization "abc"
-                                                      :form/title ""
-                                                      :form/fields []}))
-            _ (assert form-id2)
-            res-id2 (:id (resource/create-resource! {:resid "res2+"
-                                                     :organization "abc"
-                                                     :licenses []}
-                                                    "owner"))
-            _ (assert res-id2)
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id2
-                                                            :wfid wf-id}))
-            _ (assert cat-id2)]
+      (let [form-id2 (test-data/create-form! {})
+            res-id2 (test-data/create-resource! {:resource-ext-id "res2+"})
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id2
+                                                       :workflow-id wf-id})]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
                               (application-created-event {:application-id 42
                                                           :catalogue-item-ids [cat-id cat-id2]
@@ -150,22 +117,11 @@
                                                           :actor "alice"})))))
 
     (testing "error: catalogue items with different workflows"
-      (let [wf-id2 (:id (workflow/create-workflow! {:type :dynamic
-                                                    :organization "abc"
-                                                    :title ""
-                                                    :handlers []
-                                                    :user-id "owner"}))
-            _ (assert wf-id2)
-            res-id2 (:id (resource/create-resource! {:resid "res2++"
-                                                     :organization "abc"
-                                                     :licenses []}
-                                                    "owner"))
-            _ (assert res-id2)
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id
-                                                            :wfid wf-id2}))
-            _ (assert cat-id2)]
+      (let [wf-id2 (test-data/create-dynamic-workflow! {})
+            res-id2 (test-data/create-resource! {:resource-ext-id "res2++"})
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id
+                                                       :workflow-id wf-id2})]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
                               (application-created-event {:application-id 42
                                                           :catalogue-item-ids [cat-id cat-id2]
@@ -173,22 +129,12 @@
                                                           :actor "alice"})))))
 
     (testing "resource licenses"
-      (let [lic-id (:id (licenses/create-license! {:licensetype "text"
-                                                   :title ""
-                                                   :textcontent ""
-                                                   :localizations {}}
-                                                  "owner"))
-            _ (assert lic-id)
-            res-id2 (:id (resource/create-resource! {:resid "res2+++"
-                                                     :organization "abc"
-                                                     :licenses [lic-id]}
-                                                    "owner"))
-            _ (assert res-id2)
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id2
-                                                            :form form-id
-                                                            :wfid wf-id}))
-            _ (assert cat-id2)]
+      (let [lic-id (test-data/create-license! {})
+            res-id2 (test-data/create-resource! {:resource-ext-id "res2+++"
+                                                 :license-ids [lic-id]})
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
+                                                       :form-id form-id
+                                                       :workflow-id wf-id})]
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
@@ -206,24 +152,12 @@
                                            :actor "alice"})))))
 
     (testing "workflow licenses"
-      (let [lic-id (:id (licenses/create-license! {:licensetype "text"
-                                                   :title ""
-                                                   :textcontent ""
-                                                   :localizations {}}
-                                                  "owner"))
-            _ (assert lic-id)
-            wf-id2 (:id (workflow/create-workflow! {:type :dynamic
-                                                    :organization "abc"
-                                                    :title ""
-                                                    :handlers []
-                                                    :user-id "owner"}))
-            _ (assert wf-id2)
+      (let [lic-id (test-data/create-license! {})
+            wf-id2 (test-data/create-dynamic-workflow! {})
             _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id})
-            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
-                                                            :resid res-id
-                                                            :form form-id
-                                                            :wfid wf-id2}))
-            _ (assert cat-id2)]
+            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id
+                                                       :form-id form-id
+                                                       :workflow-id wf-id2})]
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
