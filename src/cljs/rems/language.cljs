@@ -6,7 +6,7 @@
  :language
  (fn [db _]
    (or (get-in db [:user-settings :language])
-       (:language db)
+       (:non-user-language db) ; for when the user is not logged in
        (:default-language db))))
 
 (reg-sub
@@ -40,4 +40,4 @@
      (if user-id
        (rf/dispatch [:rems.user-settings/update-user-settings user-id {:language language}])
        (do (update-language language)
-           {:db (assoc db :language language)})))))
+           {:db (assoc db :non-user-language language)})))))

@@ -1,7 +1,6 @@
 (ns rems.db.user-settings
   (:require [rems.config :refer [env]]
             [rems.db.core :as db]
-            [clojure.tools.logging :as log]
             [rems.json :as json]))
 
 (defn- default-settings []
