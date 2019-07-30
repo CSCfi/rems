@@ -38,6 +38,6 @@
  (fn [{:keys [db]} [_ language]]
    (let [user-id (get-in db [:identity :user :eppn])]
      (if user-id
-       (rf/dispatch [:rems.user-settings/update-user-settings user-id {:language language}])
+       (rf/dispatch [:rems.user-settings/update-user-settings {:language language}])
        (do (update-language language)
            {:db (assoc db :non-user-language language)})))))
