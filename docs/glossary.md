@@ -13,8 +13,7 @@
 ## Applications
 
 - workflow: describes how an application is handled
-  - the new dynamic workflow is pretty much just a list of handler user ids
-  - the old round-based workflow had a number of rounds, and approvers and reviewers attached to those rounds
+  - the dynamic workflow is pretty much just a list of handler user ids
 - form: a form template that an applicant fills in when applying for a catalogue item
 - licenses: the applicant must accept a number of licenses when making an application
   - can be text, a link, or an attached file
