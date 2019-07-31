@@ -126,7 +126,7 @@
                 :name (id-to-name id)
                 :placeholder placeholder
                 :max-length max-length
-                :class (if validation "form-control is-invalid" "form-control")
+                :class (when validation "is-invalid")
                 :defaultValue value
                 :on-change (comp on-change event-value)}]]))
 
