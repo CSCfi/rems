@@ -79,7 +79,8 @@
        :fieldset.form-group.field
        :div.form-group.field)
      (when fieldset
-       {:aria-required (not optional)})
+       {:aria-required (not optional)
+        :aria-invalid (boolean validation)})
      [(if fieldset
         :legend
         :label)
@@ -122,6 +123,7 @@
                            :name (id-to-name id)
                            :placeholder placeholder
                            :required (not optional)
+                           :aria-invalid (boolean validation)
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :defaultValue value
@@ -139,6 +141,7 @@
                 :name (id-to-name id)
                 :placeholder placeholder
                 :required (not optional)
+                :aria-invalid (boolean validation)
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :defaultValue value
@@ -157,6 +160,7 @@
                            :class (when validation "is-invalid")
                            :defaultValue value
                            :required (not optional)
+                           :aria-invalid (boolean validation)
                            :min min
                            :max max
                            :on-change (comp on-change event-value)}]]))
@@ -181,6 +185,7 @@
                                   :class (when validation "is-invalid")
                                   :defaultValue value
                                   :required (not optional)
+                                  :aria-invalid (boolean validation)
                                   :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
