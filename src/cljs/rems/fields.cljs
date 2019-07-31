@@ -64,17 +64,25 @@
   :diff - boolean, true if should show the diff between :value and :previous-value
   :diff-component - HTML, custom component for rendering a diff
   :validation - validation errors
+  :fieldset - boolean, true if the field should be wrapped in a fieldset
 
   editor-component - HTML, form component for editing the field"
-  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff] :as opts} editor-component]
+  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
   (let [id (:field/id opts)
         title (localized (:field/title opts))
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)]
-    [:div.form-group.field
-     [:label {:for (id-to-name id)}
+    ;; TODO: simplify fieldset code
+    [(if fieldset
+       :fieldset.form-group.field
+       :div.form-group.field)
+     [(if fieldset
+        :legend
+        :label)
+      (when (not fieldset)
+        {:for (id-to-name id)})
       title " "
       (when max-length
         (text-format :t.form/maxlength (str max-length)))
@@ -179,13 +187,14 @@
         value (:field/value opts)
         options (:field/options opts)
         selected-keys (decode-option-keys value)]
-    ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
     [field-wrapper
-     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
-                                                      :value (->> options
-                                                                  (filter #(contains? selected-keys (:key %)))
-                                                                  (map #(localized (:label %)))
-                                                                  (str/join ", "))}])
+     (assoc opts
+            :fieldset true
+            :readonly-component [readonly-field {:id (id-to-name id)
+                                                 :value (->> options
+                                                             (filter #(contains? selected-keys (:key %)))
+                                                             (map #(localized (:label %)))
+                                                             (str/join ", "))}])
      (into [:div]
            (for [{:keys [key label]} options]
              (let [option-id (str (id-to-name id) "-" key)
