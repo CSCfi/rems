@@ -31,11 +31,6 @@
   (into [:div.form-control.diff {:id id}]
         (formatted-diff value previous-value)))
 
-(defn- field-validation-message [validation title]
-  (when validation
-    [:div {:class "invalid-feedback"}
-     (text-format (:type validation) title)]))
-
 (defn- toggle-diff-button [item-id diff-visible on-toggle-diff]
   [:a.toggle-diff {:href "#"
                    :on-click (fn [event]
@@ -80,7 +75,9 @@
        :div.form-group.field)
      (when fieldset
        {:aria-required (not optional)
-        :aria-invalid (boolean validation)})
+        :aria-invalid (boolean validation)
+        :aria-describedby (when validation
+                            (str (id-to-name id) "-error"))})
      [(if fieldset
         :legend
         :label)
@@ -105,7 +102,9 @@
                     [readonly-field {:id (id-to-name id)
                                      :value value}])
        :else editor-component)
-     [field-validation-message validation title]]))
+     (when validation
+       [:div.invalid-feedback {:id (str (id-to-name id) "-error")}
+        (text-format (:type validation) title)])]))
 
 (defn- event-value [event]
   (.. event -target -value))
@@ -124,6 +123,8 @@
                            :placeholder placeholder
                            :required (not optional)
                            :aria-invalid (boolean validation)
+                           :aria-describedby (when validation
+                                               (str (id-to-name id) "-error"))
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :defaultValue value
@@ -142,6 +143,8 @@
                 :placeholder placeholder
                 :required (not optional)
                 :aria-invalid (boolean validation)
+                :aria-describedby (when validation
+                                    (str (id-to-name id) "-error"))
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :defaultValue value
@@ -161,6 +164,8 @@
                            :defaultValue value
                            :required (not optional)
                            :aria-invalid (boolean validation)
+                           :aria-describedby (when validation
+                                               (str (id-to-name id) "-error"))
                            :min min
                            :max max
                            :on-change (comp on-change event-value)}]]))
@@ -186,6 +191,8 @@
                                   :defaultValue value
                                   :required (not optional)
                                   :aria-invalid (boolean validation)
+                                  :aria-describedby (when validation
+                                                      (str (id-to-name id) "-error"))
                                   :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
