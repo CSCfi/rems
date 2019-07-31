@@ -78,6 +78,8 @@
     [(if fieldset
        :fieldset.form-group.field
        :div.form-group.field)
+     (when fieldset
+       {:aria-required (not optional)})
      [(if fieldset
         :legend
         :label)
@@ -112,12 +114,14 @@
   (let [id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
+        optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [:input.form-control {:type "text"
                            :id (id-to-name id)
                            :name (id-to-name id)
                            :placeholder placeholder
+                           :required (not optional)
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :defaultValue value
@@ -128,11 +132,13 @@
   (let [id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
+        optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [textarea {:id (id-to-name id)
                 :name (id-to-name id)
                 :placeholder placeholder
+                :required (not optional)
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :defaultValue value
@@ -141,7 +147,8 @@
 (defn date-field
   [{:keys [min max validation on-change] :as opts}]
   (let [id (:field/id opts)
-        value (:field/value opts)]
+        value (:field/value opts)
+        optional (:field/optional opts)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [field-wrapper opts
      [:input.form-control {:type "date"
@@ -149,6 +156,7 @@
                            :name (id-to-name id)
                            :class (when validation "is-invalid")
                            :defaultValue value
+                           :required (not optional)
                            :min min
                            :max max
                            :on-change (comp on-change event-value)}]]))
@@ -163,7 +171,8 @@
 (defn option-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
         value (:field/value opts)
-        options (:field/options opts)]
+        options (:field/options opts)
+        optional (:field/optional opts)]
     [field-wrapper
      (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
                                                       :value (option-label value options)}])
@@ -171,6 +180,7 @@
                                   :name (id-to-name id)
                                   :class (when validation "is-invalid")
                                   :defaultValue value
+                                  :required (not optional)
                                   :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
