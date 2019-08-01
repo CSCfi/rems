@@ -36,6 +36,9 @@
 (rf/reg-event-db ::merge-state (fn [db [_ state]] (update db ::state deep-merge state)))
 (rf/reg-sub ::state (fn [db _] (::state db)))
 
+(defn close []
+  (rf/dispatch [::set-state nil]))
+
 (defn status-modal
   "Modal component showing the status of an action.
 
@@ -68,7 +71,7 @@
                            :title-class (when (or errors error-content) "alert alert-danger")
                            :content content
                            :on-close (fn []
-                                       (rf/dispatch [::set-state nil])
+                                       (close)
                                        (when on-close (on-close)))
                            :shade? shade?}])))
 
