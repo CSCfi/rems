@@ -50,7 +50,7 @@
                            :on-change on-change}]]))
 
 (defn invite-member-view
-  [{:keys [name email on-invite-member on-remove-member on-send]}]
+  [{:keys [name email on-send]}]
   [action-form-view action-form-id
    (text :t.actions/invite-member)
    [[button-wrapper {:id "invite-member"
@@ -75,8 +75,6 @@
         email @(rf/subscribe [::email])]
     [invite-member-view {:name name
                          :email email
-                         :on-invite-member #(rf/dispatch [::add-selected-member %])
-                         :on-remove-member #(rf/dispatch [::remove-selected-member %])
                          :on-send #(rf/dispatch [::send-invite-member {:application-id application-id
                                                                        :member {:name name :email email}
                                                                        :on-finished on-finished}])}]))
