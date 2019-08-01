@@ -42,21 +42,6 @@
 
 (s/defschema ResourceLicense License)
 
-(s/defschema ApplicationLicense
-  (merge License
-         {:type (s/eq "license") ;; TODO this is pretty redundant
-          :approved s/Bool}))
-
-(s/defschema Item
-  {:id s/Int
-   :localizations {s/Keyword {:title s/Str :inputprompt (s/maybe s/Str)}}
-   :optional s/Bool
-   :options [{:key s/Str :label {s/Keyword s/Str}}]
-   :maxlength (s/maybe s/Int)
-   :type s/Str
-   :value (s/maybe s/Str)
-   :previous-value (s/maybe s/Str)})
-
 (s/defschema Event
   (assoc events/EventBase
          s/Keyword s/Any))
@@ -110,11 +95,6 @@
 
 (def UserId s/Str)
 
-(s/defschema Actor
-  {:actoruserid UserId
-   :round s/Int
-   :role (s/enum "approver" "reviewer")})
-
 (s/defschema WorkflowLicense
   {:type s/Str
    :start DateTime
@@ -122,25 +102,19 @@
    :localizations [s/Any]
    :end (s/maybe DateTime)})
 
-(s/defschema WorkflowDB ; TODO: unify workflow schemas
+(s/defschema Workflow
   {:id s/Int
    :organization s/Str
    :owneruserid UserId
    :modifieruserid UserId
    :title s/Str
    :workflow s/Any
-   :licenses s/Any
+   :licenses [WorkflowLicense]
    :start DateTime
    :end (s/maybe DateTime)
    :expired s/Bool
    :enabled s/Bool
    :archived s/Bool})
-
-(s/defschema Workflow
-  (-> WorkflowDB
-      (dissoc :licenses)
-      (assoc :actors [Actor]
-             :licenses [WorkflowLicense])))
 
 (def not-neg? (partial <= 0))
 

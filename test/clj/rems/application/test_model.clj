@@ -194,7 +194,7 @@
   (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
                                         ["catalogue item" schema/CatalogueItem get-catalogue-item]
                                         ["license" schema/License get-license]
-                                        ["workflow" schema/WorkflowDB get-workflow]]]
+                                        ["workflow" schema/Workflow get-workflow]]]
     (doseq [[id dummy] dummies]
       (testing (str description " " id)
         (is (s/validate schema dummy))))))
