@@ -26,18 +26,28 @@
        (dissoc ::loading?))))
 
 (rf/reg-sub ::page-id (fn [db _] (::page-id db)))
-(rf/reg-sub ::title (fn [db _] (let [page-id (::page-id db)
-                                     language (:language db)]
-                                 (->> db
-                                      :config
-                                      :extra-pages
-                                      (filter #(= page-id (:id %)))
-                                      first
-                                      :translations
-                                      language
-                                      :title))))
 (rf/reg-sub ::content (fn [db _] (::content db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+
+(rf/reg-sub
+ ::page
+ (fn [db _]
+   (let [page-id (::page-id db)]
+     (->> db
+          :config
+          :extra-pages
+          (filter #(= page-id (:id %)))
+          first))))
+
+(rf/reg-sub
+ ::title
+ (fn [_ _]
+   [(rf/subscribe [::page]) (rf/subscribe [:language])])
+ (fn [[page language] _]
+   (->> page
+        :translations
+        language
+        :title)))
 
 ;;;; Entry point
 

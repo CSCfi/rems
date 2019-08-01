@@ -6,7 +6,7 @@
  :language
  (fn [db _]
    (or (get-in db [:user-settings :language])
-       (:language db)
+       (:non-user-language db) ; for when the user is not logged in
        (:default-language db))))
 
 (reg-sub
@@ -21,15 +21,6 @@
  (fn [db _]
    (:default-language db)))
 
-(reg-event-fx
- ::set-language
- (fn [{:keys [db]} [_ language]]
-   (let [user-id (get-in db [:identity :user :eppn])]
-     (if user-id
-       (rf/dispatch [:rems.user-settings/update-user-settings user-id {:language language}])
-       (do (update-language language)
-           {:db (assoc db :language language)})))))
-
 (defn- update-css [language]
   (let [localized-css (str "/css/" (name language) "/screen.css")]
     ;; Figwheel replaces the linked stylesheet
@@ -41,3 +32,12 @@
 (defn update-language [language]
   (set! (.. js/document -documentElement -lang) (name language))
   (update-css language))
+
+(reg-event-fx
+ ::set-language
+ (fn [{:keys [db]} [_ language]]
+   (let [user-id (get-in db [:identity :user :eppn])]
+     (if user-id
+       (rf/dispatch [:rems.user-settings/update-user-settings {:language language}])
+       (do (update-language language)
+           {:db (assoc db :non-user-language language)})))))
