@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.atoms :refer [enrich-user]]
-            [rems.autocomplete :as autocomplete]
+            [rems.dropdown :as dropdown]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
@@ -31,8 +31,6 @@
 
 (rf/reg-sub ::selected-deciders (fn [db _] (::selected-deciders db)))
 (rf/reg-event-db ::set-selected-deciders (fn [db [_ deciders]] (assoc db ::selected-deciders deciders)))
-(rf/reg-event-db ::add-selected-decider (fn [db [_ decider]] (update db ::selected-deciders conj decider)))
-(rf/reg-event-db ::remove-selected-decider (fn [db [_ decider]] (update db ::selected-deciders disj decider)))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
@@ -59,7 +57,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-decision-view
-  [{:keys [selected-deciders potential-deciders comment on-set-comment on-add-decider on-remove-decider on-send]}]
+  [{:keys [selected-deciders potential-deciders comment on-set-comment on-set-deciders on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-decision)
    [[button-wrapper {:id "request-decision"
@@ -74,16 +72,12 @@
                      :on-comment on-set-comment}]
     [:div.form-group
      [:label (text :t.actions/request-selection)]
-     [autocomplete/component
-      {:value (sort-by :display selected-deciders)
-       :items potential-deciders
-       :value->text #(:display %2)
-       :item->key :userid
-       :item->text :display
-       :item->value identity
-       :search-fields [:name :email]
-       :add-fn on-add-decider
-       :remove-fn on-remove-decider}]]]])
+     [dropdown/dropdown
+      {:items potential-deciders
+       :item->label :display
+       :item->selected? #(contains? (set selected-deciders) %)
+       :multi? true
+       :on-change on-set-deciders}]]]])
 
 (defn request-decision-form [application-id on-finished]
   (let [selected-deciders @(rf/subscribe [::selected-deciders])
@@ -93,8 +87,7 @@
                             :potential-deciders potential-deciders
                             :comment comment
                             :on-set-comment #(rf/dispatch [::set-comment %])
-                            :on-add-decider #(rf/dispatch [::add-selected-decider %])
-                            :on-remove-decider #(rf/dispatch [::remove-selected-decider %])
+                            :on-set-deciders #(rf/dispatch [::set-selected-deciders %])
                             :on-send #(rf/dispatch [::send-request-decision {:application-id application-id
                                                                              :deciders selected-deciders
                                                                              :comment comment

@@ -210,6 +210,9 @@
     (seq? obj) (map remove-nil-vals obj)
     :else obj))
 
+(defn- make-important [style]
+  (into {} (mapv (fn [[k v]] (vector k (str v " !important"))) style)))
+
 (deftest test-remove-nil-vals
   (testing "empty"
     (is (= nil
@@ -655,56 +658,20 @@
      :.application-description {:max-width "30em"}
      :.application-applicant {:max-width "10em"}]]
 
-   ;; autocomplete, duplicates some Bootstrap styling
-   ;; because the component classes are hard-coded
-   [:.autocomplete {:width (u/percent 100)}
-    [:.autocomplete__control
-     [:input {;; from Bootstrap .form-control
-              :display :block
-              :width (u/percent 100)
-              :padding [[(u/rem 0.375) (u/rem 0.75)]]
-              :font-size (u/rem 1)
-              :line-height 1.5
-              :color "#495057"
-              :background-color "#fff"
-              :background-image :none
-              :background-clip :padding-box
-              :border [[(u/px 1) :solid "#ced4da"]]
-              :border-radius (u/rem 0.25)
-              :transition [[:border-color :ease-in-out (u/s 0.15) :box-shadow :ease-in-out (u/s 0.15)]]}]
-     ["input:focus" {:color "#495057"
-                     :background-color "#fff"
-                     :border-color "#80bdff"
-                     :outline 0
-                     :outline-offset (u/px -2)
-                     :box-shadow [[0 0 0 (u/rem 0.2) "rgba(0,123,255,.25)"]]}]]
-    [:.autocomplete__selected-items {:display :inline-block}]
-    [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
-    [:.autocomplete__selected-item {:height (u/px 40)
-                                    :line-height (u/px 40)
-                                    :color (util/get-theme-attribute :table-heading-color "#fff")
-                                    :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
-                                    :border-radius (u/rem 0.25)
-                                    :border [[(u/px 1) :solid "#111"]]}]
-    [:.autocomplete__dropdown {:padding (u/px 10)}]
-    [:.autocomplete__control [:input {:display :inline-block}]]
-    [:.autocomplete__item {:padding (u/px 10)}]
-    [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "#fff")
-                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}
-     [:.text-warning :.text-danger {:color "inherit!important"}]]
-    [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "#fff")
-                                 :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
-                                 :cursor :pointer}
-     [:.text-warning :.text-danger {:color "inherit!important"}]]
-    [:.autocomplete__selected-item {:display :inline-block
-                                    :padding [[0 (u/rem 0.5)]]
-                                    :margin-right (u/px 10)}
-     [:a.autocomplete__remove-item-button {:margin-left (u/px 5)
-                                           :padding (u/rem 0.5)
-                                           :padding-right 0
-                                           :color (util/get-theme-attribute :alert-danger-color)
-                                           :font-weight :bold}]
-     [:input {:width (u/percent 100)}]]]
+   ;; !important is needed here, otherwise these attributes are overridden
+   ;; by more specific styles by react-select.
+   [:.dropdown-select__option--is-focused
+    (make-important
+     {:color (util/get-theme-attribute :table-heading-color "#fff")
+      :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)})]
+   [:.dropdown-select__control--is-focused
+    (make-important
+     {:color "#495057"
+      :background-color "#fff"
+      :border-color "#80bdff"
+      :outline "0"
+      :outline-offset "-2px"
+      :box-shadow "0 0 0 0.2rem rgba(0,123,255,.25)"})]
 
    (generate-phase-styles)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]

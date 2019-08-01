@@ -141,8 +141,6 @@
                  :submitted "Lähetetty"
                  :latest-activity "Viimeisin toimenpide"
                  :view "Näytä"}
-  :autocomplete {:no-results "Ei tuloksia"
-                 :placeholder "Valitse tai kirjoita"}
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
@@ -199,6 +197,8 @@
                     :dynamic-workflow-description "Hakemuksen käsittelijä päättää tapauskohtaisesti, tarvitseeko hakemus katselmointia tai hyväksyntää."
                     :handlers "Käsittelijät"
                     :title "Työvuon nimi"}
+  :dropdown {:no-results "Ei tuloksia"
+             :placeholder "Valitse..."}
   :email {:application-approved {:subject "Hakemus hyväksytty (%3)"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nTarkastele hakemusta: %5"
                                  :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}

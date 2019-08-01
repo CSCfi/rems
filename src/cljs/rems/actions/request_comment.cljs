@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.atoms :refer [enrich-user]]
-            [rems.autocomplete :as autocomplete]
+            [rems.dropdown :as dropdown]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
@@ -32,8 +32,6 @@
 
 (rf/reg-sub ::selected-commenters (fn [db _] (::selected-commenters db)))
 (rf/reg-event-db ::set-selected-commenters (fn [db [_ commenters]] (assoc db ::selected-commenters commenters)))
-(rf/reg-event-db ::add-selected-commenter (fn [db [_ commenter]] (update db ::selected-commenters conj commenter)))
-(rf/reg-event-db ::remove-selected-commenter (fn [db [_ commenter]] (update db ::selected-commenters disj commenter)))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
@@ -60,7 +58,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-comment-view
-  [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
+  [{:keys [selected-commenters potential-commenters comment on-set-comment on-set-commenters on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-comment)
    [[button-wrapper {:id "request-comment"
@@ -75,16 +73,12 @@
                      :on-comment on-set-comment}]
     [:div.form-group
      [:label (text :t.actions/request-selection)]
-     [autocomplete/component
-      {:value (sort-by :display selected-commenters)
-       :items potential-commenters
-       :value->text #(:display %2)
-       :item->key :userid
-       :item->text :display
-       :item->value identity
-       :search-fields [:name :email]
-       :add-fn on-add-commenter
-       :remove-fn on-remove-commenter}]]]])
+     [dropdown/dropdown
+      {:items potential-commenters
+       :item->label :display
+       :item->selected? #(contains? (set selected-commenters) %)
+       :multi? true
+       :on-change on-set-commenters}]]]])
 
 (defn request-comment-form [application-id on-finished]
   (let [selected-commenters @(rf/subscribe [::selected-commenters])
@@ -94,8 +88,7 @@
                            :potential-commenters potential-commenters
                            :comment comment
                            :on-set-comment #(rf/dispatch [::set-comment %])
-                           :on-add-commenter #(rf/dispatch [::add-selected-commenter %])
-                           :on-remove-commenter #(rf/dispatch [::remove-selected-commenter %])
+                           :on-set-commenters #(rf/dispatch [::set-selected-commenters %])
                            :on-send #(rf/dispatch [::send-request-comment {:application-id application-id
                                                                            :commenters selected-commenters
                                                                            :comment comment

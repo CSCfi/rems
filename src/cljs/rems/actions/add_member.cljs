@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
             [rems.atoms :refer [enrich-user]]
-            [rems.autocomplete :as autocomplete]
+            [rems.dropdown :as dropdown]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
@@ -31,7 +31,6 @@
           ::selected-member nil)))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
-(rf/reg-event-db ::remove-selected-member (fn [db [_ member]] (dissoc db ::selected-member)))
 (rf/reg-sub ::selected-member (fn [db _] (::selected-member db)))
 
 (def ^:private action-form-id "add-member")
@@ -55,7 +54,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn add-member-view
-  [{:keys [selected-member potential-members on-add-member on-remove-member on-send]}]
+  [{:keys [selected-member potential-members on-set-member on-send]}]
   [action-form-view action-form-id
    (text :t.actions/add-member)
    [[button-wrapper {:id "add-member-submit"
@@ -65,16 +64,11 @@
    [:div
     [:div.form-group
      [:label (text :t.actions/member)]
-     [autocomplete/component
-      {:value (when selected-member [selected-member])
-       :items potential-members
-       :value->text #(:display %2)
-       :item->key :userid
-       :item->text :display
-       :item->value identity
-       :search-fields [:name :email]
-       :add-fn on-add-member
-       :remove-fn on-remove-member}]]]
+     [dropdown/dropdown
+      {:items potential-members
+       :item->label :display
+       :item->selected? #(= selected-member %)
+       :on-change on-set-member}]]]
    {:collapse-id "member-action-forms"}])
 
 (defn add-member-form [application-id on-finished]
@@ -82,8 +76,7 @@
         potential-members @(rf/subscribe [::potential-members])]
     [add-member-view {:selected-member selected-member
                       :potential-members potential-members
-                      :on-add-member #(rf/dispatch [::set-selected-member %])
-                      :on-remove-member #(rf/dispatch [::remove-selected-member %])
+                      :on-set-member #(rf/dispatch [::set-selected-member %])
                       :on-send #(rf/dispatch [::send-add-member {:application-id application-id
                                                                  :member selected-member
                                                                  :on-finished on-finished}])}]))

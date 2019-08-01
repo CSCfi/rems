@@ -5,9 +5,9 @@
             [rems.application-list :as application-list]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.auth.auth :as auth]
-            [rems.autocomplete :as autocomplete]
             [rems.cart :as cart]
             [rems.collapsible :as collapsible]
+            [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.language-switcher :as language-switcher]
             [rems.modal :as modal]
@@ -124,6 +124,6 @@
 
     [:h2 "Misc components"]
     [table/guide]
-    [autocomplete/guide]
+    [dropdown/guide]
     [phase/guide]
     [atoms/guide]]])
