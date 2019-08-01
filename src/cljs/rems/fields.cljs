@@ -8,7 +8,7 @@
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- id-to-name [id]
+(defn id-to-name [id]
   (str "field" id))
 
 (defn- diff [value previous-value]
@@ -74,7 +74,9 @@
        :fieldset.form-group.field
        :div.form-group.field)
      (when fieldset
-       {:aria-required (not optional)
+       {:id (id-to-name id)
+        :tab-index -1
+        :aria-required (not optional)
         :aria-invalid (boolean validation)
         :aria-describedby (when validation
                             (str (id-to-name id) "-error"))})
@@ -249,7 +251,8 @@
         title (localized (:field/title opts))
         value (:field/value opts)
         filename (get-in opts [:field/attachment :attachment/filename])
-        click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
+        upload-field-id (str (id-to-name id) "-input")
+        click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document upload-field-id))))
         link (fn [attachment-id filename]
                (if (empty? attachment-id)
                  [:div.field.mr-2
@@ -262,8 +265,8 @@
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
-                               :id (id-to-name id)
-                               :name (id-to-name id)
+                               :id upload-field-id
+                               :name upload-field-id
                                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                                :class (when validation "is-invalid")
                                :on-change (fn [event]
@@ -274,7 +277,8 @@
                                               (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
                       [:button.btn.btn-secondary
-                       {:type :button
+                       {:id (id-to-name id)
+                        :type :button
                         :on-click click-upload}
                        (text :t.form/upload)]]
         remove-button [:button.btn.btn-secondary.mr-2
