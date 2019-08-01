@@ -1,6 +1,7 @@
 (ns rems.spinner
-  (:require [rems.guide-functions]
-            [re-frame.core :as rf])
+  (:require [re-frame.core :as rf]
+            [rems.guide-functions]
+            [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn big
@@ -12,12 +13,14 @@
                   :color (:color2 theme :transparent)
                   :margin "32px"
                   :font-size "40px"}
-          :class "fas fa-spinner fa-spin"}]]))
+          :class "fas fa-spinner fa-spin"
+          :aria-label (text :t.form/please-wait)}]]))
 
 (defn small
   "Small spinner for indicating loading or in-progress state."
   []
-  [:i {:class "fas fa-spinner fa-spin"}])
+  [:i {:class "fas fa-spinner fa-spin"
+       :aria-label (text :t.form/please-wait)}])
 
 (defn guide
   []
