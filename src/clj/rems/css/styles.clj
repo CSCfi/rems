@@ -599,9 +599,9 @@
    [:.license-panel {:display :inline-block
                      :width "inherit"}]
    [:.card-header.clickable {:cursor "pointer"}]
+   [:.rems-card-margin-fix {:margin (u/px -1)}]  ; make sure header overlaps container border
    [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color "#fff")
-                        :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
-                        :margin (u/px -1)}] ; make sure header overlaps container border
+                        :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
    [(s/descendant :.card-header :a) {:color :inherit}]
    [:.application-resources
     [:.application-resource {:margin-bottom (u/rem 1)
