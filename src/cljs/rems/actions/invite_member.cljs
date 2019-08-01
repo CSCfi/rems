@@ -20,17 +20,24 @@
 
 (def ^:private action-form-id "invite-member")
 
+(defn- validate-member [{:keys [name email]}]
+  (when (or (empty? name)
+            (empty? email))
+    [{:type :t.actions/name-and-email-required}]))
+
 (rf/reg-event-fx
  ::send-invite-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/invite-member))
-   (post! "/api/applications/invite-member"
-          {:params {:application-id application-id
-                    :member member}
-           :handler (partial status-modal/common-success-handler! (fn [_]
-                                                                    (collapse-action-form action-form-id)
-                                                                    (on-finished)))
-           :error-handler status-modal/common-error-handler!})
+   (if-let [errors (validate-member member)]
+     (status-modal/set-error! {:result {:errors errors}})
+     (post! "/api/applications/invite-member"
+            {:params {:application-id application-id
+                      :member member}
+             :handler (partial status-modal/common-success-handler! (fn [_]
+                                                                      (collapse-action-form action-form-id)
+                                                                      (on-finished)))
+             :error-handler status-modal/common-error-handler!}))
    {}))
 
 (defn invite-member-action-button []
