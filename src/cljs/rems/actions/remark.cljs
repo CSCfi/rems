@@ -45,18 +45,19 @@
                      :text (text :t.actions/remark)
                      :class "btn-primary"
                      :on-click on-send}]]
-   [:div [action-comment {:id action-form-id
-                          :label (text :t.form/add-remark)
-                          :comment comment
-                          :on-comment on-set-comment}]
-         [:input {:type "checkbox"
-                  :id "public"
-                  :name "public"
-                  :value public
-                  :on-change #(on-set-public (.. % -target -checked))}]
-         [:label.form-check-label {:for "public"}
-          (text :t.actions/remark-public)]]])
-
+   [:div
+    [action-comment {:id action-form-id
+                     :label (text :t.form/add-remark)
+                     :comment comment
+                     :on-comment on-set-comment}]
+    [:div.form-check
+     [:input.form-check-input {:type "checkbox"
+                               :id "public"
+                               :name "public"
+                               :value public
+                               :on-change #(on-set-public (.. % -target -checked))}]
+     [:label.form-check-label {:for "public"}
+      (text :t.actions/remark-public)]]]])
 
 (defn remark-form [application-id on-finished]
   [remark-view {:comment @(rf/subscribe [::comment])
