@@ -553,14 +553,13 @@
                    :justify-content "space-between"
                    :min-width "100%"}]
    [(s/> :.form-actions "*:not(:first-child)")
+    (s/> :#action-commands "*:not(:first-child)")
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
    [".btn-opens-more::after" {:content "'...'"}]
 
    [:#action-commands {:display "flex"
                        :flex-flow "row wrap"}]
-   [(s/> :#action-commands :button)
-    {:margin-bottom (u/em 0.5)}]
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
