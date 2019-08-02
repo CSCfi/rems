@@ -20,22 +20,21 @@
   (or (datestring-coercion-matcher schema)
       (coerce/string-coercion-matcher schema)))
 
-;; TODO: remove "dynamic" from names
-(def ^:private coerce-dynamic-event-commons
+(def ^:private coerce-event-commons
   (coerce/coercer (st/open-schema events/EventBase) coercion-matcher))
 
-(def ^:private coerce-dynamic-event-specifics
+(def ^:private coerce-event-specifics
   (coerce/coercer events/Event coercion-matcher))
 
-(defn- coerce-dynamic-event [event]
+(defn- coerce-event [event]
   ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
   (-> event
-      coerce-dynamic-event-commons
-      coerce-dynamic-event-specifics))
+      coerce-event-commons
+      coerce-event-specifics))
 
 (defn json->event [json]
   (when json
-    (let [result (coerce-dynamic-event (json/parse-string json))]
+    (let [result (coerce-event (json/parse-string json))]
       (when (schema.utils/error? result)
         ;; similar exception as what schema.core/validate throws
         (throw (ex-info (str "Value does not match schema: " (pr-str result))
