@@ -71,6 +71,7 @@
 
   :source-paths ["src/clj" "src/cljc"]
   :java-source-paths ["src/java"]
+  :javac-options ["-source" "8" "-target" "8"]
   :test-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ;; also run tests from src files
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
