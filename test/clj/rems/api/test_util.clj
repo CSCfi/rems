@@ -55,6 +55,14 @@
              (get-in route [:info :public :summary])))))
 
   (testing "summary documentation is required"
-    ; TODO: is there a way to test exceptions thrown from macros, so that we don't need to expose this private helper function?
-    (is (thrown-with-msg? IllegalArgumentException #"^\QRoute must have a :summary when using :roles and it must be specified before :roles\E$"
-                          (add-roles-documentation nil #{:some-role})))))
+    (try
+      (eval
+       `(GET "/foo" []
+          :roles #{:some-role}
+          (ok {:success true})))
+      (is false "did not throw")
+      (catch clojure.lang.Compiler$CompilerException ce
+        (is (-> ce
+                 .getCause
+                 .getMessage
+                 (.contains "Route must have a :summary when using :roles and it must be specified before :roles")))))))
