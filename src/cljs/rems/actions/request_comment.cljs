@@ -75,8 +75,8 @@
      [:label (text :t.actions/request-selection)]
      [dropdown/dropdown
       {:items potential-commenters
-       :item->label :display
-       :item->selected? #(contains? (set selected-commenters) %)
+       :item-label :display
+       :item-selected? #(contains? (set selected-commenters) %)
        :multi? true
        :on-change on-set-commenters}]]]])
 

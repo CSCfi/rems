@@ -66,8 +66,8 @@
      [:label (text :t.actions/member)]
      [dropdown/dropdown
       {:items potential-members
-       :item->label :display
-       :item->selected? #(= selected-member %)
+       :item-label :display
+       :item-selected? #(= selected-member %)
        :on-change on-set-member}]]]
    {:collapse-id "member-action-forms"}])
 

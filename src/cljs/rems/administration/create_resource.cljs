@@ -95,8 +95,8 @@
      [:label (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
       {:items (map localize-item available-licenses)
-       :item->label :title
-       :item->selected? #(contains? (set selected-licenses) %)
+       :item-label :title
+       :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change #(rf/dispatch [::set-licenses %])}]]))
 

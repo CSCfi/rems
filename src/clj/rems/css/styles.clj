@@ -211,7 +211,7 @@
     :else obj))
 
 (defn- make-important [style]
-  (into {} (mapv (fn [[k v]] (vector k (str v " !important"))) style)))
+  (map-vals #(str % " !important") style))
 
 (deftest test-remove-nil-vals
   (testing "empty"

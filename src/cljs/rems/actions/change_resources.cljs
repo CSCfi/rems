@@ -152,9 +152,9 @@
          [:label (text :t.actions/resources-selection)]
          [dropdown/dropdown
           {:items sorted-selected-catalogue
-           :item->disabled? #(not (compatible-item? % enriched-selected-resources original-workflow-id original-form-id))
-           :item->label #(get-localized-title % language)
-           :item->selected? #(contains? (set selected-resources) (% :id))
+           :item-disabled? #(not (compatible-item? % enriched-selected-resources original-workflow-id original-form-id))
+           :item-label #(get-localized-title % language)
+           :item-selected? #(contains? (set selected-resources) (% :id))
            :multi? true
            :on-change on-set-resources}]]])]))
 

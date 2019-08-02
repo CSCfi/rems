@@ -177,8 +177,8 @@
      [:label (text :t.create-workflow/handlers)]
      [dropdown/dropdown
       {:items all-handlers
-       :item->label :display
-       :item->selected? #(contains? selected-handlers (% :userid))
+       :item-label :display
+       :item-selected? #(contains? selected-handlers (% :userid))
        :multi? true
        :on-change #(rf/dispatch [::set-handlers %])}]]))
 

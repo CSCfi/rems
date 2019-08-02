@@ -74,8 +74,8 @@
      [:label (text :t.actions/request-selection)]
      [dropdown/dropdown
       {:items potential-deciders
-       :item->label :display
-       :item->selected? #(contains? (set selected-deciders) %)
+       :item-label :display
+       :item-selected? #(contains? (set selected-deciders) %)
        :multi? true
        :on-change on-set-deciders}]]]])
 

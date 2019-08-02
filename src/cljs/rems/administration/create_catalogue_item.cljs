@@ -140,8 +140,8 @@
      [:label (text :t.create-catalogue-item/workflow-selection)]
      [dropdown/dropdown
       {:items workflows
-       :item->label :title
-       :item->selected? #(= (:id %) (:id selected-workflow))
+       :item-label :title
+       :item-selected? #(= (:id %) (:id selected-workflow))
        :on-change #(rf/dispatch [::set-selected-workflow %])}]]))
 
 (defn- catalogue-item-resource-field []
@@ -151,8 +151,8 @@
      [:label (text :t.create-catalogue-item/resource-selection)]
      [dropdown/dropdown
       {:items resources
-       :item->label :resid
-       :item->selected? #(= (:id %) (:id selected-resource))
+       :item-label :resid
+       :item-selected? #(= (:id %) (:id selected-resource))
        :on-change #(rf/dispatch [::set-selected-resource %])}]]))
 
 (defn- catalogue-item-form-field []
@@ -162,8 +162,8 @@
      [:label (text :t.create-catalogue-item/form-selection)]
      [dropdown/dropdown
       {:items forms
-       :item->label :form/title
-       :item->selected? #(= (:form/id %) (:id selected-form))
+       :item-label :form/title
+       :item-selected? #(= (:form/id %) (:id selected-form))
        :on-change #(rf/dispatch [::set-selected-form %])}]]))
 
 (defn- cancel-button []

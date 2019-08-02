@@ -84,8 +84,8 @@
      [:label (text :t.actions/licenses-selection)]
      [dropdown/dropdown
       {:items potential-licenses
-       :item->label #(title-of-license % language)
-       :item->selected? #(contains? (set selected-licenses) %)
+       :item-label #(title-of-license % language)
+       :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change on-set-licenses}]]]])
 
