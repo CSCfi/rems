@@ -48,14 +48,6 @@
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
   (validate/validate))
 
-(defn repl-help []
-  (println "Welcome to REMS!")
-  (println "Some useful commands:")
-  (println "  Run the server  (start-app)")
-  (println "  Run all tests   (user/run-all-tests)")
-  (println "  Run some tests  (user/run-tests 'rems.test.api.applications 'rems.test.api.actions)")
-  (println "  Pretty-print a transit payload from your clipboard  (user/pptransit)"))
-
 (defn -main
   "Arguments can be either arguments to mount/start-with-args, or one of
      \"migrate\" -- migrate database

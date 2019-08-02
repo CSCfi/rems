@@ -159,8 +159,8 @@
                             "-Djdk.attach.allowAttachSelf"] ; needed by clj-memory-meter on Java 9+
                  :source-paths ["env/dev/clj"]
                  :resource-paths ["env/dev/resources"]
-                 :repl-options {:init-ns rems.standalone
-                                :welcome (rems.standalone/repl-help)}
+                 :repl-options {:init-ns rems
+                                :welcome (rems/repl-help)}
 
                  :cljsbuild {:builds {:dev {:source-paths ["src/cljs" "src/cljc"]
                                             :figwheel {:on-jsload "rems.spa/mount-components"}
