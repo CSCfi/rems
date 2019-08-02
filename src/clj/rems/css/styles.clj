@@ -456,13 +456,16 @@
                                  :padding-left (u/px 20)
                                  :padding-right (u/px 20)
                                  :padding-top (u/px 8)}]
-   [:footer {:width "100%"
-             :height (u/px 53.6)
-             :color (util/get-theme-attribute :footer-color :table-heading-color "#fff")
-             :background-color (util/get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
-             :text-align "center"
-             :margin-top (u/em 1)}
-    [:.navbar {:color (util/get-theme-attribute :footer-color :table-heading-color "#fff")}]]
+   (let [footer-text-color (util/get-theme-attribute :footer-color :table-heading-color "#fff")]
+     [:footer {:width "100%"
+               :height (u/px 53.6)
+               :color footer-text-color
+               :background-color (util/get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
+               :text-align "center"
+               :margin-top (u/em 1)}
+      [:.navbar {:color footer-text-color}]
+      [:a :a:hover {:color footer-text-color
+                    :font-weight (button-navbar-font-weight)}]])
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"
