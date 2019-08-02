@@ -77,7 +77,7 @@
        {:id (id-to-name id)
         :tab-index -1
         :aria-required (not optional)
-        :aria-invalid (boolean validation)
+        :aria-invalid (when validation true)
         :aria-describedby (when validation
                             (str (id-to-name id) "-error"))})
      [(if fieldset
@@ -130,7 +130,7 @@
                            :name (id-to-name id)
                            :placeholder placeholder
                            :required (not optional)
-                           :aria-invalid (boolean validation)
+                           :aria-invalid (when validation true)
                            :aria-describedby (when validation
                                                (str (id-to-name id) "-error"))
                            :max-length max-length
@@ -150,7 +150,7 @@
                 :name (id-to-name id)
                 :placeholder placeholder
                 :required (not optional)
-                :aria-invalid (boolean validation)
+                :aria-invalid (when validation true)
                 :aria-describedby (when validation
                                     (str (id-to-name id) "-error"))
                 :max-length max-length
@@ -171,7 +171,7 @@
                            :class (when validation "is-invalid")
                            :defaultValue value
                            :required (not optional)
-                           :aria-invalid (boolean validation)
+                           :aria-invalid (when validation true)
                            :aria-describedby (when validation
                                                (str (id-to-name id) "-error"))
                            :min min
@@ -198,7 +198,7 @@
                                   :class (when validation "is-invalid")
                                   :defaultValue value
                                   :required (not optional)
-                                  :aria-invalid (boolean validation)
+                                  :aria-invalid (when validation true)
                                   :aria-describedby (when validation
                                                       (str (id-to-name id) "-error"))
                                   :on-change (comp on-change event-value)}
