@@ -78,6 +78,8 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
+(def ^:private licenses-dropdown-id "licenses-dropdown")
+
 (defn- resource-organization-field []
   [text-field context {:keys [:organization]
                        :label (text :t.administration/organization)
@@ -92,9 +94,10 @@
   (let [available-licenses @(rf/subscribe [::licenses])
         selected-licenses @(rf/subscribe [::selected-licenses])]
     [:div.form-group
-     [:label (text :t.create-resource/licenses-selection)]
+     [:label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
-      {:items (map localize-item available-licenses)
+      {:id licenses-dropdown-id
+       :items (map localize-item available-licenses)
        :item-label :title
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true

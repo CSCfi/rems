@@ -36,6 +36,7 @@
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
 (def ^:private action-form-id "request-decision")
+(def ^:private dropdown-id "request-decision-dropdown")
 
 (rf/reg-event-fx
  ::send-request-decision
@@ -71,9 +72,10 @@
                      :comment comment
                      :on-comment on-set-comment}]
     [:div.form-group
-     [:label (text :t.actions/request-selection)]
+     [:label {:for dropdown-id} (text :t.actions/request-selection)]
      [dropdown/dropdown
-      {:items potential-deciders
+      {:id dropdown-id
+       :items potential-deciders
        :item-label :display
        :item-selected? #(contains? (set selected-deciders) %)
        :multi? true

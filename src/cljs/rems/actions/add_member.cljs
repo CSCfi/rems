@@ -34,6 +34,7 @@
 (rf/reg-sub ::selected-member (fn [db _] (::selected-member db)))
 
 (def ^:private action-form-id "add-member")
+(def ^:private dropdown-id "add-member-dropdown")
 
 (rf/reg-event-fx
  ::send-add-member
@@ -63,9 +64,10 @@
                      :on-click on-send}]]
    [:div
     [:div.form-group
-     [:label (text :t.actions/member)]
+     [:label {:for dropdown-id} (text :t.actions/member)]
      [dropdown/dropdown
-      {:items potential-members
+      {:id dropdown-id
+       :items potential-members
        :item-label :display
        :item-selected? #(= selected-member %)
        :on-change on-set-member}]]]

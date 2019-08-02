@@ -127,6 +127,10 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
+(def ^:private workflow-dropdown-id "workflow-dropdown")
+(def ^:private resource-dropdown-id "resource-dropdown")
+(def ^:private form-dropdown-id "form-dropdown")
+
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]
                        :label (str (text :t.create-catalogue-item/title)
@@ -137,9 +141,10 @@
   (let [workflows @(rf/subscribe [::workflows])
         selected-workflow @(rf/subscribe [::selected-workflow])]
     [:div.form-group
-     [:label (text :t.create-catalogue-item/workflow-selection)]
+     [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
      [dropdown/dropdown
-      {:items workflows
+      {:id workflow-dropdown-id
+       :items workflows
        :item-label :title
        :item-selected? #(= (:id %) (:id selected-workflow))
        :on-change #(rf/dispatch [::set-selected-workflow %])}]]))
@@ -148,9 +153,10 @@
   (let [resources @(rf/subscribe [::resources])
         selected-resource @(rf/subscribe [::selected-resource])]
     [:div.form-group
-     [:label (text :t.create-catalogue-item/resource-selection)]
+     [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
      [dropdown/dropdown
-      {:items resources
+      {:id resource-dropdown-id
+       :items resources
        :item-label :resid
        :item-selected? #(= (:id %) (:id selected-resource))
        :on-change #(rf/dispatch [::set-selected-resource %])}]]))
@@ -159,9 +165,10 @@
   (let [forms @(rf/subscribe [::forms])
         selected-form @(rf/subscribe [::selected-form])]
     [:div.form-group
-     [:label (text :t.create-catalogue-item/form-selection)]
+     [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
      [dropdown/dropdown
-      {:items forms
+      {:id form-dropdown-id
+       :items forms
        :item-label :form/title
        :item-selected? #(= (:form/id %) (:id selected-form))
        :on-change #(rf/dispatch [::set-selected-form %])}]]))

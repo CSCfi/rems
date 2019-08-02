@@ -7,7 +7,7 @@
 ;; TODO: add an ID to the input field and then link all labels to it
 (defn dropdown
   "Single- or multi-choice, searchable dropdown menu."
-  [{:keys [items item-label item-selected? item-disabled? multi? on-change]
+  [{:keys [id items item-label item-selected? item-disabled? multi? on-change]
     :or {item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   (let [options (map (fn [item] {:value item
@@ -17,6 +17,7 @@
         grouped (group-by #(item-selected? (% :value)) options)]
     [:> js/Select {:className "dropdown-container"
                    :classNamePrefix "dropdown-select"
+                   :inputId id
                    :isMulti multi?
                    :maxMenuHeight 200
                    :noOptionsMessage #(text :t.dropdown/no-results)

@@ -43,6 +43,7 @@
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
 (def ^:private action-form-id "add-licenses")
+(def ^:private dropdown-id "add-licenses-dropdown")
 
 (rf/reg-event-fx
  ::send-add-licenses
@@ -81,9 +82,10 @@
                      :comment comment
                      :on-comment on-set-comment}]
     [:div.form-group
-     [:label (text :t.actions/licenses-selection)]
+     [:label {:for dropdown-id} (text :t.actions/licenses-selection)]
      [dropdown/dropdown
-      {:items potential-licenses
+      {:id dropdown-id
+       :items potential-licenses
        :item-label #(title-of-license % language)
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true

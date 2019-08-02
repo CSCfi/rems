@@ -124,6 +124,8 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
+(def ^:private handlers-dropdown-id "handlers-dropdown")
+
 (defn- workflow-organization-field []
   [text-field context {:keys [:organization]
                        :readonly @(rf/subscribe [::editing?])
@@ -174,9 +176,10 @@
         all-handlers @(rf/subscribe [::actors])
         selected-handlers (set (map :userid (get-in form [:handlers])))]
     [:div.form-group
-     [:label (text :t.create-workflow/handlers)]
+     [:label {:for handlers-dropdown-id} (text :t.create-workflow/handlers)]
      [dropdown/dropdown
-      {:items all-handlers
+      {:id handlers-dropdown-id
+       :items all-handlers
        :item-label :display
        :item-selected? #(contains? selected-handlers (% :userid))
        :multi? true

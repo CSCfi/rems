@@ -35,6 +35,7 @@
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
 (def ^:private action-form-id "change-resources")
+(def ^:private dropdown-id "change-resources-dropdown")
 
 (rf/reg-event-fx
  ::send-change-resources
@@ -149,9 +150,10 @@
                            :comment comment
                            :on-comment on-set-comment}])
         [:div.form-group
-         [:label (text :t.actions/resources-selection)]
+         [:label {:for dropdown-id} (text :t.actions/resources-selection)]
          [dropdown/dropdown
-          {:items sorted-selected-catalogue
+          {:id dropdown-id
+           :items sorted-selected-catalogue
            :item-disabled? #(not (compatible-item? % enriched-selected-resources original-workflow-id original-form-id))
            :item-label #(get-localized-title % language)
            :item-selected? #(contains? (set selected-resources) (% :id))
