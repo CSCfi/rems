@@ -28,10 +28,12 @@
 (defn- status-icon [success? error-content]
   (cond
     (and (not success?) (not error-content)) [spinner/small]
-    success? [:i {:class ["fa fa-check-circle text-success"]
-                  :aria-label (text :t.form/success)}]
-    error-content [:i {:class "fa fa-times-circle text-danger"
-                       :aria-label (text :t.form/failed)}]))
+    success? [:span.fa-stack {:aria-label (text :t.form/success)}
+              [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
+              [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]]
+    error-content [:span.fa-stack {:aria-label (text :t.form/failed)}
+                   [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
+                   [:i {:class "fas fa-times-circle fa-stack-1x text-danger"}]]))
 
 (defn- status-text [success? error-content]
   (cond
