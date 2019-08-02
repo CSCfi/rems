@@ -586,8 +586,7 @@
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
         applicant? (= (:application/applicant application) userid)
-        can-bundle-all? (not applicant?)
-        can-change? (contains? permissions :application.command/change-resources)
+        can-change-resources? (contains? permissions :application.command/change-resources)
         can-comment? (not applicant?)]
     [collapsible/component
      {:id "resources"
@@ -599,9 +598,9 @@
                        [:div.application-resource (localized (:catalogue-item/title resource))]))]
       :footer [:div
                [:div.commands
-                (when can-change? [change-resources-action-button (:application/resources application)])]
+                (when can-change-resources? [change-resources-action-button (:application/resources application)])]
                [:div#resource-action-forms
-                [change-resources-form application can-bundle-all? can-comment? (partial reload! application-id)]]]}]))
+                [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
 (defn- render-application [application edit-application config userid]
   (let [messages (remove nil?

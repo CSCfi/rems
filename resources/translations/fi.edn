@@ -5,15 +5,10 @@
             :accept-licenses "Hyväksy käyttöehdot"
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
-            :bundling-error "Resursseja ei voi hakea samalla hakemuksella."
-            :bundling-warning "Resursseja ei tavallisesti voi hakea samalla hakemuksella, koska niillä on eri lomake tai työvuo."
-            :change-form-error "Resursseja ei voi hakea tällä hakemuksella. Muuta niitä tai tee uusi hakemus."
-            :change-form-warning "Lomake on eri kuin alkuperäisessä hakemuksessa."
-            :change-workflow-error "Resursseja ei voi hakea tällä hakemuksella. Muuta niitä tai tee uusi hakemus."
-            :change-workflow-warning "Työvuo on eri kuin alkuperäisessä hakemuksessa."
             :change-resources "Muuta resursseja"
             :approve "Hyväksy"
             :approve-reject "Hyväksy tai hylkää"
+            :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama hakemuslomake ja työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
@@ -42,7 +37,7 @@
             :request-comment "Pyydä kommenttia"
             :request-decision "Pyydä päätöstä"
             :request-selection "Lähetä pyyntöjä"
-            :resources-selection "Hakemukseen liitettävät resurssit"
+            :resources-selection "Hakemukseen liitettävät resurssit:"
             :return "Palauta hakijalle"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä käsittelyajat"}

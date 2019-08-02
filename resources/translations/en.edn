@@ -5,15 +5,10 @@
             :accept-licenses "Accept terms of use"
             :add-licenses "Add terms of use"
             :add-member "Add member"
-            :bundling-error "Application bundling not possible."
-            :bundling-warning "The resources can't normally be bundled into one application because they have different forms or workflows."
-            :change-form-error "The resources can't be applied for with this application. Change them or make a new application."
-            :change-form-warning "The form differs from the original application."
-            :change-workflow-error "The resources can't be applied for with this application. Change them or make a new application."
-            :change-workflow-warning "The workflow differs from the original application."
             :change-resources "Change resources"
             :approve "Approve"
             :approve-reject "Approve or reject"
+            :bundling-intro [:div.intro [:p "Note that only resources that have the same application form and workflow can be bundled together."]]
             :cancel "Cancel"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be opened again."]]
@@ -42,7 +37,7 @@
             :request-comment "Request comment"
             :request-decision "Request decision"
             :request-selection "Send requests"
-            :resources-selection "Resources included in the application"
+            :resources-selection "Resources included in the application:"
             :return "Return to applicant"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"}
