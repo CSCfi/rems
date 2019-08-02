@@ -8,8 +8,7 @@
           :else (every? (set user-accepted-licenses) application-licenses))))
 
 (defn form-fields-editable? [application]
-  (contains? (or (:possible-commands application) ;; TODO: remove v1 api usage
-                 (:application/permissions application))
+  (contains? (:application/permissions application)
              :application.command/save-draft))
 
 (def ^:private name-attribute-priority [:name :commonName :displayName :eppn])

@@ -458,14 +458,3 @@
             result (handle-command command application {})]
         (is (not (:success result)))
         (is (= [{:type :forbidden}] (:errors result)))))))
-
-;;; Possible commands
-
-(defn possible-commands ; TODO: legacy code; remove me
-  "Returns the commands which the user is authorized to execute."
-  [actor application-state]
-  (permissions/user-permissions application-state actor))
-
-(defn assoc-possible-commands [actor application-state]
-  (assoc application-state
-         :possible-commands (possible-commands actor application-state)))
