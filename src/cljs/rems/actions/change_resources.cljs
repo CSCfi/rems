@@ -2,8 +2,8 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
-            [rems.autocomplete :as autocomplete]
             [rems.common-util :refer [index-by]]
+            [rems.dropdown :as dropdown]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text get-localized-title]]
@@ -27,22 +27,15 @@
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
-(defn resource-matches? [language resource query]
-  (-> (get-localized-title resource language)
-      .toLowerCase
-      (.indexOf query)
-      (not= -1)))
-
 (rf/reg-sub ::initial-resources (fn [db _] (::initial-resources db)))
 (rf/reg-sub ::selected-resources (fn [db _] (::selected-resources db)))
-(rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources resources)))
-(rf/reg-event-db ::add-selected-resources (fn [db [_ resource]] (update db ::selected-resources conj (:id resource))))
-(rf/reg-event-db ::remove-selected-resource (fn [db [_ resource]] (update db ::selected-resources disj (:id resource))))
+(rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources (map :id resources))))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
 (def ^:private action-form-id "change-resources")
+(def ^:private dropdown-id "change-resources-dropdown")
 
 (rf/reg-event-fx
  ::send-change-resources
@@ -114,7 +107,7 @@
            (show-change-workflow-warning? original-workflow-id (conj resources item)))))
 
 (defn change-resources-view
-  [{:keys [application initial-resources selected-resources full-catalogue catalogue comment can-bundle-all? can-comment? language on-set-comment on-add-resources on-remove-resource on-send]}]
+  [{:keys [application initial-resources selected-resources full-catalogue catalogue comment can-bundle-all? can-comment? language on-set-comment on-set-resources on-send]}]
   (let [indexed-resources (index-by [:id] full-catalogue)
         enriched-selected-resources (->> selected-resources
                                          (select-keys indexed-resources)
@@ -124,7 +117,6 @@
         original-workflow-id (get-in application [:application/workflow :workflow/id])
         compatible-first-sort-fn #(if (compatible-item? % enriched-selected-resources original-workflow-id original-form-id) -1 1)
         sorted-selected-catalogue (->> catalogue
-                                       (remove (comp (set selected-resources) :id))
                                        (sort-by #(get-localized-title % language))
                                        (sort-by compatible-first-sort-fn))]
     [action-form-view action-form-id
@@ -141,6 +133,10 @@
                        :on-click on-send}]]
      (if (empty? catalogue)
        [spinner/big]
+       ;; TODO: Nowadays the user cannot select resources that have an
+       ;;   incompatible form or workflow. Delete extra code here that
+       ;;   previously showed a warning if the selected resources were
+       ;;   incompatible.
        [:div
         (cond (show-bundling-warning? enriched-selected-resources)
               [bundling-warning enriched-selected-resources can-bundle-all? language]
@@ -154,20 +150,15 @@
                            :comment comment
                            :on-comment on-set-comment}])
         [:div.form-group
-         [:label (text :t.actions/resources-selection)]
-         [autocomplete/component
-          {:value enriched-selected-resources
+         [:label {:for dropdown-id} (text :t.actions/resources-selection)]
+         [dropdown/dropdown
+          {:id dropdown-id
            :items sorted-selected-catalogue
-           :value->text #(get-localized-title %2 language)
-           :item->key :id
-           :item->text (fn [item]
-                         [:span (when-not (compatible-item? item enriched-selected-resources original-workflow-id original-form-id)
-                                  {:class (if can-bundle-all? :text-warning :text-danger)})
-                          (get-localized-title item language)])
-           :item->value identity
-           :term-match-fn (partial resource-matches? language)
-           :add-fn on-add-resources
-           :remove-fn on-remove-resource}]]])]))
+           :item-disabled? #(not (compatible-item? % enriched-selected-resources original-workflow-id original-form-id))
+           :item-label #(get-localized-title % language)
+           :item-selected? #(contains? (set selected-resources) (% :id))
+           :multi? true
+           :on-change on-set-resources}]]])]))
 
 (defn change-resources-form [application can-bundle-all? can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
@@ -186,8 +177,7 @@
                             :can-comment? can-comment?
                             :language language
                             :on-set-comment #(rf/dispatch [::set-comment %])
-                            :on-add-resources #(rf/dispatch [::add-selected-resources %])
-                            :on-remove-resource #(rf/dispatch [::remove-selected-resource %])
+                            :on-set-resources #(rf/dispatch [::set-selected-resources %])
                             :on-send #(rf/dispatch [::send-change-resources {:application-id (:application/id application)
                                                                              :resources selected-resources
                                                                              :comment comment

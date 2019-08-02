@@ -4,8 +4,8 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
             [rems.atoms :as atoms :refer [document-title]]
-            [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.dropdown :as dropdown]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
@@ -56,7 +56,7 @@
   (let [request {:title (get (:title form) (first languages))
                  :wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
-                 :form (get-in form [:form :form/id])
+                 :form (get-in form [:form :id])
                  :localizations (for [language languages]
                                   {:langcode (name language)
                                    :title (get (:title form) language)})}]
@@ -127,6 +127,10 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
+(def ^:private workflow-dropdown-id "workflow-dropdown")
+(def ^:private resource-dropdown-id "resource-dropdown")
+(def ^:private form-dropdown-id "form-dropdown")
+
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]
                        :label (str (text :t.create-catalogue-item/title)
@@ -137,49 +141,37 @@
   (let [workflows @(rf/subscribe [::workflows])
         selected-workflow @(rf/subscribe [::selected-workflow])]
     [:div.form-group
-     [:label (text :t.create-catalogue-item/workflow-selection)]
-     [autocomplete/component
-      {:value (when selected-workflow #{selected-workflow})
+     [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
+     [dropdown/dropdown
+      {:id workflow-dropdown-id
        :items workflows
-       :value->text #(:title %2)
-       :item->key :id
-       :item->text :title
-       :item->value identity
-       :search-fields [:title]
-       :add-fn #(rf/dispatch [::set-selected-workflow %])
-       :remove-fn #(rf/dispatch [::set-selected-workflow nil])}]]))
+       :item-label :title
+       :item-selected? #(= (:id %) (:id selected-workflow))
+       :on-change #(rf/dispatch [::set-selected-workflow %])}]]))
 
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])
         selected-resource @(rf/subscribe [::selected-resource])]
     [:div.form-group
-     [:label (text :t.create-catalogue-item/resource-selection)]
-     [autocomplete/component
-      {:value (when selected-resource #{selected-resource})
+     [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
+     [dropdown/dropdown
+      {:id resource-dropdown-id
        :items resources
-       :value->text #(:resid %2)
-       :item->key :id
-       :item->text :resid
-       :item->value identity
-       :search-fields [:resid]
-       :add-fn #(rf/dispatch [::set-selected-resource %])
-       :remove-fn #(rf/dispatch [::set-selected-resource nil])}]]))
+       :item-label :resid
+       :item-selected? #(= (:id %) (:id selected-resource))
+       :on-change #(rf/dispatch [::set-selected-resource %])}]]))
 
 (defn- catalogue-item-form-field []
   (let [forms @(rf/subscribe [::forms])
         selected-form @(rf/subscribe [::selected-form])]
     [:div.form-group
-     [:label (text :t.create-catalogue-item/form-selection)]
-     [autocomplete/component
-      {:value (when selected-form #{selected-form})
+     [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
+     [dropdown/dropdown
+      {:id form-dropdown-id
        :items forms
-       :value->text #(:form/title %2)
-       :item->key :form/id
-       :item->text :form/title
-       :item->value identity
-       :search-fields [:form/title]
-       :add-fn #(rf/dispatch [::set-selected-form %])
-       :remove-fn #(rf/dispatch [::set-selected-form nil])}]]))
+       :item-label :form/title
+       :item-selected? #(= (:form/id %) (:id selected-form))
+       :on-change #(rf/dispatch [::set-selected-form %])}]]))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}

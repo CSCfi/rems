@@ -4,8 +4,8 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
             [rems.atoms :as atoms :refer [document-title]]
-            [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.dropdown :as dropdown]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text localize-item]]
@@ -27,9 +27,7 @@
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-sub ::selected-licenses (fn [db _] (get-in db [::form :licenses])))
-(rf/reg-event-db ::select-license (fn [db [_ license]] (update-in db [::form :licenses] conj license)))
-(rf/reg-event-db ::deselect-license (fn [db [_ license]] (update-in db [::form :licenses] disj license)))
-
+(rf/reg-event-db ::set-licenses (fn [db [_ licenses]] (assoc-in db [::form :licenses] (sort-by :id licenses))))
 
 ;; form submit
 
@@ -80,6 +78,8 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
+(def ^:private licenses-dropdown-id "licenses-dropdown")
+
 (defn- resource-organization-field []
   [text-field context {:keys [:organization]
                        :label (text :t.administration/organization)
@@ -94,19 +94,14 @@
   (let [available-licenses @(rf/subscribe [::licenses])
         selected-licenses @(rf/subscribe [::selected-licenses])]
     [:div.form-group
-     [:label (text :t.create-resource/licenses-selection)]
-     [autocomplete/component
-      {:value (->> selected-licenses
-                   (map localize-item)
-                   (sort-by :id))
+     [:label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
+     [dropdown/dropdown
+      {:id licenses-dropdown-id
        :items (map localize-item available-licenses)
-       :value->text #(:title %2)
-       :item->key :id
-       :item->text :title
-       :item->value identity
-       :search-fields [:title]
-       :add-fn #(rf/dispatch [::select-license %])
-       :remove-fn #(rf/dispatch [::deselect-license %])}]]))
+       :item-label :title
+       :item-selected? #(contains? (set selected-licenses) %)
+       :multi? true
+       :on-change #(rf/dispatch [::set-licenses %])}]]))
 
 (defn- save-resource-button [form]
   (let [request (build-request form)]

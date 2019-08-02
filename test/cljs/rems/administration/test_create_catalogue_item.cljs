@@ -9,7 +9,7 @@
                          :unrelated "stuff"}
               :resource {:id 456
                          :unrelated "stuff"}
-              :form {:form/id 789
+              :form {:id 789
                      :unrelated "stuff"}}
         languages [:en :fi]]
 

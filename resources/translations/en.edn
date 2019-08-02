@@ -144,8 +144,6 @@
                  :submitted "Sent"
                  :latest-activity "Latest activity"
                  :view "View"}
-  :autocomplete {:no-results "No results"
-                 :placeholder "Choose or type"}
   :cart {:add "Add to cart"
          :apply "Apply"
          :apply-for-bundle "Apply for %1 resources as a bundle "
@@ -202,6 +200,8 @@
                     :dynamic-workflow-description "The handler decides on a case-by-case basis who needs to review or approve the application."
                     :handlers "Handlers"
                     :title "Title"}
+  :dropdown {:no-results "No results"
+             :placeholder "Select..."}
   :email {:application-approved {:subject "Application approved (%3)"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nView application: %6"
                                  :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nView application: %6"}

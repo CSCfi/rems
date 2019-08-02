@@ -4,8 +4,8 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field]]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
-            [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.dropdown :as dropdown]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
@@ -101,19 +101,7 @@
                                   :error-handler status-modal/common-error-handler!})
    {}))
 
-(defn- remove-actor [actors actor]
-  (filter #(not= (:userid %)
-                 (:userid actor))
-          actors))
-
-(defn- add-actor [actors actor]
-  (-> actors
-      (remove-actor actor) ; avoid duplicates
-      (conj actor)))
-
-(rf/reg-event-db ::remove-handler (fn [db [_ handler]] (update-in db [::form :handlers] remove-actor handler)))
-(rf/reg-event-db ::add-handler (fn [db [_ handler]] (update-in db [::form :handlers] add-actor handler)))
-
+(rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
 
 (defn- fetch-actors []
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
@@ -135,6 +123,8 @@
 (def ^:private context
   {:get-form ::form
    :update-form ::set-form-field})
+
+(def ^:private handlers-dropdown-id "handlers-dropdown")
 
 (defn- workflow-organization-field []
   [text-field context {:keys [:organization]
@@ -184,19 +174,16 @@
 (defn- workflow-handlers-field []
   (let [form @(rf/subscribe [::form])
         all-handlers @(rf/subscribe [::actors])
-        selected-handlers (get-in form [:handlers])]
+        selected-handlers (set (map :userid (get-in form [:handlers])))]
     [:div.form-group
-     [:label (text :t.create-workflow/handlers)]
-     [autocomplete/component
-      {:value (sort-by :userid selected-handlers)
+     [:label {:for handlers-dropdown-id} (text :t.create-workflow/handlers)]
+     [dropdown/dropdown
+      {:id handlers-dropdown-id
        :items all-handlers
-       :value->text #(:display %2)
-       :item->key :userid
-       :item->text :display
-       :item->value identity
-       :search-fields [:display :userid]
-       :add-fn #(rf/dispatch [::add-handler %])
-       :remove-fn #(rf/dispatch [::remove-handler %])}]]))
+       :item-label :display
+       :item-selected? #(contains? selected-handlers (% :userid))
+       :multi? true
+       :on-change #(rf/dispatch [::set-handlers %])}]]))
 
 (defn dynamic-workflow-form []
   [:div
