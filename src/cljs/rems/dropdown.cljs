@@ -4,7 +4,6 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-;; TODO: add an ID to the input field and then link all labels to it
 (defn dropdown
   "Single- or multi-choice, searchable dropdown menu."
   [{:keys [id items item-label item-selected? item-disabled? multi? on-change]
