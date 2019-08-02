@@ -8,7 +8,7 @@
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- id-to-name [id]
+(defn id-to-name [id]
   (str "field" id))
 
 (defn- diff [value previous-value]
@@ -30,11 +30,6 @@
 (defn- diff-field [{:keys [id value previous-value]}]
   (into [:div.form-control.diff {:id id}]
         (formatted-diff value previous-value)))
-
-(defn- field-validation-message [validation title]
-  (when validation
-    [:div {:class "invalid-feedback"}
-     (text-format (:type validation) title)]))
 
 (defn- toggle-diff-button [item-id diff-visible on-toggle-diff]
   [:a.toggle-diff {:href "#"
@@ -64,17 +59,32 @@
   :diff - boolean, true if should show the diff between :value and :previous-value
   :diff-component - HTML, custom component for rendering a diff
   :validation - validation errors
+  :fieldset - boolean, true if the field should be wrapped in a fieldset
 
   editor-component - HTML, form component for editing the field"
-  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff] :as opts} editor-component]
+  [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
   (let [id (:field/id opts)
         title (localized (:field/title opts))
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
         max-length (:field/max-length opts)]
-    [:div.form-group.field
-     [:label {:for (id-to-name id)}
+    ;; TODO: simplify fieldset code
+    [(if fieldset
+       :fieldset.form-group.field
+       :div.form-group.field)
+     (when fieldset
+       {:id (id-to-name id)
+        :tab-index -1
+        :aria-required (not optional)
+        :aria-invalid (when validation true)
+        :aria-describedby (when validation
+                            (str (id-to-name id) "-error"))})
+     [(if fieldset
+        :legend
+        :label)
+      (when (not fieldset)
+        {:for (id-to-name id)})
       title " "
       (when max-length
         (text-format :t.form/maxlength (str max-length)))
@@ -94,7 +104,15 @@
                     [readonly-field {:id (id-to-name id)
                                      :value value}])
        :else editor-component)
-     [field-validation-message validation title]]))
+     (when validation
+       [:div.invalid-feedback
+        {:id (str (id-to-name id) "-error")
+         ;; XXX: Bootstrap's has "display: none" on .invalid-feedback by default
+         ;;      and overrides that for example when there is a sibling .form-control.is-invalid,
+         ;;      but that doesn't work with checkbox groups nor attachments, and we anyways
+         ;;      don't need the feature of hiding this div with CSS when it has no content.
+         :style {:display "block"}}
+        (text-format (:type validation) title)])]))
 
 (defn- event-value [event]
   (.. event -target -value))
@@ -104,12 +122,17 @@
   (let [id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
+        optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [:input.form-control {:type "text"
                            :id (id-to-name id)
                            :name (id-to-name id)
                            :placeholder placeholder
+                           :required (not optional)
+                           :aria-invalid (when validation true)
+                           :aria-describedby (when validation
+                                               (str (id-to-name id) "-error"))
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :defaultValue value
@@ -120,20 +143,26 @@
   (let [id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
+        optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [textarea {:id (id-to-name id)
                 :name (id-to-name id)
                 :placeholder placeholder
+                :required (not optional)
+                :aria-invalid (when validation true)
+                :aria-describedby (when validation
+                                    (str (id-to-name id) "-error"))
                 :max-length max-length
-                :class (if validation "form-control is-invalid" "form-control")
+                :class (when validation "is-invalid")
                 :defaultValue value
                 :on-change (comp on-change event-value)}]]))
 
 (defn date-field
   [{:keys [min max validation on-change] :as opts}]
   (let [id (:field/id opts)
-        value (:field/value opts)]
+        value (:field/value opts)
+        optional (:field/optional opts)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [field-wrapper opts
      [:input.form-control {:type "date"
@@ -141,6 +170,10 @@
                            :name (id-to-name id)
                            :class (when validation "is-invalid")
                            :defaultValue value
+                           :required (not optional)
+                           :aria-invalid (when validation true)
+                           :aria-describedby (when validation
+                                               (str (id-to-name id) "-error"))
                            :min min
                            :max max
                            :on-change (comp on-change event-value)}]]))
@@ -155,7 +188,8 @@
 (defn option-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
         value (:field/value opts)
-        options (:field/options opts)]
+        options (:field/options opts)
+        optional (:field/optional opts)]
     [field-wrapper
      (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
                                                       :value (option-label value options)}])
@@ -163,6 +197,10 @@
                                   :name (id-to-name id)
                                   :class (when validation "is-invalid")
                                   :defaultValue value
+                                  :required (not optional)
+                                  :aria-invalid (when validation true)
+                                  :aria-describedby (when validation
+                                                      (str (id-to-name id) "-error"))
                                   :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
@@ -179,13 +217,14 @@
         value (:field/value opts)
         options (:field/options opts)
         selected-keys (decode-option-keys value)]
-    ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
     [field-wrapper
-     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
-                                                      :value (->> options
-                                                                  (filter #(contains? selected-keys (:key %)))
-                                                                  (map #(localized (:label %)))
-                                                                  (str/join ", "))}])
+     (assoc opts
+            :fieldset true
+            :readonly-component [readonly-field {:id (id-to-name id)
+                                                 :value (->> options
+                                                             (filter #(contains? selected-keys (:key %)))
+                                                             (map #(localized (:label %)))
+                                                             (str/join ", "))}])
      (into [:div]
            (for [{:keys [key label]} options]
              (let [option-id (str (id-to-name id) "-" key)
@@ -212,7 +251,8 @@
         title (localized (:field/title opts))
         value (:field/value opts)
         filename (get-in opts [:field/attachment :attachment/filename])
-        click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
+        upload-field-id (str (id-to-name id) "-input")
+        click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document upload-field-id))))
         link (fn [attachment-id filename]
                (if (empty? attachment-id)
                  [:div.field.mr-2
@@ -225,8 +265,8 @@
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
-                               :id (id-to-name id)
-                               :name (id-to-name id)
+                               :id upload-field-id
+                               :name upload-field-id
                                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                                :class (when validation "is-invalid")
                                :on-change (fn [event]
@@ -237,7 +277,8 @@
                                               (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
                       [:button.btn.btn-secondary
-                       {:type :button
+                       {:id (id-to-name id)
+                        :type :button
                         :on-click click-upload}
                        (text :t.form/upload)]]
         remove-button [:button.btn.btn-secondary.mr-2

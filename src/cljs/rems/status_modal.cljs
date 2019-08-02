@@ -14,7 +14,7 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- format-errors [errors]
-  (into [:div]
+  (into [:<>]
         (for [error errors]
           [:p
            (when (:key error)
@@ -25,16 +25,30 @@
            (when-let [text (:status error)]
              (str " (" text ")"))])))
 
-(defn- status-widget [success? error-content]
+(defn- status-icon [success? error-content]
   (cond
-    (and (not success?) (not error-content)) [spinner/big]
-    success? [:p#status-success [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
-    error-content [:div [:p#status-failed [:i {:class "fa fa-times-circle text-danger"}] (text :t.form/failed)]
+    (and (not success?) (not error-content)) [spinner/small]
+    success? [:span.fa-stack {:aria-label (text :t.form/success)}
+              [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
+              [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]]
+    error-content [:span.fa-stack {:aria-label (text :t.form/failed)}
+                   [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
+                   [:i {:class "fas fa-times-circle fa-stack-1x text-danger"}]]))
+
+(defn- status-text [success? error-content]
+  (cond
+    (and (not success?) (not error-content)) [:p (text :t.form/please-wait)]
+    success? [:p#status-success (text :t.form/success)]
+    error-content [:<>
+                   [:p#status-failed (text :t.form/failed)]
                    error-content]))
 
 (rf/reg-event-db ::set-state (fn [db [_ state]] (assoc db ::state state)))
 (rf/reg-event-db ::merge-state (fn [db [_ state]] (update db ::state deep-merge state)))
 (rf/reg-sub ::state (fn [db _] (::state db)))
+
+(defn close []
+  (rf/dispatch [::set-state nil]))
 
 (defn status-modal
   "Modal component showing the status of an action.
@@ -61,14 +75,13 @@
         {:keys [title content error-content result on-close shade? open?]} state
         success? (:success? result)
         errors (if (:error result) [(:error result)] (:errors result))
-        error-content (or error-content (and errors (format-errors errors)))
-        content [:div [status-widget success? error-content] content]]
+        error-content (or error-content (and errors (format-errors errors)))]
     (when open?
-      [modal/notification {:title title
+      [modal/notification {:title [:div [status-icon success? error-content] " " title]
                            :title-class (when (or errors error-content) "alert alert-danger")
-                           :content content
+                           :content [:<> [status-text success? error-content] content]
                            :on-close (fn []
-                                       (rf/dispatch [::set-state nil])
+                                       (close)
                                        (when on-close (on-close)))
                            :shade? shade?}])))
 
@@ -133,24 +146,24 @@
    (example "status-modal while result is pending"
             [status-modal {:open? true
                            :shade? false
-                           :title "Pending"
+                           :title "Example"
                            :content [:p "We are experiencing unexpected slowness"]}])
    (example "status-modal for success"
             [status-modal {:open? true
                            :result {:success? true}
                            :shade? false
-                           :title "Success"
+                           :title "Example"
                            :content [:p "This was a great success for all!"]}])
    (example "status-modal for result with a single error"
             [status-modal {:open? true
                            :result {:error {:status 404
                                             :status-text "Not found"}}
                            :shade? false
-                           :title "Error"
+                           :title "Example"
                            :content [:p "This did not go as planned"]}])
    (example "status-modal for result with errors"
             [status-modal {:open? true
                            :result {:errors [{:type :t.form.validation/errors}]}
                            :shade? false
-                           :title "Errors"
+                           :title "Example"
                            :content [:p "You should check the errors"]}])])

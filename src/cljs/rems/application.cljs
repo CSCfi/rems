@@ -61,8 +61,19 @@
   [id & [replace?]]
   (dispatch! (str "#/application/" id) replace?))
 
-(defn- format-validation-error [type title]
-  [:li (text-format type (localized title))])
+(defn- in-page-anchor-link [id]
+  (fn [event]
+    (.preventDefault event)
+    (status-modal/close) ; the error summary may also be shown in a modal dialog
+    (when-let [element (.getElementById js/document id)]
+      (.focus element))))
+
+(defn- format-validation-error [type field]
+  ;; XXX: since REMS uses hash-based URLs, it's not possible to have normal
+  ;;      in-page anchor links, but they need to be emulated with JavaScript
+  [:li [:a {:href "#"
+            :on-click (in-page-anchor-link (fields/id-to-name (:field/id field)))}
+        (text-format type (localized (:field/title field)))]])
 
 (defn- format-validation-errors
   [application errors]
@@ -74,7 +85,7 @@
             (for [{:keys [type field-id]} errors
                   :when field-id]
               (let [field (get fields-by-id field-id)]
-                (format-validation-error type (:field/title field))))))]))
+                (format-validation-error type field)))))]))
 
 
 ;;;; State

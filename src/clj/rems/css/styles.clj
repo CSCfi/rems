@@ -356,6 +356,8 @@
    [:.icon-link {:color "#6c757d" ; same color as bootstrap's default for .btn-secondary.disabled
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
+   [:.icon-stack-background {:color "white"
+                             :font-size "110%"}]
    [:.modal--title [:.link
                     {:border-radius "0.25em"
                      :padding "0.25em"
@@ -537,7 +539,9 @@
    [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
    [".children-inline-blocks > *" {:display :inline-block}]
-   [:.form-group {:text-align "initial"}]
+   [:.form-group {:text-align "initial"}
+    ;; make fieldset legends look the same as normal labels
+    [:legend {:font-size "inherit"}]]
    [:.navbar-flex {:display "flex"
                    :flex-direction "row"
                    :justify-content "space-between"
@@ -599,7 +603,7 @@
    [:.license-panel {:display :inline-block
                      :width "inherit"}]
    [:.card-header.clickable {:cursor "pointer"}]
-   [:.rems-card-margin-fix {:margin (u/px -1)}]  ; make sure header overlaps container border
+   [:.rems-card-margin-fix {:margin (u/px -1)}] ; make sure header overlaps container border
    [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color "#fff")
                         :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
    [(s/descendant :.card-header :a) {:color :inherit}]
