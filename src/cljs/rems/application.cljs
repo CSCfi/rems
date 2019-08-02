@@ -325,7 +325,7 @@
   (when-let [licenses (not-empty (:application/licenses application))]
     (let [application-id (:application/id application)
           accepted-licenses (get (:application/accepted-licenses application) userid)
-          possible-commands (:application/permissions application)
+          permissions (:application/permissions application)
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
       [collapsible/component
@@ -341,7 +341,7 @@
                                        :readonly readonly?)]))
          (if (accepted-licenses? application userid)
            (text :t.form/has-accepted-licenses)
-           (when (contains? possible-commands :application.command/accept-licenses)
+           (when (contains? permissions :application.command/accept-licenses)
              [:div.commands
               ;; TODO consider saving the form first so that no data is lost for the applicant
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
@@ -499,11 +499,11 @@
                          (:application/applicant-attributes application))
         members (:application/members application)
         invited-members (:application/invited-members application)
-        possible-commands (:application/permissions application)
-        can-add? (contains? possible-commands :application.command/add-member)
-        can-remove? (contains? possible-commands :application.command/remove-member)
-        can-invite? (contains? possible-commands :application.command/invite-member)
-        can-uninvite? (contains? possible-commands :application.command/uninvite-member)]
+        permissions (:application/permissions application)
+        can-add? (contains? permissions :application.command/add-member)
+        can-remove? (contains? permissions :application.command/remove-member)
+        can-invite? (contains? permissions :application.command/invite-member)
+        can-uninvite? (contains? permissions :application.command/uninvite-member)]
     [collapsible/component
      {:id "applicants-info"
       :title (text :t.applicant-info/applicants)
@@ -584,10 +584,10 @@
 
 (defn- applied-resources [application userid]
   (let [application-id (:application/id application)
-        possible-commands (:application/permissions application)
+        permissions (:application/permissions application)
         applicant? (= (:application/applicant application) userid)
         can-bundle-all? (not applicant?)
-        can-change? (contains? possible-commands :application.command/change-resources)
+        can-change? (contains? permissions :application.command/change-resources)
         can-comment? (not applicant?)]
     [collapsible/component
      {:id "resources"
