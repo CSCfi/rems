@@ -17,7 +17,7 @@
             :cancel "Cancel"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be opened again."]]
-            :comment "Comment"
+            :comment "Review"
             :comment-placeholder "Comment"
             :decide "Decide"
             :empty "No applications to process."
@@ -39,7 +39,7 @@
             :remark "Remark"
             :remark-public "Show to applicant"
             :remove-member "Remove member"
-            :request-comment "Request comment"
+            :request-comment "Request review"
             :request-decision "Request decision"
             :request-selection "Send requests"
             :resources-selection "Resources included in the application"
@@ -109,8 +109,8 @@
                  :empty "No applications."
                  :events {:approved "Approved"
                           :closed "Closed"
-                          :comment-requested "Comment requested"
-                          :commented "Commented"
+                          :comment-requested "Review requested"
+                          :commented "Reviewed"
                           :remarked "Remarked"
                           :created "Created"
                           :decided "Decided"
@@ -219,10 +219,10 @@
                                        :message-to-handler "Dear %1,\n\n%2 has added terms of use to the application %3 from %4.\n\nView application: %6"}
           :application-submitted {:subject "Application submitted (%4: %3)"
                                   :message "Dear %1,\n\n%4 has submitted an application (%3): %5.\n\nView application: %6"}
-          :comment-requested {:subject "Comment requested (%2: %3)"
-                              :message "Dear %1,\n\n%2 has requested a comment on application %3.\n\nComment: %6"}
-          :commented {:subject "Comment added (%2: %3)"
-                      :message "Dear %1,\n\n%2 has commented application %3.\n\nView application: %6"}
+          :comment-requested {:subject "Review requested (%2: %3)"
+                              :message "Dear %1,\n\n%2 has requested a review on application %3.\n\nComment: %6"}
+          :commented {:subject "Review added (%2: %3)"
+                      :message "Dear %1,\n\n%2 has reviewed application %3.\n\nView application: %6"}
           :decided {:subject "Decision made (%2: %3)"
                     :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %6"}
           :decision-requested {:subject "Decision requested (%2: %3)"
