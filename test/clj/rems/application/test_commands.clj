@@ -251,6 +251,19 @@
                             :catalogue-item-ids [cat-1 cat-2 cat-4-other-form]}
                            injections))))
 
+    (testing "applicant can replace resources"
+      (is (= {:event/type :application.event/resources-changed
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id 123
+              :application/resources [{:catalogue-item/id cat-2 :resource/ext-id "res2"}]
+              :application/licenses [{:license/id license-2}]}
+             (ok-command application
+                         {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [cat-2]}
+                         injections))))
+
     (testing "applicant cannot replace resources with different workflow"
       (is (= {:errors [{:type :changes-original-workflow :workflow/id wf-1 :ids [wf-2]}]}
              (fail-command application
