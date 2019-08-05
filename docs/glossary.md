@@ -30,7 +30,7 @@
 
 - handler (of a workflow): in a dynamic workflow, the user who is responsible for steering the applications of
   the workflow through the approval process
-  - the handler can request comments and decisions from other users
+  - the handler can request reviews and decisions from other users
   - finally the handler either approves or rejects the application
 - applicant (of an application): the user who fills in the application
 - member (of an application): additional members can be added to an application by the applicant or the handler
@@ -42,8 +42,8 @@
 ## Events
 
 - submitted: the applicant submits the application when he thinks it is ready for approval
-- comment requested: the handler has requested that an other user comment on an application
-- commented: comments are in response to comment requests
+- review requested: the handler has requested that an other user review an application
+- reviewed: in response to review requests
 - decision requested: the handler has requested that an other user decide whether to accept or reject this application
 - decision: the response to a decision request, that is, accept or reject
   - a decision does not cause the application to be approved or rejected, it is up to the handler to do that

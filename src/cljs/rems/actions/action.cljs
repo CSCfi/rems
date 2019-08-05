@@ -54,10 +54,10 @@
                            (.on (js/$ elem) "shown.bs.collapse" #(.focus elem))))}
    [:h3.mt-5 title]
    content
-   (into [:div.col.commands.mr-3 [cancel-action-button id]] buttons)])
+   (into [:div.col.commands [cancel-action-button id]] buttons)])
 
 (defn action-button [{:keys [id text class on-click]}]
-  [:button.btn.mr-3
+  [:button.btn
    {:type :button
     :id (action-button-id id)
     :class (str (or class "btn-secondary")

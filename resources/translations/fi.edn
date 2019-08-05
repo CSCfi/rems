@@ -12,7 +12,6 @@
             :cancel "Peruuta"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
-            :comment "Kommentoi"
             :comment-placeholder "Kommentti"
             :decide "Päätä"
             :empty "Ei käsiteltäviä hakemuksia."
@@ -34,11 +33,12 @@
             :remark "Kirjaa huomio"
             :remark-public "Näytä huomio hakijalle"
             :remove-member "Poista jäsen"
-            :request-comment "Pyydä kommenttia"
             :request-decision "Pyydä päätöstä"
+            :request-review "Pyydä katselmointia"
             :request-selection "Lähetä pyyntöjä"
             :resources-selection "Hakemukseen liitettävät resurssit:"
             :return "Palauta hakijalle"
+            :review "Katselmoi"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä käsittelyajat"}
   :administration {:active "Aktiivinen"
@@ -102,8 +102,8 @@
                  :empty "Ei hakemuksia."
                  :events {:approved "Hyväksytty"
                           :closed "Suljettu"
-                          :comment-requested "Kommenttia pyydetty"
-                          :commented "Kommentoitu"
+                          :comment-requested "Katselmointia pyydetty"
+                          :commented "Katselmoitu"
                           :remarked "Huomio kirjattu"
                           :created "Luotu"
                           :decided "Päätetty"
@@ -212,10 +212,10 @@
                                        :message-to-handler "Hyvä %1,\n\n%2 on lisännyt käyttöehtoja käyttäjän %4 hakemukseen %3.\n\nTarkastele hakemusta: %5"}
           :application-submitted {:subject "Hakemus lähetetty (%4: %3)"
                                   :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen (%3): %5.\n\nTarkastele hakemusta: %6"}
-          :comment-requested {:subject "Kommenttipyyntö (%2: %3)"
-                              :message "Hyvä %1,\n\n%2 on pyytänyt kommentoimaan hakemusta %3.\n\nKommentoi: %6"}
-          :commented {:subject "Hakemusta kommentoitu (%2: %3)"
-                      :message "Hyvä %1,\n\n%2 on kommentoinut hakemusta %3.\n\nTarkastele hakemusta: %6"}
+          :comment-requested {:subject "Katselmointipyyntö (%2: %3)"
+                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmoimaan hakemuksen %3.\n\nKommentoi: %6"}
+          :commented {:subject "Hakemus katselmoitu (%2: %3)"
+                      :message "Hyvä %1,\n\n%2 on katselmoinut hakemuksen %3.\n\nTarkastele hakemusta: %6"}
           :decided {:subject "Päätös tehty (%2: %3)"
                     :message "Hyvä %1,\n\n%2 on tehnyt päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
           :decision-requested {:subject "Päätöspyyntö (%2: %3)"

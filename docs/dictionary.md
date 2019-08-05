@@ -22,4 +22,4 @@ The glossary below provides definitions for words used in REMS:
 
 **Resource Owner**: A resource owner is the person who owns one or more resources in REMS. Resource owners are eligible to create and manage catalogue items (including workflows, licenses and forms).
 
-**Workflow**: The process for handing an application submitted by the applicant. In a dynamic workflow, the person in control of the application is called a handler. The handler can request for comments from other people before approving or rejecting the application.
+**Workflow**: The process for handing an application submitted by the applicant. In a dynamic workflow, the person in control of the application is called a handler. The handler can request for reviews from other people before approving or rejecting the application.

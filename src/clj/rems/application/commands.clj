@@ -62,6 +62,7 @@
          :decision (s/enum :approved :rejected)
          :comment s/Str))
 
+;; TODO RequestComment/Comment could be renamed to RequestReview/Review to be in line with the UI
 (s/defschema RequestCommentCommand
   (assoc CommandBase
          :commenters [UserId]

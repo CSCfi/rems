@@ -1,6 +1,5 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
-  (:refer-clojure :exclude [run!])
   (:require [clj-time.core :as time]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
