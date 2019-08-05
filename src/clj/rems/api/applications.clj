@@ -144,10 +144,10 @@
            :errors (:errors errors)})
       (ok {:success true}))))
 
-(defmacro command-endpoint [command schema]
+(defmacro command-endpoint [command schema & [additional-doc]]
   (let [path (str "/" (name command))]
     `(POST ~path []
-       :summary ~(str "Submit a `" (name command) "` command for an application.")
+       :summary ~(str "Submit a `" (name command) "` command for an application. " additional-doc)
        :roles #{:logged-in}
        :body [request# ~schema]
        :return SuccessResponse
@@ -252,10 +252,12 @@
     (command-endpoint :application.command/approve commands/ApproveCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)
-    (command-endpoint :application.command/comment commands/CommentCommand)
+    (command-endpoint :application.command/comment commands/CommentCommand
+                      "This corresponds to the \"Review\" operation in the UI.")
     (command-endpoint :application.command/decide commands/DecideCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)
-    (command-endpoint :application.command/request-comment commands/RequestCommentCommand)
+    (command-endpoint :application.command/request-comment commands/RequestCommentCommand
+                      "This corresponds to the \"Request review\" operation in the UI.")
     (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
     (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
     (command-endpoint :application.command/return commands/ReturnCommand)

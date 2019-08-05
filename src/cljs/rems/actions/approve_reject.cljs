@@ -50,7 +50,7 @@
 (defn approve-reject-view
   [{:keys [comment on-set-comment on-approve on-reject]}]
   [action-form-view action-form-id
-   (text :t.actions/comment)
+   (text :t.actions/approve-reject)
    [[button-wrapper {:id "reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"

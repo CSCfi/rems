@@ -112,18 +112,18 @@
                 :subject "Invitation to participate in an application",
                 :body "Hello,\n\nThis email address (somebody@example.com) has been invited to participate in an application.\n\nParticipate: http://example.com/accept-invitation?token=abc"}]
               [{:to-user "commenter1",
-                :subject "Comment requested (handler: 2001/3)",
-                :body "Dear commenter1,\n\nhandler has requested a comment on application 2001/3.\n\nComment: http://example.com/#/application/7"}
+                :subject "Review requested (handler: 2001/3)",
+                :body "Dear commenter1,\n\nhandler has requested a review on application 2001/3.\n\nComment: http://example.com/#/application/7"}
                {:to-user "commenter2",
-                :subject "Comment requested (handler: 2001/3)",
-                :body "Dear commenter2,\n\nhandler has requested a comment on application 2001/3.\n\nComment: http://example.com/#/application/7"}]
+                :subject "Review requested (handler: 2001/3)",
+                :body "Dear commenter2,\n\nhandler has requested a review on application 2001/3.\n\nComment: http://example.com/#/application/7"}]
               []
               [{:to-user "assistant",
-                :subject "Comment added (commenter2: 2001/3)",
-                :body "Dear assistant,\n\ncommenter2 has commented application 2001/3.\n\nView application: http://example.com/#/application/7"}
+                :subject "Review added (commenter2: 2001/3)",
+                :body "Dear assistant,\n\ncommenter2 has reviewed application 2001/3.\n\nView application: http://example.com/#/application/7"}
                {:to-user "handler",
-                :subject "Comment added (commenter2: 2001/3)",
-                :body "Dear handler,\n\ncommenter2 has commented application 2001/3.\n\nView application: http://example.com/#/application/7"}]
+                :subject "Review added (commenter2: 2001/3)",
+                :body "Dear handler,\n\ncommenter2 has reviewed application 2001/3.\n\nView application: http://example.com/#/application/7"}]
               [{:to-user "member",
                 :subject "Added as a member of an application (2001/3)",
                 :body "Dear member,\n\nYou've been added as a member of application 2001/3.\n\nView application: http://example.com/#/application/7"}]
