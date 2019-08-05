@@ -217,7 +217,8 @@
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [1 2]}
-                           injections)))
+                           injections))
+          "applicant can't change a submitted resources")
       (is (= {:errors [{:type :unbundlable-catalogue-items
                         :catalogue-item-ids [1 2 3]}]}
              (fail-command application
