@@ -170,8 +170,8 @@
 
 (deftest test-change-resources
   (let [cat-1 1
-        cat-2 2
-        cat-3-other-wf 3
+        cat-2-other-license 2
+        cat-3-other-workflow 3
         cat-4-other-form 4
         form-1 1
         form-2 2
@@ -196,12 +196,12 @@
                                                  :application/comment "This is good"
                                                  :application/id 123}])
         catalogue-item-to-license {cat-1 license-1
-                                   cat-2 license-2
-                                   cat-3-other-wf license-1
+                                   cat-2-other-license license-2
+                                   cat-3-other-workflow license-1
                                    cat-4-other-form license-1}
         injections {:get-catalogue-item {cat-1 {:id cat-1 :resid "res1" :formid form-1 :wfid wf-1}
-                                         cat-2 {:id cat-2 :resid "res2" :formid form-1 :wfid wf-1}
-                                         cat-3-other-wf {:id cat-3-other-wf :resid "res3" :formid form-1 :wfid wf-2}
+                                         cat-2-other-license {:id cat-2-other-license :resid "res2" :formid form-1 :wfid wf-1}
+                                         cat-3-other-workflow {:id cat-3-other-workflow :resid "res3" :formid form-1 :wfid wf-2}
                                          cat-4-other-form {:id cat-4-other-form :resid "res4" :formid form-2 :wfid wf-1}}
                     :get-licenses
                     (fn [catalogue-item-ids]
@@ -215,13 +215,13 @@
               :event/actor applicant-user-id
               :application/id 123
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2 :resource/ext-id "res2"}]
+                                      {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
                                      {:license/id license-2}]}
              (ok-command application
                          {:type :application.command/change-resources
                           :actor applicant-user-id
-                          :catalogue-item-ids [cat-1 cat-2]}
+                          :catalogue-item-ids [cat-1 cat-2-other-license]}
                          injections))))
 
     (testing "applicant cannot add resources to a submitted application"
@@ -229,25 +229,25 @@
              (fail-command submitted-application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
-                            :catalogue-item-ids [cat-1 cat-2]}
+                            :catalogue-item-ids [cat-1 cat-2-other-license]}
                            injections))))
 
     (testing "applicant cannot add resources with different workflow"
       (is (= {:errors [{:type :unbundlable-catalogue-items
-                        :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf]}]}
+                        :catalogue-item-ids [cat-1 cat-2-other-license cat-3-other-workflow]}]}
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
-                            :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf]}
+                            :catalogue-item-ids [cat-1 cat-2-other-license cat-3-other-workflow]}
                            injections))))
 
     (testing "applicant cannot add resources with different form"
       (is (= {:errors [{:type :unbundlable-catalogue-items
-                        :catalogue-item-ids [cat-1 cat-2 cat-4-other-form]}]}
+                        :catalogue-item-ids [cat-1 cat-2-other-license cat-4-other-form]}]}
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
-                            :catalogue-item-ids [cat-1 cat-2 cat-4-other-form]}
+                            :catalogue-item-ids [cat-1 cat-2-other-license cat-4-other-form]}
                            injections))))
 
     (testing "applicant can replace resources"
@@ -255,12 +255,12 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id 123
-              :application/resources [{:catalogue-item/id cat-2 :resource/ext-id "res2"}]
+              :application/resources [{:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-2}]}
              (ok-command application
                          {:type :application.command/change-resources
                           :actor applicant-user-id
-                          :catalogue-item-ids [cat-2]}
+                          :catalogue-item-ids [cat-2-other-license]}
                          injections))))
 
     (testing "applicant cannot replace resources with different workflow"
@@ -268,7 +268,7 @@
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
-                            :catalogue-item-ids [cat-3-other-wf]}
+                            :catalogue-item-ids [cat-3-other-workflow]}
                            injections))))
 
     (testing "applicant cannot replace resources with different form"
@@ -286,14 +286,14 @@
               :application/id 123
               :application/comment "Changed these for you"
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2 :resource/ext-id "res2"}]
+                                      {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
                                      {:license/id license-2}]}
              (ok-command submitted-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
                           :comment "Changed these for you"
-                          :catalogue-item-ids [cat-1 cat-2]}
+                          :catalogue-item-ids [cat-1 cat-2-other-license]}
                          injections)))
 
       (testing "- even with a different workflow or form"
@@ -303,8 +303,8 @@
                 :application/id 123
                 :application/comment "Changed these for you"
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                        {:catalogue-item/id cat-2 :resource/ext-id "res2"}
-                                        {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
+                                        {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}
+                                        {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
                 :application/licenses [{:license/id license-1}
                                        {:license/id license-2}]}
@@ -312,7 +312,7 @@
                            {:type :application.command/change-resources
                             :actor handler-user-id
                             :comment "Changed these for you"
-                            :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf cat-4-other-form]}
+                            :catalogue-item-ids [cat-1 cat-2-other-license cat-3-other-workflow cat-4-other-form]}
                            injections)))))
 
     (testing "handler can add resources to an approved application"
@@ -322,14 +322,14 @@
               :application/id 123
               :application/comment "Changed these for you"
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2 :resource/ext-id "res2"}]
+                                      {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
                                      {:license/id license-2}]}
              (ok-command approved-application
                          {:type :application.command/change-resources
                           :actor handler-user-id
                           :comment "Changed these for you"
-                          :catalogue-item-ids [cat-1 cat-2]}
+                          :catalogue-item-ids [cat-1 cat-2-other-license]}
                          injections)))
 
       (testing "- even with different workflow or form"
@@ -339,8 +339,8 @@
                 :application/id 123
                 :application/comment "Changed these for you"
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                        {:catalogue-item/id cat-2 :resource/ext-id "res2"}
-                                        {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
+                                        {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}
+                                        {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
                 :application/licenses [{:license/id license-1}
                                        {:license/id license-2}]}
@@ -348,7 +348,7 @@
                            {:type :application.command/change-resources
                             :actor handler-user-id
                             :comment "Changed these for you"
-                            :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf cat-4-other-form]}
+                            :catalogue-item-ids [cat-1 cat-2-other-license cat-3-other-workflow cat-4-other-form]}
                            injections)))))
 
     (testing "the catalogue item must exist"
