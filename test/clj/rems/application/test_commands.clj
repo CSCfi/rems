@@ -209,7 +209,8 @@
                       (->> catalogue-item-ids
                            (mapv (fn [id] {:id (catalogue-item-to-license id)}))
                            (distinct-by :id)))}]
-    (testing "applicant can change draft resources"
+
+    (testing "applicant can add resources to a draft application"
       (is (= {:event/type :application.event/resources-changed
               :event/time test-time
               :event/actor applicant-user-id
@@ -222,46 +223,51 @@
                          {:type :application.command/change-resources
                           :actor applicant-user-id
                           :catalogue-item-ids [cat-1 cat-2]}
-                         injections)))
+                         injections))))
+
+    (testing "applicant cannot add resources to a submitted application"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command submitted-application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [cat-1 cat-2]}
-                           injections))
-          "applicant can't change a submitted resources")
+                           injections))))
+
+    (testing "applicant cannot add resources with different workflow"
       (is (= {:errors [{:type :unbundlable-catalogue-items
                         :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf]}]}
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf]}
-                           injections))
-          "can't bundle with different wfid")
+                           injections))))
+
+    (testing "applicant cannot add resources with different form"
       (is (= {:errors [{:type :unbundlable-catalogue-items
                         :catalogue-item-ids [cat-1 cat-2 cat-4-other-form]}]}
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [cat-1 cat-2 cat-4-other-form]}
-                           injections))
-          "can't bundle with different formid")
+                           injections))))
+
+    (testing "applicant cannot replace resources with different workflow"
       (is (= {:errors [{:type :changes-original-workflow :workflow/id wf-1 :ids [wf-2]}]}
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [cat-3-other-wf]}
-                           injections))
-          "can't change workflow from original")
+                           injections))))
+
+    (testing "applicant cannot replace resources with different form"
       (is (= {:errors [{:type :changes-original-form :form/id form-1 :ids [form-2]}]}
              (fail-command application
                            {:type :application.command/change-resources
                             :actor applicant-user-id
                             :catalogue-item-ids [cat-4-other-form]}
-                           injections))
-          "can't change formid from original"))
+                           injections))))
 
-    (testing "handler can change submitted resources"
+    (testing "handler can add resources to a submitted application"
       (is (= {:event/type :application.event/resources-changed
               :event/time test-time
               :event/actor handler-user-id
@@ -278,26 +284,27 @@
                           :catalogue-item-ids [cat-1 cat-2]}
                          injections)))
 
-      (is (= {:event/type :application.event/resources-changed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id 123
-              :application/comment "Changed these for you"
-              :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2 :resource/ext-id "res2"}
-                                      {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
-                                      {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
-              :application/licenses [{:license/id license-1}
-                                     {:license/id license-2}
-                                     {:license/id license-3}]}
-             (ok-command submitted-application
-                         {:type :application.command/change-resources
-                          :actor handler-user-id
-                          :comment "Changed these for you"
-                          :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf cat-4-other-form]}
-                         injections))))
+      (testing "- even with a different workflow or form"
+        (is (= {:event/type :application.event/resources-changed
+                :event/time test-time
+                :event/actor handler-user-id
+                :application/id 123
+                :application/comment "Changed these for you"
+                :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
+                                        {:catalogue-item/id cat-2 :resource/ext-id "res2"}
+                                        {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
+                                        {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
+                :application/licenses [{:license/id license-1}
+                                       {:license/id license-2}
+                                       {:license/id license-3}]}
+               (ok-command submitted-application
+                           {:type :application.command/change-resources
+                            :actor handler-user-id
+                            :comment "Changed these for you"
+                            :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf cat-4-other-form]}
+                           injections)))))
 
-    (testing "handler can change approved resources"
+    (testing "handler can add resources to an approved application"
       (is (= {:event/type :application.event/resources-changed
               :event/time test-time
               :event/actor handler-user-id
@@ -314,36 +321,40 @@
                           :catalogue-item-ids [cat-1 cat-2]}
                          injections)))
 
-      (is (= {:event/type :application.event/resources-changed
-              :event/time test-time
-              :event/actor handler-user-id
-              :application/id 123
-              :application/comment "Changed these for you"
-              :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-2 :resource/ext-id "res2"}
-                                      {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
-                                      {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
-              :application/licenses [{:license/id license-1}
-                                     {:license/id license-2}
-                                     {:license/id license-3}]}
-             (ok-command approved-application
-                         {:type :application.command/change-resources
-                          :actor handler-user-id
-                          :comment "Changed these for you"
-                          :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf cat-4-other-form]}
-                         injections))))
+      (testing "- even with different workflow or form"
+        (is (= {:event/type :application.event/resources-changed
+                :event/time test-time
+                :event/actor handler-user-id
+                :application/id 123
+                :application/comment "Changed these for you"
+                :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
+                                        {:catalogue-item/id cat-2 :resource/ext-id "res2"}
+                                        {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
+                                        {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
+                :application/licenses [{:license/id license-1}
+                                       {:license/id license-2}
+                                       {:license/id license-3}]}
+               (ok-command approved-application
+                           {:type :application.command/change-resources
+                            :actor handler-user-id
+                            :comment "Changed these for you"
+                            :catalogue-item-ids [cat-1 cat-2 cat-3-other-wf cat-4-other-form]}
+                           injections)))))
 
-    (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}
-           (fail-command application
-                         {:type :application.command/change-resources
-                          :actor applicant-user-id
-                          :catalogue-item-ids [42]}
-                         injections)))
-    (is (= {:errors [{:type :must-not-be-empty :key :catalogue-item-ids}]}
-           (fail-command application
-                         {:type :application.command/change-resources
-                          :actor applicant-user-id
-                          :catalogue-item-ids []})))))
+    (testing "the catalogue item must exist"
+      (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids [42]}
+                           injections))))
+
+    (testing "there must be at least one catalogue item"
+      (is (= {:errors [{:type :must-not-be-empty :key :catalogue-item-ids}]}
+             (fail-command application
+                           {:type :application.command/change-resources
+                            :actor applicant-user-id
+                            :catalogue-item-ids []}))))))
 
 (deftest test-submit
   (let [injections {:validate-fields form-validation/validate-fields}
