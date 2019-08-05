@@ -14,7 +14,7 @@
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
-            [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
+            [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
@@ -545,7 +545,7 @@
                               :application.command/return [return-action-button]
                               :application.command/request-decision [request-decision-action-button]
                               :application.command/decide [decide-action-button]
-                              :application.command/request-comment [request-comment-action-button]
+                              :application.command/request-comment [request-review-action-button]
                               :application.command/comment [review-action-button]
                               :application.command/remark [remark-action-button]
                               :application.command/add-licenses [add-licenses-action-button]
@@ -565,7 +565,7 @@
         actions (action-buttons application)
         reload (partial reload! app-id)
         forms [[:div#actions-forms.mt-3
-                [request-comment-form app-id reload]
+                [request-review-form app-id reload]
                 [request-decision-form app-id reload]
                 [review-form app-id reload]
                 [remark-form app-id reload]
