@@ -1,6 +1,6 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -18,6 +18,8 @@
 (rf/reg-sub ::public (fn [db _] (::public db)))
 (rf/reg-event-db ::set-public (fn [db [_ value]] (assoc db ::public value)))
 
+(def ^:private action-form-id "remark")
+
 (rf/reg-event-fx
  ::send-remark
  (fn [{:keys [db]} [_ {:keys [application-id on-finished]}]]
@@ -26,11 +28,11 @@
           {:params {:application-id application-id
                     :comment (::comment db)
                     :public (::public db)}
-           :handler (partial status-modal/common-success-handler! on-finished)
+           :handler (partial status-modal/common-success-handler! (fn [_]
+                                                                    (collapse-action-form action-form-id)
+                                                                    (on-finished)))
            :error-handler status-modal/common-error-handler!})
    {}))
-
-(def ^:private action-form-id "remark")
 
 (defn remark-action-button []
   [action-button {:id action-form-id

@@ -1,6 +1,6 @@
 (ns rems.actions.decide
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -13,6 +13,8 @@
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
+(def ^:private action-form-id "decide")
+
 (rf/reg-event-fx
  ::send-decide
  (fn [_ [_ {:keys [application-id comment decision on-finished]}]]
@@ -21,11 +23,11 @@
           {:params {:application-id application-id
                     :decision decision
                     :comment comment}
-           :handler (partial status-modal/common-success-handler! on-finished)
+           :handler (partial status-modal/common-success-handler! (fn [_]
+                                                                    (collapse-action-form action-form-id)
+                                                                    (on-finished)))
            :error-handler status-modal/common-error-handler!})
    {}))
-
-(def ^:private action-form-id "decide")
 
 (defn decide-action-button []
   [action-button {:id action-form-id
