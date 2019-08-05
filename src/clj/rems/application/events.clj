@@ -26,6 +26,7 @@
   (assoc EventBase
          :event/type (s/enum :application.event/closed)
          :application/comment s/Str))
+;; TODO Commented/CommentRequested could be renamed to Reviewed/ReviewRequested to be in line with the UI
 (s/defschema CommentedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/commented)
