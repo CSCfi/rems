@@ -180,21 +180,17 @@
         license-1 1
         license-2 2
         application (apply-events nil [dummy-created-event])
-        submitted-application (apply-events nil [dummy-created-event
-                                                 {:event/type :application.event/submitted
-                                                  :event/time test-time
-                                                  :event/actor applicant-user-id
-                                                  :application/id 123}])
-        approved-application (apply-events nil [dummy-created-event
-                                                {:event/type :application.event/submitted
-                                                 :event/time test-time
-                                                 :event/actor applicant-user-id
-                                                 :application/id 123}
-                                                {:event/type :application.event/approved
-                                                 :event/time test-time
-                                                 :event/actor handler-user-id
-                                                 :application/comment "This is good"
-                                                 :application/id 123}])
+        submitted-application (apply-events application
+                                            [{:event/type :application.event/submitted
+                                              :event/time test-time
+                                              :event/actor applicant-user-id
+                                              :application/id 123}])
+        approved-application (apply-events submitted-application
+                                           [{:event/type :application.event/approved
+                                             :event/time test-time
+                                             :event/actor handler-user-id
+                                             :application/comment "This is good"
+                                             :application/id 123}])
         injections {:get-catalogue-item
                     {cat-1 {:id cat-1 :resid "res1" :formid form-1 :wfid wf-1}
                      cat-2-other-license {:id cat-2-other-license :resid "res2" :formid form-1 :wfid wf-1}
