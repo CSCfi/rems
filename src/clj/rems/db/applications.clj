@@ -86,9 +86,6 @@
 (defn add-application-created-event! [opts]
   (events/add-event! (application-created-event (assoc opts :allocate-external-id? true))))
 
-(defn- get-workflow-id-for-catalogue-items [catalogue-item-ids]
-  (:workflow/id (application-created-event {:catalogue-item-ids catalogue-item-ids})))
-
 (defn create-application! [user-id catalogue-item-ids]
   (let [start (time/now)
         app-id (:id (db/create-application!))]
@@ -101,10 +98,10 @@
 
 ;;; Running commands
 
-(defn- get-licenses-for-catalogue-items [catalogue-item-ids]
+(defn- get-catalogue-item-licenses [catalogue-item-id]
   (db/get-licenses
-   {:wfid (get-workflow-id-for-catalogue-items catalogue-item-ids)
-    :items catalogue-item-ids}))
+   {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
+    :items [catalogue-item-id]}))
 
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
@@ -114,7 +111,7 @@
    :validate-fields form-validation/validate-fields
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
-   :get-licenses get-licenses-for-catalogue-items})
+   :get-catalogue-item-licenses get-catalogue-item-licenses})
 
 (declare get-unrestricted-application)
 

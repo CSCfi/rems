@@ -195,19 +195,16 @@
                                                  :event/actor handler-user-id
                                                  :application/comment "This is good"
                                                  :application/id 123}])
-        catalogue-item-to-license {cat-1 license-1
-                                   cat-2-other-license license-2
-                                   cat-3-other-workflow license-1
-                                   cat-4-other-form license-1}
-        injections {:get-catalogue-item {cat-1 {:id cat-1 :resid "res1" :formid form-1 :wfid wf-1}
-                                         cat-2-other-license {:id cat-2-other-license :resid "res2" :formid form-1 :wfid wf-1}
-                                         cat-3-other-workflow {:id cat-3-other-workflow :resid "res3" :formid form-1 :wfid wf-2}
-                                         cat-4-other-form {:id cat-4-other-form :resid "res4" :formid form-2 :wfid wf-1}}
-                    :get-licenses
-                    (fn [catalogue-item-ids]
-                      (->> catalogue-item-ids
-                           (mapv (fn [id] {:id (catalogue-item-to-license id)}))
-                           (distinct-by :id)))}]
+        injections {:get-catalogue-item
+                    {cat-1 {:id cat-1 :resid "res1" :formid form-1 :wfid wf-1}
+                     cat-2-other-license {:id cat-2-other-license :resid "res2" :formid form-1 :wfid wf-1}
+                     cat-3-other-workflow {:id cat-3-other-workflow :resid "res3" :formid form-1 :wfid wf-2}
+                     cat-4-other-form {:id cat-4-other-form :resid "res4" :formid form-2 :wfid wf-1}}
+                    :get-catalogue-item-licenses
+                    {cat-1 [{:id license-1}]
+                     cat-2-other-license [{:id license-2}]
+                     cat-3-other-workflow [{:id license-1}]
+                     cat-4-other-form [{:id license-1}]}}]
 
     (testing "applicant can add resources to a draft application"
       (is (= {:event/type :application.event/resources-changed
