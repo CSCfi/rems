@@ -57,65 +57,15 @@
                   :text (text :t.actions/change-resources)
                   :on-click #(rf/dispatch [::open-form initial-resources])}])
 
-(defn- show-bundling-warning? [resources]
-  (let [workflows (set (map :wfid resources))
-        forms (set (map :formid resources))]
-    (and (seq resources)
-         (not= 1 (count workflows) (count forms)))))
-
-(defn- bundling-warning [resources can-bundle-all? language]
-  [:div
-   [:div.alert {:class (if can-bundle-all? :alert-warning :alert-danger)}
-    [:p (if can-bundle-all?
-          (text :t.actions/bundling-warning)
-          (text :t.actions/bundling-error))]
-    (into [:ul]
-          (for [group (vals (group-by (juxt :wfid :formid) resources))]
-            [:li (str/join ", " (map #(get-localized-title % language) group))]))]])
-
-(defn- show-change-form-warning? [original-form-id resources]
-  (and (seq resources)
-       (apply not= original-form-id (map :formid resources))))
-
-(defn- change-form-warning [resources can-bundle-all? language]
-  [:div
-   [:div.alert {:class (if can-bundle-all? :alert-warning :alert-danger)}
-    [:p (if can-bundle-all?
-          (text :t.actions/change-form-warning)
-          (text :t.actions/change-form-error))]
-    (into [:ul]
-          (for [group (vals (group-by :formid resources))]
-            [:li (str/join ", " (map #(get-localized-title % language) group))]))]])
-
-(defn- show-change-workflow-warning? [original-workflow-id resources]
-  (and (seq resources)
-       (apply not= original-workflow-id (map :wfid resources))))
-
-(defn- change-workflow-warning [resources can-bundle-all? language]
-  [:div
-   [:div.alert {:class (if can-bundle-all? :alert-warning :alert-danger)}
-    [:p (if can-bundle-all?
-          (text :t.actions/change-workflow-warning)
-          (text :t.actions/change-workflow-error))]
-    (into [:ul]
-          (for [group (vals (group-by :wfid resources))]
-            [:li (str/join ", " (map #(get-localized-title % language) group))]))]])
-
-(defn compatible-item? [item resources original-workflow-id original-form-id]
-  (not (or (show-bundling-warning? (conj resources item))
-           (show-change-form-warning? original-form-id (conj resources item))
-           (show-change-workflow-warning? original-workflow-id (conj resources item)))))
+(defn compatible-item? [item original-workflow-id original-form-id]
+  (and (= original-workflow-id (:wfid item))
+       (= original-form-id (:formid item))))
 
 (defn change-resources-view
-  [{:keys [application initial-resources selected-resources full-catalogue catalogue comment can-bundle-all? can-comment? language on-set-comment on-set-resources on-send]}]
-  (let [indexed-resources (index-by [:id] full-catalogue)
-        enriched-selected-resources (->> selected-resources
-                                         (select-keys indexed-resources)
-                                         vals
-                                         (sort-by #(get-localized-title % language)))
-        original-form-id (get-in application [:application/form :form/id])
+  [{:keys [application initial-resources selected-resources full-catalogue catalogue comment can-comment? language on-set-comment on-set-resources on-send]}]
+  (let [original-form-id (get-in application [:application/form :form/id])
         original-workflow-id (get-in application [:application/workflow :workflow/id])
-        compatible-first-sort-fn #(if (compatible-item? % enriched-selected-resources original-workflow-id original-form-id) -1 1)
+        compatible-first-sort-fn #(if (compatible-item? % original-workflow-id original-form-id) -1 1)
         sorted-selected-catalogue (->> catalogue
                                        (sort-by #(get-localized-title % language))
                                        (sort-by compatible-first-sort-fn))]
@@ -124,11 +74,7 @@
      [[button-wrapper {:id "change-resources"
                        :text (text :t.actions/change-resources)
                        :class "btn-primary"
-                       :disabled (or (and (not can-bundle-all?)
-                                          (or (show-bundling-warning? enriched-selected-resources))
-                                          (show-change-form-warning? original-form-id enriched-selected-resources)
-                                          (show-change-workflow-warning? original-workflow-id enriched-selected-resources))
-                                     (empty? selected-resources)
+                       :disabled (or (empty? selected-resources)
                                      (= selected-resources initial-resources))
                        :on-click on-send}]]
      (if (empty? catalogue)
@@ -138,12 +84,6 @@
        ;;   previously showed a warning if the selected resources were
        ;;   incompatible.
        [:div
-        (cond (show-bundling-warning? enriched-selected-resources)
-              [bundling-warning enriched-selected-resources can-bundle-all? language]
-              (show-change-form-warning? original-form-id enriched-selected-resources)
-              [change-workflow-warning enriched-selected-resources can-bundle-all? language]
-              (show-change-workflow-warning? original-workflow-id enriched-selected-resources)
-              [change-form-warning enriched-selected-resources can-bundle-all? language])
         (when can-comment?
           [action-comment {:id action-form-id
                            :label (text :t.form/add-comments-shown-to-applicant)
@@ -154,13 +94,14 @@
          [dropdown/dropdown
           {:id dropdown-id
            :items sorted-selected-catalogue
-           :item-disabled? #(not (compatible-item? % enriched-selected-resources original-workflow-id original-form-id))
+           :item-disabled? #(not (compatible-item? % original-workflow-id original-form-id))
            :item-label #(get-localized-title % language)
            :item-selected? #(contains? (set selected-resources) (% :id))
            :multi? true
-           :on-change on-set-resources}]]])]))
+           :on-change on-set-resources}]]
+        (text :t.actions/bundling-intro)])]))
 
-(defn change-resources-form [application can-bundle-all? can-comment? on-finished]
+(defn change-resources-form [application can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
         full-catalogue @(rf/subscribe [:rems.catalogue/full-catalogue])
@@ -173,7 +114,6 @@
                             :full-catalogue full-catalogue
                             :catalogue catalogue
                             :comment comment
-                            :can-bundle-all? can-bundle-all?
                             :can-comment? can-comment?
                             :language language
                             :on-set-comment #(rf/dispatch [::set-comment %])
