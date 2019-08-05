@@ -1,4 +1,4 @@
-(ns rems.actions.comment
+(ns rems.actions.review
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.status-modal :as status-modal]
@@ -14,7 +14,7 @@
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
 (rf/reg-event-fx
- ::send-comment
+ ::send-review
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/comment))
    (post! "/api/applications/comment"
@@ -24,18 +24,18 @@
            :error-handler status-modal/common-error-handler!})
    {}))
 
-(def ^:private action-form-id "comment")
+(def ^:private action-form-id "review")
 
-(defn comment-action-button []
+(defn review-action-button []
   [action-button {:id action-form-id
                   :text (text :t.actions/comment)
                   :on-click #(rf/dispatch [::open-form])}])
 
-(defn comment-view
+(defn review-view
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view action-form-id
    (text :t.actions/comment)
-   [[button-wrapper {:id "comment"
+   [[button-wrapper {:id "review-button"
                      :text (text :t.actions/comment)
                      :class "btn-primary"
                      :on-click on-send}]]
@@ -44,10 +44,10 @@
                     :comment comment
                     :on-comment on-set-comment}]])
 
-(defn comment-form [application-id on-finished]
+(defn review-form [application-id on-finished]
   (let [comment @(rf/subscribe [::comment])]
-    [comment-view {:comment comment
-                   :on-set-comment #(rf/dispatch [::set-comment %])
-                   :on-send #(rf/dispatch [::send-comment {:application-id application-id
-                                                           :comment comment
-                                                           :on-finished on-finished}])}]))
+    [review-view {:comment comment
+                  :on-set-comment #(rf/dispatch [::set-comment %])
+                  :on-send #(rf/dispatch [::send-review {:application-id application-id
+                                                         :comment comment
+                                                         :on-finished on-finished}])}]))
