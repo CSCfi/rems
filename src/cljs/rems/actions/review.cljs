@@ -13,7 +13,7 @@
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
-(def ^:private action-form-id "comment")
+(def ^:private action-form-id "review")
 
 (rf/reg-event-fx
  ::send-review
