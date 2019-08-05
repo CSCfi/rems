@@ -179,7 +179,6 @@
         wf-2 2
         license-1 1
         license-2 2
-        license-3 3
         application (apply-events nil [dummy-created-event])
         submitted-application (apply-events nil [dummy-created-event
                                                  {:event/type :application.event/submitted
@@ -198,7 +197,7 @@
                                                  :application/id 123}])
         catalogue-item-to-license {cat-1 license-1
                                    cat-2 license-2
-                                   cat-3-other-wf license-3
+                                   cat-3-other-wf license-1
                                    cat-4-other-form license-1}
         injections {:get-catalogue-item {cat-1 {:id cat-1 :resid "res1" :formid form-1 :wfid wf-1}
                                          cat-2 {:id cat-2 :resid "res2" :formid form-1 :wfid wf-1}
@@ -308,8 +307,7 @@
                                         {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
                 :application/licenses [{:license/id license-1}
-                                       {:license/id license-2}
-                                       {:license/id license-3}]}
+                                       {:license/id license-2}]}
                (ok-command submitted-application
                            {:type :application.command/change-resources
                             :actor handler-user-id
@@ -345,8 +343,7 @@
                                         {:catalogue-item/id cat-3-other-wf :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
                 :application/licenses [{:license/id license-1}
-                                       {:license/id license-2}
-                                       {:license/id license-3}]}
+                                       {:license/id license-2}]}
                (ok-command approved-application
                            {:type :application.command/change-resources
                             :actor handler-user-id
