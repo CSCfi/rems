@@ -16,7 +16,7 @@
 (rf/reg-event-fx
  ::send-review
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (status-modal/common-pending-handler! (text :t.actions/comment))
+   (status-modal/common-pending-handler! (text :t.actions/review))
    (post! "/api/applications/comment"
           {:params {:application-id application-id
                     :comment comment}
@@ -28,15 +28,15 @@
 
 (defn review-action-button []
   [action-button {:id action-form-id
-                  :text (text :t.actions/comment)
+                  :text (text :t.actions/review)
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn review-view
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view action-form-id
-   (text :t.actions/comment)
+   (text :t.actions/review)
    [[button-wrapper {:id "review-button"
-                     :text (text :t.actions/comment)
+                     :text (text :t.actions/review)
                      :class "btn-primary"
                      :on-click on-send}]]
    [action-comment {:id action-form-id

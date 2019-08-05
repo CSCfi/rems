@@ -17,7 +17,6 @@
             :cancel "Peruuta"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
-            :comment "Katselmoi"
             :comment-placeholder "Kommentti"
             :decide "Päätä"
             :empty "Ei käsiteltäviä hakemuksia."
@@ -39,11 +38,12 @@
             :remark "Kirjaa huomio"
             :remark-public "Näytä huomio hakijalle"
             :remove-member "Poista jäsen"
-            :request-comment "Pyydä katselmointia"
             :request-decision "Pyydä päätöstä"
             :request-selection "Lähetä pyyntöjä"
+            :request-review "Pyydä katselmointia"
             :resources-selection "Hakemukseen liitettävät resurssit"
             :return "Palauta hakijalle"
+            :review "Katselmoi"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä käsittelyajat"}
   :administration {:active "Aktiivinen"

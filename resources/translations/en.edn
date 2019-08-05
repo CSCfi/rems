@@ -17,7 +17,6 @@
             :cancel "Cancel"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be opened again."]]
-            :comment "Review"
             :comment-placeholder "Comment"
             :decide "Decide"
             :empty "No applications to process."
@@ -39,11 +38,12 @@
             :remark "Remark"
             :remark-public "Show to applicant"
             :remove-member "Remove member"
-            :request-comment "Request review"
             :request-decision "Request decision"
             :request-selection "Send requests"
+            :request-review "Request review"
             :resources-selection "Resources included in the application"
             :return "Return to applicant"
+            :review "Review"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"}
   :administration {:active "Active"
