@@ -330,8 +330,11 @@
    {:id "preview-form"
     :title (text :t.administration/preview)
     :always (into [:div#preview-form-contents]
-                  (for [field (:form/fields form)]
-                    [fields/field field]))}])
+                  ;; Allocate indexes in db?
+                  (map-indexed (fn [field-index field]
+                                 [fields/field (assoc field
+                                                      :field/id (inc field-index))])
+                               (:form/fields form)))}])
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
