@@ -417,7 +417,7 @@
    [:.alert-dark {:color (util/get-theme-attribute :alert-dark-color)
                   :background-color (util/get-theme-attribute :alert-dark-bgcolor)
                   :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
-   [:#navbar
+   [:.navbar-wrapper
     {:max-width content-width}]
    [:.navbar
     {:font-size (u/px 19)
