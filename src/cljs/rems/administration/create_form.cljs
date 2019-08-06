@@ -315,7 +315,7 @@
   [collapsible/component
    {:id "preview-form"
     :title (text :t.administration/preview)
-    :always (into [:div]
+    :always (into [:div#preview-form-contents]
                   (for [field (:form/fields form)]
                     [fields/field field]))}])
 
