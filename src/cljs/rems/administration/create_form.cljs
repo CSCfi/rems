@@ -291,8 +291,9 @@
    (text :t.administration/cancel)])
 
 (defn- view-field-button [field-index]
-  ;; TODO accessibility
   [:a {:href "#"
+       :aria-label (text :t.administration/preview)
+       :title (text :t.administration/preview)
        :on-click (fn [event]
                    (.preventDefault event)
                    (let [id (fields/id-to-name field-index)
@@ -302,7 +303,7 @@
                      ;; Without :nearest, the browser would sometimes also scroll the main scroll bar for some reason.
                      ;; TODO :nearest doesn't work on Firefox<58 or Edge
                      (.scrollIntoView parent (clj->js {:block :nearest}))))}
-   [:i.icon-link.fas.fa-eye]])
+   [:i.icon-link.fas.fa-eye {:aria-hidden true}]])
 
 (defn- form-fields [fields]
   (into [:div]
