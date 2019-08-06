@@ -593,11 +593,10 @@
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
                     :top "100px" ;; TODO adjust
-                    :height "80vh"
-                    :overflow-y :scroll
-                    :overflow-x :hidden}
-    [:.card-header {:position :sticky
-                    :top "0px"}]]
+                    }
+    [:.collapse-content {:overflow-y :scroll
+                         :overflow-x :hidden
+                         :max-height "80vh"}]]
 
    [:.full {:width "100%"}]
    [:.intro {:margin-bottom (u/rem 2)}]
