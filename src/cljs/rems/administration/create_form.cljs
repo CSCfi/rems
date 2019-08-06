@@ -299,7 +299,6 @@
                          elt (. js/document getElementById id)
                          ;; the input itself is wrapped in a div or fieldset
                          parent (.-parentElement elt)]
-                     (prn :SCROLL id elt parent)
                      ;; Without :nearest, the browser would sometimes also scroll the main scroll bar for some reason.
                      ;; TODO :nearest doesn't work on Firefox<58 or Edge
                      (.scrollIntoView parent (clj->js {:block :nearest}))))}
