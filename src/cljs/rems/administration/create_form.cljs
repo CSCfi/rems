@@ -40,7 +40,9 @@
 ;;;; form state
 
 ;; TODO rename item->field
-(rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-sub ::form (fn [db _]
+                     (-> (::form db)
+                         (update :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/id i)) %))))))
 (rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
 (rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
 (rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
@@ -293,7 +295,7 @@
   [:a {:href "#"
        :on-click (fn [event]
                    (.preventDefault event)
-                   (let [id (fields/id-to-name (inc field-index))
+                   (let [id (fields/id-to-name field-index)
                          elt (. js/document getElementById id)
                          ;; the input itself is wrapped in a div or fieldset
                          parent (.-parentElement elt)]
@@ -305,38 +307,34 @@
 
 (defn- form-fields [fields]
   (into [:div]
-        (map-indexed (fn [field-index field]
-                       [:div.form-field {:key field-index}
-                        [:div.form-field-header
-                         [:h3 (text-format :t.create-form/field-n (inc field-index))]
-                         [:div.form-field-controls
-                          [view-field-button field-index]
-                          [move-form-field-up-button field-index]
-                          [move-form-field-down-button field-index]
-                          [remove-form-field-button field-index]]]
+        (for [{id :field/id :as field} fields]
+          [:div.form-field {:key id}
+           [:div.form-field-header
+            [:h3 (text-format :t.create-form/field-n (inc id))]
+            [:div.form-field-controls
+             [view-field-button id]
+             [move-form-field-up-button id]
+             [move-form-field-down-button id]
+             [remove-form-field-button id]]]
 
-                        [form-field-title-field field-index]
-                        [form-field-type-radio-group field-index]
-                        (when (supports-optional? field)
-                          [form-field-optional-checkbox field-index])
-                        (when (supports-placeholder? field)
-                          [form-field-placeholder-field field-index])
-                        (when (supports-max-length? field)
-                          [form-field-max-length-field field-index])
-                        (when (supports-options? field)
-                          [form-field-option-fields field-index])])
-                     fields)))
+           [form-field-title-field id]
+           [form-field-type-radio-group id]
+           (when (supports-optional? field)
+             [form-field-optional-checkbox id])
+           (when (supports-placeholder? field)
+             [form-field-placeholder-field id])
+           (when (supports-max-length? field)
+             [form-field-max-length-field id])
+           (when (supports-options? field)
+             [form-field-option-fields id])])))
 
 (defn form-preview [form]
   [collapsible/component
    {:id "preview-form"
     :title (text :t.administration/preview)
     :always (into [:div#preview-form-contents]
-                  ;; Allocate indexes in db?
-                  (map-indexed (fn [field-index field]
-                                 [fields/field (assoc field
-                                                      :field/id (inc field-index))])
-                               (:form/fields form)))}])
+                  (for [field (:form/fields form)]
+                    [fields/field field]))}])
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
