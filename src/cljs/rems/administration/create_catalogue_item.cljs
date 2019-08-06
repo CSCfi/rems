@@ -145,6 +145,7 @@
      [dropdown/dropdown
       {:id workflow-dropdown-id
        :items workflows
+       :item-key :id
        :item-label :title
        :item-selected? #(= (:id %) (:id selected-workflow))
        :on-change #(rf/dispatch [::set-selected-workflow %])}]]))
@@ -157,6 +158,7 @@
      [dropdown/dropdown
       {:id resource-dropdown-id
        :items resources
+       :item-key :id
        :item-label :resid
        :item-selected? #(= (:id %) (:id selected-resource))
        :on-change #(rf/dispatch [::set-selected-resource %])}]]))
@@ -169,6 +171,7 @@
      [dropdown/dropdown
       {:id form-dropdown-id
        :items forms
+       :item-key :id
        :item-label :form/title
        :item-selected? #(= (:form/id %) (:id selected-form))
        :on-change #(rf/dispatch [::set-selected-form %])}]]))
