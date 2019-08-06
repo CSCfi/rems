@@ -95,6 +95,7 @@
           {:id dropdown-id
            :items sorted-selected-catalogue
            :item-disabled? #(not (compatible-item? % original-workflow-id original-form-id))
+           :item-key :id
            :item-label #(get-localized-title % language)
            :item-selected? #(contains? (set selected-resources) (% :id))
            :multi? true

@@ -76,6 +76,7 @@
      [dropdown/dropdown
       {:id dropdown-id
        :items potential-deciders
+       :item-key :userid
        :item-label :display
        :item-selected? #(contains? (set selected-deciders) %)
        :multi? true

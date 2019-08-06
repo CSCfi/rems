@@ -98,6 +98,7 @@
      [dropdown/dropdown
       {:id licenses-dropdown-id
        :items (map localize-item available-licenses)
+       :item-key :id
        :item-label :title
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true

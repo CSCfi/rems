@@ -6,7 +6,7 @@
 
 (defn dropdown
   "Single- or multi-choice, searchable dropdown menu."
-  [{:keys [id items item-label item-selected? item-disabled? multi? on-change]
+  [{:keys [id items item-key item-label item-selected? item-disabled? multi? on-change]
     :or {item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   (let [options (map (fn [item] {:value item
@@ -16,6 +16,8 @@
         grouped (group-by #(item-selected? (% :value)) options)]
     [:> js/Select {:className "dropdown-container"
                    :classNamePrefix "dropdown-select"
+                   :getOptionValue #(let [item (:value (js->clj % :keywordize-keys true))]
+                                      (item-key item))
                    :inputId id
                    :isMulti multi?
                    :maxMenuHeight 200
@@ -42,10 +44,12 @@
      (component-info dropdown)
      (example "dropdown menu, single-choice, empty"
               [dropdown {:items items
+                         :item-key :userid
                          :item-label :userid
                          :on-change on-change}])
      (example "dropdown menu, multi-choice, several values selected"
               [dropdown {:items items
+                         :item-key :userid
                          :item-label :userid
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true

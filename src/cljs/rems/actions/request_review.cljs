@@ -78,6 +78,7 @@
      [dropdown/dropdown
       {:id dropdown-id
        :items potential-reviewers
+       :item-key :userid
        :item-label :display
        :item-selected? #(contains? (set selected-reviewers) %)
        :multi? true

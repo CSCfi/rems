@@ -68,6 +68,7 @@
      [dropdown/dropdown
       {:id dropdown-id
        :items potential-members
+       :item-key :userid
        :item-label :display
        :item-selected? #(= selected-member %)
        :on-change on-set-member}]]]

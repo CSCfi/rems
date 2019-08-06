@@ -86,6 +86,7 @@
      [dropdown/dropdown
       {:id dropdown-id
        :items potential-licenses
+       :item-key :id
        :item-label #(title-of-license % language)
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true

@@ -180,6 +180,7 @@
      [dropdown/dropdown
       {:id handlers-dropdown-id
        :items all-handlers
+       :item-key :userid
        :item-label :display
        :item-selected? #(contains? selected-handlers (% :userid))
        :multi? true
