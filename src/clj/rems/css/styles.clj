@@ -417,9 +417,14 @@
    [:.alert-dark {:color (util/get-theme-attribute :alert-dark-color)
                   :background-color (util/get-theme-attribute :alert-dark-bgcolor)
                   :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
+   [:.navbar-wrapper
+    {:max-width content-width}]
    [:.navbar
-    {:max-width content-width
-     :font-size (u/px 19)}
+    {:font-size (u/px 19)
+     :letter-spacing (u/rem 0.015)
+     :padding-left 0
+     :padding-right 0
+     :color (util/get-theme-attribute :navbar-color "#111")}
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
    [:.navbar-top-bar {:width (u/percent 100)
@@ -497,10 +502,6 @@
    [:.fa
     :.user-name
     {:margin-right (u/px 5)}]
-   [:.navbar {:padding-left 0
-              :padding-right 0
-              :letter-spacing (u/rem 0.015)
-              :color (util/get-theme-attribute :navbar-color "#111")}]
    [:#big-navbar {:text-transform (util/get-theme-attribute :big-navbar-text-transform "none")}]
    [(s/descendant :.navbar-text :.language-switcher)
     {:margin-right (u/rem 1)}]
