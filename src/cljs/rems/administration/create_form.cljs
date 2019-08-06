@@ -288,6 +288,18 @@
    "/#/administration/forms"
    (text :t.administration/cancel)])
 
+(defn- view-field-button [field-index]
+  ;; TODO accessibility
+  [:a {:href "#"
+       :on-click (fn [event]
+                   (.preventDefault event)
+                   (let [id (fields/id-to-name (inc field-index))
+                         elt (. js/document getElementById id)]
+                     (prn :SCROLL id elt)
+                     ;; Without :nearest, the browser would sometimes also scroll the main scroll bar for some reason.
+                     (.scrollIntoView elt (clj->js {:block :nearest}))))}
+   [:i.icon-link.fas.fa-eye]])
+
 (defn- form-fields [fields]
   (into [:div]
         (map-indexed (fn [field-index field]
@@ -295,6 +307,7 @@
                         [:div.form-field-header
                          [:h3 (text-format :t.create-form/field-n (inc field-index))]
                          [:div.form-field-controls
+                          [view-field-button field-index]
                           [move-form-field-up-button field-index]
                           [move-form-field-down-button field-index]
                           [remove-form-field-button field-index]]]
