@@ -294,11 +294,13 @@
        :on-click (fn [event]
                    (.preventDefault event)
                    (let [id (fields/id-to-name (inc field-index))
-                         elt (. js/document getElementById id)]
-                     (prn :SCROLL id elt)
+                         elt (. js/document getElementById id)
+                         ;; the input itself is wrapped in a div or fieldset
+                         parent (.-parentElement elt)]
+                     (prn :SCROLL id elt parent)
                      ;; Without :nearest, the browser would sometimes also scroll the main scroll bar for some reason.
                      ;; TODO :nearest doesn't work on Firefox<58 or Edge
-                     (.scrollIntoView elt (clj->js {:block :nearest}))))}
+                     (.scrollIntoView parent (clj->js {:block :nearest}))))}
    [:i.icon-link.fas.fa-eye]])
 
 (defn- form-fields [fields]
