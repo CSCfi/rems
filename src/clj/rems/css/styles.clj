@@ -593,11 +593,11 @@
    [:.new-form-field-option {:text-align "center"}]
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
-                    :top "100px" ;; TODO adjust
-                    }
+                    :top "100px"}
     [:.collapse-content {:overflow-y :scroll
                          :overflow-x :hidden
-                         :max-height "80vh"}]]
+                         ;; subtract #preview-form top value here to stay inside the viewbox
+                         :max-height "calc(80vh - 100px)"}]]
 
    [:.full {:width "100%"}]
    [:.intro {:margin-bottom (u/rem 2)}]
