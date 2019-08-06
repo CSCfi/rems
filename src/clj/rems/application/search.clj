@@ -4,8 +4,9 @@
             [rems.db.applications :as applications])
   (:import [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
-           [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode DirectoryReader Term]
-           [org.apache.lucene.search IndexSearcher TermQuery ScoreDoc TopDocs]
+           [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode DirectoryReader]
+           [org.apache.lucene.queryparser.flexible.standard StandardQueryParser]
+           [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs]
            [org.apache.lucene.store Directory NIOFSDirectory]))
 
 (mount/defstate ^Directory directory
@@ -21,6 +22,7 @@
              (Long/parseLong id)))))
 
 (defn find-applications [^String query]
+  ;; TODO: incremental indexing
   (let [apps (applications/get-all-unrestricted-applications)]
 
     (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
@@ -33,6 +35,8 @@
 
     (with-open [reader (DirectoryReader/open directory)]
       (let [searcher (IndexSearcher. reader)
-            query (TermQuery. (Term. "applicant" query))
-            results (.search searcher query 10000)]
+            results (.search searcher
+                             (-> (StandardQueryParser. analyzer)
+                                 (.parse query "applicant")) ; TODO: change defaultField to full text search
+                             10000)]
         (set (get-application-ids searcher results))))))
