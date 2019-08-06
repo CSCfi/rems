@@ -297,6 +297,7 @@
                          elt (. js/document getElementById id)]
                      (prn :SCROLL id elt)
                      ;; Without :nearest, the browser would sometimes also scroll the main scroll bar for some reason.
+                     ;; TODO :nearest doesn't work on Firefox<58 or Edge
                      (.scrollIntoView elt (clj->js {:block :nearest}))))}
    [:i.icon-link.fas.fa-eye]])
 
