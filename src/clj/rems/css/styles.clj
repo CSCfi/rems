@@ -592,6 +592,13 @@
                                :margin-right 0)]
    [:.new-form-field-option {:text-align "center"}]
 
+   [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
+                    :top "100px" ;; TODO adjust
+                    }
+    [:.collapse-content {:overflow-y :scroll
+                         :overflow-x :hidden
+                         :max-height "80vh"}]]
+
    [:.full {:width "100%"}]
    [:.intro {:margin-bottom (u/rem 2)}]
    [:.rectangle {:width (u/px 50)

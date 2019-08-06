@@ -20,7 +20,7 @@
 
       (rf/dispatch-sync [::f/add-form-field])
 
-      (is (= {:form/fields [{:field/type :text}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text}]}
              @form)
           "after"))
 
@@ -28,13 +28,14 @@
       (reset-form)
       (rf/dispatch-sync [::f/add-form-field])
       (rf/dispatch-sync [::f/set-form-field [:form/fields 0 :foo] "old field"])
-      (is (= {:form/fields [{:field/type :text :foo "old field"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "old field"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/add-form-field])
 
-      (is (= {:form/fields [{:field/type :text :foo "old field"} {:field/type :text}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "old field"}
+                            {:field/id 1 :field/type :text}]}
              @form)
           "after"))))
 
@@ -43,7 +44,7 @@
     (testing "removes fields"
       (reset-form)
       (rf/dispatch-sync [::f/add-form-field])
-      (is (= {:form/fields [{:field/type :text}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text}]}
              @form)
           "before")
 
@@ -61,16 +62,16 @@
       (rf/dispatch-sync [::f/set-form-field [:form/fields 0 :foo] "field 0"])
       (rf/dispatch-sync [::f/set-form-field [:form/fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:form/fields 2 :foo] "field 2"])
-      (is (= {:form/fields [{:field/type :text :foo "field 0"}
-                            {:field/type :text :foo "field 1"}
-                            {:field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
+                            {:field/id 1 :field/type :text :foo "field 1"}
+                            {:field/id 2 :field/type :text :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/remove-form-field 1])
 
-      (is (= {:form/fields [{:field/type :text :foo "field 0"}
-                            {:field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
+                            {:field/id 1 :field/type :text :foo "field 2"}]}
              @form)
           "after"))))
 
@@ -84,34 +85,34 @@
       (rf/dispatch-sync [::f/set-form-field [:form/fields 0 :foo] "field 0"])
       (rf/dispatch-sync [::f/set-form-field [:form/fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:form/fields 2 :foo] "field X"])
-      (is (= {:form/fields [{:field/type :text :foo "field 0"}
-                            {:field/type :text :foo "field 1"}
-                            {:field/type :text :foo "field X"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
+                            {:field/id 1 :field/type :text :foo "field 1"}
+                            {:field/id 2 :field/type :text :foo "field X"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-field-up 2])
 
-      (is (= {:form/fields [{:field/type :text :foo "field 0"}
-                            {:field/type :text :foo "field X"}
-                            {:field/type :text :foo "field 1"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
+                            {:field/id 1 :field/type :text :foo "field X"}
+                            {:field/id 2 :field/type :text :foo "field 1"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-field-up 1])
 
-      (is (= {:form/fields [{:field/type :text :foo "field X"}
-                            {:field/type :text :foo "field 0"}
-                            {:field/type :text :foo "field 1"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field X"}
+                            {:field/id 1 :field/type :text :foo "field 0"}
+                            {:field/id 2 :field/type :text :foo "field 1"}]}
              @form)
           "after move 2")
 
       (testing "unless already first"
         (rf/dispatch-sync [::f/move-form-field-up 0])
 
-        (is (= {:form/fields [{:field/type :text :foo "field X"}
-                              {:field/type :text :foo "field 0"}
-                              {:field/type :text :foo "field 1"}]}
+        (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field X"}
+                              {:field/id 1 :field/type :text :foo "field 0"}
+                              {:field/id 2 :field/type :text :foo "field 1"}]}
                @form)
             "after move 3")))))
 
@@ -125,34 +126,34 @@
       (rf/dispatch-sync [::f/set-form-field [:form/fields 0 :foo] "field X"])
       (rf/dispatch-sync [::f/set-form-field [:form/fields 1 :foo] "field 1"])
       (rf/dispatch-sync [::f/set-form-field [:form/fields 2 :foo] "field 2"])
-      (is (= {:form/fields [{:field/type :text :foo "field X"}
-                            {:field/type :text :foo "field 1"}
-                            {:field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field X"}
+                            {:field/id 1 :field/type :text :foo "field 1"}
+                            {:field/id 2 :field/type :text :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [::f/move-form-field-down 0])
 
-      (is (= {:form/fields [{:field/type :text :foo "field 1"}
-                            {:field/type :text :foo "field X"}
-                            {:field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 1"}
+                            {:field/id 1 :field/type :text :foo "field X"}
+                            {:field/id 2 :field/type :text :foo "field 2"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [::f/move-form-field-down 1])
 
-      (is (= {:form/fields [{:field/type :text :foo "field 1"}
-                            {:field/type :text :foo "field 2"}
-                            {:field/type :text :foo "field X"}]}
+      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 1"}
+                            {:field/id 1 :field/type :text :foo "field 2"}
+                            {:field/id 2 :field/type :text :foo "field X"}]}
              @form)
           "after move 2")
 
       (testing "unless already last"
         (rf/dispatch-sync [::f/move-form-field-down 2])
 
-        (is (= {:form/fields [{:field/type :text :foo "field 1"}
-                              {:field/type :text :foo "field 2"}
-                              {:field/type :text :foo "field X"}]}
+        (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 1"}
+                              {:field/id 1 :field/type :text :foo "field 2"}
+                              {:field/id 2 :field/type :text :foo "field X"}]}
                @form)
             "after move 3")))))
 
