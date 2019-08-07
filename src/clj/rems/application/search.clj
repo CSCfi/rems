@@ -43,6 +43,14 @@
       (.maybeRefresh searcher-manager)
       (swap! search-index assoc ::last-processed-event-id (:event/id (last events))))))
 
+(defn- with-searcher [f]
+  (let [searcher-manager ^SearcherManager (::searcher-manager @search-index)
+        searcher ^IndexSearcher (.acquire searcher-manager)]
+    (try
+      (f searcher)
+      (finally
+        (.release searcher-manager searcher)))))
+
 (defn- get-application-ids [^IndexSearcher searcher ^TopDocs results]
   (doall (for [^ScoreDoc hit (.-scoreDocs results)]
            (let [doc (.doc searcher (.-doc hit))
@@ -51,13 +59,10 @@
 
 (defn find-applications [^String query]
   (refresh!) ; TODO: call from a background thread asynchronously?
-  (let [searcher-manager ^SearcherManager (::searcher-manager @search-index)
-        searcher ^IndexSearcher (.acquire searcher-manager)]
-    (try
-      (let [results (.search searcher
-                             (-> (StandardQueryParser. analyzer)
-                                 (.parse query "applicant")) ; TODO: change defaultField to full text search
-                             10000)]
-        (set (get-application-ids searcher results)))
-      (finally
-        (.release searcher-manager searcher)))))
+  (with-searcher
+   (fn [^IndexSearcher searcher]
+     (let [results (.search searcher
+                            (-> (StandardQueryParser. analyzer)
+                                (.parse query "applicant")) ; TODO: change defaultField to full text search
+                            10000)]
+       (set (get-application-ids searcher results))))))
