@@ -188,11 +188,18 @@
           :else
           (/ (.-bottom bounds) (.-height bounds)))))
 
+(defn true-height [element]
+  (let [style (.getComputedStyle js/window element)]
+    (+ (.-offsetHeight element)
+       (js/parseInt (.-marginTop style))
+       (js/parseInt (.-marginBottom style)))))
+
 (defn set-visibility-ratio [frame element ratio]
   (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
-        element-height (.-offsetHeight element)
-        top-margin (/ (.-offsetHeight frame) 4)] ;; TODO adjust?
-    (.scrollTo frame 0 (+ element-top element-height (* -1 ratio element-height) (- top-margin)))))
+        element-height (true-height element) #_(.-offsetHeight element)
+        top-margin (/ (.-offsetHeight frame) 4)
+        position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
+    (.scrollTo frame 0 position)))
 
 (defn first-partially-visible-edit-field []
   (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field"))
