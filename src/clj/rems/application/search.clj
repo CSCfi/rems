@@ -1,57 +1,47 @@
 (ns rems.application.search
   (:require [clojure.java.io :as io]
-            [clojure.set :as set]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
-            [rems.application.events-cache :as events-cache]
             [rems.db.applications :as applications]
-            [rems.util :refer [conj-set]])
+            [rems.db.events :as events])
   (:import [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
-           [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode DirectoryReader]
+           [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode]
            [org.apache.lucene.queryparser.flexible.standard StandardQueryParser]
-           [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs]
+           [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs SearcherManager SearcherFactory]
            [org.apache.lucene.store Directory NIOFSDirectory]))
 
 (def ^:private analyzer (StandardAnalyzer.))
 
-(mount/defstate ^Directory directory
-  :start (let [dir (NIOFSDirectory. (.toPath (io/file "search-index")))]
-           (with-open [writer (IndexWriter. dir (-> (IndexWriterConfig. analyzer)
-                                                    (.setOpenMode IndexWriterConfig$OpenMode/CREATE)))]
+(mount/defstate ^Directory search-index
+  :start (let [directory (NIOFSDirectory. (.toPath (io/file "search-index")))]
+           (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
+                                                          (.setOpenMode IndexWriterConfig$OpenMode/CREATE)))]
              (.deleteAll writer))
-           dir)
-  :stop (.close directory))
+           (atom {::directory directory
+                  ::searcher-manager (SearcherManager. directory (SearcherFactory.))
+                  ::last-processed-event-id 0}))
+  :stop (do
+          (.close ^SearcherManager (::searcher-manager @search-index))
+          (.close ^Directory (::directory @search-index))))
 
-
-;; TODO: store last event ID inside the index?
-(mount/defstate applications
-  :start (events-cache/new))
-
-(defn- update-applications [state event]
-  (let [app-id (:application/id event)]
-    (if app-id
-      (update state ::needs-reindexing conj-set app-id)
-      state)))
+(defn- index-application! [^IndexWriter writer app]
+  (log/info "Indexing application" (:application/id app))
+  (let [doc (Document.)]
+    (.add doc (StringField. "id" (str (:application/id app)) Field$Store/YES))
+    (.add doc (TextField. "applicant" (str (:application/applicant app)) Field$Store/NO))
+    (.addDocument writer doc)))
 
 (defn refresh! []
-  (events-cache/refresh! applications
-                         (fn [state events]
-                           (reduce update-applications state events)))
-  (let [app-ids (::needs-reindexing (:state @applications))]
-    (when-not (empty? app-ids)
+  (let [{::keys [directory ^SearcherManager searcher-manager last-processed-event-id]} @search-index
+        events (events/get-all-events-since last-processed-event-id)]
+    (when-not (empty? events)
       (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                      (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
-        (doseq [app-id app-ids]
-          (log/info "Indexing application" app-id)
-          (let [app (applications/get-unrestricted-application app-id)
-                doc (Document.)]
-            (.add doc (StringField. "id" (str (:application/id app)) Field$Store/YES))
-            (.add doc (TextField. "applicant" (str (:application/applicant app)) Field$Store/NO))
-            (.addDocument writer doc))))
-      (swap! applications (fn [obj]
-                            (update-in obj [:state ::needs-reindexing] set/difference app-ids))))))
-
+        (doseq [app-id (set (map :application/id events))]
+          (index-application! writer (applications/get-unrestricted-application app-id))))
+      (.maybeRefresh searcher-manager)
+      (swap! search-index assoc ::last-processed-event-id (:event/id (last events))))))
 
 (defn- get-application-ids [^IndexSearcher searcher ^TopDocs results]
   (doall (for [^ScoreDoc hit (.-scoreDocs results)]
@@ -61,10 +51,13 @@
 
 (defn find-applications [^String query]
   (refresh!) ; TODO: call from a background thread asynchronously?
-  (with-open [reader (DirectoryReader/open directory)]
-    (let [searcher (IndexSearcher. reader)
-          results (.search searcher
-                           (-> (StandardQueryParser. analyzer)
-                               (.parse query "applicant")) ; TODO: change defaultField to full text search
-                           10000)]
-      (set (get-application-ids searcher results)))))
+  (let [searcher-manager ^SearcherManager (::searcher-manager @search-index)
+        searcher ^IndexSearcher (.acquire searcher-manager)]
+    (try
+      (let [results (.search searcher
+                             (-> (StandardQueryParser. analyzer)
+                                 (.parse query "applicant")) ; TODO: change defaultField to full text search
+                             10000)]
+        (set (get-application-ids searcher results)))
+      (finally
+        (.release searcher-manager searcher)))))
