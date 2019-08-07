@@ -177,6 +177,41 @@
                    :error-handler status-modal/common-error-handler!}))
      {:db (assoc db ::form-errors form-errors)})))
 
+;;;; preview auto-scrolling
+
+(defn visibility-ratio [element]
+  (let [bounds (.getBoundingClientRect element)]
+    (cond (<= (.-bottom bounds) 0)
+          0
+          (>= (.-top bounds) 0)
+          1
+          :else
+          (/ (.-bottom bounds) (.-height bounds)))))
+
+(defn set-visibility-ratio [frame element ratio]
+  (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
+        element-height (.-offsetHeight element)
+        top-margin (/ (.-offsetHeight frame) 4)] ;; TODO adjust?
+    (.scrollTo frame 0 (+ element-top element-height (* -1 ratio element-height) (- top-margin)))))
+
+(defn first-partially-visible-edit-field []
+  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field"))
+        visible? #(<= 0 (-> % .getBoundingClientRect .-bottom))]
+    (first (filter visible? fields))))
+
+(defn autoscroll []
+  (let [edit-field (first-partially-visible-edit-field)
+        id (.getAttribute edit-field "data-field-id")
+        preview-frame (.querySelector js/document "#preview-form .collapse-content")
+        preview-field (-> js/document
+                          (.getElementById (str "field" id))
+                          (.closest ".field"))
+        ratio (visibility-ratio edit-field)]
+    (set-visibility-ratio preview-frame preview-field ratio)))
+
+(defn enable-autoscroll []
+  (js/setInterval autoscroll 50))
+
 ;;;; UI
 
 (def ^:private context
@@ -308,7 +343,8 @@
 (defn- form-fields [fields]
   (into [:div]
         (for [{id :field/id :as field} fields]
-          [:div.form-field {:key id}
+          [:div.form-field {:key id
+                            :data-field-id id}
            [:div.form-field-header
             [:h3 (text-format :t.create-form/field-n (inc id))]
             [:div.form-field-controls
