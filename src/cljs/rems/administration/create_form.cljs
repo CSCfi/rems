@@ -177,6 +177,47 @@
                    :error-handler status-modal/common-error-handler!}))
      {:db (assoc db ::form-errors form-errors)})))
 
+;;;; preview auto-scrolling
+
+(defn visibility-ratio [element]
+  (let [bounds (.getBoundingClientRect element)]
+    (cond (<= (.-bottom bounds) 0)
+          0
+          (>= (.-top bounds) 0)
+          1
+          :else
+          (/ (.-bottom bounds) (.-height bounds)))))
+
+(defn true-height [element]
+  (let [style (.getComputedStyle js/window element)]
+    (+ (.-offsetHeight element)
+       (js/parseInt (.-marginTop style))
+       (js/parseInt (.-marginBottom style)))))
+
+(defn set-visibility-ratio [frame element ratio]
+  (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
+        element-height (true-height element)
+        top-margin (/ (.-offsetHeight frame) 4)
+        position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
+    (.scrollTo frame 0 position)))
+
+(defn first-partially-visible-edit-field []
+  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field"))
+        visible? #(<= 0 (-> % .getBoundingClientRect .-bottom))]
+    (first (filter visible? fields))))
+
+(defn autoscroll []
+  (when-let [edit-field (first-partially-visible-edit-field)]
+    (let [id (.getAttribute edit-field "data-field-id")
+          preview-frame (.querySelector js/document "#preview-form .collapse-content")
+          preview-field (-> js/document
+                            (.getElementById (str "container-field" id)))
+          ratio (visibility-ratio edit-field)]
+      (set-visibility-ratio preview-frame preview-field ratio))))
+
+(defn enable-autoscroll! []
+  (set! (.-onscroll js/window) autoscroll))
+
 ;;;; UI
 
 (def ^:private context
@@ -290,29 +331,14 @@
    "/#/administration/forms"
    (text :t.administration/cancel)])
 
-(defn- view-field-button [field-index]
-  [:a {:href "#"
-       :aria-label (text :t.administration/preview)
-       :title (text :t.administration/preview)
-       :on-click (fn [event]
-                   (.preventDefault event)
-                   (let [id (fields/id-to-name field-index)
-                         elt (. js/document getElementById id)
-                         ;; the input itself is wrapped in a div or fieldset
-                         parent (.-parentElement elt)]
-                     ;; Without :nearest, the browser would sometimes also scroll the main scroll bar for some reason.
-                     ;; TODO :nearest doesn't work on Firefox<58 or Edge
-                     (.scrollIntoView parent (clj->js {:block :nearest}))))}
-   [:i.icon-link.fas.fa-eye {:aria-hidden true}]])
-
 (defn- form-fields [fields]
   (into [:div]
         (for [{id :field/id :as field} fields]
-          [:div.form-field {:key id}
+          [:div.form-field {:key id
+                            :data-field-id id}
            [:div.form-field-header
             [:h3 (text-format :t.create-form/field-n (inc id))]
             [:div.form-field-controls
-             [view-field-button id]
              [move-form-field-up-button id]
              [move-form-field-down-button id]
              [remove-form-field-button id]]]
@@ -337,6 +363,7 @@
                     [fields/field field]))}])
 
 (defn create-form-page []
+  (enable-autoscroll!)
   (let [form @(rf/subscribe [::form])
         edit-form? @(rf/subscribe [::edit-form?])
         loading-form? @(rf/subscribe [::loading-form?])]
