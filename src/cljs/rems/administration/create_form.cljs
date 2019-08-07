@@ -196,7 +196,7 @@
 
 (defn set-visibility-ratio [frame element ratio]
   (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
-        element-height (true-height element) #_(.-offsetHeight element)
+        element-height (true-height element)
         top-margin (/ (.-offsetHeight frame) 4)
         position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
     (.scrollTo frame 0 position)))
@@ -207,13 +207,13 @@
     (first (filter visible? fields))))
 
 (defn autoscroll []
-  (let [edit-field (first-partially-visible-edit-field)
-        id (.getAttribute edit-field "data-field-id")
-        preview-frame (.querySelector js/document "#preview-form .collapse-content")
-        preview-field (-> js/document
-                          (.getElementById (str "container-field" id)))
-        ratio (visibility-ratio edit-field)]
-    (set-visibility-ratio preview-frame preview-field ratio)))
+  (when-let [edit-field (first-partially-visible-edit-field)]
+    (let [id (.getAttribute edit-field "data-field-id")
+          preview-frame (.querySelector js/document "#preview-form .collapse-content")
+          preview-field (-> js/document
+                            (.getElementById (str "container-field" id)))
+          ratio (visibility-ratio edit-field)]
+      (set-visibility-ratio preview-frame preview-field ratio))))
 
 (defn enable-autoscroll! []
   (set! (.-onscroll js/window) autoscroll))
