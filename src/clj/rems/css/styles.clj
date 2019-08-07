@@ -596,8 +596,8 @@
                     :top "100px"}
     [:.collapse-content {:overflow-y :scroll
                          :overflow-x :hidden
-                         ;; subtract #preview-form top value here to stay inside the viewbox
-                         :max-height "calc(80vh - 100px)"}]]
+                         ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
+                         :max-height "calc(100vh - 220px)"}]]
 
    [:.full {:width "100%"}]
    [:.intro {:margin-bottom (u/rem 2)}]
