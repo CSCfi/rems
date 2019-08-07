@@ -208,7 +208,7 @@
         ratio (visibility-ratio edit-field)]
     (set-visibility-ratio preview-frame preview-field ratio)))
 
-(defn enable-autoscroll []
+(defn enable-autoscroll! []
   (set! (.-onscroll js/window) autoscroll))
 
 ;;;; UI
@@ -370,6 +370,7 @@
                     [fields/field field]))}])
 
 (defn create-form-page []
+  (enable-autoscroll!)
   (let [form @(rf/subscribe [::form])
         edit-form? @(rf/subscribe [::edit-form?])
         loading-form? @(rf/subscribe [::loading-form?])]
