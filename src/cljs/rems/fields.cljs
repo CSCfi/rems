@@ -73,13 +73,14 @@
     [(if fieldset
        :fieldset.form-group.field
        :div.form-group.field)
-     (when fieldset
-       {:id (id-to-name id)
-        :tab-index -1
-        :aria-required (not optional)
-        :aria-invalid (when validation true)
-        :aria-describedby (when validation
-                            (str (id-to-name id) "-error"))})
+     (merge
+      {:id (str "container-" (id-to-name id))}
+      (when fieldset
+        {:tab-index -1
+         :aria-required (not optional)
+         :aria-invalid (when validation true)
+         :aria-describedby (when validation
+                             (str (id-to-name id) "-error"))}))
      [(if fieldset
         :legend
         :label)
@@ -210,6 +211,7 @@
 (defn label [opts]
   (let [title (:field/title opts)]
     [:div.form-group
+     {:id (str "container-" (id-to-name (:field/id opts)))}
      [:label (localized title)]]))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]

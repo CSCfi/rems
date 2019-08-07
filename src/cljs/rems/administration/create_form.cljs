@@ -204,8 +204,7 @@
         id (.getAttribute edit-field "data-field-id")
         preview-frame (.querySelector js/document "#preview-form .collapse-content")
         preview-field (-> js/document
-                          (.getElementById (str "field" id))
-                          (.closest ".field"))
+                          (.getElementById (str "container-field" id)))
         ratio (visibility-ratio edit-field)]
     (set-visibility-ratio preview-frame preview-field ratio)))
 
@@ -331,13 +330,11 @@
        :title (text :t.administration/preview)
        :on-click (fn [event]
                    (.preventDefault event)
-                   (let [id (fields/id-to-name field-index)
-                         elt (. js/document getElementById id)
-                         ;; the input itself is wrapped in a div or fieldset
-                         parent (.-parentElement elt)]
+                   (let [id (str "container-" (fields/id-to-name field-index))
+                         elt (. js/document getElementById id)]
                      ;; Without :nearest, the browser would sometimes also scroll the main scroll bar for some reason.
                      ;; TODO :nearest doesn't work on Firefox<58 or Edge
-                     (.scrollIntoView parent (clj->js {:block :nearest}))))}
+                     (.scrollIntoView elt (clj->js {:block :nearest}))))}
    [:i.icon-link.fas.fa-eye {:aria-hidden true}]])
 
 (defn- form-fields [fields]
