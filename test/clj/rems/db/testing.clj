@@ -16,7 +16,8 @@
   (mount/start-with-args {:test true}
                          #'rems.config/env
                          #'rems.db.core/*db*
-                         #'rems.application.search/directory)
+                         #'rems.application.search/directory
+                         #'rems.application.search/applications)
   (db/assert-test-database!)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
   (f)

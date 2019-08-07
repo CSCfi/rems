@@ -10,6 +10,7 @@
 (deftest test-application-search
   ;; unrelated application - it's an error if any of the tests finds this
   (test-data/create-application! {:actor "developer"})
+  (search/refresh!)
 
   (testing "find by applicant"
     (let [app-id (test-data/create-application! {:actor "alice"})]
