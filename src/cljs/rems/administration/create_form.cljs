@@ -210,7 +210,7 @@
     (set-visibility-ratio preview-frame preview-field ratio)))
 
 (defn enable-autoscroll []
-  (js/setInterval autoscroll 50))
+  (set! (.-onscroll js/window) autoscroll))
 
 ;;;; UI
 
