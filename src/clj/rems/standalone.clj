@@ -6,7 +6,9 @@
             [luminus.http-server :as http]
             [luminus.repl-server :as repl]
             [mount.core :as mount]
+            [rems.application.search :as search]
             [rems.config :refer [env]]
+            [rems.db.applications :as applications]
             [rems.db.test-data :as test-data]
             [rems.handler :as handler]
             [rems.validate :as validate])
@@ -39,6 +41,12 @@
   (doseq [component (:stopped (mount/stop))]
     (log/info component "stopped")))
 
+(defn- refresh-caches []
+  (log/info "Refreshing caches")
+  (applications/refresh-all-applications-cache!)
+  (search/refresh!)
+  (log/info "Caches refreshed"))
+
 (defn start-app [& args]
   (doseq [component (-> args
                         (parse-opts cli-options)
@@ -46,7 +54,8 @@
                         :started)]
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
-  (validate/validate))
+  (validate/validate)
+  (refresh-caches))
 
 (defn -main
   "Arguments can be either arguments to mount/start-with-args, or one of
