@@ -33,16 +33,21 @@
     (.add doc (TextField. "applicant" (str (:application/applicant app)) Field$Store/NO))
     (.addDocument writer doc)))
 
+(def ^:private refresh-lock (Object.))
+
 (defn refresh! []
-  (let [{::keys [directory ^SearcherManager searcher-manager last-processed-event-id]} @search-index
-        events (events/get-all-events-since last-processed-event-id)]
-    (when-not (empty? events)
-      (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
-                                                     (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
-        (doseq [app-id (set (map :application/id events))]
-          (index-application! writer (applications/get-unrestricted-application app-id))))
-      (.maybeRefresh searcher-manager)
-      (swap! search-index assoc ::last-processed-event-id (:event/id (last events))))))
+  ;; Only one IndexWriter may use the directory at a time.
+  ;; Otherwise it'll throw a LockObtainFailedException.
+  (locking refresh-lock
+    (let [{::keys [directory ^SearcherManager searcher-manager last-processed-event-id]} @search-index
+          events (events/get-all-events-since last-processed-event-id)]
+      (when-not (empty? events)
+        (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
+                                                       (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
+          (doseq [app-id (set (map :application/id events))]
+            (index-application! writer (applications/get-unrestricted-application app-id))))
+        (.maybeRefresh searcher-manager)
+        (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
 
 (defn- with-searcher [f]
   (let [searcher-manager ^SearcherManager (::searcher-manager @search-index)
