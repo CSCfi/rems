@@ -175,36 +175,40 @@
 (defn- search-field [{:keys [id on-query searching?]}]
   (let [input-value (r/atom "")
         input-element (atom nil)]
-    ;; TODO: styling & localization
+    ;; TODO: localization & aria-labels
     (fn [{:keys [id on-query searching?]}]
-      [:div
-       [:label {:for id}
-        "Search"]
-       " "
+      [:div.form-inline.mb-3
+       [:div.form-group.mr-1
+        [:label {:for id}
+         "Search"]]
 
-       [:input {:id id
-                :type :text
-                :value @input-value
-                :ref (fn [element]
-                       (reset! input-element element))
-                :on-change (fn [event]
-                             (let [value (-> event .-target .-value)]
-                               (reset! input-value value)
-                               (on-query value)))}]
+       [:div.input-group.mr-2
+        [:input.form-control
+         {:id id
+          :type :text
+          :value @input-value
+          :ref (fn [element]
+                 (reset! input-element element))
+          :on-change (fn [event]
+                       (let [value (-> event .-target .-value)]
+                         (reset! input-value value)
+                         (on-query value)))}]
 
-       (when-not (= "" @input-value)
-         [:button {:id (str id "-clear")
-                   :type :button
-                   ;; override the custom font-size from .btn
-                   :style {:font-size "inherit"}
-                   :on-click (fn []
-                               (reset! input-value "")
-                               (on-query "")
-                               (.focus @input-element))}
-          [close-symbol]])
+        (when-not (= "" @input-value)
+          [:div.input-group-append
+           [:button.btn.btn-outline-secondary
+            {:id (str id "-clear")
+             :type :button
+             ;; override the custom font-size from .btn which breaks .input-group
+             :style {:font-size "inherit"}
+             :on-click (fn []
+                         (reset! input-value "")
+                         (on-query "")
+                         (.focus @input-element))}
+            [close-symbol]]])]
 
        (when searching?
-         [:<> " " [spinner/small]])])))
+         [spinner/small])])))
 
 (defn actions-page []
   [:div
