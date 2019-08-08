@@ -153,6 +153,16 @@
            (assoc :id applications
                   :applications applications))])))
 
+(defn- search-field [on-query]
+  ;; TODO: styling & localization
+  [:label
+   "Search "
+   [:input {:type :text
+            :default-value ""
+            :on-change (fn [event]
+                         (let [query (-> event .-target .-value)]
+                           (on-query query)))}]])
+
 (defn actions-page []
   [:div
    [document-title (text :t.navigation/actions)]
@@ -162,24 +172,12 @@
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
-                 [:label
-                  "Search "
-                  [:input {:type :text
-                           :default-value ""
-                           :on-change (fn [event]
-                                        (let [query (-> event .-target .-value)]
-                                          (rf/dispatch [::fetch-todo-applications query])))}]]
+                 [search-field #(rf/dispatch [::fetch-todo-applications %])]
                  [todo-applications]]}]
     [collapsible/component
      {:id "handled-applications"
       :on-open #(rf/dispatch [::fetch-handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>
-                 [:label
-                  "Search "
-                  [:input {:type :text
-                           :default-value ""
-                           :on-change (fn [event]
-                                        (let [query (-> event .-target .-value)]
-                                          (rf/dispatch [::fetch-handled-applications query])))}]]
+                 [search-field #(rf/dispatch [::fetch-handled-applications %])]
                  [handled-applications]]}]]])
