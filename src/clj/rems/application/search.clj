@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
+            [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.events :as events])
   (:import [org.apache.lucene.analysis.standard StandardAnalyzer]
@@ -14,7 +15,7 @@
 (def ^:private analyzer (StandardAnalyzer.))
 
 (mount/defstate ^Directory search-index
-  :start (let [directory (NIOFSDirectory. (.toPath (io/file "search-index")))]
+  :start (let [directory (NIOFSDirectory. (.toPath (io/file (:search-index-path env))))]
            (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                           (.setOpenMode IndexWriterConfig$OpenMode/CREATE)))]
              (.deleteAll writer))
