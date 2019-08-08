@@ -21,15 +21,22 @@
 (rf/reg-event-fx
  ::fetch-todo-applications
  (fn [{:keys [db]} [_ query]]
-   (fetch "/api/applications/todo"
-          {:url-params (when query
-                         {:query query})
-           :handler #(rf/dispatch [::fetch-todo-applications-result %])})
-   {:db (assoc db ::loading-todo-applications? true)}))
+   ;; do only one fetch at a time - will retry after the pending fetch is finished
+   (when-not (::loading-todo-applications? db)
+     (fetch "/api/applications/todo"
+            {:url-params (when query
+                           {:query query})
+             :handler #(rf/dispatch [::fetch-todo-applications-result % query])}))
+   {:db (assoc db
+               ::todo-applications-query query
+               ::loading-todo-applications? true)}))
 
 (rf/reg-event-db
  ::fetch-todo-applications-result
- (fn [db [_ result]]
+ (fn [db [_ result query]]
+   ;; fetch again if the query that just finished was not the latest
+   (when-not (= query (::todo-applications-query db))
+     (rf/dispatch [::fetch-todo-applications (::todo-applications-query db)]))
    (-> db
        (assoc ::todo-applications result)
        (dissoc ::loading-todo-applications?))))
@@ -49,15 +56,22 @@
 (rf/reg-event-fx
  ::fetch-handled-applications
  (fn [{:keys [db]} [_ query]]
-   (fetch "/api/applications/handled"
-          {:url-params (when query
-                         {:query query})
-           :handler #(rf/dispatch [::fetch-handled-applications-result %])})
-   {:db (assoc db ::loading-handled-applications? true)}))
+   ;; do only one fetch at a time - will retry after the pending fetch is finished
+   (when-not (::loading-handled-applications? db)
+     (fetch "/api/applications/handled"
+            {:url-params (when query
+                           {:query query})
+             :handler #(rf/dispatch [::fetch-handled-applications-result % query])}))
+   {:db (assoc db
+               ::handled-applications-query query
+               ::loading-handled-applications? true)}))
 
 (rf/reg-event-db
  ::fetch-handled-applications-result
- (fn [db [_ result]]
+ (fn [db [_ result query]]
+   ;; fetch again if the query that just finished was not the latest
+   (when-not (= query (::handled-applications-query db))
+     (rf/dispatch [::fetch-handled-applications (::handled-applications-query db)]))
    (-> db
        (assoc ::handled-applications result)
        (dissoc ::loading-handled-applications?))))
@@ -148,7 +162,6 @@
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
-                 ;; TODO: smarter search
                  [:label
                   "Search "
                   [:input {:type :text
@@ -162,7 +175,6 @@
       :on-open #(rf/dispatch [::fetch-handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>
-                 ;; TODO: smarter search
                  [:label
                   "Search "
                   [:input {:type :text
