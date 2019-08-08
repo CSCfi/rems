@@ -20,9 +20,11 @@
 
 (rf/reg-event-fx
  ::fetch-todo-applications
- (fn [{:keys [db]} _]
+ (fn [{:keys [db]} [_ query]]
    (fetch "/api/applications/todo"
-          {:handler #(rf/dispatch [::fetch-todo-applications-result %])})
+          {:url-params (when query
+                         {:query query})
+           :handler #(rf/dispatch [::fetch-todo-applications-result %])})
    {:db (assoc db ::loading-todo-applications? true)}))
 
 (rf/reg-event-db
@@ -46,9 +48,11 @@
 
 (rf/reg-event-fx
  ::fetch-handled-applications
- (fn [{:keys [db]} _]
+ (fn [{:keys [db]} [_ query]]
    (fetch "/api/applications/handled"
-          {:handler #(rf/dispatch [::fetch-handled-applications-result %])})
+          {:url-params (when query
+                         {:query query})
+           :handler #(rf/dispatch [::fetch-handled-applications-result %])})
    {:db (assoc db ::loading-handled-applications? true)}))
 
 (rf/reg-event-db
@@ -106,8 +110,14 @@
 
 (defn- todo-applications []
   (let [applications ::todo-applications]
-    (if (empty? @(rf/subscribe [applications]))
+    (cond
+      @(rf/subscribe [::loading-todo-applications?])
+      [spinner/big]
+
+      (empty? @(rf/subscribe [applications]))
       [:div.actions.alert.alert-success (text :t.actions/empty)]
+
+      :else
       [application-list/component
        (-> (application-list-defaults)
            (assoc :id applications
@@ -132,16 +142,32 @@
 (defn actions-page []
   [:div
    [document-title (text :t.navigation/actions)]
-   (if @(rf/subscribe [::loading-todo-applications?])
-     [spinner/big]
-     [:div.spaced-sections
-      [collapsible/component
-       {:id "todo-applications"
-        :open? true
-        :title (text :t.actions/todo-applications)
-        :collapse [todo-applications]}]
-      [collapsible/component
-       {:id "handled-applications"
-        :on-open #(rf/dispatch [::fetch-handled-applications])
-        :title (text :t.actions/handled-applications)
-        :collapse [handled-applications]}]])])
+   [:div.spaced-sections
+    [collapsible/component
+     {:id "todo-applications"
+      :open? true
+      :title (text :t.actions/todo-applications)
+      :collapse [:<>
+                 ;; TODO: smarter search
+                 [:label
+                  "Search "
+                  [:input {:type :text
+                           :default-value ""
+                           :on-change (fn [event]
+                                        (let [query (-> event .-target .-value)]
+                                          (rf/dispatch [::fetch-todo-applications query])))}]]
+                 [todo-applications]]}]
+    [collapsible/component
+     {:id "handled-applications"
+      :on-open #(rf/dispatch [::fetch-handled-applications])
+      :title (text :t.actions/handled-applications)
+      :collapse [:<>
+                 ;; TODO: smarter search
+                 [:label
+                  "Search "
+                  [:input {:type :text
+                           :default-value ""
+                           :on-change (fn [event]
+                                        (let [query (-> event .-target .-value)]
+                                          (rf/dispatch [::fetch-handled-applications query])))}]]
+                 [handled-applications]]}]]])
