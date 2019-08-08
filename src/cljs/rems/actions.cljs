@@ -172,11 +172,11 @@
            (assoc :id applications
                   :applications applications))])))
 
-(defn- search-field [{:keys [id on-query searching?]}]
+(defn- search-field [{:keys [id on-search searching?]}]
   (let [input-value (r/atom "")
         input-element (atom nil)]
     ;; TODO: localization & aria-labels
-    (fn [{:keys [id on-query searching?]}]
+    (fn [{:keys [id on-search searching?]}]
       [:div.form-inline.mb-3
        [:div.form-group.mr-1
         [:label {:for id}
@@ -192,7 +192,7 @@
           :on-change (fn [event]
                        (let [value (-> event .-target .-value)]
                          (reset! input-value value)
-                         (on-query value)))}]
+                         (on-search value)))}]
 
         (when-not (= "" @input-value)
           [:div.input-group-append
@@ -203,7 +203,7 @@
              :style {:font-size "inherit"}
              :on-click (fn []
                          (reset! input-value "")
-                         (on-query "")
+                         (on-search "")
                          (.focus @input-element))}
             [close-symbol]]])]
 
@@ -220,7 +220,7 @@
       :title (text :t.actions/todo-applications)
       :collapse [:<>
                  [search-field {:id "todo-search"
-                                :on-query #(rf/dispatch [::fetch-todo-applications %])
+                                :on-search #(rf/dispatch [::fetch-todo-applications %])
                                 :searching? @(rf/subscribe [::searching-todo-applications?])}]
                  [todo-applications]]}]
     [collapsible/component
@@ -229,6 +229,6 @@
       :title (text :t.actions/handled-applications)
       :collapse [:<>
                  [search-field {:id "handled-search"
-                                :on-query #(rf/dispatch [::fetch-handled-applications %])
+                                :on-search #(rf/dispatch [::fetch-handled-applications %])
                                 :searching? @(rf/subscribe [::searching-handled-applications?])}]
                  [handled-applications]]}]]])
