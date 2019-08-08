@@ -12,7 +12,11 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (dissoc db ::todo-applications ::handled-applications)
+   {:db (-> db
+            (dissoc ::todo-applications
+                    ::handled-applications)
+            (assoc ::initializing-todo-applications? true
+                   ::initializing-handled-applications? true))
     :dispatch-n [[::fetch-todo-applications]
                  [:rems.table/reset]]}))
 
@@ -22,14 +26,14 @@
  ::fetch-todo-applications
  (fn [{:keys [db]} [_ query]]
    ;; do only one fetch at a time - will retry after the pending fetch is finished
-   (when-not (::loading-todo-applications? db)
+   (when-not (::fetching-todo-applications? db)
      (fetch "/api/applications/todo"
             {:url-params (when query
                            {:query query})
              :handler #(rf/dispatch [::fetch-todo-applications-result % query])}))
    {:db (assoc db
                ::todo-applications-query query
-               ::loading-todo-applications? true)}))
+               ::fetching-todo-applications? true)}))
 
 (rf/reg-event-db
  ::fetch-todo-applications-result
@@ -39,7 +43,8 @@
      (rf/dispatch [::fetch-todo-applications (::todo-applications-query db)]))
    (-> db
        (assoc ::todo-applications result)
-       (dissoc ::loading-todo-applications?))))
+       (dissoc ::initializing-todo-applications?
+               ::fetching-todo-applications?))))
 
 (rf/reg-sub
  ::todo-applications
@@ -47,9 +52,15 @@
    (::todo-applications db)))
 
 (rf/reg-sub
- ::loading-todo-applications?
+ ::initializing-todo-applications?
  (fn [db _]
-   (::loading-todo-applications? db)))
+   (::initializing-todo-applications? db)))
+
+(rf/reg-sub
+ ::searching-todo-applications?
+ (fn [db _]
+   (and (::fetching-todo-applications? db)
+        (not (::initializing-todo-applications? db)))))
 
 ;;;; handled applications
 
@@ -57,14 +68,14 @@
  ::fetch-handled-applications
  (fn [{:keys [db]} [_ query]]
    ;; do only one fetch at a time - will retry after the pending fetch is finished
-   (when-not (::loading-handled-applications? db)
+   (when-not (::fetching-handled-applications? db)
      (fetch "/api/applications/handled"
             {:url-params (when query
                            {:query query})
              :handler #(rf/dispatch [::fetch-handled-applications-result % query])}))
    {:db (assoc db
                ::handled-applications-query query
-               ::loading-handled-applications? true)}))
+               ::fetching-handled-applications? true)}))
 
 (rf/reg-event-db
  ::fetch-handled-applications-result
@@ -74,7 +85,8 @@
      (rf/dispatch [::fetch-handled-applications (::handled-applications-query db)]))
    (-> db
        (assoc ::handled-applications result)
-       (dissoc ::loading-handled-applications?))))
+       (dissoc ::initializing-handled-applications?
+               ::fetching-handled-applications?))))
 
 (rf/reg-sub
  ::handled-applications
@@ -82,9 +94,15 @@
    (::handled-applications db)))
 
 (rf/reg-sub
- ::loading-handled-applications?
+ ::initializing-handled-applications?
  (fn [db _]
-   (::loading-handled-applications? db)))
+   (::initializing-handled-applications? db)))
+
+(rf/reg-sub
+ ::searching-handled-applications?
+ (fn [db _]
+   (and (::fetching-handled-applications? db)
+        (not (::initializing-handled-applications? db)))))
 
 ;;;; UI
 
@@ -125,7 +143,7 @@
 (defn- todo-applications []
   (let [applications ::todo-applications]
     (cond
-      @(rf/subscribe [::loading-todo-applications?])
+      @(rf/subscribe [::initializing-todo-applications?])
       [spinner/big]
 
       (empty? @(rf/subscribe [applications]))
@@ -140,7 +158,7 @@
 (defn- handled-applications []
   (let [applications ::handled-applications]
     (cond
-      @(rf/subscribe [::loading-handled-applications?])
+      @(rf/subscribe [::initializing-handled-applications?])
       [spinner/big]
 
       (empty? @(rf/subscribe [applications]))
@@ -153,7 +171,7 @@
            (assoc :id applications
                   :applications applications))])))
 
-(defn- search-field [on-query]
+(defn- search-field [{:keys [on-query searching?]}]
   ;; TODO: styling & localization
   [:label
    "Search "
@@ -161,7 +179,9 @@
             :default-value ""
             :on-change (fn [event]
                          (let [query (-> event .-target .-value)]
-                           (on-query query)))}]])
+                           (on-query query)))}]
+   (when searching?
+     [:<> " " [spinner/small]])])
 
 (defn actions-page []
   [:div
@@ -172,12 +192,14 @@
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
-                 [search-field #(rf/dispatch [::fetch-todo-applications %])]
+                 [search-field {:on-query #(rf/dispatch [::fetch-todo-applications %])
+                                :searching? @(rf/subscribe [::searching-todo-applications?])}]
                  [todo-applications]]}]
     [collapsible/component
      {:id "handled-applications"
       :on-open #(rf/dispatch [::fetch-handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>
-                 [search-field #(rf/dispatch [::fetch-handled-applications %])]
+                 [search-field {:on-query #(rf/dispatch [::fetch-handled-applications %])
+                                :searching? @(rf/subscribe [::searching-handled-applications?])}]
                  [handled-applications]]}]]])
