@@ -6,6 +6,7 @@
             [rems.api.util :as api-util] ; required for route :roles
             [rems.application-util :as application-util]
             [rems.application.commands :as commands]
+            [rems.application.search :as search]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -128,6 +129,14 @@
   (->> (get-potential-todos user-id)
        (remove todo?)))
 
+(defn- filter-with-search [query apps]
+  (if (str/blank? query)
+    apps
+    (let [app-ids (search/find-applications query)]
+      (filter (fn [app]
+                (contains? app-ids (:application/id app)))
+              apps))))
+
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
   (update-present cmd :decision keyword))
@@ -161,7 +170,9 @@
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications/get-my-applications (getx-user-id))))))
+      :query-params [{query :- (describe s/Str "search query") nil}]
+      (ok (->> (applications/get-my-applications (getx-user-id))
+               (filter-with-search query))))))
 
 (def applications-api
   (context "/applications" []
@@ -171,19 +182,25 @@
       :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (applications/get-all-applications (getx-user-id))))
+      :query-params [{query :- (describe s/Str "search query") nil}]
+      (ok (->> (applications/get-all-applications (getx-user-id))
+               (filter-with-search query))))
 
     (GET "/todo" []
       :summary "Get all applications that the current user needs to act on."
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (get-todos (getx-user-id))))
+      :query-params [{query :- (describe s/Str "search query") nil}]
+      (ok (->> (get-todos (getx-user-id))
+               (filter-with-search query))))
 
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (get-handled-todos (getx-user-id))))
+      :query-params [{query :- (describe s/Str "search query") nil}]
+      (ok (->> (get-handled-todos (getx-user-id))
+               (filter-with-search query))))
 
     (POST "/create" []
       :summary "Create a new application"
