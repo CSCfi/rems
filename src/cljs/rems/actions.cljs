@@ -1,8 +1,9 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
   (:require [re-frame.core :as rf]
+            [reagent.core :as r]
             [rems.application-list :as application-list]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :refer [document-title close-symbol]]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
             [rems.spinner :as spinner]
@@ -171,17 +172,39 @@
            (assoc :id applications
                   :applications applications))])))
 
-(defn- search-field [{:keys [on-query searching?]}]
-  ;; TODO: styling & localization
-  [:label
-   "Search "
-   [:input {:type :text
-            :default-value ""
-            :on-change (fn [event]
-                         (let [query (-> event .-target .-value)]
-                           (on-query query)))}]
-   (when searching?
-     [:<> " " [spinner/small]])])
+(defn- search-field [{:keys [id on-query searching?]}]
+  (let [input-value (r/atom "")
+        input-element (atom nil)]
+    ;; TODO: styling & localization
+    (fn [{:keys [id on-query searching?]}]
+      [:div
+       [:label {:for id}
+        "Search"]
+       " "
+
+       [:input {:id id
+                :type :text
+                :value @input-value
+                :ref (fn [element]
+                       (reset! input-element element))
+                :on-change (fn [event]
+                             (let [value (-> event .-target .-value)]
+                               (reset! input-value value)
+                               (on-query value)))}]
+
+       (when-not (= "" @input-value)
+         [:button {:id (str id "-clear")
+                   :type :button
+                   ;; override the custom font-size from .btn
+                   :style {:font-size "inherit"}
+                   :on-click (fn []
+                               (reset! input-value "")
+                               (on-query "")
+                               (.focus @input-element))}
+          [close-symbol]])
+
+       (when searching?
+         [:<> " " [spinner/small]])])))
 
 (defn actions-page []
   [:div
@@ -192,7 +215,8 @@
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
-                 [search-field {:on-query #(rf/dispatch [::fetch-todo-applications %])
+                 [search-field {:id "todo-search"
+                                :on-query #(rf/dispatch [::fetch-todo-applications %])
                                 :searching? @(rf/subscribe [::searching-todo-applications?])}]
                  [todo-applications]]}]
     [collapsible/component
@@ -200,6 +224,7 @@
       :on-open #(rf/dispatch [::fetch-handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>
-                 [search-field {:on-query #(rf/dispatch [::fetch-handled-applications %])
+                 [search-field {:id "handled-search"
+                                :on-query #(rf/dispatch [::fetch-handled-applications %])
                                 :searching? @(rf/subscribe [::searching-handled-applications?])}]
                  [handled-applications]]}]]])
