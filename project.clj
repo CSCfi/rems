@@ -35,7 +35,8 @@
                  [metosin/compojure-api "2.0.0-alpha28" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
                  [metosin/jsonista "0.2.2"]
                  [metosin/komponentit "0.3.7"]
-                 [metosin/ring-swagger "0.26.1"]
+                 [metosin/ring-swagger "0.26.2"]
+                 [metosin/ring-swagger-ui "3.20.1"]
                  [mount "0.1.15"]
                  [org.clojars.luontola/garden "1.3.6-patch1"] ;; TODO: waiting for a new release with https://github.com/noprompt/garden/pull/172
                  [org.clojars.luontola/ns-tracker "0.3.1-patch3"] ;; TODO: waiting for a new release with https://github.com/weavejester/ns-tracker/pull/24
