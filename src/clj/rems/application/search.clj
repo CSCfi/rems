@@ -45,7 +45,7 @@
       (when-not (empty? events)
         (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                        (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
-          (doseq [app-id (set (map :application/id events))]
+          (doseq [app-id (distinct (map :application/id events))]
             (index-application! writer (applications/get-unrestricted-application app-id))))
         (.maybeRefresh searcher-manager)
         (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
