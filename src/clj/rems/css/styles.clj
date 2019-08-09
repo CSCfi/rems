@@ -669,6 +669,11 @@
 
      :.application-description {:max-width "30em"}
      :.application-applicant {:max-width "10em"}]]
+   [:.search-field {:display :flex
+                    :flex-wrap :nowrap
+                    :align-items :center}
+    [:label {:margin-bottom 0}] ; override the default from Bootstrap
+    [:div.input-group {:width "17em"}]]
 
    ;; !important is needed here, otherwise these attributes are overridden
    ;; by more specific styles by react-select.

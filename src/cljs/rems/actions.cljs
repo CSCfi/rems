@@ -178,10 +178,9 @@
         input-element (atom nil)]
     ;; TODO: localization & aria-labels
     (fn [{:keys [id on-search searching?]}]
-      [:div.form-inline.mb-3
-       [:div.form-group.mr-1
-        [:label {:for id}
-         "Search"]]
+      [:div.search-field.mb-3
+       [:label.mr-1 {:for id}
+        "Search"]
 
        [:div.input-group.mr-2
         [:input.form-control
