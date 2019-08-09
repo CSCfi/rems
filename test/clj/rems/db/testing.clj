@@ -15,7 +15,8 @@
   (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down
   (mount/start-with-args {:test true}
                          #'rems.config/env
-                         #'rems.db.core/*db*)
+                         #'rems.db.core/*db*
+                         #'rems.application.search/search-index)
   (db/assert-test-database!)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
   (f)

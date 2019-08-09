@@ -38,6 +38,8 @@
                  [metosin/ring-swagger "0.26.2"]
                  [metosin/ring-swagger-ui "3.20.1"]
                  [mount "0.1.15"]
+                 [org.apache.lucene/lucene-core "8.2.0"]
+                 [org.apache.lucene/lucene-queryparser "8.2.0"]
                  [org.clojars.luontola/garden "1.3.6-patch1"] ;; TODO: waiting for a new release with https://github.com/noprompt/garden/pull/172
                  [org.clojars.luontola/ns-tracker "0.3.1-patch3"] ;; TODO: waiting for a new release with https://github.com/weavejester/ns-tracker/pull/24
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]

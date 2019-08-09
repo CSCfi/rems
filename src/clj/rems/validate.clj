@@ -3,7 +3,8 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.tools.logging :as log]
             [rems.api.forms]
-            [rems.db.applications :as applications]
+            [rems.application.events :as events]
+            [rems.db.events :as events-db]
             [rems.db.form :as form]
             [schema.core :as s]))
 
@@ -15,8 +16,7 @@
   (log/info "Validating data")
   (try
     (validate-forms)
-    ;; will throw an exception if there are non-valid events
-    (applications/get-all-unrestricted-applications)
+    (events/validate-events (events-db/get-all-events-since 0))
     (log/info "Validations passed")
     (catch Throwable t
       (log/error t "Validations failed" (with-out-str (when-let [data (ex-data t)]

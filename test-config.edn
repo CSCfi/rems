@@ -4,4 +4,5 @@
  :public-url "http://localhost:3001/"
  :database-url "postgresql://localhost/rems_test?user=rems_test"
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
+ :search-index-path "target/search-index-test"
  :authentication :fake-shibboleth}

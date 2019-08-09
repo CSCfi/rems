@@ -11,6 +11,9 @@
  :database-url nil
  :database-jndi-name "java:comp/env/jdbc/rems"
 
+ ;; Path to a writable directory where to store the Lucene search index files.
+ :search-index-path "search-index"
+
  ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :ldap
  :authentication :shibboleth
  :ldap {:connection {:host "localhost:2636"

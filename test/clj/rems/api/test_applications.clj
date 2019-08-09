@@ -29,14 +29,14 @@
 (defn- catalogue-item-ids-for-application [application]
   (set (map :catalogue-item/id (:application/resources application))))
 
-(defn- get-my-applications [user-id]
-  (-> (request :get "/api/my-applications")
+(defn- get-my-applications [user-id & [params]]
+  (-> (request :get "/api/my-applications" params)
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
-(defn- get-all-applications [user-id]
-  (-> (request :get "/api/applications")
+(defn- get-all-applications [user-id & [params]]
+  (-> (request :get "/api/applications" params)
       (authenticate "42" user-id)
       handler
       read-ok-body))
@@ -47,14 +47,14 @@
       handler
       read-ok-body))
 
-(defn- get-todos [user-id]
-  (-> (request :get "/api/applications/todo")
+(defn- get-todos [user-id & [params]]
+  (-> (request :get "/api/applications/todo" params)
       (authenticate "42" user-id)
       handler
       read-ok-body))
 
-(defn- get-handled-todos [user-id]
-  (-> (request :get "/api/applications/handled")
+(defn- get-handled-todos [user-id & [params]]
+  (-> (request :get "/api/applications/handled" params)
       (authenticate "42" user-id)
       handler
       read-ok-body))
@@ -622,9 +622,19 @@
       (is (contains? (get-ids (get-my-applications "alice"))
                      app-id)))
 
+    (testing "search user applications"
+      (is (contains? (get-ids (get-my-applications "alice" {:query "applicant:alice"}))
+                     app-id))
+      (is (empty? (get-ids (get-my-applications "alice" {:query "applicant:no-such-user"})))))
+
     (testing "list all applications"
       (is (contains? (get-ids (get-all-applications "alice"))
-                     app-id)))))
+                     app-id)))
+
+    (testing "search all applications"
+      (is (contains? (get-ids (get-all-applications "alice" {:query "applicant:alice"}))
+                     app-id))
+      (is (empty? (get-ids (get-all-applications "alice" {:query "applicant:no-such-user"})))))))
 
 (deftest test-todos
   (let [app-id (test-data/create-application! {:actor "alice"})]
@@ -640,6 +650,11 @@
                      app-id))
       (is (not (contains? (get-ids (get-handled-todos "developer"))
                           app-id))))
+
+    (testing "search todos"
+      (is (contains? (get-ids (get-todos "developer" {:query "applicant:alice"}))
+                     app-id))
+      (is (empty? (get-ids (get-todos "developer" {:query "applicant:no-such-user"})))))
 
     (testing "commenter sees application in todos"
       (is (= {:success true} (send-command "developer" {:type :application.command/request-comment
@@ -659,6 +674,11 @@
                           app-id)))
       (is (contains? (get-ids (get-handled-todos "developer"))
                      app-id)))
+
+    (testing "search handled todos"
+      (is (contains? (get-ids (get-handled-todos "developer" {:query "applicant:alice"}))
+                     app-id))
+      (is (empty? (get-ids (get-handled-todos "developer" {:query "applicant:no-such-user"})))))
 
     (testing "commenter doesn't see accepted application in todos"
       (is (not (contains? (get-ids (get-todos "bob"))

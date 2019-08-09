@@ -1,7 +1,6 @@
 (ns rems.permissions
-  (:require [clojure.test :refer [deftest is testing]]))
-
-(def ^:private conj-set (fnil conj #{}))
+  (:require [clojure.test :refer [deftest is testing]]
+            [rems.util :refer [conj-set]]))
 
 (defn- give-role-to-user [application role user]
   (assert (keyword? role) {:role role})
@@ -106,13 +105,13 @@
                                 :role-2 #{:bar}}}
            (-> {}
                (update-role-permissions {:role-1 [:foo]
-                                      :role-2 [:bar]})))))
+                                         :role-2 [:bar]})))))
   (testing "does not alter unrelated roles"
     (is (= {::role-permissions {:unrelated #{:foo}
                                 :role #{:gazonk}}}
            (-> {}
                (update-role-permissions {:unrelated [:foo]
-                                      :role [:bar]})
+                                         :role [:bar]})
                (update-role-permissions {:role [:gazonk]}))))))
 
 (defn remove-permission-from-all [application permission]
@@ -128,7 +127,7 @@
                                 :role-2 #{}}}
            (-> {}
                (update-role-permissions {:role-1 [:foo]
-                                      :role-2 [:foo]})
+                                         :role-2 [:foo]})
                (remove-permission-from-all :foo)))))
   (testing "leaves unrelated permissions unchanged"
     (is (= {::role-permissions {:role #{:bar}}}
