@@ -5,6 +5,7 @@
             [rems.application-list :as application-list]
             [rems.atoms :refer [document-title close-symbol]]
             [rems.collapsible :as collapsible]
+            [rems.config :as config]
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
@@ -219,16 +220,18 @@
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
-                 [search-field {:id "todo-search"
-                                :on-search #(rf/dispatch [::fetch-todo-applications %])
-                                :searching? @(rf/subscribe [::searching-todo-applications?])}]
+                 (when (config/dev-environment?) ; TODO: remove feature flag
+                   [search-field {:id "todo-search"
+                                  :on-search #(rf/dispatch [::fetch-todo-applications %])
+                                  :searching? @(rf/subscribe [::searching-todo-applications?])}])
                  [todo-applications]]}]
     [collapsible/component
      {:id "handled-applications"
       :on-open #(rf/dispatch [::fetch-handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>
-                 [search-field {:id "handled-search"
-                                :on-search #(rf/dispatch [::fetch-handled-applications %])
-                                :searching? @(rf/subscribe [::searching-handled-applications?])}]
+                 (when (config/dev-environment?) ; TODO: remove feature flag
+                   [search-field {:id "handled-search"
+                                  :on-search #(rf/dispatch [::fetch-handled-applications %])
+                                  :searching? @(rf/subscribe [::searching-handled-applications?])}])
                  [handled-applications]]}]]])
