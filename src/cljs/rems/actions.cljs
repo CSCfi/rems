@@ -32,7 +32,9 @@
      (fetch "/api/applications/todo"
             {:url-params (when query
                            {:query query})
-             :handler #(rf/dispatch [::fetch-todo-applications-result % query])}))
+             :handler #(rf/dispatch [::fetch-todo-applications-result % query])
+             ;; TODO: show error message
+             :error-handler #(rf/dispatch [::fetch-todo-applications-result nil query])}))
    {:db (assoc db
                ::todo-applications-query query
                ::fetching-todo-applications? true)}))
@@ -74,7 +76,9 @@
      (fetch "/api/applications/handled"
             {:url-params (when query
                            {:query query})
-             :handler #(rf/dispatch [::fetch-handled-applications-result % query])}))
+             :handler #(rf/dispatch [::fetch-handled-applications-result % query])
+             ;; TODO: show error message
+             :error-handler #(rf/dispatch [::fetch-handled-applications-result nil query])}))
    {:db (assoc db
                ::handled-applications-query query
                ::fetching-handled-applications? true)}))
