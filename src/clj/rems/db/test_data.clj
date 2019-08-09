@@ -178,7 +178,7 @@
     (doseq [role roles]
       (roles/add-role! user role))))
 
-(defn- create-users-and-roles! []
+(defn create-users-and-roles! []
   ;; users provided by the fake login
   (let [users (comp +fake-user-data+ +fake-users+)]
     (create-user! (users :applicant1))

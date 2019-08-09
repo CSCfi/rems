@@ -8,13 +8,17 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-application-search
+  ;; generate users with full names and emails
+  (test-data/create-users-and-roles!)
   ;; unrelated application - it's an error if any of the tests finds this
   (test-data/create-application! {:actor "developer"})
   (search/refresh!)
 
   (testing "find by applicant"
     (let [app-id (test-data/create-application! {:actor "alice"})]
-      (is (= #{app-id} (search/find-applications "alice")))))
+      (is (= #{app-id} (search/find-applications "alice")) "user ID")
+      (is (= #{app-id} (search/find-applications "\"Alice Applicant\"")) "name")
+      (is (= #{app-id} (search/find-applications "\"alice@example.com\"")) "email")))
 
   (testing "find by member")
 

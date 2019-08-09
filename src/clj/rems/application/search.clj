@@ -1,7 +1,9 @@
 (ns rems.application.search
   (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
+            [rems.application-util :as application-util]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.events :as events])
@@ -29,9 +31,12 @@
 
 (defn- index-application! [^IndexWriter writer app]
   (log/info "Indexing application" (:application/id app))
-  (let [doc (Document.)]
+  (let [doc (Document.)
+        applicant (str/join " " [(:application/applicant app)
+                                 (application-util/get-applicant-name app)
+                                 (:mail (:application/applicant-attributes app))])]
     (.add doc (StringField. "id" (str (:application/id app)) Field$Store/YES))
-    (.add doc (TextField. "applicant" (str (:application/applicant app)) Field$Store/NO))
+    (.add doc (TextField. "applicant" applicant Field$Store/NO))
     (.addDocument writer doc)))
 
 (def ^:private refresh-lock (Object.))
