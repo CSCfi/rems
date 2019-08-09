@@ -70,5 +70,5 @@
      (let [results (.search searcher
                             (-> (StandardQueryParser. analyzer)
                                 (.parse query "applicant")) ; TODO: change defaultField to full text search
-                            10000)]
+                            Integer/MAX_VALUE)]
        (set (get-application-ids searcher results))))))
