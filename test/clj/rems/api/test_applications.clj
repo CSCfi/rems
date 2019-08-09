@@ -127,6 +127,7 @@
                        handler
                        assert-response-is-ok)]
       (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
+      (is (= "filename=\"13.pdf\"" (get-in response [:headers "Content-Disposition"])))
       (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
 
 (deftest test-application-commands
