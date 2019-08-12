@@ -1,6 +1,7 @@
 (ns ^:integration rems.application.test-search
   (:require [clojure.test :refer :all]
             [rems.application.search :as search]
+            [rems.db.applications :as applications]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
@@ -21,7 +22,6 @@
       (is (= #{app-id} (search/find-applications "applicant:\"Alice Applicant\"")) "name")
       (is (= #{app-id} (search/find-applications "applicant:\"alice@example.com\"")) "email")))
 
-
   (testing "find by member"
     (let [app-id (test-data/create-application! {:actor "alice"})]
       (test-data/command! {:type :application.command/submit
@@ -35,6 +35,13 @@
       (is (= #{app-id} (search/find-applications "member:bob")) "user ID")
       (is (= #{app-id} (search/find-applications "member:\"Bob Approver\"")) "name")
       (is (= #{app-id} (search/find-applications "member:\"bob@example.com\"")) "email")))
+
+  (testing "find by ID"
+    (let [app-id (test-data/create-application! {:actor "alice"})
+          app (applications/get-unrestricted-application app-id)]
+      (is (= #{app-id} (search/find-applications (str app-id))) "app ID, any field")
+      (is (= #{app-id} (search/find-applications (str "id:" app-id))) "app ID")
+      (is (= #{app-id} (search/find-applications (str "id:\"" (:application/external-id app) "\""))) "external ID")))
 
   (testing "find by title"
     (let [form-id (test-data/create-form! {:form/fields [{:field/type :description

@@ -32,6 +32,9 @@
 (defn- index-application! [^IndexWriter writer app]
   (log/info "Indexing application" (:application/id app))
   (let [doc (Document.)
+        id (->> [(:application/id app)
+                 (:application/external-id app)]
+                (str/join " "))
         applicant (->> [(:application/applicant app)
                         (application-util/get-applicant-name app)
                         (:mail (:application/applicant-attributes app))]
@@ -47,8 +50,11 @@
                       (mapcat (fn [resource]
                                 (vals (:catalogue-item/title resource))))
                       (str/join " "))
-        all (str/join " " [applicant member title resource])]
-    (.add doc (StringField. "id" (str (:application/id app)) Field$Store/YES))
+        all (str/join " " [id applicant member title resource])]
+    ;; metadata
+    (.add doc (StringField. "app-id" (str (:application/id app)) Field$Store/YES))
+    ;; searchable fields
+    (.add doc (TextField. "id" id Field$Store/NO))
     (.add doc (TextField. "applicant" applicant Field$Store/NO))
     (.add doc (TextField. "member" member Field$Store/NO))
     (.add doc (TextField. "title" title Field$Store/NO))
@@ -83,8 +89,8 @@
 (defn- get-application-ids [^IndexSearcher searcher ^TopDocs results]
   (doall (for [^ScoreDoc hit (.-scoreDocs results)]
            (let [doc (.doc searcher (.-doc hit))
-                 id (.get doc "id")]
-             (Long/parseLong id)))))
+                 app-id (.get doc "app-id")]
+             (Long/parseLong app-id)))))
 
 (defn- ^Query parse-query [^String query]
   (try
