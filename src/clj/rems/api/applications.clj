@@ -304,5 +304,7 @@
                (pdf/application-to-pdf-bytes)
                (ByteArrayInputStream.)
                (ok)
+               ;; could also set "attachment" here to force download:
+               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
                (content-type "application/pdf")))
         (api-util/not-found-json-response)))))
