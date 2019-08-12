@@ -54,7 +54,14 @@
       (is (= #{app-id} (search/find-applications "Supercalifragilisticexpialidocious")) "any field")
       (is (= #{app-id} (search/find-applications "title:Supercalifragilisticexpialidocious")) "title field")))
 
-  (testing "find by resource")
+  (testing "find by resource"
+    (let [cat-id (test-data/create-catalogue-item! {:title {:en "Spam"
+                                                            :fi "Nötkötti"}})
+          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                                 :actor "alice"})]
+      (is (= #{app-id} (search/find-applications "Spam")) "en title, any field")
+      (is (= #{app-id} (search/find-applications "resource:Spam")) "en title")
+      (is (= #{app-id} (search/find-applications "resource:Nötkötti")) "fi title")))
 
   (testing "find by state")
 
