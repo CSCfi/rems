@@ -24,13 +24,13 @@ Changes since v2.4
   - Preview for forms
   - Editing workflows
   - "Copy as new" button for forms
-- Upload an attachment file for a licese (#808)
-- Adding and removing members to/from an application (#609, #870, )
+- Upload an attachment file for a license (#808)
+- Adding and removing members to/from an application (#609, #870)
 - More configuration options for themes (e.g. alert colour)
 - Track license acceptance per member (#653)
 - Optional external id for applications (format "2019/123") (#862)
 - Reporter role
-- Accessibility improvements: screen reader support etc (#1172)
+- Accessibility improvements: screen reader support etc. (#1172)
 - Store user language preference, use chosen language for emails
 - Upgraded swagger-ui from 2 to 3
 
@@ -39,7 +39,7 @@ Changes since v2.4
 - More systematic use of db transactions
 - Improved table widget
 - Hide language switcher when only one language configured
-- PDFs are now downloaded as <application-id>.pdf instead of pdf.pdf
+- PDFs are now downloaded as \<application-id\>.pdf instead of pdf.pdf
 
 ### Fixes
 - Entitlement API
