@@ -42,10 +42,12 @@
                                (application-util/get-member-name member)
                                (:mail member)]))
                     (str/join " "))
-        all (str/join " " [applicant member])]
+        title (:application/description app)
+        all (str/join " " [applicant member title])]
     (.add doc (StringField. "id" (str (:application/id app)) Field$Store/YES))
     (.add doc (TextField. "applicant" applicant Field$Store/NO))
     (.add doc (TextField. "member" member Field$Store/NO))
+    (.add doc (TextField. "title" title Field$Store/NO))
     (.add doc (TextField. "all" all Field$Store/NO))
     (.addDocument writer doc)))
 

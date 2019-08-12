@@ -36,7 +36,23 @@
       (is (= #{app-id} (search/find-applications "member:\"Bob Approver\"")) "name")
       (is (= #{app-id} (search/find-applications "member:\"bob@example.com\"")) "email")))
 
-  (testing "find by title")
+  (testing "find by title"
+    (let [form-id (test-data/create-form! {:form/fields [{:field/type :description
+                                                          :field/title {:en "Title"}
+                                                          :field/optional false}]})
+          cat-id (test-data/create-catalogue-item! {:form-id form-id})
+          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                                 :actor "alice"})]
+      (test-data/command! {:type :application.command/save-draft
+                           :application-id app-id
+                           :actor "alice"
+                           :field-values [{:field 1
+                                           :value "Supercalifragilisticexpialidocious"}]})
+      (test-data/command! {:type :application.command/submit ; make sure that the required field was filled in
+                           :application-id app-id
+                           :actor "alice"})
+      (is (= #{app-id} (search/find-applications "Supercalifragilisticexpialidocious")) "any field")
+      (is (= #{app-id} (search/find-applications "title:Supercalifragilisticexpialidocious")) "title field")))
 
   (testing "find by resource")
 
