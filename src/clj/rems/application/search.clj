@@ -32,11 +32,21 @@
 (defn- index-application! [^IndexWriter writer app]
   (log/info "Indexing application" (:application/id app))
   (let [doc (Document.)
-        applicant (str/join " " [(:application/applicant app)
-                                 (application-util/get-applicant-name app)
-                                 (:mail (:application/applicant-attributes app))])]
+        applicant (->> [(:application/applicant app)
+                        (application-util/get-applicant-name app)
+                        (:mail (:application/applicant-attributes app))]
+                       (str/join " "))
+        member (->> (:application/members app)
+                    (mapcat (fn [member]
+                              [(:userid member)
+                               (application-util/get-member-name member)
+                               (:mail member)]))
+                    (str/join " "))
+        all (str/join " " [applicant member])]
     (.add doc (StringField. "id" (str (:application/id app)) Field$Store/YES))
     (.add doc (TextField. "applicant" applicant Field$Store/NO))
+    (.add doc (TextField. "member" member Field$Store/NO))
+    (.add doc (TextField. "all" all Field$Store/NO))
     (.addDocument writer doc)))
 
 (def ^:private refresh-lock (Object.))
@@ -72,7 +82,7 @@
 (defn- ^Query parse-query [^String query]
   (try
     (-> (StandardQueryParser. analyzer)
-        (.parse query "applicant")) ; TODO: change defaultField to full text search
+        (.parse query "all"))
     (catch QueryNodeException e
       (log/info (str "Failed to parse query '" query "', " e))
       nil)))

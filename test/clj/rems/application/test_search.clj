@@ -16,11 +16,25 @@
 
   (testing "find by applicant"
     (let [app-id (test-data/create-application! {:actor "alice"})]
-      (is (= #{app-id} (search/find-applications "alice")) "user ID")
-      (is (= #{app-id} (search/find-applications "\"Alice Applicant\"")) "name")
-      (is (= #{app-id} (search/find-applications "\"alice@example.com\"")) "email")))
+      (is (= #{app-id} (search/find-applications "alice")) "user ID, any field")
+      (is (= #{app-id} (search/find-applications "applicant:alice")) "user ID")
+      (is (= #{app-id} (search/find-applications "applicant:\"Alice Applicant\"")) "name")
+      (is (= #{app-id} (search/find-applications "applicant:\"alice@example.com\"")) "email")))
 
-  (testing "find by member")
+
+  (testing "find by member"
+    (let [app-id (test-data/create-application! {:actor "alice"})]
+      (test-data/command! {:type :application.command/submit
+                           :application-id app-id
+                           :actor "alice"})
+      (test-data/command! {:type :application.command/add-member
+                           :application-id app-id
+                           :actor "developer"
+                           :member {:userid "bob"}})
+      (is (= #{app-id} (search/find-applications "bob")) "user ID, any field")
+      (is (= #{app-id} (search/find-applications "member:bob")) "user ID")
+      (is (= #{app-id} (search/find-applications "member:\"Bob Approver\"")) "name")
+      (is (= #{app-id} (search/find-applications "member:\"bob@example.com\"")) "email")))
 
   (testing "find by title")
 
