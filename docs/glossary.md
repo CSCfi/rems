@@ -19,9 +19,12 @@
   - can be text, a link, or an attached file
   - can currently be attached to workflows, forms or catalogue items
   - upcoming: dynamic licenses added to application by handler
-- catalogue item: resource+workflow+form
+- catalogue item: something an applicant can pick from the catalogue and apply for
+  - catalogue item = resource + workflow + form
   - internal to rems
-- application: answers + catalogue item(s) + events
+- catalogue: the list of all (enabled) catalogue items
+- application: an instance of an applicant applying for entitlement to some resources
+  - application = answers + catalogue item(s) + events
   - answers mean values for the form fields + license acceptance
   - can also contain additional members
   - an application can have multiple catalogue items _if_ they have the same form & workflow
@@ -38,6 +41,8 @@
   - they will receive entitlements once the application is approved and they have accepted the licenses
 - user: somebody who is logged in to REMS. They can either be an applicant, a handler or somebody who
   responds to requests from handlers
+- reporter: a role that can view all applications
+- owner: a role that can create and edit resources, workflows, catalogue items, etc.
 
 ## Events
 
