@@ -24,4 +24,7 @@
 
   (testing "find by state")
 
-  (testing "find by form content"))
+  (testing "find by form content")
+
+  (testing "invalid query"
+    (is (= nil (search/find-applications "+")))))

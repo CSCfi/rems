@@ -8,8 +8,9 @@
   (:import [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode]
+           [org.apache.lucene.queryparser.flexible.core QueryNodeException]
            [org.apache.lucene.queryparser.flexible.standard StandardQueryParser]
-           [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs SearcherManager SearcherFactory]
+           [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs SearcherManager SearcherFactory Query]
            [org.apache.lucene.store Directory NIOFSDirectory]))
 
 (def ^:private analyzer (StandardAnalyzer.))
@@ -44,7 +45,7 @@
       (when-not (empty? events)
         (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                        (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
-          (doseq [app-id (set (map :application/id events))]
+          (doseq [app-id (distinct (map :application/id events))]
             (index-application! writer (applications/get-unrestricted-application app-id))))
         (.maybeRefresh searcher-manager)
         (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
@@ -63,12 +64,19 @@
                  id (.get doc "id")]
              (Long/parseLong id)))))
 
+(defn- ^Query parse-query [^String query]
+  (try
+    (-> (StandardQueryParser. analyzer)
+        (.parse query "applicant")) ; TODO: change defaultField to full text search
+    (catch QueryNodeException e
+      (log/info (str "Failed to parse query '" query "', " e))
+      nil)))
+
 (defn find-applications [^String query]
-  (refresh!) ; TODO: call from a background thread asynchronously?
-  (with-searcher
-   (fn [^IndexSearcher searcher]
-     (let [results (.search searcher
-                            (-> (StandardQueryParser. analyzer)
-                                (.parse query "applicant")) ; TODO: change defaultField to full text search
-                            Integer/MAX_VALUE)]
-       (set (get-application-ids searcher results))))))
+  (when-let [query (parse-query query)]
+    (refresh!) ; TODO: call from a background thread asynchronously?
+    (with-searcher
+     (fn [^IndexSearcher searcher]
+       (->> (.search searcher query Integer/MAX_VALUE)
+            (get-application-ids searcher)
+            set)))))
