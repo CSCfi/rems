@@ -144,7 +144,8 @@
         id-column (get config :application-id-column :id)]
     {:visible-columns #{id-column :description :resource :applicant :state :submitted :last-activity :view}
      :default-sort-column :last-activity
-     :default-sort-order :desc}))
+     :default-sort-order :desc
+     :filterable? false}))
 
 (defn- todo-applications []
   (let [applications ::todo-applications]
@@ -223,18 +224,16 @@
       :open? true
       :title (text :t.actions/todo-applications)
       :collapse [:<>
-                 (when (config/dev-environment?) ; TODO: remove feature flag
-                   [search-field {:id "todo-search"
-                                  :on-search #(rf/dispatch [::fetch-todo-applications %])
-                                  :searching? @(rf/subscribe [::searching-todo-applications?])}])
+                 [search-field {:id "todo-search"
+                                :on-search #(rf/dispatch [::fetch-todo-applications %])
+                                :searching? @(rf/subscribe [::searching-todo-applications?])}]
                  [todo-applications]]}]
     [collapsible/component
      {:id "handled-applications"
       :on-open #(rf/dispatch [::fetch-handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>
-                 (when (config/dev-environment?) ; TODO: remove feature flag
-                   [search-field {:id "handled-search"
-                                  :on-search #(rf/dispatch [::fetch-handled-applications %])
-                                  :searching? @(rf/subscribe [::searching-handled-applications?])}])
+                 [search-field {:id "handled-search"
+                                :on-search #(rf/dispatch [::fetch-handled-applications %])
+                                :searching? @(rf/subscribe [::searching-handled-applications?])}]
                  [handled-applications]]}]]])
