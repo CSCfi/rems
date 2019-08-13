@@ -23,23 +23,28 @@
 
 ;;;; UI
 
-(defn- application-list [opts]
-  (let [apps @(rf/subscribe [(:applications opts)])]
-    (cond (::loading? opts)
-          [spinner/big]
+(defn- application-list-defaults []
+  (let [config @(rf/subscribe [:rems.config/config])
+        id-column (get config :application-id-column :id)]
+    {:visible-columns #{id-column :description :resource :state :created :submitted :last-activity :view}
+     :default-sort-column :created
+     :default-sort-order :desc
+     :filterable? false}))
 
-          (empty? apps)
-          [:div.applications.alert.alert-success (text :t.applications/empty)]
+;; TODO: deduplicate with rems.actions
+(defn- application-list [applications]
+  (cond
+    (not @(rf/subscribe [applications :initialized?]))
+    [spinner/big]
 
-          :else
-          (let [config @(rf/subscribe [:rems.config/config])
-                id-column (get config :application-id-column :id)]
-            [application-list/component
-             (merge {:visible-columns #{id-column :description :resource :state :created :submitted :last-activity :view}
-                     :default-sort-column :created
-                     :default-sort-order :desc
-                     :filterable? false}
-                    opts)]))))
+    (empty? @(rf/subscribe [applications]))
+    [:div.applications.alert.alert-success (text :t.applications/empty)]
+
+    :else
+    [application-list/component
+     (-> (application-list-defaults)
+         (assoc :id applications
+                :applications applications))]))
 
 (defn applications-page []
   (let [identity @(rf/subscribe [:identity])]
@@ -50,15 +55,11 @@
      [search/search-field {:id "my-applications-search"
                            :on-search #(rf/dispatch [::my-applications %])
                            :searching? @(rf/subscribe [::my-applications :searching?])}]
-     [application-list {:id ::my-applications
-                        :applications ::my-applications
-                        ::loading? (not @(rf/subscribe [::my-applications :initialized?]))}]
+     [application-list ::my-applications]
      (when (roles/show-all-applications? (:roles identity))
        [:<>
         [:h2 (text :t.applications/all-applications)]
         [search/search-field {:id "all-applications-search"
                               :on-search #(rf/dispatch [::all-applications %])
                               :searching? @(rf/subscribe [::all-applications :searching?])}]
-        [application-list {:id ::all-applications
-                           :applications ::all-applications
-                           ::loading? (not @(rf/subscribe [::all-applications :initialized?]))}]])]))
+        [application-list ::all-applications]])]))

@@ -58,10 +58,11 @@
      :default-sort-order :desc
      :filterable? false}))
 
+;; TODO: deduplicate with rems.applications
 (defn- todo-applications []
   (let [applications ::todo-applications]
     (cond
-      (not @(rf/subscribe [::todo-applications :initialized?]))
+      (not @(rf/subscribe [applications :initialized?]))
       [spinner/big]
 
       (empty? @(rf/subscribe [applications]))
@@ -76,7 +77,7 @@
 (defn- handled-applications []
   (let [applications ::handled-applications]
     (cond
-      (not @(rf/subscribe [::handled-applications :initialized?]))
+      (not @(rf/subscribe [applications :initialized?]))
       [spinner/big]
 
       (empty? @(rf/subscribe [applications]))
