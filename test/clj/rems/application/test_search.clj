@@ -3,17 +3,16 @@
             [rems.application.search :as search]
             [rems.db.applications :as applications]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
+            [rems.db.testing :refer [test-db-fixture search-index-fixture]]))
 
-(use-fixtures :once test-db-fixture)
-(use-fixtures :each rollback-db-fixture)
+(use-fixtures :once (join-fixtures [test-db-fixture
+                                    search-index-fixture]))
 
 (deftest test-application-search
   ;; generate users with full names and emails
   (test-data/create-users-and-roles!)
   ;; unrelated application - it's an error if any of the tests finds this
   (test-data/create-application! {:actor "developer"})
-  (search/refresh!)
 
   (testing "find by applicant"
     (let [app-id (test-data/create-application! {:actor "alice"})]
@@ -70,7 +69,18 @@
       (is (= #{app-id} (search/find-applications "resource:Spam")) "en title")
       (is (= #{app-id} (search/find-applications "resource:Nötkötti")) "fi title")))
 
-  (testing "find by state")
+  (testing "find by state"
+    (let [app-id (test-data/create-application! {:actor "alice"})]
+      (test-data/command! {:type :application.command/submit
+                           :application-id app-id
+                           :actor "alice"})
+      (test-data/command! {:type :application.command/approve
+                           :application-id app-id
+                           :actor "developer"
+                           :comment ""})
+      (is (= #{app-id} (search/find-applications "Approved")) "en status, any field")
+      (is (= #{app-id} (search/find-applications "state:Approved")) "en status")
+      (is (= #{app-id} (search/find-applications "state:Hyväksytty")) "fi status")))
 
   (testing "find by form content")
 

@@ -6,7 +6,8 @@
             [rems.application-util :as application-util]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
-            [rems.db.events :as events])
+            [rems.db.events :as events]
+            [rems.text :as text])
   (:import [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode]
@@ -50,7 +51,13 @@
                       (mapcat (fn [resource]
                                 (vals (:catalogue-item/title resource))))
                       (str/join " "))
-        all (str/join " " [id applicant member title resource])]
+        state (->> (:languages env)
+                   (map (fn [lang]
+                          (text/with-language lang
+                            (fn []
+                              (text/localize-state (:application/state app))))))
+                   (str/join " "))
+        all (str/join " " [id applicant member title resource state])]
     ;; metadata
     (.add doc (StringField. "app-id" (str (:application/id app)) Field$Store/YES))
     ;; searchable fields
@@ -59,6 +66,7 @@
     (.add doc (TextField. "member" member Field$Store/NO))
     (.add doc (TextField. "title" title Field$Store/NO))
     (.add doc (TextField. "resource" resource Field$Store/NO))
+    (.add doc (TextField. "state" state Field$Store/NO))
     (.add doc (TextField. "all" all Field$Store/NO))
     (.addDocument writer doc)))
 
