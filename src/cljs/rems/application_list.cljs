@@ -1,9 +1,11 @@
 (ns rems.application-list
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application-util :as application-util]
             [rems.atoms :as atoms]
             [rems.guide-functions]
+            [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -96,9 +98,33 @@
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
     [:div
+     ;; TODO: remove filtering
      (when filterable?
        [table/search application-table])
      [table/table application-table]]))
+
+(defn- application-list-defaults []
+  (let [config @(rf/subscribe [:rems.config/config])
+        id-column (get config :application-id-column :id)]
+    {:visible-columns #{id-column :description :resource :applicant :state :created :submitted :last-activity :view}
+     :default-sort-column :created
+     :default-sort-order :desc
+     :filterable? false}))
+
+(defn default-component [{:keys [applications empty-message hidden-columns] :as opts}]
+  (cond
+    (not @(rf/subscribe [applications :initialized?]))
+    [spinner/big]
+
+    (empty? @(rf/subscribe [applications]))
+    [:div.applications.alert.alert-success (text (or empty-message :t.applications/empty))]
+
+    :else
+    [component
+     (-> (application-list-defaults)
+         (update :visible-columns set/difference (set hidden-columns))
+         (assoc :id applications)
+         (merge opts))]))
 
 (defn guide []
   (rf/reg-sub

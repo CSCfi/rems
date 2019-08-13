@@ -6,7 +6,6 @@
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
             [rems.search :as search]
-            [rems.spinner :as spinner]
             [rems.text :refer [text]]))
 
 (rf/reg-event-fx
@@ -50,46 +49,6 @@
    [show-publications-button]
    [show-throughput-times-button]])
 
-(defn application-list-defaults []
-  (let [config @(rf/subscribe [:rems.config/config])
-        id-column (get config :application-id-column :id)]
-    {:visible-columns #{id-column :description :resource :applicant :state :submitted :last-activity :view}
-     :default-sort-column :last-activity
-     :default-sort-order :desc
-     :filterable? false}))
-
-;; TODO: deduplicate with rems.applications
-(defn- todo-applications []
-  (let [applications ::todo-applications]
-    (cond
-      (not @(rf/subscribe [applications :initialized?]))
-      [spinner/big]
-
-      (empty? @(rf/subscribe [applications]))
-      [:div.actions.alert.alert-success (text :t.actions/empty)]
-
-      :else
-      [application-list/component
-       (-> (application-list-defaults)
-           (assoc :id applications
-                  :applications applications))])))
-
-(defn- handled-applications []
-  (let [applications ::handled-applications]
-    (cond
-      (not @(rf/subscribe [applications :initialized?]))
-      [spinner/big]
-
-      (empty? @(rf/subscribe [applications]))
-      [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
-
-      :else
-      [application-list/component
-       (-> (application-list-defaults)
-           (update :visible-columns disj :submitted)
-           (assoc :id applications
-                  :applications applications))])))
-
 (defn actions-page []
   [:div
    [document-title (text :t.navigation/actions)]
@@ -102,7 +61,11 @@
                  [search/search-field {:id "todo-search"
                                        :on-search #(rf/dispatch [::todo-applications %])
                                        :searching? @(rf/subscribe [::todo-applications :searching?])}]
-                 [todo-applications]]}]
+                 [application-list/default-component {:applications ::todo-applications
+                                                      :empty-message :t.actions/empty
+                                                      :hidden-columns #{:created}
+                                                      :default-sort-column :last-activity
+                                                      :default-sort-order :desc}]]}]
     [collapsible/component
      {:id "handled-applications"
       :on-open #(rf/dispatch [::handled-applications])
@@ -111,4 +74,8 @@
                  [search/search-field {:id "handled-search"
                                        :on-search #(rf/dispatch [::handled-applications %])
                                        :searching? @(rf/subscribe [::handled-applications :searching?])}]
-                 [handled-applications]]}]]])
+                 [application-list/default-component {:applications ::handled-applications
+                                                      :empty-message :t.actions/no-handled-yet
+                                                      :hidden-columns #{:created :submitted}
+                                                      :default-sort-column :last-activity
+                                                      :default-sort-order :desc}]]}]]])
