@@ -4,6 +4,7 @@
             [rems.atoms :refer [document-title]]
             [rems.roles :as roles]
             [rems.search :as search]
+            [rems.spinner :as spinner]
             [rems.text :refer [text]]))
 
 (rf/reg-event-fx
@@ -26,22 +27,25 @@
   (let [identity @(rf/subscribe [:identity])]
     [:<>
      [document-title (text :t.applications/applications)]
-     (when (roles/show-all-applications? (:roles identity))
-       [:h2 (text :t.applications/my-applications)])
-     [search/search-field {:id "my-applications-search"
-                           :on-search #(rf/dispatch [::my-applications %])
-                           :searching? @(rf/subscribe [::my-applications :searching?])}]
-     [application-list/default-component {:applications ::my-applications
-                                          :hidden-columns #{:applicant}
-                                          :default-sort-column :created
-                                          :default-sort-order :desc}]
-     (when (roles/show-all-applications? (:roles identity))
+     (if (not @(rf/subscribe [::my-applications :initialized?]))
+       [spinner/big]
        [:<>
-        [:h2 (text :t.applications/all-applications)]
-        [search/search-field {:id "all-applications-search"
-                              :on-search #(rf/dispatch [::all-applications %])
-                              :searching? @(rf/subscribe [::all-applications :searching?])}]
-        [application-list/default-component {:applications ::all-applications
-                                             :hidden-columns #{:created :submitted}
-                                             :default-sort-column :last-activity
-                                             :default-sort-order :desc}]])]))
+        (when (roles/show-all-applications? (:roles identity))
+          [:h2 (text :t.applications/my-applications)])
+        [search/search-field {:id "my-applications-search"
+                              :on-search #(rf/dispatch [::my-applications %])
+                              :searching? @(rf/subscribe [::my-applications :searching?])}]
+        [application-list/default-component {:applications ::my-applications
+                                             :hidden-columns #{:applicant}
+                                             :default-sort-column :created
+                                             :default-sort-order :desc}]
+        (when (roles/show-all-applications? (:roles identity))
+          [:<>
+           [:h2 (text :t.applications/all-applications)]
+           [search/search-field {:id "all-applications-search"
+                                 :on-search #(rf/dispatch [::all-applications %])
+                                 :searching? @(rf/subscribe [::all-applications :searching?])}]
+           [application-list/default-component {:applications ::all-applications
+                                                :hidden-columns #{:created :submitted}
+                                                :default-sort-column :last-activity
+                                                :default-sort-order :desc}]])])]))
