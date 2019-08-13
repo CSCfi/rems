@@ -33,6 +33,7 @@ Changes since v2.4
 - Accessibility improvements: screen reader support etc. (#1172)
 - Store user language preference, use chosen language for emails
 - Upgraded swagger-ui from 2 to 3
+- Extra pages (#472)
 
 ### Enhancements
 - Improved version information in footer
