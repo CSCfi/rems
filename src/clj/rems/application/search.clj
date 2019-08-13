@@ -57,7 +57,12 @@
                             (fn []
                               (text/localize-state (:application/state app))))))
                    (str/join " "))
-        all (str/join " " [id applicant member title resource state])]
+        form (->> (:form/fields (:application/form app))
+                  (map (fn [field]
+                         ;; TODO: filter out checkboxes, attachments etc?
+                         (:field/value field)))
+                  (str/join " "))
+        all (str/join " " [id applicant member title resource state form])]
     ;; metadata
     (.add doc (StringField. "app-id" (str (:application/id app)) Field$Store/YES))
     ;; searchable fields
@@ -67,6 +72,7 @@
     (.add doc (TextField. "title" title Field$Store/NO))
     (.add doc (TextField. "resource" resource Field$Store/NO))
     (.add doc (TextField. "state" state Field$Store/NO))
+    (.add doc (TextField. "form" form Field$Store/NO))
     (.add doc (TextField. "all" all Field$Store/NO))
     (.addDocument writer doc)))
 

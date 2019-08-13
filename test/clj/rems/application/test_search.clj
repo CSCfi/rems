@@ -82,7 +82,23 @@
       (is (= #{app-id} (search/find-applications "state:Approved")) "en status")
       (is (= #{app-id} (search/find-applications "state:Hyväksytty")) "fi status")))
 
-  (testing "find by form content")
+  (testing "find by form content"
+    (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
+                                                          :field/title {:en "Text field"}
+                                                          :field/optional false}]})
+          cat-id (test-data/create-catalogue-item! {:form-id form-id})
+          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                                 :actor "alice"})]
+      (test-data/command! {:type :application.command/save-draft
+                           :application-id app-id
+                           :actor "alice"
+                           :field-values [{:field 1
+                                           :value "Tis but a scratch."}]})
+      (test-data/command! {:type :application.command/submit ; make sure that the required field was filled in
+                           :application-id app-id
+                           :actor "alice"})
+      (is (= #{app-id} (search/find-applications "scratch")) "any field")
+      (is (= #{app-id} (search/find-applications "form:scratch")) "form field")))
 
   (testing "invalid query"
     (is (= nil (search/find-applications "+")))))
