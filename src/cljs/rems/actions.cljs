@@ -5,7 +5,6 @@
             [rems.application-list :as application-list]
             [rems.atoms :refer [document-title close-symbol]]
             [rems.collapsible :as collapsible]
-            [rems.config :as config]
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
@@ -16,99 +15,50 @@
  (fn [{:keys [db]} _]
    {:db (-> db
             (dissoc ::todo-applications
-                    ::handled-applications)
-            (assoc ::initializing-todo-applications? true
-                   ::initializing-handled-applications? true))
-    :dispatch-n [[::fetch-todo-applications]
+                    ::handled-applications))
+    :dispatch-n [[::todo-applications]
                  [:rems.table/reset]]}))
 
-;;;; applications to do
+(defn reg-fetcher [id url]
+  (let [result-id (keyword (namespace id)
+                           (str (name id) "-result"))]
+    (rf/reg-event-fx
+     id
+     (fn [{:keys [db]} [_ query]]
+       ;; do only one fetch at a time - will retry after the pending fetch is finished
+       (when-not (get-in db [id :fetching?])
+         (fetch url
+                {:url-params (when query
+                               {:query query})
+                 :handler #(rf/dispatch [result-id % query])
+                 ;; TODO: show error message
+                 :error-handler #(rf/dispatch [result-id nil query])}))
+       {:db (-> db
+                (assoc-in [id :query] query)
+                (assoc-in [id :fetching?] true))}))
 
-(rf/reg-event-fx
- ::fetch-todo-applications
- (fn [{:keys [db]} [_ query]]
-   ;; do only one fetch at a time - will retry after the pending fetch is finished
-   (when-not (::fetching-todo-applications? db)
-     (fetch "/api/applications/todo"
-            {:url-params (when query
-                           {:query query})
-             :handler #(rf/dispatch [::fetch-todo-applications-result % query])
-             ;; TODO: show error message
-             :error-handler #(rf/dispatch [::fetch-todo-applications-result nil query])}))
-   {:db (assoc db
-               ::todo-applications-query query
-               ::fetching-todo-applications? true)}))
+    (rf/reg-event-db
+     result-id
+     (fn [db [_ result query]]
+       ;; fetch again if the query that just finished was not the latest
+       (let [latest-query (get-in db [id :query])]
+         (when-not (= query latest-query)
+           (rf/dispatch [id latest-query])))
+       (-> db
+           (assoc-in [id :data] result)
+           (assoc-in [id :initialized?] true)
+           (assoc-in [id :fetching?] false))))
 
-(rf/reg-event-db
- ::fetch-todo-applications-result
- (fn [db [_ result query]]
-   ;; fetch again if the query that just finished was not the latest
-   (when-not (= query (::todo-applications-query db))
-     (rf/dispatch [::fetch-todo-applications (::todo-applications-query db)]))
-   (-> db
-       (assoc ::todo-applications result)
-       (dissoc ::initializing-todo-applications?
-               ::fetching-todo-applications?))))
+    (rf/reg-sub
+     id
+     (fn [db [_ k]]
+       (case k
+         :searching? (and (get-in db [id :fetching?])
+                          (get-in db [id :initialized?]))
+         (get-in db [id (or k :data)]))))))
 
-(rf/reg-sub
- ::todo-applications
- (fn [db _]
-   (::todo-applications db)))
-
-(rf/reg-sub
- ::initializing-todo-applications?
- (fn [db _]
-   (::initializing-todo-applications? db)))
-
-(rf/reg-sub
- ::searching-todo-applications?
- (fn [db _]
-   (and (::fetching-todo-applications? db)
-        (not (::initializing-todo-applications? db)))))
-
-;;;; handled applications
-
-(rf/reg-event-fx
- ::fetch-handled-applications
- (fn [{:keys [db]} [_ query]]
-   ;; do only one fetch at a time - will retry after the pending fetch is finished
-   (when-not (::fetching-handled-applications? db)
-     (fetch "/api/applications/handled"
-            {:url-params (when query
-                           {:query query})
-             :handler #(rf/dispatch [::fetch-handled-applications-result % query])
-             ;; TODO: show error message
-             :error-handler #(rf/dispatch [::fetch-handled-applications-result nil query])}))
-   {:db (assoc db
-               ::handled-applications-query query
-               ::fetching-handled-applications? true)}))
-
-(rf/reg-event-db
- ::fetch-handled-applications-result
- (fn [db [_ result query]]
-   ;; fetch again if the query that just finished was not the latest
-   (when-not (= query (::handled-applications-query db))
-     (rf/dispatch [::fetch-handled-applications (::handled-applications-query db)]))
-   (-> db
-       (assoc ::handled-applications result)
-       (dissoc ::initializing-handled-applications?
-               ::fetching-handled-applications?))))
-
-(rf/reg-sub
- ::handled-applications
- (fn [db _]
-   (::handled-applications db)))
-
-(rf/reg-sub
- ::initializing-handled-applications?
- (fn [db _]
-   (::initializing-handled-applications? db)))
-
-(rf/reg-sub
- ::searching-handled-applications?
- (fn [db _]
-   (and (::fetching-handled-applications? db)
-        (not (::initializing-handled-applications? db)))))
+(reg-fetcher ::todo-applications "/api/applications/todo")
+(reg-fetcher ::handled-applications "/api/applications/handled")
 
 ;;;; UI
 
@@ -150,7 +100,7 @@
 (defn- todo-applications []
   (let [applications ::todo-applications]
     (cond
-      @(rf/subscribe [::initializing-todo-applications?])
+      (not @(rf/subscribe [::todo-applications :initialized?]))
       [spinner/big]
 
       (empty? @(rf/subscribe [applications]))
@@ -165,7 +115,7 @@
 (defn- handled-applications []
   (let [applications ::handled-applications]
     (cond
-      @(rf/subscribe [::initializing-handled-applications?])
+      (not @(rf/subscribe [::handled-applications :initialized?]))
       [spinner/big]
 
       (empty? @(rf/subscribe [applications]))
@@ -225,15 +175,15 @@
       :title (text :t.actions/todo-applications)
       :collapse [:<>
                  [search-field {:id "todo-search"
-                                :on-search #(rf/dispatch [::fetch-todo-applications %])
-                                :searching? @(rf/subscribe [::searching-todo-applications?])}]
+                                :on-search #(rf/dispatch [::todo-applications %])
+                                :searching? @(rf/subscribe [::todo-applications :searching?])}]
                  [todo-applications]]}]
     [collapsible/component
      {:id "handled-applications"
-      :on-open #(rf/dispatch [::fetch-handled-applications])
+      :on-open #(rf/dispatch [::handled-applications])
       :title (text :t.actions/handled-applications)
       :collapse [:<>
                  [search-field {:id "handled-search"
-                                :on-search #(rf/dispatch [::fetch-handled-applications %])
-                                :searching? @(rf/subscribe [::searching-handled-applications?])}]
+                                :on-search #(rf/dispatch [::handled-applications %])
+                                :searching? @(rf/subscribe [::handled-applications :searching?])}]
                  [handled-applications]]}]]])
