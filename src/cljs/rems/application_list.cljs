@@ -69,8 +69,8 @@
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
-(defn component [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]
-                  :or {visible-columns (constantly true) filterable? true}}]
+(defn component [{:keys [id applications visible-columns default-sort-column default-sort-order]
+                  :or {visible-columns (constantly true)}}]
   (let [all-columns [{:key :id
                       :title (text :t.applications/id)}
                      {:key :external-id
@@ -97,19 +97,14 @@
                            :rows [::table-rows applications]
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
-    [:div
-     ;; TODO: remove filtering
-     (when filterable?
-       [table/search application-table])
-     [table/table application-table]]))
+    [table/table application-table]))
 
 (defn- application-list-defaults []
   (let [config @(rf/subscribe [:rems.config/config])
         id-column (get config :application-id-column :id)]
     {:visible-columns #{id-column :description :resource :applicant :state :created :submitted :last-activity :view}
      :default-sort-column :created
-     :default-sort-order :desc
-     :filterable? false}))
+     :default-sort-order :desc}))
 
 (defn default-component [{:keys [applications empty-message hidden-columns] :as opts}]
   (cond

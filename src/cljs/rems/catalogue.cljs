@@ -105,8 +105,7 @@
          :applications applications
          :visible-columns #{:resource :last-activity :view}
          :default-sort-column :last-activity
-         :default-sort-order :desc
-         :filterable? false}]])))
+         :default-sort-order :desc}]])))
 
 (defn- catalogue-table []
   (let [catalogue {:id ::catalogue
