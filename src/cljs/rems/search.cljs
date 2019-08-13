@@ -3,6 +3,7 @@
             [reagent.core :as r]
             [rems.atoms :refer [close-symbol]]
             [rems.spinner :as spinner]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 (defn reg-fetcher [id url]
@@ -46,11 +47,10 @@
 (defn search-field [{:keys [id on-search searching?]}]
   (let [input-value (r/atom "")
         input-element (atom nil)]
-    ;; TODO: localization & aria-labels
     (fn [{:keys [id on-search searching?]}]
       [:div.search-field.mb-3
        [:label.mr-1 {:for id}
-        "Search"]
+        (text :t.search/search)]
 
        [:div.input-group.mr-2
         [:input.form-control
@@ -69,6 +69,7 @@
            [:button.btn.btn-outline-secondary
             {:id (str id "-clear")
              :type :button
+             :aria-label (text :t.search/clear-search)
              ;; override the custom font-size from .btn which breaks .input-group
              :style {:font-size "inherit"}
              :on-click (fn []

@@ -302,9 +302,8 @@
            :phase-pending "Phase pending:"
            :phase-rejected "Phase rejected:"
            :rejected "Rejected"}
-  :search {:close-search "Close search"
-           :open-search "Open search"
-           :search-parameters "Search parameters"}
+  :search {:clear-search "Clear search"
+           :search "Search"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"}
   :unauthorized-page {:unauthorized "Unauthorized"

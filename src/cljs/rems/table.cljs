@@ -3,8 +3,7 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
-            [rems.search :as search]
-            [rems.text :refer [text]])
+            [rems.search :as search])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-db

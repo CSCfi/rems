@@ -300,9 +300,8 @@
            :phase-pending "Vaihe tulossa:"
            :phase-rejected "Vaihe hylätty:"
            :rejected "Hylätty"}
-  :search {:close-search "Sulje haku"
-           :open-search "Avaa haku"
-           :search-parameters "Hakutermit"}
+  :search {:clear-search "Nollaa etsintä"
+           :search "Etsi"}
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
