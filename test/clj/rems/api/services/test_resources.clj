@@ -1,6 +1,6 @@
-(ns ^:integration rems.db.test-resources
+(ns ^:integration rems.api.services.test-resources
   (:require [clojure.test :refer :all]
-            [rems.db.resource :as resources]
+            [rems.api.services.resource :as resources]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
 
