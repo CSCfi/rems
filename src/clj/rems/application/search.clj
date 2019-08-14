@@ -69,7 +69,7 @@
     ;; searchable fields
     (doseq [[k v] terms]
       (.add doc (TextField. (name k) v Field$Store/NO)))
-    (.add doc (TextField. "all" (str/join " " (vals terms)) Field$Store/NO))
+    (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
     (.addDocument writer doc)))
 
 (def ^:private refresh-lock (Object.))
