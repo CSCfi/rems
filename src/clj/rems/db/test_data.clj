@@ -14,6 +14,48 @@
             [ring.util.http-response :refer [bad-request!]])
   (:import [java.util UUID]))
 
+;;; test data definitions
+
+(def +fake-users+
+  {:applicant1 "alice"
+   :applicant2 "malice"
+   :approver1 "developer"
+   :approver2 "bob"
+   :owner "owner"
+   :reporter "reporter"
+   :reviewer "carl"
+   :roleless1 "elsa"
+   :roleless2 "frank"})
+
+(def +fake-user-data+
+  {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
+   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant"}
+   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
+   "bob" {:eppn "bob" :mail "bob@example.com" :commonName "Bob Approver"}
+   "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
+   "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
+   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
+   "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
+   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
+
+(def +demo-users+
+  {:applicant1 "RDapplicant1@funet.fi"
+   :applicant2 "RDapplicant2@funet.fi"
+   :approver1 "RDapprover1@funet.fi"
+   :approver2 "RDapprover2@funet.fi"
+   :reviewer "RDreview@funet.fi"
+   :owner "RDowner@funet.fi"
+   :reporter "RDdomainreporter@funet.fi"})
+
+(def +demo-user-data+
+  {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
+   "RDapplicant2@funet.fi" {:eppn "RDapplicant2@funet.fi" :mail "RDapplicant2.test@test_example.org" :commonName "RDapplicant2 REMSDEMO"}
+   "RDapprover1@funet.fi" {:eppn "RDapprover1@funet.fi" :mail "RDapprover1.test@rems_example.org" :commonName "RDapprover1 REMSDEMO"}
+   "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
+   "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
+   "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
+   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
+
 ;;; helpers for generating test data
 
 (defn command! [command]
@@ -31,6 +73,12 @@
        (reduce (fn [m [k1 k2 v]]
                  (assoc-in m [k2 k1] v))
                {})))
+
+(defn- create-user! [user-attributes & roles]
+  (let [user (:eppn user-attributes)]
+    (users/add-user! user user-attributes)
+    (doseq [role roles]
+      (roles/add-role! user role))))
 
 (defn create-license! [{:keys [actor]
                         :license/keys [type title link text]
@@ -66,11 +114,15 @@
 
 (defn create-dynamic-workflow! [{:keys [actor organization title handlers]
                                  :as command}]
-  (let [result (workflow/create-workflow! {:user-id (or actor "owner")
-                                           :organization (or organization "abc")
-                                           :title (or title "")
-                                           :type :dynamic
-                                           :handlers (or handlers ["developer"])})]
+  (let [result (workflow/create-workflow!
+                {:user-id (or actor "owner")
+                 :organization (or organization "abc")
+                 :title (or title "")
+                 :type :dynamic
+                 :handlers
+                 (or handlers
+                     (do (create-user! (get +fake-user-data+ "developer"))
+                         ["developer"]))})]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -130,53 +182,7 @@
                        :actor actor})
     app-id))
 
-;;; test data
-
-(def +fake-users+
-  {:applicant1 "alice"
-   :applicant2 "malice"
-   :approver1 "developer"
-   :approver2 "bob"
-   :owner "owner"
-   :reporter "reporter"
-   :reviewer "carl"
-   :roleless1 "elsa"
-   :roleless2 "frank"})
-
-(def +fake-user-data+
-  {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
-   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant"}
-   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
-   "bob" {:eppn "bob" :mail "bob@example.com" :commonName "Bob Approver"}
-   "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
-   "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
-   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
-   "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
-   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
-
-(def +demo-users+
-  {:applicant1 "RDapplicant1@funet.fi"
-   :applicant2 "RDapplicant2@funet.fi"
-   :approver1 "RDapprover1@funet.fi"
-   :approver2 "RDapprover2@funet.fi"
-   :reviewer "RDreview@funet.fi"
-   :owner "RDowner@funet.fi"
-   :reporter "RDdomainreporter@funet.fi"})
-
-(def +demo-user-data+
-  {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
-   "RDapplicant2@funet.fi" {:eppn "RDapplicant2@funet.fi" :mail "RDapplicant2.test@test_example.org" :commonName "RDapplicant2 REMSDEMO"}
-   "RDapprover1@funet.fi" {:eppn "RDapprover1@funet.fi" :mail "RDapprover1.test@rems_example.org" :commonName "RDapprover1 REMSDEMO"}
-   "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
-   "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
-   "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
-   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
-
-(defn- create-user! [user-attributes & roles]
-  (let [user (:eppn user-attributes)]
-    (users/add-user! user user-attributes)
-    (doseq [role roles]
-      (roles/add-role! user role))))
+;;; generate test data
 
 (defn create-users-and-roles! []
   ;; users provided by the fake login
