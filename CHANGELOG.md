@@ -34,6 +34,7 @@ Changes since v2.4
 - Store user language preference, use chosen language for emails
 - Upgraded swagger-ui from 2 to 3
 - Extra pages (#472)
+- Full-text search for all application content (#873)
 
 ### Enhancements
 - Improved version information in footer

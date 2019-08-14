@@ -8,15 +8,18 @@
             [rems.db.applications :as applications]
             [rems.db.events :as events]
             [rems.text :as text])
-  (:import [org.apache.lucene.analysis.standard StandardAnalyzer]
+  (:import [org.apache.lucene.analysis Analyzer]
+           [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
-           [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode]
+           [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode Term]
            [org.apache.lucene.queryparser.flexible.core QueryNodeException]
            [org.apache.lucene.queryparser.flexible.standard StandardQueryParser]
            [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs SearcherManager SearcherFactory Query]
            [org.apache.lucene.store Directory NIOFSDirectory]))
 
-(def ^:private analyzer (StandardAnalyzer.))
+(def ^:private ^Analyzer analyzer (StandardAnalyzer.))
+
+(def ^:private ^String app-id-field "app-id")
 
 (mount/defstate ^Directory search-index
   :start (let [directory (NIOFSDirectory. (.toPath (io/file (:search-index-path env))))]
@@ -63,14 +66,15 @@
 (defn- index-application! [^IndexWriter writer app]
   (log/info "Indexing application" (:application/id app))
   (let [doc (Document.)
+        app-id (str (:application/id app))
         terms (index-terms-for-application app)]
     ;; metadata
-    (.add doc (StringField. "app-id" (str (:application/id app)) Field$Store/YES))
+    (.add doc (StringField. app-id-field app-id Field$Store/YES))
     ;; searchable fields
     (doseq [[k v] terms]
       (.add doc (TextField. (name k) v Field$Store/NO)))
-    (.add doc (TextField. "all" (str/join " " (vals terms)) Field$Store/NO))
-    (.addDocument writer doc)))
+    (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
+    (.updateDocument writer (Term. app-id-field app-id) doc)))
 
 (def ^:private refresh-lock (Object.))
 
@@ -99,7 +103,7 @@
 (defn- get-application-ids [^IndexSearcher searcher ^TopDocs results]
   (doall (for [^ScoreDoc hit (.-scoreDocs results)]
            (let [doc (.doc searcher (.-doc hit))
-                 app-id (.get doc "app-id")]
+                 app-id (.get doc app-id-field)]
              (Long/parseLong app-id)))))
 
 (defn- ^Query parse-query [^String query]

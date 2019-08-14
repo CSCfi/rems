@@ -1,9 +1,11 @@
 (ns rems.application-list
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application-util :as application-util]
             [rems.atoms :as atoms]
             [rems.guide-functions]
+            [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -67,8 +69,8 @@
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
-(defn component [{:keys [id applications visible-columns default-sort-column default-sort-order filterable?]
-                  :or {visible-columns (constantly true) filterable? true}}]
+(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order]
+             :or {visible-columns (constantly true)}}]
   (let [all-columns [{:key :id
                       :title (text :t.applications/id)}
                      {:key :external-id
@@ -95,10 +97,31 @@
                            :rows [::table-rows applications]
                            :default-sort-column default-sort-column
                            :default-sort-order default-sort-order}]
-    [:div
-     (when filterable?
-       [table/search application-table])
-     [table/table application-table]]))
+    [table/table application-table]))
+
+(defn- application-list-defaults []
+  (let [config @(rf/subscribe [:rems.config/config])
+        id-column (get config :application-id-column :id)]
+    {:visible-columns #{id-column :description :resource :applicant :state :created :submitted :last-activity :view}
+     :default-sort-column :created
+     :default-sort-order :desc}))
+
+(defn component
+  "An application list which shows a spinner on initial page load (meant to be
+  used with rems.search/reg-fetcher) and a message if there are no applications."
+  [{:keys [applications empty-message hidden-columns] :as opts}]
+  (cond
+    (not @(rf/subscribe [applications :initialized?]))
+    [spinner/big]
+
+    (empty? @(rf/subscribe [applications]))
+    [:div.applications.alert.alert-success (text (or empty-message :t.applications/empty))]
+
+    :else
+    [list (-> (application-list-defaults)
+              (update :visible-columns set/difference (set hidden-columns))
+              (assoc :id applications)
+              (merge opts))]))
 
 (defn guide []
   (rf/reg-sub
@@ -152,17 +175,17 @@
        :application/last-activity "2017-01-01T01:01:01:001Z"}]))
 
   [:div
-   (component-info component)
+   (component-info list)
    (example "empty list"
-            [component {:id ::example1
-                        :applications ::no-applications
-                        :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
+            [list {:id ::example1
+                   :applications ::no-applications
+                   :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, default order"
-            [component {:id ::example2
-                        :applications ::example-applications
-                        :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
+            [list {:id ::example2
+                   :applications ::example-applications
+                   :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, descending date, all columns"
-            [component {:id ::example3
-                        :applications ::example-applications
-                        :default-sort-column :created
-                        :default-sort-order :desc}])])
+            [list {:id ::example3
+                   :applications ::example-applications
+                   :default-sort-column :created
+                   :default-sort-order :desc}])])
