@@ -30,49 +30,46 @@
           (.close ^SearcherManager (::searcher-manager @search-index))
           (.close ^Directory (::directory @search-index))))
 
+(defn- index-terms-for-application [app]
+  {:id (->> [(:application/id app)
+             (:application/external-id app)]
+            (str/join " "))
+   :applicant (->> [(:application/applicant app)
+                    (application-util/get-applicant-name app)
+                    (:mail (:application/applicant-attributes app))]
+                   (str/join " "))
+   :member (->> (:application/members app)
+                (mapcat (fn [member]
+                          [(:userid member)
+                           (application-util/get-member-name member)
+                           (:mail member)]))
+                (str/join " "))
+   :title (:application/description app)
+   :resource (->> (:application/resources app)
+                  (mapcat (fn [resource]
+                            (vals (:catalogue-item/title resource))))
+                  (str/join " "))
+   :state (->> (:languages env)
+               (map (fn [lang]
+                      (text/with-language lang
+                        #(text/localize-state (:application/state app)))))
+               (str/join " "))
+   :form (->> (:form/fields (:application/form app))
+              (map (fn [field]
+                     ;; TODO: filter out checkboxes, attachments etc?
+                     (:field/value field)))
+              (str/join " "))})
+
 (defn- index-application! [^IndexWriter writer app]
   (log/info "Indexing application" (:application/id app))
   (let [doc (Document.)
-        id (->> [(:application/id app)
-                 (:application/external-id app)]
-                (str/join " "))
-        applicant (->> [(:application/applicant app)
-                        (application-util/get-applicant-name app)
-                        (:mail (:application/applicant-attributes app))]
-                       (str/join " "))
-        member (->> (:application/members app)
-                    (mapcat (fn [member]
-                              [(:userid member)
-                               (application-util/get-member-name member)
-                               (:mail member)]))
-                    (str/join " "))
-        title (:application/description app)
-        resource (->> (:application/resources app)
-                      (mapcat (fn [resource]
-                                (vals (:catalogue-item/title resource))))
-                      (str/join " "))
-        state (->> (:languages env)
-                   (map (fn [lang]
-                          (text/with-language lang
-                            #(text/localize-state (:application/state app)))))
-                   (str/join " "))
-        form (->> (:form/fields (:application/form app))
-                  (map (fn [field]
-                         ;; TODO: filter out checkboxes, attachments etc?
-                         (:field/value field)))
-                  (str/join " "))
-        all (str/join " " [id applicant member title resource state form])]
+        terms (index-terms-for-application app)]
     ;; metadata
     (.add doc (StringField. "app-id" (str (:application/id app)) Field$Store/YES))
     ;; searchable fields
-    (.add doc (TextField. "id" id Field$Store/NO))
-    (.add doc (TextField. "applicant" applicant Field$Store/NO))
-    (.add doc (TextField. "member" member Field$Store/NO))
-    (.add doc (TextField. "title" title Field$Store/NO))
-    (.add doc (TextField. "resource" resource Field$Store/NO))
-    (.add doc (TextField. "state" state Field$Store/NO))
-    (.add doc (TextField. "form" form Field$Store/NO))
-    (.add doc (TextField. "all" all Field$Store/NO))
+    (doseq [[k v] terms]
+      (.add doc (TextField. (name k) v Field$Store/NO)))
+    (.add doc (TextField. "all" (str/join " " (vals terms)) Field$Store/NO))
     (.addDocument writer doc)))
 
 (def ^:private refresh-lock (Object.))
