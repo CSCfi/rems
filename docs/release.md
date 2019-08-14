@@ -1,18 +1,19 @@
 # Releases and releasing
 
 ## Naming
-Releases are named by streets starting from CSC headquarters in Keilaniemi. 
+Releases are named by streets starting from CSC headquarters in Keilaniemi.
 
-I.e. Keilaranta (v2.0), Otaniementie (v2.1), Vuorimiehentie (v2.2.), Tekniikantie (v2.3) to Tietotie (v2.4). 
+I.e. Keilaranta (v2.0), Otaniementie (v2.1), Vuorimiehentie (v2.2.), Tekniikantie (v2.3) to Tietotie (v2.4).
 The destination to aim for is up to you.
 
 See [Release page](https://github.com/CSCfi/rems/releases).
 
 ## Release notes
 
-Release notes are hand-written by going through all the issues that are included in the release.
+Release notes can be found in the [changelog](../CHANGELOG.md). The
+changelog is updated by developers via the normal pull request process.
 
-See [Release page](https://github.com/CSCfi/rems/releases).
+Releases can be found on the github [release page](https://github.com/CSCfi/rems/releases).
 
 ## Environments
 
