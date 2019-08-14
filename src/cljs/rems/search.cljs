@@ -6,7 +6,24 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
-(defn reg-fetcher [id url]
+(defn reg-fetcher
+  "Registers a set of event handlers and subscriptions for fetching data, with
+  support for search. Throttles automatically so that only one fetch is running
+  at a time.
+  
+  Given `(reg-fetcher ::foo \"/url\")`, registers the following:
+
+  - Handler `[::foo]` fetches data from `/url`, i.e. get all items
+  - Handler `[::foo \"bar\"]` fetches data from `/url?query=bar`, i.e. do a search
+  - Subscription `[::foo]` returns the data that was last fetched
+  - Subscription `[::foo :initialized?]` returns `true` if the data has been
+    fetched at least once
+  - Subscription `[::foo :fetching?]` returns `true` if a fetch is in progress
+  - Subscription `[::foo :searching?]` returns `true` if a search is in progress,
+    i.e. a fetch after the initial fetch
+
+  All state is stored in `db` under `::foo`, which can be removed to reset state."
+  [id url]
   (let [result-id (keyword (namespace id)
                            (str (name id) "-result"))]
     (rf/reg-event-fx
