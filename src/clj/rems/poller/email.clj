@@ -71,13 +71,15 @@
                                 (:application/applicant application)
                                 (resources-for-email application)
                                 (link-to-application (:application/id event)))
-          :body (text-format body-text
-                             recipient
-                             (:event/actor event)
-                             (application-id-for-email application)
-                             (:application/applicant application)
-                             (resources-for-email application)
-                             (link-to-application (:application/id event)))})))))
+          :body (str
+                 (text-format body-text
+                              recipient
+                              (:event/actor event)
+                              (application-id-for-email application)
+                              (:application/applicant application)
+                              (resources-for-email application)
+                              (link-to-application (:application/id event)))
+                 (text :t.email/footer))})))))
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (concat (emails-to-recipients (applicant-and-members application)
@@ -173,9 +175,11 @@
         :subject (text-format :t.email.member-invited/subject
                               (:email (:application/member event))
                               (invitation-link (:invitation/token event)))
-        :body (text-format :t.email.member-invited/message
-                           (:email (:application/member event))
-                           (invitation-link (:invitation/token event)))}])))
+        :body (str
+               (text-format :t.email.member-invited/message
+                            (:email (:application/member event))
+                            (invitation-link (:invitation/token event)))
+               (text :t.email/footer))}])))
 
 ;; TODO member-joined?
 
@@ -207,8 +211,7 @@
       (log/info "pretending to send email:" (pr-str email-spec))
       (let [email (assoc email-spec
                          :from (:mail-from env)
-                         :body (str (:body email-spec)
-                                    (text :t.email/footer))
+                         :body (:body email-spec)
                          :to (or (:to email-spec)
                                  (util/get-user-mail
                                   (users/get-user-attributes
