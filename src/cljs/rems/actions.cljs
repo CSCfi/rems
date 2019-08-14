@@ -61,11 +61,11 @@
                  [search/search-field {:id "todo-search"
                                        :on-search #(rf/dispatch [::todo-applications %])
                                        :searching? @(rf/subscribe [::todo-applications :searching?])}]
-                 [application-list/default-component {:applications ::todo-applications
-                                                      :empty-message :t.actions/empty
-                                                      :hidden-columns #{:created}
-                                                      :default-sort-column :last-activity
-                                                      :default-sort-order :desc}]]}]
+                 [application-list/component {:applications ::todo-applications
+                                              :empty-message :t.actions/empty
+                                              :hidden-columns #{:created}
+                                              :default-sort-column :last-activity
+                                              :default-sort-order :desc}]]}]
     [collapsible/component
      {:id "handled-applications"
       :on-open #(rf/dispatch [::handled-applications])
@@ -74,8 +74,8 @@
                  [search/search-field {:id "handled-search"
                                        :on-search #(rf/dispatch [::handled-applications %])
                                        :searching? @(rf/subscribe [::handled-applications :searching?])}]
-                 [application-list/default-component {:applications ::handled-applications
-                                                      :empty-message :t.actions/no-handled-yet
-                                                      :hidden-columns #{:created :submitted}
-                                                      :default-sort-column :last-activity
-                                                      :default-sort-order :desc}]]}]]])
+                 [application-list/component {:applications ::handled-applications
+                                              :empty-message :t.actions/no-handled-yet
+                                              :hidden-columns #{:created :submitted}
+                                              :default-sort-column :last-activity
+                                              :default-sort-order :desc}]]}]]])

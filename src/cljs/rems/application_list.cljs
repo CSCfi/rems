@@ -69,8 +69,8 @@
            :view {:td [:td.view [view-button app]]}})
         apps)))
 
-(defn component [{:keys [id applications visible-columns default-sort-column default-sort-order]
-                  :or {visible-columns (constantly true)}}]
+(defn list [{:keys [id applications visible-columns default-sort-column default-sort-order]
+             :or {visible-columns (constantly true)}}]
   (let [all-columns [{:key :id
                       :title (text :t.applications/id)}
                      {:key :external-id
@@ -106,7 +106,10 @@
      :default-sort-column :created
      :default-sort-order :desc}))
 
-(defn default-component [{:keys [applications empty-message hidden-columns] :as opts}]
+(defn component
+  "An application list which shows a spinner on initial page load (meant to be
+  used with rems.search/reg-fetcher) and a message if there are no applications."
+  [{:keys [applications empty-message hidden-columns] :as opts}]
   (cond
     (not @(rf/subscribe [applications :initialized?]))
     [spinner/big]
@@ -115,11 +118,10 @@
     [:div.applications.alert.alert-success (text (or empty-message :t.applications/empty))]
 
     :else
-    [component
-     (-> (application-list-defaults)
-         (update :visible-columns set/difference (set hidden-columns))
-         (assoc :id applications)
-         (merge opts))]))
+    [list (-> (application-list-defaults)
+              (update :visible-columns set/difference (set hidden-columns))
+              (assoc :id applications)
+              (merge opts))]))
 
 (defn guide []
   (rf/reg-sub
@@ -173,17 +175,17 @@
        :application/last-activity "2017-01-01T01:01:01:001Z"}]))
 
   [:div
-   (component-info component)
+   (component-info list)
    (example "empty list"
-            [component {:id ::example1
-                        :applications ::no-applications
-                        :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
+            [list {:id ::example1
+                   :applications ::no-applications
+                   :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, default order"
-            [component {:id ::example2
-                        :applications ::example-applications
-                        :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
+            [list {:id ::example2
+                   :applications ::example-applications
+                   :visible-columns #{:id :description :resource :applicant :state :created :last-activity :view}}])
    (example "applications, descending date, all columns"
-            [component {:id ::example3
-                        :applications ::example-applications
-                        :default-sort-column :created
-                        :default-sort-order :desc}])])
+            [list {:id ::example3
+                   :applications ::example-applications
+                   :default-sort-column :created
+                   :default-sort-order :desc}])])

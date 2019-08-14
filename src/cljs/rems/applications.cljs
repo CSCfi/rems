@@ -35,17 +35,17 @@
         [search/search-field {:id "my-applications-search"
                               :on-search #(rf/dispatch [::my-applications %])
                               :searching? @(rf/subscribe [::my-applications :searching?])}]
-        [application-list/default-component {:applications ::my-applications
-                                             :hidden-columns #{:applicant}
-                                             :default-sort-column :created
-                                             :default-sort-order :desc}]
+        [application-list/component {:applications ::my-applications
+                                     :hidden-columns #{:applicant}
+                                     :default-sort-column :created
+                                     :default-sort-order :desc}]
         (when (roles/show-all-applications? (:roles identity))
           [:<>
            [:h2 (text :t.applications/all-applications)]
            [search/search-field {:id "all-applications-search"
                                  :on-search #(rf/dispatch [::all-applications %])
                                  :searching? @(rf/subscribe [::all-applications :searching?])}]
-           [application-list/default-component {:applications ::all-applications
-                                                :hidden-columns #{:created :submitted}
-                                                :default-sort-column :last-activity
-                                                :default-sort-order :desc}]])])]))
+           [application-list/component {:applications ::all-applications
+                                        :hidden-columns #{:created :submitted}
+                                        :default-sort-column :last-activity
+                                        :default-sort-order :desc}]])])]))

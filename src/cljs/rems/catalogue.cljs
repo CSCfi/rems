@@ -100,7 +100,7 @@
       [:div
        [:h2 (text :t.catalogue/continue-existing-application)]
        (text :t.catalogue/continue-existing-application-intro)
-       [application-list/component
+       [application-list/list
         {:id applications
          :applications applications
          :visible-columns #{:resource :last-activity :view}
