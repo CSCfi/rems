@@ -16,6 +16,29 @@
     (f)
     (mount/stop)))
 
+(deftest test-send-email!
+  ;; Just for a bit of coverage in code that doesn't get run in other tests or the dev profile
+  (let [message-atom (atom nil)]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :smtp-host "localhost"
+                                         :smtp-port 25
+                                         :mail-from "rems@rems.rems")
+                  postal.core/send-message (fn [_host message] (reset! message-atom message))
+                  rems.db.users/get-user-attributes (constantly {:mail "user@example.com"})]
+      (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})
+      (is (= {:to "foo@example.com"
+              :subject "ding"
+              :body "boing"
+              :from "rems@rems.rems"}
+             @message-atom))
+      (send-email! {:to-user "user" :subject "ding" :body "boing"})
+      (is (= {:to "user@example.com"
+              :to-user "user"
+              :subject "ding"
+              :body "boing"
+              :from "rems@rems.rems"}
+             @message-atom)))))
+
 (defn sort-emails [emails]
   (sort-by #(or (:to %) (:to-user %)) emails))
 
