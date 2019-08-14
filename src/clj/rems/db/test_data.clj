@@ -74,7 +74,7 @@
                  (assoc-in m [k2 k1] v))
                {})))
 
-(defn- create-user! [user-attributes & roles]
+(defn create-user! [user-attributes & roles]
   (let [user (:eppn user-attributes)]
     (users/add-user! user user-attributes)
     (doseq [role roles]
