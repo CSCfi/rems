@@ -54,8 +54,7 @@
         state (->> (:languages env)
                    (map (fn [lang]
                           (text/with-language lang
-                            (fn []
-                              (text/localize-state (:application/state app))))))
+                            #(text/localize-state (:application/state app)))))
                    (str/join " "))
         form (->> (:form/fields (:application/form app))
                   (map (fn [field]
