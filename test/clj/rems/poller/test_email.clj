@@ -127,62 +127,62 @@
       (is (= [[]
               [{:to-user "assistant",
                 :subject "Application submitted (applicant: 2001/3)",
-                :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "handler",
                 :subject "Application submitted (applicant: 2001/3)",
-                :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+                :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
               [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
-                :body "Hello,\n\nThis email address (somebody@example.com) has been invited to participate in an application.\n\nParticipate: http://example.com/accept-invitation?token=abc"}]
+                :body "Hello,\n\nThis email address (somebody@example.com) has been invited to participate in an application.\n\nParticipate: http://example.com/accept-invitation?token=abc\n\nPlease don't reply to this automatically generated message."}]
               [{:to-user "commenter1",
                 :subject "Review requested (handler: 2001/3)",
-                :body "Dear commenter1,\n\nhandler has requested a review on application 2001/3.\n\nComment: http://example.com/#/application/7"}
+                :body "Dear commenter1,\n\nhandler has requested a review on application 2001/3.\n\nComment: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "commenter2",
                 :subject "Review requested (handler: 2001/3)",
-                :body "Dear commenter2,\n\nhandler has requested a review on application 2001/3.\n\nComment: http://example.com/#/application/7"}]
+                :body "Dear commenter2,\n\nhandler has requested a review on application 2001/3.\n\nComment: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
               []
               [{:to-user "assistant",
                 :subject "Review added (commenter2: 2001/3)",
-                :body "Dear assistant,\n\ncommenter2 has reviewed application 2001/3.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear assistant,\n\ncommenter2 has reviewed application 2001/3.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "handler",
                 :subject "Review added (commenter2: 2001/3)",
-                :body "Dear handler,\n\ncommenter2 has reviewed application 2001/3.\n\nView application: http://example.com/#/application/7"}]
+                :body "Dear handler,\n\ncommenter2 has reviewed application 2001/3.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
               [{:to-user "member",
                 :subject "Added as a member of an application (2001/3)",
-                :body "Dear member,\n\nYou've been added as a member of application 2001/3.\n\nView application: http://example.com/#/application/7"}]
+                :body "Dear member,\n\nYou've been added as a member of application 2001/3.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
               [{:to-user "decider",
                 :subject "Decision requested (assistant: 2001/3)",
-                :body "Dear decider,\n\nassistant has requested your decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}]
+                :body "Dear decider,\n\nassistant has requested your decision on application 2001/3.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
               [{:to-user "assistant",
                 :subject "Decision made (decider: 2001/3)",
-                :body "Dear assistant,\n\ndecider has made a decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear assistant,\n\ndecider has made a decision on application 2001/3.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "handler",
                 :subject "Decision made (decider: 2001/3)",
-                :body "Dear handler,\n\ndecider has made a decision on application 2001/3.\n\nView application: http://example.com/#/application/7"}]
+                :body "Dear handler,\n\ndecider has made a decision on application 2001/3.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
               [{:to-user "applicant",
                 :subject "Application approved (2001/3)",
-                :body "Dear applicant,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear applicant,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "assistant"
                 :subject "Application approved (2001/3)"
-                :body "Dear assistant,\n\nhandler has approved the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear assistant,\n\nhandler has approved the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "member",
                 :subject "Application approved (2001/3)",
-                :body "Dear member,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear member,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "somebody",
                 :subject "Application approved (2001/3)",
-                :body "Dear somebody,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7"}]
+                :body "Dear somebody,\n\nYour application 2001/3 has been approved.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
               [{:to-user "applicant",
                 :subject "Application closed (2001/3)",
-                :body "Dear applicant,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear applicant,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "handler"
                 :subject "Application closed (2001/3)"
-                :body "Dear handler,\n\nassistant has closed the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear handler,\n\nassistant has closed the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "member",
                 :subject "Application closed (2001/3)",
-                :body "Dear member,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}
+                :body "Dear member,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                {:to-user "somebody",
                 :subject "Application closed (2001/3)",
-                :body "Dear somebody,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7"}]]
+                :body "Dear somebody,\n\nYour application 2001/3 has been closed.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]]
              (events-to-emails events))))
     (testing "application rejected"
       (let [events (conj base-events
@@ -192,15 +192,15 @@
         (is (= [[]
                 [{:to-user "assistant",
                   :subject "Application submitted (applicant: 2001/3)",
-                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                  {:to-user "handler",
                   :subject "Application submitted (applicant: 2001/3)",
-                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
                 [{:subject "Application rejected (2001/3)",
-                  :body "Dear applicant,\n\nYour application 2001/3 has been rejected.\n\nView application: http://example.com/#/application/7",
+                  :body "Dear applicant,\n\nYour application 2001/3 has been rejected.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message.",
                   :to-user "applicant"}
                  {:subject "Application rejected (2001/3)"
-                  :body "Dear assistant,\n\nhandler has rejected the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"
+                  :body "Dear assistant,\n\nhandler has rejected the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."
                   :to-user "assistant"}]]
                (events-to-emails events)))))
     (testing "id field can be overrided"
@@ -208,10 +208,10 @@
         (is (= [[]
                 [{:to-user "assistant"
                   :subject "Application submitted (applicant: 7)"
-                  :body "Dear assistant,\n\napplicant has submitted an application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                  :body "Dear assistant,\n\napplicant has submitted an application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                  {:to-user "handler"
                   :subject "Application submitted (applicant: 7)"
-                  :body "Dear handler,\n\napplicant has submitted an application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]]
+                  :body "Dear handler,\n\napplicant has submitted an application (7): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]]
                (events-to-emails base-events)))))
     (testing "returning application to applicant and re-submitting"
       (let [events (conj base-events
@@ -225,20 +225,20 @@
         (is (= [[]
                 [{:to-user "assistant",
                   :subject "Application submitted (applicant: 2001/3)",
-                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                  {:to-user "handler",
                   :subject "Application submitted (applicant: 2001/3)",
-                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]
+                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
                 [{:to-user "applicant",
                   :subject "Application returned (2001/3)",
-                  :body "Dear applicant,\n\nYour application 2001/3 has been returned.\n\nView application: http://example.com/#/application/7"}
+                  :body "Dear applicant,\n\nYour application 2001/3 has been returned.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                  {:to-user "assistant",
                   :subject "Application returned (2001/3)",
-                  :body "Dear assistant,\n\nhandler has returned the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7"}]
+                  :body "Dear assistant,\n\nhandler has returned the application 2001/3 from applicant.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]
                 [{:to-user "assistant",
                   :subject "Application submitted (applicant: 2001/3)",
-                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}
+                  :body "Dear assistant,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}
                  {:to-user "handler",
                   :subject "Application submitted (applicant: 2001/3)",
-                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7"}]]
+                  :body "Dear handler,\n\napplicant has submitted an application (2001/3): en title 11, en title 21.\n\nView application: http://example.com/#/application/7\n\nPlease don't reply to this automatically generated message."}]]
                (events-to-emails events)))))))
