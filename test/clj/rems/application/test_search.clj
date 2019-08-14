@@ -54,9 +54,6 @@
                            :actor "alice"
                            :field-values [{:field 1
                                            :value "Supercalifragilisticexpialidocious"}]})
-      (test-data/command! {:type :application.command/submit ; make sure that the required field was filled in
-                           :application-id app-id
-                           :actor "alice"})
       (is (= #{app-id} (search/find-applications "Supercalifragilisticexpialidocious")) "any field")
       (is (= #{app-id} (search/find-applications "title:Supercalifragilisticexpialidocious")) "title field")))
 
@@ -94,9 +91,6 @@
                            :actor "alice"
                            :field-values [{:field 1
                                            :value "Tis but a scratch."}]})
-      (test-data/command! {:type :application.command/submit ; make sure that the required field was filled in
-                           :application-id app-id
-                           :actor "alice"})
       (is (= #{app-id} (search/find-applications "scratch")) "any field")
       (is (= #{app-id} (search/find-applications "form:scratch")) "form field")))
 
