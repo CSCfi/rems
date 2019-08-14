@@ -16,9 +16,9 @@
                         (and file (.exists file)) file
                         resource resource
                         :else (throw (FileNotFoundException.
-                                       (if file
-                                         (str "translations could not be found in " file " file or " resource-path " resource")
-                                         (str "translations could not be found in " resource-path " resource and " :translations-directory " was not set")))))]
+                                      (if file
+                                        (str "translations could not be found in " file " file or " resource-path " resource")
+                                        (str "translations could not be found in " resource-path " resource and " :translations-directory " was not set")))))]
     (read-string (slurp file-contents))))
 
 (defn- extra-translations-path [theme-path]
@@ -43,4 +43,5 @@
 (defstate translations :start (load-translations env))
 
 (defn tempura-config []
+  (assert (map? translations) {:translations translations})
   {:dict translations})

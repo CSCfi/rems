@@ -3,7 +3,7 @@
   (:require [clojure.test :refer :all]
             [cheshire.core :refer [parse-stream]]
             [mount.core :as mount]
-            [rems.db.testing :refer [test-data-fixture test-db-fixture caches-fixture]]
+            [rems.db.testing :refer [test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -17,6 +17,7 @@
 
 (def api-fixture
   (join-fixtures [test-db-fixture
+                  search-index-fixture
                   caches-fixture
                   test-data-fixture
                   handler-fixture]))

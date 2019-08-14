@@ -1,10 +1,13 @@
 (ns rems.application.search
   (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
+            [rems.application-util :as application-util]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
-            [rems.db.events :as events])
+            [rems.db.events :as events]
+            [rems.text :as text])
   (:import [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode]
@@ -27,11 +30,46 @@
           (.close ^SearcherManager (::searcher-manager @search-index))
           (.close ^Directory (::directory @search-index))))
 
+(defn- index-terms-for-application [app]
+  {:id (->> [(:application/id app)
+             (:application/external-id app)]
+            (str/join " "))
+   :applicant (->> [(:application/applicant app)
+                    (application-util/get-applicant-name app)
+                    (:mail (:application/applicant-attributes app))]
+                   (str/join " "))
+   :member (->> (:application/members app)
+                (mapcat (fn [member]
+                          [(:userid member)
+                           (application-util/get-member-name member)
+                           (:mail member)]))
+                (str/join " "))
+   :title (:application/description app)
+   :resource (->> (:application/resources app)
+                  (mapcat (fn [resource]
+                            (vals (:catalogue-item/title resource))))
+                  (str/join " "))
+   :state (->> (:languages env)
+               (map (fn [lang]
+                      (text/with-language lang
+                        #(text/localize-state (:application/state app)))))
+               (str/join " "))
+   :form (->> (:form/fields (:application/form app))
+              (map (fn [field]
+                     ;; TODO: filter out checkboxes, attachments etc?
+                     (:field/value field)))
+              (str/join " "))})
+
 (defn- index-application! [^IndexWriter writer app]
   (log/info "Indexing application" (:application/id app))
-  (let [doc (Document.)]
-    (.add doc (StringField. "id" (str (:application/id app)) Field$Store/YES))
-    (.add doc (TextField. "applicant" (str (:application/applicant app)) Field$Store/NO))
+  (let [doc (Document.)
+        terms (index-terms-for-application app)]
+    ;; metadata
+    (.add doc (StringField. "app-id" (str (:application/id app)) Field$Store/YES))
+    ;; searchable fields
+    (doseq [[k v] terms]
+      (.add doc (TextField. (name k) v Field$Store/NO)))
+    (.add doc (TextField. "all" (str/join " " (vals terms)) Field$Store/NO))
     (.addDocument writer doc)))
 
 (def ^:private refresh-lock (Object.))
@@ -61,13 +99,13 @@
 (defn- get-application-ids [^IndexSearcher searcher ^TopDocs results]
   (doall (for [^ScoreDoc hit (.-scoreDocs results)]
            (let [doc (.doc searcher (.-doc hit))
-                 id (.get doc "id")]
-             (Long/parseLong id)))))
+                 app-id (.get doc "app-id")]
+             (Long/parseLong app-id)))))
 
 (defn- ^Query parse-query [^String query]
   (try
     (-> (StandardQueryParser. analyzer)
-        (.parse query "applicant")) ; TODO: change defaultField to full text search
+        (.parse query "all"))
     (catch QueryNodeException e
       (log/info (str "Failed to parse query '" query "', " e))
       nil)))
