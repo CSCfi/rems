@@ -53,7 +53,12 @@
                             :title "fi title 21"}}}})
 
 (def ^:private get-workflow
-  {5 {:workflow {:handlers ["handler" "assistant"]}}})
+  {5 {:workflow {:handlers [{:userid "handler"
+                             :name "Handler"
+                             :email "handler@example.com"}
+                            {:userid "assistant"
+                             :name "Assistant"
+                             :email "assistant@example.com"}]}}})
 
 (defn ^:private get-nothing [& _]
   nil)

@@ -2,6 +2,7 @@
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
             [rems.api.services.licenses :as licenses]
+            [rems.api.services.workflow :as workflow]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
@@ -9,7 +10,6 @@
             [rems.db.resource :as resource]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
             [rems.poller.entitlements :as entitlements-poller]
             [ring.util.http-response :refer [bad-request!]])
   (:import [java.util UUID]))

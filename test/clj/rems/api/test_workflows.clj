@@ -1,10 +1,10 @@
 (ns ^:integration rems.api.test-workflows
   (:require [clojure.test :refer :all]
+            [rems.api.services.workflow :as workflow]
             [rems.api.testing :refer :all]
             [rems.common-util :refer [index-by]]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [sync-with-database-time]]
-            [rems.db.workflow :as workflow]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
