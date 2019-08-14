@@ -4,7 +4,7 @@
             [rems.api.util :as api-util] ; required for route :roles
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]
-            [rems.db.licenses :as licenses]
+            [rems.api.services.licenses :as licenses]
             [rems.util :refer [getx-user-id]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
