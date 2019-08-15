@@ -1,4 +1,5 @@
 (ns rems.application-list
+  (:refer-clojure :exclude [list])
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [re-frame.core :as rf]
