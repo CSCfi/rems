@@ -331,60 +331,60 @@
    "/#/administration/forms"
    (text :t.administration/cancel)])
 
-(defn- format-validation-errors [errors]
+(defn- format-validation-errors [form-errors]
   ;; TODO: deduplicate with field definitions
   (into [:ul
-         (when (:form/organization errors)
+         (when (:form/organization form-errors)
            [:li [:a {:href "#"
                      :on-click (in-page-anchor-link "organization")}
-                 (text-format (:form/organization errors) (text :t.administration/organization))]])
+                 (text-format (:form/organization form-errors) (text :t.administration/organization))]])
 
-         (when (:form/title errors)
+         (when (:form/title form-errors)
            [:li [:a {:href "#"
                      :on-click (in-page-anchor-link "title")}
-                 (text-format (:form/title errors) (text :t.create-form/title))]])]
+                 (text-format (:form/title form-errors) (text :t.create-form/title))]])]
 
-        (for [[field-id field] (into (sorted-map) (:form/fields errors))]
+        (for [[field-id field-errors] (into (sorted-map) (:form/fields form-errors))]
           [:li (text-format :t.create-form/field-n (inc field-id))
            [:ul
 
-            (when (:field/title field)
+            (when (:field/title field-errors)
               (into [:<>]
-                    (for [[lang error] (:field/title field)]
+                    (for [[lang error] (:field/title field-errors)]
                       [:li [:a {:href "#"
                                 :on-click (in-page-anchor-link (str "fields-" field-id "-title-" (name lang)))}
                             (text-format error (str (text :t.create-form/field-title)
                                                     " (" (.toUpperCase (name lang)) ")"))]])))
 
             ;; FIXME: the error is not cleared when the field is not visible
-            (when (:field/placeholder field)
+            (when (:field/placeholder field-errors)
               (into [:<>]
-                    (for [[lang error] (:field/placeholder field)]
+                    (for [[lang error] (:field/placeholder field-errors)]
                       [:li [:a {:href "#"
                                 :on-click (in-page-anchor-link (str "fields-" field-id "-placeholder-" (name lang)))}
                             (text-format error (str (text :t.create-form/placeholder)
                                                     " (" (.toUpperCase (name lang)) ")"))]])))
 
             ;; FIXME: the error is not cleared when the field is not visible
-            (when (:field/max-length field)
+            (when (:field/max-length field-errors)
               [:li [:a {:href "#"
                         :on-click (in-page-anchor-link (str "fields-" field-id "-max-length"))}
-                    (text :t.create-form/maxlength) ": " (text (:field/max-length field))]])
+                    (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))]])
 
             ;; FIXME: the error is not cleared when the field is not visible
-            (when (:field/options field)
-              (for [[option-id option] (into (sorted-map) (:field/options field))]
+            (when (:field/options field-errors)
+              (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
                 [:li (text-format :t.create-form/option-n (inc option-id))
                  [:ul
 
-                  (when (:key option)
+                  (when (:key option-errors)
                     [:li [:a {:href "#"
                               :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-key"))}
-                          (text-format (:key option) (text :t.create-form/option-key))]])
+                          (text-format (:key option-errors) (text :t.create-form/option-key))]])
 
-                  (when (:label option)
+                  (when (:label option-errors)
                     (into [:<>]
-                          (for [[lang error] (:label option)]
+                          (for [[lang error] (:label option-errors)]
                             [:li [:a {:href "#"
                                       :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-label-" (name lang)))}
                                   (text-format error (str (text :t.create-form/option-label)
