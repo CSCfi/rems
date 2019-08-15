@@ -1,9 +1,10 @@
 (ns rems.util
   (:require [ajax.core :refer [GET PUT POST]]
+            [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
-            [secretary.core :as secretary]
-            [clojure.string :as str]))
+            [rems.status-modal :as status-modal]
+            [secretary.core :as secretary]))
 
 ;; TODO move to cljc
 (defn getx
@@ -132,4 +133,12 @@
   [s]
   (let [link? (fn [s] (re-matches #"^http[s]?://.*" s))]
     (map #(if (link? %) [:a {:href %} %] %)
-      (interpose " " (str/split s " ")))))
+         (interpose " " (str/split s " ")))))
+
+;; XXX: since REMS uses hash-based URLs, it's not possible to have normal in-page anchor links, but they need to be emulated with JavaScript
+(defn in-page-anchor-link [id]
+  (fn [event]
+    (.preventDefault event)
+    (status-modal/close) ; in case this link is from a modal dialog to the page behind it
+    (when-let [element (.getElementById js/document id)]
+      (.focus element))))
