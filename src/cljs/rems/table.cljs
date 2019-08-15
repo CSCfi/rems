@@ -222,7 +222,8 @@
        (do
          (.setAttribute element "tabindex" "-1")
          (.focus element))
-       (js/setTimeout #(focus-element-async selector) 10 (dec tries))))))
+       (js/setTimeout #(focus-element-async selector (dec tries))
+                      10)))))
 
 (defn table [table]
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
