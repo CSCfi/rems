@@ -107,7 +107,7 @@
                                    :filterable? false}]
                         :rows [::licenses-table-rows]
                         :default-sort-column :title}]
-    [:div
+    [:div.mt-3
      [table/search licenses-table]
      [table/table licenses-table]]))
 

@@ -106,7 +106,7 @@
                                     :filterable? false}]
                          :rows [::resources-table-rows]
                          :default-sort-column :title}]
-    [:div
+    [:div.mt-3
      [table/search resources-table]
      [table/table resources-table]]))
 
