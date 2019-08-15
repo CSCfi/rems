@@ -24,6 +24,7 @@ Changes since v2.4
   - Preview for forms
   - Editing workflows
   - "Copy as new" button for forms
+  - Form validation error summary (#1461)
 - Upload an attachment file for a license (#808)
 - Adding and removing members to/from an application (#609, #870)
 - More configuration options for themes (e.g. alert colour)
