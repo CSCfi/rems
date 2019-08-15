@@ -1,6 +1,19 @@
 (ns rems.db.users
-  (:require [rems.db.core :as db]
+  (:require [clojure.string :as str]
+            [rems.db.core :as db]
             [rems.json :as json]))
+
+;; XXX: Adding these attributes is not done consistently when retrieving
+;;   the data for a user.
+(defn format-user [u]
+  {:userid (:eppn u)
+   :name (:commonName u)
+   :email (:mail u)})
+
+(defn- invalid-user? [u]
+  (or (str/blank? (:eppn u))
+      (str/blank? (:commonName u))
+      (str/blank? (:mail u))))
 
 (defn add-user! [user userattrs]
   (assert (and userattrs user) "User or user attributes missing!")
@@ -27,7 +40,36 @@
        (map get-user-attributes)
        (doall)))
 
+;; TODO Filter applicant, requesting user
+;;
+;; XXX: Removing invalid users is not done consistently. It seems that
+;;   only the following API calls are affected:
+;;
+;;     /applications/commenters
+;;     /applications/members
+;;     /applications/deciders
+;;     /workflows/actors
+;;
+;;   For example, a user without commonName is able to log in and send an
+;;   application, and the application is visible to the handler and can
+;;   be approved.
+(defn get-users []
+  (->> (get-all-users)
+       (remove invalid-user?)
+       (map format-user)))
+
+(def get-applicants get-users)
+
+(def get-commenters get-users)
+
+(def get-deciders get-users)
+
 (defn get-users-with-role [role]
   (->> (db/get-users-with-role {:role (name role)})
        (map :userid)
        (doall)))
+
+(defn get-user [userid]
+  (->> userid
+       get-user-attributes
+       format-user))

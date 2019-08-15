@@ -67,42 +67,6 @@
 
 ;; Api implementation
 
-(defn invalid-user? [u]
-  (or (str/blank? (:eppn u))
-      (str/blank? (:commonName u))
-      (str/blank? (:mail u))))
-
-;; XXX: Adding these attributes is not done consistently when retrieving
-;;   the data for a user.
-(defn format-user [u]
-  {:userid (:eppn u)
-   :name (:commonName u)
-   :email (:mail u)})
-
-;; TODO Filter applicant, requesting user
-;;
-;; XXX: Removing invalid users is not done consistently. It seems that
-;;   only the following API calls are affected:
-;;
-;;     /applications/commenters
-;;     /applications/members
-;;     /applications/deciders
-;;     /workflows/actors
-;;
-;;   For example, a user without commonName is able to log in and send an
-;;   application, and the application is visible to the handler and can
-;;   be approved.
-(defn get-users []
-  (->> (users/get-all-users)
-       (remove invalid-user?)
-       (map format-user)))
-
-(def get-applicants get-users)
-
-(def get-commenters get-users)
-
-(def get-deciders get-users)
-
 (def ^:private todo-roles
   #{:handler :commenter :decider :past-commenter :past-decider})
 
@@ -213,19 +177,19 @@
       :summary "Available third party commenters"
       :roles #{:handler}
       :return Commenters
-      (ok (get-commenters)))
+      (ok (users/get-commenters)))
 
     (GET "/members" []
       :summary "Existing REMS users available for application membership"
       :roles #{:handler}
       :return [Applicant]
-      (ok (get-applicants)))
+      (ok (users/get-applicants)))
 
     (GET "/deciders" []
       :summary "Available deciders"
       :roles #{:handler}
       :return Deciders
-      (ok (get-deciders)))
+      (ok (users/get-deciders)))
 
     (GET "/attachment/:attachment-id" []
       :summary "Get an attachment"

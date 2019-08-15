@@ -24,7 +24,9 @@
                                     :form/id 1
                                     :workflow/id 1
                                     :workflow/type :workflow/dynamic})
-(def ^:private dummy-workflows {1 {:workflow {:handlers [handler-user-id]}}})
+(def ^:private dummy-workflows {1 {:workflow {:handlers [{:userid handler-user-id
+                                                          :name "user"
+                                                          :email "user@example.com"}]}}})
 (def ^:private dummy-forms {1 {}})
 
 (def ^:private injections

@@ -37,8 +37,8 @@
           "should find same catalogue item by id"))))
 
 (deftest test-multi-applications
-  (db/add-user! {:user "test-user" :userattrs nil})
-  (db/add-user! {:user "handler" :userattrs nil})
+  (test-data/create-user! {:eppn "test-user" :mail "test-user@test.com" :commonName "Test-user"})
+  (test-data/create-user! {:eppn "handler" :mail "handler@test.com" :commonName "Handler"})
   (let [applicant "test-user"
         wfid (test-data/create-dynamic-workflow! {:handlers ["handler"]})
         res1 (test-data/create-resource! {:resource-ext-id "resid111"})
@@ -81,9 +81,9 @@
   (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role))))
 
 (deftest test-get-entitlements-for-export
-  (db/add-user! {:user "handler" :userattrs nil})
-  (db/add-user! {:user "jack" :userattrs nil})
-  (db/add-user! {:user "jill" :userattrs nil})
+  (test-data/create-user! {:eppn "handler" :mail "handler@test.com" :commonName "Handler"})
+  (test-data/create-user! {:eppn "jack" :mail "jack@test.com" :commonName "Jack"})
+  (test-data/create-user! {:eppn "jill" :mail "jill@test.com" :commonName "Jill"})
   (let [wf (test-data/create-dynamic-workflow! {:handlers ["handler"]})
         form-id (test-data/create-form! {})
         res1 (test-data/create-resource! {:resource-ext-id "resource1"})

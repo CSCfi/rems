@@ -176,7 +176,9 @@
        :organization "org"
        :title "workflow title"
        :workflow {:type "workflow/dynamic"
-                  :handlers ["handler"]}
+                  :handlers [{:userid "handler"
+                              :name "Handler"
+                              :email "handler@example.com"}]}
        :licenses nil
        :owneruserid "owner"
        :modifieruserid "owner"

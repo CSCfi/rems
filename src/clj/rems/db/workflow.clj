@@ -1,8 +1,49 @@
 (ns rems.db.workflow
-  (:require [rems.db.catalogue :as catalogue]
+  (:require [clj-time.core :as time-core]
+            [clojure.test :refer [deftest is]]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.json :as json])
-  (:import [org.apache.commons.lang3 NotImplementedException]))
+            [rems.db.users :as users]
+            [rems.json :as json]
+            [rems.util :refer [update-present]])
+  (:import [org.joda.time DateTime DateTimeZone]))
+
+(defn- parse-db-time [s]
+  (when s
+    (-> (DateTime/parse s)
+        (.withZone DateTimeZone/UTC))))
+
+(deftest test-parse-db-time
+  (is (= nil (parse-db-time nil)))
+  (is (= (time-core/date-time 2019 1 30 7 56 38 627) (parse-db-time "2019-01-30T09:56:38.627616+02:00")))
+  (is (= (time-core/date-time 2015 2 13 12 47 26) (parse-db-time "2015-02-13T14:47:26+02:00"))))
+
+;; TODO: This should probably be in rems.db.licenses.
+(defn- format-license [license]
+  (-> license
+      (select-keys [:type :textcontent :localizations])
+      (assoc :start (parse-db-time (:start license)))
+      (assoc :end (parse-db-time (:end license)))))
+
+(defn- format-workflow
+  [{:keys [id organization owneruserid modifieruserid title workflow start end expired enabled archived licenses]}]
+  {:id id
+   :organization organization
+   :owneruserid owneruserid
+   :modifieruserid modifieruserid
+   :title title
+   :workflow workflow
+   :start start
+   :end end
+   :expired expired
+   :enabled enabled
+   :archived archived
+   :licenses (mapv format-license licenses)})
+
+(defn- enrich-and-format-workflow [wf]
+  (-> wf
+      (update-present :workflow update :handlers #(mapv users/get-user %))
+      format-workflow))
 
 (defn- parse-workflow-body [json]
   (json/parse-string json))
@@ -15,50 +56,12 @@
       db/get-workflow
       (update :workflow parse-workflow-body)
       (update :licenses parse-licenses)
-      db/assoc-expired))
+      db/assoc-expired
+      enrich-and-format-workflow))
 
 (defn get-workflows [filters]
   (->> (db/get-workflows)
        (map #(update % :workflow parse-workflow-body))
        (map db/assoc-expired)
-       (db/apply-filters filters)))
-
-(defn- create-auto-approve-workflow! [{:keys [user-id organization title]}]
-  (assert user-id)
-  ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-  (throw (NotImplementedException. "auto-approve workflows are not yet implemented")))
-
-(defn- create-dynamic-workflow! [{:keys [user-id organization title handlers]}]
-  (assert user-id)
-  (assert organization)
-  (assert title)
-  (assert (every? string? handlers) {:handlers handlers})
-  (let [wfid (:id (db/create-workflow! {:organization organization,
-                                        :owneruserid user-id,
-                                        :modifieruserid user-id,
-                                        :title title,
-                                        :workflow (json/generate-string {:type :workflow/dynamic
-                                                                         :handlers handlers})}))]
-    {:id wfid}))
-
-(defn create-workflow! [command]
-  (let [result (case (:type command)
-                 :auto-approve (create-auto-approve-workflow! command)
-                 :dynamic (create-dynamic-workflow! command))]
-    (merge
-     result
-     {:success (not (nil? (:id result)))})))
-
-(defn update-workflow! [command]
-  (let [catalogue-items
-        (->> (catalogue/get-localized-catalogue-items {:workflow (:id command) :archived false})
-             (map #(select-keys % [:id :title :localizations])))]
-    (if (and (:archived command) (seq catalogue-items))
-      {:success false
-       :errors [{:type :t.administration.errors/workflow-in-use :catalogue-items catalogue-items}]}
-      (do
-        (db/update-workflow! (merge (select-keys command [:id :enabled :archived :title])
-                                    (when-let [handlers (:handlers command)]
-                                      {:workflow (json/generate-string {:type :workflow/dynamic
-                                                                        :handlers handlers})})))
-        {:success true}))))
+       (db/apply-filters filters)
+       (mapv enrich-and-format-workflow)))

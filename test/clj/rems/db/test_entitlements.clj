@@ -100,9 +100,9 @@
                                                           :license-ids [lic-id1]})
                 :form-id form-id
                 :workflow-id wfid})]
-    (db/add-user! {:user applicant :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
-    (db/add-user! {:user member :userattrs (cheshire/generate-string {"mail" "e.l@s.a"})})
-    (db/add-user! {:user admin :userattrs nil})
+    (test-data/create-user! {:eppn applicant :mail "b@o.b" :commonName "Bob"})
+    (test-data/create-user! {:eppn member :mail "e.l@s.a" :commonName "Elsa"})
+    (test-data/create-user! {:eppn admin :mail "o.w@n.er" :commonName "Owner"})
 
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
       (testing "submitted application should not yet cause entitlements"
