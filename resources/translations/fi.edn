@@ -303,7 +303,8 @@
   :search {:clear-search "Tyhjennä hakuehdot"
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
   :table {:ascending-order "Nouseva järjestys"
-          :descending-order "Laskeva järjestys"}
+          :descending-order "Laskeva järjestys"
+          :show-all-n-rows "Näytä kaikki %1 riviä"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :forbidden-page {:forbidden "Kielletty"
