@@ -59,6 +59,8 @@ jobs:
       - restore_cache:
           keys:
           - v2-dependencies-{{ checksum "project.clj" }}
+      # workaround for apt failing with Could not get lock /var/lib/apt/lists/lock
+      - run: sudo systemctl kill --kill-who=all apt-daily.service
       - run: sudo apt remove google-chrome-stable
       - run: sudo rm /usr/local/bin/chromedriver
       - run: sudo apt update
