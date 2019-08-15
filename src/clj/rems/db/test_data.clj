@@ -1,10 +1,10 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
+            [rems.api.services.catalogue :as catalogue]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
             [rems.db.applications :as applications]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.roles :as roles]

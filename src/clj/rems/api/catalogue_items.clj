@@ -2,8 +2,8 @@
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
+            [rems.api.services.catalogue :as catalogue]
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
