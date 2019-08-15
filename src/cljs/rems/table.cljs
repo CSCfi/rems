@@ -247,8 +247,9 @@
                [:button.btn.btn-primary {:type :button
                                          :on-click (fn []
                                                      (rf/dispatch [::show-all-rows table])
-                                                     (focus-element-async (str "table.rems-table." (name (:id table))
-                                                                               " > tbody > tr:nth-child(" (inc max-rows) ") > td")))}
+                                                     (let [next-row (:key (nth rows max-rows))]
+                                                       (focus-element-async (str "table.rems-table." (name (:id table))
+                                                                                 " > tbody > tr[data-row='" next-row "'] > td"))))}
                 (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
 (defn guide []
