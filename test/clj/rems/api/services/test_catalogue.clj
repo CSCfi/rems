@@ -1,6 +1,6 @@
-(ns ^:integration rems.db.test-catalogue
+(ns ^:integration rems.api.services.test-catalogue
   (:require [clojure.test :refer :all]
-            [rems.db.catalogue :as catalogue]
+            [rems.api.services.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
