@@ -3,6 +3,7 @@
             [reagent.core :as r]
             [rems.atoms :refer [close-symbol]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
@@ -10,7 +11,7 @@
   "Registers a set of event handlers and subscriptions for fetching data, with
   support for search. Throttles automatically so that only one fetch is running
   at a time.
-  
+
   Given `(reg-fetcher ::foo \"/url\")`, registers the following:
 
   - Handler `[::foo]` fetches data from `/url`, i.e. get all items
@@ -35,8 +36,10 @@
                 {:url-params (when query
                                {:query query})
                  :handler #(rf/dispatch [result-id % query])
-                 ;; TODO: show error message
-                 :error-handler #(rf/dispatch [result-id nil query])}))
+                 ;; TODO: no title for the error modal. That's fine since this will only fail very exceptionally.
+                 :error-handler #(do
+                                   (status-modal/common-error-handler! %)
+                                   (rf/dispatch [result-id nil query]))}))
        {:db (-> db
                 (assoc-in [id :query] query)
                 (assoc-in [id :fetching?] true))}))
