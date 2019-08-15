@@ -18,6 +18,7 @@
  (fn [{:keys [db]} [_ form-id edit-form?]]
    {:db (assoc db
                ::form {:form/fields []}
+               ::form-errors nil
                ::form-id form-id
                ::edit-form? edit-form?)
     :dispatch-n [[::fetch-form form-id]]}))
@@ -149,11 +150,16 @@
              (validate-max-length (:field/max-length field))
              (validate-options (:field/options field) languages))})
 
+(defn- nil-if-empty [m]
+  (when-not (empty? m)
+    m))
+
 (defn validate-form [form languages]
   (-> (merge (validate-text-field form :form/organization)
              (validate-text-field form :form/title)
              {:form/fields (apply merge (mapv #(validate-field %1 %2 languages) (:form/fields form) (range)))})
-      remove-empty-keys))
+      remove-empty-keys
+      nil-if-empty))
 
 (defn- page-title [edit-form?]
   (if edit-form?
@@ -166,7 +172,7 @@
    (let [edit? (db ::edit-form?)
          form-errors (validate-form (db ::form) (db :languages))
          send-verb (if edit? put! post!)]
-     (when (empty? form-errors)
+     (when-not form-errors
        (status-modal/common-pending-handler! (page-title edit?))
        (send-verb (str "/api/forms/"
                        (if edit?
