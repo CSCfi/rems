@@ -11,7 +11,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys]]))
+            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys in-page-anchor-link]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -331,6 +331,71 @@
    "/#/administration/forms"
    (text :t.administration/cancel)])
 
+(defn- format-validation-errors [errors]
+  ;; TODO: deduplicate with field definitions
+  (into [:ul
+         (when (:form/organization errors)
+           [:li [:a {:href "#"
+                     :on-click (in-page-anchor-link "organization")}
+                 (text-format (:form/organization errors) (text :t.administration/organization))]])
+
+         (when (:form/title errors)
+           [:li [:a {:href "#"
+                     :on-click (in-page-anchor-link "title")}
+                 (text-format (:form/title errors) (text :t.create-form/title))]])]
+
+        (for [[field-id field] (into (sorted-map) (:form/fields errors))]
+          [:li (text-format :t.create-form/field-n (inc field-id))
+           [:ul
+
+            (when (:field/title field)
+              (into [:<>]
+                    (for [[lang error] (:field/title field)]
+                      [:li [:a {:href "#"
+                                :on-click (in-page-anchor-link (str "fields-" field-id "-title-" (name lang)))}
+                            (text-format error (str (text :t.create-form/field-title)
+                                                    " (" (.toUpperCase (name lang)) ")"))]])))
+
+            ;; FIXME: the error is not cleared when the field is not visible
+            (when (:field/placeholder field)
+              (into [:<>]
+                    (for [[lang error] (:field/placeholder field)]
+                      [:li [:a {:href "#"
+                                :on-click (in-page-anchor-link (str "fields-" field-id "-placeholder-" (name lang)))}
+                            (text-format error (str (text :t.create-form/placeholder)
+                                                    " (" (.toUpperCase (name lang)) ")"))]])))
+
+            ;; FIXME: the error is not cleared when the field is not visible
+            (when (:field/max-length field)
+              [:li [:a {:href "#"
+                        :on-click (in-page-anchor-link (str "fields-" field-id "-max-length"))}
+                    (text :t.create-form/maxlength) ": " (text (:field/max-length field))]])
+
+            ;; FIXME: the error is not cleared when the field is not visible
+            (when (:field/options field)
+              (for [[option-id option] (into (sorted-map) (:field/options field))]
+                [:li (text-format :t.create-form/option-n (inc option-id))
+                 [:ul
+
+                  (when (:key option)
+                    [:li [:a {:href "#"
+                              :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-key"))}
+                          (text-format (:key option) (text :t.create-form/option-key))]])
+
+                  (when (:label option)
+                    (into [:<>]
+                          (for [[lang error] (:label option)]
+                            [:li [:a {:href "#"
+                                      :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-label-" (name lang)))}
+                                  (text-format error (str (text :t.create-form/option-label)
+                                                          " (" (.toUpperCase (name lang)) ")"))]])))]]))]])))
+
+(defn- validation-errors-summary []
+  (let [errors @(rf/subscribe [::form-errors])]
+    (when errors
+      [:div.alert.alert-danger (text :t.form.validation/errors)
+       [format-validation-errors errors]])))
+
 (defn- form-fields [fields]
   (into [:div]
         (for [{id :field/id :as field} fields]
@@ -373,6 +438,7 @@
      (if loading-form?
        [:div [spinner/big]]
        [:div.container-fluid.editor-content
+        [validation-errors-summary]
         [:div.row
          [:div.col-lg
           [collapsible/component
