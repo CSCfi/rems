@@ -230,7 +230,7 @@
         language @(rf/subscribe [:language])
         max-rows @(rf/subscribe [::max-rows table])
         ;; When showing all rows, table-row is responsible for filtering displayed rows,
-        ;; but with truncation the visible rows need to be calculated before truncation.
+        ;; but with truncation the visible rows need to be filtered before truncation.
         rows (if (< max-rows (count rows))
                (filter ::display-row? rows)
                rows)]
