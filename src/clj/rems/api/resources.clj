@@ -2,8 +2,8 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util] ; required for route :roles
+            [rems.api.services.resource :as resource]
             [rems.db.licenses :as licenses]
-            [rems.db.resource :as resource]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -36,31 +36,6 @@
    (s/optional-key :id) s/Int
    (s/optional-key :errors) [s/Any]})
 
-(defn- format-resource
-  [{:keys [id owneruserid modifieruserid organization resid start end expired enabled archived]}]
-  {:id id
-   :owneruserid owneruserid
-   :modifieruserid modifieruserid
-   :organization organization
-   :resid resid
-   :start start
-   :end end
-   :expired expired
-   :enabled enabled
-   :archived archived})
-
-(defn- get-resources [filters]
-  (doall
-   (for [res (resource/get-resources filters)]
-     (assoc (format-resource res)
-            :licenses (licenses/get-resource-licenses (:id res))))))
-
-(defn- get-resource [id]
-  (-> id
-      resource/get-resource
-      format-resource
-      (assoc :licenses (licenses/get-resource-licenses id))))
-
 (def resources-api
   (context "/resources" []
     :tags ["resources"]
@@ -72,16 +47,16 @@
                      {expired :- (describe s/Bool "whether to include expired resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
-      (ok (get-resources (merge (when-not expired {:expired false})
-                                (when-not disabled {:enabled true})
-                                (when-not archived {:archived false})))))
+      (ok (resource/get-resources (merge (when-not expired {:expired false})
+                                         (when-not disabled {:enabled true})
+                                         (when-not archived {:archived false})))))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
       :roles #{:owner}
       :path-params [resource-id :- (describe s/Int "resource id")]
       :return Resource
-      (ok (get-resource resource-id)))
+      (ok (resource/get-resource resource-id)))
 
     (POST "/create" []
       :summary "Create resource"

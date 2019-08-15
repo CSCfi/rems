@@ -2,11 +2,11 @@
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
             [rems.api.services.licenses :as licenses]
+            [rems.api.services.resource :as resource]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
-            [rems.db.resource :as resource]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
