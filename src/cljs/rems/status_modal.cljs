@@ -82,7 +82,8 @@
                            :content [:<> [status-text success? error-content] content]
                            :on-close (fn []
                                        (close)
-                                       (when on-close (on-close)))
+                                       (when on-close (on-close))
+                                       (rf/dispatch [:rems.spa/user-triggered-navigation]))
                            :shade? shade?}])))
 
 (defn set-pending!
