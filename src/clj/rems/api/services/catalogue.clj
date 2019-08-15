@@ -29,7 +29,7 @@
 
 (defn update-catalogue-item! [command]
   (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item (:id command))
-        archived-licenses (filter #(:archived %) licenses)
+        archived-licenses (filter :archived licenses)
         errors
         (remove
          nil?
@@ -42,7 +42,7 @@
           (when (not (empty? archived-licenses))
             {:type :t.administration.errors/license-archived :licenses archived-licenses})])]
     (if (and (not (:archived command))
-             (pos? (count errors)))
+             (not (empty? errors)))
       {:success false
        :errors errors}
       (do (db/set-catalogue-item-state! (select-keys command [:id :enabled :archived]))

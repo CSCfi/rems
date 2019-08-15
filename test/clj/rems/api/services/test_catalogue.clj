@@ -115,14 +115,14 @@
       (archive-workflow! false)
       (is (:success (archive-catalogue-item! true))))
 
-    (testing "cannot unarchive if license is archived"
+    (testing "cannot unarchive if resource and license are archived"
       (archive-catalogue-item! true)
       (archive-resource! true)
       (archive-license! true)
       (let [errors (:errors (archive-catalogue-item! false))]
-        (is (= (set (mapv :type errors))
-               #{:t.administration.errors/resource-archived
-                 :t.administration.errors/license-archived})))
+        (is (= #{:t.administration.errors/resource-archived
+                 :t.administration.errors/license-archived}
+               (set (mapv :type errors)))))
       (archive-license! false)
       (archive-resource! false)
       (is (:success (archive-catalogue-item! true))))))
