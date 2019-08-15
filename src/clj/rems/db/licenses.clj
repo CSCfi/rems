@@ -71,14 +71,19 @@
        (format-licenses)
        (localize-licenses)))
 
-(defn get-active-licenses
-  "Get license active now. Params map can contain:
-    :wfid -- workflow to get workflow licenses for
-    :items -- sequence of catalogue items to get resource licenses for"
-  [now params]
+(defn get-licenses
+  "Get licenses. Params map can contain:
+     :wfid -- workflow to get workflow licenses for
+     :items -- sequence of catalogue items to get resource licenses for"
+  [params]
   (->> (db/get-licenses params)
        (format-licenses)
        (localize-licenses)
-       (map (partial db/assoc-expired now))
-       (remove :expired)
        (distinct-by :id)))
+
+(defn get-active-licenses
+  "Get licenses active now. Params map similar to get-licenses."
+  [now params]
+  (->> (get-licenses params)
+       (map (partial db/assoc-expired now))
+       (remove :expired)))

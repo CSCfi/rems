@@ -62,9 +62,13 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Resource already exists in the organization."
+                            :form-archived "Form has been archived:"
                             :form-in-use "Form in use:"
+                            :license-archived "License has been archived:"
                             :license-in-use "License in use:"
+                            :resource-archived "Resource has been archived:"
                             :resource-in-use "Resource in use:"
+                            :workflow-archived "Workflow has been archived:"
                             :workflow-in-use "Workflow in use:"}
                    :form "Form"
                    :forms "Forms"

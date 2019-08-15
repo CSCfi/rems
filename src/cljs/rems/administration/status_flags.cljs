@@ -48,7 +48,7 @@
    [:label.form-check-label {:for "display-old"}
     (text :t.administration/display-old)]])
 
-(defn- format-update-error [{:keys [type catalogue-items resources workflows]}]
+(defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows]}]
   (let [language @(rf/subscribe [:language])]
     [:<>
      [:p (text type)]
@@ -59,6 +59,20 @@
               [:a {:target :_blank
                    :href (str "#/administration/catalogue-items/" (:id ci))}
                (get-localized-title ci language)]]))
+     (into [:ul]
+           (for [f forms]
+             [:li
+              (text :t.administration/form) ": "
+              [:a {:target :_blank
+                   :href (str "#/administration/forms/" (:id f))}
+               (:form/title f)]]))
+     (into [:ul]
+           (for [lic licenses]
+             [:li
+              (text :t.administration/license) ": "
+              [:a {:target :_blank
+                   :href (str "#/administration/licenses/" (:id lic))}
+               (get-localized-title lic language)]]))
      (into [:ul]
            (for [r resources]
              [:li
