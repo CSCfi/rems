@@ -331,7 +331,7 @@
    "/#/administration/forms"
    (text :t.administration/cancel)])
 
-(defn- format-validation-errors [form-errors]
+(defn- format-validation-errors [form-errors form]
   ;; TODO: deduplicate with field definitions
   (into [:ul
          (when (:form/organization form-errors)
@@ -345,56 +345,59 @@
                  (text-format (:form/title form-errors) (text :t.create-form/title))]])]
 
         (for [[field-id field-errors] (into (sorted-map) (:form/fields form-errors))]
-          [:li (text-format :t.create-form/field-n (inc field-id))
-           [:ul
+          (let [field (get-in form [:form/fields field-id])]
+            [:li (text-format :t.create-form/field-n (inc field-id))
+             [:ul
 
-            (when (:field/title field-errors)
-              (into [:<>]
-                    (for [[lang error] (:field/title field-errors)]
-                      [:li [:a {:href "#"
-                                :on-click (in-page-anchor-link (str "fields-" field-id "-title-" (name lang)))}
-                            (text-format error (str (text :t.create-form/field-title)
-                                                    " (" (.toUpperCase (name lang)) ")"))]])))
+              (when (:field/title field-errors)
+                (into [:<>]
+                      (for [[lang error] (:field/title field-errors)]
+                        [:li [:a {:href "#"
+                                  :on-click (in-page-anchor-link (str "fields-" field-id "-title-" (name lang)))}
+                              (text-format error (str (text :t.create-form/field-title)
+                                                      " (" (.toUpperCase (name lang)) ")"))]])))
 
-            ;; FIXME: the error is not cleared when the field is not visible
-            (when (:field/placeholder field-errors)
-              (into [:<>]
-                    (for [[lang error] (:field/placeholder field-errors)]
-                      [:li [:a {:href "#"
-                                :on-click (in-page-anchor-link (str "fields-" field-id "-placeholder-" (name lang)))}
-                            (text-format error (str (text :t.create-form/placeholder)
-                                                    " (" (.toUpperCase (name lang)) ")"))]])))
+              (when (supports-placeholder? field)
+                (when (:field/placeholder field-errors)
+                  (into [:<>]
+                        (for [[lang error] (:field/placeholder field-errors)]
+                          [:li [:a {:href "#"
+                                    :on-click (in-page-anchor-link (str "fields-" field-id "-placeholder-" (name lang)))}
+                                (text-format error (str (text :t.create-form/placeholder)
+                                                        " (" (.toUpperCase (name lang)) ")"))]]))))
 
-            ;; FIXME: the error is not cleared when the field is not visible
-            (when (:field/max-length field-errors)
-              [:li [:a {:href "#"
-                        :on-click (in-page-anchor-link (str "fields-" field-id "-max-length"))}
-                    (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))]])
+              (when (supports-max-length? field)
+                (when (:field/max-length field-errors)
+                  [:li [:a {:href "#"
+                            :on-click (in-page-anchor-link (str "fields-" field-id "-max-length"))}
+                        (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))]]))
 
-            ;; FIXME: the error is not cleared when the field is not visible
-            (when (:field/options field-errors)
-              (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
-                [:li (text-format :t.create-form/option-n (inc option-id))
-                 [:ul
+              (when (supports-options? field)
+                (when (:field/options field-errors)
+                  (into [:<>]
+                        (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
+                          [:li (text-format :t.create-form/option-n (inc option-id))
+                           [:ul
 
-                  (when (:key option-errors)
-                    [:li [:a {:href "#"
-                              :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-key"))}
-                          (text-format (:key option-errors) (text :t.create-form/option-key))]])
+                            (when (:key option-errors)
+                              [:li [:a {:href "#"
+                                        :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-key"))}
+                                    (text-format (:key option-errors) (text :t.create-form/option-key))]])
 
-                  (when (:label option-errors)
-                    (into [:<>]
-                          (for [[lang error] (:label option-errors)]
-                            [:li [:a {:href "#"
-                                      :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-label-" (name lang)))}
-                                  (text-format error (str (text :t.create-form/option-label)
-                                                          " (" (.toUpperCase (name lang)) ")"))]])))]]))]])))
+                            (when (:label option-errors)
+                              (into [:<>]
+                                    (for [[lang error] (:label option-errors)]
+                                      [:li [:a {:href "#"
+                                                :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-label-" (name lang)))}
+                                            (text-format error (str (text :t.create-form/option-label)
+                                                                    " (" (.toUpperCase (name lang)) ")"))]])))]]))))]]))))
 
 (defn- validation-errors-summary []
-  (let [errors @(rf/subscribe [::form-errors])]
+  (let [form @(rf/subscribe [::form])
+        errors @(rf/subscribe [::form-errors])]
     (when errors
       [:div.alert.alert-danger (text :t.form.validation/errors)
-       [format-validation-errors errors]])))
+       [format-validation-errors errors form]])))
 
 (defn- form-fields [fields]
   (into [:div]
