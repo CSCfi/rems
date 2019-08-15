@@ -59,10 +59,10 @@ jobs:
       - restore_cache:
           keys:
           - v2-dependencies-{{ checksum "project.clj" }}
+      # killall is a workaround for apt failing with: Could not get lock /var/lib/apt/lists/lock
+      - run: sudo killall -9 apt-get || true; sudo apt update
       - run: sudo apt remove google-chrome-stable
       - run: sudo rm /usr/local/bin/chromedriver
-      # workaround for apt failing with Could not get lock /var/lib/apt/lists/lock
-      - run: sudo killall -9 apt-get || true; sudo apt update
       - run: sudo apt install chromium-chromedriver
       - run: FOR_TESTS=1 ./dev_db.sh
       - run: lein cljtests
