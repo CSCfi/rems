@@ -2,8 +2,7 @@
   (:require [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.json :as json]
-            [rems.util :refer [update-present]]))
+            [rems.json :as json]))
 
 ;; XXX: Overwriting :start and :end from license table with :start and :end
 ;;      from workflow_license table seems error-prone - they could at least
@@ -24,10 +23,10 @@
 
 (defn- enrich-and-format-workflow [wf]
   (-> wf
-      (update :workflow #(json/parse-string %))
+      (update :workflow json/parse-string)
       (assoc :licenses (get-workflow-licenses (:id wf)))
       db/assoc-expired
-      (update-present :workflow update :handlers #(mapv users/get-user %))))
+      (update-in [:workflow :handlers] #(mapv users/get-user %))))
 
 (defn get-workflow [id]
   (-> {:wfid id}
