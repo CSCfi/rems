@@ -3,13 +3,14 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
-            [rems.search :as search])
+            [rems.search :as search]
+            [rems.text :refer [text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-db
  ::reset
  (fn [db _]
-   (dissoc db ::sorting ::filtering)))
+   (dissoc db ::sorting ::filtering ::max-rows)))
 
 (defn- flip [order]
   (case order
@@ -50,6 +51,17 @@
  ::filtering
  (fn [db [_ table]]
    (get-in db [::filtering (:id table)])))
+
+(rf/reg-event-db
+ ::show-all-rows
+ (fn [db [_ table]]
+   (assoc-in db [::max-rows (:id table)] js/Number.MAX_SAFE_INTEGER)))
+
+(rf/reg-sub
+ ::max-rows
+ (fn [db [_ table]]
+   (or (get-in db [::max-rows (:id table)])
+       50)))
 
 (defn- default-if-missing [m k make-default]
   (if (contains? m k)
@@ -201,16 +213,45 @@
         (for [column (:columns table)]
           (get-in row [(:key column) :td]))))
 
+(defn- focus-element-async
+  ([selector]
+   (focus-element-async selector 100))
+  ([selector tries]
+   (when (pos? tries)
+     (if-let [element (.querySelector js/document selector)]
+       (do
+         (.setAttribute element "tabindex" "-1")
+         (.focus element))
+       (js/setTimeout #(focus-element-async selector (dec tries))
+                      10)))))
+
 (defn table [table]
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
-        language @(rf/subscribe [:language])]
+        language @(rf/subscribe [:language])
+        max-rows @(rf/subscribe [::max-rows table])
+        ;; When showing all rows, table-row is responsible for filtering displayed rows,
+        ;; but with truncation the visible rows need to be filtered before truncation.
+        rows (if (< max-rows (count rows))
+               (filter ::display-row? rows)
+               rows)]
     [:div.table-border
      [:table.rems-table {:class (:id table)}
       [:thead
        [table-header table]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
-       (for [row rows]
-         ^{:key (:key row)} [table-row row table])]]]))
+       (for [row (take max-rows rows)]
+         ^{:key (:key row)} [table-row row table])]
+      (when (< max-rows (count rows))
+        [:tfoot
+         [:tr [:td {:col-span (count (:columns table))
+                    :style {:text-align :center}}
+               [:button.btn.btn-primary {:type :button
+                                         :on-click (fn []
+                                                     (rf/dispatch [::show-all-rows table])
+                                                     (let [next-row (:key (nth rows max-rows))]
+                                                       (focus-element-async (str "table.rems-table." (name (:id table))
+                                                                                 " > tbody > tr[data-row='" next-row "'] > td"))))}
+                (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
 (defn guide []
   (rf/reg-sub
