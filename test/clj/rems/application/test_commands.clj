@@ -60,7 +60,12 @@
    (let [cmd (merge command-defaults cmd)
          result (commands/handle-command cmd application injections)]
      (assert-ex (:success result) {:cmd cmd :result result})
-     (events/validate-event (getx result :result)))))
+     (let [events (:events result)]
+       (events/validate-events events)
+       ;; most tests expect only one event, so this avoids having to wrap the expectation to a list
+       (if (= 1 (count events))
+         (first events)
+         events)))))
 
 (defn- apply-command
   ([application cmd]

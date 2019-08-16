@@ -62,8 +62,8 @@
         observed-app-version-marker 999
         mark-observed-app-version (fn [result _cmd application]
                                     (if (and (:success result)
-                                             (= :application.event/draft-saved (:event/type (:result result))))
-                                      (assoc-in result [:result :application/field-values observed-app-version-marker]
+                                             (= :application.event/draft-saved (:event/type (first (:events result)))))
+                                      (assoc-in result [:events 0 :application/field-values observed-app-version-marker]
                                                 (str (count (:application/events application))))
                                       result))
         write-event (fn [app-id]
