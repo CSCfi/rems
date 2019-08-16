@@ -9,14 +9,14 @@
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
-            [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
-            [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
+            [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
-            [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
+            [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
+            [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title]]
             [rems.collapsible :as collapsible]
@@ -27,7 +27,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [localize-decision localize-event localized localize-item localize-state localize-time text text-format get-localized-title]]
-            [rems.util :refer [dispatch! fetch parse-int post!]])
+            [rems.util :refer [dispatch! fetch parse-int post! in-page-anchor-link]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -61,16 +61,7 @@
   [id & [replace?]]
   (dispatch! (str "#/application/" id) replace?))
 
-(defn- in-page-anchor-link [id]
-  (fn [event]
-    (.preventDefault event)
-    (status-modal/close) ; the error summary may also be shown in a modal dialog
-    (when-let [element (.getElementById js/document id)]
-      (.focus element))))
-
 (defn- format-validation-error [type field]
-  ;; XXX: since REMS uses hash-based URLs, it's not possible to have normal
-  ;;      in-page anchor links, but they need to be emulated with JavaScript
   [:li [:a {:href "#"
             :on-click (in-page-anchor-link (fields/id-to-name (:field/id field)))}
         (text-format type (localized (:field/title field)))]])
