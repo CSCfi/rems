@@ -241,6 +241,7 @@
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
          :comment "Kommentti"
+         :copy-as-new "Kopioi uutena hakemuksena"
          :current-value "Nykyinen"
          :date "Aika"
          :diff-hide "Piilota muutokset"

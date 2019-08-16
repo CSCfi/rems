@@ -243,6 +243,7 @@
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
          :comment "Comment"
+         :copy-as-new "Copy as new application"
          :current-value "Current"
          :date "Time"
          :diff-hide "Hide changes"

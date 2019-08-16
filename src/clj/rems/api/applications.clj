@@ -245,6 +245,7 @@
     (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
     (command-endpoint :application.command/submit commands/SubmitCommand)
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
+    (command-endpoint :application.command/copy-as-new commands/CopyAsNewCommand)
 
     ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []

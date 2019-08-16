@@ -900,16 +900,17 @@
   (testing "everyone can accept invitation"
     (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
                                                             :event/actor "applicant"}])]
-      (is (= #{:application.command/accept-invitation}
-             (permissions/user-permissions created "joe")))))
+      (is (contains? (permissions/user-permissions created "joe")
+                     :application.command/accept-invitation))))
   (testing "nobody can accept invitation for closed application"
     (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
                                                            :event/actor "applicant"}
                                                           {:event/type :application.event/closed
                                                            :event/actor "applicant"}])]
-      (is (= #{}
-             (permissions/user-permissions closed "joe")
-             (permissions/user-permissions closed "applicant"))))))
+      (is (not (contains? (permissions/user-permissions closed "joe")
+                          :application.command/accept-invitation)))
+      (is (not (contains? (permissions/user-permissions closed "applicant")
+                          :application.command/accept-invitation))))))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created

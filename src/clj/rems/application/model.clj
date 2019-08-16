@@ -25,12 +25,14 @@
     :application.command/invite-member
     :application.command/uninvite-member
     :application.command/accept-licenses
-    :application.command/change-resources})
+    :application.command/change-resources
+    :application.command/copy-as-new})
 
 (def ^:private non-submittable-application-commands
   #{:application.command/remove-member
     :application.command/uninvite-member
-    :application.command/accept-licenses})
+    :application.command/accept-licenses
+    :application.command/copy-as-new})
 
 (def ^:private handler-all-commands
   #{:application.command/remark
@@ -51,7 +53,8 @@
 
 (def ^:private created-permissions
   {:applicant submittable-application-commands
-   :member #{:application.command/accept-licenses}
+   :member #{:application.command/accept-licenses
+             :application.command/copy-as-new}
    :reporter #{:see-everything
                :application.command/remark}
    ;; member before accepting an invitation
@@ -87,8 +90,8 @@
               :application.command/close}})
 
 (def ^:private closed-permissions
-  {:applicant #{}
-   :member #{}
+  {:applicant #{:application.command/copy-as-new}
+   :member #{:application.command/copy-as-new}
    :handler #{:see-everything}
    :commenter #{:see-everything}
    :decider #{:see-everything}

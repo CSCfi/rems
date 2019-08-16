@@ -111,6 +111,9 @@
                   :email s/Str}
          :comment s/Str))
 
+(s/defschema CopyAsNewCommand
+  CommandBase)
+
 (def command-schemas
   {#_:application.command/require-license
    :application.command/accept-invitation AcceptInvitationCommand
@@ -132,6 +135,7 @@
    :application.command/save-draft SaveDraftCommand
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand
+   :application.command/copy-as-new CopyAsNewCommand
    #_:application.command/withdraw})
 
 (s/defschema Command
@@ -416,6 +420,11 @@
       (ok {:event/type :application.event/member-uninvited
            :application/member (:member cmd)
            :application/comment (:comment cmd)})))
+
+(defmethod command-handler :application.command/copy-as-new
+  [cmd application _injections]
+  ;; TODO
+  (assert false "not implemented"))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (assoc event

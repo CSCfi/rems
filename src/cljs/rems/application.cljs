@@ -187,6 +187,14 @@
                           (get-in (:identity db) [:user :eppn])))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
+(rf/reg-event-fx
+ ::copy-as-new-application
+ (fn [{:keys [db]} _]
+   (let [application (::application db)]
+     ;; TODO
+     (js/alert (str "TODO: copy as new " (:application/id application))))
+   nil))
+
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
     (status-modal/common-pending-handler! description)
@@ -281,6 +289,11 @@
                    :text (text :t.form/submit)
                    :class :btn-primary
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
+
+(defn- copy-as-new-button []
+  [button-wrapper {:id "copy-as-new"
+                   :text (text :t.form/copy-as-new)
+                   :on-click #(rf/dispatch [::copy-as-new-application])}])
 
 (defn- application-fields [application edit-application]
   (let [field-values (:field-values edit-application)
@@ -542,7 +555,8 @@
                               :application.command/add-licenses [add-licenses-action-button]
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
-                              :application.command/close [close-action-button]]]
+                              :application.command/close [close-action-button]
+                              :application.command/copy-as-new [copy-as-new-button]]]
     (distinct (for [[command action] (partition 2 commands-and-actions)
                     :when (contains? (:application/permissions application) command)]
                 action))))

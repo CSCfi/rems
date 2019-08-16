@@ -184,7 +184,8 @@
                (map :event/type (get application :application/events))))
         (is (= #{"application.command/remove-member"
                  "application.command/uninvite-member"
-                 "application.command/accept-licenses"}
+                 "application.command/accept-licenses"
+                 "application.command/copy-as-new"}
                (set (get application :application/permissions))))))
 
     (testing "getting dynamic application as handler"
