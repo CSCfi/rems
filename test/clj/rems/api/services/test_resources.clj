@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.services.test-resources
   (:require [clojure.test :refer :all]
+            [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resources]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
@@ -12,8 +13,13 @@
       (select-keys [:enabled :archived])))
 
 (deftest test-update-resource!
-  (let [res-id (test-data/create-resource! {})
-        res-id2 (test-data/create-resource! {})]
+  (let [lic-id (test-data/create-license! {})
+        res-id (test-data/create-resource! {:license-ids [lic-id]})
+        res-id2 (test-data/create-resource! {})
+
+        archive-license! #(licenses/update-license! {:id lic-id
+                                                     :enabled true
+                                                     :archived %})]
 
     (testing "new resources are enabled and not archived"
       (is (= {:enabled true
@@ -52,6 +58,16 @@
       (is (= {:enabled false
               :archived false}
              (status-flags res-id))))
+
+    (testing "cannot unarchive if license is archived"
+      (resources/update-resource! {:id res-id
+                                   :archived true})
+      (archive-license! true)
+      (is (not (:success (resources/update-resource! {:id res-id
+                                                      :archived false}))))
+      (archive-license! false)
+      (is (:success (resources/update-resource! {:id res-id
+                                                 :archived false}))))
 
     (testing "does not affect unrelated resources"
       (resources/update-resource! {:id res-id
