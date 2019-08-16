@@ -111,7 +111,7 @@
                                     :filterable? false}]
                          :rows [::workflows-table-rows]
                          :default-sort-column :title}]
-    [:div
+    [:div.mt-3
      [table/search workflows-table]
      [table/table workflows-table]]))
 

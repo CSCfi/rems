@@ -125,7 +125,8 @@
   (let [app (get-unrestricted-application (:application-id cmd))
         result (commands/handle-command cmd app db-injections)]
     (if (:success result)
-      (events/add-event! (:result result))
+      (doseq [event (:events result)]
+        (events/add-event! event))
       result)))
 
 (defn accept-invitation [user-id invitation-token]

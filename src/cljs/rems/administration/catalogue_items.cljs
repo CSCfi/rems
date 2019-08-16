@@ -130,7 +130,7 @@
                                     :filterable? false}]
                          :rows [::catalogue-table-rows]
                          :default-sort-column :name}]
-    [:div
+    [:div.mt-3
      [table/search catalogue-table]
      [table/table catalogue-table]]))
 

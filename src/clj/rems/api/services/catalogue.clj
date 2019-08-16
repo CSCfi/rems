@@ -1,6 +1,5 @@
 (ns rems.api.services.catalogue
-  (:require [clojure.core.memoize :as memo]
-            [rems.common-util :refer [index-by]]
+  (:require [rems.common-util :refer [index-by]]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
             [rems.db.form :as form]

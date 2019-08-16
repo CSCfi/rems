@@ -1,8 +1,7 @@
 (ns rems.language-switcher
   (:require [clojure.string :as str]
-            [re-frame.core :as rf :refer [reg-event-fx reg-event-db]]
-            [rems.guide-functions]
-            [rems.status-modal :as status-modal])
+            [re-frame.core :as rf]
+            [rems.guide-functions])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn lang-link-classes [current-language language]
