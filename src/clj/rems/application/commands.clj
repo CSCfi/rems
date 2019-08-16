@@ -246,9 +246,11 @@
   (when (contains? (all-members application) userid)
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
-(defn- ok [event]
+(defn- ok [& events]
   {:success true
-   :result event})
+   :events events
+   ;; TODO: remove :result
+   :result (first events)})
 
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
@@ -425,7 +427,11 @@
 
 (defn- enrich-result [result cmd]
   (if (:success result)
-    (update result :result add-common-event-fields-from-command cmd)
+    (-> result
+        (update :events (fn [events]
+                          (mapv #(add-common-event-fields-from-command % cmd) events)))
+        ;; TODO: remove :result
+        (update :result add-common-event-fields-from-command cmd))
     result))
 
 (defn ^:dynamic postprocess-command-result-for-tests [result _cmd _application]
