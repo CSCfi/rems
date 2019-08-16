@@ -4,7 +4,6 @@
             [rems.api.schema :refer [SuccessResponse UserId Workflow]]
             [rems.api.services.workflow :as workflow]
             [rems.api.util] ; required for route :roles
-            [rems.db.core :as db]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))

@@ -1,8 +1,6 @@
 (ns rems.db.resource
-  (:require [rems.db.catalogue :as catalogue]
-            [rems.db.core :as db]
-            [rems.db.licenses :as licenses])
-  (:import (org.postgresql.util PSQLException)))
+  (:require [rems.db.core :as db]
+            [rems.db.licenses :as licenses]))
 
 (defn- format-resource
   [{:keys [id owneruserid modifieruserid organization resid start end expired enabled archived]}]

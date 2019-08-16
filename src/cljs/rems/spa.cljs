@@ -1,9 +1,7 @@
 (ns rems.spa
-  (:require [clojure.string :as str]
-            [goog.events :as events]
+  (:require [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
-            [markdown.core :refer [md->html]]
-            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
+            [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
@@ -46,31 +44,31 @@
 
 ;;; subscriptions
 
-(reg-sub
+(rf/reg-sub
  :page
  (fn [db _]
    (:page db)))
 
-(reg-sub
+(rf/reg-sub
  :docs
  (fn [db _]
    (:docs db)))
 
 ;; TODO: possibly move translations out
-(reg-sub
+(rf/reg-sub
  :translations
  (fn [db _]
    (:translations db)))
 
 ;; TODO: possibly move theme out
-(reg-sub
+(rf/reg-sub
  :theme
  (fn [db _]
    (:theme db)))
 
 ;;; handlers
 
-(reg-event-db
+(rf/reg-event-db
  :initialize-db
  (fn [_ _]
    {:page :home
@@ -79,27 +77,27 @@
     :translations {}
     :identity {:user nil :roles nil}}))
 
-(reg-event-db
+(rf/reg-event-db
  :set-active-page
  (fn [db [_ page]]
    (assoc db :page page)))
 
-(reg-event-db
+(rf/reg-event-db
  :set-docs
  (fn [db [_ docs]]
    (assoc db :docs docs)))
 
-(reg-event-db
+(rf/reg-event-db
  :loaded-translations
  (fn [db [_ translations]]
    (assoc db :translations translations)))
 
-(reg-event-db
+(rf/reg-event-db
  :loaded-theme
  (fn [db [_ theme]]
    (assoc db :theme theme)))
 
-(reg-event-fx
+(rf/reg-event-fx
  :unauthorized!
  (fn [_ [_ current-url]]
    (println "Received unauthorized from" current-url)
@@ -107,13 +105,13 @@
    (dispatch! "/")
    {}))
 
-(reg-event-fx
+(rf/reg-event-fx
  :forbidden!
  (fn [_ [_ current-url]]
    (println "Received forbidden from" current-url)
    {:dispatch [:set-active-page :forbidden]}))
 
-(reg-event-fx
+(rf/reg-event-fx
  :landing-page-redirect!
  (fn [{:keys [db]}]
    ;; do we have the roles set by set-identity already?
@@ -254,12 +252,12 @@
      [main-content page-id grab-focus?]
      [footer]]))
 
-(reg-event-fx
+(rf/reg-event-fx
  :after-translations-are-loaded
  (fn [{:keys [db]} [_ on-loaded]]
    (if (seq (:translations db))
      (on-loaded)
-     (.setTimeout js/window #(dispatch [:after-translations-are-loaded on-loaded]) 100))
+     (.setTimeout js/window #(rf/dispatch [:after-translations-are-loaded on-loaded]) 100))
    {}))
 
 ;; -------------------------

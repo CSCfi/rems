@@ -1,8 +1,7 @@
 (ns rems.db.licenses
   "querying localized licenses"
   (:require [rems.common-util :refer [distinct-by]]
-            [rems.db.core :as db])
-  (:import (java.io FileInputStream ByteArrayOutputStream)))
+            [rems.db.core :as db]))
 
 (defn- format-license [license]
   {:id (:id license)

@@ -1,9 +1,8 @@
 (ns rems.api.resources
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util] ; required for route :roles
             [rems.api.services.resource :as resource]
-            [rems.db.licenses :as licenses]
+            [rems.api.util] ; required for route :roles
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
