@@ -248,9 +248,7 @@
 
 (defn- ok [& events]
   {:success true
-   :events events
-   ;; TODO: remove :result
-   :result (first events)})
+   :events events})
 
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
@@ -427,11 +425,8 @@
 
 (defn- enrich-result [result cmd]
   (if (:success result)
-    (-> result
-        (update :events (fn [events]
-                          (mapv #(add-common-event-fields-from-command % cmd) events)))
-        ;; TODO: remove :result
-        (update :result add-common-event-fields-from-command cmd))
+    (update result :events (fn [events]
+                             (mapv #(add-common-event-fields-from-command % cmd) events)))
     result))
 
 (defn ^:dynamic postprocess-command-result-for-tests [result _cmd _application]
