@@ -1,7 +1,6 @@
 (ns rems.db.workflow
   (:require [clj-time.core :as time-core]
             [clojure.test :refer [deftest is]]
-            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]

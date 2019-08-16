@@ -1,8 +1,6 @@
 (ns rems.actions.change-resources
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
-            [rems.common-util :refer [index-by]]
             [rems.dropdown :as dropdown]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
