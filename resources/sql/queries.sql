@@ -331,17 +331,15 @@ UPDATE workflow_licenses wl
 SET start = :start, endt = :end
 WHERE wl.licid = :licid;
 
+-- :name get-workflow-licenses :? :*
+SELECT licid, start, endt as "end"
+FROM workflow_licenses
+WHERE wfid = :wfid
+
 -- :name get-workflow :? :1
 SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.start, wf.endt AS "end",
-  wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived,
-  (SELECT json_agg(joined)
-   FROM (SELECT *, (SELECT json_agg(licloc)
-                    FROM license_localization licloc
-                    WHERE licloc.licid = lic.id) AS localizations
-         FROM workflow_licenses wflic
-         JOIN license lic ON (wflic.licid = lic.id)
-         WHERE wf.id = wflic.wfid) joined)::TEXT AS licenses
+  wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf
 /*~ (when (:catid params) */
 JOIN catalogue_item ci ON (wf.id = ci.wfid)

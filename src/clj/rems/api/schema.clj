@@ -95,13 +95,6 @@
 
 (def UserId s/Str)
 
-(s/defschema WorkflowLicense
-  {:type s/Str
-   :start DateTime
-   :textcontent s/Str
-   :localizations [s/Any]
-   :end (s/maybe DateTime)})
-
 (s/defschema Workflow
   {:id s/Int
    :organization s/Str
@@ -109,7 +102,7 @@
    :modifieruserid UserId
    :title s/Str
    :workflow s/Any
-   :licenses [WorkflowLicense]
+   :licenses [License]
    :start DateTime
    :end (s/maybe DateTime)
    :expired s/Bool
