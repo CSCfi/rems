@@ -101,6 +101,7 @@
                  :applicant "Applicant"
                  :application "Application"
                  :applications "Applications"
+                 :copied-from "copied from"
                  :created "Created"
                  ;; TODO: Once the terms have stabilized, convert db and the
                  ;;   code to match the term in UI.
