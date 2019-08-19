@@ -439,7 +439,7 @@
                                      (into {}))}
      {:event/type :application.event/copied-from
       :application/id new-app-id
-      :application/copied-from (:application/id application)})))
+      :application/copied-from (select-keys application [:application/id :application/external-id])})))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event

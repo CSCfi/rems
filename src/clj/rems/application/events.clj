@@ -124,7 +124,8 @@
 (s/defschema CopiedFromEvent
   (assoc EventBase
          :event/type (s/enum :application.event/copied-from)
-         :application/copied-from s/Int))
+         :application/copied-from {:application/id s/Int
+                                   :application/external-id (s/maybe s/Str)}))
 
 (def event-schemas
   {:application.event/approved ApprovedEvent

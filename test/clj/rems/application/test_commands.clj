@@ -1156,7 +1156,7 @@
                                         :event/time test-time
                                         :event/actor applicant-user-id
                                         :application/id old-app-id
-                                        :application/external-id nil
+                                        :application/external-id "2019/42"
                                         :application/resources [{:catalogue-item/id 10
                                                                  :resource/ext-id "urn:11"}
                                                                 {:catalogue-item/id 20
@@ -1180,7 +1180,8 @@
                :event/time test-time
                :event/actor applicant-user-id
                :application/id new-app-id
-               :application/copied-from old-app-id}]
+               :application/copied-from {:application/id old-app-id
+                                         :application/external-id "2019/42"}}]
              (ok-command application
                          {:type :application.command/copy-as-new
                           :actor applicant-user-id}
