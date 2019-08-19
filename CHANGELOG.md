@@ -36,6 +36,7 @@ Changes since v2.4
 - Upgraded swagger-ui from 2 to 3
 - Extra pages (#472)
 - Full-text search for all application content (#873)
+- Creating a new application as a copy from an older application (#832) 
 
 ### Enhancements
 - Improved version information in footer
