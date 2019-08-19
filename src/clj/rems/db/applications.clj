@@ -111,7 +111,8 @@
    :validate-fields form-validation/validate-fields
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
-   :get-catalogue-item-licenses get-catalogue-item-licenses})
+   :get-catalogue-item-licenses get-catalogue-item-licenses
+   :create-application! create-application!})
 
 (declare get-unrestricted-application)
 

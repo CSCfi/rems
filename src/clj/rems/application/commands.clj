@@ -422,15 +422,26 @@
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/copy-as-new
-  [cmd application _injections]
-  ;; TODO
-  (assert false "not implemented"))
+  [cmd application {:keys [create-application!]}]
+  (let [result (create-application! (:actor cmd) (map :catalogue-item/id (:application/resources application)))
+        _ (assert (:success result) {:result result})
+        new-app-id (:application-id result)]
+    (ok {:event/type :application.event/draft-saved
+         :application/id new-app-id
+         :application/field-values (->> (:form/fields (:application/form application))
+                                        (map (fn [field]
+                                               [(:field/id field) (:field/value field)]))
+                                        (into {}))}
+        {:event/type :application.event/copied-from
+         :application/id new-app-id
+         :application/copied-from (:application/id application)})))
 
 (defn- add-common-event-fields-from-command [event cmd]
-  (assoc event
-         :event/time (:time cmd)
-         :event/actor (:actor cmd)
-         :application/id (:application-id cmd)))
+  (-> event
+      (update :application/id (fn [app-id]
+                                (or app-id (:application-id cmd))))
+      (assoc :event/time (:time cmd)
+             :event/actor (:actor cmd))))
 
 (defn- enrich-result [result cmd]
   (if (:success result)
