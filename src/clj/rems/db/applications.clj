@@ -137,11 +137,11 @@
                                   :application-id application-id
                                   :token invitation-token
                                   :time (time/now)})]
-          (if-not response
-            {:success true
-             :application-id application-id}
+          (if (:errors response)
             {:success false
-             :errors (:errors response)})))
+             :errors (:errors response)}
+            {:success true
+             :application-id application-id})))
       {:success false
        :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
 

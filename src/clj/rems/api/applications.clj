@@ -105,16 +105,19 @@
   ;; TODO: schema could do these coercions for us
   (update-present cmd :decision keyword))
 
+(defn parse-command [command-type request]
+  (-> request
+      (coerce-command-from-api)
+      (assoc :type command-type
+             :actor (getx-user-id)
+             :time (time/now))))
+
 (defn api-command [command-type request]
-  (let [command (-> request
-                    (coerce-command-from-api)
-                    (assoc :type command-type
-                           :actor (getx-user-id)
-                           :time (time/now)))
-        errors (applications/command! command)]
-    (if errors
+  (let [command (parse-command command-type request)
+        response (applications/command! command)]
+    (if (:errors response)
       (ok {:success false
-           :errors (:errors errors)})
+           :errors (:errors response)})
       (ok {:success true}))))
 
 (defmacro command-endpoint [command schema & [additional-doc]]
