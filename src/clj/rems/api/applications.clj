@@ -129,6 +129,14 @@
        :return SuccessResponse
        (ok (api-command ~command request#)))))
 
+(defn accept-invitation [invitation-token]
+  (if-let [application-id (applications/get-application-by-invitation-token invitation-token)]
+    (api-command :application.command/accept-invitation
+                 {:application-id application-id
+                  :token invitation-token})
+    {:success false
+     :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
+
 (def my-applications-api
   (context "/my-applications" []
     :tags ["applications"]
@@ -225,7 +233,7 @@
       :roles #{:logged-in}
       :query-params [invitation-token :- (describe s/Str "invitation token")]
       :return AcceptInvitationResult
-      (ok (applications/accept-invitation (getx-user-id) invitation-token)))
+      (ok (accept-invitation invitation-token)))
 
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)

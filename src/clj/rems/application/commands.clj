@@ -253,6 +253,9 @@
 (defn- ok [& events]
   {:events events})
 
+(defn- ok-with-data [data & events]
+  (assoc data :events events))
+
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
@@ -395,9 +398,10 @@
   [cmd application injections]
   (or (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
-      (ok {:event/type :application.event/member-joined
-           :application/id (:application-id cmd)
-           :invitation/token (:token cmd)})))
+      (ok-with-data {:application-id (:application-id cmd)}
+                    {:event/type :application.event/member-joined
+                     :application/id (:application-id cmd)
+                     :invitation/token (:token cmd)})))
 
 (defmethod command-handler :application.command/remove-member
   [cmd application _injections]

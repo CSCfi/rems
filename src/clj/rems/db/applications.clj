@@ -130,20 +130,8 @@
         (events/add-event! event)))
     result))
 
-(defn accept-invitation [user-id invitation-token]
-  (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
-        (let [response (command! {:type :application.command/accept-invitation
-                                  :actor user-id
-                                  :application-id application-id
-                                  :token invitation-token
-                                  :time (time/now)})]
-          (if (:errors response)
-            {:success false
-             :errors (:errors response)}
-            {:success true
-             :application-id application-id})))
-      {:success false
-       :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
+(defn get-application-by-invitation-token [invitation-token]
+  (:id (db/get-application-by-invitation-token {:token invitation-token})))
 
 ;;; Fetching applications (for API) (incl. caching)
 
