@@ -429,15 +429,17 @@
   (let [result (create-application! (:actor cmd) (map :catalogue-item/id (:application/resources application)))
         _ (assert (:success result) {:result result})
         new-app-id (:application-id result)]
-    (ok {:event/type :application.event/draft-saved
-         :application/id new-app-id
-         :application/field-values (->> (:form/fields (:application/form application))
-                                        (map (fn [field]
-                                               [(:field/id field) (:field/value field)]))
-                                        (into {}))}
-        {:event/type :application.event/copied-from
-         :application/id new-app-id
-         :application/copied-from (:application/id application)})))
+    (ok-with-data
+     {:application-id new-app-id}
+     {:event/type :application.event/draft-saved
+      :application/id new-app-id
+      :application/field-values (->> (:form/fields (:application/form application))
+                                     (map (fn [field]
+                                            [(:field/id field) (:field/value field)]))
+                                     (into {}))}
+     {:event/type :application.event/copied-from
+      :application/id new-app-id
+      :application/copied-from (:application/id application)})))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event

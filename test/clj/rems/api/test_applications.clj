@@ -373,7 +373,17 @@
                     "application.event/resources-changed"
                     "application.event/remarked"
                     "application.event/approved"]
-                   applicant-event-types))))))))
+                   applicant-event-types)))))
+
+      (testing "copy as new"
+        (let [result (send-command user-id {:type :application.command/copy-as-new
+                                            :application-id application-id})]
+          (is (:success result)
+              {:result result})
+          (is (:application-id result)
+              {:result result})
+          (is (not= application-id (:application-id result))
+              "should create a new application"))))))
 
 (deftest test-application-create
   (let [api-key "42"

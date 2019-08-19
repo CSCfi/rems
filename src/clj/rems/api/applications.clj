@@ -27,8 +27,8 @@
   {:catalogue-item-ids [s/Int]})
 
 (s/defschema CreateApplicationResponse
-  {:success s/Bool
-   (s/optional-key :application-id) s/Int})
+  (assoc SuccessResponse
+         (s/optional-key :application-id) s/Int))
 
 (s/defschema User
   {:userid s/Str
@@ -57,13 +57,17 @@
   [Decider])
 
 (s/defschema AcceptInvitationResult
-  {:success s/Bool
-   (s/optional-key :application-id) s/Int
-   (s/optional-key :errors) [s/Any]})
+  (assoc SuccessResponse
+         (s/optional-key :application-id) s/Int
+         (s/optional-key :errors) [s/Any]))
 
 (s/defschema SaveAttachmentResponse
-  (merge SuccessResponse
-         {(s/optional-key :id) s/Int}))
+  (assoc SuccessResponse
+         (s/optional-key :id) s/Int))
+
+(s/defschema CopyAsNewResponse
+  (assoc SuccessResponse
+         (s/optional-key :application-id) s/Int))
 
 ;; Api implementation
 
@@ -184,6 +188,13 @@
       :return CreateApplicationResponse
       (ok (applications/create-application! (getx-user-id) (:catalogue-item-ids request))))
 
+    (POST "/copy-as-new" []
+      :summary "Create a new application as a copy of an existing application."
+      :roles #{:logged-in}
+      :body [request commands/CopyAsNewCommand]
+      :return CopyAsNewResponse
+      (ok (api-command :application.command/copy-as-new request)))
+
     (GET "/commenters" []
       :summary "Available third party commenters"
       :roles #{:handler}
@@ -256,7 +267,6 @@
     (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
     (command-endpoint :application.command/submit commands/SubmitCommand)
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
-    (command-endpoint :application.command/copy-as-new commands/CopyAsNewCommand)
 
     ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
