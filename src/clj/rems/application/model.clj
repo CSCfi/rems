@@ -324,8 +324,9 @@
 
 (defmethod event-type-specific-application-view :application.event/copied-from
   [application event]
-  ;; TODO
-  (-> application))
+  (-> application
+      (assoc :application/copied-from (:application/copied-from event))
+      (assoc ::submitted-answers (::draft-answers application))))
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"

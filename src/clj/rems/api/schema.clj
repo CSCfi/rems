@@ -168,6 +168,8 @@
    :application/created DateTime
    :application/modified DateTime
    (s/optional-key :application/first-submitted) DateTime
+   (s/optional-key :application/copied-from) {:application/id s/Int
+                                              :application/external-id (s/maybe s/Str)}
    :application/last-activity DateTime
    :application/applicant s/Str
    :application/applicant-attributes {s/Keyword s/Str}

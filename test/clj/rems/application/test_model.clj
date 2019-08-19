@@ -355,6 +355,22 @@
                                                                                    {:field/value "bar"}]}})]
             (is (= expected-application (apply-events events)))
 
+            (testing "> copied from"
+              (let [events (conj events {:event/type :application.event/copied-from
+                                         :event/time (DateTime. 3000)
+                                         :event/actor "applicant"
+                                         :application/id 1
+                                         :application/copied-from {:application/id 42
+                                                                   :application/external-id "2019/42"}})
+                    expected-application (deep-merge expected-application
+                                                     {:application/last-activity (DateTime. 3000)
+                                                      :application/events events
+                                                      :application/copied-from {:application/id 42
+                                                                                :application/external-id "2019/42"}
+                                                      :application/form {:form/fields [{:field/previous-value "foo"}
+                                                                                       {:field/previous-value "bar"}]}})]
+                (is (= expected-application (apply-events events)))))
+
             (testing "> accepted licenses"
               (let [events (conj events {:event/type :application.event/licenses-accepted
                                          :event/time (DateTime. 2500)
