@@ -6,6 +6,7 @@
   Use the functions `set-pending!`, `set-success!` and `set-error!` to control its state.
   See `rems.status-modal/status-modal` for values to use in the calls."
   (:require [re-frame.core :as rf]
+            [rems.atoms :as atoms]
             [rems.common-util :refer [deep-merge]]
             [rems.guide-functions]
             [rems.modal :as modal]
@@ -28,9 +29,7 @@
 (defn- status-icon [success? error-content]
   (cond
     (and (not success?) (not error-content)) [spinner/small]
-    success? [:span.fa-stack {:aria-label (text :t.form/success)}
-              [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
-              [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]]
+    success? (atoms/success-symbol)
     error-content [:span.fa-stack {:aria-label (text :t.form/failed)}
                    [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
                    [:i {:class "fas fa-times-circle fa-stack-1x text-danger"}]]))
