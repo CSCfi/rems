@@ -190,10 +190,15 @@
 (rf/reg-event-fx
  ::copy-as-new-application
  (fn [{:keys [db]} _]
-   (let [application (::application db)]
-     ;; TODO
-     (js/alert (str "TODO: copy as new " (:application/id application))))
-   nil))
+   (let [application-id (get-in db [::application :application/id])]
+     (status-modal/common-pending-handler! (text :t.form/copy-as-new))
+     (post! "/api/applications/copy-as-new"
+            {:params {:application-id application-id}
+             :handler (partial status-modal/common-success-handler!
+                               (fn [response]
+                                 (dispatch! (str "/#/application/" (:application-id response)))))
+             :error-handler status-modal/common-error-handler!}))
+   {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
