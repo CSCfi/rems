@@ -8,13 +8,7 @@ have notable changes.
 
 Changes since v2.4
 
-### Breaking changes
-- Removed support for old round-based workflows
-- Removed support for transferring REMS 1 data
-- Replace applications API with new one (for dynamic applications)
-
 ### Additions
-- Dynamic workflows
 - New field types: description, option, multiselect
 - Setting maximum length for a form field
 - Showing changes between two versions of an application
@@ -47,6 +41,40 @@ Changes since v2.4
 
 ### Fixes
 - Entitlement API
+
+## v2.5 "Maarintie" 2019-07-18
+
+### Breaking changes
+- Removed support for old round-based workflows
+- Removed support for transferring REMS 1 data
+- Replace applications API with new one (for dynamic applications)
+
+### Additions
+- Dynamic workflows
+
+This is the last release that still supports round based workflows. Please use this version to convert to dynamic workflows. There are also many changes and fixes since last version, which will be listed in the next release.
+
+WARNING! The migration has problems with databases where licenses have been revoked, if the related entitlements are still active. See #1372.
+
+1. Run lein run migrate in rems/ repository. NOTE! If you can't run lein on target server, use an SSH tunnel. Make sure you have no previous tunnels running!
+   ssh -L 5432:remsdbserver:5432 remsappserver
+   AND then run on your local machine:
+   DATABASE_URL="postgresql://user:pw@localhost/db_name" lein run migrate
+
+2. Create a dynamic workflow
+
+3. Check new, dynamic workflow id from database:
+   select * from workflow order by start desc;
+
+4. Run on your own machine lein run convert-to-dynamic <dynamic_workflow_id> NOTE! If you can't run lein on target server, see step 1 for tunneling.
+
+5. Verify from database that all applications have the new, dynamic workflow id in column wfid: select * from catalogue_item_application;
+
+6. Go to administration page in UI and archive all non-dynamic workflows. If you do not have admin privileges, add them by adding owner role for yourself into the database:
+   insert into roles (userid, role) = ('[userid]', 'owner')
+   where [userid] is the eppn of your account (email address).
+
+7. Verify from ui that different kind of applications still work.
 
 ## v2.4 "Tietotie" 2018-10-24
 
