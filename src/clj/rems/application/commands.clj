@@ -251,8 +251,7 @@
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
 (defn- ok [& events]
-  {:success true
-   :events events})
+  {:events events})
 
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
@@ -444,7 +443,7 @@
              :event/actor (:actor cmd))))
 
 (defn- enrich-result [result cmd]
-  (if (:success result)
+  (if (:events result)
     (update result :events (fn [events]
                              (mapv #(add-common-event-fields-from-command % cmd) events)))
     result))
@@ -471,7 +470,7 @@
                  :field-values []
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
-      (is (:success (handle-command command application {}))))
+      (is (not (:errors (handle-command command application {})))))
     (testing "fails when command fails validation"
       (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
                             (handle-command (assoc command :time 3) application {}))))
@@ -480,5 +479,4 @@
       ;; and only depend on the roles and permissions
       (let [application (permissions/remove-role-from-user application :applicant "applicant")
             result (handle-command command application {})]
-        (is (not (:success result)))
-        (is (= [{:type :forbidden}] (:errors result)))))))
+        (is (= {:errors [{:type :forbidden}]} result))))))

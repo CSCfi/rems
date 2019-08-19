@@ -51,7 +51,7 @@
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
          result (commands/handle-command cmd application injections)]
-     (assert-ex (not (:success result)) {:cmd cmd :result result})
+     (assert-ex (:errors result) {:cmd cmd :result result})
      result)))
 
 (defn- ok-command
@@ -60,7 +60,7 @@
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
          result (commands/handle-command cmd application injections)]
-     (assert-ex (:success result) {:cmd cmd :result result})
+     (assert-ex (not (:errors result)) {:cmd cmd :result result})
      (let [events (:events result)]
        (events/validate-events events)
        ;; most tests expect only one event, so this avoids having to wrap the expectation to a list

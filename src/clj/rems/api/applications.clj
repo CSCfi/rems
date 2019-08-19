@@ -115,10 +115,10 @@
 (defn api-command [command-type request]
   (let [command (parse-command command-type request)
         response (applications/command! command)]
-    (if (:errors response)
-      (ok {:success false
-           :errors (:errors response)})
-      (ok {:success true}))))
+    (-> response
+        (assoc :success (not (:errors response)))
+        ;; hide possibly sensitive events, but allow other explicitly returned data
+        (dissoc :events))))
 
 (defmacro command-endpoint [command schema & [additional-doc]]
   (let [path (str "/" (name command))]
@@ -127,7 +127,7 @@
        :roles #{:logged-in}
        :body [request# ~schema]
        :return SuccessResponse
-       (api-command ~command request#))))
+       (ok (api-command ~command request#)))))
 
 (def my-applications-api
   (context "/my-applications" []
