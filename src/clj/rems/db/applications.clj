@@ -92,18 +92,13 @@
                                 :actor actor
                                 :allocate-external-id? true})))
 
-(defn add-application-created-event! [opts]
-  (events/add-event! (application-created-event (assoc opts :allocate-external-id? true))))
-
 (defn create-application! [user-id catalogue-item-ids]
-  (let [start (time/now)
-        app-id (:id (db/create-application!))]
-    (add-application-created-event! {:application-id app-id
-                                     :catalogue-item-ids catalogue-item-ids
-                                     :time start
-                                     :actor user-id})
+  (let [event (create-application2 {:catalogue-item-ids catalogue-item-ids
+                                    :time (time/now)
+                                    :actor user-id})]
+    (events/add-event! event)
     {:success true
-     :application-id app-id}))
+     :application-id (:application/id event)}))
 
 ;;; Running commands
 
