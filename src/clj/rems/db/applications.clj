@@ -54,7 +54,8 @@
 
 (defn application-created-event [{:keys [application-id catalogue-item-ids time actor allocate-external-id?]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
-  (let [items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
+  (let [application-id (or application-id (:id (db/create-application!)))
+        items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
     (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
     (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
     (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
@@ -85,12 +86,10 @@
 
 ;; TODO: deduplicate
 (defn create-application2 [{:keys [catalogue-item-ids time actor]}]
-  (let [app-id (:id (db/create-application!))]
-    (application-created-event {:application-id app-id
-                                :catalogue-item-ids catalogue-item-ids
-                                :time time
-                                :actor actor
-                                :allocate-external-id? true})))
+  (application-created-event {:catalogue-item-ids catalogue-item-ids
+                              :time time
+                              :actor actor
+                              :allocate-external-id? true}))
 
 (defn create-application! [user-id catalogue-item-ids]
   (let [event (create-application2 {:catalogue-item-ids catalogue-item-ids
