@@ -371,6 +371,30 @@
                                                                                        {:field/previous-value "bar"}]}})]
                 (is (= expected-application (apply-events events)))))
 
+            (testing "> copied to"
+              (let [events (conj events
+                                 ;; two copied-to events in order to test the order in which they are shown
+                                 {:event/type :application.event/copied-to
+                                  :event/time (DateTime. 3000)
+                                  :event/actor "applicant"
+                                  :application/id 1
+                                  :application/copied-to {:application/id 666
+                                                          :application/external-id "2020/666"}}
+                                 {:event/type :application.event/copied-to
+                                  :event/time (DateTime. 3000)
+                                  :event/actor "applicant"
+                                  :application/id 1
+                                  :application/copied-to {:application/id 777
+                                                          :application/external-id "2021/777"}})
+                    expected-application (deep-merge expected-application
+                                                     {:application/last-activity (DateTime. 3000)
+                                                      :application/events events
+                                                      :application/copied-to [{:application/id 666
+                                                                               :application/external-id "2020/666"}
+                                                                              {:application/id 777
+                                                                               :application/external-id "2021/777"}]})]
+                (is (= expected-application (apply-events events)))))
+
             (testing "> accepted licenses"
               (let [events (conj events {:event/type :application.event/licenses-accepted
                                          :event/time (DateTime. 2500)
