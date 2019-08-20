@@ -379,6 +379,9 @@
               :application.event/copied-from
               [application-link (:application/copied-from event) (text :t.applications/application)]
 
+              :application.event/copied-to
+              [application-link (:application/copied-to event) (text :t.applications/application)]
+
               (:application/comment event))
    :request-id (:application/request-id event)
    :commenters (:application/commenters event)
@@ -431,6 +434,22 @@
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
 
+(defn- application-copy-notice [application]
+  (let [old-app (:application/copied-from application)
+        new-apps (:application/copied-to application)]
+    (when (or old-app new-apps)
+      [:<>
+       " ("
+       (when old-app
+         [:<> (text :t.applications/copied-from) " " [application-link old-app nil]])
+       (when (and old-app new-apps)
+         "; ")
+       (when new-apps
+         (into [:<> (text :t.applications/copied-to) " "]
+               (interpose ", " (for [new-app new-apps]
+                                 [application-link new-app nil]))))
+       ")"])))
+
 (defn- application-state [application config]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
@@ -452,9 +471,7 @@
                       (text :t.applications/application)
                       [:<>
                        [:span#application-id (format-application-id config application)]
-                       (when-let [original-app (:application/copied-from application)]
-                         [:<>
-                          " (" (text :t.applications/copied-from) " " [application-link original-app nil] ")"])]
+                       [application-copy-notice application]]
                       {:inline? true}]
                      [info-field
                       (text :t.applications/description)
@@ -825,4 +842,26 @@
                                       :license/title {:en "A Text License"}
                                       :license/text {:en lipsum}}]}
              {:field-values {1 "abc"}
-              :accepted-licenses #{4}}])])
+              :accepted-licenses #{4}}])
+
+   (component-info application-copy-notice)
+   (example "no copies"
+            [application-copy-notice {}])
+   (example "copied from"
+            [application-copy-notice {:application/copied-from {:application/id 1
+                                                                :application/external-id "2018/10"}}])
+   (example "copied to one"
+            [application-copy-notice {:application/copied-to [{:application/id 2
+                                                               :application/external-id "2019/20"}]}])
+   (example "copied to many"
+            [application-copy-notice {:application/copied-to [{:application/id 2
+                                                               :application/external-id "2019/20"}
+                                                              {:application/id 3
+                                                               :application/external-id "2020/30"}]}])
+   (example "copied to and from"
+            [application-copy-notice {:application/copied-from {:application/id 1
+                                                                :application/external-id "2018/10"}
+                                      :application/copied-to [{:application/id 2
+                                                               :application/external-id "2019/20"}
+                                                              {:application/id 3
+                                                               :application/external-id "2020/30"}]}])])

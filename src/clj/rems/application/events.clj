@@ -126,6 +126,11 @@
          :event/type (s/enum :application.event/copied-from)
          :application/copied-from {:application/id s/Int
                                    :application/external-id (s/maybe s/Str)}))
+(s/defschema CopiedToEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/copied-to)
+         :application/copied-to {:application/id s/Int
+                                 :application/external-id (s/maybe s/Str)}))
 
 (def event-schemas
   {:application.event/approved ApprovedEvent
@@ -148,7 +153,8 @@
    :application.event/resources-changed ResourcesChangedEvent
    :application.event/returned ReturnedEvent
    :application.event/submitted SubmittedEvent
-   :application.event/copied-from CopiedFromEvent})
+   :application.event/copied-from CopiedFromEvent
+   :application.event/copied-to CopiedToEvent})
 
 (s/defschema Event
   (apply r/dispatch-on :event/type (flatten (seq event-schemas))))

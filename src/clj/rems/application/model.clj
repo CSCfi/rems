@@ -3,7 +3,7 @@
             [medley.core :refer [map-vals]]
             [rems.application.events :as events]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx]]))
+            [rems.util :refer [getx conj-vec]]))
 
 ;;;; Roles & Permissions
 
@@ -327,6 +327,11 @@
   (-> application
       (assoc :application/copied-from (:application/copied-from event))
       (assoc ::submitted-answers (::draft-answers application))))
+
+(defmethod event-type-specific-application-view :application.event/copied-to
+  [application event]
+  (-> application
+      (update :application/copied-to conj-vec (:application/copied-to event))))
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"

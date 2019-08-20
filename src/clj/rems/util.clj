@@ -65,6 +65,8 @@
 
 (def conj-set (fnil conj #{}))
 
+(def conj-vec (fnil conj []))
+
 (defn update-present
   "Like clojure.core/update, but does nothing if the key `k` does not exist in `m`."
   [m k f & args]

@@ -52,9 +52,11 @@
   (let [id-prefix (str (.getYear time))]
     (format-external-id (allocate-external-id! id-prefix))))
 
-(defn application-created-event [{:keys [application-id catalogue-item-ids time actor allocate-external-id?]}]
+(defn application-created-event [{:keys [application-id catalogue-item-ids time actor allocate-external-id?]
+                                  :or {allocate-external-id? true}}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
-  (let [items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
+  (let [application-id (or application-id (:id (db/create-application!)))
+        items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
     (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
     (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
     (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
@@ -83,18 +85,13 @@
        :workflow/id workflow-id
        :workflow/type (:type workflow)})))
 
-(defn add-application-created-event! [opts]
-  (events/add-event! (application-created-event (assoc opts :allocate-external-id? true))))
-
 (defn create-application! [user-id catalogue-item-ids]
-  (let [start (time/now)
-        app-id (:id (db/create-application!))]
-    (add-application-created-event! {:application-id app-id
-                                     :catalogue-item-ids catalogue-item-ids
-                                     :time start
-                                     :actor user-id})
+  (let [event (application-created-event {:catalogue-item-ids catalogue-item-ids
+                                          :time (time/now)
+                                          :actor user-id})]
+    (events/add-event! event)
     {:success true
-     :application-id app-id}))
+     :application-id (:application/id event)}))
 
 ;;; Running commands
 
@@ -112,7 +109,7 @@
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses get-catalogue-item-licenses
-   :create-application! create-application!})
+   :application-created-event application-created-event})
 
 (declare get-unrestricted-application)
 

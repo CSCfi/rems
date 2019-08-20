@@ -102,6 +102,7 @@
                  :application "Application"
                  :applications "Applications"
                  :copied-from "copied from"
+                 :copied-to "copied to"
                  :created "Created"
                  ;; TODO: Once the terms have stabilized, convert db and the
                  ;;   code to match the term in UI.
@@ -112,6 +113,7 @@
                           :comment-requested "Review requested"
                           :commented "Reviewed"
                           :copied-from "Copied from an old application"
+                          :copied-to "Copied to a new application"
                           :created "Created"
                           :decided "Decided"
                           :decision-requested "Decision requested"
