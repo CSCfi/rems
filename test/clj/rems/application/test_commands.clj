@@ -37,7 +37,7 @@
    :get-user (constantly nil)
    :get-users-with-role (constantly nil)
    :get-attachments-for-application (constantly nil)
-   :application-created-event (constantly nil)})
+   :application-created-event! (constantly nil)})
 
 ;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
@@ -1158,16 +1158,16 @@
                        :form/id 40
                        :workflow/id 50
                        :workflow/type :workflow/dynamic}
-        injections {:application-created-event (fn [{:keys [catalogue-item-ids time actor]}]
-                                                 (is (= applicant-user-id actor)
-                                                     "applicant for new application")
-                                                 (is (= [10 20] catalogue-item-ids)
-                                                     "catalogue items for new application")
-                                                 (assoc created-event
-                                                        :event/time time
-                                                        :event/actor actor
-                                                        :application/id new-app-id
-                                                        :application/external-id "2019/66"))}
+        injections {:application-created-event! (fn [{:keys [catalogue-item-ids time actor]}]
+                                                  (is (= applicant-user-id actor)
+                                                      "applicant for new application")
+                                                  (is (= [10 20] catalogue-item-ids)
+                                                      "catalogue items for new application")
+                                                  (assoc created-event
+                                                         :event/time time
+                                                         :event/actor actor
+                                                         :application/id new-app-id
+                                                         :application/external-id "2019/66"))}
         application (apply-events nil [created-event
                                        {:event/type :application.event/draft-saved
                                         :event/time test-time
