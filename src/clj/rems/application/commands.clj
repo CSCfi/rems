@@ -425,11 +425,11 @@
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/copy-as-new
-  [cmd application {:keys [create-application2]}]
+  [cmd application {:keys [application-created-event]}]
   (let [catalogue-item-ids (map :catalogue-item/id (:application/resources application))
-        created-event (create-application2 {:catalogue-item-ids catalogue-item-ids
-                                            :time (:time cmd)
-                                            :actor (:actor cmd)})
+        created-event (application-created-event {:catalogue-item-ids catalogue-item-ids
+                                                  :time (:time cmd)
+                                                  :actor (:actor cmd)})
         old-app-id (:application/id application)
         new-app-id (:application/id created-event)]
     (ok-with-data

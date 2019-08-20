@@ -85,16 +85,10 @@
        :workflow/id workflow-id
        :workflow/type (:type workflow)})))
 
-;; TODO: deduplicate
-(defn create-application2 [{:keys [catalogue-item-ids time actor]}]
-  (application-created-event {:catalogue-item-ids catalogue-item-ids
-                              :time time
-                              :actor actor}))
-
 (defn create-application! [user-id catalogue-item-ids]
-  (let [event (create-application2 {:catalogue-item-ids catalogue-item-ids
-                                    :time (time/now)
-                                    :actor user-id})]
+  (let [event (application-created-event {:catalogue-item-ids catalogue-item-ids
+                                          :time (time/now)
+                                          :actor user-id})]
     (events/add-event! event)
     {:success true
      :application-id (:application/id event)}))
@@ -115,7 +109,7 @@
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses get-catalogue-item-licenses
-   :create-application2 create-application2})
+   :application-created-event application-created-event})
 
 (declare get-unrestricted-application)
 
