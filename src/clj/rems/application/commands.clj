@@ -250,11 +250,11 @@
   (when (contains? (all-members application) userid)
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
-(defn- ok [& events]
-  {:events events})
-
-(defn- ok-with-data [data & events]
+(defn- ok-with-data [data events]
   (assoc data :events events))
+
+(defn- ok [& events]
+  (ok-with-data nil events))
 
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
@@ -399,9 +399,9 @@
   (or (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
       (ok-with-data {:application-id (:application-id cmd)}
-                    {:event/type :application.event/member-joined
-                     :application/id (:application-id cmd)
-                     :invitation/token (:token cmd)})))
+                    [{:event/type :application.event/member-joined
+                      :application/id (:application-id cmd)
+                      :invitation/token (:token cmd)}])))
 
 (defmethod command-handler :application.command/remove-member
   [cmd application _injections]
@@ -431,15 +431,15 @@
         new-app-id (:application-id result)]
     (ok-with-data
      {:application-id new-app-id}
-     {:event/type :application.event/draft-saved
-      :application/id new-app-id
-      :application/field-values (->> (:form/fields (:application/form application))
-                                     (map (fn [field]
-                                            [(:field/id field) (:field/value field)]))
-                                     (into {}))}
-     {:event/type :application.event/copied-from
-      :application/id new-app-id
-      :application/copied-from (select-keys application [:application/id :application/external-id])})))
+     [{:event/type :application.event/draft-saved
+       :application/id new-app-id
+       :application/field-values (->> (:form/fields (:application/form application))
+                                      (map (fn [field]
+                                             [(:field/id field) (:field/value field)]))
+                                      (into {}))}
+      {:event/type :application.event/copied-from
+       :application/id new-app-id
+       :application/copied-from (select-keys application [:application/id :application/external-id])}])))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event
