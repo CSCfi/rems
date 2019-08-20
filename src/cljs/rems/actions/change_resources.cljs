@@ -38,15 +38,14 @@
 (rf/reg-event-fx
  ::send-change-resources
  (fn [_ [_ {:keys [application-id resources comment on-finished]}]]
-   (status-modal/common-pending-handler! (text :t.actions/change-resources))
    (post! "/api/applications/change-resources"
           {:params (merge {:application-id application-id
                            :catalogue-item-ids (vec resources)}
                           (when comment
                             {:comment comment}))
-           :handler (partial status-modal/common-success-handler! (fn [_]
-                                                                    (collapse-action-form action-form-id)
-                                                                    (on-finished)))
+           :handler (fn [_]
+                      (collapse-action-form action-form-id)
+                      (on-finished))
            :error-handler status-modal/common-error-handler!})
    {}))
 

@@ -18,7 +18,7 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
-            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title]]
+            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title success-symbol]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
             [rems.fields :as fields]
@@ -331,7 +331,7 @@
                                        :accepted (contains? accepted-licenses (:license/id license))
                                        :readonly readonly?)]))
          (if (accepted-licenses? application userid)
-           (text :t.form/has-accepted-licenses)
+           [:div#has-accepted-licenses.alert.alert-success (success-symbol) (text :t.form/has-accepted-licenses)]
            (when (contains? permissions :application.command/accept-licenses)
              [:div.commands
               ;; TODO consider saving the form first so that no data is lost for the applicant

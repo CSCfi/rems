@@ -166,8 +166,7 @@
 (defn accept-licenses []
   (doto *driver*
     (scroll-and-click :accept-licenses-button)
-    (wait-visible :status-success)
-    (scroll-and-click :modal-ok)))
+    (wait-visible :has-accepted-licenses)))
 
 (defn send-application []
   (doto *driver*

@@ -36,6 +36,11 @@
 (defn close-symbol []
   [:i.fa {:class "fa-times"}])
 
+(defn success-symbol []
+  [:span.fa-stack {:aria-label (text :t.form/success)}
+   [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
+   [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]])
+
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])
