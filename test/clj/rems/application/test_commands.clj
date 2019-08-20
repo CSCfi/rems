@@ -37,7 +37,7 @@
    :get-user (constantly nil)
    :get-users-with-role (constantly nil)
    :get-attachments-for-application (constantly nil)
-   :create-application! (constantly nil)})
+   :create-application2 (constantly nil)})
 
 ;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
@@ -1145,33 +1145,50 @@
 (deftest test-copy-as-new
   (let [old-app-id 100
         new-app-id 200
-        injections {:create-application! (fn [user cat-items]
-                                           (is (= applicant-user-id user)
+        created-event {:event/type :application.event/created
+                       :event/time test-time
+                       :event/actor applicant-user-id
+                       :application/id old-app-id
+                       :application/external-id "2018/55"
+                       :application/resources [{:catalogue-item/id 10
+                                                :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20
+                                                :resource/ext-id "urn:21"}]
+                       :application/licenses []
+                       :form/id 40
+                       :workflow/id 50
+                       :workflow/type :workflow/dynamic}
+        injections {:create-application2 (fn [{:keys [catalogue-item-ids time actor]}]
+                                           (is (= applicant-user-id actor)
                                                "applicant for new application")
-                                           (is (= [10 20] cat-items)
+                                           (is (= [10 20] catalogue-item-ids)
                                                "catalogue items for new application")
-                                           {:success true
-                                            :application-id new-app-id})}
-        application (apply-events nil [{:event/type :application.event/created
-                                        :event/time test-time
-                                        :event/actor applicant-user-id
-                                        :application/id old-app-id
-                                        :application/external-id "2019/42"
-                                        :application/resources [{:catalogue-item/id 10
-                                                                 :resource/ext-id "urn:11"}
-                                                                {:catalogue-item/id 20
-                                                                 :resource/ext-id "urn:21"}]
-                                        :application/licenses []
-                                        :form/id 40
-                                        :workflow/id 50
-                                        :workflow/type :workflow/dynamic}
+                                           (assoc created-event
+                                                  :event/time time
+                                                  :event/actor actor
+                                                  :application/id new-app-id
+                                                  :application/external-id "2019/66"))}
+        application (apply-events nil [created-event
                                        {:event/type :application.event/draft-saved
                                         :event/time test-time
                                         :event/actor applicant-user-id
                                         :application/id old-app-id
                                         :application/field-values {1 "foo" 2 "bar"}}])]
     (testing "creates a new application with the same form answers"
-      (is (= [{:event/type :application.event/draft-saved
+      (is (= [{:event/type :application.event/created
+               :event/time test-time
+               :event/actor applicant-user-id
+               :application/id new-app-id
+               :application/external-id "2019/66"
+               :application/resources [{:catalogue-item/id 10
+                                        :resource/ext-id "urn:11"}
+                                       {:catalogue-item/id 20
+                                        :resource/ext-id "urn:21"}]
+               :application/licenses []
+               :form/id 40
+               :workflow/id 50
+               :workflow/type :workflow/dynamic}
+              {:event/type :application.event/draft-saved
                :event/time test-time
                :event/actor applicant-user-id
                :application/id new-app-id
@@ -1181,7 +1198,7 @@
                :event/actor applicant-user-id
                :application/id new-app-id
                :application/copied-from {:application/id old-app-id
-                                         :application/external-id "2019/42"}}]
+                                         :application/external-id "2018/55"}}]
              (ok-command application
                          {:type :application.command/copy-as-new
                           :actor applicant-user-id}

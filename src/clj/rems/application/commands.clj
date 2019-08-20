@@ -425,15 +425,17 @@
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/copy-as-new
-  [cmd application {:keys [create-application!]}]
-  (let [result (create-application! (:actor cmd) (map :catalogue-item/id (:application/resources application)))
-        _ (assert (:success result) {:result result})
-        new-app-id (:application-id result)]
+  [cmd application {:keys [create-application2]}]
+  (let [catalogue-item-ids (map :catalogue-item/id (:application/resources application))
+        created-event (create-application2 {:catalogue-item-ids catalogue-item-ids
+                                            :time (:time cmd)
+                                            :actor (:actor cmd)})
+        new-app-id (:application/id created-event)]
     (ok-with-data
      {:application-id new-app-id}
-     ;; TODO: it would be better to refactor create-application! so that it won't persist the created event, but it'll be returned here explicitly
      ;; TODO: add copied-to event to the original application
-     [{:event/type :application.event/draft-saved
+     [created-event
+      {:event/type :application.event/draft-saved
        :application/id new-app-id
        :application/field-values (->> (:form/fields (:application/form application))
                                       (map (fn [field]

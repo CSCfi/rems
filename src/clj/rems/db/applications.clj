@@ -83,6 +83,15 @@
        :workflow/id workflow-id
        :workflow/type (:type workflow)})))
 
+;; TODO: deduplicate
+(defn create-application2 [{:keys [catalogue-item-ids time actor]}]
+  (let [app-id (:id (db/create-application!))]
+    (application-created-event {:application-id app-id
+                                :catalogue-item-ids catalogue-item-ids
+                                :time time
+                                :actor actor
+                                :allocate-external-id? true})))
+
 (defn add-application-created-event! [opts]
   (events/add-event! (application-created-event (assoc opts :allocate-external-id? true))))
 
@@ -112,7 +121,7 @@
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses get-catalogue-item-licenses
-   :create-application! create-application!})
+   :create-application2 create-application2})
 
 (declare get-unrestricted-application)
 
