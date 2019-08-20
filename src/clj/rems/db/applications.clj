@@ -52,8 +52,7 @@
   (let [id-prefix (str (.getYear time))]
     (format-external-id (allocate-external-id! id-prefix))))
 
-(defn application-created-event! [{:keys [application-id catalogue-item-ids time actor allocate-external-id?]
-                                   :or {allocate-external-id? true}}]
+(defn application-created-event! [{:keys [application-id catalogue-item-ids time actor]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [application-id (or application-id (:id (db/create-application!)))
         items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
@@ -72,8 +71,7 @@
        :event/time time
        :event/actor actor
        :application/id application-id
-       :application/external-id (when allocate-external-id? ;; TODO parameterize id allocation?
-                                  (application-external-id! time))
+       :application/external-id (application-external-id! time)
        :application/resources (map (fn [item]
                                      {:catalogue-item/id (:id item)
                                       :resource/ext-id (:resid item)})

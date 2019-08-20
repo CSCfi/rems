@@ -41,7 +41,7 @@
 (s/defschema CreatedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/created)
-         :application/external-id (s/maybe s/Str)
+         :application/external-id s/Str
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]
@@ -125,12 +125,12 @@
   (assoc EventBase
          :event/type (s/enum :application.event/copied-from)
          :application/copied-from {:application/id s/Int
-                                   :application/external-id (s/maybe s/Str)}))
+                                   :application/external-id s/Str}))
 (s/defschema CopiedToEvent
   (assoc EventBase
          :event/type (s/enum :application.event/copied-to)
          :application/copied-to {:application/id s/Int
-                                 :application/external-id (s/maybe s/Str)}))
+                                 :application/external-id s/Str}))
 
 (def event-schemas
   {:application.event/approved ApprovedEvent

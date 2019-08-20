@@ -18,7 +18,7 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id 123
-                                    :application/external-id nil
+                                    :application/external-id "2000/123"
                                     :application/resources []
                                     :application/licenses []
                                     :form/id 1
@@ -369,7 +369,7 @@
                        :event/time test-time
                        :event/actor applicant-user-id
                        :application/id 123
-                       :application/external-id nil
+                       :application/external-id "2000/123"
                        :application/resources [{:catalogue-item/id 10
                                                 :resource/ext-id "urn:11"}
                                                {:catalogue-item/id 20
