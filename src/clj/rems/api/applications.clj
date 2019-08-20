@@ -109,7 +109,7 @@
   ;; TODO: schema could do these coercions for us
   (update-present cmd :decision keyword))
 
-(defn parse-command [command-type request]
+(defn parse-command [request command-type]
   (-> request
       (coerce-command-from-api)
       (assoc :type command-type
@@ -117,8 +117,9 @@
              :time (time/now))))
 
 (defn api-command [command-type request]
-  (let [command (parse-command command-type request)
-        response (applications/command! command)]
+  (let [response (-> request
+                     (parse-command command-type)
+                     (applications/command!))]
     (-> response
         (assoc :success (not (:errors response)))
         ;; hide possibly sensitive events, but allow other explicitly returned data
