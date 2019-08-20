@@ -102,6 +102,7 @@
                  :application "Hakemus"
                  :applications "Hakemukset"
                  :copied-from "kopioitu hakemuksesta"
+                 :copied-to "kopioitu hakemukseksi"
                  :created "Luotu"
                  :description "Otsikko"
                  :empty "Ei hakemuksia."
