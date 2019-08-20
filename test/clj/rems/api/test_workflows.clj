@@ -1,8 +1,10 @@
 (ns ^:integration rems.api.test-workflows
   (:require [clojure.test :refer :all]
+            [rems.api.services.licenses :as licenses]
             [rems.api.services.workflow :as workflow]
             [rems.api.testing :refer :all]
             [rems.common-util :refer [index-by]]
+            [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [sync-with-database-time]]
             [rems.handler :refer [handler]]
@@ -82,6 +84,13 @@
         wfid (test-data/create-dynamic-workflow! {:organization "abc"
                                                   :title "dynamic workflow"
                                                   :handlers ["bob" "carl"]})
+        lic-id (test-data/create-license! {})
+        _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
+
+        archive-license! #(licenses/update-license! {:id lic-id
+                                                     :enabled true
+                                                     :archived %})
+
         ;; this is a subset of what we expect to get from the api
         expected {:id wfid
                   :organization "abc"
@@ -100,42 +109,48 @@
                   (select-keys
                    (first (filter #(= wfid (:id %)) wfs))
                    (keys expected))))
-        update #(-> (request :put "/api/workflows/update")
-                    (json-body (merge {:id wfid} %))
-                    (authenticate api-key user-id)
-                    handler
-                    read-ok-body)]
+        update! #(-> (request :put "/api/workflows/update")
+                     (json-body (merge {:id wfid} %))
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)]
     (sync-with-database-time)
     (testing "before changes"
       (is (= expected (fetch))))
     (testing "disable and archive"
-      (is (:success (update {:enabled false :archived true})))
+      (is (:success (update! {:enabled false :archived true})))
       (is (= (assoc expected
                     :enabled false
                     :archived true)
              (fetch))))
     (testing "re-enable"
-      (is (:success (update {:enabled true})))
+      (is (:success (update! {:enabled true})))
       (is (= (assoc expected
                     :archived true)
              (fetch))))
     (testing "unarchive"
-      (is (:success (update {:archived false})))
+      (is (:success (update! {:archived false})))
       (is (= expected
              (fetch))))
     (testing "change title"
-      (is (:success (update {:title "x"})))
+      (is (:success (update! {:title "x"})))
       (is (= (assoc expected
                     :title "x")
              (fetch))))
     (testing "change handlers"
-      (is (:success (update {:handlers ["owner" "alice"]})))
+      (is (:success (update! {:handlers ["owner" "alice"]})))
       (is (= (assoc expected
                     :title "x"
                     :workflow {:type "workflow/dynamic"
                                :handlers [{:email "owner@example.com" :name "Owner" :userid "owner"}
                                           {:email "alice@example.com" :name "Alice Applicant" :userid "alice"}]})
-             (fetch))))))
+             (fetch))))
+    (testing "cannot unarchive if license is archived"
+      (update! {:archived true})
+      (archive-license! true)
+      (is (not (:success (update! {:archived false}))))
+      (archive-license! false)
+      (is (:success (update! {:archived false}))))))
 
 (deftest workflows-api-filtering-test
   (let [enabled-wf (test-data/create-dynamic-workflow! {})
