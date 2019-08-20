@@ -1198,7 +1198,13 @@
                :event/actor applicant-user-id
                :application/id new-app-id
                :application/copied-from {:application/id old-app-id
-                                         :application/external-id "2018/55"}}]
+                                         :application/external-id "2018/55"}}
+              {:event/type :application.event/copied-to
+               :event/time test-time
+               :event/actor applicant-user-id
+               :application/id old-app-id
+               :application/copied-to {:application/id new-app-id
+                                       :application/external-id "2019/66"}}]
              (ok-command application
                          {:type :application.command/copy-as-new
                           :actor applicant-user-id}

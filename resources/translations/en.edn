@@ -112,6 +112,7 @@
                           :comment-requested "Review requested"
                           :commented "Reviewed"
                           :copied-from "Copied from an old application"
+                          :copied-to "Copied to a new application"
                           :created "Created"
                           :decided "Decided"
                           :decision-requested "Decision requested"

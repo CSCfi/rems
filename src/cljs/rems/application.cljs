@@ -379,6 +379,9 @@
               :application.event/copied-from
               [application-link (:application/copied-from event) (text :t.applications/application)]
 
+              :application.event/copied-to
+              [application-link (:application/copied-to event) (text :t.applications/application)]
+
               (:application/comment event))
    :request-id (:application/request-id event)
    :commenters (:application/commenters event)

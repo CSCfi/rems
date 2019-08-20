@@ -110,6 +110,7 @@
                           :comment-requested "Katselmointia pyydetty"
                           :commented "Katselmoitu"
                           :copied-from "Kopioitu vanhasta hakemuksesta"
+                          :copied-to "Kopioitu uudeksi hakemukseksi"
                           :created "Luotu"
                           :decided "Päätetty"
                           :decision-requested "Päätöstä pyydetty"

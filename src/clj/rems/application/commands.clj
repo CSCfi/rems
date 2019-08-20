@@ -430,10 +430,10 @@
         created-event (create-application2 {:catalogue-item-ids catalogue-item-ids
                                             :time (:time cmd)
                                             :actor (:actor cmd)})
+        old-app-id (:application/id application)
         new-app-id (:application/id created-event)]
     (ok-with-data
      {:application-id new-app-id}
-     ;; TODO: add copied-to event to the original application
      [created-event
       {:event/type :application.event/draft-saved
        :application/id new-app-id
@@ -443,7 +443,10 @@
                                       (into {}))}
       {:event/type :application.event/copied-from
        :application/id new-app-id
-       :application/copied-from (select-keys application [:application/id :application/external-id])}])))
+       :application/copied-from (select-keys application [:application/id :application/external-id])}
+      {:event/type :application.event/copied-to
+       :application/id old-app-id
+       :application/copied-to (select-keys created-event [:application/id :application/external-id])}])))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event
