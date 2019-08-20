@@ -431,6 +431,8 @@
         new-app-id (:application-id result)]
     (ok-with-data
      {:application-id new-app-id}
+     ;; TODO: it would be better to refactor create-application! so that it won't persist the created event, but it'll be returned here explicitly
+     ;; TODO: add copied-to event to the original application
      [{:event/type :application.event/draft-saved
        :application/id new-app-id
        :application/field-values (->> (:form/fields (:application/form application))
