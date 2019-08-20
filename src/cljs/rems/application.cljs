@@ -187,6 +187,19 @@
                           (get-in (:identity db) [:user :eppn])))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
+(rf/reg-event-fx
+ ::copy-as-new-application
+ (fn [{:keys [db]} _]
+   (let [application-id (get-in db [::application :application/id])]
+     (status-modal/common-pending-handler! (text :t.form/copy-as-new))
+     (post! "/api/applications/copy-as-new"
+            {:params {:application-id application-id}
+             :handler (partial status-modal/common-success-handler!
+                               (fn [response]
+                                 (dispatch! (str "/#/application/" (:application-id response)))))
+             :error-handler status-modal/common-error-handler!}))
+   {}))
+
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
     (status-modal/common-pending-handler! description)
@@ -282,6 +295,11 @@
                    :class :btn-primary
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
+(defn- copy-as-new-button []
+  [button-wrapper {:id "copy-as-new"
+                   :text (text :t.form/copy-as-new)
+                   :on-click #(rf/dispatch [::copy-as-new-application])}])
+
 (defn- application-fields [application edit-application]
   (let [field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
@@ -337,12 +355,30 @@
               ;; TODO consider saving the form first so that no data is lost for the applicant
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
+(defn- format-application-id [config application]
+  (let [id-column (get config :application-id-column :id)]
+    (case id-column
+      :external-id (:application/external-id application)
+      :id (:application/id application)
+      (:application/id application))))
+
+(defn- application-link [application prefix]
+  (let [config @(rf/subscribe [:rems.config/config])]
+    [:a {:href (str "/#/application/" (:application/id application))}
+     (when prefix
+       (str prefix " "))
+     (format-application-id config application)]))
 
 (defn- format-event [event]
   {:userid (:event/actor event)
    :event (localize-event (:event/type event))
-   :comment (if (= :application.event/decided (:event/type event))
+   :comment (case (:event/type event)
+              :application.event/decided
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
+
+              :application.event/copied-from
+              [application-link (:application/copied-from event) (text :t.applications/application)]
+
               (:application/comment event))
    :request-id (:application/request-id event)
    :commenters (:application/commenters event)
@@ -395,13 +431,6 @@
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
 
-(defn- application-id-value [config application]
-  (let [id-column (get config :application-id-column :id)]
-    (case id-column
-      :external-id (:application/external-id application)
-      :id (:application/id application)
-      (:application/id application))))
-
 (defn- application-state [application config]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
@@ -421,7 +450,11 @@
                       (phases (get-application-phases state))]
                      [info-field
                       (text :t.applications/application)
-                      [:span#application-id (application-id-value config application)]
+                      [:<>
+                       [:span#application-id (format-application-id config application)]
+                       (when-let [original-app (:application/copied-from application)]
+                         [:<>
+                          " (" (text :t.applications/copied-from) " " [application-link original-app nil] ")"])]
                       {:inline? true}]
                      [info-field
                       (text :t.applications/description)
@@ -542,7 +575,8 @@
                               :application.command/add-licenses [add-licenses-action-button]
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
-                              :application.command/close [close-action-button]]]
+                              :application.command/close [close-action-button]
+                              :application.command/copy-as-new [copy-as-new-button]]]
     (distinct (for [[command action] (partition 2 commands-and-actions)
                     :when (contains? (:application/permissions application) command)]
                 action))))
@@ -602,7 +636,7 @@
                               :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
-     [document-title (str (text :t.applications/application) " " (application-id-value config application))]
+     [document-title (str (text :t.applications/application) " " (format-application-id config application))]
      (text :t.applications/intro)
      (into [:div] messages)
      [application-state application config]

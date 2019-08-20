@@ -62,7 +62,8 @@
   (let [command (merge {:time (time/now)}
                        command)
         result (applications/command! command)]
-    (assert (nil? result) {:command command :result result})))
+    (assert (not (:errors result))
+            {:command command :result result})))
 
 (defn- transpose-localizations [m]
   (->> m

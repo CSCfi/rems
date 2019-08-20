@@ -25,12 +25,14 @@
     :application.command/invite-member
     :application.command/uninvite-member
     :application.command/accept-licenses
-    :application.command/change-resources})
+    :application.command/change-resources
+    :application.command/copy-as-new})
 
 (def ^:private non-submittable-application-commands
   #{:application.command/remove-member
     :application.command/uninvite-member
-    :application.command/accept-licenses})
+    :application.command/accept-licenses
+    :application.command/copy-as-new})
 
 (def ^:private handler-all-commands
   #{:application.command/remark
@@ -51,7 +53,8 @@
 
 (def ^:private created-permissions
   {:applicant submittable-application-commands
-   :member #{:application.command/accept-licenses}
+   :member #{:application.command/accept-licenses
+             :application.command/copy-as-new}
    :reporter #{:see-everything
                :application.command/remark}
    ;; member before accepting an invitation
@@ -87,8 +90,8 @@
               :application.command/close}})
 
 (def ^:private closed-permissions
-  {:applicant #{}
-   :member #{}
+  {:applicant #{:application.command/copy-as-new}
+   :member #{:application.command/copy-as-new}
    :handler #{:see-everything}
    :commenter #{:see-everything}
    :decider #{:see-everything}
@@ -319,6 +322,12 @@
   (-> application
       (assoc :application/state :application.state/closed)))
 
+(defmethod event-type-specific-application-view :application.event/copied-from
+  [application event]
+  (-> application
+      (assoc :application/copied-from (:application/copied-from event))
+      (assoc ::submitted-answers (::draft-answers application))))
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -432,20 +441,19 @@
 
 (defn- enrich-resources [app-resources get-catalogue-item]
   (->> app-resources
-       (map :catalogue-item/id)
-       (map get-catalogue-item)
-       (map (fn [item]
-              {:catalogue-item/id (:id item)
-               :resource/id (:resource-id item)
-               :resource/ext-id (:resid item)
-               :catalogue-item/title (assoc (localization-for :title item)
-                                            :default (:title item))
-               ;; TODO: remove unused keys
-               :catalogue-item/start (:start item)
-               :catalogue-item/end (:end item)
-               :catalogue-item/enabled (:enabled item)
-               :catalogue-item/expired (:expired item)
-               :catalogue-item/archived (:archived item)}))
+       (map (fn [resource]
+              (let [item (get-catalogue-item (:catalogue-item/id resource))]
+                {:catalogue-item/id (:catalogue-item/id resource)
+                 :resource/ext-id (:resource/ext-id resource)
+                 :resource/id (:resource-id item)
+                 :catalogue-item/title (assoc (localization-for :title item)
+                                              :default (:title item))
+                 ;; TODO: remove unused keys
+                 :catalogue-item/start (:start item)
+                 :catalogue-item/end (:end item)
+                 :catalogue-item/enabled (:enabled item)
+                 :catalogue-item/expired (:expired item)
+                 :catalogue-item/archived (:archived item)})))
        (sort-by :catalogue-item/id)
        vec))
 

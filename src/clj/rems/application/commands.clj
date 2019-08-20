@@ -111,6 +111,9 @@
                   :email s/Str}
          :comment s/Str))
 
+(s/defschema CopyAsNewCommand
+  CommandBase)
+
 (def command-schemas
   {#_:application.command/require-license
    :application.command/accept-invitation AcceptInvitationCommand
@@ -132,6 +135,7 @@
    :application.command/save-draft SaveDraftCommand
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand
+   :application.command/copy-as-new CopyAsNewCommand
    #_:application.command/withdraw})
 
 (s/defschema Command
@@ -246,9 +250,11 @@
   (when (contains? (all-members application) userid)
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
+(defn- ok-with-data [data events]
+  (assoc data :events events))
+
 (defn- ok [& events]
-  {:success true
-   :events events})
+  (ok-with-data nil events))
 
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
@@ -392,9 +398,10 @@
   [cmd application injections]
   (or (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
-      (ok {:event/type :application.event/member-joined
-           :application/id (:application-id cmd)
-           :invitation/token (:token cmd)})))
+      (ok-with-data {:application-id (:application-id cmd)}
+                    [{:event/type :application.event/member-joined
+                      :application/id (:application-id cmd)
+                      :invitation/token (:token cmd)}])))
 
 (defmethod command-handler :application.command/remove-member
   [cmd application _injections]
@@ -417,14 +424,34 @@
            :application/member (:member cmd)
            :application/comment (:comment cmd)})))
 
+(defmethod command-handler :application.command/copy-as-new
+  [cmd application {:keys [create-application!]}]
+  (let [result (create-application! (:actor cmd) (map :catalogue-item/id (:application/resources application)))
+        _ (assert (:success result) {:result result})
+        new-app-id (:application-id result)]
+    (ok-with-data
+     {:application-id new-app-id}
+     ;; TODO: it would be better to refactor create-application! so that it won't persist the created event, but it'll be returned here explicitly
+     ;; TODO: add copied-to event to the original application
+     [{:event/type :application.event/draft-saved
+       :application/id new-app-id
+       :application/field-values (->> (:form/fields (:application/form application))
+                                      (map (fn [field]
+                                             [(:field/id field) (:field/value field)]))
+                                      (into {}))}
+      {:event/type :application.event/copied-from
+       :application/id new-app-id
+       :application/copied-from (select-keys application [:application/id :application/external-id])}])))
+
 (defn- add-common-event-fields-from-command [event cmd]
-  (assoc event
-         :event/time (:time cmd)
-         :event/actor (:actor cmd)
-         :application/id (:application-id cmd)))
+  (-> event
+      (update :application/id (fn [app-id]
+                                (or app-id (:application-id cmd))))
+      (assoc :event/time (:time cmd)
+             :event/actor (:actor cmd))))
 
 (defn- enrich-result [result cmd]
-  (if (:success result)
+  (if (:events result)
     (update result :events (fn [events]
                              (mapv #(add-common-event-fields-from-command % cmd) events)))
     result))
@@ -451,7 +478,7 @@
                  :field-values []
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
-      (is (:success (handle-command command application {}))))
+      (is (not (:errors (handle-command command application {})))))
     (testing "fails when command fails validation"
       (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
                             (handle-command (assoc command :time 3) application {}))))
@@ -460,5 +487,4 @@
       ;; and only depend on the roles and permissions
       (let [application (permissions/remove-role-from-user application :applicant "applicant")
             result (handle-command command application {})]
-        (is (not (:success result)))
-        (is (= [{:type :forbidden}] (:errors result)))))))
+        (is (= {:errors [{:type :forbidden}]} result))))))

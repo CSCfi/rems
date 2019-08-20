@@ -18,7 +18,7 @@
        (not (.contains str "Unknown"))))
 
 (deftest test-all-state-localizations
-  (is (= (-> (:states (:applications (:t loc-en)))
+  (is (= (-> (:states (:applications (:t (loc-en))))
              (dissoc :unknown)
              (keys)
              (sort))
@@ -35,7 +35,7 @@
 
 (deftest test-all-event-localizations
   (let [event-types (keys events/event-schemas)]
-    (is (= (-> (:events (:applications (:t loc-en)))
+    (is (= (-> (:events (:applications (:t (loc-en))))
                (dissoc :unknown)
                (keys)
                (sort))

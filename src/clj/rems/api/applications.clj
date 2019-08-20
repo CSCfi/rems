@@ -27,8 +27,8 @@
   {:catalogue-item-ids [s/Int]})
 
 (s/defschema CreateApplicationResponse
-  {:success s/Bool
-   (s/optional-key :application-id) s/Int})
+  (assoc SuccessResponse
+         (s/optional-key :application-id) s/Int))
 
 (s/defschema User
   {:userid s/Str
@@ -57,13 +57,17 @@
   [Decider])
 
 (s/defschema AcceptInvitationResult
-  {:success s/Bool
-   (s/optional-key :application-id) s/Int
-   (s/optional-key :errors) [s/Any]})
+  (assoc SuccessResponse
+         (s/optional-key :application-id) s/Int
+         (s/optional-key :errors) [s/Any]))
 
 (s/defschema SaveAttachmentResponse
-  (merge SuccessResponse
-         {(s/optional-key :id) s/Int}))
+  (assoc SuccessResponse
+         (s/optional-key :id) s/Int))
+
+(s/defschema CopyAsNewResponse
+  (assoc SuccessResponse
+         (s/optional-key :application-id) s/Int))
 
 ;; Api implementation
 
@@ -105,17 +109,21 @@
   ;; TODO: schema could do these coercions for us
   (update-present cmd :decision keyword))
 
+(defn parse-command [request command-type]
+  (-> request
+      (coerce-command-from-api)
+      (assoc :type command-type
+             :actor (getx-user-id)
+             :time (time/now))))
+
 (defn api-command [command-type request]
-  (let [command (-> request
-                    (coerce-command-from-api)
-                    (assoc :type command-type
-                           :actor (getx-user-id)
-                           :time (time/now)))
-        errors (applications/command! command)]
-    (if errors
-      (ok {:success false
-           :errors (:errors errors)})
-      (ok {:success true}))))
+  (let [response (-> request
+                     (parse-command command-type)
+                     (applications/command!))]
+    (-> response
+        (assoc :success (not (:errors response)))
+        ;; hide possibly sensitive events, but allow other explicitly returned data
+        (dissoc :events))))
 
 (defmacro command-endpoint [command schema & [additional-doc]]
   (let [path (str "/" (name command))]
@@ -124,7 +132,15 @@
        :roles #{:logged-in}
        :body [request# ~schema]
        :return SuccessResponse
-       (api-command ~command request#))))
+       (ok (api-command ~command request#)))))
+
+(defn accept-invitation [invitation-token]
+  (if-let [application-id (applications/get-application-by-invitation-token invitation-token)]
+    (api-command :application.command/accept-invitation
+                 {:application-id application-id
+                  :token invitation-token})
+    {:success false
+     :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
 
 (def my-applications-api
   (context "/my-applications" []
@@ -172,6 +188,13 @@
       :body [request CreateApplicationCommand]
       :return CreateApplicationResponse
       (ok (applications/create-application! (getx-user-id) (:catalogue-item-ids request))))
+
+    (POST "/copy-as-new" []
+      :summary "Create a new application as a copy of an existing application."
+      :roles #{:logged-in}
+      :body [request commands/CopyAsNewCommand]
+      :return CopyAsNewResponse
+      (ok (api-command :application.command/copy-as-new request)))
 
     (GET "/commenters" []
       :summary "Available third party commenters"
@@ -222,7 +245,7 @@
       :roles #{:logged-in}
       :query-params [invitation-token :- (describe s/Str "invitation token")]
       :return AcceptInvitationResult
-      (ok (applications/accept-invitation (getx-user-id) invitation-token)))
+      (ok (accept-invitation invitation-token)))
 
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)

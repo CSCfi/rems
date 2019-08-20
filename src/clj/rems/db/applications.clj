@@ -111,7 +111,8 @@
    :validate-fields form-validation/validate-fields
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
-   :get-catalogue-item-licenses get-catalogue-item-licenses})
+   :get-catalogue-item-licenses get-catalogue-item-licenses
+   :create-application! create-application!})
 
 (declare get-unrestricted-application)
 
@@ -124,25 +125,13 @@
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
   (let [app (get-unrestricted-application (:application-id cmd))
         result (commands/handle-command cmd app db-injections)]
-    (if (:success result)
+    (if (not (:errors result))
       (doseq [event (:events result)]
-        (events/add-event! event))
-      result)))
+        (events/add-event! event)))
+    result))
 
-(defn accept-invitation [user-id invitation-token]
-  (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
-        (let [response (command! {:type :application.command/accept-invitation
-                                  :actor user-id
-                                  :application-id application-id
-                                  :token invitation-token
-                                  :time (time/now)})]
-          (if-not response
-            {:success true
-             :application-id application-id}
-            {:success false
-             :errors (:errors response)})))
-      {:success false
-       :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
+(defn get-application-by-invitation-token [invitation-token]
+  (:id (db/get-application-by-invitation-token {:token invitation-token})))
 
 ;;; Fetching applications (for API) (incl. caching)
 
