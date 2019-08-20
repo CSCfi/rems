@@ -442,18 +442,18 @@
 (defn- enrich-resources [app-resources get-catalogue-item]
   (->> app-resources
        (map (fn [resource]
-              (merge
-               resource ; already contains :catalogue-item/id and :resource/ext-id
-               (let [item (get-catalogue-item (:catalogue-item/id resource))]
-                 {:resource/id (:resource-id item)
-                  :catalogue-item/title (assoc (localization-for :title item)
-                                               :default (:title item))
-                  ;; TODO: remove unused keys
-                  :catalogue-item/start (:start item)
-                  :catalogue-item/end (:end item)
-                  :catalogue-item/enabled (:enabled item)
-                  :catalogue-item/expired (:expired item)
-                  :catalogue-item/archived (:archived item)}))))
+              (let [item (get-catalogue-item (:catalogue-item/id resource))]
+                {:catalogue-item/id (:catalogue-item/id resource)
+                 :resource/ext-id (:resource/ext-id resource)
+                 :resource/id (:resource-id item)
+                 :catalogue-item/title (assoc (localization-for :title item)
+                                              :default (:title item))
+                 ;; TODO: remove unused keys
+                 :catalogue-item/start (:start item)
+                 :catalogue-item/end (:end item)
+                 :catalogue-item/enabled (:enabled item)
+                 :catalogue-item/expired (:expired item)
+                 :catalogue-item/archived (:archived item)})))
        (sort-by :catalogue-item/id)
        vec))
 
