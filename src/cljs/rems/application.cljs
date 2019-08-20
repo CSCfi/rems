@@ -446,9 +446,8 @@
          "; ")
        (when new-apps
          (into [:<> (text :t.applications/copied-to) " "]
-               (->> (for [new-app new-apps]
-                      [application-link new-app nil])
-                    (interpose ", "))))
+               (interpose ", " (for [new-app new-apps]
+                                 [application-link new-app nil]))))
        ")"])))
 
 (defn- application-state [application config]
