@@ -99,7 +99,7 @@
                                                          :actor "alice"}))))
 
     (testing "error: non-existing catalogue items"
-      (is (thrown-with-msg? AssertionError #"catalogue item not found"
+      (is (thrown-with-msg? AssertionError #"catalogue item 999999 not found"
                             (application-created-event! {:catalogue-item-ids [999999]
                                                          :time (DateTime. 1000)
                                                          :actor "alice"}))))

@@ -58,8 +58,11 @@
 
 (defn application-created-event! [{:keys [catalogue-item-ids time actor]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
-  (let [items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
-    (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
+  (let [items (map (fn [id]
+                     (let [item (catalogue/get-localized-catalogue-item id)]
+                       (assert item (str "catalogue item " id " not found"))
+                       item))
+                   catalogue-item-ids)]
     (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
     (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
     (let [ids (allocate-application-ids! time)
