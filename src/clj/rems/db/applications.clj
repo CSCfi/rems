@@ -68,12 +68,11 @@
     (let [ids (allocate-application-ids! time)
           workflow-id (:wfid (first items))
           form-id (:formid (first items))
-          workflow (-> (:workflow (workflow/get-workflow workflow-id))
-                       (update :type keyword))
+          workflow-type (:type (:workflow (workflow/get-workflow workflow-id)))
           licenses (db/get-licenses {:wfid workflow-id
                                      :items catalogue-item-ids})]
-      (assert (= :workflow/dynamic (:type workflow))
-              (str "workflow type was " (:type workflow))) ; TODO: support other workflows
+      (assert (= :workflow/dynamic workflow-type)
+              (str "workflow type was " workflow-type)) ; TODO: support other workflows
       {:event/type :application.event/created
        :event/time time
        :event/actor actor
@@ -88,7 +87,7 @@
                                   licenses)
        :form/id form-id
        :workflow/id workflow-id
-       :workflow/type (:type workflow)})))
+       :workflow/type workflow-type})))
 
 (defn create-application! [user-id catalogue-item-ids]
   (let [event (application-created-event! {:catalogue-item-ids catalogue-item-ids
