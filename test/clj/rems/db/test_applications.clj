@@ -4,7 +4,7 @@
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]
-            [rems.db.applications :refer [application-created-event! application-external-id!]]
+            [rems.db.applications :as applications :refer [application-created-event! application-external-id!]]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
             [rems.db.test-data :as test-data]
@@ -68,7 +68,8 @@
               :workflow/type :workflow/dynamic}
              (application-created-event! {:catalogue-item-ids [cat-id]
                                           :time (DateTime. 1000)
-                                          :actor "alice"}))))
+                                          :actor "alice"}
+                                         applications/db-injections))))
 
     (testing "multiple resources"
       (let [res-id2 (test-data/create-resource! {:resource-ext-id "res2"})
@@ -90,19 +91,22 @@
                 :workflow/type :workflow/dynamic}
                (application-created-event! {:catalogue-item-ids [cat-id cat-id2]
                                             :time (DateTime. 1000)
-                                            :actor "alice"})))))
+                                            :actor "alice"}
+                                           applications/db-injections)))))
 
     (testing "error: zero catalogue items"
       (is (thrown-with-msg? AssertionError #"catalogue item not specified"
                             (application-created-event! {:catalogue-item-ids []
                                                          :time (DateTime. 1000)
-                                                         :actor "alice"}))))
+                                                         :actor "alice"}
+                                                        applications/db-injections))))
 
     (testing "error: non-existing catalogue items"
       (is (thrown-with-msg? AssertionError #"catalogue item 999999 not found"
                             (application-created-event! {:catalogue-item-ids [999999]
                                                          :time (DateTime. 1000)
-                                                         :actor "alice"}))))
+                                                         :actor "alice"}
+                                                        applications/db-injections))))
 
     (testing "error: catalogue items with different forms"
       (let [form-id2 (test-data/create-form! {})
@@ -113,7 +117,8 @@
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
                               (application-created-event! {:catalogue-item-ids [cat-id cat-id2]
                                                            :time (DateTime. 1000)
-                                                           :actor "alice"})))))
+                                                           :actor "alice"}
+                                                          applications/db-injections)))))
 
     (testing "error: catalogue items with different workflows"
       (let [wf-id2 (test-data/create-dynamic-workflow! {})
@@ -124,7 +129,8 @@
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
                               (application-created-event! {:catalogue-item-ids [cat-id cat-id2]
                                                            :time (DateTime. 1000)
-                                                           :actor "alice"})))))
+                                                           :actor "alice"}
+                                                          applications/db-injections)))))
 
     (testing "resource licenses"
       (let [lic-id (test-data/create-license! {})
@@ -146,7 +152,8 @@
                 :workflow/type :workflow/dynamic}
                (application-created-event! {:catalogue-item-ids [cat-id2]
                                             :time (DateTime. 1000)
-                                            :actor "alice"})))))
+                                            :actor "alice"}
+                                           applications/db-injections)))))
 
     (testing "workflow licenses"
       (let [lic-id (test-data/create-license! {})
@@ -168,7 +175,8 @@
                 :workflow/type :workflow/dynamic}
                (application-created-event! {:catalogue-item-ids [cat-id2]
                                             :time (DateTime. 1000)
-                                            :actor "alice"})))))))
+                                            :actor "alice"}
+                                           applications/db-injections)))))))
 
 (deftest test-application-external-id!
   (is (= [] (db/get-external-ids {:prefix "1981"})))

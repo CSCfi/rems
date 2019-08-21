@@ -1158,7 +1158,7 @@
                        :form/id 40
                        :workflow/id 50
                        :workflow/type :workflow/dynamic}
-        injections {:application-created-event! (fn [{:keys [catalogue-item-ids time actor]}]
+        injections {:application-created-event! (fn [{:keys [catalogue-item-ids time actor]} _injections]
                                                   (is (= applicant-user-id actor)
                                                       "applicant for new application")
                                                   (is (= [10 20] catalogue-item-ids)
