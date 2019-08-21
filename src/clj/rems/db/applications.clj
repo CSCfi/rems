@@ -56,7 +56,7 @@
   {:application/id (:id (db/create-application!))
    :application/external-id (application-external-id! time)})
 
-(defn application-created-event! [{:keys [application-id catalogue-item-ids time actor]}]
+(defn application-created-event! [{:keys [catalogue-item-ids time actor]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
     (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
@@ -74,8 +74,7 @@
       {:event/type :application.event/created
        :event/time time
        :event/actor actor
-       :application/id (or application-id ; TODO: only used in tests, remove
-                           (:application/id ids))
+       :application/id (:application/id ids)
        :application/external-id (:application/external-id ids)
        :application/resources (map (fn [item]
                                      {:catalogue-item/id (:id item)

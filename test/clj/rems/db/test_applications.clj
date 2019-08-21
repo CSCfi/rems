@@ -1,5 +1,6 @@
 (ns ^:integration rems.db.test-applications
-  (:require [clojure.string :as str]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]
@@ -48,13 +49,16 @@
         res-id (test-data/create-resource! {:resource-ext-id "res1"})
         cat-id (test-data/create-catalogue-item! {:resource-id res-id
                                                   :form-id form-id
-                                                  :workflow-id wf-id})]
+                                                  :workflow-id wf-id})
+        next-expected-app-id (let [id (atom (:id (first (jdbc/query db/*db* ["SELECT nextval('catalogue_item_application_id_seq') AS id"]))))]
+                               (fn []
+                                 (swap! id inc)))]
 
     (testing "minimal application"
       (is (= {:event/type :application.event/created
               :event/actor "alice"
               :event/time (DateTime. 1000)
-              :application/id 42
+              :application/id (next-expected-app-id)
               :application/external-id "1970/1"
               :application/resources [{:catalogue-item/id cat-id
                                        :resource/ext-id "res1"}]
@@ -62,8 +66,7 @@
               :form/id form-id
               :workflow/id wf-id
               :workflow/type :workflow/dynamic}
-             (application-created-event! {:application-id 42
-                                          :catalogue-item-ids [cat-id]
+             (application-created-event! {:catalogue-item-ids [cat-id]
                                           :time (DateTime. 1000)
                                           :actor "alice"}))))
 
@@ -75,7 +78,7 @@
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
-                :application/id 42
+                :application/id (next-expected-app-id)
                 :application/external-id "1970/2"
                 :application/resources [{:catalogue-item/id cat-id
                                          :resource/ext-id "res1"}
@@ -85,22 +88,19 @@
                 :form/id form-id
                 :workflow/id wf-id
                 :workflow/type :workflow/dynamic}
-               (application-created-event! {:application-id 42
-                                            :catalogue-item-ids [cat-id cat-id2]
+               (application-created-event! {:catalogue-item-ids [cat-id cat-id2]
                                             :time (DateTime. 1000)
                                             :actor "alice"})))))
 
     (testing "error: zero catalogue items"
       (is (thrown-with-msg? AssertionError #"catalogue item not specified"
-                            (application-created-event! {:application-id 42
-                                                         :catalogue-item-ids []
+                            (application-created-event! {:catalogue-item-ids []
                                                          :time (DateTime. 1000)
                                                          :actor "alice"}))))
 
     (testing "error: non-existing catalogue items"
       (is (thrown-with-msg? AssertionError #"catalogue item not found"
-                            (application-created-event! {:application-id 42
-                                                         :catalogue-item-ids [999999]
+                            (application-created-event! {:catalogue-item-ids [999999]
                                                          :time (DateTime. 1000)
                                                          :actor "alice"}))))
 
@@ -111,8 +111,7 @@
                                                        :form-id form-id2
                                                        :workflow-id wf-id})]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
-                              (application-created-event! {:application-id 42
-                                                           :catalogue-item-ids [cat-id cat-id2]
+                              (application-created-event! {:catalogue-item-ids [cat-id cat-id2]
                                                            :time (DateTime. 1000)
                                                            :actor "alice"})))))
 
@@ -123,8 +122,7 @@
                                                        :form-id form-id
                                                        :workflow-id wf-id2})]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
-                              (application-created-event! {:application-id 42
-                                                           :catalogue-item-ids [cat-id cat-id2]
+                              (application-created-event! {:catalogue-item-ids [cat-id cat-id2]
                                                            :time (DateTime. 1000)
                                                            :actor "alice"})))))
 
@@ -138,7 +136,7 @@
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
-                :application/id 42
+                :application/id (next-expected-app-id)
                 :application/external-id "1970/3"
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res2+++"}]
@@ -146,8 +144,7 @@
                 :form/id form-id
                 :workflow/id wf-id
                 :workflow/type :workflow/dynamic}
-               (application-created-event! {:application-id 42
-                                            :catalogue-item-ids [cat-id2]
+               (application-created-event! {:catalogue-item-ids [cat-id2]
                                             :time (DateTime. 1000)
                                             :actor "alice"})))))
 
@@ -161,7 +158,7 @@
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
-                :application/id 42
+                :application/id (next-expected-app-id)
                 :application/external-id "1970/4"
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res1"}]
@@ -169,8 +166,7 @@
                 :form/id form-id
                 :workflow/id wf-id2
                 :workflow/type :workflow/dynamic}
-               (application-created-event! {:application-id 42
-                                            :catalogue-item-ids [cat-id2]
+               (application-created-event! {:catalogue-item-ids [cat-id2]
                                             :time (DateTime. 1000)
                                             :actor "alice"})))))))
 
