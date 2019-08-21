@@ -21,6 +21,7 @@
                  [compojure "1.6.1"]
                  [conman "0.8.3"]
                  [cprop "0.1.13"]
+                 [garden "1.3.9"]
                  [haka-buddy "0.2.3" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
                  [javax.xml.bind/jaxb-api "2.3.1"]
@@ -41,7 +42,6 @@
                  [ns-tracker "0.4.0"]
                  [org.apache.lucene/lucene-core "8.2.0"]
                  [org.apache.lucene/lucene-queryparser "8.2.0"]
-                 [org.clojars.luontola/garden "1.3.6-patch1"] ;; TODO: waiting for a new release with https://github.com/noprompt/garden/pull/172
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]
                  [org.clojars.runa/conjure "2.2.0"]
                  [org.clojure/clojure "1.10.0"]
