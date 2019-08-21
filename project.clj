@@ -43,7 +43,6 @@
                  [org.apache.lucene/lucene-core "8.2.0"]
                  [org.apache.lucene/lucene-queryparser "8.2.0"]
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]
-                 [org.clojars.runa/conjure "2.2.0"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/clojurescript "1.10.520" :exclusions [com.fasterxml.jackson.core/jackson-core]]
                  [org.clojure/core.cache "0.7.2"]
