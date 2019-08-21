@@ -56,47 +56,12 @@
   {:application/id (:id (db/create-application!))
    :application/external-id (application-external-id! time)})
 
-(defn application-created-event! [{:keys [catalogue-item-ids time actor]}
-                                  {:keys [allocate-application-ids! get-catalogue-item get-catalogue-item-licenses get-workflow]}]
-  (assert (seq catalogue-item-ids) "catalogue item not specified")
-  (let [items (map (fn [id]
-                     (let [item (get-catalogue-item id)]
-                       (assert item (str "catalogue item " id " not found"))
-                       item))
-                   catalogue-item-ids)
-        _ (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
-        _ (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
-        form-id (:formid (first items))
-        workflow-id (:wfid (first items))
-        workflow-type (:type (:workflow (get-workflow workflow-id)))
-        _ (assert (= :workflow/dynamic workflow-type)
-                  (str "workflow type was " workflow-type)) ; TODO: support other workflows
-        ids (allocate-application-ids! time)]
-    {:event/type :application.event/created
-     :event/time time
-     :event/actor actor
-     :application/id (:application/id ids)
-     :application/external-id (:application/external-id ids)
-     :application/resources (map (fn [item]
-                                   {:catalogue-item/id (:id item)
-                                    :resource/ext-id (:resid item)})
-                                 items)
-     ;; TODO: duplicated in command-handler :application.command/change-resources
-     :application/licenses (->> catalogue-item-ids
-                                (mapcat get-catalogue-item-licenses)
-                                distinct
-                                (mapv (fn [license]
-                                        {:license/id (:id license)})))
-     :form/id form-id
-     :workflow/id workflow-id
-     :workflow/type workflow-type}))
-
 (declare db-injections)
 (defn create-application! [user-id catalogue-item-ids]
-  (let [event (application-created-event! {:catalogue-item-ids catalogue-item-ids
-                                           :time (time/now)
-                                           :actor user-id}
-                                          db-injections)]
+  (let [event (commands/application-created-event! {:catalogue-item-ids catalogue-item-ids
+                                                    :time (time/now)
+                                                    :actor user-id}
+                                                   db-injections)]
     (events/add-event! event)
     {:success true
      :application-id (:application/id event)}))
@@ -118,8 +83,7 @@
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
-   :allocate-application-ids! allocate-application-ids!
-   :application-created-event! application-created-event!})
+   :allocate-application-ids! allocate-application-ids!})
 
 (declare get-unrestricted-application)
 

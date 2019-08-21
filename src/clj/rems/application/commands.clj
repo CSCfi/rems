@@ -256,6 +256,41 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
+(defn application-created-event! [{:keys [catalogue-item-ids time actor]}
+                                  {:keys [allocate-application-ids! get-catalogue-item get-catalogue-item-licenses get-workflow]}]
+  (assert (seq catalogue-item-ids) "catalogue item not specified")
+  (let [items (map (fn [id]
+                     (let [item (get-catalogue-item id)]
+                       (assert item (str "catalogue item " id " not found"))
+                       item))
+                   catalogue-item-ids)
+        _ (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
+        _ (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
+        form-id (:formid (first items))
+        workflow-id (:wfid (first items))
+        workflow-type (:type (:workflow (get-workflow workflow-id)))
+        _ (assert (= :workflow/dynamic workflow-type)
+                  (str "workflow type was " workflow-type)) ; TODO: support other workflows
+        ids (allocate-application-ids! time)]
+    {:event/type :application.event/created
+     :event/time time
+     :event/actor actor
+     :application/id (:application/id ids)
+     :application/external-id (:application/external-id ids)
+     :application/resources (map (fn [item]
+                                   {:catalogue-item/id (:id item)
+                                    :resource/ext-id (:resid item)})
+                                 items)
+     ;; TODO: duplicated in command-handler :application.command/change-resources
+     :application/licenses (->> catalogue-item-ids
+                                (mapcat get-catalogue-item-licenses)
+                                distinct
+                                (mapv (fn [license]
+                                        {:license/id (:id license)})))
+     :form/id form-id
+     :workflow/id workflow-id
+     :workflow/type workflow-type}))
+
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
@@ -425,7 +460,7 @@
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/copy-as-new
-  [cmd application {:keys [application-created-event!]
+  [cmd application {:keys []
                     :as injections}]
   (let [catalogue-item-ids (map :catalogue-item/id (:application/resources application))
         created-event (application-created-event! {:catalogue-item-ids catalogue-item-ids
