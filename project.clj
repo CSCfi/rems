@@ -14,7 +14,7 @@
                  [cljsjs/react-dom-server "16.9.0-0"]
                  [cljsjs/react-select "2.4.4-0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
-                 [com.attendify/schema-refined "0.3.0-alpha4"]
+                 [com.attendify/schema-refined "0.3.0-alpha5"]
                  [com.draines/postal "2.0.3"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.10.0.pr1"]
                  [com.taoensso/tempura "1.2.1"]
