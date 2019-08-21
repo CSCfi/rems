@@ -52,14 +52,18 @@
   (let [id-prefix (str (.getYear time))]
     (format-external-id (allocate-external-id! id-prefix))))
 
+(defn allocate-application-ids! [time]
+  {:application/id (:id (db/create-application!))
+   :application/external-id (application-external-id! time)})
+
 (defn application-created-event! [{:keys [application-id catalogue-item-ids time actor]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
-  (let [application-id (or application-id (:id (db/create-application!)))
-        items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
+  (let [items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
     (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
     (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
     (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
-    (let [workflow-id (:wfid (first items))
+    (let [ids (allocate-application-ids! time)
+          workflow-id (:wfid (first items))
           form-id (:formid (first items))
           workflow (-> (:workflow (workflow/get-workflow workflow-id))
                        (update :type keyword))
@@ -70,8 +74,9 @@
       {:event/type :application.event/created
        :event/time time
        :event/actor actor
-       :application/id application-id
-       :application/external-id (application-external-id! time)
+       :application/id (or application-id ; TODO: only used in tests, remove
+                           (:application/id ids))
+       :application/external-id (:application/external-id ids)
        :application/resources (map (fn [item]
                                      {:catalogue-item/id (:id item)
                                       :resource/ext-id (:resid item)})
