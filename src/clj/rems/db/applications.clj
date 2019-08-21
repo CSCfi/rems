@@ -56,6 +56,7 @@
   {:application/id (:id (db/create-application!))
    :application/external-id (application-external-id! time)})
 
+(declare get-catalogue-item-licenses)
 (defn application-created-event! [{:keys [catalogue-item-ids time actor]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [items (map (fn [id]
@@ -68,9 +69,7 @@
     (let [ids (allocate-application-ids! time)
           workflow-id (:wfid (first items))
           form-id (:formid (first items))
-          workflow-type (:type (:workflow (workflow/get-workflow workflow-id)))
-          licenses (db/get-licenses {:wfid workflow-id
-                                     :items catalogue-item-ids})]
+          workflow-type (:type (:workflow (workflow/get-workflow workflow-id)))]
       (assert (= :workflow/dynamic workflow-type)
               (str "workflow type was " workflow-type)) ; TODO: support other workflows
       {:event/type :application.event/created
@@ -82,9 +81,12 @@
                                      {:catalogue-item/id (:id item)
                                       :resource/ext-id (:resid item)})
                                    items)
-       :application/licenses (map (fn [license]
-                                    {:license/id (:id license)})
-                                  licenses)
+       ;; TODO: duplicated in command-handler :application.command/change-resources
+       :application/licenses (->> catalogue-item-ids
+                                  (mapcat get-catalogue-item-licenses)
+                                  distinct
+                                  (mapv (fn [license]
+                                          {:license/id (:id license)})))
        :form/id form-id
        :workflow/id workflow-id
        :workflow/type workflow-type})))
