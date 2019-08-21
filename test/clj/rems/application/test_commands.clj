@@ -58,6 +58,9 @@
    (ok-command application cmd nil))
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
+         cmd (if (= :application.command/create (:type cmd))
+               (dissoc cmd :application-id)
+               cmd)
          result (commands/handle-command cmd application injections)]
      (assert-ex (not (:errors result)) {:cmd cmd :result result})
      (let [events (:events result)]
@@ -81,6 +84,39 @@
            application commands)))
 
 ;;; Tests
+
+(deftest test-create
+  (let [injections {:get-catalogue-item {10 {:id 10
+                                             :resid "urn:11"
+                                             :formid 40
+                                             :wfid 50}
+                                         20 {:id 20
+                                             :resid "urn:21"
+                                             :formid 40
+                                             :wfid 50}}
+                    :get-catalogue-item-licenses {10 []
+                                                  20 []}
+                    :get-workflow {50 {:workflow {:type :workflow/dynamic}}}
+                    :allocate-application-ids! (fn [_time]
+                                                 {:application/id 123
+                                                  :application/external-id "2019/1"})}]
+    ;; TODO: move here tests from rems.db.test-applications/test-application-created-event!
+    (is (= {:event/type :application.event/created
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id 123
+            :application/external-id "2019/1"
+            :application/resources [{:catalogue-item/id 10
+                                     :resource/ext-id "urn:11"}]
+            :application/licenses []
+            :form/id 40
+            :workflow/id 50
+            :workflow/type :workflow/dynamic}
+           (ok-command nil
+                       {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [10]}
+                       injections)))))
 
 (deftest test-save-draft
   (let [application (apply-events nil [dummy-created-event])]

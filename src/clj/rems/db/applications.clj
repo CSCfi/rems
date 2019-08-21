@@ -88,13 +88,13 @@
 (declare get-unrestricted-application)
 
 (defn command! [cmd]
-  (assert (:application-id cmd))
   ;; Use locks to prevent multiple commands being executed in parallel.
   ;; Serializable isolation level will already avoid anomalies, but produces
   ;; lots of transaction conflicts when there is contention. This lock
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
-  (let [app (get-unrestricted-application (:application-id cmd))
+  (let [app (when-let [app-id (:application-id cmd)]
+              (get-unrestricted-application app-id))
         result (commands/handle-command cmd app db-injections)]
     (if (not (:errors result))
       (doseq [event (:events result)]

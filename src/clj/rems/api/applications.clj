@@ -187,7 +187,7 @@
       :roles #{:logged-in}
       :body [request CreateApplicationCommand]
       :return CreateApplicationResponse
-      (ok (applications/create-application! (getx-user-id) (:catalogue-item-ids request))))
+      (ok (api-command :application.command/create request)))
 
     (POST "/copy-as-new" []
       :summary "Create a new application as a copy of an existing application."

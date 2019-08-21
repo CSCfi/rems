@@ -23,6 +23,9 @@
 (s/defschema CommandBase
   {:application-id s/Int})
 
+(s/defschema CreateCommand
+  {:catalogue-item-ids [s/Int]})
+
 (s/defschema SaveDraftCommand
   (assoc CommandBase
          ;; {s/Int s/Str} is what we want, but that isn't nicely representable as JSON
@@ -115,28 +118,27 @@
   CommandBase)
 
 (def command-schemas
-  {#_:application.command/require-license
-   :application.command/accept-invitation AcceptInvitationCommand
+  {:application.command/accept-invitation AcceptInvitationCommand
    :application.command/accept-licenses AcceptLicensesCommand
    :application.command/add-licenses AddLicensesCommand
    :application.command/add-member AddMemberCommand
-   :application.command/change-resources ChangeResourcesCommand
-   :application.command/invite-member InviteMemberCommand
    :application.command/approve ApproveCommand
+   :application.command/change-resources ChangeResourcesCommand
    :application.command/close CloseCommand
    :application.command/comment CommentCommand
+   :application.command/copy-as-new CopyAsNewCommand
+   :application.command/create CreateCommand
    :application.command/decide DecideCommand
-   :application.command/remark RemarkCommand
+   :application.command/invite-member InviteMemberCommand
    :application.command/reject RejectCommand
+   :application.command/remark RemarkCommand
+   :application.command/remove-member RemoveMemberCommand
    :application.command/request-comment RequestCommentCommand
    :application.command/request-decision RequestDecisionCommand
-   :application.command/remove-member RemoveMemberCommand
    :application.command/return ReturnCommand
    :application.command/save-draft SaveDraftCommand
    :application.command/submit SubmitCommand
-   :application.command/uninvite-member UninviteMemberCommand
-   :application.command/copy-as-new CopyAsNewCommand
-   #_:application.command/withdraw})
+   :application.command/uninvite-member UninviteMemberCommand})
 
 (s/defschema Command
   (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
@@ -290,6 +292,12 @@
      :form/id form-id
      :workflow/id workflow-id
      :workflow/type workflow-type}))
+
+(defmethod command-handler :application.command/create
+  [cmd application injections]
+  (let [event (application-created-event! cmd injections)]
+    (ok-with-data {:application-id (:application/id event)}
+                  [event])))
 
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
@@ -503,7 +511,9 @@
 
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (let [permissions (permissions/user-permissions application (:actor cmd))]
+  (let [permissions (if application
+                      (permissions/user-permissions application (:actor cmd))
+                      #{:application.command/create})]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
           (enrich-result cmd)
