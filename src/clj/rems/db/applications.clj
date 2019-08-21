@@ -63,33 +63,33 @@
                      (let [item (catalogue/get-localized-catalogue-item id)]
                        (assert item (str "catalogue item " id " not found"))
                        item))
-                   catalogue-item-ids)]
-    (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
-    (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
-    (let [ids (allocate-application-ids! time)
-          workflow-id (:wfid (first items))
-          form-id (:formid (first items))
-          workflow-type (:type (:workflow (workflow/get-workflow workflow-id)))]
-      (assert (= :workflow/dynamic workflow-type)
-              (str "workflow type was " workflow-type)) ; TODO: support other workflows
-      {:event/type :application.event/created
-       :event/time time
-       :event/actor actor
-       :application/id (:application/id ids)
-       :application/external-id (:application/external-id ids)
-       :application/resources (map (fn [item]
-                                     {:catalogue-item/id (:id item)
-                                      :resource/ext-id (:resid item)})
-                                   items)
-       ;; TODO: duplicated in command-handler :application.command/change-resources
-       :application/licenses (->> catalogue-item-ids
-                                  (mapcat get-catalogue-item-licenses)
-                                  distinct
-                                  (mapv (fn [license]
-                                          {:license/id (:id license)})))
-       :form/id form-id
-       :workflow/id workflow-id
-       :workflow/type workflow-type})))
+                   catalogue-item-ids)
+        _ (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
+        _ (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
+        form-id (:formid (first items))
+        workflow-id (:wfid (first items))
+        workflow-type (:type (:workflow (workflow/get-workflow workflow-id)))
+        _ (assert (= :workflow/dynamic workflow-type)
+                  (str "workflow type was " workflow-type)) ; TODO: support other workflows
+        ids (allocate-application-ids! time)]
+    {:event/type :application.event/created
+     :event/time time
+     :event/actor actor
+     :application/id (:application/id ids)
+     :application/external-id (:application/external-id ids)
+     :application/resources (map (fn [item]
+                                   {:catalogue-item/id (:id item)
+                                    :resource/ext-id (:resid item)})
+                                 items)
+     ;; TODO: duplicated in command-handler :application.command/change-resources
+     :application/licenses (->> catalogue-item-ids
+                                (mapcat get-catalogue-item-licenses)
+                                distinct
+                                (mapv (fn [license]
+                                        {:license/id (:id license)})))
+     :form/id form-id
+     :workflow/id workflow-id
+     :workflow/type workflow-type}))
 
 (defn create-application! [user-id catalogue-item-ids]
   (let [event (application-created-event! {:catalogue-item-ids catalogue-item-ids
