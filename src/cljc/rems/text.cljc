@@ -75,19 +75,21 @@
    :application.event/closed :t.applications.events/closed
    :application.event/comment-requested :t.applications.events/comment-requested
    :application.event/commented :t.applications.events/commented
-   :application.event/remarked :t.applications.events/remarked
+   :application.event/copied-from :t.applications.events/copied-from
+   :application.event/copied-to :t.applications.events/copied-to
    :application.event/created :t.applications.events/created
    :application.event/decided :t.applications.events/decided
    :application.event/decision-requested :t.applications.events/decision-requested
    :application.event/draft-saved :t.applications.events/draft-saved
-   :application.event/licenses-added :t.applications.events/licenses-added
    :application.event/licenses-accepted :t.applications.events/licenses-accepted
+   :application.event/licenses-added :t.applications.events/licenses-added
    :application.event/member-added :t.applications.events/member-added
    :application.event/member-invited :t.applications.events/member-invited
    :application.event/member-joined :t.applications.events/member-joined
    :application.event/member-removed :t.applications.events/member-removed
    :application.event/member-uninvited :t.applications.events/member-uninvited
    :application.event/rejected :t.applications.events/rejected
+   :application.event/remarked :t.applications.events/remarked
    :application.event/resources-changed :t.applications.events/resources-changed
    :application.event/returned :t.applications.events/returned
    :application.event/submitted :t.applications.events/submitted})

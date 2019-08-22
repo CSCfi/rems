@@ -350,6 +350,46 @@
                                                                                    {:field/value "bar"}]}})]
             (is (= expected-application (apply-events events)))
 
+            (testing "> copied from"
+              (let [events (conj events {:event/type :application.event/copied-from
+                                         :event/time (DateTime. 3000)
+                                         :event/actor "applicant"
+                                         :application/id 1
+                                         :application/copied-from {:application/id 42
+                                                                   :application/external-id "2019/42"}})
+                    expected-application (deep-merge expected-application
+                                                     {:application/last-activity (DateTime. 3000)
+                                                      :application/events events
+                                                      :application/copied-from {:application/id 42
+                                                                                :application/external-id "2019/42"}
+                                                      :application/form {:form/fields [{:field/previous-value "foo"}
+                                                                                       {:field/previous-value "bar"}]}})]
+                (is (= expected-application (apply-events events)))))
+
+            (testing "> copied to"
+              (let [events (conj events
+                                 ;; two copied-to events in order to test the order in which they are shown
+                                 {:event/type :application.event/copied-to
+                                  :event/time (DateTime. 3000)
+                                  :event/actor "applicant"
+                                  :application/id 1
+                                  :application/copied-to {:application/id 666
+                                                          :application/external-id "2020/666"}}
+                                 {:event/type :application.event/copied-to
+                                  :event/time (DateTime. 3000)
+                                  :event/actor "applicant"
+                                  :application/id 1
+                                  :application/copied-to {:application/id 777
+                                                          :application/external-id "2021/777"}})
+                    expected-application (deep-merge expected-application
+                                                     {:application/last-activity (DateTime. 3000)
+                                                      :application/events events
+                                                      :application/copied-to [{:application/id 666
+                                                                               :application/external-id "2020/666"}
+                                                                              {:application/id 777
+                                                                               :application/external-id "2021/777"}]})]
+                (is (= expected-application (apply-events events)))))
+
             (testing "> accepted licenses"
               (let [events (conj events {:event/type :application.event/licenses-accepted
                                          :event/time (DateTime. 2500)
@@ -891,16 +931,17 @@
   (testing "everyone can accept invitation"
     (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
                                                             :event/actor "applicant"}])]
-      (is (= #{:application.command/accept-invitation}
-             (permissions/user-permissions created "joe")))))
+      (is (contains? (permissions/user-permissions created "joe")
+                     :application.command/accept-invitation))))
   (testing "nobody can accept invitation for closed application"
     (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
                                                            :event/actor "applicant"}
                                                           {:event/type :application.event/closed
                                                            :event/actor "applicant"}])]
-      (is (= #{}
-             (permissions/user-permissions closed "joe")
-             (permissions/user-permissions closed "applicant"))))))
+      (is (not (contains? (permissions/user-permissions closed "joe")
+                          :application.command/accept-invitation)))
+      (is (not (contains? (permissions/user-permissions closed "applicant")
+                          :application.command/accept-invitation))))))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created

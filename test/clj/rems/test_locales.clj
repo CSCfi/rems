@@ -10,9 +10,11 @@
             [taoensso.tempura.impl :refer [compile-dictionary]])
   (:import (java.io FileNotFoundException)))
 
-(def loc-en (read-string (slurp (io/resource "translations/en.edn"))))
+(defn loc-en []
+  (read-string (slurp (io/resource "translations/en.edn"))))
 
-(def loc-fi (read-string (slurp (io/resource "translations/fi.edn"))))
+(defn loc-fi []
+  (read-string (slurp (io/resource "translations/fi.edn"))))
 
 (defn map-structure
   "Recurse into map m and replace all leaves with true."
@@ -21,8 +23,8 @@
     (reduce-kv (fn [m k v] (assoc m k (transform v))) {} m)))
 
 (deftest test-all-languages-defined
-  (is (= (map-structure loc-en)
-         (map-structure loc-fi))))
+  (is (= (map-structure (loc-en))
+         (map-structure (loc-fi)))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o

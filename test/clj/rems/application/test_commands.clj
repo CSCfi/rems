@@ -36,7 +36,8 @@
    :get-license (constantly nil)
    :get-user (constantly nil)
    :get-users-with-role (constantly nil)
-   :get-attachments-for-application (constantly nil)})
+   :get-attachments-for-application (constantly nil)
+   :application-created-event (constantly nil)})
 
 ;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
@@ -50,7 +51,7 @@
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
          result (commands/handle-command cmd application injections)]
-     (assert-ex (not (:success result)) {:cmd cmd :result result})
+     (assert-ex (:errors result) {:cmd cmd :result result})
      result)))
 
 (defn- ok-command
@@ -59,7 +60,7 @@
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
          result (commands/handle-command cmd application injections)]
-     (assert-ex (:success result) {:cmd cmd :result result})
+     (assert-ex (not (:errors result)) {:cmd cmd :result result})
      (let [events (:events result)]
        (events/validate-events events)
        ;; most tests expect only one event, so this avoids having to wrap the expectation to a list
@@ -1140,3 +1141,71 @@
                     :application/comment "second remark"
                     :application/public false}
                    event-2))))))))
+
+(deftest test-copy-as-new
+  (let [old-app-id 100
+        new-app-id 200
+        created-event {:event/type :application.event/created
+                       :event/time test-time
+                       :event/actor applicant-user-id
+                       :application/id old-app-id
+                       :application/external-id "2018/55"
+                       :application/resources [{:catalogue-item/id 10
+                                                :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20
+                                                :resource/ext-id "urn:21"}]
+                       :application/licenses []
+                       :form/id 40
+                       :workflow/id 50
+                       :workflow/type :workflow/dynamic}
+        injections {:application-created-event (fn [{:keys [catalogue-item-ids time actor]}]
+                                                 (is (= applicant-user-id actor)
+                                                     "applicant for new application")
+                                                 (is (= [10 20] catalogue-item-ids)
+                                                     "catalogue items for new application")
+                                                 (assoc created-event
+                                                        :event/time time
+                                                        :event/actor actor
+                                                        :application/id new-app-id
+                                                        :application/external-id "2019/66"))}
+        application (apply-events nil [created-event
+                                       {:event/type :application.event/draft-saved
+                                        :event/time test-time
+                                        :event/actor applicant-user-id
+                                        :application/id old-app-id
+                                        :application/field-values {1 "foo" 2 "bar"}}])]
+    (testing "creates a new application with the same form answers"
+      (is (= [{:event/type :application.event/created
+               :event/time test-time
+               :event/actor applicant-user-id
+               :application/id new-app-id
+               :application/external-id "2019/66"
+               :application/resources [{:catalogue-item/id 10
+                                        :resource/ext-id "urn:11"}
+                                       {:catalogue-item/id 20
+                                        :resource/ext-id "urn:21"}]
+               :application/licenses []
+               :form/id 40
+               :workflow/id 50
+               :workflow/type :workflow/dynamic}
+              {:event/type :application.event/draft-saved
+               :event/time test-time
+               :event/actor applicant-user-id
+               :application/id new-app-id
+               :application/field-values {1 "foo" 2 "bar"}}
+              {:event/type :application.event/copied-from
+               :event/time test-time
+               :event/actor applicant-user-id
+               :application/id new-app-id
+               :application/copied-from {:application/id old-app-id
+                                         :application/external-id "2018/55"}}
+              {:event/type :application.event/copied-to
+               :event/time test-time
+               :event/actor applicant-user-id
+               :application/id old-app-id
+               :application/copied-to {:application/id new-app-id
+                                       :application/external-id "2019/66"}}]
+             (ok-command application
+                         {:type :application.command/copy-as-new
+                          :actor applicant-user-id}
+                         injections))))))
