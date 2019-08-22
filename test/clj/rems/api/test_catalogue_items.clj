@@ -22,8 +22,7 @@
       (is (str/starts-with? (:resid item) "urn:")))
     (let [data (-> (request :post "/api/catalogue-items/create")
                    (authenticate api-key "owner")
-                   (json-body {:title "test-item-title"
-                               :form form-id
+                   (json-body {:form form-id
                                :resid 1
                                :wfid 1
                                :archived true})
@@ -37,11 +36,10 @@
                      handler
                      read-body)]
         (is (= {:id id
-                :title "test-item-title"
                 :workflow-name "dynamic workflow"
                 :form-name "form name"
                 :resource-name "urn:nbn:fi:lb-201403262"}
-               (select-keys data [:id :title :workflow-name :form-name :resource-name])))))
+               (select-keys data [:id :workflow-name :form-name :resource-name])))))
     (testing "not found"
       (let [response (-> (request :get "/api/catalogue-items/777777777")
                          (authenticate api-key user-id)
@@ -72,8 +70,7 @@
     (is (= "invalid api key"
            (-> (request :post (str "/api/catalogue-items/create"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-               (json-body {:title "malicious item"
-                           :form 1
+               (json-body {:form 1
                            :resid 1
                            :wfid 1})
                handler

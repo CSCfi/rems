@@ -68,11 +68,12 @@
  ::catalogue-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue])
-    (rf/subscribe [:language])])
- (fn [[catalogue language] _]
+    (rf/subscribe [:language])
+    (rf/subscribe [:default-language])])
+ (fn [[catalogue language default-language] _]
    (map (fn [item]
           {:key (:id item)
-           :name {:value (get-localized-title item language)}
+           :name {:value (get-localized-title item language default-language)}
            :resource (let [value (:resource-name item)]
                        {:value value
                         :td [:td.resource

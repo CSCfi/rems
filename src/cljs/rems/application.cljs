@@ -689,11 +689,11 @@
             [disabled-items-warning
              {:application/state :application.state/submitted
               :application/resources [{:catalogue-item/enabled true :catalogue-item/archived true
-                                       :catalogue-item/title {:default "Catalogue item 1"}}
+                                       :catalogue-item/title {:en "Catalogue item 1"}}
                                       {:catalogue-item/enabled false :catalogue-item/archived false
-                                       :catalogue-item/title {:default "Catalogue item 2"}}
+                                       :catalogue-item/title {:en "Catalogue item 2"}}
                                       {:catalogue-item/enabled true :catalogue-item/archived false
-                                       :catalogue-item/title {:default "Catalogue item 3"}}]}])
+                                       :catalogue-item/title {:en "Catalogue item 3"}}]}])
 
    (example "link license"
             [:form

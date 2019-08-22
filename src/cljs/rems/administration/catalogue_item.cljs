@@ -6,7 +6,7 @@
             [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text text-format]]
+            [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [dispatch! fetch]]))
 
 (rf/reg-event-fx
@@ -36,14 +36,13 @@
    "/#/administration/catalogue-items"
    (text :t.administration/back)])
 
-(defn catalogue-item-view [catalogue-item language]
+(defn catalogue-item-view [catalogue-item language default-language]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "catalogue-item"
-     :title [:span (get-in catalogue-item [:localizations language :title] (:title catalogue-item))]
+     :title [:span (get-localized-title catalogue-item language default-language)]
      :always (into [:div]
                    (concat
-                    [[inline-info-field (text :t.administration/title) (:title catalogue-item)]]
                     (for [[langcode localization] (:localizations catalogue-item)]
                       [inline-info-field
                        (str (text :t.administration/title)
@@ -68,6 +67,7 @@
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])
+        default-language (rf/subscribe [:default-language])
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     (fn []
@@ -76,4 +76,4 @@
        [document-title (text :t.administration/catalogue-item)]
        (if @loading?
          [spinner/big]
-         [catalogue-item-view @catalogue-item @language])])))
+         [catalogue-item-view @catalogue-item @language @default-language])])))

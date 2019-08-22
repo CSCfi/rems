@@ -14,8 +14,7 @@
         languages [:en :fi]]
 
     (testing "valid form"
-      (is (= {:title "en title"
-              :wfid 123
+      (is (= {:wfid 123
               :resid 456
               :form 789
               :localizations [{:langcode "en"

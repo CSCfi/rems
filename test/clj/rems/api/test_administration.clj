@@ -27,8 +27,7 @@
                                     :type :dynamic :handlers [user-id]}
                                    api-key user-id))
         catalogue-id (:id (api-call :post "/api/catalogue-items/create"
-                                    {:title "test-item-title"
-                                     :form form-id
+                                    {:form form-id
                                      :resid resource-id
                                      :wfid workflow-id}
                                     api-key user-id))]
@@ -49,7 +48,7 @@
                            api-key user-id)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/resource-in-use"
-                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
+                 :catalogue-items [{:id catalogue-id :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a form"
@@ -60,7 +59,7 @@
                            api-key user-id)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use"
-                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
+                 :catalogue-items [{:id catalogue-id :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a workflow"
@@ -71,7 +70,7 @@
                            api-key user-id)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/workflow-in-use"
-                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
+                 :catalogue-items [{:id catalogue-id :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a license"

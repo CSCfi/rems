@@ -46,15 +46,13 @@
        (not (str/blank? (:title localization)))))
 
 (defn- valid-request? [request]
-  (and (not (str/blank? (:title request)))
-       (number? (:wfid request))
+  (and (number? (:wfid request))
        (number? (:resid request))
        (number? (:form request))
        (every? valid-localization? (:localizations request))))
 
 (defn build-request [form languages]
-  (let [request {:title (get (:title form) (first languages))
-                 :wfid (get-in form [:workflow :id])
+  (let [request {:wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
                  :form (get-in form [:form :id])
                  :localizations (for [language languages]

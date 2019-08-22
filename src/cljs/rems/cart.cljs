@@ -26,11 +26,11 @@
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
-  [item language]
+  [item language default-language]
   [:button.btn.btn-primary.add-to-cart
    {:type :button
     :on-click #(rf/dispatch [::add-item item])
-    :aria-label (str (text :t.cart/add) ": " (get-localized-title item language))}
+    :aria-label (str (text :t.cart/add) ": " (get-localized-title item language default-language))}
    (text :t.cart/add)])
 
 (defn remove-from-cart-button
@@ -51,18 +51,18 @@
    (str "#/application?items=" (str/join "," (sort (map :id items))))
    (text :t.cart/apply)])
 
-(defn- item-view [item language apply-button?]
+(defn- item-view [item language default-language apply-button?]
   [:tr.cart-item
-   [:td.title (get-localized-title item language)]
+   [:td.title (get-localized-title item language default-language)]
    [:td.commands
     [remove-from-cart-button item]
     (when apply-button? [apply-button [item]])]])
 
-(defn- bundle-view [items language]
+(defn- bundle-view [items language default-language]
   (let [many-items? (< 1 (count items))]
     (into [:tbody.cart-bundle]
           (concat (map (fn [item]
-                         [item-view item language (not many-items?)])
+                         [item-view item language default-language (not many-items?)])
                        items)
                   (when many-items?
                     [[:tr [:td.commands.text-right {:col-span 2}
@@ -72,7 +72,7 @@
 
 (defn cart-list
   "List of shopping cart items"
-  [items language]
+  [items language default-language]
   [:div
    (text :t.cart/intro)
    [:div.outer-cart.mb-3
@@ -85,12 +85,13 @@
      (into [:table.rems-table.cart]
            (for [group (vals (into (sorted-map)
                                    (group-by (juxt :wfid :formid) items)))]
-             [bundle-view (sort-by get-localized-title group) language]))]]])
+             [bundle-view (sort-by get-localized-title group) language default-language]))]]])
 
 (defn cart-list-container []
   (let [language @(rf/subscribe [:language])
+        default-language @(rf/subscribe [:default-language])
         cart @(rf/subscribe [::cart])]
-    [cart-list cart language]))
+    [cart-list cart language default-language]))
 
 (defn guide []
   [:div

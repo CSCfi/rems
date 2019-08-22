@@ -14,8 +14,7 @@
 ;; TODO resid is misleading: it's the internal id, not the string id
 ;; Should we take the string id instead?
 (s/defschema CreateCatalogueItemCommand
-  {:title s/Str
-   :form s/Int
+  {:form s/Int
    :resid s/Int
    :wfid s/Int
    (s/optional-key :enabled) s/Bool

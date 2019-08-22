@@ -49,7 +49,8 @@
     (text :t.administration/display-old)]])
 
 (defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows]}]
-  (let [language @(rf/subscribe [:language])]
+  (let [default-language @(rf/subscribe [:default-language])
+        language @(rf/subscribe [:language])]
     [:<>
      [:p (text type)]
      (into [:ul]
@@ -58,7 +59,7 @@
               (text :t.administration/catalogue-item) ": "
               [:a {:target :_blank
                    :href (str "#/administration/catalogue-items/" (:id ci))}
-               (get-localized-title ci language)]]))
+               (get-localized-title ci language default-language)]]))
      (into [:ul]
            (for [f forms]
              [:li
@@ -72,7 +73,7 @@
               (text :t.administration/license) ": "
               [:a {:target :_blank
                    :href (str "#/administration/licenses/" (:id lic))}
-               (get-localized-title lic language)]]))
+               (get-localized-title lic language default-language)]]))
      (into [:ul]
            (for [r resources]
              [:li
