@@ -1,6 +1,5 @@
 (ns ^:integration rems.db.test-applications
-  (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]

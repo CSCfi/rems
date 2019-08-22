@@ -1,6 +1,5 @@
 (ns ^:integration rems.db.test-transactions
-  (:require [clj-time.core :as time]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [conman.core :as conman]
             [rems.application.commands :as commands]
             [rems.db.core :as db]

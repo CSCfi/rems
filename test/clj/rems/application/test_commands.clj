@@ -106,7 +106,6 @@
                                                   cat-id2 [{:id licence-id2}]}
                     :get-workflow {wf-id {:workflow {:type :workflow/dynamic}}}
                     :allocate-application-ids! (fn [^DateTime time]
-                                                 (.getYear time)
                                                  {:application/id app-id
                                                   :application/external-id (str (.getYear time) "/1")})}]
     (testing "one resource"

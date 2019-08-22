@@ -66,7 +66,7 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(def db-injections
+(def ^:private db-injections
   {:valid-user? valid-user?
    :validate-fields form-validation/validate-fields
    :secure-token secure-token

@@ -147,7 +147,6 @@
 (defn create-application! [{:keys [catalogue-item-ids actor]}]
   (:application-id (command! {:type :application.command/create
                               :catalogue-item-ids (or catalogue-item-ids [(create-catalogue-item! {})])
-                              :time (time/now)
                               :actor actor})))
 
 (defn- base-command [{:keys [application-id actor time]}]

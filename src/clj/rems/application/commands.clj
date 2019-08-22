@@ -471,8 +471,7 @@
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/copy-as-new
-  [cmd application {:keys []
-                    :as injections}]
+  [cmd application injections]
   (let [catalogue-item-ids (map :catalogue-item/id (:application/resources application))
         created-event (application-created-event! {:catalogue-item-ids catalogue-item-ids
                                                    :time (:time cmd)
