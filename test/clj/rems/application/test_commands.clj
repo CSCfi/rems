@@ -10,8 +10,7 @@
            [org.joda.time DateTime]))
 
 (def ^:private test-time (DateTime. 1000))
-(def ^:private command-defaults {:application-id 123
-                                 :time test-time})
+(def ^:private app-id 123)
 (def ^:private applicant-user-id "applicant")
 (def ^:private handler-user-id "assistant")
 (def ^:private dummy-created-event {:event/type :application.event/created
@@ -44,11 +43,17 @@
   (-> (reduce model/application-view application events)
       (model/enrich-with-injections injections)))
 
+(defn- set-command-defaults [cmd]
+  (-> cmd
+      (assoc :time test-time)
+      (cond-> (not= :application.command/create (:type cmd))
+              (assoc :application-id app-id))))
+
 (defn- fail-command
   ([application cmd]
    (fail-command application cmd nil))
   ([application cmd injections]
-   (let [cmd (merge command-defaults cmd)
+   (let [cmd (set-command-defaults cmd)
          result (commands/handle-command cmd application injections)]
      (assert-ex (:errors result) {:cmd cmd :result result})
      result)))
@@ -57,10 +62,7 @@
   ([application cmd]
    (ok-command application cmd nil))
   ([application cmd injections]
-   (let [cmd (merge command-defaults cmd)
-         cmd (if (= :application.command/create (:type cmd))
-               (dissoc cmd :application-id)
-               cmd)
+   (let [cmd (set-command-defaults cmd)
          result (commands/handle-command cmd application injections)]
      (assert-ex (not (:errors result)) {:cmd cmd :result result})
      (let [events (:events result)]
@@ -86,37 +88,93 @@
 ;;; Tests
 
 (deftest test-create
-  (let [injections {:get-catalogue-item {10 {:id 10
-                                             :resid "urn:11"
-                                             :formid 40
-                                             :wfid 50}
-                                         20 {:id 20
-                                             :resid "urn:21"
-                                             :formid 40
-                                             :wfid 50}}
-                    :get-catalogue-item-licenses {10 []
-                                                  20 []}
-                    :get-workflow {50 {:workflow {:type :workflow/dynamic}}}
-                    :allocate-application-ids! (fn [_time]
-                                                 {:application/id 123
-                                                  :application/external-id "2019/1"})}]
-    ;; TODO: move here tests from rems.db.test-applications/test-application-created-event!
-    (is (= {:event/type :application.event/created
-            :event/time test-time
-            :event/actor applicant-user-id
-            :application/id 123
-            :application/external-id "2019/1"
-            :application/resources [{:catalogue-item/id 10
-                                     :resource/ext-id "urn:11"}]
-            :application/licenses []
-            :form/id 40
-            :workflow/id 50
-            :workflow/type :workflow/dynamic}
-           (ok-command nil
-                       {:type :application.command/create
-                        :actor applicant-user-id
-                        :catalogue-item-ids [10]}
-                       injections)))))
+  (let [cat-id 10
+        cat-id2 20
+        licence-id 30
+        licence-id2 40
+        form-id 50
+        wf-id 60
+        injections {:get-catalogue-item {cat-id {:id cat-id
+                                                 :resid "res1"
+                                                 :formid form-id
+                                                 :wfid wf-id}
+                                         cat-id2 {:id cat-id2
+                                                  :resid "res2"
+                                                  :formid form-id
+                                                  :wfid wf-id}}
+                    :get-catalogue-item-licenses {cat-id [{:id licence-id}]
+                                                  cat-id2 [{:id licence-id2}]}
+                    :get-workflow {wf-id {:workflow {:type :workflow/dynamic}}}
+                    :allocate-application-ids! (fn [^DateTime time]
+                                                 (.getYear time)
+                                                 {:application/id app-id
+                                                  :application/external-id (str (.getYear time) "/1")})}]
+    (testing "one resource"
+      (is (= {:event/type :application.event/created
+              :event/actor applicant-user-id
+              :event/time (DateTime. 1000)
+              :application/id app-id
+              :application/external-id "1970/1"
+              :application/resources [{:catalogue-item/id cat-id
+                                       :resource/ext-id "res1"}]
+              :application/licenses [{:license/id licence-id}]
+              :form/id form-id
+              :workflow/id wf-id
+              :workflow/type :workflow/dynamic}
+             (ok-command nil {:type :application.command/create
+                              :actor applicant-user-id
+                              :catalogue-item-ids [cat-id]}
+                         injections))))
+
+    (testing "multiple resources"
+      (is (= {:event/type :application.event/created
+              :event/actor applicant-user-id
+              :event/time (DateTime. 1000)
+              :application/id app-id
+              :application/external-id "1970/1"
+              :application/resources [{:catalogue-item/id cat-id
+                                       :resource/ext-id "res1"}
+                                      {:catalogue-item/id cat-id2
+                                       :resource/ext-id "res2"}]
+              :application/licenses [{:license/id licence-id}
+                                     {:license/id licence-id2}]
+              :form/id form-id
+              :workflow/id wf-id
+              :workflow/type :workflow/dynamic}
+             (ok-command nil {:type :application.command/create
+                              :actor applicant-user-id
+                              :catalogue-item-ids [cat-id cat-id2]}
+                         injections))))
+
+    (testing "error: zero catalogue items"
+      (is (thrown-with-msg? AssertionError #"catalogue item not specified"
+                            (fail-command nil {:type :application.command/create
+                                               :actor applicant-user-id
+                                               :catalogue-item-ids []}
+                                          injections))))
+
+    (testing "error: non-existing catalogue items"
+      (is (thrown-with-msg? AssertionError #"catalogue item 999999 not found"
+                            (fail-command nil {:type :application.command/create
+                                               :actor applicant-user-id
+                                               :catalogue-item-ids [999999]}
+                                          injections))))
+
+    (testing "error: catalogue items with different forms"
+      (let [injections (assoc-in injections [:get-catalogue-item cat-id2 :formid] 666)]
+        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
+                              (fail-command nil {:type :application.command/create
+                                                 :actor applicant-user-id
+                                                 :catalogue-item-ids [cat-id cat-id2]}
+                                            injections)))))
+
+    (testing "error: catalogue items with different workflows"
+      (let [injections (assoc-in injections [:get-catalogue-item cat-id2 :wfid] 666)]
+        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
+                              (fail-command nil {:type :application.command/create
+                                                 :actor applicant-user-id
+                                                 :catalogue-item-ids [cat-id cat-id2]}
+                                            injections)))))))
 
 (deftest test-save-draft
   (let [application (apply-events nil [dummy-created-event])]

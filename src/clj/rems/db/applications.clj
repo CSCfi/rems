@@ -68,7 +68,7 @@
 
 ;;; Running commands
 
-(defn- get-catalogue-item-licenses [catalogue-item-id]
+(defn get-catalogue-item-licenses [catalogue-item-id]
   (db/get-licenses
    {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
     :items [catalogue-item-id]}))
