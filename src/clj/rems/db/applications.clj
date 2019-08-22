@@ -26,15 +26,6 @@
             [rems.util :refer [atom? getx secure-token]])
   (:import [org.joda.time Duration]))
 
-;;; Query functions
-
-;; TODO use also in UI side?
-(defn is-dynamic-application? [application]
-  (= :workflow/dynamic (get-in application [:workflow :type])))
-
-(defn is-dynamic-handler? [user-id application]
-  (contains? (set (get-in application [:workflow :handlers])) user-id))
-
 ;;; Creating applications
 
 (defn allocate-external-id! [prefix]
