@@ -79,10 +79,3 @@
        (format-licenses)
        (localize-licenses)
        (distinct-by :id)))
-
-(defn get-active-licenses
-  "Get licenses active now. Params map similar to get-licenses."
-  [now params]
-  (->> (get-licenses params)
-       (map (partial db/assoc-expired now))
-       (remove :expired)))
