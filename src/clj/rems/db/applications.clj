@@ -37,7 +37,7 @@
 
 ;;; Creating applications
 
-(defn allocate-external-id! [prefix]
+(defn- allocate-external-id! [prefix]
   (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
     (let [all (db/get-external-ids {:prefix prefix})
           last (apply max (cons 0 (map (comp read-string :suffix) all)))
@@ -45,26 +45,16 @@
       (db/add-external-id! {:prefix prefix :suffix new})
       {:prefix prefix :suffix new})))
 
-(defn format-external-id [{:keys [prefix suffix]}]
+(defn- format-external-id [{:keys [prefix suffix]}]
   (str prefix "/" suffix))
 
 (defn application-external-id! [time]
   (let [id-prefix (str (.getYear time))]
     (format-external-id (allocate-external-id! id-prefix))))
 
-(defn allocate-application-ids! [time]
+(defn- allocate-application-ids! [time]
   {:application/id (:id (db/create-application!))
    :application/external-id (application-external-id! time)})
-
-(declare db-injections)
-(defn create-application! [user-id catalogue-item-ids]
-  (let [event (commands/application-created-event! {:catalogue-item-ids catalogue-item-ids
-                                                    :time (time/now)
-                                                    :actor user-id}
-                                                   db-injections)]
-    (events/add-event! event)
-    {:success true
-     :application-id (:application/id event)}))
 
 ;;; Running commands
 
@@ -86,7 +76,6 @@
    :allocate-application-ids! allocate-application-ids!})
 
 (declare get-unrestricted-application)
-
 (defn command! [cmd]
   ;; Use locks to prevent multiple commands being executed in parallel.
   ;; Serializable isolation level will already avoid anomalies, but produces
@@ -106,7 +95,7 @@
 
 ;;; Fetching applications (for API) (incl. caching)
 
-(def ^:private injections
+(def ^:private fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template form/get-form-template
    :get-catalogue-item catalogue/get-localized-catalogue-item
@@ -126,7 +115,7 @@
   [application-id]
   (let [events (events/get-application-events application-id)
         cache-key [application-id (count events)]
-        build-app (fn [_] (model/build-application-view events injections))]
+        build-app (fn [_] (model/build-application-view events fetcher-injections))]
     (if (empty? events)
       nil ; application not found
       ;; TODO: this caching could be removed by refactoring the pollers to build their own projection
@@ -227,7 +216,7 @@
            ;; TODO: batched injections: only one DB query to fetch all catalogue items etc.
            ;;       - fetch all items in the background as a batch, use plain maps as injections
            ;;       - change db/get-license and db/get-user-attributes to fetch all rows if ID is not defined
-           cached-injections (map-vals memoize injections)
+           cached-injections (map-vals memoize fetcher-injections)
            enriched-apps (->> (select-keys raw-apps updated-app-ids)
                               (map-vals #(model/enrich-with-injections % cached-injections))
                               (merge (::enriched-apps state)))]

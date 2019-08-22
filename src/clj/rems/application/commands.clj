@@ -258,8 +258,8 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
-(defn application-created-event! [{:keys [catalogue-item-ids time actor]}
-                                  {:keys [allocate-application-ids! get-catalogue-item get-catalogue-item-licenses get-workflow]}]
+(defn- application-created-event! [{:keys [catalogue-item-ids time actor]}
+                                   {:keys [allocate-application-ids! get-catalogue-item get-catalogue-item-licenses get-workflow]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [items (map (fn [id]
                      (let [item (get-catalogue-item id)]

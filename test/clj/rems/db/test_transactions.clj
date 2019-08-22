@@ -117,8 +117,11 @@
         (prn 'all-events-reader-results (count all-events-reader-results)))
 
       (testing "all commands succeeded"
-        (is (seq writer-results))
-        (is (every? nil? writer-results)) ; successful commands return nil
+        (is (seq writer-results)
+            "at least one result")
+        (is (every? #(= [:events] (keys %))
+                    writer-results)
+            "no errors")
         (is (= (count writer-results)
                (count writer-attempts))
             "should have no transaction conflicts"))

@@ -63,7 +63,8 @@
                        command)
         result (applications/command! command)]
     (assert (not (:errors result))
-            {:command command :result result})))
+            {:command command :result result})
+    result))
 
 (defn- transpose-localizations [m]
   (->> m
@@ -143,12 +144,11 @@
           (assert (:success result) {:command [id lang text] :result result}))))
     id))
 
-(defn create-application! [{:keys [catalogue-item-ids actor]
-                            :as command}]
-  (let [result (applications/create-application! actor
-                                                 (or catalogue-item-ids [(create-catalogue-item! {})]))]
-    (assert (:success result) {:command command :result result})
-    (:application-id result)))
+(defn create-application! [{:keys [catalogue-item-ids actor]}]
+  (:application-id (command! {:type :application.command/create
+                              :catalogue-item-ids (or catalogue-item-ids [(create-catalogue-item! {})])
+                              :time (time/now)
+                              :actor actor})))
 
 (defn- base-command [{:keys [application-id actor time]}]
   (assert application-id)
