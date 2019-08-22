@@ -258,8 +258,23 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
+(defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
+  (->> catalogue-item-ids
+       (mapv get-catalogue-item)
+       (mapv (fn [catalogue-item]
+               {:catalogue-item/id (:id catalogue-item)
+                :resource/ext-id (:resid catalogue-item)}))))
+
+(defn- build-licenses-list [catalogue-item-ids {:keys [get-catalogue-item-licenses]}]
+  (->> catalogue-item-ids
+       (mapcat get-catalogue-item-licenses)
+       distinct
+       (mapv (fn [license]
+               {:license/id (:id license)}))))
+
 (defn- application-created-event! [{:keys [catalogue-item-ids time actor]}
-                                   {:keys [allocate-application-ids! get-catalogue-item get-catalogue-item-licenses get-workflow]}]
+                                   {:keys [allocate-application-ids! get-catalogue-item get-workflow]
+                                    :as injections}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [items (map (fn [id]
                      (let [item (get-catalogue-item id)]
@@ -279,16 +294,8 @@
      :event/actor actor
      :application/id (:application/id ids)
      :application/external-id (:application/external-id ids)
-     :application/resources (map (fn [item]
-                                   {:catalogue-item/id (:id item)
-                                    :resource/ext-id (:resid item)})
-                                 items)
-     ;; TODO: duplicated in command-handler :application.command/change-resources
-     :application/licenses (->> catalogue-item-ids
-                                (mapcat get-catalogue-item-licenses)
-                                distinct
-                                (mapv (fn [license]
-                                        {:license/id (:id license)})))
+     :application/resources (build-resources-list catalogue-item-ids injections)
+     :application/licenses (build-licenses-list catalogue-item-ids injections)
      :form/id form-id
      :workflow/id workflow-id
      :workflow/type workflow-type}))
@@ -411,16 +418,8 @@
       (changes-original-form application (:catalogue-item-ids cmd) (:actor cmd) injections)
       (changes-original-workflow application (:catalogue-item-ids cmd) (:actor cmd) injections)
       (ok (merge {:event/type :application.event/resources-changed
-                  :application/resources (->> (:catalogue-item-ids cmd)
-                                              (mapv (:get-catalogue-item injections))
-                                              (mapv (fn [catalogue-item]
-                                                      {:catalogue-item/id (:id catalogue-item)
-                                                       :resource/ext-id (:resid catalogue-item)})))
-                  :application/licenses (->> (:catalogue-item-ids cmd)
-                                             (mapcat (:get-catalogue-item-licenses injections))
-                                             distinct
-                                             (mapv (fn [license]
-                                                     {:license/id (:id license)})))}
+                  :application/resources (build-resources-list (:catalogue-item-ids cmd) injections)
+                  :application/licenses (build-licenses-list (:catalogue-item-ids cmd) injections)}
                  (when (:comment cmd)
                    {:application/comment (:comment cmd)})))))
 
