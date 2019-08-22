@@ -302,9 +302,13 @@
 
 (defmethod command-handler :application.command/create
   [cmd application injections]
-  (let [event (application-created-event! cmd injections)]
-    (ok-with-data {:application-id (:application/id event)}
-                  [event])))
+  ;; XXX: handle-command will execute this method even when the permission for it is missing,
+  ;;      so we need to guard against that to avoid the mutative operation of allocating
+  ;;      new application IDs when the application already exists.
+  (when (nil? application)
+    (let [event (application-created-event! cmd injections)]
+      (ok-with-data {:application-id (:application/id event)}
+                    [event]))))
 
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]

@@ -174,7 +174,20 @@
                               (fail-command nil {:type :application.command/create
                                                  :actor applicant-user-id
                                                  :catalogue-item-ids [cat-id cat-id2]}
-                                            injections)))))))
+                                            injections)))))
+
+    (testing "cannot execute the create command for an existing application"
+      (let [allocated-new-ids? (atom false)
+            injections (assoc injections :allocate-application-ids! (fn [_]
+                                                                      (reset! allocated-new-ids? true)))
+            application (apply-events nil [dummy-created-event])]
+        (is (= {:errors [{:type :forbidden}]}
+               (fail-command application {:type :application.command/create
+                                          :actor applicant-user-id
+                                          :catalogue-item-ids [cat-id]}
+                             injections)))
+        (is (false? @allocated-new-ids?)
+            "should not allocate new IDs")))))
 
 (deftest test-save-draft
   (let [application (apply-events nil [dummy-created-event])]
