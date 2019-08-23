@@ -48,7 +48,7 @@
 (defn- format-external-id [{:keys [prefix suffix]}]
   (str prefix "/" suffix))
 
-(defn application-external-id! [time]
+(defn- application-external-id! [time]
   (let [id-prefix (str (.getYear time))]
     (format-external-id (allocate-external-id! id-prefix))))
 

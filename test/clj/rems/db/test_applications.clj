@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]
-            [rems.db.applications :as applications :refer [application-external-id!]]
+            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
             [rems.db.test-data :as test-data]
@@ -68,11 +68,12 @@
                (map :id (applications/get-catalogue-item-licenses cat-id))))))))
 
 (deftest test-application-external-id!
-  (is (= [] (db/get-external-ids {:prefix "1981"})))
-  (is (= [] (db/get-external-ids {:prefix "1980"})))
-  (is (= "1981/1" (application-external-id! (DateTime. #inst "1981-03-02"))))
-  (is (= "1981/2" (application-external-id! (DateTime. #inst "1981-01-01"))))
-  (is (= "1981/3" (application-external-id! (DateTime. #inst "1981-04-03"))))
-  (is (= "1980/1" (application-external-id! (DateTime. #inst "1980-12-12"))))
-  (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
-  (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01")))))
+  (let [application-external-id! @#'applications/application-external-id!]
+    (is (= [] (db/get-external-ids {:prefix "1981"})))
+    (is (= [] (db/get-external-ids {:prefix "1980"})))
+    (is (= "1981/1" (application-external-id! (DateTime. #inst "1981-03-02"))))
+    (is (= "1981/2" (application-external-id! (DateTime. #inst "1981-01-01"))))
+    (is (= "1981/3" (application-external-id! (DateTime. #inst "1981-04-03"))))
+    (is (= "1980/1" (application-external-id! (DateTime. #inst "1980-12-12"))))
+    (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
+    (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01"))))))
