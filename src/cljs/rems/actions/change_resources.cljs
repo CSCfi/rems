@@ -59,12 +59,12 @@
        (= original-form-id (:formid item))))
 
 (defn change-resources-view
-  [{:keys [application initial-resources selected-resources full-catalogue catalogue comment can-comment? default-language language on-set-comment on-set-resources on-send]}]
+  [{:keys [application initial-resources selected-resources full-catalogue catalogue comment can-comment? language on-set-comment on-set-resources on-send]}]
   (let [original-form-id (get-in application [:application/form :form/id])
         original-workflow-id (get-in application [:application/workflow :workflow/id])
         compatible-first-sort-fn #(if (compatible-item? % original-workflow-id original-form-id) -1 1)
         sorted-selected-catalogue (->> catalogue
-                                       (sort-by #(get-localized-title % language default-language))
+                                       (sort-by #(get-localized-title % language))
                                        (sort-by compatible-first-sort-fn))]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
@@ -93,7 +93,7 @@
            :items sorted-selected-catalogue
            :item-disabled? #(not (compatible-item? % original-workflow-id original-form-id))
            :item-key :id
-           :item-label #(get-localized-title % language default-language)
+           :item-label #(get-localized-title % language)
            :item-selected? #(contains? (set selected-resources) (% :id))
            :multi? true
            :on-change on-set-resources}]]
@@ -105,8 +105,7 @@
         full-catalogue @(rf/subscribe [:rems.catalogue/full-catalogue])
         catalogue @(rf/subscribe [:rems.catalogue/catalogue])
         comment @(rf/subscribe [::comment])
-        language @(rf/subscribe [:language])
-        default-language @(rf/subscribe [:default-language])]
+        language @(rf/subscribe [:language])]
     [change-resources-view {:application application
                             :initial-resources initial-resources
                             :selected-resources selected-resources
@@ -114,7 +113,6 @@
                             :catalogue catalogue
                             :comment comment
                             :can-comment? can-comment?
-                            :default-language default-language
                             :language language
                             :on-set-comment #(rf/dispatch [::set-comment %])
                             :on-set-resources #(rf/dispatch [::set-selected-resources %])

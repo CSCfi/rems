@@ -67,12 +67,11 @@
  ::licenses-table-rows
  (fn [_ _]
    [(rf/subscribe [::licenses])
-    (rf/subscribe [:language])
-    (rf/subscribe [:default-langauge])])
- (fn [[licenses language default-language] _]
+    (rf/subscribe [:language])])
+ (fn [[licenses language] _]
    (map (fn [license]
           {:key (:id license)
-           :title {:value (get-localized-title license language default-language)} ; XXX: not really catalogue item, but the structure is the same
+           :title {:value (get-localized-title license language)} ; XXX: not really catalogue item, but the structure is the same
            :type {:value (:licensetype license)}
            :start (let [value (:start license)]
                     {:value value

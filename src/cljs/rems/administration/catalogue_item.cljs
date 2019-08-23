@@ -36,11 +36,11 @@
    "/#/administration/catalogue-items"
    (text :t.administration/back)])
 
-(defn catalogue-item-view [catalogue-item language default-language]
+(defn catalogue-item-view [catalogue-item language]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "catalogue-item"
-     :title [:span (get-localized-title catalogue-item language default-language)]
+     :title [:span (get-localized-title catalogue-item language)]
      :always (into [:div]
                    (concat
                     (for [[langcode localization] (:localizations catalogue-item)]
@@ -67,7 +67,6 @@
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])
-        default-language (rf/subscribe [:default-language])
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     (fn []
@@ -76,4 +75,4 @@
        [document-title (text :t.administration/catalogue-item)]
        (if @loading?
          [spinner/big]
-         [catalogue-item-view @catalogue-item @language @default-language])])))
+         [catalogue-item-view @catalogue-item @language])])))

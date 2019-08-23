@@ -84,15 +84,14 @@
  ::catalogue-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue])
-    (rf/subscribe [:language])
-    (rf/subscribe [:default-language])])
- (fn [[catalogue language default-language] _]
+    (rf/subscribe [:language])])
+ (fn [[catalogue language] _]
    (map (fn [item]
           {:key (:id item)
-           :name {:value (get-localized-title item language default-language)}
+           :name {:value (get-localized-title item language)}
            :commands {:td [:td.commands
                            [catalogue-item-more-info item {}]
-                           [cart/add-to-cart-button item language default-language]]}})
+                           [cart/add-to-cart-button item language]]}})
         catalogue)))
 
 (defn draft-application-list []

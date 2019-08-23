@@ -41,23 +41,20 @@
                  (.error js/console e)
                  (str (vec ks)))))))
 
-;; TODO: Fall back to default language first, similar to get-localized-item.
 (defn localized [m]
   (let [lang #?(:clj context/*lang*
                 :cljs @(rf/subscribe [:language]))]
     (or (get m lang)
+        ;; TODO: After all non-localized titles have been removed and guaranteed
+        ;;   that the localizations exist for all languages, this :default
+        ;;   fallback can be removed.
         (get m :default)
         (first (vals m)))))
 
 ;; TODO: replace usages of `get-localized-title` with `localized`
-;;
-;; TODO: remove fallback that fetches :title from item: localizations
-;;;  could be forced to always have the title in either the language of
-;;   choice or the default language.
 (defn get-localized-title [item language default-language]
   (or (get-in item [:localizations language :title])
-      (get-in item [:localizations default-language :title])
-      (:title item)))
+      (:title (first (vals (get item :localizations))))))
 
 (def ^:private states
   {:application.state/draft :t.applications.states/draft

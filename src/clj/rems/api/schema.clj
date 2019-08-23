@@ -18,9 +18,9 @@
    :enabled s/Bool
    :archived s/Bool
    :expired s/Bool
-   :localizations (s/maybe {s/Keyword {:id s/Int
-                                       :langcode s/Keyword
-                                       :title s/Str}})})
+   :localizations {s/Keyword {:id s/Int
+                              :langcode s/Keyword
+                              :title s/Str}}})
 
 (s/defschema License
   {:id s/Int
