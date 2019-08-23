@@ -146,34 +146,38 @@
                          injections))))
 
     (testing "error: zero catalogue items"
-      (is (thrown-with-msg? AssertionError #"catalogue item not specified"
-                            (fail-command nil {:type :application.command/create
-                                               :actor applicant-user-id
-                                               :catalogue-item-ids []}
-                                          injections))))
+      (is (= {:errors [{:type :must-not-be-empty
+                        :key :catalogue-item-ids}]}
+             (fail-command nil {:type :application.command/create
+                                :actor applicant-user-id
+                                :catalogue-item-ids []}
+                           injections))))
 
     (testing "error: non-existing catalogue items"
-      (is (thrown-with-msg? AssertionError #"catalogue item 999999 not found"
-                            (fail-command nil {:type :application.command/create
-                                               :actor applicant-user-id
-                                               :catalogue-item-ids [999999]}
-                                          injections))))
+      (is (= {:errors [{:type :invalid-catalogue-item
+                        :catalogue-item-id 999999}]}
+             (fail-command nil {:type :application.command/create
+                                :actor applicant-user-id
+                                :catalogue-item-ids [999999]}
+                           injections))))
 
     (testing "error: catalogue items with different forms"
       (let [injections (assoc-in injections [:get-catalogue-item cat-id2 :formid] 666)]
-        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
-                              (fail-command nil {:type :application.command/create
-                                                 :actor applicant-user-id
-                                                 :catalogue-item-ids [cat-id cat-id2]}
-                                            injections)))))
+        (is (= {:errors [{:type :unbundlable-catalogue-items
+                          :catalogue-item-ids [10 20]}]}
+               (fail-command nil {:type :application.command/create
+                                  :actor applicant-user-id
+                                  :catalogue-item-ids [cat-id cat-id2]}
+                             injections)))))
 
     (testing "error: catalogue items with different workflows"
       (let [injections (assoc-in injections [:get-catalogue-item cat-id2 :wfid] 666)]
-        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
-                              (fail-command nil {:type :application.command/create
-                                                 :actor applicant-user-id
-                                                 :catalogue-item-ids [cat-id cat-id2]}
-                                            injections)))))
+        (is (= {:errors [{:type :unbundlable-catalogue-items
+                          :catalogue-item-ids [10 20]}]}
+               (fail-command nil {:type :application.command/create
+                                  :actor applicant-user-id
+                                  :catalogue-item-ids [cat-id cat-id2]}
+                             injections)))))
 
     (testing "cannot execute the create command for an existing application"
       (let [allocated-new-ids? (atom false)
