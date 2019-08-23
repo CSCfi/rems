@@ -179,20 +179,20 @@
   (is (= (set (keys command-schemas))
          (set (keys (methods command-handler))))))
 
-(defn- invalid-user-error [user-id injections]
+(defn- invalid-user-error [user-id {:keys [valid-user?]}]
   (cond
-    (not (:valid-user? injections)) {:errors [{:type :missing-injection :injection :valid-user?}]}
-    (not ((:valid-user? injections) user-id)) {:errors [{:type :t.form.validation/invalid-user :userid user-id}]}))
+    (not valid-user?) {:errors [{:type :missing-injection :injection :valid-user?}]}
+    (not (valid-user? user-id)) {:errors [{:type :t.form.validation/invalid-user :userid user-id}]}))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
   [user-ids injections]
   (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
-(defn- invalid-catalogue-item-error [catalogue-item-id injections]
+(defn- invalid-catalogue-item-error [catalogue-item-id {:keys [get-catalogue-item]}]
   (cond
-    (not (:get-catalogue-item injections)) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
-    (not ((:get-catalogue-item injections) catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
+    (not get-catalogue-item) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
+    (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
 (defn- invalid-catalogue-items
   "Checks the given catalogue items for validity and merges the errors"
@@ -201,8 +201,8 @@
 
 (defn- changes-original-workflow
   "Checks that the given catalogue items are compatible with the original application from where the workflow is from. Applicant can't do it."
-  [application catalogue-item-ids actor injections]
-  (let [catalogue-items (map (:get-catalogue-item injections) catalogue-item-ids)
+  [application catalogue-item-ids actor {:keys [get-catalogue-item]}]
+  (let [catalogue-items (map get-catalogue-item catalogue-item-ids)
         original-workflow-id (get-in application [:application/workflow :workflow/id])
         new-workflow-ids (mapv :wfid catalogue-items)
         handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
@@ -212,8 +212,8 @@
 
 (defn- changes-original-form
   "Checks that the given catalogue items are compatible with the original application from where the form is from. Applicant can't do it."
-  [application catalogue-item-ids actor injections]
-  (let [catalogue-items (map (:get-catalogue-item injections) catalogue-item-ids)
+  [application catalogue-item-ids actor {:keys [get-catalogue-item]}]
+  (let [catalogue-items (map get-catalogue-item catalogue-item-ids)
         original-form-id (get-in application [:application/form :form/id])
         new-form-ids (mapv :formid catalogue-items)
         handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
@@ -223,8 +223,8 @@
 
 (defn- unbundlable-catalogue-items
   "Checks that the given catalogue items are bundlable by the given actor."
-  [application catalogue-item-ids actor injections]
-  (let [catalogue-items (map (:get-catalogue-item injections) catalogue-item-ids)
+  [application catalogue-item-ids actor {:keys [get-catalogue-item]}]
+  (let [catalogue-items (map get-catalogue-item catalogue-item-ids)
         handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
     (when (and (not (contains? handlers actor))
                (not= 1
@@ -435,13 +435,13 @@
            :application/member (:member cmd)})))
 
 (defmethod command-handler :application.command/invite-member
-  [cmd _application injections]
+  [cmd _application {:keys [secure-token]}]
   (ok {:event/type :application.event/member-invited
        :application/member (:member cmd)
-       :invitation/token ((getx injections :secure-token))}))
+       :invitation/token (secure-token)}))
 
 (defmethod command-handler :application.command/accept-invitation
-  [cmd application injections]
+  [cmd application _injections]
   (or (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
       (ok-with-data {:application-id (:application-id cmd)}
