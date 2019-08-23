@@ -8,6 +8,11 @@ have notable changes.
 
 Changes since v2.4
 
+### Breaking changes
+- `:application/external-id` has been made a non-optional field in the
+  API and event schemas. All applications should already have an external ID
+  since the previous release, so no database migration should be needed. 
+
 ### Additions
 - New field types: description, option, multiselect
 - Setting maximum length for a form field

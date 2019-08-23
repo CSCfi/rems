@@ -3,15 +3,16 @@
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]
-            [rems.db.applications :refer [application-created-event application-external-id!]]
+            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.events :as db-events]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.util :refer [try-catch-ex]]
             [schema-generators.generators :as sg])
-  (:import (org.joda.time DateTime DateTimeZone)
-           (clojure.lang ExceptionInfo)))
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]
+           [org.joda.time DateTime DateTimeZone]))
 
 (use-fixtures
   :once
@@ -42,144 +43,37 @@
           json (db-events/event->json event)]
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
 
-(deftest test-application-created-event
-  (let [wf-id (test-data/create-dynamic-workflow! {})
-        form-id (test-data/create-form! {})
-        res-id (test-data/create-resource! {:resource-ext-id "res1"})
-        cat-id (test-data/create-catalogue-item! {:resource-id res-id
-                                                  :form-id form-id
-                                                  :workflow-id wf-id})]
-
-    (testing "minimal application"
-      (is (= {:event/type :application.event/created
-              :event/actor "alice"
-              :event/time (DateTime. 1000)
-              :application/id 42
-              :application/external-id "1970/1"
-              :application/resources [{:catalogue-item/id cat-id
-                                       :resource/ext-id "res1"}]
-              :application/licenses []
-              :form/id form-id
-              :workflow/id wf-id
-              :workflow/type :workflow/dynamic}
-             (application-created-event {:application-id 42
-                                         :catalogue-item-ids [cat-id]
-                                         :time (DateTime. 1000)
-                                         :actor "alice"}))))
-
-    (testing "multiple resources"
-      (let [res-id2 (test-data/create-resource! {:resource-ext-id "res2"})
-            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
-                                                       :form-id form-id
-                                                       :workflow-id wf-id})]
-        (is (= {:event/type :application.event/created
-                :event/actor "alice"
-                :event/time (DateTime. 1000)
-                :application/id 42
-                :application/external-id "1970/2"
-                :application/resources [{:catalogue-item/id cat-id
-                                         :resource/ext-id "res1"}
-                                        {:catalogue-item/id cat-id2
-                                         :resource/ext-id "res2"}]
-                :application/licenses []
-                :form/id form-id
-                :workflow/id wf-id
-                :workflow/type :workflow/dynamic}
-               (application-created-event {:application-id 42
-                                           :catalogue-item-ids [cat-id cat-id2]
-                                           :time (DateTime. 1000)
-                                           :actor "alice"})))))
-
-    (testing "error: zero catalogue items"
-      (is (thrown-with-msg? AssertionError #"catalogue item not specified"
-                            (application-created-event {:application-id 42
-                                                        :catalogue-item-ids []
-                                                        :time (DateTime. 1000)
-                                                        :actor "alice"}))))
-
-    (testing "error: non-existing catalogue items"
-      (is (thrown-with-msg? AssertionError #"catalogue item not found"
-                            (application-created-event {:application-id 42
-                                                        :catalogue-item-ids [999999]
-                                                        :time (DateTime. 1000)
-                                                        :actor "alice"}))))
-
-    (testing "error: catalogue items with different forms"
-      (let [form-id2 (test-data/create-form! {})
-            res-id2 (test-data/create-resource! {:resource-ext-id "res2+"})
-            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
-                                                       :form-id form-id2
-                                                       :workflow-id wf-id})]
-        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
-                              (application-created-event {:application-id 42
-                                                          :catalogue-item-ids [cat-id cat-id2]
-                                                          :time (DateTime. 1000)
-                                                          :actor "alice"})))))
-
-    (testing "error: catalogue items with different workflows"
-      (let [wf-id2 (test-data/create-dynamic-workflow! {})
-            res-id2 (test-data/create-resource! {:resource-ext-id "res2++"})
-            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
-                                                       :form-id form-id
-                                                       :workflow-id wf-id2})]
-        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
-                              (application-created-event {:application-id 42
-                                                          :catalogue-item-ids [cat-id cat-id2]
-                                                          :time (DateTime. 1000)
-                                                          :actor "alice"})))))
-
+(deftest test-get-catalogue-item-licenses
+  (let [form-id (test-data/create-form! {})]
     (testing "resource licenses"
       (let [lic-id (test-data/create-license! {})
-            res-id2 (test-data/create-resource! {:resource-ext-id "res2+++"
-                                                 :license-ids [lic-id]})
-            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id2
-                                                       :form-id form-id
-                                                       :workflow-id wf-id})]
-        (is (= {:event/type :application.event/created
-                :event/actor "alice"
-                :event/time (DateTime. 1000)
-                :application/id 42
-                :application/external-id "1970/3"
-                :application/resources [{:catalogue-item/id cat-id2
-                                         :resource/ext-id "res2+++"}]
-                :application/licenses [{:license/id lic-id}]
-                :form/id form-id
-                :workflow/id wf-id
-                :workflow/type :workflow/dynamic}
-               (application-created-event {:application-id 42
-                                           :catalogue-item-ids [cat-id2]
-                                           :time (DateTime. 1000)
-                                           :actor "alice"})))))
+            wf-id (test-data/create-dynamic-workflow! {})
+            res-id (test-data/create-resource! {:resource-ext-id (str (UUID/randomUUID))
+                                                :license-ids [lic-id]})
+            cat-id (test-data/create-catalogue-item! {:resource-id res-id
+                                                      :form-id form-id
+                                                      :workflow-id wf-id})]
+        (is (= [lic-id]
+               (map :id (applications/get-catalogue-item-licenses cat-id))))))
 
     (testing "workflow licenses"
       (let [lic-id (test-data/create-license! {})
-            wf-id2 (test-data/create-dynamic-workflow! {})
-            _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id})
-            cat-id2 (test-data/create-catalogue-item! {:resource-id res-id
-                                                       :form-id form-id
-                                                       :workflow-id wf-id2})]
-        (is (= {:event/type :application.event/created
-                :event/actor "alice"
-                :event/time (DateTime. 1000)
-                :application/id 42
-                :application/external-id "1970/4"
-                :application/resources [{:catalogue-item/id cat-id2
-                                         :resource/ext-id "res1"}]
-                :application/licenses [{:license/id lic-id}]
-                :form/id form-id
-                :workflow/id wf-id2
-                :workflow/type :workflow/dynamic}
-               (application-created-event {:application-id 42
-                                           :catalogue-item-ids [cat-id2]
-                                           :time (DateTime. 1000)
-                                           :actor "alice"})))))))
+            wf-id (test-data/create-dynamic-workflow! {})
+            _ (db/create-workflow-license! {:wfid wf-id :licid lic-id})
+            res-id (test-data/create-resource! {:resource-ext-id (str (UUID/randomUUID))})
+            cat-id (test-data/create-catalogue-item! {:resource-id res-id
+                                                      :form-id form-id
+                                                      :workflow-id wf-id})]
+        (is (= [lic-id]
+               (map :id (applications/get-catalogue-item-licenses cat-id))))))))
 
 (deftest test-application-external-id!
-  (is (= [] (db/get-external-ids {:prefix "1981"})))
-  (is (= [] (db/get-external-ids {:prefix "1980"})))
-  (is (= "1981/1" (application-external-id! (DateTime. #inst "1981-03-02"))))
-  (is (= "1981/2" (application-external-id! (DateTime. #inst "1981-01-01"))))
-  (is (= "1981/3" (application-external-id! (DateTime. #inst "1981-04-03"))))
-  (is (= "1980/1" (application-external-id! (DateTime. #inst "1980-12-12"))))
-  (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
-  (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01")))))
+  (let [application-external-id! @#'applications/application-external-id!]
+    (is (= [] (db/get-external-ids {:prefix "1981"})))
+    (is (= [] (db/get-external-ids {:prefix "1980"})))
+    (is (= "1981/1" (application-external-id! (DateTime. #inst "1981-03-02"))))
+    (is (= "1981/2" (application-external-id! (DateTime. #inst "1981-01-01"))))
+    (is (= "1981/3" (application-external-id! (DateTime. #inst "1981-04-03"))))
+    (is (= "1980/1" (application-external-id! (DateTime. #inst "1980-12-12"))))
+    (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
+    (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01"))))))
