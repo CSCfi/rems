@@ -66,7 +66,7 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(def ^:private db-injections
+(def ^:private command-injections
   {:valid-user? valid-user?
    :validate-fields form-validation/validate-fields
    :secure-token secure-token
@@ -84,7 +84,7 @@
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
   (let [app (when-let [app-id (:application-id cmd)]
               (get-unrestricted-application app-id))
-        result (commands/handle-command cmd app db-injections)]
+        result (commands/handle-command cmd app command-injections)]
     (if (not (:errors result))
       (doseq [event (:events result)]
         (events/add-event! event)))
