@@ -100,6 +100,10 @@
 (mount/defstate application-cache
   :start (atom (cache/ttl-cache-factory {} :ttl 10000)))
 
+;; TODO combine with reload-cache!?
+(defn- reset-application-cache! []
+  (swap! application-cache empty))
+
 (defn get-unrestricted-application
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
@@ -240,6 +244,7 @@
 
 (defn reload-cache! []
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
+  (reset-application-cache!)
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!))
 
