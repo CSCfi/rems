@@ -82,7 +82,7 @@
       (let [resp (update-resource! {:enabled true :archived true})]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/resource-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations nil}]}]
+                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
                (:errors resp)))))
 
     (testing "can disable a form"
@@ -92,7 +92,7 @@
       (let [resp (update-form! {:enabled true :archived true})]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations nil}]}]
+                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
                (:errors resp)))))
 
     (testing "can disable a workflow"
@@ -102,7 +102,7 @@
       (let [resp (update-workflow! {:enabled true :archived true})]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/workflow-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations nil}]}]
+                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
                (:errors resp)))))
 
     (testing "can disable a license"

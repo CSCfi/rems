@@ -52,7 +52,7 @@
         (first (vals m)))))
 
 ;; TODO: replace usages of `get-localized-title` with `localized`
-(defn get-localized-title [item language default-language]
+(defn get-localized-title [item language]
   (or (get-in item [:localizations language :title])
       (:title (first (vals (get item :localizations))))))
 
