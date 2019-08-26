@@ -28,10 +28,14 @@
                                                           :email "user@example.com"}]}}})
 (def ^:private dummy-forms {1 {}})
 
+(defn- dummy-get-catalogue-item [id]
+  {:enabled true :archived false :expired false
+   :id id :wfid 1 :formid 1})
+
 (def ^:private injections
   {:get-workflow dummy-workflows
    :get-form-template dummy-forms
-   :get-catalogue-item (constantly nil)
+   :get-catalogue-item dummy-get-catalogue-item
    :get-license (constantly nil)
    :get-user (constantly nil)
    :get-users-with-role (constantly nil)
@@ -510,6 +514,11 @@
              (-> application
                  (apply-events [(assoc-in draft-saved-event [:application/field-values 41] "")])
                  (fail-command submit-command injections)))))
+
+    (testing "cannot submit if catalogue item is disabled"
+      (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
+        (is (= {:errors [{:type :disabled-catalogue-item, :catalogue-item-id 20}]}
+               (fail-command disabled submit-command injections)))))
 
     (testing "non-applicant cannot submit"
       (is (= {:errors [{:type :forbidden}]}

@@ -198,6 +198,15 @@
     (not get-catalogue-item) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
     (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
+(defn- disabled-catalogue-items-error [application {:keys [get-catalogue-item]}]
+  (let [errors (for [item (:application/resources application)
+                     :when (or (not (getx item :catalogue-item/enabled))
+                               (getx item :catalogue-item/archived)
+                               (getx item :catalogue-item/expired))]
+        {:type :disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
+    (when (not (empty? errors))
+      {:errors (vec errors)})))
+
 (defn- invalid-catalogue-items
   "Checks the given catalogue items for validity and merges the errors"
   [catalogue-item-ids injections]
@@ -332,6 +341,7 @@
 (defmethod command-handler :application.command/submit
   [_cmd application injections]
   (or (validation-error application injections)
+      (disabled-catalogue-items-error application injections)
       (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler :application.command/approve
