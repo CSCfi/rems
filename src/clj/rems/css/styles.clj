@@ -310,7 +310,6 @@
                     ;; See https://stackoverflow.com/questions/4086107/fixed-page-header-overlaps-in-page-anchors
                     :padding-top (u/px 212)
                     :margin-top (u/px -212)}]
-   [:#main-content.page-create-form {:max-width :unset}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
            :font-weight (button-navbar-font-weight)
@@ -580,6 +579,7 @@
    [:.remove-workflow-round {:float "right"}]
 
    ;; form editor
+   [:#main-content.page-create-form {:max-width :unset}]
    [:.form-field dashed-form-group]
    [:.form-field-header {:margin-bottom (u/rem 0.5)}
     [:h4 {:display "inline"
@@ -662,9 +662,12 @@
                                  (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
 
-   ;; float application action buttons
+   ;; application page
+   ;; working around garden minifier bug that causes 1800.0px to lose the px (1800px works fine)
+   ;; https://github.com/noprompt/garden/issues/120
+   [:#main-content.page-application {:max-width (u/px (int (* 1.5 (:magnitude content-width))))}]
    [:#float-actions {:position :sticky
-                     :bottom "0px"}]
+                     :top "100px"}]
 
    ;; application list
    [:.rems-table

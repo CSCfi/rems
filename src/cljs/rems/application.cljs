@@ -644,16 +644,19 @@
                             [flash-message
                              {:status :danger
                               :contents [format-validation-errors application errors]}])])]
-    [:div
-     [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-     (text :t.applications/intro)
-     (into [:div] messages)
-     [application-state application config]
-     [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources application userid]]
-     [:div.my-3 [application-licenses application edit-application userid]]
-     [:div.my-3 [application-fields application edit-application]]
-     [:div#float-actions.mb-3 [actions-form application]]]))
+    [:div.container-fluid.editor-content
+     [:div.row
+      [:div.col-lg-8
+       [document-title (str (text :t.applications/application) " " (format-application-id config application))]
+       (text :t.applications/intro)
+       (into [:div] messages)
+       [application-state application config]
+       [:div.mt-3 [applicants-info application]]
+       [:div.mt-3 [applied-resources application userid]]
+       [:div.my-3 [application-licenses application edit-application userid]]
+       [:div.my-3 [application-fields application edit-application]]]
+      [:div.col-lg-4
+       [:div#float-actions.mb-3 [actions-form application]]]]]))
 
 ;;;; Entrypoint
 
