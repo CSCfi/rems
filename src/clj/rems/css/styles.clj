@@ -662,6 +662,10 @@
                                  (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 3) 0 (u/rem 1) 0]]}]
 
+   ;; float application action buttons
+   [:#float-actions {:position :sticky
+                     :bottom "0px"}]
+
    ;; application list
    [:.rems-table
     [:.application-description

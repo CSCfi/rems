@@ -653,7 +653,7 @@
      [:div.mt-3 [applied-resources application userid]]
      [:div.my-3 [application-licenses application edit-application userid]]
      [:div.my-3 [application-fields application edit-application]]
-     [:div.mb-3 [actions-form application]]]))
+     [:div#float-actions.mb-3 [actions-form application]]]))
 
 ;;;; Entrypoint
 
