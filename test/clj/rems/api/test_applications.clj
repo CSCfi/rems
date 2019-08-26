@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-applications
   (:require [clojure.test :refer :all]
+            [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
             [rems.db.form :as form]
             [rems.db.test-data :as test-data]
@@ -431,6 +432,33 @@
                                   :comment ""})))
     (is (= "application.state/closed"
            (:application/state (get-application application-id user-id))))))
+
+(deftest test-application-submit
+  (let [user-id "alice"
+        form-id (test-data/create-form! {})
+        cat-id (test-data/create-catalogue-item! {:form-id form-id})
+        app-id (test-data/create-application! {:catalogue-item-ds [cat-id] :actor user-id})]
+    (testing "submit with disabled catalogue item fails"
+      (is (:success (catalogue/update-catalogue-item! {:id cat-id
+                                                       :enabled false
+                                                       :archived false})))
+      (is (= {:success false}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
+    (testing "submit with archived catalogue item fails"
+      (is (:success (catalogue/update-catalogue-item! {:id cat-id
+                                                       :enabled true
+                                                       :archived true})))
+      (is (= {:success false}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
+    (testing "submit with normal catalogue item succeeds"
+      (is (:success (catalogue/update-catalogue-item! {:id cat-id
+                                                       :enabled true
+                                                       :archived false})))
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))))
 
 (deftest test-application-validation
   (let [user-id "alice"
