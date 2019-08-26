@@ -157,7 +157,7 @@
 
                  :plugins [[lein-ancient "0.6.15"]
                            [lein-doo "0.1.11"]
-                           [lein-figwheel "0.5.18"]]
+                           [lein-figwheel "0.5.19"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf"] ; needed by clj-memory-meter on Java 9+
