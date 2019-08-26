@@ -312,6 +312,8 @@
            :phase-rejected "Phase rejected:"
            :rejected "Rejected"}
   :search {:clear-search "Clear search"
+           :example-searches "Example searches"
+           :learn-more "Learn more"
            :search "Search"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"

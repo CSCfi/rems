@@ -68,7 +68,7 @@
   (let [input-value (r/atom "")
         input-element (atom nil)]
     (fn [{:keys [id on-search searching?]}]
-      [:div.search-field.mb-3
+      [:div.search-field
        [:label.mr-1 {:for id}
         (text :t.search/search)]
 
@@ -100,3 +100,15 @@
 
        (when searching?
          [spinner/small])])))
+
+(defn application-search-tips []
+  [:div.search-tips
+   (text :t.search/example-searches)
+   ": "
+   (->> ["supercalifra*" "+egg +bacon -spam" "id:\"2019/12\"" "applicant:\"alice@example.com\""]
+        (map (fn [example] [:tt.example-search example]))
+        (interpose ", ")
+        (into [:<>]))
+   " "
+   [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/search.md"}
+    (text :t.search/learn-more)]])

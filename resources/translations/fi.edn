@@ -310,6 +310,8 @@
            :phase-rejected "Vaihe hylätty:"
            :rejected "Hylätty"}
   :search {:clear-search "Tyhjennä hakuehdot"
+           :example-searches "Esimerkkihakuja"
+           :learn-more "Opi lisää"
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"

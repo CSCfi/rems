@@ -678,6 +678,11 @@
                     :align-items :center}
     [:label {:margin-bottom 0}] ; override the default from Bootstrap
     [:div.input-group {:width "17em"}]]
+   [:.search-tips {:font-size "0.9rem"
+                   :margin "0.4rem 0"}
+    [:.example-search {:background-color "#eef"
+                       :padding "0.2rem"
+                       :border-radius "0.25rem"}]]
 
    ;; !important is needed here, otherwise these attributes are overridden
    ;; by more specific styles by react-select.
