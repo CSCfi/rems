@@ -101,7 +101,7 @@
   :start (atom (cache/ttl-cache-factory {} :ttl 10000)))
 
 ;; TODO combine with reload-cache!?
-(defn reset-application-cache! []
+(defn- reset-application-cache! []
   (swap! application-cache empty))
 
 (defn get-unrestricted-application
@@ -244,6 +244,7 @@
 
 (defn reload-cache! []
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
+  (reset-application-cache!)
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!))
 

@@ -443,7 +443,7 @@
       (is (:success (catalogue/update-catalogue-item! {:id cat-id
                                                        :enabled false
                                                        :archived false})))
-      (rems.db.applications/reset-application-cache!)
+      (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (send-command user-id {:type :application.command/submit
@@ -452,7 +452,7 @@
       (is (:success (catalogue/update-catalogue-item! {:id cat-id
                                                        :enabled true
                                                        :archived true})))
-      (rems.db.applications/reset-application-cache!)
+      (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (send-command user-id {:type :application.command/submit
@@ -461,7 +461,7 @@
       (is (:success (catalogue/update-catalogue-item! {:id cat-id
                                                        :enabled true
                                                        :archived false})))
-      (rems.db.applications/reset-application-cache!)
+      (rems.db.applications/reload-cache!)
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
