@@ -61,6 +61,7 @@
                  [search/search-field {:id "todo-search"
                                        :on-search #(rf/dispatch [::todo-applications %])
                                        :searching? @(rf/subscribe [::todo-applications :searching?])}]
+                 [search/application-search-tips]
                  [application-list/component {:applications ::todo-applications
                                               :empty-message :t.actions/empty
                                               :hidden-columns #{:created}
@@ -74,6 +75,7 @@
                  [search/search-field {:id "handled-search"
                                        :on-search #(rf/dispatch [::handled-applications %])
                                        :searching? @(rf/subscribe [::handled-applications :searching?])}]
+                 [search/application-search-tips]
                  [application-list/component {:applications ::handled-applications
                                               :empty-message :t.actions/no-handled-yet
                                               :hidden-columns #{:created :submitted}
