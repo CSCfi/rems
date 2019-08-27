@@ -71,7 +71,7 @@
  (fn [[licenses language] _]
    (map (fn [license]
           {:key (:id license)
-           :title {:value (get-localized-title license language)} ; XXX: not really catalogue item, but the structure is the same
+           :title {:value (get-localized-title license language)}
            :type {:value (:licensetype license)}
            :start (let [value (:start license)]
                     {:value value

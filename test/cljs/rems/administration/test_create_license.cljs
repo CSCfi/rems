@@ -28,13 +28,9 @@
                                    :text "fi text"
                                    :attachment-filename "something_fi.pdf"
                                    :attachment-id 2}}}
-        default-language :en
         languages [:en :fi]]
     (testing "linked license"
-      (is (= {:title "en title"
-              :licensetype "link"
-              :textcontent "en link"
-              :attachment-id 1
+      (is (= {:licensetype "link"
               :localizations {:en {:title "en title"
                                    :textcontent "en link"
                                    :attachment-id 1}
@@ -42,13 +38,9 @@
                                    :textcontent "fi link"
                                    :attachment-id 2}}}
              (build-request (assoc-in form [:licensetype] "link")
-                            default-language
                             languages))))
     (testing "inline license"
-      (is (= {:title "en title"
-              :licensetype "text"
-              :textcontent "en text"
-              :attachment-id 1
+      (is (= {:licensetype "text"
               :localizations {:en {:title "en title"
                                    :textcontent "en text"
                                    :attachment-id 1}
@@ -56,14 +48,10 @@
                                    :textcontent "fi text"
                                    :attachment-id 2}}}
              (build-request (assoc-in form [:licensetype] "text")
-                            default-language
                             languages))))
 
     (testing "attachment license"
-      (is (= {:title "en title"
-              :licensetype "attachment"
-              :textcontent "something.pdf"
-              :attachment-id 1
+      (is (= {:licensetype "attachment"
               :localizations {:en {:title "en title"
                                    :textcontent "something.pdf"
                                    :attachment-id 1}
@@ -71,27 +59,20 @@
                                    :textcontent "something_fi.pdf"
                                    :attachment-id 2}}}
              (build-request (assoc-in form [:licensetype] "attachment")
-                            default-language
                             languages))))
     (testing "missing license type"
       (is (nil? (build-request (assoc-in form [:licensetype] nil)
-                               default-language
                                languages))))
     (testing "missing title"
       (is (nil? (build-request (assoc-in form [:localizations :en :title] "")
-                               default-language
                                languages)))
       (is (nil? (build-request (assoc-in form [:localizations :fi :title] "")
-                               default-language
                                languages))))
     (testing "missing license"
       (is (nil? (build-request (assoc-in form [:localizations :en :link] "")
-                               default-language
                                languages)))
       (is (nil? (build-request (assoc-in form [:localizations :fi :link] "")
-                               default-language
                                languages))))
     (testing "missing language"
       (is (nil? (build-request (update-in form [:localizations] dissoc :fi)
-                               default-language
                                languages))))))

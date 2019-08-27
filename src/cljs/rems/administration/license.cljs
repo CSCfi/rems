@@ -6,7 +6,7 @@
             [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text text-format]]
+            [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [dispatch! fetch]]))
 
 (rf/reg-event-fx
@@ -40,10 +40,9 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "license"
-     :title [:span (get-in license [:localizations language :title] (:title license))]
+     :title [:span (get-localized-title license language)]
      :always (into [:div]
                    (concat
-                    [[inline-info-field (text :t.administration/title) (:title license)]]
                     (for [[langcode localization] (:localizations license)]
                       [inline-info-field (str (text :t.administration/title)
                                               " (" (str/upper-case (name langcode)) ")")

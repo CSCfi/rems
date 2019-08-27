@@ -86,8 +86,6 @@
                         :license/keys [type title link text]
                         :as command}]
   (let [result (licenses/create-license! {:licensetype (name (or type :text))
-                                          :title ""
-                                          :textcontent ""
                                           :localizations
                                           (transpose-localizations {:title title
                                                                     :textcontent (merge link text)})}
@@ -216,8 +214,12 @@
     (form/update-form! {:id id :enabled true :archived true})))
 
 (defn- create-disabled-license! [owner]
-  (let [id (:id (db/create-license! {:modifieruserid owner :owneruserid owner
-                                     :title "expired license" :type "link" :textcontent "http://expired"}))]
+  (let [id (create-license! {:actor owner
+                             :license/type "link"
+                             :license/title {:en "Disabled license"
+                                             :fi "Käytöstä poistettu lisenssi"}
+                             :license/link {:en "http://disabled"
+                                            :fi "http://disabled"}})]
     (db/set-license-state! {:id id :enabled false :archived false})))
 
 (defn- create-basic-form!

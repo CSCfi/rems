@@ -7,7 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text text-format]]
+            [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [dispatch! fetch]]))
 
 (rf/reg-event-fx
@@ -37,25 +37,18 @@
    "/#/administration/resources"
    (text :t.administration/back)])
 
-(defn license-view [license language]
+;; XXX: Duplicates much of rems.administration.license/license-view. One
+;;      notable difference is that here the license text is only shown
+;;      in the current language.
+(defn- license-view [license language]
   (into [:div.form-item
-         [:h3 (text-format :t.administration/license-field (get-in license [:localizations language :title]))]
-         [inline-info-field (text :t.administration/title) (:title license)]]
+         [:h3 (text-format :t.administration/license-field (get-localized-title license language))]]
         (concat (for [[langcode localization] (:localizations license)]
                   [inline-info-field
                    (str (text :t.administration/title)
                         " (" (str/upper-case (name langcode)) ")")
                    (:title localization)])
-                [[inline-info-field (text :t.administration/type) (:licensetype license)]
-                 (case (:licensetype license)
-                   "link" [inline-info-field
-                           (text :t.create-license/external-link)
-                           [:a {:target :_blank :href (:textcontent license)}
-                            (:textcontent license) " " [external-link]]]
-                   "text" [inline-info-field
-                           (text :t.create-license/license-text)
-                           (:textcontent license)]
-                   nil)]
+                [[inline-info-field (text :t.administration/type) (:licensetype license)]]
                 (when (= "link" (:licensetype license))
                   (for [[langcode localization] (:localizations license)]
                     [inline-info-field
@@ -63,6 +56,11 @@
                           " (" (str/upper-case (name langcode)) ")")
                      [:a {:target :_blank :href (:textcontent localization)}
                       (:textcontent localization) " " [external-link]]]))
+                (when (= "text" (:licensetype license))
+                  (let [localization (get-in license [:localizations language])]
+                    (when (:textcontent localization)
+                      [[inline-info-field (text :t.create-license/license-text)
+                        (:textcontent localization)]])))
                 (when (= "attachment" (:licensetype license))
                   (for [[langcode localization] (:localizations license)]
                     (when (:attachment-id localization)
@@ -74,6 +72,7 @@
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                  [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
 
+;; XXX: Should probably be in rems.administration.license.
 (defn licenses-view [licenses language]
   [collapsible/component
    {:id "licenses"

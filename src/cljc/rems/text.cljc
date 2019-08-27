@@ -45,10 +45,6 @@
   (let [lang #?(:clj context/*lang*
                 :cljs @(rf/subscribe [:language]))]
     (or (get m lang)
-        ;; TODO: After all non-localized titles have been removed and guaranteed
-        ;;   that the localizations exist for all languages, this :default
-        ;;   fallback can be removed.
-        (get m :default)
         (first (vals m)))))
 
 ;; TODO: replace usages of `get-localized-title` with `localized`
@@ -109,9 +105,3 @@
      :cljs (let [time (if (string? time) (format/parse time) time)]
              (when time
                (format/unparse-local time-format (time/to-default-time-zone time))))))
-
-(defn localize-item
-  ([item]
-   #?(:cljs (localize-item item @(rf/subscribe [:language]))))
-  ([item language]
-   #?(:cljs (merge item (get-in item [:localizations language])))))
