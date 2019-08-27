@@ -12,7 +12,9 @@ Changes since v2.4
 - `:application/external-id` has been made a non-optional field in the
   API and event schemas. All applications should already have an external ID
   since the previous release, so no database migration should be needed.
-- the `start`, `end` and `expired` fields have been removed from licenses
+- The pdf button and API have been removed. We recommend using "print
+  to pdf" in your browser.
+- The `start`, `end` and `expired` fields have been removed from licenses
 
 ### Additions
 - New field types: description, option, multiselect

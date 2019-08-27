@@ -224,13 +224,6 @@
 
 ;;;; UI components
 
-(defn- pdf-button [app-id]
-  (when app-id
-    [:a.btn.btn-secondary
-     {:href (str "/api/applications/" app-id "/pdf")
-      :target :_blank}
-     "PDF " [external-link]]))
-
 (rf/reg-event-db
  ::set-field-value
  (fn [db [_ field-id value]]
@@ -652,7 +645,6 @@
                              {:status :danger
                               :contents [format-validation-errors application errors]}])])]
     [:div
-     [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [document-title (str (text :t.applications/application) " " (format-application-id config application))]
      (text :t.applications/intro)
      (into [:div] messages)
