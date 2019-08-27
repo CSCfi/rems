@@ -216,9 +216,8 @@
                           :form/title "Archived form, should not be seen by applicants"})]
     (form/update-form! {:id id :enabled true :archived true})))
 
-(defn- create-disabled-license! []
-  (let [owner (+fake-users+ :owner) ; only used from create-test-data! TODO fix
-        id (:id (db/create-license! {:modifieruserid owner :owneruserid owner
+(defn- create-disabled-license! [owner]
+  (let [id (:id (db/create-license! {:modifieruserid owner :owneruserid owner
                                      :title "expired license" :type "link" :textcontent "http://expired"}))]
     (db/set-license-state! {:id id :enabled false :archived false})))
 
@@ -768,7 +767,7 @@
         form (create-basic-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
-    (create-disabled-license!)
+    (create-disabled-license! (+fake-users+ :owner))
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :resource-id res1
@@ -815,7 +814,7 @@
         _ (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
         form (create-basic-form! +demo-users+)
         workflows (create-workflows! +demo-users+)]
-    (create-disabled-license!)
+    (create-disabled-license! (+demo-users+ :owner))
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :resource-id res1
