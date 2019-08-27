@@ -171,8 +171,7 @@
 (defn send-application []
   (doto *driver*
     (scroll-and-click :submit)
-    (wait-visible :status-success)
-    (scroll-and-click :modal-ok)
+    ;; TODO: check the flash message's content
     (wait-has-class :apply-phase "completed")))
 
 (defn get-application-id []

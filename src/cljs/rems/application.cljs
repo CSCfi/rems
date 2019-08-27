@@ -18,7 +18,7 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
-            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title success-symbol]]
+            [rems.atoms :as atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
             [rems.fields :as fields]
@@ -48,7 +48,7 @@
                                             (:catalogue-item/expired %)
                                             (:catalogue-item/archived %)))
                                seq)]
-      [:div.alert.alert-danger
+      [:div.alert.alert-warning
        (text :t.form/alert-disabled-resources)
        (into [:ul]
              (for [resource resources]
@@ -87,7 +87,7 @@
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   {:db (dissoc db ::application ::edit-application)
+   {:db (dissoc db ::application ::edit-application ::flash-message)
     ::fetch-application id}))
 
 (rf/reg-fx
@@ -124,6 +124,30 @@
    (assoc db
           ::application application)))
 
+
+
+;; TODO: extract flash-message namespace
+
+(rf/reg-sub ::flash-message (fn [db _] (::flash-message db)))
+
+(rf/reg-event-fx
+ ::show-flash-message
+ (fn [{:keys [db]} [_ flash-message]]
+   (.scrollTo js/window 0 0)
+   ;; TODO: focus the message
+   {:db (assoc db ::flash-message flash-message)}))
+
+(defn show-success-message [contents]
+  (rf/dispatch [::show-flash-message {:status :success
+                                      :contents contents}]))
+
+(defn show-error-message [contents]
+  (rf/dispatch [::show-flash-message {:status :danger
+                                      :contents contents}]))
+
+
+
+
 (rf/reg-event-db
  ::set-validation-errors
  (fn [db [_ errors]]
@@ -134,12 +158,17 @@
     {:field field :value value}))
 
 (defn- save-application! [description application-id field-values]
-  (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
-          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
-          :error-handler status-modal/common-error-handler!}))
+          :handler (fn [response]
+                     (if (:success response)
+                       (do
+                         (rf/dispatch [::enter-application-page application-id]) ;; XXX: clears the flash message
+                         (show-success-message "✔ Draft saved"))
+                       (show-error-message "❌ Error")))
+          :error-handler (fn [response]
+                           (show-error-message (str "❌ Error: " (:status-text response))))}))
 
 (rf/reg-event-fx
  ::save-application
@@ -154,26 +183,31 @@
 (defn- submit-application! [application description application-id field-values
                             userid]
   ;; TODO: deduplicate with save-application!
-  (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
           :handler (fn [response]
-                     (if (:success response)
-                       (if (accepted-licenses? application userid)
-                         (post! "/api/applications/submit"
-                                {:params {:application-id application-id}
-                                 :handler (fn [response]
-                                            (if (:success response)
-                                              (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id])})
-                                              (do
-                                                (status-modal/set-error! {:result response
-                                                                          :error-content (format-validation-errors application (:errors response))})
-                                                (rf/dispatch [::set-validation-errors (:errors response)]))))
-                                 :error-handler status-modal/common-error-handler!})
-                         (status-modal/set-error! {:error-content (text :t.actions/licenses-not-accepted-error)}))
-                       (status-modal/common-error-handler! response)))
-          :error-handler status-modal/common-error-handler!}))
+                     (cond
+                       (not (:success response))
+                       (show-error-message "❌ Error")
+
+                       (not (accepted-licenses? application userid))
+                       (show-error-message (text :t.actions/licenses-not-accepted-error))
+
+                       :else
+                       (post! "/api/applications/submit"
+                              {:params {:application-id application-id}
+                               :handler (fn [response]
+                                          (if (:success response)
+                                            (do
+                                              (rf/dispatch [::enter-application-page application-id]) ;; XXX: clears the flash message
+                                              (show-success-message "✔ Submitted"))
+                                            (do
+                                              (rf/dispatch [::set-validation-errors (:errors response)])
+                                              (show-error-message [format-validation-errors application (:errors response)]))))
+                               :error-handler status-modal/common-error-handler!})))
+          :error-handler (fn [response]
+                           (show-error-message (str "❌ Error: " (:status-text response))))}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -637,23 +671,18 @@
                [:div#resource-action-forms
                 [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
-(defn- render-application [{:keys [application edit-application config userid]}]
-  (let [messages (remove nil?
-                         [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
-                          (when-let [errors (:validation-errors edit-application)]
-                            [flash-message
-                             {:status :danger
-                              :contents [format-validation-errors application errors]}])])]
-    [:div
-     [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-     (text :t.applications/intro)
-     (into [:div] messages)
-     [application-state application config]
-     [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources application userid]]
-     [:div.my-3 [application-licenses application edit-application userid]]
-     [:div.my-3 [application-fields application edit-application]]
-     [:div.mb-3 [actions-form application]]]))
+(defn- render-application [{:keys [application edit-application flash-message config userid]}]
+  [:div
+   [document-title (str (text :t.applications/application) " " (format-application-id config application))]
+   [atoms/flash-message flash-message]
+   [disabled-items-warning application]
+   (text :t.applications/intro)
+   [application-state application config]
+   [:div.mt-3 [applicants-info application]]
+   [:div.mt-3 [applied-resources application userid]]
+   [:div.my-3 [application-licenses application edit-application userid]]
+   [:div.my-3 [application-fields application edit-application]]
+   [:div.mb-3 [actions-form application]]])
 
 ;;;; Entrypoint
 
@@ -662,6 +691,7 @@
         application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])
+        flash-message @(rf/subscribe [::flash-message])
         loading? (not application)]
     (if loading?
       [:div
@@ -669,6 +699,7 @@
        [spinner/big]]
       [render-application {:application application
                            :edit-application edit-application
+                           :flash-message flash-message
                            :config config
                            :userid userid}])))
 
