@@ -473,10 +473,7 @@
                                             :license/title (assoc (localization-for :title license)
                                                                   :default (:title license))
                                             ;; TODO: remove unused keys
-                                            :license/start (:start license)
-                                            :license/end (:end license)
                                             :license/enabled (:enabled license)
-                                            :license/expired (:expired license)
                                             :license/archived (:archived license)}
                                            (case license-type
                                              :text {:license/text (assoc (localization-for :textcontent license)

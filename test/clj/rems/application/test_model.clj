@@ -95,10 +95,7 @@
                             :textcontent "http://en-license-link"}
                        :fi {:title "fi title"
                             :textcontent "http://fi-license-link"}}
-       :start (DateTime. 100)
-       :end nil
        :enabled true
-       :expired false
        :archived false}
    31 {:id 31
        :licensetype "text"
@@ -108,10 +105,7 @@
                             :textcontent "en license text"}
                        :fi {:title "fi title"
                             :textcontent "fi license text"}}
-       :start (DateTime. 100)
-       :end nil
        :enabled true
-       :expired false
        :archived false}
    32 {:id 32
        :licensetype "attachment"
@@ -124,10 +118,7 @@
                        :fi {:title "fi title"
                             :textcontent "fi filename"
                             :attachment-id 3202}}
-       :start (DateTime. 100)
-       :end nil
        :enabled true
-       :expired false
        :archived false}
    33 {:id 33
        :licensetype "attachment"
@@ -140,10 +131,7 @@
                        :fi {:title "fi title"
                             :textcontent "fi filename"
                             :attachment-id 3302}}
-       :start (DateTime. 100)
-       :end nil
        :enabled true
-       :expired false
        :archived false}
    34 {:id 34
        :licensetype "attachment"
@@ -156,10 +144,7 @@
                        :fi {:title "fi title"
                             :textcontent "fi filename"
                             :attachment-id 3402}}
-       :start (DateTime. 100)
-       :end nil
        :enabled true
-       :expired false
        :archived false}})
 
 (def ^:private get-user
@@ -277,9 +262,6 @@
                                                           :license/link {:en "http://en-license-link"
                                                                          :fi "http://fi-license-link"
                                                                          :default "http://non-localized-license-link"}
-                                                          :license/start (DateTime. 100)
-                                                          :license/end nil
-                                                          :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 31
@@ -290,9 +272,6 @@
                                                           :license/text {:en "en license text"
                                                                          :fi "fi license text"
                                                                          :default "non-localized license text"}
-                                                          :license/start (DateTime. 100)
-                                                          :license/end nil
-                                                          :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 32
@@ -306,9 +285,6 @@
                                                           :license/attachment-filename {:en "en filename"
                                                                                         :fi "fi filename"
                                                                                         :default "non-localized filename"}
-                                                          :license/start (DateTime. 100)
-                                                          :license/end nil
-                                                          :license/expired false
                                                           :license/enabled true
                                                           :license/archived false}]
                                   :application/accepted-licenses {}
@@ -448,9 +424,6 @@
                                                                                        :license/attachment-filename {:en "en filename"
                                                                                                                      :fi "fi filename"
                                                                                                                      :default "non-localized filename"}
-                                                                                       :license/start (DateTime. 100)
-                                                                                       :license/end nil
-                                                                                       :license/expired false
                                                                                        :license/enabled true
                                                                                        :license/archived false})})]
                     (is (= expected-application (apply-events events)))))
@@ -579,9 +552,6 @@
                                                                                            :license/attachment-filename {:en "en filename"
                                                                                                                          :fi "fi filename"
                                                                                                                          :default "non-localized filename"}
-                                                                                           :license/start (DateTime. 100)
-                                                                                           :license/end nil
-                                                                                           :license/expired false
                                                                                            :license/enabled true
                                                                                            :license/archived false})})]
                         (is (= expected-application (apply-events events)))))
@@ -609,9 +579,6 @@
                                                                                       :license/attachment-filename {:en "en filename"
                                                                                                                     :fi "fi filename"
                                                                                                                     :default "non-localized filename"}
-                                                                                      :license/start (DateTime. 100)
-                                                                                      :license/end nil
-                                                                                      :license/expired false
                                                                                       :license/enabled true
                                                                                       :license/archived false})})]
                         (is (= expected-application (apply-events events)))
@@ -682,9 +649,6 @@
                                                                                                    :license/attachment-filename {:en "en filename"
                                                                                                                                  :fi "fi filename"
                                                                                                                                  :default "non-localized filename"}
-                                                                                                   :license/start (DateTime. 100)
-                                                                                                   :license/end nil
-                                                                                                   :license/expired false
                                                                                                    :license/enabled true
                                                                                                    :license/archived false})})]
                                 (is (= expected-application (apply-events events)))))

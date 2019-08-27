@@ -153,7 +153,7 @@
               assert-response-is-server-error?))))))
 
 (deftest licenses-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/licenses" {:expired true})
+  (let [unfiltered (-> (request :get "/api/licenses" {:disabled true})
                        (authenticate "42" "owner")
                        handler
                        assert-response-is-ok

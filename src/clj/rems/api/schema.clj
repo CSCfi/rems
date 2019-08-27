@@ -25,11 +25,8 @@
 (s/defschema License
   {:id s/Int
    :licensetype (s/enum "text" "link" "attachment")
-   :start DateTime
-   :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
-   :expired s/Bool
    :title s/Str
    :textcontent s/Str
    (s/optional-key :attachment-id) (s/maybe s/Int)
@@ -87,10 +84,7 @@
    (s/optional-key :license/text) LocalizedString
    (s/optional-key :license/attachment-id) LocalizedInt
    (s/optional-key :license/attachment-filename) LocalizedString
-   :license/start DateTime
-   :license/end (s/maybe DateTime)
    :license/enabled s/Bool
-   :license/expired s/Bool
    :license/archived s/Bool})
 
 (def UserId s/Str)

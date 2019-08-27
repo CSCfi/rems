@@ -6,11 +6,8 @@
 (defn- format-license [license]
   {:id (:id license)
    :licensetype (:type license)
-   :start (:start license)
-   :end (:end license)
    :enabled (:enabled license)
    :archived (:archived license)
-   :expired (:expired license)
    ;; TODO why do licenses have a non-localized title & content while items don't?
    :title (:title license)
    :textcontent (:textcontent license)
@@ -39,7 +36,6 @@
   [id]
   (->> (db/get-resource-licenses {:id id})
        (format-licenses)
-       (mapv db/assoc-expired)
        (localize-licenses)))
 
 (defn get-license
@@ -47,7 +43,6 @@
   [id]
   (->> (db/get-license {:id id})
        (format-license)
-       (db/assoc-expired)
        (localize-license (get-license-localizations))))
 
 ;; NB! There are three different "license activity" concepts:
@@ -65,7 +60,6 @@
    filters is a map of key-value pairs that must be present in the licenses"
   [filters]
   (->> (db/get-all-licenses)
-       (map db/assoc-expired)
        (db/apply-filters filters)
        (format-licenses)
        (localize-licenses)))

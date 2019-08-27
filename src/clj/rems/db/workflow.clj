@@ -4,17 +4,10 @@
             [rems.db.users :as users]
             [rems.json :as json]))
 
-;; XXX: Overwriting :start and :end from license table with :start and :end
-;;      from workflow_license table seems error-prone - they could at least
-;;      be named differently to avoid confusion.
-;;
-;;      See a related comment in rems.db.licenses regarding the use of
-;;      various start and end times.
+;; TODO refactor
 (defn- join-workflow-license-with-license [workflow-license]
   (-> (:licid workflow-license)
-      licenses/get-license
-      (assoc :start (:start workflow-license)
-             :end (:end workflow-license))))
+      licenses/get-license))
 
 (defn- get-workflow-licenses [id]
   (->> {:wfid id}
