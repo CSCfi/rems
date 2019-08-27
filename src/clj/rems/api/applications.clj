@@ -12,7 +12,6 @@
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.users :as users]
-            [rems.pdf :as pdf]
             [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
@@ -278,20 +277,4 @@
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications/get-application (getx-user-id) application-id)]
         (ok app)
-        (api-util/not-found-json-response)))
-
-    (GET "/:application-id/pdf" []
-      :summary "Get a pdf version of an application"
-      :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Int "application id")]
-      :produces ["application/pdf"]
-      (if-let [app (applications/get-application (getx-user-id) application-id)]
-        (with-language context/*lang*
-          #(-> app
-               (pdf/application-to-pdf-bytes)
-               (ByteArrayInputStream.)
-               (ok)
-               ;; could also set "attachment" here to force download:
-               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
-               (content-type "application/pdf")))
         (api-util/not-found-json-response)))))
