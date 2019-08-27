@@ -16,7 +16,7 @@
                                        :items [id]})}))
 
 (defn create-catalogue-item! [command]
-  (let [id (:id (db/create-catalogue-item! (select-keys command [:title :form :resid :wfid :enabled :archived])))]
+  (let [id (:id (db/create-catalogue-item! (select-keys command [:form :resid :wfid :enabled :archived])))]
     {:success (not (nil? id))
      :id id}))
 

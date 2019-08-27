@@ -6,7 +6,7 @@
             [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text text-format]]
+            [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [dispatch! fetch]]))
 
 (rf/reg-event-fx
@@ -40,10 +40,9 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "catalogue-item"
-     :title [:span (get-in catalogue-item [:localizations language :title] (:title catalogue-item))]
+     :title [:span (get-localized-title catalogue-item language)]
      :always (into [:div]
                    (concat
-                    [[inline-info-field (text :t.administration/title) (:title catalogue-item)]]
                     (for [[langcode localization] (:localizations catalogue-item)]
                       [inline-info-field
                        (str (text :t.administration/title)

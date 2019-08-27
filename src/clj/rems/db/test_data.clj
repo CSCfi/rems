@@ -130,8 +130,7 @@
 
 (defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]
                                :as command}]
-  (let [result (catalogue/create-catalogue-item! {:title ""
-                                                  :resid (or resource-id (create-resource! {}))
+  (let [result (catalogue/create-catalogue-item! {:resid (or resource-id (create-resource! {}))
                                                   :form (or form-id (create-form! {}))
                                                   :wfid (or workflow-id (create-dynamic-workflow! {}))})
         _ (assert (:success result) {:command command :result result})

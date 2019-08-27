@@ -155,8 +155,7 @@
                         read-ok-body))))
     (let [data (-> (request :post "/api/catalogue-items/create")
                    (authenticate api-key user-id)
-                   (json-body {:title "test-item-title"
-                               :form form-id
+                   (json-body {:form form-id
                                :resid 1
                                :wfid 1
                                :archived false})

@@ -6,7 +6,6 @@
 
 (s/defschema CatalogueItem
   {:id s/Int
-   :title s/Str
    :wfid s/Int
    (s/optional-key :workflow-name) s/Str
    :formid s/Int
@@ -14,13 +13,14 @@
    :resid s/Str
    :resource-id s/Int
    (s/optional-key :resource-name) s/Str
-   (s/optional-key :langcode) s/Keyword
    :start DateTime
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
    :expired s/Bool
-   :localizations (s/maybe {s/Any s/Any})})
+   :localizations {s/Keyword {:id s/Int
+                              :langcode s/Keyword
+                              :title s/Str}}})
 
 (s/defschema License
   {:id s/Int

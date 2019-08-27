@@ -39,7 +39,6 @@
        :resid "urn:11"
        :wfid 50
        :formid 40
-       :title "non-localized title"
        :localizations {:en {:id 10
                             :langcode :en
                             :title "en title"}
@@ -56,7 +55,6 @@
        :resid "urn:21"
        :wfid 50
        :formid 40
-       :title "non-localized title"
        :localizations {:en {:id 20
                             :langcode :en
                             :title "en title"}
@@ -73,7 +71,6 @@
        :resid "urn:31"
        :wfid 50
        :formid 40
-       :title "non-localized title"
        :localizations {:en {:id 20
                             :langcode :en
                             :title "en title"}
@@ -236,8 +233,7 @@
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"
                                                            :catalogue-item/title {:en "en title"
-                                                                                  :fi "fi title"
-                                                                                  :default "non-localized title"}
+                                                                                  :fi "fi title"}
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
@@ -247,8 +243,7 @@
                                                            :resource/id 21
                                                            :resource/ext-id "urn:21"
                                                            :catalogue-item/title {:en "en title"
-                                                                                  :fi "fi title"
-                                                                                  :default "non-localized title"}
+                                                                                  :fi "fi title"}
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
@@ -405,8 +400,7 @@
                                                                                         :resource/id 31
                                                                                         :resource/ext-id "urn:31"
                                                                                         :catalogue-item/title {:en "en title"
-                                                                                                               :fi "fi title"
-                                                                                                               :default "non-localized title"}
+                                                                                                               :fi "fi title"}
                                                                                         :catalogue-item/start (DateTime. 100)
                                                                                         :catalogue-item/end nil
                                                                                         :catalogue-item/enabled true
@@ -533,8 +527,7 @@
                                                                                             :resource/id 31
                                                                                             :resource/ext-id "urn:31"
                                                                                             :catalogue-item/title {:en "en title"
-                                                                                                                   :fi "fi title"
-                                                                                                                   :default "non-localized title"}
+                                                                                                                   :fi "fi title"}
                                                                                             :catalogue-item/start (DateTime. 100)
                                                                                             :catalogue-item/end nil
                                                                                             :catalogue-item/enabled true
@@ -619,8 +612,7 @@
                                                                                                :resource/id 11
                                                                                                :resource/ext-id "urn:11"
                                                                                                :catalogue-item/title {:en "en title"
-                                                                                                                      :fi "fi title"
-                                                                                                                      :default "non-localized title"}
+                                                                                                                      :fi "fi title"}
                                                                                                :catalogue-item/start (DateTime. 100)
                                                                                                :catalogue-item/end nil
                                                                                                :catalogue-item/enabled true
@@ -630,8 +622,7 @@
                                                                                                :resource/id 31
                                                                                                :resource/ext-id "urn:31"
                                                                                                :catalogue-item/title {:en "en title"
-                                                                                                                      :fi "fi title"
-                                                                                                                      :default "non-localized title"}
+                                                                                                                      :fi "fi title"}
                                                                                                :catalogue-item/start (DateTime. 100)
                                                                                                :catalogue-item/end nil
                                                                                                :catalogue-item/enabled true

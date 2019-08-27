@@ -451,8 +451,7 @@
                 {:catalogue-item/id (:catalogue-item/id resource)
                  :resource/ext-id (:resource/ext-id resource)
                  :resource/id (:resource-id item)
-                 :catalogue-item/title (assoc (localization-for :title item)
-                                              :default (:title item))
+                 :catalogue-item/title (localization-for :title item)
                  ;; TODO: remove unused keys
                  :catalogue-item/start (:start item)
                  :catalogue-item/end (:end item)
