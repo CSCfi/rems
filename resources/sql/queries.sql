@@ -249,12 +249,10 @@ WHERE appid = :application-id;
 
 -- :name create-license! :insert
 INSERT INTO license
-(ownerUserId, modifierUserId, title, type, textcontent, attachmentId, endt)
+(ownerUserId, modifierUserId, title, type, textcontent, attachmentId)
 VALUES
 (:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent,
-/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/,
-/*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
-);
+/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/);
 
 -- :name set-license-state! :!
 UPDATE license
