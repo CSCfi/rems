@@ -163,12 +163,12 @@
 
 (defn- display-row? [row filtered-columns search-terms]
   (or (empty? filtered-columns) ; table has no filtering enabled
-      (every? (fn [search-term]
-                (some (fn [column]
-                        (str/includes? (str (get-in row [(:key column) :filter-value]))
-                                       search-term))
-                      filtered-columns))
-              search-terms)))
+      (let [filtered-values (map (fn [column]
+                                   (str (get-in row [(:key column) :filter-value])))
+                                 filtered-columns)]
+        (every? (fn [search-term]
+                  (some #(str/includes? % search-term) filtered-values))
+                search-terms))))
 
 (defn parse-search-terms [s]
   (->> (re-seq #"\S+" (str s))
