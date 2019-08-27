@@ -317,20 +317,6 @@ INSERT INTO resource_licenses
 VALUES
 (:resid, :licid);
 
--- TODO: only used in test data; consider removing
--- :name set-resource-license-validity! :insert
--- :doc set license expiration
-UPDATE resource_licenses rl
-SET start = :start, endt = :end
-WHERE rl.licid = :licid;
-
--- TODO: only used in test data; consider removing
--- :name set-workflow-license-validity! :insert
--- :doc set license expiration
-UPDATE workflow_licenses wl
-SET start = :start, endt = :end
-WHERE wl.licid = :licid;
-
 -- :name get-workflow-licenses :? :*
 SELECT licid
 FROM workflow_licenses

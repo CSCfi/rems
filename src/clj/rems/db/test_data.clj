@@ -525,8 +525,7 @@
                                                 :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))}})]
       (doseq [licid [link text]]
         (doseq [wfid [dynamic]]
-          (db/create-workflow-license! {:wfid wfid :licid licid})
-          (db/set-workflow-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil}))))
+          (db/create-workflow-license! {:wfid wfid :licid licid}))))
 
     {:dynamic dynamic}))
 
@@ -538,7 +537,6 @@
                                 :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                :fi "https://www.apache.org/licenses/LICENSE-2.0"}})]
     (db/create-resource-license! {:resid resid :licid licid})
-    (db/set-resource-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil})
     licid))
 
 (defn- create-disabled-applications! [catid applicant approver]
