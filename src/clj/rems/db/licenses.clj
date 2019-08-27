@@ -45,15 +45,6 @@
        (format-license)
        (localize-license (get-license-localizations))))
 
-;; NB! There are three different "license activity" concepts:
-;; - start and end in resource_licenses table
-;; - start and end in workflow_licenses table
-;; - start and end in licenses table
-;;
-;; The last of these is only used in get-all-licenses which is only
-;; used by /api/licenses. The resource and workflow activities are
-;; used in actual application processing logic.
-
 (defn get-all-licenses
   "Get all licenses.
 
