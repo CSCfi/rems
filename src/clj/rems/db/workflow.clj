@@ -2,17 +2,13 @@
   (:require [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.json :as json]))
-
-;; TODO refactor
-(defn- join-workflow-license-with-license [workflow-license]
-  (-> (:licid workflow-license)
-      licenses/get-license))
+            [rems.json :as json]
+            [rems.util :refer [getx]]))
 
 (defn- get-workflow-licenses [id]
   (->> {:wfid id}
        db/get-workflow-licenses
-       (mapv join-workflow-license-with-license)))
+       (mapv #(licenses/get-license (getx % :licid)))))
 
 (defn- enrich-and-format-workflow [wf]
   (-> wf
