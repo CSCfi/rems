@@ -32,7 +32,13 @@
     (testing "filters"
       (is (= [:normal :normal2 :disabled :archived]
              (map :id (get-all-licenses {}))))
+      (is (= [:normal :normal2 :disabled]
+             (map :id (get-all-licenses {:archived false}))))
       (is (= [:archived]
              (map :id (get-all-licenses {:archived true}))))
+      (is (= [:disabled]
+             (map :id (get-all-licenses {:enabled false}))))
+      (is (= [:normal :normal2 :archived]
+             (map :id (get-all-licenses {:enabled true}))))
       (is (= [:normal :normal2]
              (map :id (get-all-licenses {:archived false :enabled true})))))))
