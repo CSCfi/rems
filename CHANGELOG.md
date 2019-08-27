@@ -11,7 +11,9 @@ Changes since v2.4
 ### Breaking changes
 - `:application/external-id` has been made a non-optional field in the
   API and event schemas. All applications should already have an external ID
-  since the previous release, so no database migration should be needed. 
+  since the previous release, so no database migration should be needed.
+- The pdf button and API have been removed. We recommend using "print
+  to pdf" in your browser.
 
 ### Additions
 - New field types: description, option, multiselect
@@ -35,7 +37,7 @@ Changes since v2.4
 - Upgraded swagger-ui from 2 to 3
 - Extra pages (#472)
 - Full-text search for all application content (#873)
-- Creating a new application as a copy from an older application (#832) 
+- Creating a new application as a copy from an older application (#832)
 
 ### Enhancements
 - Improved version information in footer
