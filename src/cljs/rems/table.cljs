@@ -161,13 +161,27 @@
 (defn- filterable? [column]
   (:filterable? column true))
 
-(defn- display-row? [row filtered-columns filters]
-  (if (empty? filtered-columns)
-    true ; table has no filtering enabled
-    (some (fn [column]
-            (str/includes? (str (get-in row [(:key column) :filter-value]))
-                           filters))
-          filtered-columns)))
+(defn- display-row? [row filtered-columns search-terms]
+  (or (empty? filtered-columns) ; table has no filtering enabled
+      (empty? search-terms)
+      (every? (fn [search-term]
+                (some (fn [column]
+                        (str/includes? (str (get-in row [(:key column) :filter-value]))
+                                       search-term))
+                      filtered-columns))
+              search-terms)))
+
+(defn parse-search-terms [s]
+  (->> (re-seq #"\S+" (str s))
+       (map str/lower-case)))
+
+(deftest test-parse-search-terms
+  (is (= [] (parse-search-terms nil)))
+  (is (= [] (parse-search-terms "")))
+  (is (= ["word"] (parse-search-terms "word")))
+  (is (= ["uppercase"] (parse-search-terms "UPPERCASE")))
+  (is (= ["two" "words"] (parse-search-terms "two words")))
+  (is (= ["white" "space"] (parse-search-terms "   white \t\n space  "))))
 
 (rf/reg-sub
  ::sorted-and-filtered-rows
@@ -175,13 +189,13 @@
    [(rf/subscribe [::sorted-rows table])
     (rf/subscribe [::filtering table])])
  (fn [[rows filtering] [_ table]]
-   (let [filters (str/lower-case (str (:filters filtering)))
+   (let [search-terms (parse-search-terms (:filters filtering))
          columns (->> (:columns table)
                       (filter filterable?))]
      (->> rows
           (map (fn [row]
                  ;; performance optimization: hide DOM nodes instead of destroying them
-                 (assoc row ::display-row? (display-row? row columns filters))))))))
+                 (assoc row ::display-row? (display-row? row columns search-terms))))))))
 
 (defn search [table]
   (let [filtering @(rf/subscribe [::filtering table])
