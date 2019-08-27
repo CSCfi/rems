@@ -163,7 +163,6 @@
 
 (defn- display-row? [row filtered-columns search-terms]
   (or (empty? filtered-columns) ; table has no filtering enabled
-      (empty? search-terms)
       (every? (fn [search-term]
                 (some (fn [column]
                         (str/includes? (str (get-in row [(:key column) :filter-value]))
