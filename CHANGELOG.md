@@ -14,6 +14,7 @@ Changes since v2.4
   since the previous release, so no database migration should be needed.
 - The pdf button and API have been removed. We recommend using "print
   to pdf" in your browser.
+- The `start`, `end` and `expired` fields have been removed from licenses
 
 ### Additions
 - New field types: description, option, multiselect

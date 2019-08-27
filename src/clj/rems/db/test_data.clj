@@ -216,10 +216,10 @@
                           :form/title "Archived form, should not be seen by applicants"})]
     (form/update-form! {:id id :enabled true :archived true})))
 
-(defn- create-expired-license! []
-  (let [owner (+fake-users+ :owner) ; only used from create-test-data!
-        yesterday (time/minus (time/now) (time/days 1))]
-    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :end yesterday})))
+(defn- create-disabled-license! [owner]
+  (let [id (:id (db/create-license! {:modifieruserid owner :owneruserid owner
+                                     :title "expired license" :type "link" :textcontent "http://expired"}))]
+    (db/set-license-state! {:id id :enabled false :archived false})))
 
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
@@ -525,8 +525,7 @@
                                                 :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))}})]
       (doseq [licid [link text]]
         (doseq [wfid [dynamic]]
-          (db/create-workflow-license! {:wfid wfid :licid licid})
-          (db/set-workflow-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil}))))
+          (db/create-workflow-license! {:wfid wfid :licid licid}))))
 
     {:dynamic dynamic}))
 
@@ -538,7 +537,6 @@
                                 :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                :fi "https://www.apache.org/licenses/LICENSE-2.0"}})]
     (db/create-resource-license! {:resid resid :licid licid})
-    (db/set-resource-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil})
     licid))
 
 (defn- create-disabled-applications! [catid applicant approver]
@@ -767,7 +765,7 @@
         form (create-basic-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
-    (create-expired-license!)
+    (create-disabled-license! (+fake-users+ :owner))
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :resource-id res1
@@ -814,7 +812,7 @@
         _ (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
         form (create-basic-form! +demo-users+)
         workflows (create-workflows! +demo-users+)]
-    (create-expired-license!)
+    (create-disabled-license! (+demo-users+ :owner))
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :resource-id res1

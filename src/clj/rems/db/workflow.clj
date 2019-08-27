@@ -2,24 +2,13 @@
   (:require [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.json :as json]))
-
-;; XXX: Overwriting :start and :end from license table with :start and :end
-;;      from workflow_license table seems error-prone - they could at least
-;;      be named differently to avoid confusion.
-;;
-;;      See a related comment in rems.db.licenses regarding the use of
-;;      various start and end times.
-(defn- join-workflow-license-with-license [workflow-license]
-  (-> (:licid workflow-license)
-      licenses/get-license
-      (assoc :start (:start workflow-license)
-             :end (:end workflow-license))))
+            [rems.json :as json]
+            [rems.util :refer [getx]]))
 
 (defn- get-workflow-licenses [id]
   (->> {:wfid id}
        db/get-workflow-licenses
-       (mapv join-workflow-license-with-license)))
+       (mapv #(licenses/get-license (getx % :licid)))))
 
 (defn- enrich-and-format-workflow [wf]
   (-> wf

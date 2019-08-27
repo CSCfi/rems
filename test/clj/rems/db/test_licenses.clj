@@ -24,23 +24,21 @@
              {:id 2 :type "link" :title "default title 2" :textcontent "default content 2"}])))))
 
 (deftest test-get-all-licenses
-  (let [today (time/now)
-        yesterday (time/minus today (time/days 1))
-        expired-license-end (time/plus yesterday (time/hours 1))
-        just-created-license-start (time/minus today (time/hours 1))]
-    (with-redefs [db/get-license-localizations (constantly [])
-                  db/get-all-licenses (fn [] [{:id :always :start nil :end nil}
-                                              {:id :always2 :start nil :end nil}
-                                              {:id :expired :start nil :end expired-license-end}
-                                              {:id :just-created :start just-created-license-start :end nil}])]
-      (testing "expired field is added"
-        (is (= [{:id :always :expired false}
-                {:id :always2 :expired false}
-                {:id :expired :expired true}
-                {:id :just-created :expired false}]
-               (map #(select-keys % [:id :expired]) (get-all-licenses {})))))
-      (testing "filters"
-        (is (= [:expired]
-               (map :id (get-all-licenses {:expired true}))))
-        (is (= [:always :always2 :just-created]
-               (map :id (get-all-licenses {:expired false}))))))))
+  (with-redefs [db/get-license-localizations (constantly [])
+                db/get-all-licenses (fn [] [{:id :normal :enabled true :archived false}
+                                            {:id :normal2 :enabled true :archived false}
+                                            {:id :disabled :enabled false :archived false}
+                                            {:id :archived :enabled true :archived true}])]
+    (testing "filters"
+      (is (= [:normal :normal2 :disabled :archived]
+             (map :id (get-all-licenses {}))))
+      (is (= [:normal :normal2 :disabled]
+             (map :id (get-all-licenses {:archived false}))))
+      (is (= [:archived]
+             (map :id (get-all-licenses {:archived true}))))
+      (is (= [:disabled]
+             (map :id (get-all-licenses {:enabled false}))))
+      (is (= [:normal :normal2 :archived]
+             (map :id (get-all-licenses {:enabled true}))))
+      (is (= [:normal :normal2]
+             (map :id (get-all-licenses {:archived false :enabled true})))))))
