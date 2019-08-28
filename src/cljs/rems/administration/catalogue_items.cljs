@@ -64,6 +64,11 @@
    (str "/#/administration/catalogue-items/" catalogue-item-id)
    (text :t.administration/view)])
 
+(defn- to-edit-catalogue-item [catalogue-item-id]
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/edit-catalogue-item/" catalogue-item-id)
+   (text :t.administration/edit)])
+
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
@@ -104,6 +109,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-catalogue-item (:id item)]
+                           [to-edit-catalogue-item (:id item)]
                            [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]
                            [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]]}})
         catalogue)))

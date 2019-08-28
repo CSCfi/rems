@@ -36,6 +36,11 @@
    "/#/administration/catalogue-items"
    (text :t.administration/back)])
 
+(defn- edit-button [id]
+  [atoms/link {:class "btn btn-secondary"}
+   (str "/#/administration/edit-catalogue-item/" id)
+   (text :t.administration/edit)])
+
 (defn catalogue-item-view [catalogue-item language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -63,7 +68,7 @@
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired catalogue-item))]]]))}]
-   [:div.col.commands [back-button]]])
+   [:div.col.commands [back-button] [edit-button (:id catalogue-item)]]])
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])

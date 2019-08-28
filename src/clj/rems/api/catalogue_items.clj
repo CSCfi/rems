@@ -17,17 +17,17 @@
   {:form s/Int
    :resid s/Int
    :wfid s/Int
+   :localizations {s/Keyword {:title s/Str}}
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool})
+
+(s/defschema EditCatalogueItemCommand
+  {:id s/Int
+   :localizations {s/Keyword {:title s/Str}}})
 
 (s/defschema CreateCatalogueItemResponse
   {:success s/Bool
    :id s/Int})
-
-(s/defschema CreateCatalogueItemLocalizationCommand
-  {:id s/Int
-   :langcode s/Str
-   :title s/Str})
 
 ;; TODO use declarative roles everywhere
 (def catalogue-items-api
@@ -69,16 +69,16 @@
       :return CreateCatalogueItemResponse
       (ok (catalogue/create-catalogue-item! command)))
 
+    (POST "/edit" []
+      :summary "Edit a catalogue item"
+      :roles #{:owner}
+      :body [command EditCatalogueItemCommand]
+      :return SuccessResponse
+      (ok (catalogue/edit-catalogue-item! command)))
+
     (PUT "/update" []
       :summary "Update catalogue item"
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (ok (catalogue/update-catalogue-item! command)))
-
-    (POST "/create-localization" []
-      :summary "Create a new catalogue item localization"
-      :roles #{:owner}
-      :body [command CreateCatalogueItemLocalizationCommand]
-      :return SuccessResponse
-      (ok (catalogue/create-catalogue-item-localization! command)))))
+      (ok (catalogue/update-catalogue-item! command)))))

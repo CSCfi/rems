@@ -57,6 +57,7 @@
                    :disable "Poista käytöstä"
                    :display-old "Näytä vanhat"
                    :edit "Muokkaa"
+                   :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-form "Muokkaa lomaketta"
                    :edit-workflow "Muokkaa työvuota"
                    :enable "Ota käyttöön"
