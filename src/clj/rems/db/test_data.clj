@@ -134,8 +134,8 @@
                 {:resid (or resource-id (create-resource! {}))
                  :form (or form-id (create-form! {}))
                  :wfid (or workflow-id (create-dynamic-workflow! {}))
-                 :localizations (or localizations {})})
-        _ (assert (:success result) {:command command :result result})]
+                 :localizations (or localizations {})})]
+    (assert (:success result) {:command command :result result})
     (:id result)))
 
 (defn create-application! [{:keys [catalogue-item-ids actor]}]
