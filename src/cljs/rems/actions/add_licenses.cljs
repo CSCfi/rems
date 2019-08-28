@@ -4,7 +4,7 @@
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
+            [rems.text :refer [text get-localized-title]]
             [rems.util :refer [fetch post!]]))
 
 (rf/reg-fx
@@ -66,10 +66,6 @@
                   :text (text :t.actions/add-licenses)
                   :on-click #(rf/dispatch [::open-form])}])
 
-(defn- title-of-license [license language]
-  (or (get-in license [:localizations language :title])
-      (:title license)))
-
 (defn add-licenses-view
   [{:keys [selected-licenses potential-licenses comment language on-set-comment on-set-licenses on-send]}]
   [action-form-view action-form-id
@@ -89,7 +85,7 @@
       {:id dropdown-id
        :items potential-licenses
        :item-key :id
-       :item-label #(title-of-license % language)
+       :item-label #(get-localized-title % language)
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change on-set-licenses}]]]])

@@ -249,10 +249,9 @@ WHERE appid = :application-id;
 
 -- :name create-license! :insert
 INSERT INTO license
-(ownerUserId, modifierUserId, title, type, textcontent, attachmentId)
+(ownerUserId, modifierUserId, type)
 VALUES
-(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent,
-/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/);
+(:owneruserid, :modifieruserid, :type::license_type)
 
 -- :name set-license-state! :!
 UPDATE license
@@ -348,12 +347,12 @@ FROM workflow wf;
 -- - Gets application licenses by workflow and catalogue item ids
 -- - :wfid workflow id for workflow licenses
 -- - :items vector of catalogue item ids for resource licenses
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.enabled, lic.archived
+SELECT lic.id, lic.type, lic.enabled, lic.archived
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licid
 WHERE wl.wfid = :wfid
 UNION
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.enabled, lic.archived
+SELECT lic.id, lic.type, lic.enabled, lic.archived
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)
@@ -361,17 +360,17 @@ WHERE item.id IN (:v*:items)
 ORDER BY id;
 
 -- :name get-resource-licenses :? :*
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.enabled, lic.archived
+SELECT lic.id, lic.type, lic.enabled, lic.archived
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 WHERE rl.resid = :id;
 
 -- :name get-all-licenses :? :*
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.enabled, lic.archived, lic.attachmentid
+SELECT lic.id, lic.type, lic.enabled, lic.archived
 FROM license lic;
 
 -- :name get-license :? :1
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.enabled, lic.archived, lic.attachmentid
+SELECT lic.id, lic.type, lic.enabled, lic.archived
 FROM license lic
 WHERE lic.id = :id;
 

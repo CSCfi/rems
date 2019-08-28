@@ -8,7 +8,7 @@
             [rems.dropdown :as dropdown]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.text :refer [text localize-item]]
+            [rems.text :refer [text get-localized-title]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (rf/reg-event-fx
@@ -92,14 +92,15 @@
 
 (defn- resource-licenses-field []
   (let [available-licenses @(rf/subscribe [::licenses])
-        selected-licenses @(rf/subscribe [::selected-licenses])]
+        selected-licenses @(rf/subscribe [::selected-licenses])
+        language @(rf/subscribe [:language])]
     [:div.form-group
      [:label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
       {:id licenses-dropdown-id
-       :items (map localize-item available-licenses)
+       :items available-licenses
        :item-key :id
-       :item-label :title
+       :item-label #(get-localized-title % language)
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change #(rf/dispatch [::set-licenses %])}]]))

@@ -86,8 +86,6 @@
 (def ^:private get-license
   {30 {:id 30
        :licensetype "link"
-       :title "non-localized title"
-       :textcontent "http://non-localized-license-link"
        :localizations {:en {:title "en title"
                             :textcontent "http://en-license-link"}
                        :fi {:title "fi title"
@@ -96,8 +94,6 @@
        :archived false}
    31 {:id 31
        :licensetype "text"
-       :title "non-localized title"
-       :textcontent "non-localized license text"
        :localizations {:en {:title "en title"
                             :textcontent "en license text"}
                        :fi {:title "fi title"
@@ -106,9 +102,6 @@
        :archived false}
    32 {:id 32
        :licensetype "attachment"
-       :title "non-localized title"
-       :textcontent "non-localized filename"
-       :attachment-id 3200
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
                             :attachment-id 3201}
@@ -119,9 +112,6 @@
        :archived false}
    33 {:id 33
        :licensetype "attachment"
-       :title "non-localized title"
-       :textcontent "non-localized filename"
-       :attachment-id 3300
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
                             :attachment-id 3301}
@@ -132,9 +122,6 @@
        :archived false}
    34 {:id 34
        :licensetype "attachment"
-       :title "non-localized title"
-       :textcontent "non-localized filename"
-       :attachment-id 3400
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
                             :attachment-id 3401}
@@ -252,34 +239,27 @@
                                   :application/licenses [{:license/id 30
                                                           :license/type :link
                                                           :license/title {:en "en title"
-                                                                          :fi "fi title"
-                                                                          :default "non-localized title"}
+                                                                          :fi "fi title"}
                                                           :license/link {:en "http://en-license-link"
-                                                                         :fi "http://fi-license-link"
-                                                                         :default "http://non-localized-license-link"}
+                                                                         :fi "http://fi-license-link"}
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 31
                                                           :license/type :text
                                                           :license/title {:en "en title"
-                                                                          :fi "fi title"
-                                                                          :default "non-localized title"}
+                                                                          :fi "fi title"}
                                                           :license/text {:en "en license text"
-                                                                         :fi "fi license text"
-                                                                         :default "non-localized license text"}
+                                                                         :fi "fi license text"}
                                                           :license/enabled true
                                                           :license/archived false}
                                                          {:license/id 32
                                                           :license/type :attachment
                                                           :license/title {:en "en title"
-                                                                          :fi "fi title"
-                                                                          :default "non-localized title"}
+                                                                          :fi "fi title"}
                                                           :license/attachment-id {:en 3201
-                                                                                  :fi 3202
-                                                                                  :default 3200}
+                                                                                  :fi 3202}
                                                           :license/attachment-filename {:en "en filename"
-                                                                                        :fi "fi filename"
-                                                                                        :default "non-localized filename"}
+                                                                                        :fi "fi filename"}
                                                           :license/enabled true
                                                           :license/archived false}]
                                   :application/accepted-licenses {}
@@ -410,14 +390,11 @@
                                                                                       {:license/id 34
                                                                                        :license/type :attachment
                                                                                        :license/title {:en "en title"
-                                                                                                       :fi "fi title"
-                                                                                                       :default "non-localized title"}
+                                                                                                       :fi "fi title"}
                                                                                        :license/attachment-id {:en 3401
-                                                                                                               :fi 3402
-                                                                                                               :default 3400}
+                                                                                                               :fi 3402}
                                                                                        :license/attachment-filename {:en "en filename"
-                                                                                                                     :fi "fi filename"
-                                                                                                                     :default "non-localized filename"}
+                                                                                                                     :fi "fi filename"}
                                                                                        :license/enabled true
                                                                                        :license/archived false})})]
                     (is (= expected-application (apply-events events)))))
@@ -537,14 +514,11 @@
                                                                                           {:license/id 34
                                                                                            :license/type :attachment
                                                                                            :license/title {:en "en title"
-                                                                                                           :fi "fi title"
-                                                                                                           :default "non-localized title"}
+                                                                                                           :fi "fi title"}
                                                                                            :license/attachment-id {:en 3401
-                                                                                                                   :fi 3402
-                                                                                                                   :default 3400}
+                                                                                                                   :fi 3402}
                                                                                            :license/attachment-filename {:en "en filename"
-                                                                                                                         :fi "fi filename"
-                                                                                                                         :default "non-localized filename"}
+                                                                                                                         :fi "fi filename"}
                                                                                            :license/enabled true
                                                                                            :license/archived false})})]
                         (is (= expected-application (apply-events events)))))
@@ -564,14 +538,11 @@
                                                                                      {:license/id 33
                                                                                       :license/type :attachment
                                                                                       :license/title {:en "en title"
-                                                                                                      :fi "fi title"
-                                                                                                      :default "non-localized title"}
+                                                                                                      :fi "fi title"}
                                                                                       :license/attachment-id {:en 3301
-                                                                                                              :fi 3302
-                                                                                                              :default 3300}
+                                                                                                              :fi 3302}
                                                                                       :license/attachment-filename {:en "en filename"
-                                                                                                                    :fi "fi filename"
-                                                                                                                    :default "non-localized filename"}
+                                                                                                                    :fi "fi filename"}
                                                                                       :license/enabled true
                                                                                       :license/archived false})})]
                         (is (= expected-application (apply-events events)))
@@ -632,14 +603,11 @@
                                                                                                   {:license/id 34
                                                                                                    :license/type :attachment
                                                                                                    :license/title {:en "en title"
-                                                                                                                   :fi "fi title"
-                                                                                                                   :default "non-localized title"}
+                                                                                                                   :fi "fi title"}
                                                                                                    :license/attachment-id {:en 3401
-                                                                                                                           :fi 3402
-                                                                                                                           :default 3400}
+                                                                                                                           :fi 3402}
                                                                                                    :license/attachment-filename {:en "en filename"
-                                                                                                                                 :fi "fi filename"
-                                                                                                                                 :default "non-localized filename"}
+                                                                                                                                 :fi "fi filename"}
                                                                                                    :license/enabled true
                                                                                                    :license/archived false})})]
                                 (is (= expected-application (apply-events events)))))

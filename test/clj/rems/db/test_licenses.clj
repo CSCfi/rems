@@ -10,18 +10,14 @@
                                                      {:licid 2 :langcode "fi" :title "fi title 2" :textcontent "fi content 2" :attachmentid 1}])]
     (is (= [{:id 1,
              :type "text",
-             :title "default title 1",
-             :textcontent "default content 1",
              :localizations {:en {:title "en title 1", :textcontent "en content 1", :attachment-id 1},
                              :fi {:title "fi title 1", :textcontent "fi content 1", :attachment-id 1}}}
             {:id 2,
              :type "link",
-             :title "default title 2",
-             :textcontent "default content 2",
              :localizations {:fi {:title "fi title 2", :textcontent "fi content 2", :attachment-id 1}}}]
            (#'rems.db.licenses/localize-licenses
-            [{:id 1 :type "text" :title "default title 1" :textcontent "default content 1"}
-             {:id 2 :type "link" :title "default title 2" :textcontent "default content 2"}])))))
+            [{:id 1 :type "text"}
+             {:id 2 :type "link"}])))))
 
 (deftest test-get-all-licenses
   (with-redefs [db/get-license-localizations (constantly [])
