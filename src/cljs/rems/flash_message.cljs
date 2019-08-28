@@ -1,5 +1,6 @@
 (ns rems.flash-message
-  (:require [re-frame.core :as rf]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.atoms :as atoms]))
 
 (rf/reg-sub ::message (fn [db _] (::message db)))
@@ -13,13 +14,25 @@
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message message)}))
 
-(defn show-success [contents]
+(defn show-success! [contents]
   (rf/dispatch [::show-flash-message {:status :success
                                       :contents contents}]))
 
-(defn show-error [contents]
+(defn show-error! [contents]
   (rf/dispatch [::show-flash-message {:status :danger
                                       :contents contents}]))
-
 (defn component []
   [atoms/flash-message @(rf/subscribe [::message])])
+
+;;; Helpers for typical messages
+
+(defn show-default-success! [description]
+  (show-success! (str description ": Success.")))
+
+(defn show-default-error! [description & more]
+  (show-error! (str/join " " (concat [(str description ": Error.")]
+                                     more))))
+
+(defn default-error-handler [description]
+  (fn [response]
+    (show-default-error! description (:status-text response))))

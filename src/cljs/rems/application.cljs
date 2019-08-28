@@ -142,10 +142,9 @@
                      (if (:success response)
                        (do
                          (rf/dispatch [::enter-application-page application-id]) ;; XXX: clears the flash message
-                         (flash-message/show-success "✔ Draft saved"))
-                       (flash-message/show-error "❌ Error")))
-          :error-handler (fn [response]
-                           (flash-message/show-error (str "❌ Error: " (:status-text response))))}))
+                         (flash-message/show-default-success! description))
+                       (flash-message/show-default-error! description)))
+          :error-handler (flash-message/default-error-handler description)}))
 
 (rf/reg-event-fx
  ::save-application
@@ -166,10 +165,10 @@
           :handler (fn [response]
                      (cond
                        (not (:success response))
-                       (flash-message/show-error "❌ Error")
+                       (flash-message/show-default-error! description)
 
                        (not (accepted-licenses? application userid))
-                       (flash-message/show-error (text :t.actions/licenses-not-accepted-error))
+                       (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
 
                        :else
                        (post! "/api/applications/submit"
@@ -178,13 +177,12 @@
                                           (if (:success response)
                                             (do
                                               (rf/dispatch [::enter-application-page application-id]) ;; XXX: clears the flash message
-                                              (flash-message/show-success "✔ Submitted"))
+                                              (flash-message/show-default-success! description))
                                             (do
                                               (rf/dispatch [::set-validation-errors (:errors response)])
-                                              (flash-message/show-error [format-validation-errors application (:errors response)]))))
-                               :error-handler status-modal/common-error-handler!})))
-          :error-handler (fn [response]
-                           (flash-message/show-error (str "❌ Error: " (:status-text response))))}))
+                                              (flash-message/show-error! [format-validation-errors application (:errors response)]))))
+                               :error-handler (flash-message/default-error-handler description)})))
+          :error-handler (flash-message/default-error-handler description)}))
 
 (rf/reg-event-fx
  ::submit-application
