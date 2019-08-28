@@ -645,11 +645,11 @@
                              {:status :danger
                               :contents [format-validation-errors application errors]}])])]
     [:div.container-fluid.editor-content
+     [document-title (str (text :t.applications/application) " " (format-application-id config application))]
+     (text :t.applications/intro)
+     (into [:div] messages)
      [:div.row
       [:div.col-lg-8
-       [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-       (text :t.applications/intro)
-       (into [:div] messages)
        [application-state application config]
        [:div.mt-3 [applicants-info application]]
        [:div.mt-3 [applied-resources application userid]]
