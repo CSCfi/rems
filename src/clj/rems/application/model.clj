@@ -469,21 +469,16 @@
                                   (let [license-type (keyword (:licensetype license))]
                                     (merge {:license/id (:id license)
                                             :license/type license-type
-                                            :license/title (assoc (localization-for :title license)
-                                                                  :default (:title license))
+                                            :license/title (localization-for :title license)
                                             ;; TODO: remove unused keys
                                             :license/enabled (:enabled license)
                                             :license/archived (:archived license)}
                                            (case license-type
-                                             :text {:license/text (assoc (localization-for :textcontent license)
-                                                                         :default (:textcontent license))}
-                                             :link {:license/link (assoc (localization-for :textcontent license)
-                                                                         :default (:textcontent license))}
-                                             :attachment {:license/attachment-id (assoc (localization-for :attachment-id license)
-                                                                                        :default (:attachment-id license))
+                                             :text {:license/text (localization-for :textcontent license)}
+                                             :link {:license/link (localization-for :textcontent license)}
+                                             :attachment {:license/attachment-id (localization-for :attachment-id license)
                                                           ;; TODO: remove filename as unused?
-                                                          :license/attachment-filename (assoc (localization-for :textcontent license)
-                                                                                              :default (:textcontent license))})))))
+                                                          :license/attachment-filename (localization-for :textcontent license)})))))
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 

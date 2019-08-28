@@ -13,9 +13,6 @@
 
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")
-   :title s/Str
-   :textcontent s/Str
-   (s/optional-key :attachment-id) (s/maybe s/Int)
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str
                               (s/optional-key :attachment-id) (s/maybe s/Int)}}})
@@ -55,7 +52,7 @@
       (ok (licenses/create-license! command (getx-user-id))))
 
     (PUT "/update" []
-      :summary "Update workflow"
+      :summary "Update license"
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse

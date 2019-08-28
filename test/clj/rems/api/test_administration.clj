@@ -16,7 +16,7 @@
 (deftest test-archiving-disabling
   (let [api-key "42"
         user-id "owner"
-        license-id (:id (api-call :post "/api/licenses/create" {:licensetype "text" :title "x" :textcontent "x" :localizations {}}
+        license-id (:id (api-call :post "/api/licenses/create" {:licensetype "text" :localizations {}}
                                   api-key user-id))
         resource-id (:id (api-call :post "/api/resources/create" {:resid "test" :organization "abc" :licenses [license-id]}
                                    api-key user-id))

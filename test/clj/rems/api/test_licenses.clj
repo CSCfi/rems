@@ -2,8 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
-            [ring.mock.request :refer :all])
-  (:import (java.util UUID)))
+            [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
@@ -28,10 +27,7 @@
         (is (:id (first data)))))
 
     (testing "create linked license"
-      (let [command {:title (str "license title " (UUID/randomUUID))
-                     :licensetype "link"
-                     :textcontent "http://example.com/license"
-                     :attachment-id nil
+      (let [command {:licensetype "link"
                      :localizations {:en {:title "en title"
                                           :textcontent "http://example.com/license/en"
                                           :attachment-id nil}
@@ -56,10 +52,7 @@
             (is (= command (select-keys license (keys command))))))))
 
     (testing "create inline license"
-      (let [command {:title (str "license title " (UUID/randomUUID))
-                     :licensetype "text"
-                     :textcontent "license text"
-                     :attachment-id nil
+      (let [command {:licensetype "text"
                      :localizations {:en {:title "en title"
                                           :textcontent "en text"
                                           :attachment-id nil}
@@ -120,10 +113,7 @@
                               handler
                               read-ok-body
                               :id)
-            command {:title (str "license title " (UUID/randomUUID))
-                     :licensetype "text"
-                     :textcontent "license text"
-                     :attachment-id attachment-id
+            command {:licensetype "text"
                      :localizations {:en {:title "en title"
                                           :textcontent "en text"
                                           :attachment-id attachment-id}
@@ -177,8 +167,6 @@
     (testing "create"
       (let [response (-> (request :post "/api/licenses/create")
                          (json-body {:licensetype "text"
-                                     :title "t"
-                                     :textcontent "t"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]
@@ -196,8 +184,6 @@
       (let [response (-> (request :post "/api/licenses/create")
                          (authenticate "42" "alice")
                          (json-body {:licensetype "text"
-                                     :title "t"
-                                     :textcontent "t"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]
