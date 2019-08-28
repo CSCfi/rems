@@ -18,10 +18,11 @@
 (defn create-catalogue-item! [{:keys [localizations] :as command}]
   (let [id (:id (db/create-catalogue-item! (select-keys command [:form :resid :wfid :enabled :archived])))
         loc-ids
-        (for [[langcode localization] localizations]
-          (:id (db/create-catalogue-item-localization! {:id id
-                                                        :langcode (name langcode)
-                                                        :title (:title localization)})))]
+        (doall
+         (for [[langcode localization] localizations]
+           (:id (db/create-catalogue-item-localization! {:id id
+                                                         :langcode (name langcode)
+                                                         :title (:title localization)}))))]
     ;; Reset cache so that next call to get localizations will get these ones.
     (catalogue/reset-cache!)
     {:success (not (some nil? (cons id loc-ids)))
