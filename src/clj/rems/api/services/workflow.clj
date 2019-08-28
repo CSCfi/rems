@@ -32,6 +32,14 @@
      result
      {:success (not (nil? (:id result)))})))
 
+(defn edit-workflow! [command]
+  (db/edit-workflow!
+   (merge (select-keys command [:id :title])
+          (when-let [handlers (:handlers command)]
+            {:workflow (json/generate-string {:type :workflow/dynamic
+                                              :handlers handlers})})))
+  {:success true})
+
 (defn update-workflow! [{:keys [id] :as command}]
   (let [workflow (workflow/get-workflow id)
         archived-licenses (filter :archived (:licenses workflow))
@@ -52,11 +60,7 @@
 
       :else
       (do
-        (db/update-workflow!
-         (merge (select-keys command [:id :enabled :archived :title])
-                (when-let [handlers (:handlers command)]
-                  {:workflow (json/generate-string {:type :workflow/dynamic
-                                                    :handlers handlers})})))
+        (db/set-workflow-state! (select-keys command [:id :enabled :archived]))
         {:success true}))))
 
 (defn get-workflow [id] (workflow/get-workflow id))

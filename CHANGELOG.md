@@ -18,6 +18,9 @@ Changes since v2.4
 - API for creating catalogue item and its localizations has been changed.
   There is now a single API call that is used to create both a catalogue
   item and the localizations, namely, /api/catalogue-items/create.
+- API for editing workflow content has been changed. The API endpoint for
+  editing is now /api/workflows/edit, whereas the API endpoint for changing
+  the state of a workflow remains /api/workflows/update.
 
 ### Additions
 - New field types: description, option, multiselect

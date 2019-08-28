@@ -1,7 +1,7 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
             [rems.api.applications :refer [User]]
-            [rems.api.schema :refer [SuccessResponse UserId Workflow]]
+            [rems.api.schema :refer [SuccessResponse UpdateStateCommand UserId Workflow]]
             [rems.api.services.workflow :as workflow]
             [rems.api.util] ; required for route :roles
             [rems.util :refer [getx-user-id]]
@@ -14,13 +14,11 @@
    :type s/Keyword
    (s/optional-key :handlers) [UserId]})
 
-(s/defschema UpdateWorkflowCommand
+(s/defschema EditWorkflowCommand
   {:id s/Int
-   (s/optional-key :title) s/Str
-   (s/optional-key :handlers) [UserId]
    ;; type can't change
-   (s/optional-key :enabled) s/Bool
-   (s/optional-key :archived) s/Bool})
+   (s/optional-key :title) s/Str
+   (s/optional-key :handlers) [UserId]})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool
@@ -52,10 +50,17 @@
       :return CreateWorkflowResponse
       (ok (workflow/create-workflow! (assoc command :user-id (getx-user-id)))))
 
+    (PUT "/edit" []
+      :summary "Edit workflow"
+      :roles #{:owner}
+      :body [command EditWorkflowCommand]
+      :return SuccessResponse
+      (ok (workflow/edit-workflow! command)))
+
     (PUT "/update" []
       :summary "Update workflow"
       :roles #{:owner}
-      :body [command UpdateWorkflowCommand]
+      :body [command UpdateStateCommand]
       :return SuccessResponse
       (ok (workflow/update-workflow! command)))
 
