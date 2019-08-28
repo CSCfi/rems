@@ -29,7 +29,8 @@
         catalogue-id (:id (api-call :post "/api/catalogue-items/create"
                                     {:form form-id
                                      :resid resource-id
-                                     :wfid workflow-id}
+                                     :wfid workflow-id
+                                     :localizations {}}
                                     api-key user-id))
 
         update-resource! (fn [{:keys [enabled archived]}]

@@ -134,6 +134,12 @@ INSERT INTO catalogue_item_localization
   (catid, langcode, title)
 VALUES (:id, :langcode, :title);
 
+-- :name edit-catalogue-item-localization! :!
+UPDATE catalogue_item_localization
+SET (catid, langcode, title) = (:id, :langcode, :title)
+WHERE catid = :id
+  AND langcode = :langcode;
+
 -- :name get-form-templates :? :*
 SELECT
   id,

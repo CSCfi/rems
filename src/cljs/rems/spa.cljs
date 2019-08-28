@@ -345,6 +345,10 @@
   (rf/dispatch [:rems.administration.create-catalogue-item/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
 
+(secretary/defroute "/administration/edit-catalogue-item/:catalogue-item-id" [catalogue-item-id]
+  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page (parse-int catalogue-item-id)])
+  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
+
 (secretary/defroute "/administration/create-form" []
   (rf/dispatch [:rems.administration.create-form/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/create-form]))

@@ -1,6 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
+            [medley.core :refer [map-vals]]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
@@ -128,18 +129,14 @@
 
 (defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]
                                :as command}]
-  (let [result (catalogue/create-catalogue-item! {:resid (or resource-id (create-resource! {}))
-                                                  :form (or form-id (create-form! {}))
-                                                  :wfid (or workflow-id (create-dynamic-workflow! {}))})
-        _ (assert (:success result) {:command command :result result})
-        id (:id result)]
-    (when (map? title)
-      (doseq [[lang text] title]
-        (let [result (catalogue/create-catalogue-item-localization! {:id id
-                                                                     :langcode (name lang)
-                                                                     :title text})]
-          (assert (:success result) {:command [id lang text] :result result}))))
-    id))
+  (let [localizations (map-vals (fn [title] {:title title}) title)
+        result (catalogue/create-catalogue-item!
+                {:resid (or resource-id (create-resource! {}))
+                 :form (or form-id (create-form! {}))
+                 :wfid (or workflow-id (create-dynamic-workflow! {}))
+                 :localizations (or localizations {})})
+        _ (assert (:success result) {:command command :result result})]
+    (:id result)))
 
 (defn create-application! [{:keys [catalogue-item-ids actor]}]
   (:application-id (command! {:type :application.command/create

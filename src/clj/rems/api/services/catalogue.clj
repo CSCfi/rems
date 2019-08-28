@@ -15,16 +15,26 @@
      :licenses (licenses/get-licenses {:wfid wfid
                                        :items [id]})}))
 
-(defn create-catalogue-item! [command]
-  (let [id (:id (db/create-catalogue-item! (select-keys command [:form :resid :wfid :enabled :archived])))]
-    {:success (not (nil? id))
+(defn create-catalogue-item! [{:keys [localizations] :as command}]
+  (let [id (:id (db/create-catalogue-item! (select-keys command [:form :resid :wfid :enabled :archived])))
+        loc-ids
+        (for [[langcode localization] localizations]
+          (:id (db/create-catalogue-item-localization! {:id id
+                                                        :langcode (name langcode)
+                                                        :title (:title localization)})))]
+    ;; Reset cache so that next call to get localizations will get these ones.
+    (catalogue/reset-cache!)
+    {:success (not (some nil? (cons id loc-ids)))
      :id id}))
 
-(defn create-catalogue-item-localization! [command]
-  (let [return {:success (not (nil? (:id (db/create-catalogue-item-localization! (select-keys command [:id :langcode :title])))))}]
-    ;; Reset cache so that next call to get localizations will get this one.
-    (catalogue/reset-cache!)
-    return))
+(defn edit-catalogue-item! [{:keys [id localizations] :as command}]
+  (doseq [[langcode localization] localizations]
+    (db/edit-catalogue-item-localization! {:id id
+                                           :langcode (name langcode)
+                                           :title (:title localization)}))
+  ;; Reset cache so that next call to get localizations will get these ones.
+  (catalogue/reset-cache!)
+  {:success true})
 
 (defn update-catalogue-item! [command]
   (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item (:id command))

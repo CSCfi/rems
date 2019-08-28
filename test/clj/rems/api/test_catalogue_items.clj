@@ -25,7 +25,8 @@
                    (json-body {:form form-id
                                :resid 1
                                :wfid 1
-                               :archived true})
+                               :archived true
+                               :localizations {}})
                    handler
                    read-body)
           id (:id data)]
@@ -38,8 +39,9 @@
         (is (= {:id id
                 :workflow-name "dynamic workflow"
                 :form-name "form name"
-                :resource-name "urn:nbn:fi:lb-201403262"}
-               (select-keys data [:id :workflow-name :form-name :resource-name])))))
+                :resource-name "urn:nbn:fi:lb-201403262"
+                :localizations {}}
+               (select-keys data [:id :workflow-name :form-name :resource-name :localizations])))))
     (testing "not found"
       (let [response (-> (request :get "/api/catalogue-items/777777777")
                          (authenticate api-key user-id)
@@ -72,24 +74,23 @@
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:form 1
                            :resid 1
-                           :wfid 1})
+                           :wfid 1
+                           :localizations {}})
                handler
                (read-body)))))
-  (testing "create-localization without authentication"
-    (let [response (-> (request :post (str "/api/catalogue-items/create-localization"))
+  (testing "edit without authentication"
+    (let [response (-> (request :post (str "/api/catalogue-items/edit"))
                        (json-body {:id 1
-                                   :langcode :fi
-                                   :title "malicious localization"})
+                                   :localizations {:en {:title "malicious localization"}}})
                        handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
-  (testing "create-localization with wrong API-Key"
+  (testing "edit with wrong API-Key"
     (is (= "invalid api key"
-           (-> (request :post (str "/api/catalogue-items/create-localization"))
+           (-> (request :post (str "/api/catalogue-items/edit"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:id 1
-                           :langcode :fi
-                           :title "malicious localization"})
+                           :localizations {:en {:title "malicious localization"}}})
                handler
                (read-body))))))
