@@ -3,7 +3,7 @@
             [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
-            [rems.status-modal :as status-modal]
+            [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
@@ -39,14 +39,16 @@
 (rf/reg-event-fx
  ::send-add-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-   (status-modal/common-pending-handler! (text :t.actions/add-member))
-   (post! "/api/applications/add-member"
-          {:params {:application-id application-id
-                    :member (select-keys member [:userid])}
-           :handler (partial status-modal/common-success-handler! (fn [_]
-                                                                    (collapse-action-form action-form-id)
-                                                                    (on-finished)))
-           :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.actions/add-member)]
+     (post! "/api/applications/add-member"
+            {:params {:application-id application-id
+                      :member (select-keys member [:userid])}
+             :handler (flash-message/default-success-handler
+                       description
+                       (fn [_]
+                         (collapse-action-form action-form-id)
+                         (on-finished)))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn add-member-action-button []

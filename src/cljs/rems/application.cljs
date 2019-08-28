@@ -18,7 +18,7 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
-            [rems.atoms :as atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol]]
+            [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
             [rems.fields :as fields]
@@ -26,7 +26,6 @@
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [localize-decision localize-event localized localize-item localize-state localize-time text text-format get-localized-title]]
             [rems.util :refer [dispatch! fetch parse-int post! in-page-anchor-link]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -199,19 +198,19 @@
 (rf/reg-event-fx
  ::copy-as-new-application
  (fn [{:keys [db]} _]
-   (let [application-id (get-in db [::application :application/id])]
-     (status-modal/common-pending-handler! (text :t.form/copy-as-new))
+   (let [application-id (get-in db [::application :application/id])
+         description (text :t.form/copy-as-new)]
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
-             :handler (partial status-modal/common-success-handler!
-                               (fn [response]
-                                 (dispatch! (str "/#/application/" (:application-id response)))))
-             :error-handler status-modal/common-error-handler!}))
+             :handler (flash-message/default-success-handler
+                       description
+                       (fn [response]
+                         (dispatch! (str "/#/application/" (:application-id response)))))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
-    (status-modal/common-pending-handler! description)
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id
                          :field-id field-id}
@@ -219,14 +218,14 @@
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
-            :handler (fn [response]
-                       (if (:success response)
-                         (do
-                           ;; no race condition here: events are handled in a FIFO manner
-                           (rf/dispatch [::set-field-value field-id (str (:id response))])
-                           (rf/dispatch [::save-application (text :t.form/upload)]))
-                         (status-modal/common-error-handler! response)))
-            :error-handler status-modal/common-error-handler!})
+            :handler (flash-message/default-success-handler
+                      description
+                      (fn [response]
+                        (do
+                          ;; no race condition here: events are handled in a FIFO manner
+                          (rf/dispatch [::set-field-value field-id (str (:id response))])
+                          (rf/dispatch [::save-application (text :t.form/upload)]))))
+            :error-handler (flash-message/default-error-handler description)})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)

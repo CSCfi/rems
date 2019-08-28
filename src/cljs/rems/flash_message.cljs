@@ -33,6 +33,15 @@
   (show-error! (str/join " " (concat [(str description ": Error.")]
                                      more))))
 
+(defn default-success-handler [description on-success]
+  (fn [response]
+    (if (:success response)
+      (do
+        (show-default-success! description)
+        (when on-success
+          (on-success response)))
+      (show-default-error! description))))
+
 (defn default-error-handler [description]
   (fn [response]
     (show-default-error! description (:status-text response))))
