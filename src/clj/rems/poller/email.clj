@@ -15,7 +15,8 @@
             [rems.scheduler :as scheduler]
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])
-  (:import [org.joda.time Duration]))
+  (:import [javax.mail.internet AddressException InternetAddress]
+           [org.joda.time Duration]))
 
 ;;; Mapping events to emails
 
@@ -204,6 +205,24 @@
         last-id (:event/id (last events))]
     (common/set-poller-state! ::poller {:last-processed-event-id last-id})))
 
+(defn- validate-address
+  "Returns nil for a valid email address, string message for an invalid one."
+  [email]
+  (try
+    (InternetAddress. email)
+    nil
+    (catch Throwable t
+      (str "Invalid address "
+           (pr-str email)
+           ": "
+           (.getMessage t)))))
+
+(deftest test-validate-address
+  (is (nil? (validate-address "valid@example.com")))
+  (is (string? (validate-address "")))
+  (is (string? (validate-address nil)))
+  (is (string? (validate-address "test@test_example.com"))))
+
 (defn send-email! [email-spec]
   (let [host (:smtp-host env)
         port (:smtp-port env)
@@ -212,11 +231,17 @@
                      :to (or (:to email-spec)
                              (util/get-user-mail
                               (users/get-user-attributes
-                               (:to-user email-spec)))))]
-    (if (not (and host port))
+                               (:to-user email-spec)))))
+        to-error (validate-address (:to email))]
+    (cond
+      to-error
+      (log/warn "failed address validation: " to-error)
+
+      (not (and host port))
       (log/info "pretending to send email:" (pr-str email))
+
+      :else
       (do
-        ;; TODO check that :to is set
         (log/info "sending email:" (pr-str email))
         (try
           (postal/send-message {:host host :port port} email)
