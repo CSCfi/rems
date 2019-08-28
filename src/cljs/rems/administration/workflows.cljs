@@ -82,7 +82,7 @@
            :end (let [value (:end workflow)]
                   {:value value
                    :display-value (localize-time value)})
-           :active (let [checked? (not (:expired workflow))]
+           :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})

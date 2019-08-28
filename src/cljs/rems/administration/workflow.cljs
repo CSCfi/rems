@@ -4,6 +4,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
@@ -62,7 +63,7 @@
                                                                          (str/join ", "))]
               [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired workflow))]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? workflow)]]]}]
    [licenses-view (:licenses workflow) language]
    [:div.col.commands [back-button] [edit-button (:id workflow)]]])
 

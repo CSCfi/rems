@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
@@ -71,7 +72,7 @@
                            {:box? false}])))
                     [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]
-                     [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired license))]]]))}]
+                     [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? license)]]]))}]
    [:div.col.commands [back-button]]])
 
 ;; XXX: Duplicates much of license-view. One notable difference is that

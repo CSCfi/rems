@@ -78,7 +78,7 @@
            :end (let [value (:end resource)]
                   {:value value
                    :display-value (localize-time value)})
-           :active (let [checked? (not (:expired resource))]
+           :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})

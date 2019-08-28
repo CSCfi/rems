@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
@@ -67,7 +68,7 @@
                        (:form-name catalogue-item)]]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
-                     [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired catalogue-item))]]]))}]
+                     [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? catalogue-item)]]]))}]
    [:div.col.commands [back-button] [edit-button (:id catalogue-item)]]])
 
 (defn catalogue-item-page []
