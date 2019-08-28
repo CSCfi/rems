@@ -1,6 +1,4 @@
-ALTER TABLE license ADD title varchar(256);
---;; XXX: Do not copy title from localizations but leave it empty.
-UPDATE license SET title='';
+ALTER TABLE license ADD title varchar(256) DEFAULT '' NOT NULL
 --;;
 ALTER TABLE license ALTER COLUMN title SET NOT NULL;
 --;;

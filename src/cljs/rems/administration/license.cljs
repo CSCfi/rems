@@ -36,7 +36,7 @@
    "/#/administration/licenses"
    (text :t.administration/back)])
 
-(defn license-view [license language]
+(defn- license-view [license language]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "license"
@@ -73,6 +73,52 @@
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired license))]]]))}]
    [:div.col.commands [back-button]]])
+
+;; XXX: Duplicates much of license-view. One notable difference is that
+;;      here the license text is only shown in the current language.
+(defn- license-view-compact [license language]
+  (into [:div.form-item
+         [:h3 (text-format :t.administration/license-field (get-localized-title license language))]]
+        (concat (for [[langcode localization] (:localizations license)]
+                  [inline-info-field
+                   (str (text :t.administration/title)
+                        " (" (str/upper-case (name langcode)) ")")
+                   (:title localization)])
+                [[inline-info-field (text :t.administration/type) (:licensetype license)]]
+                (when (= "link" (:licensetype license))
+                  (for [[langcode localization] (:localizations license)]
+                    [inline-info-field
+                     (str (text :t.create-license/external-link)
+                          " (" (str/upper-case (name langcode)) ")")
+                     [:a {:target :_blank :href (:textcontent localization)}
+                      (:textcontent localization) " " [external-link]]]))
+                (when (= "text" (:licensetype license))
+                  (let [localization (get-in license [:localizations language])]
+                    (when (:textcontent localization)
+                      [[inline-info-field (text :t.create-license/license-text)
+                        (:textcontent localization)]])))
+                (when (= "attachment" (:licensetype license))
+                  (for [[langcode localization] (:localizations license)]
+                    (when (:attachment-id localization)
+                      [inline-info-field
+                       (str (text :t.create-license/license-attachment)
+                            " (" (str/upper-case (name langcode)) ")")
+                       [attachment-link (:attachment-id localization) (:title localization)]
+                       {:box? false}])))
+                [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
+                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
+
+(defn licenses-view [licenses language]
+  [collapsible/component
+   {:id "licenses"
+    :title (text :t.administration/licenses)
+    :top-less-button? (> (count licenses) 5)
+    :open? (<= (count licenses) 5)
+    :collapse (if (seq licenses)
+                (into [:div]
+                      (for [license licenses]
+                        [license-view-compact license language]))
+                [:p (text :t.administration/no-licenses)])}])
 
 (defn license-page []
   (let [license (rf/subscribe [::license])

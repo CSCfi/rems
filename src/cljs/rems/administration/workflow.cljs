@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.administration.resource :refer [licenses-view]]
+            [rems.administration.license :refer [licenses-view]]
             [rems.atoms :as atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
