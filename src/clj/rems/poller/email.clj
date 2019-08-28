@@ -206,16 +206,16 @@
 
 (defn send-email! [email-spec]
   (let [host (:smtp-host env)
-        port (:smtp-port env)]
+        port (:smtp-port env)
+        email (assoc email-spec
+                     :from (:mail-from env)
+                     :to (or (:to email-spec)
+                             (util/get-user-mail
+                              (users/get-user-attributes
+                               (:to-user email-spec)))))]
     (if (not (and host port))
-      (log/info "pretending to send email:" (pr-str email-spec))
-      (let [email (assoc email-spec
-                         :from (:mail-from env)
-                         :body (:body email-spec)
-                         :to (or (:to email-spec)
-                                 (util/get-user-mail
-                                  (users/get-user-attributes
-                                   (:to-user email-spec)))))]
+      (log/info "pretending to send email:" (pr-str email))
+      (do
         ;; TODO check that :to is set
         (log/info "sending email:" (pr-str email))
         (try
