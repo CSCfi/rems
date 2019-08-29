@@ -40,7 +40,7 @@
                   :td [:td.foo [:button "Button"]]}}
            (apply-row-defaults {:key 123
                                 :foo {:td [:td.foo [:button "Button"]]}}))))
-  (testing ":sort-value is normalized to lowercase"
+  (testing ":value is normalized to lowercase in :sort-value"
     (is (= {:key 123
             :foo {:value "FooBar"
                   :sort-value "foobar"
@@ -51,7 +51,19 @@
                                 :foo {:value "FooBar"
                                       :filter-value ""
                                       :td [:td ""]}}))))
-  (testing ":filter-value is normalized to lowercase"
+  (testing ":sort-value retains non-lowercase string if explicitly set"
+    (is (= {:key 123
+            :foo {:value "FooBar"
+                  :sort-value "FooBar"
+                  :display-value "FooBar"
+                  :filter-value ""
+                  :td [:td ""]}}
+           (apply-row-defaults {:key 123
+                                :foo {:value "FooBar"
+                                      :sort-value "FooBar"
+                                      :filter-value ""
+                                      :td [:td ""]}}))))
+  (testing ":value is normalized to lowercase in :filter-value"
     (is (= {:key 123
             :foo {:sort-value ""
                   :display-value "FooBar"
@@ -60,6 +72,17 @@
            (apply-row-defaults {:key 123
                                 :foo {:sort-value ""
                                       :display-value "FooBar"
+                                      :td [:td ""]}}))))
+  (testing ":filter-value retains non-lowercase string if explicitly set"
+    (is (= {:key 123
+            :foo {:sort-value ""
+                  :display-value "FooBar"
+                  :filter-value "FooBar"
+                  :td [:td ""]}}
+           (apply-row-defaults {:key 123
+                                :foo {:sort-value ""
+                                      :display-value "FooBar"
+                                      :filter-value "FooBar"
                                       :td [:td ""]}}))))
   (testing "cannot calculate :filter-value from non-string :display-value"
     (is (= {:key 123
