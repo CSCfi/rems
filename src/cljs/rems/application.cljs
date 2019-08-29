@@ -160,22 +160,26 @@
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
-          :handler (flash-message/default-success-handler
-                    description
-                    (fn [_]
-                      (if (not (accepted-licenses? application userid))
-                        (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
-                        (post! "/api/applications/submit"
-                               {:params {:application-id application-id}
-                                :handler (fn [response]
-                                           (if (:success response)
-                                             (do
-                                               (rf/dispatch [::fetch-application application-id])
-                                               (flash-message/show-default-success! description))
-                                             (do
-                                               (rf/dispatch [::set-validation-errors (:errors response)])
-                                               (flash-message/show-error! [format-validation-errors application (:errors response)]))))
-                                :error-handler (flash-message/default-error-handler description)}))))
+          :handler (fn [response]
+                     (cond
+                       (not (:success response))
+                       (flash-message/show-default-error! description)
+
+                       (not (accepted-licenses? application userid))
+                       (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
+
+                       :else
+                       (post! "/api/applications/submit"
+                              {:params {:application-id application-id}
+                               :handler (fn [response]
+                                          (if (:success response)
+                                            (do
+                                              (rf/dispatch [::fetch-application application-id])
+                                              (flash-message/show-default-success! description))
+                                            (do
+                                              (rf/dispatch [::set-validation-errors (:errors response)])
+                                              (flash-message/show-error! [format-validation-errors application (:errors response)]))))
+                               :error-handler (flash-message/default-error-handler description)})))
           :error-handler (flash-message/default-error-handler description)}))
 
 (rf/reg-event-fx
