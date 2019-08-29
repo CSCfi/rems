@@ -13,6 +13,13 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db ::message)}))
 
+(defn- current-time-millis []
+  (.getTime (js/Date.)))
+
+(defn- expired? [message]
+  (let [expires (get message :expires 0)]
+    (< expires (current-time-millis))))
+
 (rf/reg-event-fx
  ::show-flash-message
  (fn [{:keys [db]} [_ message]]
@@ -22,7 +29,7 @@
    (.scrollTo js/window 0 0)
    (focus/focus-element-async "#flash-message")
    ;; TODO: flash the message with CSS
-   {:db (assoc db ::message message)}))
+   {:db (assoc db ::message (assoc message :expires (+ 500 (current-time-millis))))}))
 
 (defn show-success! [contents]
   (rf/dispatch [::show-flash-message {:status :success
@@ -40,7 +47,9 @@
 
     :component-will-unmount
     (fn [_this]
-      (rf/dispatch [::reset]))
+      (let [message @(rf/subscribe [::message])]
+        (when (expired? message)
+          (rf/dispatch [::reset]))))
 
     :reagent-render
     (fn []
