@@ -172,7 +172,6 @@
   (doto *driver*
     (scroll-and-click :submit)
     (wait-visible :status-success)
-    (scroll-and-click :modal-ok)
     (wait-has-class :apply-phase "completed")))
 
 (defn get-application-id []

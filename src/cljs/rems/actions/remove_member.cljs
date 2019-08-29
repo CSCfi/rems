@@ -1,7 +1,7 @@
 (ns rems.actions.remove-member
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
-            [rems.status-modal :as status-modal]
+            [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 
@@ -23,19 +23,21 @@
 (rf/reg-event-fx
  ::remove-member
  (fn [_ [_ {:keys [collapse-id application-id member comment on-finished]}]]
-   (status-modal/common-pending-handler! (text :t.actions/remove-member))
-   (post! (if (:userid member)
-            "/api/applications/remove-member"
-            "/api/applications/uninvite-member")
-          {:params {:application-id application-id
-                    :member (if (:userid member)
-                              (select-keys member [:userid])
-                              (select-keys member [:name :email]))
-                    :comment comment}
-           :handler (partial status-modal/common-success-handler! (fn [_]
-                                                                    (collapse-action-form collapse-id)
-                                                                    (on-finished)))
-           :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.actions/remove-member)]
+     (post! (if (:userid member)
+              "/api/applications/remove-member"
+              "/api/applications/uninvite-member")
+            {:params {:application-id application-id
+                      :member (if (:userid member)
+                                (select-keys member [:userid])
+                                (select-keys member [:name :email]))
+                      :comment comment}
+             :handler (flash-message/default-success-handler
+                       description
+                       (fn [_]
+                         (collapse-action-form collapse-id)
+                         (on-finished)))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn remove-member-action-button [element-id]

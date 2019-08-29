@@ -1,7 +1,7 @@
 (ns rems.actions.decide
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
-            [rems.status-modal :as status-modal]
+            [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 
@@ -18,15 +18,17 @@
 (rf/reg-event-fx
  ::send-decide
  (fn [_ [_ {:keys [application-id comment decision on-finished]}]]
-   (status-modal/common-pending-handler! (text :t.actions/decide))
-   (post! "/api/applications/decide"
-          {:params {:application-id application-id
-                    :decision decision
-                    :comment comment}
-           :handler (partial status-modal/common-success-handler! (fn [_]
-                                                                    (collapse-action-form action-form-id)
-                                                                    (on-finished)))
-           :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.actions/decide)]
+     (post! "/api/applications/decide"
+            {:params {:application-id application-id
+                      :decision decision
+                      :comment comment}
+             :handler (flash-message/default-success-handler
+                       description
+                       (fn [_]
+                         (collapse-action-form action-form-id)
+                         (on-finished)))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn decide-action-button []
