@@ -87,14 +87,15 @@
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   {:db (dissoc db ::application ::edit-application ::flash-message/message)
-    ::fetch-application id}))
+   {:db (dissoc db ::application ::edit-application)
+    :dispatch [::fetch-application id]}))
 
-(rf/reg-fx
+(rf/reg-event-fx
  ::fetch-application
- (fn [id]
+ (fn [_ [_ id]]
    (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])})))
+          {:handler #(rf/dispatch [::fetch-application-result %])})
+   {}))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -140,7 +141,7 @@
           :handler (fn [response]
                      (if (:success response)
                        (do
-                         (rf/dispatch [::enter-application-page application-id]) ;; XXX: clears the flash message
+                         (rf/dispatch [::fetch-application application-id])
                          (flash-message/show-default-success! description))
                        (flash-message/show-default-error! description)))
           :error-handler (flash-message/default-error-handler description)}))
@@ -175,7 +176,7 @@
                                :handler (fn [response]
                                           (if (:success response)
                                             (do
-                                              (rf/dispatch [::enter-application-page application-id]) ;; XXX: clears the flash message
+                                              (rf/dispatch [::fetch-application application-id])
                                               (flash-message/show-default-success! description))
                                             (do
                                               (rf/dispatch [::set-validation-errors (:errors response)])

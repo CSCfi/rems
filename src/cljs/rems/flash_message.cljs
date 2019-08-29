@@ -1,28 +1,46 @@
 (ns rems.flash-message
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [reagent.core :as reagent]
             [rems.atoms :as atoms]))
 
 (rf/reg-sub ::message (fn [db _] (::message db)))
+
+(rf/reg-event-fx
+ ::reset
+ (fn [{:keys [db]} _]
+   {:db (dissoc db ::message)}))
 
 (rf/reg-event-fx
  ::show-flash-message
  (fn [{:keys [db]} [_ message]]
    (.scrollTo js/window 0 0)
    ;; TODO: focus the message
-   ;; TODO: be smarter about clearing the message
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message message)}))
 
 (defn show-success! [contents]
   (rf/dispatch [::show-flash-message {:status :success
-                                      :contents contents}]))
+                                      :contents contents
+                                      :page @(rf/subscribe [:page])}]))
 
 (defn show-error! [contents]
   (rf/dispatch [::show-flash-message {:status :danger
-                                      :contents contents}]))
+                                      :contents contents
+                                      :page @(rf/subscribe [:page])}]))
+
 (defn component []
-  [atoms/flash-message @(rf/subscribe [::message])])
+  (reagent/create-class
+   {:display-name "rems.flash-message/component"
+
+    :component-will-unmount
+    (fn [_this]
+      (rf/dispatch [::reset]))
+
+    :reagent-render
+    (fn []
+      (let [message @(rf/subscribe [::message])]
+        [atoms/flash-message message]))}))
 
 ;;; Helpers for typical messages
 
