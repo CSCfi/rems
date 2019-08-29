@@ -37,8 +37,8 @@
    "/#/administration/catalogue-items"
    (text :t.administration/back)])
 
-(defn- edit-button [id]
-  [atoms/link {:class "btn btn-secondary"}
+(defn edit-button [id]
+  [atoms/link {:class "btn btn-primary"}
    (str "/#/administration/edit-catalogue-item/" id)
    (text :t.administration/edit)])
 

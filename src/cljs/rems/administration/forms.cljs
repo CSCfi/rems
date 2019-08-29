@@ -1,6 +1,7 @@
 (ns rems.administration.forms
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.form :as form]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
@@ -65,14 +66,6 @@
    (str "/#/administration/forms/" (:form/id form))
    (text :t.administration/view)])
 
-(defn- to-edit-form [form]
-  [:button.btn.btn-primary
-   {:type :button
-    :on-click (fn []
-                (rf/dispatch [:rems.spa/user-triggered-navigation])
-                (rf/dispatch [:rems.administration.form/edit-form (:form/id form)]))}
-   (text :t.administration/edit)])
-
 (defn- copy-as-new-form [form]
   [atoms/link {:class "btn btn-primary"}
    (str "/#/administration/create-form/" (:form/id form))
@@ -99,7 +92,7 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-form form]
-                           [to-edit-form form]
+                           [form/edit-button (:form/id form)]
                            [copy-as-new-form form]
                            [status-flags/enabled-toggle form #(rf/dispatch [::update-form %1 %2 [::fetch-forms]])]
                            [status-flags/archived-toggle form #(rf/dispatch [::update-form %1 %2 [::fetch-forms]])]]}})

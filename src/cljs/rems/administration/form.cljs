@@ -50,7 +50,7 @@
    "/#/administration/forms"
    (text :t.administration/back)])
 
-(defn- edit-button [id]
+(defn edit-button [id]
   [:button.btn.btn-primary
    {:type :button
     :on-click (fn []
