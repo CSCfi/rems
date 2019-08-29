@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
+            [rems.focus :as focus]
             [rems.search :as search]
             [rems.text :refer [text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -226,18 +227,6 @@
         (for [column (:columns table)]
           (get-in row [(:key column) :td]))))
 
-(defn- focus-element-async
-  ([selector]
-   (focus-element-async selector 100))
-  ([selector tries]
-   (when (pos? tries)
-     (if-let [element (.querySelector js/document selector)]
-       (do
-         (.setAttribute element "tabindex" "-1")
-         (.focus element))
-       (js/setTimeout #(focus-element-async selector (dec tries))
-                      10)))))
-
 (defn table [table]
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
         language @(rf/subscribe [:language])
@@ -262,8 +251,8 @@
                                          :on-click (fn []
                                                      (rf/dispatch [::show-all-rows table])
                                                      (let [next-row (:key (nth rows max-rows))]
-                                                       (focus-element-async (str "table.rems-table." (name (:id table))
-                                                                                 " > tbody > tr[data-row='" next-row "'] > td"))))}
+                                                       (focus/focus-element-async (str "table.rems-table." (name (:id table))
+                                                                                       " > tbody > tr[data-row='" next-row "'] > td"))))}
                 (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
 (defn guide []

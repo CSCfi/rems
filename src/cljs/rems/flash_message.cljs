@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [reagent.core :as reagent]
             [rems.atoms :as atoms]
+            [rems.focus :as focus]
             [rems.text :refer [text]]))
 
 (rf/reg-sub ::message (fn [db _] (::message db)))
@@ -16,7 +17,7 @@
  ::show-flash-message
  (fn [{:keys [db]} [_ message]]
    (.scrollTo js/window 0 0)
-   ;; TODO: focus the message
+   (focus/focus-element-async "#flash-message")
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message message)}))
 

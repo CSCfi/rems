@@ -52,7 +52,7 @@
    :contents - content to show inside the notification"
   [{status :status contents :contents}]
   (when status
-    [:div.alert {:class (str "alert-" (name status))} contents]))
+    [:div#flash-message.alert {:class (str "alert-" (name status))} contents]))
 
 (defn readonly-checkbox
   "Displays a checkbox."
