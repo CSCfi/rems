@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [reagent.core :as reagent]
-            [rems.atoms :as atoms]))
+            [rems.atoms :as atoms]
+            [rems.text :refer [text]]))
 
 (rf/reg-sub ::message (fn [db _] (::message db)))
 
@@ -45,11 +46,13 @@
 ;;; Helpers for typical messages
 
 (defn show-default-success! [description]
-  (show-success! (str description ": Success.")))
+  (show-success! [:span#status-success
+                  (str description ": " (text :t.form/success) ".")]))
 
 (defn show-default-error! [description & more]
-  (show-error! (str/join " " (concat [(str description ": Error.")]
-                                     more))))
+  (show-error! [:span#status-failed
+                (str/join " " (concat [(str description ": " (text :t.form/failed) ".")]
+                                      more))]))
 
 (defn default-success-handler [description on-success]
   (fn [response]
