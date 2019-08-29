@@ -90,15 +90,15 @@
 (defn- edit-catalogue-item! [{:keys [db]} [_ request]]
   (let [id (db ::catalogue-item-id)]
     (status-modal/common-pending-handler! (text :t.administration/edit-catalogue-item))
-    (post! "/api/catalogue-items/edit"
-           {:params {:id id
-                     :localizations (:localizations request)}
-            :handler
-            (partial status-modal/common-success-handler!
-                     (fn [response]
-                       (dispatch! (str "#/administration/catalogue-items/"
-                                       id))))
-            :error-handler status-modal/common-error-handler!}))
+    (put! "/api/catalogue-items/edit"
+          {:params {:id id
+                    :localizations (:localizations request)}
+           :handler
+           (partial status-modal/common-success-handler!
+                    (fn [response]
+                      (dispatch! (str "#/administration/catalogue-items/"
+                                      id))))
+           :error-handler status-modal/common-error-handler!}))
   {})
 
 (rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)
