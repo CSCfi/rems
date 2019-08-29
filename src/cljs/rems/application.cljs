@@ -206,6 +206,7 @@
              :handler (flash-message/default-success-handler
                        description
                        (fn [response]
+                         (rf/dispatch [:rems.spa/user-triggered-navigation])
                          (dispatch! (str "/#/application/" (:application-id response)))))
              :error-handler (flash-message/default-error-handler description)}))
    {}))
