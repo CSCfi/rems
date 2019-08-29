@@ -37,11 +37,11 @@
 
 (rf/reg-event-fx
  ::update-license
- (fn [_ [_ item description]]
+ (fn [_ [_ item description dispatch-on-finished]]
    (status-modal/common-pending-handler! description)
    (put! "/api/licenses/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-licenses]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -85,8 +85,8 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-license (:id license)]
-                           [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2])]
-                           [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2])]]}})
+                           [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2 [::fetch-licenses]])]
+                           [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2 [::fetch-licenses]])]]}})
         licenses)))
 
 (defn- licenses-list []

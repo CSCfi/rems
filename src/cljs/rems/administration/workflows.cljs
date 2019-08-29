@@ -37,11 +37,11 @@
 
 (rf/reg-event-fx
  ::update-workflow
- (fn [_ [_ item description]]
+ (fn [_ [_ item description dispatch-on-finished]]
    (status-modal/common-pending-handler! description)
    (put! "/api/workflows/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-workflows]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -89,8 +89,8 @@
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]
                            [to-edit-workflow (:id workflow)]
-                           [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]
-                           [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]]}})
+                           [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]
+                           [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]]}})
         workflows)))
 
 (defn- workflows-list []

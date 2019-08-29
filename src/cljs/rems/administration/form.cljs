@@ -74,10 +74,13 @@
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? form)]]]}]
-   [:div.col.commands
-    [back-button]
-    [edit-button (:form/id form)]
-    [copy-as-new-button (:form/id form)]]
+   (let [id (:form/id form)]
+     [:div.col.commands
+      [back-button]
+      [edit-button id]
+      [copy-as-new-button id]
+      [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/update-form %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/update-form %1 %2 [::enter-page id]])]])
    [form-preview form]])
 ;; TODO Do we support form licenses?
 

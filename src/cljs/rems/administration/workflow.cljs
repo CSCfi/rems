@@ -65,7 +65,12 @@
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? workflow)]]]}]
    [licenses-view (:licenses workflow) language]
-   [:div.col.commands [back-button] [edit-button (:id workflow)]]])
+   (let [id (:id workflow)]
+     [:div.col.commands
+      [back-button]
+      [edit-button id]
+      [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/update-workflow %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/update-workflow %1 %2 [::enter-page id]])]])])
 
 (defn workflow-page []
   (let [workflow (rf/subscribe [::workflow])

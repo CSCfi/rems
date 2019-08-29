@@ -43,6 +43,7 @@ Changes since v2.4
 - Full-text search for all application content (#873)
 - Creating a new application as a copy from an older application (#832)
 - Re-naming a catalogue item (#1507)
+- Add enable/disable and archive/unarchive buttons to 'View' pages (#1438)
 
 ### Enhancements
 - Improved version information in footer
