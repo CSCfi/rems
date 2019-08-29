@@ -40,11 +40,11 @@ catalogue-item, resource, form, workflow, license.
 
 - POST /create. As before, used to create a new item.
 
-- PATCH /edit. Used to change content of an item.
+- PUT /edit. Used to change content of an item.
 
-- PATCH /archive. Used to archive/unarchive an item.
+- PUT /archived. Used to archive/unarchive an item, e.g., PUT /archived false.
 
-- PATCH /enable. Used to enable/disable an item.
+- PUT /enabled. Used to enable/disable an item, e.g., PUT /enabled true.
 
 
 Additionally for forms:
