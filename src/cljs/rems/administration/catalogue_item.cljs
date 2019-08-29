@@ -69,7 +69,12 @@
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? catalogue-item)]]]))}]
-   [:div.col.commands [back-button] [edit-button (:id catalogue-item)]]])
+   (let [id (:id catalogue-item)]
+     [:div.col.commands
+      [back-button]
+      [edit-button id]
+      [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/update-catalogue-item %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/update-catalogue-item %1 %2 [::enter-page id]])]])])
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])

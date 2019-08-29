@@ -51,7 +51,11 @@
               [inline-info-field (text :t.administration/end) (localize-time (:end resource))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? resource)]]]}]
    [licenses-view (:licenses resource) language]
-   [:div.col.commands [back-button]]])
+   (let [id (:id resource)]
+     [:div.col.commands
+      [back-button]
+      [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/update-resource %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/update-resource %1 %2 [::enter-page id]])]])])
 
 (defn resource-page []
   (let [resource (rf/subscribe [::resource])

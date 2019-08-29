@@ -39,11 +39,11 @@
 
 (rf/reg-event-fx
  ::update-catalogue-item
- (fn [_ [_ item description]]
+ (fn [_ [_ item description dispatch-on-finished]]
    (status-modal/common-pending-handler! description)
    (put! "/api/catalogue-items/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-catalogue]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -109,8 +109,8 @@
            :commands {:td [:td.commands
                            [to-catalogue-item (:id item)]
                            [to-edit-catalogue-item (:id item)]
-                           [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]
-                           [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]]}})
+                           [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2 [::fetch-catalogue]])]
+                           [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2 [::fetch-catalogue]])]]}})
         catalogue)))
 
 (defn- catalogue-list []

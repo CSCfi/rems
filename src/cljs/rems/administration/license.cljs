@@ -73,7 +73,11 @@
                     [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? license)]]]))}]
-   [:div.col.commands [back-button]]])
+   (let [id (:id license)]
+     [:div.col.commands
+      [back-button]
+      [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/update-license %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/update-license %1 %2 [::enter-page id]])]])])
 
 ;; XXX: Duplicates much of license-view. One notable difference is that
 ;;      here the license text is only shown in the current language.
