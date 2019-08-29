@@ -16,7 +16,6 @@
 (rf/reg-event-fx
  ::show-flash-message
  (fn [{:keys [db]} [_ message]]
-   (.scrollTo js/window 0 0)
    (focus/focus-element-async "#flash-message")
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message message)}))
