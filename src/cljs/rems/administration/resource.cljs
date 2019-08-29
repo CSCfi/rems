@@ -4,6 +4,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
@@ -48,7 +49,7 @@
               [inline-info-field (text :t.administration/resource) (:resid resource)]
               [inline-info-field (text :t.administration/start) (localize-time (:start resource))]
               [inline-info-field (text :t.administration/end) (localize-time (:end resource))]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired resource))]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? resource)]]]}]
    [licenses-view (:licenses resource) language]
    [:div.col.commands [back-button]]])
 

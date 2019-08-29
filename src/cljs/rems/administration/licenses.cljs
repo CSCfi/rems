@@ -79,7 +79,7 @@
            :end (let [value (:end license)]
                   {:value value
                    :display-value (localize-time value)})
-           :active (let [checked? (not (:expired license))]
+           :active (let [checked? (status-flags/active? license)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})

@@ -73,7 +73,7 @@
               [inline-info-field (text :t.administration/title) (:form/title form)]
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired form))]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? form)]]]}]
    [:div.col.commands
     [back-button]
     [edit-button (:form/id form)]

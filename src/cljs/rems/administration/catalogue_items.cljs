@@ -102,8 +102,7 @@
            :end (let [value (:end item)]
                   {:value value
                    :display-value (localize-time value)})
-           ;; TODO: active means not-expired currently. it should maybe mean (and not-expired enabled not-archived)
-           :active (let [checked? (not (:expired item))]
+           :active (let [checked? (status-flags/active? item)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})
