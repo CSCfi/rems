@@ -25,7 +25,6 @@
              :handler (flash-message/default-success-handler
                        description
                        (fn [_]
-                         ;; not strictly necessary since the form disappears
                          (collapse-action-form action-form-id)
                          (on-finished)))
              :error-handler (flash-message/default-error-handler description)}))

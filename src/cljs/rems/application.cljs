@@ -138,12 +138,10 @@
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
-          :handler (fn [response]
-                     (if (:success response)
-                       (do
-                         (rf/dispatch [::fetch-application application-id])
-                         (flash-message/show-default-success! description))
-                       (flash-message/show-default-error! description)))
+          :handler (flash-message/default-success-handler
+                    description
+                    (fn [_]
+                      (rf/dispatch [::fetch-application application-id])))
           :error-handler (flash-message/default-error-handler description)}))
 
 (rf/reg-event-fx
@@ -162,26 +160,22 @@
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
-          :handler (fn [response]
-                     (cond
-                       (not (:success response))
-                       (flash-message/show-default-error! description)
-
-                       (not (accepted-licenses? application userid))
-                       (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
-
-                       :else
-                       (post! "/api/applications/submit"
-                              {:params {:application-id application-id}
-                               :handler (fn [response]
-                                          (if (:success response)
-                                            (do
-                                              (rf/dispatch [::fetch-application application-id])
-                                              (flash-message/show-default-success! description))
-                                            (do
-                                              (rf/dispatch [::set-validation-errors (:errors response)])
-                                              (flash-message/show-error! [format-validation-errors application (:errors response)]))))
-                               :error-handler (flash-message/default-error-handler description)})))
+          :handler (flash-message/default-success-handler
+                    description
+                    (fn [_]
+                      (if (not (accepted-licenses? application userid))
+                        (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
+                        (post! "/api/applications/submit"
+                               {:params {:application-id application-id}
+                                :handler (fn [response]
+                                           (if (:success response)
+                                             (do
+                                               (rf/dispatch [::fetch-application application-id])
+                                               (flash-message/show-default-success! description))
+                                             (do
+                                               (rf/dispatch [::set-validation-errors (:errors response)])
+                                               (flash-message/show-error! [format-validation-errors application (:errors response)]))))
+                                :error-handler (flash-message/default-error-handler description)}))))
           :error-handler (flash-message/default-error-handler description)}))
 
 (rf/reg-event-fx
@@ -223,10 +217,9 @@
             :handler (flash-message/default-success-handler
                       description
                       (fn [response]
-                        (do
-                          ;; no race condition here: events are handled in a FIFO manner
-                          (rf/dispatch [::set-field-value field-id (str (:id response))])
-                          (rf/dispatch [::save-application (text :t.form/upload)]))))
+                        ;; no race condition here: events are handled in a FIFO manner
+                        (rf/dispatch [::set-field-value field-id (str (:id response))])
+                        (rf/dispatch [::save-application (text :t.form/upload)])))
             :error-handler (flash-message/default-error-handler description)})
     {}))
 
