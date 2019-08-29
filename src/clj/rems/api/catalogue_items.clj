@@ -69,7 +69,7 @@
       :return CreateCatalogueItemResponse
       (ok (catalogue/create-catalogue-item! command)))
 
-    (POST "/edit" []
+    (PUT "/edit" []
       :summary "Edit a catalogue item"
       :roles #{:owner}
       :body [command EditCatalogueItemCommand]
