@@ -297,14 +297,26 @@ VALUES
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
 
--- :name update-workflow! :!
+-- :name set-workflow-enabled! :!
+UPDATE workflow
+SET (enabled) = (:enabled)
+WHERE id = :id;
+
+-- :name set-workflow-archived! :!
+UPDATE workflow
+SET (archived) = (:archived)
+WHERE id = :id;
+
+-- :name edit-workflow! :!
 UPDATE workflow
 SET
-  id = :id
-  --~(when (contains? params :enabled) ", enabled = :enabled")
-  --~(when (contains? params :archived) ", archived = :archived")
-  --~(when (contains? params :title) ", title = :title")
-  --~(when (contains? params :workflow) ", workflowBody = :workflow::jsonb")
+/*~ (when (:title params) */
+  title = :title,
+/*~ ) ~*/
+/*~ (when (:workflow params) */
+  workflowBody = :workflow::jsonb,
+/*~ ) ~*/
+  id = id
 WHERE id = :id;
 
 -- :name create-workflow-license! :insert

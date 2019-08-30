@@ -39,9 +39,8 @@
         archive-resource! #(resource/update-resource! {:id res-id
                                                        :enabled true
                                                        :archived %})
-        archive-workflow! #(workflow/update-workflow! {:id workflow-id
-                                                       :enabled true
-                                                       :archived %})]
+        archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
+                                                             :archived %})]
     (testing "new catalogue items are enabled and not archived"
       (is (= {:enabled true
               :archived false}
