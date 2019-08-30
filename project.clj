@@ -60,7 +60,7 @@
                  [org.webjars/jquery "3.4.1"]
                  [prismatic/schema-generators "0.1.3"]
                  [re-frame "0.10.8"]
-                 [reagent "0.8.1"]
+                 [reagent "0.9.0-SNAPSHOT"] ; includes React 16.9 support https://github.com/reagent-project/reagent/pull/443
                  [reagent-utils "0.3.3"]
                  [ring-cors "0.1.13"]
                  [ring-middleware-format "0.7.4"]
