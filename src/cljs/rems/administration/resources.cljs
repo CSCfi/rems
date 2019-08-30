@@ -3,11 +3,12 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -38,12 +39,11 @@
 
 (rf/reg-event-fx
  ::update-resource
- (fn [{:keys [db]} [_ item description dispatch-on-finished]]
-   (status-modal/common-pending-handler! description)
+ (fn [_ [_ item description dispatch-on-finished]]
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
-          :error-handler status-modal/common-error-handler!})
+          :handler (flash-message/default-success-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
    {}))
 
 (rf/reg-event-fx
@@ -113,7 +113,8 @@
 (defn resources-page []
   (into [:div
          [administration-navigator-container]
-         [document-title (text :t.administration/resources)]]
+         [document-title (text :t.administration/resources)]
+         [flash-message/component]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]
