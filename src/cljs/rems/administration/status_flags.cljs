@@ -88,7 +88,7 @@
               [:a {:target :_blank
                    :href (str "#/administration/workflows/" (:id w))} (:title w)]]))]))
 
-(defn- format-update-failure [{:keys [errors]}]
+(defn format-update-failure [{:keys [errors]}]
   (into [:div]
         (map format-update-error errors)))
 

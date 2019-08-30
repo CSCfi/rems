@@ -42,7 +42,7 @@
  (fn [_ [_ item description dispatch-on-finished]]
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (flash-message/default-success-handler description #(rf/dispatch dispatch-on-finished))
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler description)})
    {}))
 

@@ -366,6 +366,7 @@
                      :color "#ccc"}
                     [:&:hover {:color (util/get-theme-attribute :color4)
                                :background-color "#eee"}]]]
+   [:.flash-message-title {:font-weight :bold}]
 
    [:.text-primary {:color (util/get-theme-attribute :text-primary)}]
    [:.text-secondary {:color (util/get-theme-attribute :text-secondary)}]

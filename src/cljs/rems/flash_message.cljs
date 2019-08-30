@@ -1,7 +1,7 @@
 (ns rems.flash-message
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [reagent.core :as reagent]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms]
             [rems.focus :as focus]
             [rems.text :refer [text]]))
@@ -59,13 +59,13 @@
 ;;; Helpers for typical messages
 
 (defn show-default-success! [description]
-  (show-success! [:span#status-success
-                  (str description ": " (text :t.form/success) ".")]))
+  (show-success! [:div#status-success.flash-message-title
+                  (str description ": " (text :t.form/success))]))
 
 (defn show-default-error! [description & more]
-  (show-error! [:span#status-failed
-                (str/join " " (concat [(str description ": " (text :t.form/failed) ".")]
-                                      more))]))
+  (show-error! (into [:<> [:div#status-failed.flash-message-title
+                           (str description ": " (text :t.form/failed))]]
+                     more)))
 
 (defn default-success-handler [description on-success]
   (fn [response]
@@ -75,6 +75,15 @@
         (when on-success
           (on-success response)))
       (show-default-error! description))))
+
+(defn status-update-handler [description on-success]
+  (fn [response]
+    (if (:success response)
+      (do
+        (show-default-success! description)
+        (when on-success
+          (on-success response)))
+      (show-default-error! description (status-flags/format-update-failure response)))))
 
 (defn default-error-handler [description]
   (fn [response]
