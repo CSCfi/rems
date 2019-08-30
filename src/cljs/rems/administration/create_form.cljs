@@ -10,7 +10,6 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
             [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys in-page-anchor-link]]))
 

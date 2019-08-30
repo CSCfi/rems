@@ -1,6 +1,5 @@
 (ns rems.administration.status-flags
   (:require [re-frame.core :as rf]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text get-localized-title]]))
 
 (defn- disable-button [item on-change]
@@ -91,11 +90,3 @@
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]
         (map format-update-error errors)))
-
-(defn update-error-handler! [response]
-  (status-modal/set-error! {:error-content (format-update-failure response)}))
-
-(defn common-update-handler! [on-close response]
-  (if (:success response)
-    (status-modal/set-success! {:on-close on-close})
-    (update-error-handler! response)))
