@@ -60,7 +60,6 @@
       :return SuccessResponse
       (ok (form/form-editable form-id)))
 
-    ;; TODO: PATCH would be more appropriate, but we use PUT elsewhere in the API
     (PUT "/:form-id/edit" []
       :summary "Edit form"
       :roles #{:owner}
