@@ -179,7 +179,12 @@
                          (str (db ::form-id) "/edit")
                          "create"))
                   {:params (build-request (db ::form) (db :languages))
-                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
+                   :handler
+                   (partial status-modal/common-success-handler!
+                            #(dispatch! (str "#/administration/forms/"
+                                             (if edit?
+                                               (db ::form-id)
+                                               (:id %)))))
                    :error-handler status-modal/common-error-handler!}))
      {:db (assoc db ::form-errors form-errors)})))
 
