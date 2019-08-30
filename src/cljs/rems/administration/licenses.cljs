@@ -3,11 +3,11 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [dispatch! put! fetch]]))
+            [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -38,11 +38,10 @@
 (rf/reg-event-fx
  ::update-license
  (fn [_ [_ item description dispatch-on-finished]]
-   (status-modal/common-pending-handler! description)
    (put! "/api/licenses/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
-          :error-handler status-modal/common-error-handler!})
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
    {}))
 
 (rf/reg-event-fx
@@ -114,7 +113,8 @@
 (defn licenses-page []
   (into [:div
          [administration-navigator-container]
-         [document-title (text :t.administration/licenses)]]
+         [document-title (text :t.administration/licenses)]
+         [flash-message/component]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-license]
