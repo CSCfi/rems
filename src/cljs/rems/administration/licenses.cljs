@@ -37,11 +37,11 @@
 
 (rf/reg-event-fx
  ::update-license
- (fn [_ [_ item description]]
+ (fn [_ [_ item description dispatch-on-finished]]
    (status-modal/common-pending-handler! description)
    (put! "/api/licenses/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-licenses]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -71,7 +71,7 @@
  (fn [[licenses language] _]
    (map (fn [license]
           {:key (:id license)
-           :title {:value (get-localized-title license language)} ; XXX: not really catalogue item, but the structure is the same
+           :title {:value (get-localized-title license language)}
            :type {:value (:licensetype license)}
            :start (let [value (:start license)]
                     {:value value
@@ -79,14 +79,14 @@
            :end (let [value (:end license)]
                   {:value value
                    :display-value (localize-time value)})
-           :active (let [checked? (not (:expired license))]
+           :active (let [checked? (status-flags/active? license)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-license (:id license)]
-                           [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2])]
-                           [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2])]]}})
+                           [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2 [::fetch-licenses]])]
+                           [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2 [::fetch-licenses]])]]}})
         licenses)))
 
 (defn- licenses-list []

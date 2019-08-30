@@ -174,6 +174,9 @@
       (log/info ">" (:request-method request) uri
                 "lang:" context/*lang*
                 "user:" context/*user*
+                (if (get-api-key request)
+                  "api-key"
+                  "")
                 "roles:" context/*roles*)
       (log/debug "session" (pr-str (:session request)))
       (when (seq (:form-params request))

@@ -38,11 +38,11 @@
 
 (rf/reg-event-fx
  ::update-resource
- (fn [{:keys [db]} [_ item description]]
+ (fn [{:keys [db]} [_ item description dispatch-on-finished]]
    (status-modal/common-pending-handler! description)
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-resources]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -78,14 +78,14 @@
            :end (let [value (:end resource)]
                   {:value value
                    :display-value (localize-time value)})
-           :active (let [checked? (not (:expired resource))]
+           :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-resource (:id resource)]
-                           [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %1 %2])]
-                           [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %1 %2])]]}})
+                           [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %1 %2 [::fetch-resources]])]
+                           [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %1 %2 [::fetch-resources]])]]}})
         resources)))
 
 (defn- resources-list []

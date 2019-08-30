@@ -1,6 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
+            [medley.core :refer [map-vals]]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
@@ -86,8 +87,6 @@
                         :license/keys [type title link text]
                         :as command}]
   (let [result (licenses/create-license! {:licensetype (name (or type :text))
-                                          :title ""
-                                          :textcontent ""
                                           :localizations
                                           (transpose-localizations {:title title
                                                                     :textcontent (merge link text)})}
@@ -130,18 +129,14 @@
 
 (defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]
                                :as command}]
-  (let [result (catalogue/create-catalogue-item! {:resid (or resource-id (create-resource! {}))
-                                                  :form (or form-id (create-form! {}))
-                                                  :wfid (or workflow-id (create-dynamic-workflow! {}))})
-        _ (assert (:success result) {:command command :result result})
-        id (:id result)]
-    (when (map? title)
-      (doseq [[lang text] title]
-        (let [result (catalogue/create-catalogue-item-localization! {:id id
-                                                                     :langcode (name lang)
-                                                                     :title text})]
-          (assert (:success result) {:command [id lang text] :result result}))))
-    id))
+  (let [localizations (map-vals (fn [title] {:title title}) title)
+        result (catalogue/create-catalogue-item!
+                {:resid (or resource-id (create-resource! {}))
+                 :form (or form-id (create-form! {}))
+                 :wfid (or workflow-id (create-dynamic-workflow! {}))
+                 :localizations (or localizations {})})]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
 
 (defn create-application! [{:keys [catalogue-item-ids actor]}]
   (:application-id (command! {:type :application.command/create
@@ -216,8 +211,12 @@
     (form/update-form! {:id id :enabled true :archived true})))
 
 (defn- create-disabled-license! [owner]
-  (let [id (:id (db/create-license! {:modifieruserid owner :owneruserid owner
-                                     :title "expired license" :type "link" :textcontent "http://expired"}))]
+  (let [id (create-license! {:actor owner
+                             :license/type "link"
+                             :license/title {:en "Disabled license"
+                                             :fi "Käytöstä poistettu lisenssi"}
+                             :license/link {:en "http://disabled"
+                                            :fi "http://disabled"}})]
     (db/set-license-state! {:id id :enabled false :archived false})))
 
 (defn- create-basic-form!

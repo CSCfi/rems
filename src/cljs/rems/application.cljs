@@ -18,15 +18,15 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
-            [rems.atoms :refer [external-link file-download flash-message info-field readonly-checkbox textarea document-title success-symbol]]
+            [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
             [rems.fields :as fields]
+            [rems.flash-message :as flash-message]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
-            [rems.text :refer [localize-decision localize-event localized localize-item localize-state localize-time text text-format get-localized-title]]
+            [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.util :refer [dispatch! fetch parse-int post! in-page-anchor-link]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -48,7 +48,7 @@
                                             (:catalogue-item/expired %)
                                             (:catalogue-item/archived %)))
                                seq)]
-      [:div.alert.alert-danger
+      [:div.alert.alert-warning
        (text :t.form/alert-disabled-resources)
        (into [:ul]
              (for [resource resources]
@@ -88,13 +88,14 @@
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
    {:db (dissoc db ::application ::edit-application)
-    ::fetch-application id}))
+    :dispatch [::fetch-application id]}))
 
-(rf/reg-fx
+(rf/reg-event-fx
  ::fetch-application
- (fn [id]
+ (fn [_ [_ id]]
    (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])})))
+          {:handler #(rf/dispatch [::fetch-application-result %])})
+   {}))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -134,12 +135,14 @@
     {:field field :value value}))
 
 (defn- save-application! [description application-id field-values]
-  (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
-          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
-          :error-handler status-modal/common-error-handler!}))
+          :handler (flash-message/default-success-handler
+                    description
+                    (fn [_]
+                      (rf/dispatch [::fetch-application application-id])))
+          :error-handler (flash-message/default-error-handler description)}))
 
 (rf/reg-event-fx
  ::save-application
@@ -154,26 +157,30 @@
 (defn- submit-application! [application description application-id field-values
                             userid]
   ;; TODO: deduplicate with save-application!
-  (status-modal/common-pending-handler! description)
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
           :handler (fn [response]
-                     (if (:success response)
-                       (if (accepted-licenses? application userid)
-                         (post! "/api/applications/submit"
-                                {:params {:application-id application-id}
-                                 :handler (fn [response]
-                                            (if (:success response)
-                                              (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id])})
-                                              (do
-                                                (status-modal/set-error! {:result response
-                                                                          :error-content (format-validation-errors application (:errors response))})
-                                                (rf/dispatch [::set-validation-errors (:errors response)]))))
-                                 :error-handler status-modal/common-error-handler!})
-                         (status-modal/set-error! {:error-content (text :t.actions/licenses-not-accepted-error)}))
-                       (status-modal/common-error-handler! response)))
-          :error-handler status-modal/common-error-handler!}))
+                     (cond
+                       (not (:success response))
+                       (flash-message/show-default-error! description)
+
+                       (not (accepted-licenses? application userid))
+                       (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
+
+                       :else
+                       (post! "/api/applications/submit"
+                              {:params {:application-id application-id}
+                               :handler (fn [response]
+                                          (if (:success response)
+                                            (do
+                                              (rf/dispatch [::fetch-application application-id])
+                                              (flash-message/show-default-success! description))
+                                            (do
+                                              (rf/dispatch [::set-validation-errors (:errors response)])
+                                              (flash-message/show-error! [format-validation-errors application (:errors response)]))))
+                               :error-handler (flash-message/default-error-handler description)})))
+          :error-handler (flash-message/default-error-handler description)}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -190,19 +197,20 @@
 (rf/reg-event-fx
  ::copy-as-new-application
  (fn [{:keys [db]} _]
-   (let [application-id (get-in db [::application :application/id])]
-     (status-modal/common-pending-handler! (text :t.form/copy-as-new))
+   (let [application-id (get-in db [::application :application/id])
+         description (text :t.form/copy-as-new)]
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
-             :handler (partial status-modal/common-success-handler!
-                               (fn [response]
-                                 (dispatch! (str "/#/application/" (:application-id response)))))
-             :error-handler status-modal/common-error-handler!}))
+             :handler (flash-message/default-success-handler
+                       description
+                       (fn [response]
+                         (rf/dispatch [:rems.spa/user-triggered-navigation])
+                         (dispatch! (str "/#/application/" (:application-id response)))))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
-    (status-modal/common-pending-handler! description)
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id
                          :field-id field-id}
@@ -210,14 +218,13 @@
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
-            :handler (fn [response]
-                       (if (:success response)
-                         (do
-                           ;; no race condition here: events are handled in a FIFO manner
-                           (rf/dispatch [::set-field-value field-id (str (:id response))])
-                           (rf/dispatch [::save-application (text :t.form/upload)]))
-                         (status-modal/common-error-handler! response)))
-            :error-handler status-modal/common-error-handler!})
+            :handler (flash-message/default-success-handler
+                      description
+                      (fn [response]
+                        ;; no race condition here: events are handled in a FIFO manner
+                        (rf/dispatch [::set-field-value field-id (str (:id response))])
+                        (rf/dispatch [::save-application (text :t.form/upload)])))
+            :error-handler (flash-message/default-error-handler description)})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
@@ -637,26 +644,21 @@
                [:div#resource-action-forms
                 [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
-(defn- render-application [application edit-application config userid]
-  (let [messages (remove nil?
-                         [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
-                          (when-let [errors (:validation-errors edit-application)]
-                            [flash-message
-                             {:status :danger
-                              :contents [format-validation-errors application errors]}])])]
-    [:div.container-fluid.editor-content
-     [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-     (text :t.applications/intro)
-     (into [:div] messages)
-     [:div.row
-      [:div.col-lg-8
-       [application-state application config]
-       [:div.mt-3 [applicants-info application]]
-       [:div.mt-3 [applied-resources application userid]]
-       [:div.my-3 [application-licenses application edit-application userid]]
-       [:div.my-3 [application-fields application edit-application]]]
-      [:div.col-lg-4
-       [:div#float-actions.mb-3 [actions-form application]]]]]))
+(defn- render-application [{:keys [application edit-application config userid]}]
+  [:div.container-fluid.editor-content
+   [document-title (str (text :t.applications/application) " " (format-application-id config application))]
+   [flash-message/component]
+   [disabled-items-warning application]
+   (text :t.applications/intro)
+   [:div.row
+    [:div.col-lg-8
+     [application-state application config]
+     [:div.mt-3 [applicants-info application]]
+     [:div.mt-3 [applied-resources application userid]]
+     [:div.my-3 [application-licenses application edit-application userid]]
+     [:div.my-3 [application-fields application edit-application]]]
+    [:div.col-lg-4
+     [:div#float-actions.mb-3 [actions-form application]]]]])
 
 ;;;; Entrypoint
 
@@ -670,7 +672,10 @@
       [:div
        [document-title (text :t.applications/application)]
        [spinner/big]]
-      [render-application application edit-application config userid])))
+      [render-application {:application application
+                           :edit-application edit-application
+                           :config config
+                           :userid userid}])))
 
 
 ;;;; Guide
@@ -771,73 +776,73 @@
    (component-info render-application)
    (example "application, partially filled"
             [render-application
-             {:application/id 17
-              :application/state :application.state/draft
-              :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-              :application/form {:form/fields [{:field/id 1
-                                                :field/type :text
-                                                :field/title {:en "Field 1"}
-                                                :field/placeholder {:en "placeholder 1"}}
-                                               {:field/id 2
-                                                :field/type :label
-                                                :title "Please input your wishes below."}
-                                               {:field/id 3
-                                                :field/type :texta
-                                                :field/optional true
-                                                :field/title {:en "Field 2"}
-                                                :field/placeholder {:en "placeholder 2"}}
-                                               {:field/id 4
-                                                :field/type :unsupported
-                                                :field/title {:en "Field 3"}
-                                                :field/placeholder {:en "placeholder 3"}}
-                                               {:field/id 5
-                                                :field/type :date
-                                                :field/title {:en "Field 4"}}]}
-              :application/licenses [{:license/id 4
-                                      :license/type :text
-                                      :license/title {:en "A Text License"}
-                                      :license/text {:en lipsum}}
-                                     {:license/id 5
-                                      :license/type :link
-                                      :license/title {:en "Link to license"}
-                                      :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
-             {:field-values {1 "abc"}
-              :show-diff {}
-              :validation-errors nil
-              :accepted-licenses #{5}}])
+             {:application {:application/id 17
+                            :application/state :application.state/draft
+                            :application/resources [{:catalogue-item/title {:en "An applied item"}}]
+                            :application/form {:form/fields [{:field/id 1
+                                                              :field/type :text
+                                                              :field/title {:en "Field 1"}
+                                                              :field/placeholder {:en "placeholder 1"}}
+                                                             {:field/id 2
+                                                              :field/type :label
+                                                              :title "Please input your wishes below."}
+                                                             {:field/id 3
+                                                              :field/type :texta
+                                                              :field/optional true
+                                                              :field/title {:en "Field 2"}
+                                                              :field/placeholder {:en "placeholder 2"}}
+                                                             {:field/id 4
+                                                              :field/type :unsupported
+                                                              :field/title {:en "Field 3"}
+                                                              :field/placeholder {:en "placeholder 3"}}
+                                                             {:field/id 5
+                                                              :field/type :date
+                                                              :field/title {:en "Field 4"}}]}
+                            :application/licenses [{:license/id 4
+                                                    :license/type :text
+                                                    :license/title {:en "A Text License"}
+                                                    :license/text {:en lipsum}}
+                                                   {:license/id 5
+                                                    :license/type :link
+                                                    :license/title {:en "Link to license"}
+                                                    :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
+              :edit-application {:field-values {1 "abc"}
+                                 :show-diff {}
+                                 :validation-errors nil
+                                 :accepted-licenses #{5}}}])
    (example "application, applied"
             [render-application
-             {:application/id 17
-              :application/state :application.state/submitted
-              :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-              :application/form {:form/fields [{:field/id 1
-                                                :field/type :text
-                                                :field/title {:en "Field 1"}
-                                                :field/placeholder {:en "placeholder 1"}}]}
-              :application/licenses [{:license/id 4
-                                      :license/type :text
-                                      :license/title {:en "A Text License"}
-                                      :license/text {:en lipsum}}]}
-             {:field-values {1 "abc"}
-              :accepted-licenses #{4}}])
+             {:application {:application/id 17
+                            :application/state :application.state/submitted
+                            :application/resources [{:catalogue-item/title {:en "An applied item"}}]
+                            :application/form {:form/fields [{:field/id 1
+                                                              :field/type :text
+                                                              :field/title {:en "Field 1"}
+                                                              :field/placeholder {:en "placeholder 1"}}]}
+                            :application/licenses [{:license/id 4
+                                                    :license/type :text
+                                                    :license/title {:en "A Text License"}
+                                                    :license/text {:en lipsum}}]}
+              :edit-application {:field-values {1 "abc"}
+                                 :accepted-licenses #{4}}}])
    (example "application, approved"
             [render-application
-             {:application/id 17
-              :application/state :application.state/approved
-              :application/applicant-attributes {:eppn "eppn"
-                                                 :mail "email@example.com"
-                                                 :additional "additional field"}
-              :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-              :application/form {:form/fields [{:field/id 1
-                                                :field/type :text
-                                                :field/title {:en "Field 1"}
-                                                :field/placeholder {:en "placeholder 1"}}]}
-              :application/licenses [{:license/id 4
-                                      :license/type :text
-                                      :license/title {:en "A Text License"}
-                                      :license/text {:en lipsum}}]}
-             {:field-values {1 "abc"}
-              :accepted-licenses #{4}}])
+             {:application {:application/id 17
+                            :application/state :application.state/approved
+                            :application/applicant-attributes {:eppn "eppn"
+                                                               :mail "email@example.com"
+                                                               :additional "additional field"}
+                            :application/resources [{:catalogue-item/title {:en "An applied item"}}]
+                            :application/form {:form/fields [{:field/id 1
+                                                              :field/type :text
+                                                              :field/title {:en "Field 1"}
+                                                              :field/placeholder {:en "placeholder 1"}}]}
+                            :application/licenses [{:license/id 4
+                                                    :license/type :text
+                                                    :license/title {:en "A Text License"}
+                                                    :license/text {:en lipsum}}]}
+              :edit-application {:field-values {1 "abc"}
+                                 :accepted-licenses #{4}}}])
 
    (component-info application-copy-notice)
    (example "no copies"

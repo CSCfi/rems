@@ -127,6 +127,22 @@
       (archive-resource! false)
       (is (:success (archive-catalogue-item! true))))))
 
+(deftest test-edit-catalogue-item
+  (let [item-id (test-data/create-catalogue-item!
+                 {:title {:en "Old title"
+                          :fi "Vanha nimi"}})
+        old-item (first (catalogue/get-localized-catalogue-items))
+
+        _ (catalogue/edit-catalogue-item!
+           {:id item-id
+            :localizations {:en {:title "New title"}
+                            :fi {:title "Uusi nimi"}}})
+        new-item (first (catalogue/get-localized-catalogue-items))]
+    (is (= "Old title" (get-in old-item [:localizations :en :title])))
+    (is (= "Vanha nimi" (get-in old-item [:localizations :fi :title])))
+    (is (= "New title" (get-in new-item [:localizations :en :title])))
+    (is (= "Uusi nimi" (get-in new-item [:localizations :fi :title])))))
+
 (deftest test-get-localized-catalogue-items
   (let [item-id (test-data/create-catalogue-item! {})]
 

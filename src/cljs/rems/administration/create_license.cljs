@@ -6,7 +6,7 @@
             [rems.atoms :as atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
             [rems.status-modal :as status-modal]
-            [rems.text :refer [text localize-item]]
+            [rems.text :refer [text]]
             [rems.util :refer [dispatch! post!]]))
 
 (rf/reg-event-db
@@ -49,14 +49,13 @@
           (set (keys (:localizations request))))
        (every? valid-localization? (vals (:localizations request)))))
 
-(defn build-request [form default-language languages]
+(defn build-request [form languages]
   (let [license-type (:licensetype form)
         request {:licensetype license-type
                  :localizations (into {} (map (fn [[lang data]]
                                                 [lang (build-localization data license-type)])
                                               (:localizations form)))}]
-    (when (valid-request? request languages)
-      (localize-item request default-language))))
+    (when (valid-request? request languages) request)))
 
 (rf/reg-event-fx
  ::create-license
@@ -180,9 +179,8 @@
 
 (defn- save-license-button [on-click]
   (let [form @(rf/subscribe [::form])
-        default-language @(rf/subscribe [:default-language])
         languages @(rf/subscribe [:languages])
-        request (build-request form default-language languages)]
+        request (build-request form languages)]
     [:button.btn.btn-primary
      {:type :button
       :on-click (fn []

@@ -158,7 +158,8 @@
                    (json-body {:form form-id
                                :resid 1
                                :wfid 1
-                               :archived false})
+                               :archived false
+                               :localizations {}})
                    handler
                    read-body)]
       (testing "Form is non-editable after in use by a catalogue item"

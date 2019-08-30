@@ -1,8 +1,8 @@
 (ns rems.table
-  (:require [cljs.test :refer-macros [deftest is testing]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
+            [rems.focus :as focus]
             [rems.search :as search]
             [rems.text :refer [text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -68,14 +68,18 @@
     m
     (assoc m k (make-default m))))
 
-(defn- apply-row-defaults [row]
+(defn apply-row-defaults [row]
   (->> row
        (map (fn [[column opts]]
               [column
                (if (= :key column) ; not a column, but the row key
                  opts
                  (-> opts
-                     (default-if-missing :sort-value :value)
+                     (default-if-missing :sort-value (fn [opts]
+                                                       (let [val (:value opts)]
+                                                         (if (string? val)
+                                                           (str/lower-case val)
+                                                           val))))
                      (default-if-missing :display-value (comp str :value))
                      (default-if-missing :filter-value (fn [opts]
                                                          (if (string? (:display-value opts))
@@ -85,56 +89,6 @@
                                                [:td {:class (name column)}
                                                 (:display-value opts)]))))]))
        (into {})))
-
-(deftest test-apply-row-defaults
-  (testing "all custom"
-    (is (= {:key 123
-            :foo {:sort-value "foo1"
-                  :display-value "foo2"
-                  :filter-value "foo3"
-                  :td [:td "foo4"]}}
-           (apply-row-defaults {:key 123
-                                :foo {:sort-value "foo1"
-                                      :display-value "foo2"
-                                      :filter-value "foo3"
-                                      :td [:td "foo4"]}}))))
-  (testing "all defaults"
-    (is (= {:key 123
-            :foo {:value 42
-                  :sort-value 42
-                  :display-value "42"
-                  :filter-value "42"
-                  :td [:td {:class "foo"} "42"]}}
-           (apply-row-defaults {:key 123
-                                :foo {:value 42}}))))
-  (testing "component only"
-    (is (= {:key 123
-            :foo {:sort-value nil
-                  :display-value ""
-                  :filter-value ""
-                  :td [:td.foo [:button "Button"]]}}
-           (apply-row-defaults {:key 123
-                                :foo {:td [:td.foo [:button "Button"]]}}))))
-  (testing ":filter-value is normalized to lowercase"
-    (is (= {:key 123
-            :foo {:sort-value ""
-                  :display-value "FooBar"
-                  :filter-value "foobar"
-                  :td [:td ""]}}
-           (apply-row-defaults {:key 123
-                                :foo {:sort-value ""
-                                      :display-value "FooBar"
-                                      :td [:td ""]}}))))
-  (testing "cannot calculate :filter-value from non-string :display-value"
-    (is (= {:key 123
-            :foo {:sort-value ""
-                  :display-value [:p "foo"]
-                  :filter-value ""
-                  :td [:td ""]}}
-           (apply-row-defaults {:key 123
-                                :foo {:sort-value ""
-                                      :display-value [:p "foo"]
-                                      :td [:td ""]}})))))
 
 (rf/reg-sub
  ::rows
@@ -173,14 +127,6 @@
 (defn parse-search-terms [s]
   (->> (re-seq #"\S+" (str s))
        (map str/lower-case)))
-
-(deftest test-parse-search-terms
-  (is (= [] (parse-search-terms nil)))
-  (is (= [] (parse-search-terms "")))
-  (is (= ["word"] (parse-search-terms "word")))
-  (is (= ["uppercase"] (parse-search-terms "UPPERCASE")))
-  (is (= ["two" "words"] (parse-search-terms "two words")))
-  (is (= ["white" "space"] (parse-search-terms "   white \t\n space  "))))
 
 (rf/reg-sub
  ::sorted-and-filtered-rows
@@ -226,18 +172,6 @@
         (for [column (:columns table)]
           (get-in row [(:key column) :td]))))
 
-(defn- focus-element-async
-  ([selector]
-   (focus-element-async selector 100))
-  ([selector tries]
-   (when (pos? tries)
-     (if-let [element (.querySelector js/document selector)]
-       (do
-         (.setAttribute element "tabindex" "-1")
-         (.focus element))
-       (js/setTimeout #(focus-element-async selector (dec tries))
-                      10)))))
-
 (defn table [table]
   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
         language @(rf/subscribe [:language])
@@ -262,8 +196,8 @@
                                          :on-click (fn []
                                                      (rf/dispatch [::show-all-rows table])
                                                      (let [next-row (:key (nth rows max-rows))]
-                                                       (focus-element-async (str "table.rems-table." (name (:id table))
-                                                                                 " > tbody > tr[data-row='" next-row "'] > td"))))}
+                                                       (focus/focus-element-async (str "table.rems-table." (name (:id table))
+                                                                                       " > tbody > tr[data-row='" next-row "'] > td"))))}
                 (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
 (defn guide []

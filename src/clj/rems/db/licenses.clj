@@ -7,11 +7,7 @@
   {:id (:id license)
    :licensetype (:type license)
    :enabled (:enabled license)
-   :archived (:archived license)
-   ;; TODO why do licenses have a non-localized title & content while items don't?
-   :title (:title license)
-   :textcontent (:textcontent license)
-   :attachment-id (:attachmentid license)})
+   :archived (:archived license)})
 
 (defn- format-licenses [licenses]
   (mapv format-license licenses))

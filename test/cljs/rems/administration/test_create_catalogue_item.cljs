@@ -5,22 +5,17 @@
 (deftest build-request-test
   (let [form {:title {:en "en title"
                       :fi "fi title"}
-              :workflow {:id 123
-                         :unrelated "stuff"}
-              :resource {:id 456
-                         :unrelated "stuff"}
-              :form {:id 789
-                     :unrelated "stuff"}}
+              :workflow-id 123
+              :resource-id 456
+              :form-id 789}
         languages [:en :fi]]
 
     (testing "valid form"
       (is (= {:wfid 123
               :resid 456
               :form 789
-              :localizations [{:langcode "en"
-                               :title "en title"}
-                              {:langcode "fi"
-                               :title "fi title"}]}
+              :localizations {:en {:title "en title"}
+                              :fi {:title "fi title"}}}
              (build-request form languages))))
 
     (testing "missing title"
@@ -28,12 +23,12 @@
                                languages)))
       (is (nil? (build-request (assoc-in form [:title :fi] "")
                                languages))))
-    (testing "missing workflow"
-      (is (nil? (build-request (assoc form :workflow nil)
+    (testing "missing workflow id"
+      (is (nil? (build-request (assoc form :workflow-id nil)
                                languages))))
-    (testing "missing resource"
-      (is (nil? (build-request (assoc form :resource nil)
+    (testing "missing resource id"
+      (is (nil? (build-request (assoc form :resource-id nil)
                                languages))))
-    (testing "missing form"
-      (is (nil? (build-request (assoc form :form nil)
+    (testing "missing form id"
+      (is (nil? (build-request (assoc form :form-id nil)
                                languages))))))

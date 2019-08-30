@@ -27,9 +27,6 @@
    :licensetype (s/enum "text" "link" "attachment")
    :enabled s/Bool
    :archived s/Bool
-   :title s/Str
-   :textcontent s/Str
-   (s/optional-key :attachment-id) (s/maybe s/Int)
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str
                               (s/optional-key :attachment-id) (s/maybe s/Int)}}})

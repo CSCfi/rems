@@ -1,6 +1,7 @@
 (ns rems.administration.workflows
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.workflow :as workflow]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
@@ -37,11 +38,11 @@
 
 (rf/reg-event-fx
  ::update-workflow
- (fn [_ [_ item description]]
+ (fn [_ [_ item description dispatch-on-finished]]
    (status-modal/common-pending-handler! description)
    (put! "/api/workflows/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-workflows]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -62,11 +63,6 @@
    (str "/#/administration/workflows/" workflow-id)
    (text :t.administration/view)])
 
-(defn- to-edit-workflow [workflow-id]
-  [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/edit-workflow/" workflow-id)
-   (text :t.administration/edit)])
-
 (rf/reg-sub
  ::workflows-table-rows
  (fn [_ _]
@@ -82,15 +78,15 @@
            :end (let [value (:end workflow)]
                   {:value value
                    :display-value (localize-time value)})
-           :active (let [checked? (not (:expired workflow))]
+           :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]
-                           [to-edit-workflow (:id workflow)]
-                           [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]
-                           [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2])]]}})
+                           [workflow/edit-button (:id workflow)]
+                           [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]
+                           [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]]}})
         workflows)))
 
 (defn- workflows-list []

@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
@@ -36,6 +37,11 @@
    "/#/administration/catalogue-items"
    (text :t.administration/back)])
 
+(defn edit-button [id]
+  [atoms/link {:class "btn btn-primary"}
+   (str "/#/administration/edit-catalogue-item/" id)
+   (text :t.administration/edit)])
+
 (defn catalogue-item-view [catalogue-item language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -62,8 +68,13 @@
                        (:form-name catalogue-item)]]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
-                     [inline-info-field (text :t.administration/active) [readonly-checkbox (not (:expired catalogue-item))]]]))}]
-   [:div.col.commands [back-button]]])
+                     [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? catalogue-item)]]]))}]
+   (let [id (:id catalogue-item)]
+     [:div.col.commands
+      [back-button]
+      [edit-button id]
+      [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/update-catalogue-item %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/update-catalogue-item %1 %2 [::enter-page id]])]])])
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])

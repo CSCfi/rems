@@ -15,6 +15,9 @@ Changes since v2.4
 - The pdf button and API have been removed. We recommend using "print
   to pdf" in your browser.
 - The `start`, `end` and `expired` fields have been removed from licenses
+- API for creating catalogue item and its localizations has been changed.
+  There is now a single API call that is used to create both a catalogue
+  item and the localizations, namely, /api/catalogue-items/create.
 
 ### Additions
 - New field types: description, option, multiselect
@@ -39,6 +42,8 @@ Changes since v2.4
 - Extra pages (#472)
 - Full-text search for all application content (#873)
 - Creating a new application as a copy from an older application (#832)
+- Re-naming a catalogue item (#1507)
+- Add enable/disable and archive/unarchive buttons to 'View' pages (#1438)
 
 ### Enhancements
 - Improved version information in footer
@@ -47,6 +52,7 @@ Changes since v2.4
 - Hide language switcher when only one language configured
 - PDFs are now downloaded as \<application-id\>.pdf instead of pdf.pdf
 - Improved table performance: added a "show all rows" button for long tables
+- Modal popups (on application page) have been replaced with flash messages (#1469)
 
 ### Fixes
 - Entitlement API

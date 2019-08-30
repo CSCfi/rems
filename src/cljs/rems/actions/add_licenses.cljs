@@ -3,8 +3,8 @@
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.dropdown :as dropdown]
-            [rems.status-modal :as status-modal]
-            [rems.text :refer [text]]
+            [rems.flash-message :as flash-message]
+            [rems.text :refer [text get-localized-title]]
             [rems.util :refer [fetch post!]]))
 
 (rf/reg-fx
@@ -48,25 +48,23 @@
 (rf/reg-event-fx
  ::send-add-licenses
  (fn [_ [_ {:keys [application-id licenses comment on-finished]}]]
-   (status-modal/common-pending-handler! (text :t.actions/add-licenses))
-   (post! "/api/applications/add-licenses"
-          {:params {:application-id application-id
-                    :comment comment
-                    :licenses (map :id licenses)}
-           :handler (partial status-modal/common-success-handler! (fn [_]
-                                                                    (collapse-action-form action-form-id)
-                                                                    (on-finished)))
-           :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.actions/add-licenses)]
+     (post! "/api/applications/add-licenses"
+            {:params {:application-id application-id
+                      :comment comment
+                      :licenses (map :id licenses)}
+             :handler (flash-message/default-success-handler
+                       description
+                       (fn [_]
+                         (collapse-action-form action-form-id)
+                         (on-finished)))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn add-licenses-action-button []
   [action-button {:id action-form-id
                   :text (text :t.actions/add-licenses)
                   :on-click #(rf/dispatch [::open-form])}])
-
-(defn- title-of-license [license language]
-  (or (get-in license [:localizations language :title])
-      (:title license)))
 
 (defn add-licenses-view
   [{:keys [selected-licenses potential-licenses comment language on-set-comment on-set-licenses on-send]}]
@@ -87,7 +85,7 @@
       {:id dropdown-id
        :items potential-licenses
        :item-key :id
-       :item-label #(title-of-license % language)
+       :item-label #(get-localized-title % language)
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change on-set-licenses}]]]])

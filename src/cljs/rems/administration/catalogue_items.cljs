@@ -1,6 +1,7 @@
 (ns rems.administration.catalogue-items
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.catalogue-item :as catalogue-item]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.spinner :as spinner]
@@ -39,11 +40,11 @@
 
 (rf/reg-event-fx
  ::update-catalogue-item
- (fn [_ [_ item description]]
+ (fn [_ [_ item description dispatch-on-finished]]
    (status-modal/common-pending-handler! description)
    (put! "/api/catalogue-items/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-catalogue]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
           :error-handler status-modal/common-error-handler!})
    {}))
 
@@ -97,15 +98,15 @@
            :end (let [value (:end item)]
                   {:value value
                    :display-value (localize-time value)})
-           ;; TODO: active means not-expired currently. it should maybe mean (and not-expired enabled not-archived)
-           :active (let [checked? (not (:expired item))]
+           :active (let [checked? (status-flags/active? item)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-catalogue-item (:id item)]
-                           [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]
-                           [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2])]]}})
+                           [catalogue-item/edit-button (:id item)]
+                           [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2 [::fetch-catalogue]])]
+                           [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2 [::fetch-catalogue]])]]}})
         catalogue)))
 
 (defn- catalogue-list []

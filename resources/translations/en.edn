@@ -57,6 +57,7 @@
                    :disable "Disable"
                    :display-old "Display old"
                    :edit "Edit"
+                   :edit-catalogue-item "Edit catalogue item"
                    :edit-form "Edit form"
                    :edit-workflow "Edit workflow"
                    :enable "Enable"
