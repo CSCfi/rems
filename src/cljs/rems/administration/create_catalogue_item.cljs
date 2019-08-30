@@ -87,7 +87,7 @@
   {})
 
 (defn- edit-catalogue-item! [{:keys [db]} [_ request]]
-  (let [id (db ::catalogue-item-id)
+  (let [id (::catalogue-item-id db)
         description (text :t.administration/edit-catalogue-item)]
     (put! "/api/catalogue-items/edit"
           {:params {:id id
