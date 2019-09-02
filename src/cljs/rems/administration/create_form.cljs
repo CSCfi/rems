@@ -174,11 +174,12 @@
          send-verb (if edit? put! post!)]
      (when-not form-errors
        (status-modal/common-pending-handler! (page-title edit?))
-       (send-verb (str "/api/forms/"
-                       (if edit?
-                         (str (db ::form-id) "/edit")
-                         "create"))
-                  {:params (build-request (db ::form) (db :languages))
+       (send-verb (str "/api/forms/" (if edit?
+                                       "edit"
+                                       "create"))
+                  {:params (merge (build-request (db ::form) (db :languages))
+                                  (when edit?
+                                    {:form/id (db ::form-id)}))
                    :handler
                    (partial status-modal/common-success-handler!
                             #(dispatch! (str "#/administration/forms/"

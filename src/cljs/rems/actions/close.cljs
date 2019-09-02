@@ -1,6 +1,6 @@
 (ns rems.actions.close
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -13,6 +13,8 @@
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
+(def ^:private action-form-id "close")
+
 (rf/reg-event-fx
  ::send-close
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
@@ -20,11 +22,13 @@
      (post! "/api/applications/close"
             {:params {:application-id application-id
                       :comment comment}
-             :handler (flash-message/default-success-handler description on-finished)
+             :handler (flash-message/default-success-handler
+                       description
+                       (fn [_]
+                         (collapse-action-form action-form-id)
+                         (on-finished)))
              :error-handler (flash-message/default-error-handler description)}))
    {}))
-
-(def ^:private action-form-id "close")
 
 (defn close-action-button []
   [action-button {:id action-form-id
