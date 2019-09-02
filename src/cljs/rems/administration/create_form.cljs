@@ -185,8 +185,10 @@
                    :handler (flash-message/default-success-handler
                              description
                              (fn [response]
-                               (dispatch! (str "#/administration/forms/" (or (::form-id db)
-                                                                             (:id response))))))
+                               (dispatch! (str "#/administration/forms/"
+                                               (if edit?
+                                                 (db ::form-id)
+                                                 (:id response))))))
                    :error-handler (flash-message/default-error-handler description)}))
      {:db (assoc db ::form-errors form-errors)})))
 
