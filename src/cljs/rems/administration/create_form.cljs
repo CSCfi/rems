@@ -180,7 +180,12 @@
                   {:params (merge (build-request (db ::form) (db :languages))
                                   (when edit?
                                     {:form/id (db ::form-id)}))
-                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
+                   :handler
+                   (partial status-modal/common-success-handler!
+                            #(dispatch! (str "#/administration/forms/"
+                                             (if edit?
+                                               (db ::form-id)
+                                               (:id %)))))
                    :error-handler status-modal/common-error-handler!}))
      {:db (assoc db ::form-errors form-errors)})))
 
