@@ -185,9 +185,10 @@
                      handler
                      read-ok-body)]
         (is (= (:form/organization form) "abc")))
-      (let [response (-> (request :put (str "/api/forms/" form-id "/edit"))
+      (let [response (-> (request :put "/api/forms/edit")
                          (authenticate api-key user-id)
-                         (json-body {:form/organization "def"
+                         (json-body {:form/id form-id
+                                     :form/organization "def"
                                      :form/title "form edit test"
                                      :form/fields []})
                          handler
