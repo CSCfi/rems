@@ -17,6 +17,9 @@
    :form/title s/Str
    :form/fields [NewFieldTemplate]})
 
+(s/defschema EditFormCommand
+  (assoc CreateFormCommand :form/id s/Int))
+
 (s/defschema CreateFormResponse
   {:success s/Bool
    :id s/Int})
@@ -60,21 +63,13 @@
       :return SuccessResponse
       (ok (form/form-editable form-id)))
 
-    (PUT "/:form-id/edit" []
+    (PUT "/edit" []
       :summary "Edit form"
       :roles #{:owner}
-      :path-params [form-id :- (describe s/Int "form-id")]
-      :body [command CreateFormCommand]
+      :body [command EditFormCommand]
       :return SuccessResponse
-      (ok (form/edit-form! (getx-user-id) form-id command)))
+      (ok (form/edit-form! (getx-user-id) command)))
 
-    ;; TODO: Change endpoint for updating form to be consistent with
-    ;;   the endpoint for editing form (/:form-id/edit). Also change
-    ;;   terminology to be less easily confused with form editing, e.g.,
-    ;;   from /update to /:form-id/update-state.
-    ;;
-    ;;   For consistency, do similar change for catalogue items, licenses,
-    ;;   and resources.
     (PUT "/update" []
       :summary "Update form"
       :roles #{:owner}
