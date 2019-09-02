@@ -176,9 +176,9 @@
                                        "edit"
                                        "create"))
          description (page-title edit?)
-         request (merge (build-request (db ::form) (db :languages))
+         request (merge (build-request (::form db) (:languages db))
                         (when edit?
-                          {:form/id (db ::form-id)}))]
+                          {:form/id (::form-id db)}))]
      (when-not form-errors
        (send-verb send-url
                   {:params request
@@ -187,8 +187,8 @@
                              (fn [response]
                                (dispatch! (str "#/administration/forms/"
                                                (if edit?
-                                                 (db ::form-id)
-                                                 (:id response))))))
+                                                 (::form-id db)
+                                                 (response :id))))))
                    :error-handler (flash-message/default-error-handler description)}))
      {:db (assoc db ::form-errors form-errors)})))
 
