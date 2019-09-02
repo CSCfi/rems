@@ -6,8 +6,8 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text get-localized-title]]
             [rems.util :refer [dispatch! fetch post!]]))
 
@@ -45,12 +45,12 @@
 (rf/reg-event-fx
  ::create-resource
  (fn [_ [_ request]]
-   (status-modal/common-pending-handler! (text :t.administration/save))
-   (post! "/api/resources/create"
-          {:params request
-           ;; TODO: render the catalogue items that use this resource in the error handler
-           :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/resources/" (:id %))))
-           :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.administration/save)]
+     (post! "/api/resources/create"
+            {:params request
+             ;; TODO: render the catalogue items that use this resource in the error handler
+             :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/resources/" (:id %))))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 ;; available licenses
@@ -126,6 +126,7 @@
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-resource)]
+     [flash-message/component]
      [collapsible/component
       {:id "create-resource"
        :title (text :t.administration/create-resource)

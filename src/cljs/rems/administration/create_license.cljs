@@ -5,7 +5,7 @@
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
             [rems.atoms :as atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
-            [rems.status-modal :as status-modal]
+            [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! post!]]))
 
@@ -60,10 +60,11 @@
 (rf/reg-event-fx
  ::create-license
  (fn [_ [_ request]]
-   (status-modal/common-pending-handler! (text :t.administration/create-license))
-   (post! "/api/licenses/create" {:params request
-                                  :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/licenses/" (:id %))))
-                                  :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.administration/create-license)]
+     (post! "/api/licenses/create"
+            {:params request
+             :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/licenses/" (:id %))))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn- save-attachment [language form-data]
@@ -199,6 +200,7 @@
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-license)]
+     [flash-message/component]
      [collapsible/component
       {:id "create-license"
        :title (text :t.administration/create-license)

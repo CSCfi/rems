@@ -6,8 +6,8 @@
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post! put!]]))
 
@@ -85,20 +85,22 @@
 
 (rf/reg-event-fx
  ::create-workflow
- (fn [{:keys [db]} [_ request]]
-   (status-modal/common-pending-handler! (text :t.administration/create-workflow))
-   (post! "/api/workflows/create" {:params request
-                                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/workflows/" (:id %))))
-                                   :error-handler status-modal/common-error-handler!})
+ (fn [_ [_ request]]
+   (let [description (text :t.administration/create-workflow)]
+     (post! "/api/workflows/create"
+            {:params request
+             :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/workflows/" (:id %))))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (rf/reg-event-fx
  ::edit-workflow
  (fn [_ [_ request]]
-   (status-modal/common-pending-handler! (text :t.administration/edit-workflow))
-   (put! "/api/workflows/edit" {:params request
-                                :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/workflows/" (:id request))))
-                                :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.administration/edit-workflow)]
+     (put! "/api/workflows/edit"
+           {:params request
+            :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/workflows/" (:id request))))
+            :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
@@ -206,6 +208,7 @@
     [:div
      [administration-navigator-container]
      [document-title title]
+     [flash-message/component]
      [collapsible/component
       {:id "create-workflow"
        :title title

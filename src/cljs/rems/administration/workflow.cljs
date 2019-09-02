@@ -8,6 +8,7 @@
             [rems.atoms :as atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [dispatch! fetch]]))
@@ -80,6 +81,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/workflow)]
+       [flash-message/component]
        (if @loading?
          [spinner/big]
          [workflow-view @workflow @language])])))

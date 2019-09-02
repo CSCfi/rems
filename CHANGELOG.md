@@ -23,6 +23,8 @@ Changes since v2.4
   endpoint for archiving or unarchiving workflow is /api/workflows/archived
   and the endpoint for enabling or disabling workflow is
   /api/workflows/enabled.
+- API endpoint for editing forms has been changed from
+  /api/forms/[form-id]/edit to /api/forms/edit.
 
 ### Additions
 - New field types: description, option, multiselect
@@ -57,7 +59,7 @@ Changes since v2.4
 - Hide language switcher when only one language configured
 - PDFs are now downloaded as \<application-id\>.pdf instead of pdf.pdf
 - Improved table performance: added a "show all rows" button for long tables
-- Modal popups (on application page) have been replaced with flash messages (#1469)
+- Modal popups have been replaced with flash messages (#1469)
 
 ### Fixes
 - Entitlement API

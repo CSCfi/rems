@@ -77,14 +77,15 @@
     {:success (not (nil? form-id))
      :id form-id}))
 
-(defn edit-form! [user-id form-id form]
-  (or (form-in-use-error form-id)
-      (do (db/edit-form-template! {:id form-id
-                                   :organization (:form/organization form)
-                                   :title (:form/title form)
-                                   :user user-id
-                                   :fields (serialize-fields form)})
-          {:success true})))
+(defn edit-form! [user-id form]
+  (let [form-id (:form/id form)]
+    (or (form-in-use-error form-id)
+        (do (db/edit-form-template! {:id form-id
+                                     :organization (:form/organization form)
+                                     :title (:form/title form)
+                                     :user user-id
+                                     :fields (serialize-fields form)})
+            {:success true}))))
 
 (defn update-form! [command]
   (let [catalogue-items (catalogue-items-for-form (:id command))]
