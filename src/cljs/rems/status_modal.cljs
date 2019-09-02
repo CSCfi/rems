@@ -14,7 +14,7 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- format-errors [errors]
+(defn format-errors [errors]
   (into [:<>]
         (for [error errors]
           [:p

@@ -6,6 +6,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [dispatch! fetch]]))
@@ -133,6 +134,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/license)]
+       [flash-message/component]
        (if @loading?
          [spinner/big]
          [license-view @license @language])])))

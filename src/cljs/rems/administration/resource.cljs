@@ -1,16 +1,16 @@
 (ns rems.administration.resource
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.text :refer [localize-time text]]
+            [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -65,6 +65,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/resource)]
+       [flash-message/component]
        (if @loading?
          [spinner/big]
          [resource-view @resource @language])])))

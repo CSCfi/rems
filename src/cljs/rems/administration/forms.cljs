@@ -4,11 +4,11 @@
             [rems.administration.form :as form]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -39,13 +39,12 @@
 (rf/reg-event-fx
  ::update-form
  (fn [_ [_ form description dispatch-on-finished]]
-   (status-modal/common-pending-handler! description)
    (put! "/api/forms/update"
          {:params {:id (:form/id form)
                    :enabled (:enabled form)
                    :archived (:archived form)}
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
-          :error-handler status-modal/common-error-handler!})
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
    {}))
 
 (rf/reg-event-fx
@@ -123,7 +122,8 @@
 (defn forms-page []
   (into [:div
          [administration-navigator-container]
-         [document-title (text :t.administration/forms)]]
+         [document-title (text :t.administration/forms)]
+         [flash-message/component]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-form]
