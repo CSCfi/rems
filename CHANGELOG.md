@@ -18,6 +18,8 @@ Changes since v2.4
 - API for creating catalogue item and its localizations has been changed.
   There is now a single API call that is used to create both a catalogue
   item and the localizations, namely, /api/catalogue-items/create.
+- API endpoint for editing forms has been changed from
+  /api/forms/[form-id]/edit to /api/forms/edit.
 
 ### Additions
 - New field types: description, option, multiselect

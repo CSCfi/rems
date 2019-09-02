@@ -172,16 +172,19 @@
    (let [edit? (::edit-form? db)
          form-errors (validate-form (::form db) (:languages db))
          send-verb (if edit? put! post!)
-         send-url (if edit?
-                    (str "/api/forms/" (::form-id db) "/edit")
-                    "/api/forms/create")
-         description (page-title edit?)]
+         send-url (str "/api/forms/" (if edit?
+                                       "edit"
+                                       "create"))
+         description (page-title edit?)
+         request (merge (build-request (db ::form) (db :languages))
+                        (when edit?
+                          {:form/id (db ::form-id)}))]
      (when-not form-errors
        (send-verb send-url
-                  {:params (build-request (::form db) (:languages db))
+                  {:params request
                    :handler (flash-message/default-success-handler
                              description
-                             (fn [response]  
+                             (fn [response]
                                (dispatch! (str "#/administration/forms/" (or (::form-id db)
                                                                              (:id response))))))
                    :error-handler (flash-message/default-error-handler description)}))
