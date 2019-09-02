@@ -650,7 +650,7 @@
    [disabled-items-warning application]
    (text :t.applications/intro)
    [:div.row
-    [:div.col-lg-4.order-12
+    [:div.col-lg-4.order-lg-last
      [:div#float-actions.mb-3
       [flash-message/component]
       [actions-form application]]]
