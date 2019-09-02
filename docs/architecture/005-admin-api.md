@@ -54,10 +54,9 @@ Additionally for forms:
 
 Additionally for licenses:
 
-- POST /add_attachment. As before, used to add an attachment file to a license.
+- POST /add-attachment. Used to add an attachment file to a license.
 
-- POST /remove_attachment. As before, used to remove an attachment file from
-  a license.
+- POST /remove-attachment. Used to remove an attachment file from a license.
 
 - GET /attachments/[id]. As before, used to get an attachment by id.
 
