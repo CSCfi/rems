@@ -328,7 +328,7 @@
   [:button.btn.btn-primary
    {:type :button
     :on-click (fn []
-                (rf/dispatch [:rems.spa/user-triggered-navigation])
+                (rf/dispatch [:rems.spa/user-triggered-navigation]) ;; scroll to top
                 (on-click))}
    (text :t.administration/save)])
 
