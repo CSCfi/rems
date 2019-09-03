@@ -50,12 +50,15 @@
                                             :archived archived}
                                            api-key user-id))
 
-        update-form! (fn [{:keys [enabled archived]}]
-                       (api-call :put "/api/forms/update"
+        form-archived! #(api-call :put "/api/forms/archived"
+                                  {:id form-id
+                                   :archived %}
+                                  api-key user-id)
+
+        form-enabled! #(api-call :put "/api/forms/enabled"
                                  {:id form-id
-                                  :enabled enabled
-                                  :archived archived}
-                                 api-key user-id))
+                                  :enabled %}
+                                 api-key user-id)
 
         update-license! (fn [{:keys [enabled archived]}]
                           (api-call :put "/api/licenses/update"
@@ -93,10 +96,10 @@
                (:errors resp)))))
 
     (testing "can disable a form"
-      (is (:success (update-form! {:enabled false :archived false}))))
+      (is (:success (form-enabled! false))))
 
     (testing "can't archive a form that's in use"
-      (let [resp (update-form! {:enabled true :archived true})]
+      (let [resp (form-archived! true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use"
                  :catalogue-items [{:id catalogue-id :localizations {}}]}]
@@ -130,7 +133,7 @@
       (is (:success (resource-archived! true))))
 
     (testing "can archive a form that's not in use"
-      (is (:success (update-form! {:enabled true :archived true}))))
+      (is (:success (form-archived! true))))
 
     (testing "can archive a workflow that's not in use"
       (is (:success (workflow-archived! true))))

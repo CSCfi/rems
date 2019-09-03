@@ -1,6 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [SuccessResponse UpdateStateCommand FormTemplateOverview NewFieldTemplate FormTemplate]]
+            [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate SuccessResponse]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
@@ -70,9 +70,16 @@
       :return SuccessResponse
       (ok (form/edit-form! (getx-user-id) command)))
 
-    (PUT "/update" []
-      :summary "Update form"
+    (PUT "/archived" []
+      :summary "Archive or unarchive form"
       :roles #{:owner}
-      :body [command UpdateStateCommand]
+      :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (form/update-form! command)))))
+      (ok (form/set-form-archived! command)))
+
+    (PUT "/enabled" []
+      :summary "Enable or disable form"
+      :roles #{:owner}
+      :body [command EnabledCommand]
+      :return SuccessResponse
+      (ok (form/set-form-enabled! command)))))

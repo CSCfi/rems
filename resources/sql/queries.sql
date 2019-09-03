@@ -185,10 +185,17 @@ SET (organization, title, modifierUserId, fields) =
 WHERE
 id = :id;
 
--- :name set-form-template-state! :!
+-- :name set-form-template-enabled! :!
 -- TODO set modifieruserid?
 UPDATE form_template
-SET (enabled, archived) = (:enabled, :archived)
+SET (enabled) = (:enabled)
+WHERE
+id = :id;
+
+-- :name set-form-template-archived! :!
+-- TODO set modifieruserid?
+UPDATE form_template
+SET (archived) = (:archived)
 WHERE
 id = :id;
 
