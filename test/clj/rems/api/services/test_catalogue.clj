@@ -30,9 +30,8 @@
         #(catalogue/update-catalogue-item! {:id item-id
                                             :enabled true
                                             :archived %})
-        archive-form! #(form/update-form! {:id form-id
-                                           :enabled true
-                                           :archived %})
+        archive-form! #(form/set-form-archived! {:id form-id
+                                                 :archived %})
         archive-license! #(licenses/update-license! {:id lic-id
                                                      :enabled true
                                                      :archived %})
