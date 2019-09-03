@@ -40,10 +40,19 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::update-catalogue-item
+ ::set-catalogue-item-archived
  (fn [_ [_ item description dispatch-on-finished]]
-   (put! "/api/catalogue-items/update"
-         {:params (select-keys item [:id :enabled :archived])
+   (put! "/api/catalogue-items/archived"
+         {:params (select-keys item [:id :archived])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
+   {}))
+
+(rf/reg-event-fx
+ ::set-catalogue-item-enabled
+ (fn [_ [_ item description dispatch-on-finished]]
+   (put! "/api/catalogue-items/enabled"
+         {:params (select-keys item [:id :enabled])
           :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler description)})
    {}))
@@ -105,8 +114,8 @@
            :commands {:td [:td.commands
                            [to-catalogue-item (:id item)]
                            [catalogue-item/edit-button (:id item)]
-                           [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %1 %2 [::fetch-catalogue]])]
-                           [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %1 %2 [::fetch-catalogue]])]]}})
+                           [status-flags/enabled-toggle item #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])]
+                           [status-flags/archived-toggle item #(rf/dispatch [::set-catalogue-item-archived %1 %2 [::fetch-catalogue]])]]}})
         catalogue)))
 
 (defn- catalogue-list []

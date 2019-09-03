@@ -420,27 +420,28 @@
         cat-id (test-data/create-catalogue-item! {:form-id form-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
     (testing "submit with disabled catalogue item fails"
-      (is (:success (catalogue/update-catalogue-item! {:id cat-id
-                                                       :enabled false
-                                                       :archived false})))
+      (is (:success (catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                            :enabled false})))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "submit with archived catalogue item fails"
-      (is (:success (catalogue/update-catalogue-item! {:id cat-id
-                                                       :enabled true
-                                                       :archived true})))
+      (is (:success (catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                            :enabled true})))
+      (is (:success (catalogue/set-catalogue-item-archived! {:id cat-id
+                                                             :archived true})))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "submit with normal catalogue item succeeds"
-      (is (:success (catalogue/update-catalogue-item! {:id cat-id
-                                                       :enabled true
-                                                       :archived false})))
+      (is (:success (catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                            :enabled true})))
+      (is (:success (catalogue/set-catalogue-item-archived! {:id cat-id
+                                                             :archived false})))
       (rems.db.applications/reload-cache!)
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit

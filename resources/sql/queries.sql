@@ -41,20 +41,23 @@ WHERE 1=1
 /*~ ) ~*/
 ;
 
--- :name set-catalogue-item-state! :insert
+-- :name set-catalogue-item-enabled! :!
 -- TODO set modifieruserid?
 UPDATE catalogue_item
-SET
-/*~ (when (boolean? (:enabled params)) */
-  enabled = :enabled,
-/*~ ) ~*/
-/*~ (when (boolean? (:archived params)) */
-  archived = :archived,
-/*~ ) ~*/
-/*~ (when (contains? params :end) */
-  endt = :end,
-/*~ ) ~*/
-  id = id
+SET (enabled) = (:enabled)
+WHERE id = :id;
+
+-- :name set-catalogue-item-archived! :!
+-- TODO set modifieruserid?
+UPDATE catalogue_item
+SET (archived) = (:archived)
+WHERE id = :id;
+
+-- :name set-catalogue-item-endt! :!
+-- TODO only used for creating test data. either have proper API
+--      for using this or remove?
+UPDATE catalogue_item
+SET (endt) = (:end)
 WHERE id = :id;
 
 -- :name create-catalogue-item! :insert

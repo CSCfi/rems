@@ -43,12 +43,15 @@
                                        :enabled %}
                                       api-key user-id)
 
-        update-catalogue-item! (fn [{:keys [enabled archived]}]
-                                 (api-call :put "/api/catalogue-items/update"
+        catalogue-item-archived! #(api-call :put "/api/catalogue-items/archived"
+                                            {:id catalogue-id
+                                             :archived %}
+                                            api-key user-id)
+
+        catalogue-item-enabled! #(api-call :put "/api/catalogue-items/enabled"
                                            {:id catalogue-id
-                                            :enabled enabled
-                                            :archived archived}
-                                           api-key user-id))
+                                            :enabled %}
+                                           api-key user-id)
 
         form-archived! #(api-call :put "/api/forms/archived"
                                   {:id form-id
@@ -89,9 +92,9 @@
     (db/create-workflow-license! {:wfid workflow-id :licid license-id})
 
     (testing "can disable a resource"
-      (is (:success (resource-enabled! false)))
+      (is (:success (resource-enabled! false))))
 
-      (testing "can't archive resource if it is part of an active catalogue item"
+    (testing "can't archive resource if it is part of an active catalogue item"
       (let [resp (resource-archived! true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/resource-in-use"
@@ -130,7 +133,7 @@
                (:errors resp)))))
 
     (testing "can archive a catalogue item"
-      (is (:success (update-catalogue-item! {:enabled true :archived true}))))
+      (is (:success (catalogue-item-archived! true))))
 
     (testing "can archive a resource that's not in use"
       (is (:success (resource-archived! true))))
@@ -148,4 +151,4 @@
       (let [resp (resource-archived! false)]
         (is (false? (:success resp)))
         (is (= "t.administration.errors/license-archived"
-               (get-in resp [:errors 0 :type]))))))))
+               (get-in resp [:errors 0 :type])))))))

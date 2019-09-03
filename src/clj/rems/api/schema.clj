@@ -47,13 +47,6 @@
    :end (s/maybe DateTime)
    :mail s/Str})
 
-;; TODO: Remove once all admin APIs have separate endpoints for enabled
-;;       and archived.
-(s/defschema UpdateStateCommand
-  {:id s/Int
-   :enabled s/Bool
-   :archived s/Bool})
-
 (s/defschema EnabledCommand
   {:id s/Int
    :enabled s/Bool})

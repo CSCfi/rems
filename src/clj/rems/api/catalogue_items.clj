@@ -76,9 +76,16 @@
       :return SuccessResponse
       (ok (catalogue/edit-catalogue-item! command)))
 
-    (PUT "/update" []
-      :summary "Update catalogue item"
+    (PUT "/archived" []
+      :summary "Archive or unarchive catalogue item"
       :roles #{:owner}
-      :body [command UpdateStateCommand]
+      :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (catalogue/update-catalogue-item! command)))))
+      (ok (catalogue/set-catalogue-item-archived! command)))
+
+    (PUT "/enabled" []
+      :summary "Enable or disable catalogue item"
+      :roles #{:owner}
+      :body [command EnabledCommand]
+      :return SuccessResponse
+      (ok (catalogue/set-catalogue-item-enabled! command)))))
