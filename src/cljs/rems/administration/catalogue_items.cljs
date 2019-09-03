@@ -4,6 +4,7 @@
             [rems.administration.catalogue-item :as catalogue-item]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -41,11 +42,10 @@
 (rf/reg-event-fx
  ::update-catalogue-item
  (fn [_ [_ item description dispatch-on-finished]]
-   (status-modal/common-pending-handler! description)
    (put! "/api/catalogue-items/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
-          :error-handler status-modal/common-error-handler!})
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
    {}))
 
 (rf/reg-event-fx
@@ -138,7 +138,8 @@
 (defn catalogue-items-page []
   (into [:div
          [administration-navigator-container]
-         [document-title (text :t.administration/catalogue-items)]]
+         [document-title (text :t.administration/catalogue-items)]
+         [flash-message/component]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]

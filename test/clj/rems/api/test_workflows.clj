@@ -14,6 +14,26 @@
   :once
   api-fixture)
 
+;; this is a subset of what we expect to get from the api
+(def ^:private expected
+  {:organization "abc"
+   :title "dynamic workflow"
+   :workflow {:type "workflow/dynamic"
+              :handlers [{:userid "bob" :email "bob@example.com" :name "Bob Approver"}
+                         {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
+   :enabled true
+   :expired false
+   :archived false})
+
+(defn- fetch [api-key user-id wfid]
+  (let [wfs (-> (request :get "/api/workflows" {:archived true :expired true :disabled true})
+                (authenticate api-key user-id)
+                handler
+                read-ok-body)]
+    (select-keys
+     (first (filter #(= wfid (:id %)) wfs))
+     (keys expected))))
+
 (deftest workflows-api-test
   (testing "list"
     (let [data (-> (request :get "/api/workflows")
@@ -62,23 +82,10 @@
       (is (< 0 id))
       (sync-with-database-time)
       (testing "and fetch"
-        (let [workflows (-> (request :get "/api/workflows")
-                            (authenticate "42" "owner")
-                            handler
-                            assert-response-is-ok
-                            read-body)
-              workflow (first (filter #(= id (:id %)) workflows))]
-          (is (= {:id id
-                  :organization "abc"
-                  :title "dynamic workflow"
-                  :workflow {:type "workflow/dynamic"
-                             :handlers [{:userid "bob" :email "bob@example.com" :name "Bob Approver"}
-                                        {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
-                  :enabled true
-                  :archived false}
-                 (select-keys workflow [:id :organization :title :workflow :enabled :archived]))))))))
+        (is (= expected
+               (fetch "42" "owner" id)))))))
 
-(deftest workflows-update-test
+(deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
         wfid (test-data/create-dynamic-workflow! {:organization "abc"
@@ -87,76 +94,83 @@
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
 
-        archive-license! #(licenses/update-license! {:id lic-id
-                                                     :enabled true
-                                                     :archived %})
-
-        ;; this is a subset of what we expect to get from the api
-        expected {:id wfid
-                  :organization "abc"
-                  :title "dynamic workflow"
-                  :workflow {:type "workflow/dynamic"
-                             :handlers [{:userid "bob" :email "bob@example.com" :name "Bob Approver"}
-                                        {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
-                  :enabled true
-                  :expired false
-                  :archived false}
-        fetch (fn []
-                (let [wfs (-> (request :get "/api/workflows" {:archived true :expired true :disabled true})
-                              (authenticate api-key user-id)
-                              handler
-                              read-ok-body)]
-                  (select-keys
-                   (first (filter #(= wfid (:id %)) wfs))
-                   (keys expected))))
-        update! #(-> (request :put "/api/workflows/update")
-                     (json-body (merge {:id wfid} %))
-                     (authenticate api-key user-id)
-                     handler
-                     read-ok-body)]
+        fetch #(fetch api-key user-id wfid)
+        archive-license! #(licenses/set-license-archived! {:id lic-id
+                                                           :archived %})
+        set-enabled! #(-> (request :put "/api/workflows/enabled")
+                          (json-body {:id wfid
+                                      :enabled %})
+                          (authenticate api-key user-id)
+                          handler
+                          read-ok-body)
+        set-archived! #(-> (request :put "/api/workflows/archived")
+                           (json-body {:id wfid
+                                       :archived %})
+                           (authenticate api-key user-id)
+                           handler
+                           read-ok-body)]
     (sync-with-database-time)
     (testing "before changes"
       (is (= expected (fetch))))
     (testing "disable and archive"
-      (is (:success (update! {:enabled false :archived true})))
+      (is (:success (set-enabled! false)))
+      (is (:success (set-archived! true)))
       (is (= (assoc expected
                     :enabled false
                     :archived true)
              (fetch))))
     (testing "re-enable"
-      (is (:success (update! {:enabled true})))
+      (is (:success (set-enabled! true)))
       (is (= (assoc expected
                     :archived true)
              (fetch))))
     (testing "unarchive"
-      (is (:success (update! {:archived false})))
+      (is (:success (set-archived! false)))
       (is (= expected
              (fetch))))
+    (testing "cannot unarchive if license is archived"
+      (set-archived! true)
+      (archive-license! true)
+      (is (not (:success (set-archived! false))))
+      (archive-license! false)
+      (is (:success (set-archived! false))))))
+
+(deftest workflows-edit-test
+  (let [api-key "42"
+        user-id "owner"
+        wfid (test-data/create-dynamic-workflow! {:organization "abc"
+                                                  :title "dynamic workflow"
+                                                  :handlers ["bob" "carl"]})
+        fetch #(fetch api-key user-id wfid)
+        edit! #(-> (request :put "/api/workflows/edit")
+                   (json-body (merge {:id wfid} %))
+                   (authenticate api-key user-id)
+                   handler
+                   read-ok-body)]
+    (sync-with-database-time)
     (testing "change title"
-      (is (:success (update! {:title "x"})))
+      (is (:success (edit! {:title "x"})))
       (is (= (assoc expected
                     :title "x")
              (fetch))))
     (testing "change handlers"
-      (is (:success (update! {:handlers ["owner" "alice"]})))
+      (is (:success (edit! {:handlers ["owner" "alice"]})))
       (is (= (assoc expected
                     :title "x"
                     :workflow {:type "workflow/dynamic"
-                               :handlers [{:email "owner@example.com" :name "Owner" :userid "owner"}
-                                          {:email "alice@example.com" :name "Alice Applicant" :userid "alice"}]})
-             (fetch))))
-    (testing "cannot unarchive if license is archived"
-      (update! {:archived true})
-      (archive-license! true)
-      (is (not (:success (update! {:archived false}))))
-      (archive-license! false)
-      (is (:success (update! {:archived false}))))))
+                               :handlers [{:email "owner@example.com"
+                                           :name "Owner"
+                                           :userid "owner"}
+                                          {:email "alice@example.com"
+                                           :name "Alice Applicant"
+                                           :userid "alice"}]})
+             (fetch))))))
 
 (deftest workflows-api-filtering-test
   (let [enabled-wf (test-data/create-dynamic-workflow! {})
         disabled-wf (test-data/create-dynamic-workflow! {})
-        _ (workflow/update-workflow! {:id disabled-wf
-                                      :enabled false})
+        _ (workflow/set-workflow-enabled! {:id disabled-wf
+                                           :enabled false})
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})
                                                    (authenticate "42" "owner")
                                                    handler

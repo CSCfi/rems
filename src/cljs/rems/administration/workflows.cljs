@@ -1,14 +1,14 @@
 (ns rems.administration.workflows
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
-            [rems.administration.workflow :as workflow]
             [rems.administration.status-flags :as status-flags]
+            [rems.administration.workflow :as workflow]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! put! fetch]]))
+            [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -37,13 +37,21 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::update-workflow
+ ::set-workflow-archived
  (fn [_ [_ item description dispatch-on-finished]]
-   (status-modal/common-pending-handler! description)
-   (put! "/api/workflows/update"
-         {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
-          :error-handler status-modal/common-error-handler!})
+   (put! "/api/workflows/archived"
+         {:params (select-keys item [:id :archived])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
+   {}))
+
+(rf/reg-event-fx
+ ::set-workflow-enabled
+ (fn [_ [_ item description dispatch-on-finished]]
+   (put! "/api/workflows/enabled"
+         {:params (select-keys item [:id :enabled])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
    {}))
 
 (rf/reg-event-fx
@@ -85,8 +93,8 @@
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]
                            [workflow/edit-button (:id workflow)]
-                           [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]
-                           [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]]}})
+                           [status-flags/enabled-toggle workflow #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])]
+                           [status-flags/archived-toggle workflow #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])]]}})
         workflows)))
 
 (defn- workflows-list []
@@ -115,7 +123,8 @@
 (defn workflows-page []
   (into [:div
          [administration-navigator-container]
-         [document-title (text :t.administration/workflows)]]
+         [document-title (text :t.administration/workflows)]
+         [flash-message/component]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-workflow]

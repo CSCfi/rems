@@ -1,6 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [SuccessResponse UpdateStateCommand FormTemplateOverview NewFieldTemplate FormTemplate]]
+            [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate SuccessResponse]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
@@ -16,6 +16,9 @@
   {:form/organization s/Str
    :form/title s/Str
    :form/fields [NewFieldTemplate]})
+
+(s/defschema EditFormCommand
+  (assoc CreateFormCommand :form/id s/Int))
 
 (s/defschema CreateFormResponse
   {:success s/Bool
@@ -60,25 +63,23 @@
       :return SuccessResponse
       (ok (form/form-editable form-id)))
 
-    ;; TODO: PATCH would be more appropriate, but we use PUT elsewhere in the API
-    (PUT "/:form-id/edit" []
+    (PUT "/edit" []
       :summary "Edit form"
       :roles #{:owner}
-      :path-params [form-id :- (describe s/Int "form-id")]
-      :body [command CreateFormCommand]
+      :body [command EditFormCommand]
       :return SuccessResponse
-      (ok (form/edit-form! (getx-user-id) form-id command)))
+      (ok (form/edit-form! (getx-user-id) command)))
 
-    ;; TODO: Change endpoint for updating form to be consistent with
-    ;;   the endpoint for editing form (/:form-id/edit). Also change
-    ;;   terminology to be less easily confused with form editing, e.g.,
-    ;;   from /update to /:form-id/update-state.
-    ;;
-    ;;   For consistency, do similar change for catalogue items, licenses,
-    ;;   and resources.
-    (PUT "/update" []
-      :summary "Update form"
+    (PUT "/archived" []
+      :summary "Archive or unarchive form"
       :roles #{:owner}
-      :body [command UpdateStateCommand]
+      :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (form/update-form! command)))))
+      (ok (form/set-form-archived! command)))
+
+    (PUT "/enabled" []
+      :summary "Enable or disable form"
+      :roles #{:owner}
+      :body [command EnabledCommand]
+      :return SuccessResponse
+      (ok (form/set-form-enabled! command)))))

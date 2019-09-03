@@ -4,13 +4,13 @@
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.create-form :refer [form-preview]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [info-field readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
-            [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.text :refer [localize-time text]]
+            [rems.util :refer [dispatch! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -37,12 +37,13 @@
 (rf/reg-event-fx
  ::edit-form
  (fn [_ [_ id]]
-   (status-modal/set-pending! {:title (text :t.administration/edit)})
-   (fetch (str "/api/forms/" id "/editable")
-          {:handler #(if (:success %)
-                       (dispatch! (str "/#/administration/edit-form/" id))
-                       (status-flags/update-error-handler! %))
-           :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.administration/edit)]
+     (fetch (str "/api/forms/" id "/editable")
+            {:handler (fn [response]
+                        (if (:success response)
+                          (dispatch! (str "/#/administration/edit-form/" id))
+                          (flash-message/show-default-error! description (status-flags/format-update-failure response))))
+             :error-handler (flash-message/default-error-handler description)}))
    {}))
 
 (defn- back-button []
@@ -79,8 +80,8 @@
       [back-button]
       [edit-button id]
       [copy-as-new-button id]
-      [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/update-form %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/update-form %1 %2 [::enter-page id]])]])
+      [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]])
    [form-preview form]])
 ;; TODO Do we support form licenses?
 
@@ -91,6 +92,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/form)]
+       [flash-message/component]
        (if @loading?
          [spinner/big]
          [form-view @form])])))

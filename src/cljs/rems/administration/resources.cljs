@@ -3,11 +3,12 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -37,13 +38,21 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::update-resource
- (fn [{:keys [db]} [_ item description dispatch-on-finished]]
-   (status-modal/common-pending-handler! description)
-   (put! "/api/resources/update"
-         {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
-          :error-handler status-modal/common-error-handler!})
+ ::set-resource-archived
+ (fn [_ [_ item description dispatch-on-finished]]
+   (put! "/api/resources/archived"
+         {:params (select-keys item [:id :archived])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
+   {}))
+
+(rf/reg-event-fx
+ ::set-resource-enabled
+ (fn [_ [_ item description dispatch-on-finished]]
+   (put! "/api/resources/enabled"
+         {:params (select-keys item [:id :enabled])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
    {}))
 
 (rf/reg-event-fx
@@ -84,8 +93,8 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-resource (:id resource)]
-                           [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %1 %2 [::fetch-resources]])]
-                           [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %1 %2 [::fetch-resources]])]]}})
+                           [status-flags/enabled-toggle resource #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])]
+                           [status-flags/archived-toggle resource #(rf/dispatch [::set-resource-archived %1 %2 [::fetch-resources]])]]}})
         resources)))
 
 (defn- resources-list []
@@ -113,7 +122,8 @@
 (defn resources-page []
   (into [:div
          [administration-navigator-container]
-         [document-title (text :t.administration/resources)]]
+         [document-title (text :t.administration/resources)]
+         [flash-message/component]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]

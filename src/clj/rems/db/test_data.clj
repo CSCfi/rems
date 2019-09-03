@@ -208,7 +208,7 @@
   (let [id (create-form! {:actor (+fake-users+ :owner)
                           :form/organization "nbn"
                           :form/title "Archived form, should not be seen by applicants"})]
-    (form/update-form! {:id id :enabled true :archived true})))
+    (form/set-form-archived! {:id id :archived true})))
 
 (defn- create-disabled-license! [owner]
   (let [id (create-license! {:actor owner
@@ -217,7 +217,7 @@
                                              :fi "Käytöstä poistettu lisenssi"}
                              :license/link {:en "http://disabled"
                                             :fi "http://disabled"}})]
-    (db/set-license-state! {:id id :enabled false :archived false})))
+    (db/set-license-enabled! {:id id :enabled false})))
 
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."

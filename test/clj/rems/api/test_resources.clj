@@ -16,8 +16,15 @@
       handler
       read-ok-body))
 
-(defn- update-resource! [command api-key user-id]
-  (-> (request :put "/api/resources/update")
+(defn- resource-archived! [command api-key user-id]
+  (-> (request :put "/api/resources/archived")
+      (authenticate api-key user-id)
+      (json-body command)
+      handler
+      read-ok-body))
+
+(defn- resource-enabled! [command api-key user-id]
+  (-> (request :put "/api/resources/enabled")
       (authenticate api-key user-id)
       (json-body command)
       handler
@@ -37,26 +44,26 @@
                                                :organization "abc"
                                                :licenses []}
                                               api-key user-id))
-            _ (update-resource! {:id enabled-id
-                                 :enabled true
-                                 :archived false}
-                                api-key user-id)
+            _ (resource-enabled! {:id enabled-id :enabled true}
+                                 api-key user-id)
+            _ (resource-archived! {:id enabled-id :archived false}
+                                  api-key user-id)
             disabled-id (:id (create-resource! {:resid "disabled"
                                                 :organization "abc"
                                                 :licenses []}
                                                api-key user-id))
-            _ (update-resource! {:id disabled-id
-                                 :enabled false
-                                 :archived false}
-                                api-key user-id)
+            _ (resource-enabled! {:id disabled-id :enabled false}
+                                 api-key user-id)
+            _ (resource-archived! {:id disabled-id :archived false}
+                                  api-key user-id)
             archived-id (:id (create-resource! {:resid "archived"
                                                 :organization "abc"
                                                 :licenses []}
                                                api-key user-id))
-            _ (update-resource! {:id archived-id
-                                 :enabled true
-                                 :archived true}
-                                api-key user-id)]
+            _ (resource-enabled! {:id archived-id :enabled true}
+                                 api-key user-id)
+            _ (resource-archived! {:id archived-id :archived true}
+                                  api-key user-id)]
         (testing "hides disabled and archived by default"
           (let [data (-> (request :get "/api/resources")
                          (authenticate api-key user-id)

@@ -18,6 +18,14 @@ Changes since v2.4
 - API for creating catalogue item and its localizations has been changed.
   There is now a single API call that is used to create both a catalogue
   item and the localizations, namely, /api/catalogue-items/create.
+- APIs for editing workflow, form, resource, and license have been changed. The
+  API endpoint for editing content of the workflow is now /edit (prefixed with
+  /api/workflows). The endpoint for archiving or unarchiving a workflow, a form,
+  a resource, or a license is /archived and the endpoint for enabling or disabling
+  a workflow, a form, a resource, or a license is /enabled, prefixed with
+  /api/workflows, /api/forms, /api/resources, or /api/licenses, respectively.
+- API endpoint for editing forms has been changed from
+  /api/forms/[form-id]/edit to /api/forms/edit.
 
 ### Additions
 - New field types: description, option, multiselect
@@ -52,7 +60,7 @@ Changes since v2.4
 - Hide language switcher when only one language configured
 - PDFs are now downloaded as \<application-id\>.pdf instead of pdf.pdf
 - Improved table performance: added a "show all rows" button for long tables
-- Modal popups (on application page) have been replaced with flash messages (#1469)
+- Modal popups have been replaced with flash messages (#1469)
 
 ### Fixes
 - Entitlement API

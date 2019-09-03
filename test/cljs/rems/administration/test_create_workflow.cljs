@@ -1,6 +1,6 @@
 (ns rems.administration.test-create-workflow
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [rems.administration.create-workflow :refer [build-create-request build-update-request]]))
+            [rems.administration.create-workflow :refer [build-create-request build-edit-request]]))
 
 (deftest build-create-request-test
   (testing "all workflows"
@@ -43,9 +43,9 @@
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
 
-(deftest build-update-request-test
+(deftest build-edit-request-test
   (is (= {:id 3 :title "t" :handlers ["a" "b"]}
-         (build-update-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
-  (is (nil? (build-update-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
-  (is (nil? (build-update-request 3 {:title "" :handlers [{:userid "a"} {:userid "b"}]})))
-  (is (nil? (build-update-request 3 {:title "t" :handlers []}))))
+         (build-edit-request 3 {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-edit-request 3 {:title "" :handlers [{:userid "a"} {:userid "b"}]})))
+  (is (nil? (build-edit-request 3 {:title "t" :handlers []}))))

@@ -32,7 +32,19 @@
      result
      {:success (not (nil? (:id result)))})))
 
-(defn update-workflow! [{:keys [id] :as command}]
+(defn edit-workflow! [command]
+  (db/edit-workflow!
+   (merge (select-keys command [:id :title])
+          (when-let [handlers (:handlers command)]
+            {:workflow (json/generate-string {:type :workflow/dynamic
+                                              :handlers handlers})})))
+  {:success true})
+
+(defn set-workflow-enabled! [command]
+  (db/set-workflow-enabled! (select-keys command [:id :enabled]))
+  {:success true})
+
+(defn set-workflow-archived! [{:keys [id archived]}]
   (let [workflow (workflow/get-workflow id)
         archived-licenses (filter :archived (:licenses workflow))
         catalogue-items
@@ -40,23 +52,20 @@
                                                        :archived false})
              (map #(select-keys % [:id :title :localizations])))]
     (cond
-      (and (:archived command) (seq catalogue-items))
+      (and archived (seq catalogue-items))
       {:success false
        :errors [{:type :t.administration.errors/workflow-in-use
                  :catalogue-items catalogue-items}]}
 
-      (and (not (:archived command)) (seq archived-licenses))
+      (and (not archived) (seq archived-licenses))
       {:success false
        :errors [{:type :t.administration.errors/license-archived
                  :licenses archived-licenses}]}
 
       :else
       (do
-        (db/update-workflow!
-         (merge (select-keys command [:id :enabled :archived :title])
-                (when-let [handlers (:handlers command)]
-                  {:workflow (json/generate-string {:type :workflow/dynamic
-                                                    :handlers handlers})})))
+        (db/set-workflow-archived! {:id id
+                                    :archived archived})
         {:success true}))))
 
 (defn get-workflow [id] (workflow/get-workflow id))

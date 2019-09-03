@@ -3,11 +3,11 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [dispatch! put! fetch]]))
+            [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -36,13 +36,21 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::update-license
+ ::set-license-archived
  (fn [_ [_ item description dispatch-on-finished]]
-   (status-modal/common-pending-handler! description)
-   (put! "/api/licenses/update"
-         {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-flags/common-update-handler! #(rf/dispatch dispatch-on-finished))
-          :error-handler status-modal/common-error-handler!})
+   (put! "/api/licenses/archived"
+         {:params (select-keys item [:id :archived])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
+   {}))
+
+(rf/reg-event-fx
+ ::set-license-enabled
+ (fn [_ [_ item description dispatch-on-finished]]
+   (put! "/api/licenses/enabled"
+         {:params (select-keys item [:id :enabled])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
    {}))
 
 (rf/reg-event-fx
@@ -85,8 +93,8 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-license (:id license)]
-                           [status-flags/enabled-toggle license #(rf/dispatch [::update-license %1 %2 [::fetch-licenses]])]
-                           [status-flags/archived-toggle license #(rf/dispatch [::update-license %1 %2 [::fetch-licenses]])]]}})
+                           [status-flags/enabled-toggle license #(rf/dispatch [::set-license-enabled %1 %2 [::fetch-licenses]])]
+                           [status-flags/archived-toggle license #(rf/dispatch [::set-license-archived %1 %2 [::fetch-licenses]])]]}})
         licenses)))
 
 (defn- licenses-list []
@@ -114,7 +122,8 @@
 (defn licenses-page []
   (into [:div
          [administration-navigator-container]
-         [document-title (text :t.administration/licenses)]]
+         [document-title (text :t.administration/licenses)]
+         [flash-message/component]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-license]

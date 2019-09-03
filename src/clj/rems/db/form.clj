@@ -77,20 +77,26 @@
     {:success (not (nil? form-id))
      :id form-id}))
 
-(defn edit-form! [user-id form-id form]
-  (or (form-in-use-error form-id)
-      (do (db/edit-form-template! {:id form-id
-                                   :organization (:form/organization form)
-                                   :title (:form/title form)
-                                   :user user-id
-                                   :fields (serialize-fields form)})
-          {:success true})))
+(defn edit-form! [user-id form]
+  (let [form-id (:form/id form)]
+    (or (form-in-use-error form-id)
+        (do (db/edit-form-template! {:id form-id
+                                     :organization (:form/organization form)
+                                     :title (:form/title form)
+                                     :user user-id
+                                     :fields (serialize-fields form)})
+            {:success true}))))
 
-(defn update-form! [command]
-  (let [catalogue-items (catalogue-items-for-form (:id command))]
-    (if (and (:archived command) (seq catalogue-items))
+(defn set-form-enabled! [command]
+  (db/set-form-template-enabled! (select-keys command [:id :enabled]))
+  {:success true})
+
+(defn set-form-archived! [{:keys [id archived]}]
+  (let [catalogue-items (catalogue-items-for-form id)]
+    (if (and archived (seq catalogue-items))
       {:success false
        :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
       (do
-        (db/set-form-template-state! command)
+        (db/set-form-template-archived! {:id id
+                                         :archived archived})
         {:success true}))))

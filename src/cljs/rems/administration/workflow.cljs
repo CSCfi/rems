@@ -8,6 +8,7 @@
             [rems.atoms :as atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [dispatch! fetch]]))
@@ -69,8 +70,8 @@
      [:div.col.commands
       [back-button]
       [edit-button id]
-      [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/update-workflow %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/update-workflow %1 %2 [::enter-page id]])]])])
+      [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]])])
 
 (defn workflow-page []
   (let [workflow (rf/subscribe [::workflow])
@@ -80,6 +81,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/workflow)]
+       [flash-message/component]
        (if @loading?
          [spinner/big]
          [workflow-view @workflow @language])])))

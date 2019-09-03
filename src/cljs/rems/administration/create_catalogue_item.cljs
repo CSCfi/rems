@@ -7,8 +7,8 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post! put!]]))
 
@@ -73,32 +73,30 @@
     (text :t.administration/create-catalogue-item)))
 
 (defn- create-catalogue-item! [_ [_ request]]
-  (status-modal/common-pending-handler! (text :t.administration/create-catalogue-item))
-  (post! "/api/catalogue-items/create"
-         {:params
-          (-> request
-              ;; create disabled catalogue items by default
-              (assoc :enabled false))
-          :handler
-          (partial status-modal/common-success-handler!
-                   (fn [response]
-                     (dispatch! (str "#/administration/catalogue-items/"
-                                     (:id response)))))
-          :error-handler status-modal/common-error-handler!})
+  (let [description (text :t.administration/create-catalogue-item)]
+    (post! "/api/catalogue-items/create"
+           {:params (-> request
+                        ;; create disabled catalogue items by default
+                        (assoc :enabled false))
+            :handler (flash-message/default-success-handler
+                      description
+                      (fn [response]
+                        (dispatch! (str "#/administration/catalogue-items/"
+                                        (:id response)))))
+            :error-handler (flash-message/default-error-handler description)}))
   {})
 
 (defn- edit-catalogue-item! [{:keys [db]} [_ request]]
-  (let [id (db ::catalogue-item-id)]
-    (status-modal/common-pending-handler! (text :t.administration/edit-catalogue-item))
+  (let [id (::catalogue-item-id db)
+        description (text :t.administration/edit-catalogue-item)]
     (put! "/api/catalogue-items/edit"
           {:params {:id id
                     :localizations (:localizations request)}
-           :handler
-           (partial status-modal/common-success-handler!
-                    (fn [response]
-                      (dispatch! (str "#/administration/catalogue-items/"
-                                      id))))
-           :error-handler status-modal/common-error-handler!}))
+           :handler (flash-message/default-success-handler
+                     description
+                     (fn [_]
+                       (dispatch! (str "#/administration/catalogue-items/" id))))
+           :error-handler (flash-message/default-error-handler description)}))
   {})
 
 (rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)
@@ -260,6 +258,7 @@
     [:div
      [administration-navigator-container]
      [document-title (page-title editing?)]
+     [flash-message/component]
      [collapsible/component
       {:id "create-catalogue-item"
        :title (page-title editing?)

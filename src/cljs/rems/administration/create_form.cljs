@@ -8,8 +8,8 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
             [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio in-page-anchor-link]]))
 
@@ -169,18 +169,27 @@
 (rf/reg-event-fx
  ::send-form
  (fn [{:keys [db]} [_]]
-   (let [edit? (db ::edit-form?)
-         form-errors (validate-form (db ::form) (db :languages))
-         send-verb (if edit? put! post!)]
+   (let [edit? (::edit-form? db)
+         form-errors (validate-form (::form db) (:languages db))
+         send-verb (if edit? put! post!)
+         send-url (str "/api/forms/" (if edit?
+                                       "edit"
+                                       "create"))
+         description (page-title edit?)
+         request (merge (build-request (::form db) (:languages db))
+                        (when edit?
+                          {:form/id (::form-id db)}))]
      (when-not form-errors
-       (status-modal/common-pending-handler! (page-title edit?))
-       (send-verb (str "/api/forms/"
-                       (if edit?
-                         (str (db ::form-id) "/edit")
-                         "create"))
-                  {:params (build-request (db ::form) (db :languages))
-                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (or (db ::form-id) (:id %)))))
-                   :error-handler status-modal/common-error-handler!}))
+       (send-verb send-url
+                  {:params request
+                   :handler (flash-message/default-success-handler
+                             description
+                             (fn [response]
+                               (dispatch! (str "#/administration/forms/"
+                                               (if edit?
+                                                 (::form-id db)
+                                                 (response :id))))))
+                   :error-handler (flash-message/default-error-handler description)}))
      {:db (assoc db ::form-errors form-errors)})))
 
 ;;;; preview auto-scrolling
@@ -435,6 +444,7 @@
     [:div
      [administration-navigator-container]
      [document-title (page-title edit-form?)]
+     [flash-message/component]
      (if loading-form?
        [:div [spinner/big]]
        [:div.container-fluid.editor-content
