@@ -11,7 +11,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys in-page-anchor-link]]))
+            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio in-page-anchor-link]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -184,15 +184,6 @@
      {:db (assoc db ::form-errors form-errors)})))
 
 ;;;; preview auto-scrolling
-
-(defn visibility-ratio [element]
-  (let [bounds (.getBoundingClientRect element)]
-    (cond (<= (.-bottom bounds) 0)
-          0
-          (>= (.-top bounds) 0)
-          1
-          :else
-          (/ (.-bottom bounds) (.-height bounds)))))
 
 (defn true-height [element]
   (let [style (.getComputedStyle js/window element)]

@@ -142,3 +142,14 @@
     (status-modal/close) ; in case this link is from a modal dialog to the page behind it
     (when-let [element (.getElementById js/document id)]
       (.focus element))))
+
+(defn visibility-ratio
+  "Given a DOM node, return a number from 0.0 to 1.0 describing how much of an element is inside the viewport."
+  [element]
+  (let [bounds (.getBoundingClientRect element)]
+    (cond (<= (.-bottom bounds) 0)
+          0
+          (>= (.-top bounds) 0)
+          1
+          :else
+          (/ (.-bottom bounds) (.-height bounds)))))
