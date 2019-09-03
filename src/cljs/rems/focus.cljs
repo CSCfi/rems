@@ -14,15 +14,18 @@
         (do
           (.setAttribute element "tabindex" "-1")
           (.focus element)
-          ;; We use block: center because the default block: top
-          ;; often leaves the flash message obscured by the fixed-top
-          ;; navbar. This means that we also need to explicitly check
-          ;; visibility to avoid unnecessary scrolling (e.g. on the
-          ;; application page where the flash message floats and is
-          ;; always visible).
+          ;; Focusing the element scrolls it into the viewport, but
+          ;; it's hidden behind the navigation menu,
+          ;; so explicit scrolling is needed.
           ;;
-          ;; TODO visibility-ratio can be 1.0 but the element can be
-          ;; behind the navbar, but this is requires careful
+          ;; We use block: center to ensure the message is not behind
+          ;; the navbar. This means that we also need to explicitly
+          ;; check visibility to avoid unnecessary scrolling (e.g. on
+          ;; the application page where the flash message floats and
+          ;; is always visible).
+          ;;
+          ;; TODO: visibility-ratio can be 1.0 and the element can
+          ;; still be behind the navbar, but this is requires careful
           ;; positioning.
           (when scroll?
             (when (> 0.9 (visibility-ratio element))

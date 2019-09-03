@@ -16,9 +16,6 @@
 (rf/reg-event-fx
  ::show-flash-message
  (fn [{:keys [db]} [_ message]]
-   ;; On Chrome, focusing the element scrolls it fully into view,
-   ;; but on Firefox the element is hidden behind the navigation menu,
-   ;; so explicit scrolling is needed.
    (focus/focus-element-async "#flash-message" {:scroll? true})
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message message)}))
