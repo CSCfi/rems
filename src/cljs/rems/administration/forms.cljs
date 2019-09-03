@@ -37,12 +37,21 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::update-form
+ ::set-form-archived
  (fn [_ [_ form description dispatch-on-finished]]
-   (put! "/api/forms/update"
+   (put! "/api/forms/archived"
          {:params {:id (:form/id form)
-                   :enabled (:enabled form)
                    :archived (:archived form)}
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
+   {}))
+
+(rf/reg-event-fx
+ ::set-form-enabled
+ (fn [_ [_ form description dispatch-on-finished]]
+   (put! "/api/forms/enabled"
+         {:params {:id (:form/id form)
+                   :enabled (:enabled form)}
           :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler description)})
    {}))
@@ -93,8 +102,8 @@
                            [to-view-form form]
                            [form/edit-button (:form/id form)]
                            [copy-as-new-form form]
-                           [status-flags/enabled-toggle form #(rf/dispatch [::update-form %1 %2 [::fetch-forms]])]
-                           [status-flags/archived-toggle form #(rf/dispatch [::update-form %1 %2 [::fetch-forms]])]]}})
+                           [status-flags/enabled-toggle form #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])]
+                           [status-flags/archived-toggle form #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])]]}})
         forms)))
 
 (defn- forms-list []

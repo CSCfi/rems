@@ -200,7 +200,7 @@
                          read-ok-body)]
             (is (= (:form/organization form) "def"))))))))
 
-(deftest form-update-test
+(deftest form-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
@@ -212,11 +212,17 @@
                     read-ok-body
                     :id)]
     (is (not (nil? form-id)))
-    (testing "update"
-      (is (:success (-> (request :put "/api/forms/update")
+    (testing "disable"
+      (is (:success (-> (request :put "/api/forms/enabled")
                         (authenticate api-key user-id)
                         (json-body {:id form-id
-                                    :enabled false
+                                    :enabled false})
+                        handler
+                        read-ok-body))))
+    (testing "archive"
+      (is (:success (-> (request :put "/api/forms/archived")
+                        (authenticate api-key user-id)
+                        (json-body {:id form-id
                                     :archived true})
                         handler
                         read-ok-body))))
@@ -227,12 +233,18 @@
                      read-ok-body)]
         (is (false? (:enabled form)))
         (is (true? (:archived form)))))
-    (testing "update again"
-      (is (:success (-> (request :put "/api/forms/update")
+    (testing "unarchive"
+      (is (:success (-> (request :put "/api/forms/archived")
                         (authenticate api-key user-id)
                         (json-body {:id form-id
-                                    :enabled true
                                     :archived false})
+                        handler
+                        read-ok-body))))
+    (testing "enable"
+      (is (:success (-> (request :put "/api/forms/enabled")
+                        (authenticate api-key user-id)
+                        (json-body {:id form-id
+                                    :enabled true})
                         handler
                         read-ok-body))))
     (testing "fetch again"

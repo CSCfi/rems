@@ -29,7 +29,11 @@
          :errors [{:type :t.administration.errors/duplicate-resid :resid resid}]}
         (throw e)))))
 
-(defn update-resource! [{:keys [id] :as command}]
+(defn set-resource-enabled! [command]
+  (db/set-resource-enabled! (select-keys command [:id :enabled]))
+  {:success true})
+
+(defn set-resource-archived! [{:keys [id archived]}]
   (let [catalogue-items
         (->> (catalogue/get-localized-catalogue-items {:resource-id id
                                                        :archived false})
@@ -37,19 +41,20 @@
         licenses (licenses/get-resource-licenses id)
         archived-licenses (filter :archived licenses)]
     (cond
-      (and (:archived command) (seq catalogue-items))
+      (and archived (seq catalogue-items))
       {:success false
        :errors [{:type :t.administration.errors/resource-in-use
                  :catalogue-items catalogue-items}]}
 
-      (and (not (:archived command)) (seq archived-licenses))
+      (and (not archived) (seq archived-licenses))
       {:success false
        :errors [{:type :t.administration.errors/license-archived
                  :licenses archived-licenses}]}
 
       :else
       (do
-        (db/set-resource-state! (select-keys command [:id :enabled :archived]))
+        (db/set-resource-archived! {:id id
+                                    :archived archived})
         {:success true}))))
 
 (defn get-resource [id] (resource/get-resource id))

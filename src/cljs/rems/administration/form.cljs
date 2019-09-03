@@ -80,8 +80,8 @@
       [back-button]
       [edit-button id]
       [copy-as-new-button id]
-      [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/update-form %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/update-form %1 %2 [::enter-page id]])]])
+      [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]])
    [form-preview form]])
 ;; TODO Do we support form licenses?
 

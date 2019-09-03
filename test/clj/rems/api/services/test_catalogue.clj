@@ -30,14 +30,12 @@
         #(catalogue/update-catalogue-item! {:id item-id
                                             :enabled true
                                             :archived %})
-        archive-form! #(form/update-form! {:id form-id
-                                           :enabled true
-                                           :archived %})
+        archive-form! #(form/set-form-archived! {:id form-id
+                                                 :archived %})
         archive-license! #(licenses/set-license-archived! {:id lic-id
                                                            :archived %})
-        archive-resource! #(resource/update-resource! {:id res-id
-                                                       :enabled true
-                                                       :archived %})
+        archive-resource! #(resource/set-resource-archived! {:id res-id
+                                                             :archived %})
         archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
                                                              :archived %})]
     (testing "new catalogue items are enabled and not archived"

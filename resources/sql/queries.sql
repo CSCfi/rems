@@ -109,17 +109,16 @@ VALUES (:resid, :organization, :owneruserid, :modifieruserid,
  /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
 );
 
--- :name set-resource-state! :insert
+-- :name set-resource-enabled! :!
 -- TODO set modifieruserid?
 UPDATE resource
-SET
-/*~ (when (boolean? (:enabled params)) */
-  enabled = :enabled,
-/*~ ) ~*/
-/*~ (when (boolean? (:archived params)) */
-  archived = :archived,
-/*~ ) ~*/
-  id = id
+SET (enabled) = (:enabled)
+WHERE id = :id;
+
+-- :name set-resource-archived! :!
+-- TODO set modifieruserid?
+UPDATE resource
+SET (archived) = (:archived)
 WHERE id = :id;
 
 -- :name get-database-name :? :1
@@ -186,10 +185,17 @@ SET (organization, title, modifierUserId, fields) =
 WHERE
 id = :id;
 
--- :name set-form-template-state! :!
+-- :name set-form-template-enabled! :!
 -- TODO set modifieruserid?
 UPDATE form_template
-SET (enabled, archived) = (:enabled, :archived)
+SET (enabled) = (:enabled)
+WHERE
+id = :id;
+
+-- :name set-form-template-archived! :!
+-- TODO set modifieruserid?
+UPDATE form_template
+SET (archived) = (:archived)
 WHERE
 id = :id;
 

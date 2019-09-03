@@ -33,12 +33,15 @@
                                      :localizations {}}
                                     api-key user-id))
 
-        update-resource! (fn [{:keys [enabled archived]}]
-                           (api-call :put "/api/resources/update"
-                                     {:id resource-id
-                                      :enabled enabled
-                                      :archived archived}
-                                     api-key user-id))
+        resource-archived! #(api-call :put "/api/resources/archived"
+                                      {:id resource-id
+                                       :archived %}
+                                      api-key user-id)
+
+        resource-enabled! #(api-call :put "/api/resources/enabled"
+                                      {:id resource-id
+                                       :enabled %}
+                                      api-key user-id)
 
         update-catalogue-item! (fn [{:keys [enabled archived]}]
                                  (api-call :put "/api/catalogue-items/update"
@@ -47,12 +50,15 @@
                                             :archived archived}
                                            api-key user-id))
 
-        update-form! (fn [{:keys [enabled archived]}]
-                       (api-call :put "/api/forms/update"
+        form-archived! #(api-call :put "/api/forms/archived"
+                                  {:id form-id
+                                   :archived %}
+                                  api-key user-id)
+
+        form-enabled! #(api-call :put "/api/forms/enabled"
                                  {:id form-id
-                                  :enabled enabled
-                                  :archived archived}
-                                 api-key user-id))
+                                  :enabled %}
+                                 api-key user-id)
 
         license-archived! #(api-call :put "/api/licenses/archived"
                                      {:id license-id
@@ -83,20 +89,20 @@
     (db/create-workflow-license! {:wfid workflow-id :licid license-id})
 
     (testing "can disable a resource"
-      (is (:success (update-resource! {:enabled false :archived false})))
+      (is (:success (resource-enabled! false)))
 
       (testing "can't archive resource if it is part of an active catalogue item"
-      (let [resp (update-resource! {:enabled true :archived true})]
+      (let [resp (resource-archived! true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/resource-in-use"
                  :catalogue-items [{:id catalogue-id :localizations {}}]}]
                (:errors resp)))))
 
     (testing "can disable a form"
-      (is (:success (update-form! {:enabled false :archived false}))))
+      (is (:success (form-enabled! false))))
 
     (testing "can't archive a form that's in use"
-      (let [resp (update-form! {:enabled true :archived true})]
+      (let [resp (form-archived! true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use"
                  :catalogue-items [{:id catalogue-id :localizations {}}]}]
@@ -127,10 +133,10 @@
       (is (:success (update-catalogue-item! {:enabled true :archived true}))))
 
     (testing "can archive a resource that's not in use"
-      (is (:success (update-resource! {:enabled true :archived true}))))
+      (is (:success (resource-archived! true))))
 
     (testing "can archive a form that's not in use"
-      (is (:success (update-form! {:enabled true :archived true}))))
+      (is (:success (form-archived! true))))
 
     (testing "can archive a workflow that's not in use"
       (is (:success (workflow-archived! true))))
@@ -139,7 +145,7 @@
       (is (= {:success true} (license-archived! true))))
 
     (testing "cannot unarchive a resource with an archived license"
-      (let [resp (update-resource! {:enabled true :archived false})]
+      (let [resp (resource-archived! false)]
         (is (false? (:success resp)))
         (is (= "t.administration.errors/license-archived"
                (get-in resp [:errors 0 :type]))))))))
