@@ -37,10 +37,19 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::update-workflow
+ ::set-workflow-archived
  (fn [_ [_ item description dispatch-on-finished]]
-   (put! "/api/workflows/update"
-         {:params (select-keys item [:id :enabled :archived])
+   (put! "/api/workflows/archived"
+         {:params (select-keys item [:id :archived])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
+   {}))
+
+(rf/reg-event-fx
+ ::set-workflow-enabled
+ (fn [_ [_ item description dispatch-on-finished]]
+   (put! "/api/workflows/enabled"
+         {:params (select-keys item [:id :enabled])
           :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler description)})
    {}))
@@ -84,8 +93,8 @@
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]
                            [workflow/edit-button (:id workflow)]
-                           [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]
-                           [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %1 %2 [::fetch-workflows]])]]}})
+                           [status-flags/enabled-toggle workflow #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])]
+                           [status-flags/archived-toggle workflow #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])]]}})
         workflows)))
 
 (defn- workflows-list []

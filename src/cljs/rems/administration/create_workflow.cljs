@@ -71,16 +71,16 @@
     (when (valid-create-request? request)
       request)))
 
-(defn- valid-update-request? [request]
+(defn- valid-edit-request? [request]
   (and (number? (:id request))
        (seq (:handlers request))
        (not (str/blank? (:title request)))))
 
-(defn build-update-request [id form]
+(defn build-edit-request [id form]
   (let [request {:id id
                  :title (:title form)
                  :handlers (map :userid (:handlers form))}]
-    (when (valid-update-request? request)
+    (when (valid-edit-request? request)
       request)))
 
 (rf/reg-event-fx
@@ -94,10 +94,10 @@
    {}))
 
 (rf/reg-event-fx
- ::update-workflow
+ ::edit-workflow
  (fn [_ [_ request]]
    (let [description (text :t.administration/edit-workflow)]
-     (put! "/api/workflows/update"
+     (put! "/api/workflows/edit"
            {:params request
             :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/workflows/" (:id request))))
             :error-handler (flash-message/default-error-handler description)}))
@@ -153,15 +153,15 @@
   (let [form @(rf/subscribe [::form])
         id @(rf/subscribe [::workflow-id])
         request (if id
-                  (build-update-request id form)
+                  (build-edit-request id form)
                   (build-create-request form))]
     [:button.btn.btn-primary
      {:type :button
       :on-click (fn []
                   (rf/dispatch [:rems.spa/user-triggered-navigation])
                   (if id
-                    (rf/dispatch [::update-workflow (build-update-request id form)])
-                    (rf/dispatch [::create-workflow (build-create-request form)])))
+                    (rf/dispatch [::edit-workflow request])
+                    (rf/dispatch [::create-workflow request])))
       :disabled (nil? request)}
      (text :t.administration/save)]))
 

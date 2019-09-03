@@ -70,8 +70,8 @@
      [:div.col.commands
       [back-button]
       [edit-button id]
-      [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/update-workflow %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/update-workflow %1 %2 [::enter-page id]])]])])
+      [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]])])
 
 (defn workflow-page []
   (let [workflow (rf/subscribe [::workflow])

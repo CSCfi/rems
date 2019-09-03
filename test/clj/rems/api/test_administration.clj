@@ -61,12 +61,15 @@
                                      :archived archived}
                                     api-key user-id))
 
-        update-workflow! (fn [{:keys [enabled archived]}]
-                           (api-call :put "/api/workflows/update"
+        workflow-archived! #(api-call :put "/api/workflows/archived"
+                                      {:id workflow-id
+                                       :archived %}
+                                      api-key user-id)
+
+        workflow-enabled! #(api-call :put "/api/workflows/enabled"
                                      {:id workflow-id
-                                      :enabled enabled
-                                      :archived archived}
-                                     api-key user-id))]
+                                      :enabled %}
+                                     api-key user-id)]
     (is license-id)
     (is resource-id)
     (is form-id)
@@ -97,10 +100,10 @@
                (:errors resp)))))
 
     (testing "can disable a workflow"
-      (is (:success (update-workflow! {:enabled false :archived false}))))
+      (is (:success (workflow-enabled! false))))
 
     (testing "can't archive a workflow that's in use"
-      (let [resp (update-workflow! {:enabled true :archived true})]
+      (let [resp (workflow-archived! true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/workflow-in-use"
                  :catalogue-items [{:id catalogue-id :localizations {}}]}]
@@ -127,7 +130,7 @@
       (is (:success (update-form! {:enabled true :archived true}))))
 
     (testing "can archive a workflow that's not in use"
-      (is (:success (update-workflow! {:enabled true :archived true}))))
+      (is (:success (workflow-archived! true))))
 
     (testing "can archive a license that's not in use"
       (is (= {:success true} (update-license! {:enabled true :archived true}))))
