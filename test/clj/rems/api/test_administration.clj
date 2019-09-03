@@ -54,12 +54,15 @@
                                   :archived archived}
                                  api-key user-id))
 
-        update-license! (fn [{:keys [enabled archived]}]
-                          (api-call :put "/api/licenses/update"
+        license-archived! #(api-call :put "/api/licenses/archived"
+                                     {:id license-id
+                                      :archived %}
+                                     api-key user-id)
+
+        license-enabled! #(api-call :put "/api/licenses/enabled"
                                     {:id license-id
-                                     :enabled enabled
-                                     :archived archived}
-                                    api-key user-id))
+                                     :enabled %}
+                                    api-key user-id)
 
         workflow-archived! #(api-call :put "/api/workflows/archived"
                                       {:id workflow-id
@@ -110,10 +113,10 @@
                (:errors resp)))))
 
     (testing "can disable a license"
-      (is (:success (update-license! {:enabled false :archived false}))))
+      (is (:success (license-enabled! false))))
 
     (testing "can't archive a license that's in use"
-      (let [resp (update-license! {:enabled true :archived true})]
+      (let [resp (license-archived! true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/license-in-use"
                  :resources [{:id resource-id :resid "test"}]
@@ -133,7 +136,7 @@
       (is (:success (workflow-archived! true))))
 
     (testing "can archive a license that's not in use"
-      (is (= {:success true} (update-license! {:enabled true :archived true}))))
+      (is (= {:success true} (license-archived! true))))
 
     (testing "cannot unarchive a resource with an archived license"
       (let [resp (update-resource! {:enabled true :archived false})]

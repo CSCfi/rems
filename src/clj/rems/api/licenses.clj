@@ -51,12 +51,19 @@
       :return CreateLicenseResponse
       (ok (licenses/create-license! command (getx-user-id))))
 
-    (PUT "/update" []
-      :summary "Update license"
+    (PUT "/archived" []
+      :summary "Archive or unarchive license"
       :roles #{:owner}
-      :body [command UpdateStateCommand]
+      :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (licenses/update-license! command)))
+      (ok (licenses/set-license-archived! command)))
+
+    (PUT "/enabled" []
+      :summary "Enable or disable license"
+      :roles #{:owner}
+      :body [command EnabledCommand]
+      :return SuccessResponse
+      (ok (licenses/set-license-enabled! command)))
 
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"

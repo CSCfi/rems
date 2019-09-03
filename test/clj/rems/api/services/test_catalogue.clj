@@ -33,9 +33,8 @@
         archive-form! #(form/update-form! {:id form-id
                                            :enabled true
                                            :archived %})
-        archive-license! #(licenses/update-license! {:id lic-id
-                                                     :enabled true
-                                                     :archived %})
+        archive-license! #(licenses/set-license-archived! {:id lic-id
+                                                           :archived %})
         archive-resource! #(resource/update-resource! {:id res-id
                                                        :enabled true
                                                        :archived %})

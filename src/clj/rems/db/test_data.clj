@@ -217,7 +217,7 @@
                                              :fi "Käytöstä poistettu lisenssi"}
                              :license/link {:en "http://disabled"
                                             :fi "http://disabled"}})]
-    (db/set-license-state! {:id id :enabled false :archived false})))
+    (db/set-license-enabled! {:id id :enabled false})))
 
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."

@@ -17,9 +17,8 @@
         res-id (test-data/create-resource! {:license-ids [lic-id]})
         res-id2 (test-data/create-resource! {})
 
-        archive-license! #(licenses/update-license! {:id lic-id
-                                                     :enabled true
-                                                     :archived %})]
+        archive-license! #(licenses/set-license-archived! {:id lic-id
+                                                           :archived %})]
 
     (testing "new resources are enabled and not archived"
       (is (= {:enabled true
