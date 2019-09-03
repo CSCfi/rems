@@ -265,9 +265,14 @@ INSERT INTO license
 VALUES
 (:owneruserid, :modifieruserid, :type::license_type)
 
--- :name set-license-state! :!
+-- :name set-license-enabled! :!
 UPDATE license
-SET (enabled, archived) = (:enabled, :archived)
+SET (enabled) = (:enabled)
+WHERE id = :id;
+
+-- :name set-license-archived! :!
+UPDATE license
+SET (archived) = (:archived)
 WHERE id = :id;
 
 -- :name create-license-attachment! :insert

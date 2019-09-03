@@ -53,14 +53,19 @@
       {:resources resources
        :workflows workflows})))
 
-(defn update-license! [command]
-  (let [usage (get-license-usage (:id command))]
-    (if (and (:archived command) usage)
+(defn set-license-enabled! [command]
+  (db/set-license-enabled! (select-keys command [:id :enabled]))
+  {:success true})
+
+(defn set-license-archived! [{:keys [id archived]}]
+  (let [usage (get-license-usage id)]
+    (if (and archived usage)
       {:success false
        :errors [(merge {:type :t.administration.errors/license-in-use}
                        usage)]}
       (do
-        (db/set-license-state! command)
+        (db/set-license-archived! {:id id
+                                   :archived archived})
         {:success true}))))
 
 (defn get-license

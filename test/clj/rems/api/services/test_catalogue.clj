@@ -32,9 +32,8 @@
                                             :archived %})
         archive-form! #(form/set-form-archived! {:id form-id
                                                  :archived %})
-        archive-license! #(licenses/update-license! {:id lic-id
-                                                     :enabled true
-                                                     :archived %})
+        archive-license! #(licenses/set-license-archived! {:id lic-id
+                                                           :archived %})
         archive-resource! #(resource/set-resource-archived! {:id res-id
                                                              :archived %})
         archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
