@@ -4,10 +4,10 @@
 (defn focus-element-async
   "Focus an element when it appears. Options can include:
     :tries -- number of times to poll, defaults to 100
-    :scroll? -- whether to .scollIntoView the element"
+    :scroll? -- whether to .scrollIntoView the element"
   [selector & [options]]
   (let [tries (get options :tries 100)
-        scoll? (get options :scroll? false)]
+        scroll? (get options :scroll? false)]
     (when (pos? tries)
       (if-let [element (.querySelector js/document selector)]
         (do
