@@ -64,9 +64,16 @@
       :return CreateResourceResponse
       (ok (resource/create-resource! command (getx-user-id))))
 
-    (PUT "/update" []
-      :summary "Update resource"
+    (PUT "/archived" []
+      :summary "Archive or unarchive resource"
       :roles #{:owner}
-      :body [command UpdateStateCommand]
+      :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (resource/update-resource! command)))))
+      (ok (resource/set-resource-archived! command)))
+
+    (PUT "/enabled" []
+      :summary "Enable or disable resource"
+      :roles #{:owner}
+      :body [command EnabledCommand]
+      :return SuccessResponse
+      (ok (resource/set-resource-enabled! command)))))

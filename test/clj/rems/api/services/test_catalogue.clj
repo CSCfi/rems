@@ -35,9 +35,8 @@
         archive-license! #(licenses/update-license! {:id lic-id
                                                      :enabled true
                                                      :archived %})
-        archive-resource! #(resource/update-resource! {:id res-id
-                                                       :enabled true
-                                                       :archived %})
+        archive-resource! #(resource/set-resource-archived! {:id res-id
+                                                             :archived %})
         archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
                                                              :archived %})]
     (testing "new catalogue items are enabled and not archived"

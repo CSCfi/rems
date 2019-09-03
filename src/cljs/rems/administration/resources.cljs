@@ -38,10 +38,19 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::update-resource
+ ::set-resource-archived
  (fn [_ [_ item description dispatch-on-finished]]
-   (put! "/api/resources/update"
-         {:params (select-keys item [:id :enabled :archived])
+   (put! "/api/resources/archived"
+         {:params (select-keys item [:id :archived])
+          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler description)})
+   {}))
+
+(rf/reg-event-fx
+ ::set-resource-enabled
+ (fn [_ [_ item description dispatch-on-finished]]
+   (put! "/api/resources/enabled"
+         {:params (select-keys item [:id :enabled])
           :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler description)})
    {}))
@@ -84,8 +93,8 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-resource (:id resource)]
-                           [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %1 %2 [::fetch-resources]])]
-                           [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %1 %2 [::fetch-resources]])]]}})
+                           [status-flags/enabled-toggle resource #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])]
+                           [status-flags/archived-toggle resource #(rf/dispatch [::set-resource-archived %1 %2 [::fetch-resources]])]]}})
         resources)))
 
 (defn- resources-list []

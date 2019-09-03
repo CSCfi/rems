@@ -18,11 +18,12 @@ Changes since v2.4
 - API for creating catalogue item and its localizations has been changed.
   There is now a single API call that is used to create both a catalogue
   item and the localizations, namely, /api/catalogue-items/create.
-- APIs for editing workflow and form have been changed. The API endpoint
-  for editing content of the workflow now /edit (prefixed with /api/workflows).
-  The endpoint for archiving or unarchiving a workflow or a form is /archived
-  and the endpoint for enabling or disabling a workflow or a form is /enabled,
-  prefixed with /api/workflows or /api/forms, respectively.
+- APIs for editing workflow, form and resource have been changed. The API endpoint
+  for editing content of the workflow is now /edit (prefixed with /api/workflows).
+  The endpoint for archiving or unarchiving a workflow, a form, or a resource
+  is /archived and the endpoint for enabling or disabling a workflow, a form, or a
+  resource is /enabled, prefixed with /api/workflows, /api/forms, or api/resources,
+  respectively.
 - API endpoint for editing forms has been changed from
   /api/forms/[form-id]/edit to /api/forms/edit.
 
