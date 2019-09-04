@@ -16,7 +16,7 @@
   (-> (catalogue/get-localized-catalogue-item item-id)
       (select-keys [:enabled :archived])))
 
-(deftest test-update-catalogue-item!
+(deftest catalogue-item-enabled-archived-test
   (let [form-id (test-data/create-form! {})
         lic-id (test-data/create-license! {})
         res-id (test-data/create-resource! {:license-ids [lic-id]})
@@ -26,10 +26,12 @@
                                                    :workflow-id workflow-id})
         item-id2 (test-data/create-catalogue-item! {})
 
+        enable-catalogue-item!
+        #(catalogue/set-catalogue-item-enabled! {:id item-id
+                                                 :enabled %})
         archive-catalogue-item!
-        #(catalogue/update-catalogue-item! {:id item-id
-                                            :enabled true
-                                            :archived %})
+        #(catalogue/set-catalogue-item-archived! {:id item-id
+                                                  :archived %})
         archive-form! #(form/set-form-archived! {:id form-id
                                                  :archived %})
         archive-license! #(licenses/set-license-archived! {:id lic-id
@@ -44,45 +46,38 @@
              (status-flags item-id))))
 
     ;; reset all to false for the following tests
-    (catalogue/update-catalogue-item! {:id item-id
-                                       :enabled false
-                                       :archived false})
+    (enable-catalogue-item! false)
+    (archive-catalogue-item! false)
 
     (testing "enable"
-      (catalogue/update-catalogue-item! {:id item-id
-                                         :enabled true})
+      (enable-catalogue-item! true)
       (is (= {:enabled true
               :archived false}
              (status-flags item-id))))
 
     (testing "disable"
-      (catalogue/update-catalogue-item! {:id item-id
-                                         :enabled false})
+      (enable-catalogue-item! false)
       (is (= {:enabled false
               :archived false}
              (status-flags item-id))))
 
     (testing "archive"
-      (catalogue/update-catalogue-item! {:id item-id
-                                         :archived true})
+      (archive-catalogue-item! true)
       (is (= {:enabled false
               :archived true}
              (status-flags item-id))))
 
     (testing "unarchive"
-      (catalogue/update-catalogue-item! {:id item-id
-                                         :archived false})
+      (archive-catalogue-item! false)
       (is (= {:enabled false
               :archived false}
              (status-flags item-id))))
 
     (testing "does not affect unrelated catalogue items"
-      (catalogue/update-catalogue-item! {:id item-id
-                                         :enabled true
-                                         :archived true})
-      (catalogue/update-catalogue-item! {:id item-id2
-                                         :enabled false
-                                         :archived false})
+      (enable-catalogue-item! true)
+      (archive-catalogue-item! true)
+      (catalogue/set-catalogue-item-enabled! {:id item-id2 :enabled false})
+      (catalogue/set-catalogue-item-archived! {:id item-id2 :archived false})
       (is (= {:enabled true
               :archived true}
              (status-flags item-id)))
@@ -146,8 +141,8 @@
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items)))))
 
     (testing "archived catalogue items"
-      (catalogue/update-catalogue-item! {:id item-id
-                                         :archived true})
+      (catalogue/set-catalogue-item-archived! {:id item-id
+                                               :archived true})
       (is (= [] (map :id (catalogue/get-localized-catalogue-items))))
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items {:archived true}))))
       (is (= [] (map :id (catalogue/get-localized-catalogue-items {:archived false})))))))

@@ -11,7 +11,7 @@
   api-fixture)
 
 (defn disable-catalogue-item [catid]
-  (db/set-catalogue-item-state! {:id catid :enabled false}))
+  (db/set-catalogue-item-enabled! {:id catid :enabled false}))
 
 (deftest redirect-to-new-application-test
   (testing "redirects to new application page for catalogue item matching the resource ID"

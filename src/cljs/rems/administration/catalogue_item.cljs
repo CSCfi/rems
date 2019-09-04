@@ -74,8 +74,8 @@
      [:div.col.commands
       [back-button]
       [edit-button id]
-      [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/update-catalogue-item %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/update-catalogue-item %1 %2 [::enter-page id]])]])])
+      [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page id]])]
+      [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]])])
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])

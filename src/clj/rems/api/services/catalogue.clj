@@ -37,8 +37,12 @@
   (catalogue/reset-cache!)
   {:success true})
 
-(defn update-catalogue-item! [command]
-  (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item (:id command))
+(defn set-catalogue-item-enabled! [command]
+  (db/set-catalogue-item-enabled! (select-keys command [:id :enabled]))
+  {:success true})
+
+(defn set-catalogue-item-archived! [{:keys [id archived]}]
+  (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item id)
         archived-licenses (filter :archived licenses)
         errors
         (remove
@@ -51,11 +55,12 @@
             {:type :t.administration.errors/workflow-archived :workflows [workflow]})
           (when (not (empty? archived-licenses))
             {:type :t.administration.errors/license-archived :licenses archived-licenses})])]
-    (if (and (not (:archived command))
+    (if (and (not archived)
              (not (empty? errors)))
       {:success false
        :errors errors}
-      (do (db/set-catalogue-item-state! (select-keys command [:id :enabled :archived]))
+      (do (db/set-catalogue-item-archived! {:id id
+                                            :archived archived})
           {:success true}))))
 
 (def get-localized-catalogue-items catalogue/get-localized-catalogue-items)

@@ -790,13 +790,13 @@
       (create-disabled-applications! dynamic-disabled
                                      (+fake-users+ :approver1) ; TODO: this should probably be :applicant1
                                      (+fake-users+ :approver1))
-      (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))
+      (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false}))
     (let [dynamic-expired (create-catalogue-item! {:title {:en "Dynamic workflow (expired)"
                                                            :fi "Dynaaminen työvuo (vanhentunut)"}
                                                    :resource-id res1
                                                    :form-id form
                                                    :workflow-id (:dynamic workflows)})]
-      (db/set-catalogue-item-state! {:id dynamic-expired :end (time/now)}))))
+      (db/set-catalogue-item-endt! {:id dynamic-expired :end (time/now)}))))
 
 (defn create-demo-data! []
   (db/add-api-key! {:apikey 55 :comment "Finna"})
@@ -832,4 +832,4 @@
       (create-disabled-applications! dynamic-disabled
                                      (+demo-users+ :approver1) ; TODO: this should probably be :applicant1
                                      (+demo-users+ :approver1))
-      (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))))
+      (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false}))))
