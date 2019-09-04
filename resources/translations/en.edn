@@ -269,7 +269,7 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
-         :validation {:errors "Submission failed. Check the following fields."
+         :validation {:errors "Submission failed. Check the following errors."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."

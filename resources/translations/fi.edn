@@ -267,7 +267,7 @@
          :submit "Lähetä hakemus"
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
-         :validation {:errors "Lähettäminen epäonnistui. Tarkasta seuraavat kentät."
+         :validation {:errors "Lähettäminen epäonnistui. Tarkasta seuraavat virheet."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."
