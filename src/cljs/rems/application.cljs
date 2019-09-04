@@ -647,12 +647,12 @@
 (defn- render-application [{:keys [application edit-application config userid]}]
   [:div.container-fluid.editor-content
    [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-   [disabled-items-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-4.order-lg-last
      [:div#float-actions.mb-3
       [flash-message/component]
+      [disabled-items-warning application]
       [actions-form application]]]
     [:div.col-lg-8
      [application-state application config]
