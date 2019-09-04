@@ -5,7 +5,7 @@
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
-            [rems.actions.add-member :refer [add-member-action-button add-member-form]]
+            [rems.actions.add-member :refer [add-member-action-button add-member-form add-member-status]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
@@ -587,6 +587,7 @@
                              :can-remove? can-uninvite?}])))
       :footer [:div
                [invite-member-status]
+               [add-member-status]
                [:div.commands
                 (when can-invite? [invite-member-action-button])
                 (when can-add? [add-member-action-button])]
