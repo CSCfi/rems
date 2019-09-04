@@ -48,7 +48,7 @@
                                             (:catalogue-item/expired %)
                                             (:catalogue-item/archived %)))
                                seq)]
-      [:div.alert.alert-warning
+      [:div.alert.alert-danger
        (text :t.form/alert-disabled-resources)
        (into [:ul]
              (for [resource resources]
