@@ -85,7 +85,7 @@
 (defn invite-member-status []
   (when @(rf/subscribe [::done?])
     [atoms/flash-message {:status :success
-                          :contents "Member invited"}]))
+                          :contents (text :t.actions/member-invited)}]))
 
 (defn invite-member-form [application-id on-finished]
   (let [name @(rf/subscribe [::name])

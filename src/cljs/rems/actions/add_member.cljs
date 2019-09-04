@@ -64,7 +64,7 @@
 (defn add-member-status []
   (when @(rf/subscribe [::done?])
     [atoms/flash-message {:status :success
-                          :contents "Member added"}]))
+                          :contents (text :t.actions/member-added)}]))
 
 (defn add-member-view
   [{:keys [selected-member potential-members on-set-member on-send]}]
