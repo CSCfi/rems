@@ -79,10 +79,12 @@ lein deps
 and then just run
 
 ```
-lein doo
+lein doo once
 ```
 
-to run tests in Headless Chrome via Karma.
+to run tests in Headless Chrome via Karma. 
+
+You may need to run `npm install karma karma-cljs-test karma-chrome-launcher` first to install the necessary tools and packages.
 
 #### Running all the tests
 
