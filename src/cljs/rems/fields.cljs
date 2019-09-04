@@ -2,7 +2,7 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             [cljs-time.core :as time]
-            [rems.atoms :refer [file-download textarea]]
+            [rems.atoms :refer [file-download textarea success-symbol]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format localize-time]]
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
@@ -248,7 +248,7 @@
                  (localized label)]])))]))
 
 (defn attachment-field
-  [{:keys [validation app-id on-change on-set-attachment on-remove-attachment] :as opts}]
+  [{:keys [validation app-id on-change on-set-attachment on-remove-attachment success] :as opts}]
   (let [id (:field/id opts)
         title (localized (:field/title opts))
         value (:field/value opts)
@@ -302,7 +302,9 @@
       (link value filename)
       (if (empty? value)
         upload-field
-        remove-button)]]))
+        remove-button)
+      (when success
+        [success-symbol])]]))
 
 (defn unsupported-field
   [f]
@@ -440,6 +442,14 @@
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "test.txt"}]])
+      (example "field of type \"attachment\", file uploaded, success indicator"
+            [:form
+             [field {:app-id 5
+                     :field/id 6
+                     :field/type :attachment
+                     :field/title {:en "Title"}
+                     :field/value "test.txt"
+                     :success true}]])
    (example "field of type \"attachment\", previous and new file uploaded, diff shown"
             [:form
              [field {:app-id 5

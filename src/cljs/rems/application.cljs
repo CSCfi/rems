@@ -5,12 +5,12 @@
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
-            [rems.actions.add-member :refer [add-member-action-button add-member-form]]
+            [rems.actions.add-member :refer [add-member-action-button add-member-form add-member-status]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
-            [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
+            [rems.actions.invite-member :refer [invite-member-action-button invite-member-form invite-member-status]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
@@ -87,7 +87,7 @@
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   {:db (dissoc db ::application ::edit-application)
+   {:db (dissoc db ::application ::edit-application ::attachment-success)
     :dispatch [::fetch-application id]}))
 
 (rf/reg-event-fx
@@ -223,13 +223,12 @@
                       (fn [response]
                         ;; no race condition here: events are handled in a FIFO manner
                         (rf/dispatch [::set-field-value field-id (str (:id response))])
-                        (rf/dispatch [::save-application (text :t.form/upload)])))
+                        (rf/dispatch [::set-attachment-success field-id])
+                        (rf/dispatch [::save-application description])))
             :error-handler (flash-message/default-error-handler description)})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
-
-;;;; UI components
 
 (rf/reg-event-db
  ::set-field-value
@@ -237,9 +236,20 @@
    (assoc-in db [::edit-application :field-values field-id] value)))
 
 (rf/reg-event-db
+ ::set-attachment-success
+ (fn [db [_ field-id]]
+   (assoc db ::attachment-success field-id)))
+
+(rf/reg-sub
+ ::attachment-success
+ (fn [db] (::attachment-success db)))
+
+(rf/reg-event-db
  ::toggle-diff
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
+
+;;;; UI components
 
 (defn- link-license [opts]
   (let [title (localized (:license/title opts))
@@ -300,7 +310,7 @@
                    :text (text :t.form/copy-as-new)
                    :on-click #(rf/dispatch [::copy-as-new-application])}])
 
-(defn- application-fields [application edit-application]
+(defn- application-fields [application edit-application attachment-success]
   (let [field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
         field-validations (index-by [:field-id] (:validation-errors edit-application))
@@ -317,7 +327,9 @@
                [fields/field (assoc fld
                                     :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
-                                    :on-remove-attachment #(rf/dispatch [::set-field-value (:field/id fld) ""])
+                                    :on-remove-attachment #(do
+                                                             (rf/dispatch [::set-field-value (:field/id fld) ""])
+                                                             (rf/dispatch [::set-attachment-success (:field/id fld)]))
                                     :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
                                     :field/value (get field-values (:field/id fld))
                                     :field/attachment (when (= :attachment (:field/type fld))
@@ -325,6 +337,7 @@
                                     :field/previous-attachment (when (= :attachment (:field/type fld))
                                                                  (when-let [prev (:field/previous-value fld)]
                                                                    (get attachments (parse-int prev))))
+                                    :success (= attachment-success (:field/id fld))
                                     :diff (get show-diff (:field/id fld))
                                     :validation (field-validations (:field/id fld))
                                     :readonly readonly?
@@ -573,6 +586,8 @@
                              :group? true
                              :can-remove? can-uninvite?}])))
       :footer [:div
+               [invite-member-status]
+               [add-member-status]
                [:div.commands
                 (when can-invite? [invite-member-action-button])
                 (when can-add? [add-member-action-button])]
@@ -644,18 +659,22 @@
                [:div#resource-action-forms
                 [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
-(defn- render-application [{:keys [application edit-application config userid]}]
-  [:div
+(defn- render-application [{:keys [application edit-application attachment-success config userid]}]
+  [:div.container-fluid.editor-content
    [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-   [flash-message/component]
-   [disabled-items-warning application]
    (text :t.applications/intro)
-   [application-state application config]
-   [:div.mt-3 [applicants-info application]]
-   [:div.mt-3 [applied-resources application userid]]
-   [:div.my-3 [application-licenses application edit-application userid]]
-   [:div.my-3 [application-fields application edit-application]]
-   [:div.mb-3 [actions-form application]]])
+   [:div.row
+    [:div.col-lg-4.order-lg-last
+     [:div#float-actions.mb-3
+      [flash-message/component]
+      [disabled-items-warning application]
+      [actions-form application]]]
+    [:div.col-lg-8
+     [application-state application config]
+     [:div.mt-3 [applicants-info application]]
+     [:div.mt-3 [applied-resources application userid]]
+     [:div.my-3 [application-licenses application edit-application userid]]
+     [:div.my-3 [application-fields application edit-application attachment-success]]]]])
 
 ;;;; Entrypoint
 
@@ -663,6 +682,7 @@
   (let [config @(rf/subscribe [:rems.config/config])
         application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
+        attachment-success @(rf/subscribe [::attachment-success])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])
         loading? (not application)]
     (if loading?
@@ -671,6 +691,7 @@
        [spinner/big]]
       [render-application {:application application
                            :edit-application edit-application
+                           :attachment-success attachment-success
                            :config config
                            :userid userid}])))
 

@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys in-page-anchor-link]]))
+            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio in-page-anchor-link]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -194,15 +194,6 @@
 
 ;;;; preview auto-scrolling
 
-(defn visibility-ratio [element]
-  (let [bounds (.getBoundingClientRect element)]
-    (cond (<= (.-bottom bounds) 0)
-          0
-          (>= (.-top bounds) 0)
-          1
-          :else
-          (/ (.-bottom bounds) (.-height bounds)))))
-
 (defn true-height [element]
   (let [style (.getComputedStyle js/window element)]
     (+ (.-offsetHeight element)
@@ -337,7 +328,7 @@
   [:button.btn.btn-primary
    {:type :button
     :on-click (fn []
-                (rf/dispatch [:rems.spa/user-triggered-navigation])
+                (rf/dispatch [:rems.spa/user-triggered-navigation]) ;; scroll to top
                 (on-click))}
    (text :t.administration/save)])
 

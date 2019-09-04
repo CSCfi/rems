@@ -1,7 +1,7 @@
 (ns rems.actions.add-member
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
-            [rems.atoms :refer [enrich-user]]
+            [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
@@ -18,6 +18,7 @@
  ::open-form
  (fn [{:keys [db]} _]
    {:db (assoc db
+               ::done? false
                ::potential-members #{}
                ::selected-member nil)
     ::fetch-potential-members #(rf/dispatch [::set-potential-members %])}))
@@ -27,11 +28,14 @@
  ::set-potential-members
  (fn [db [_ members]]
    (assoc db
-          ::potential-members (set (map enrich-user members))
+          ::potential-members (set (map atoms/enrich-user members))
           ::selected-member nil)))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
 (rf/reg-sub ::selected-member (fn [db _] (::selected-member db)))
+
+(rf/reg-event-db ::set-done? (fn [db [_ done]] (assoc db ::done? done)))
+(rf/reg-sub ::done? (fn [db _] (::done? db)))
 
 (def ^:private action-form-id "add-member")
 (def ^:private dropdown-id "add-member-dropdown")
@@ -39,22 +43,25 @@
 (rf/reg-event-fx
  ::send-add-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-   (let [description (text :t.actions/add-member)]
-     (post! "/api/applications/add-member"
-            {:params {:application-id application-id
-                      :member (select-keys member [:userid])}
-             :handler (flash-message/default-success-handler
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler description)}))
+   (post! "/api/applications/add-member"
+          {:params {:application-id application-id
+                    :member (select-keys member [:userid])}
+           :handler (fn [_]
+                      (collapse-action-form action-form-id)
+                      (rf/dispatch [::set-done? true])
+                      (on-finished))
+           :error-handler (flash-message/default-error-handler (text :t.actions/add-member))})
    {}))
 
 (defn add-member-action-button []
   [action-button {:id action-form-id
                   :text (text :t.actions/add-member)
                   :on-click #(rf/dispatch [::open-form])}])
+
+(defn add-member-status []
+  (when @(rf/subscribe [::done?])
+    [atoms/flash-message {:status :success
+                          :contents (text :t.actions/member-added)}]))
 
 (defn add-member-view
   [{:keys [selected-member potential-members on-set-member on-send]}]
