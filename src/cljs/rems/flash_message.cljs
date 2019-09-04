@@ -23,7 +23,7 @@
 (rf/reg-event-fx
  ::show-flash-message
  (fn [{:keys [db]} [_ message]]
-   (focus/focus-element-async "#flash-message" {:scroll? true})
+   (focus/focus-element-async "#flash-message")
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message (assoc message :expires (+ 500 (current-time-millis))))}))
 
