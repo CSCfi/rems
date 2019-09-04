@@ -1,6 +1,7 @@
 (ns rems.actions.invite-member
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
+            [rems.atoms :as atoms]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -9,6 +10,7 @@
  ::open-form
  (fn [db _]
    (assoc db
+          ::done? false
           ::name ""
           ::email "")))
 
@@ -17,6 +19,9 @@
 
 (rf/reg-event-db ::set-email (fn [db [_ email]] (assoc db ::email email)))
 (rf/reg-sub ::email (fn [db _] (::email db)))
+
+(rf/reg-event-db ::set-done? (fn [db [_ done]] (assoc db ::done? done)))
+(rf/reg-sub ::done? (fn [db _] (::done? db)))
 
 (def ^:private action-form-id "invite-member")
 
@@ -35,6 +40,7 @@
                       :member member}
              :handler (fn [_]
                         (collapse-action-form action-form-id)
+                        (rf/dispatch [::set-done? true])
                         (on-finished))
              :error-handler status-modal/common-error-handler!}))
    {}))
@@ -56,12 +62,12 @@
                            :on-change on-change}]]))
 
 (defn invite-member-view
-  [{:keys [name email on-send]}]
+  [{:keys [name email done? on-send]}]
   [action-form-view action-form-id
    (text :t.actions/invite-member)
    [[button-wrapper {:id "invite-member"
                      :text (text :t.actions/invite-member)
-                     :class "btn-primary"
+                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
     [input-field {:id "member-name"
@@ -76,9 +82,15 @@
                   :on-change #(rf/dispatch [::set-email (.. % -target -value)])}]]
    {:collapse-id "member-action-forms"}])
 
+(defn invite-member-status []
+  (when @(rf/subscribe [::done?])
+    [atoms/flash-message {:status :success
+                          :contents "Member invited"}]))
+
 (defn invite-member-form [application-id on-finished]
   (let [name @(rf/subscribe [::name])
-        email @(rf/subscribe [::email])]
+        email @(rf/subscribe [::email])
+        done? @(rf/subscribe [::done?])]
     [invite-member-view {:name name
                          :email email
                          :on-send #(rf/dispatch [::send-invite-member {:application-id application-id
