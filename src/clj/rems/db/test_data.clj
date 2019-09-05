@@ -127,9 +127,12 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id]
+(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id infourl]
                                :as command}]
-  (let [localizations (map-vals (fn [title] {:title title}) title)
+  (let [localizations (into {}
+                            (for [lang (set (concat (keys title) (keys infourl)))]
+                              [lang {:title (get title lang)
+                                     :infourl (get infourl lang)}]))
         result (catalogue/create-catalogue-item!
                 {:resid (or resource-id (create-resource! {}))
                  :form (or form-id (create-form! {}))
@@ -766,6 +769,8 @@
     (create-disabled-license! (+fake-users+ :owner))
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
+                                           :infourl {:en "http://www.google.com"
+                                                     :fi "http://www.google.fi"}
                                            :resource-id res1
                                            :form-id form
                                            :workflow-id (:dynamic workflows)})]
