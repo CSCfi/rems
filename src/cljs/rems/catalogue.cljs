@@ -75,10 +75,15 @@
 
 ;;;; UI
 
-(defn- catalogue-item-more-info [item config]
-  (when (urn-catalogue-item? item)
-    [:a.btn.btn-secondary {:href (urn-catalogue-item-link item config) :target :_blank}
-     (text :t.catalogue/more-info) " " [external-link]]))
+(defn- catalogue-item-more-info [item language config]
+  (let [urn-link (when (urn-catalogue-item? item)
+                   (urn-catalogue-item-link item config))
+        more-info-link (get-in item [:localizations language :infourl])
+        link (or more-info-link
+                 urn-link)]
+    (when link
+      [:a.btn.btn-secondary {:href link :target :_blank}
+       (text :t.catalogue/more-info) " " [external-link]])))
 
 (rf/reg-sub
  ::catalogue-table-rows
@@ -90,7 +95,7 @@
           {:key (:id item)
            :name {:value (get-localized-title item language)}
            :commands {:td [:td.commands
-                           [catalogue-item-more-info item {}]
+                           [catalogue-item-more-info item language {}]
                            [cart/add-to-cart-button item language]]}})
         catalogue)))
 
