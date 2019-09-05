@@ -189,7 +189,7 @@
 (defn- catalogue-item-infourl-field [language]
   [text-field context {:keys [:infourl language]
                        ;; no placeholder to make clear that field is optional
-                       :label (str (text :t.catalogue/more-info) " URL " ;; TODO localization
+                       :label (str (text :t.create-catalogue-item/infourl)
                                    " (" (str/upper-case (name language)) ")")}])
 
 (defn- catalogue-item-workflow-field []

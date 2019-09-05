@@ -164,6 +164,7 @@
   :collapse {:show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
   :create-catalogue-item {:form-selection "Lomake"
+                          :infourl "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
                           :resource-selection "Resurssi"
                           :title "Nimi"
                           :title-placeholder "Nimi"

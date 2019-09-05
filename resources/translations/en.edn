@@ -166,6 +166,7 @@
   :collapse {:show-less "Show less"
              :show-more "Show more"}
   :create-catalogue-item {:form-selection "Form"
+                          :infourl "More info URL (optional, defaults to resource URN)"
                           :resource-selection "Resource"
                           :title "Name"
                           :title-placeholder "Name"
