@@ -5,7 +5,10 @@
   (:import (org.joda.time DateTime)))
 
 (s/defschema CatalogueItemLocalizations
-  {s/Keyword {;; TODO remove :id and :langcode fields to be able to reuse as WriteCatalogueItemLocalizations
+  {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
+              ;; fields are redundant. If we remove them we can reuse
+              ;; this schema as WriteCatalogueItemLocalizations in
+              ;; rems.administration.catalogue-item
               :id s/Int
               :langcode s/Keyword
               :title s/Str
