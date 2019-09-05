@@ -20,7 +20,7 @@
         loc-ids
         (doall
          (for [[langcode localization] localizations]
-           (:id (db/create-catalogue-item-localization! {:id id
+           (:id (db/upsert-catalogue-item-localization! {:id id
                                                          :langcode (name langcode)
                                                          :title (:title localization)
                                                          :infourl (:infourl localization)}))))]
@@ -31,7 +31,7 @@
 
 (defn edit-catalogue-item! [{:keys [id localizations] :as command}]
   (doseq [[langcode localization] localizations]
-    (db/edit-catalogue-item-localization!
+    (db/upsert-catalogue-item-localization!
      (merge {:id id
              :langcode (name langcode)}
             (select-keys localization [:title :infourl]))))

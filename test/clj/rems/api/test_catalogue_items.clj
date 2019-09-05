@@ -103,10 +103,9 @@
                 (is (= {:title "Sv title 2"
                         :infourl nil}
                        (dissoc (get-in data [:localizations :sv]) :id :langcode)))
-                ;; TODO adding a new language doesn't work
-                #_(is (= {:title "Fi title"
-                          :infourl "http://info.fi"}
-                         (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))))))
+                (is (= {:title "Fi title"
+                        :infourl "http://info.fi"}
+                       (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))))))
 
 
 (deftest catalogue-items-api-security-test
