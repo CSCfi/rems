@@ -128,17 +128,18 @@ WHERE id = :id;
 SELECT current_database();
 
 -- :name get-catalogue-item-localizations :? :*
-SELECT catid AS id, langcode, title
+SELECT catid AS id, langcode, title, infoUrl
 FROM catalogue_item_localization;
 
 -- :name create-catalogue-item-localization! :insert
 INSERT INTO catalogue_item_localization
-  (catid, langcode, title)
-VALUES (:id, :langcode, :title);
+  (catid, langcode, title, infoUrl)
+VALUES (:id, :langcode, :title, :infourl);
 
 -- :name edit-catalogue-item-localization! :!
 UPDATE catalogue_item_localization
 SET (catid, langcode, title) = (:id, :langcode, :title)
+--~ (when (contains? params :infourl) ", infoUrl = :infourl")
 WHERE catid = :id
   AND langcode = :langcode;
 
