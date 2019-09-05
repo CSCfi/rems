@@ -58,12 +58,19 @@
           (set (keys (:localizations request))))
        (every? valid-localization? (vals (:localizations request)))))
 
+(defn- empty-string-to-nil [str]
+  (when-not (str/blank? str)
+    str))
+
 (defn build-request [form languages]
   (let [request {:wfid (:workflow-id form)
                  :resid (:resource-id form)
                  :form (:form-id form)
-                 :localizations (map-vals (fn [title] {:title title})
-                                          (:title form))}]
+                 :localizations (into {}
+                                      (for [lang languages]
+                                        [lang {:title (get-in form [:title lang])
+                                               :infourl (empty-string-to-nil
+                                                         (get-in form [:infourl lang]))}]))}]
     (when (valid-request? request languages)
       request)))
 
@@ -159,7 +166,8 @@
        (assoc ::form {:workflow-id wfid
                       :resource-id resource-id
                       :form-id formid
-                      :title (map-vals :title localizations)})
+                      :title (map-vals :title localizations)
+                      :infourl (map-vals :infourl localizations)})
        (dissoc ::loading-catalogue-item?))))
 
 ;;;; UI
@@ -177,6 +185,12 @@
                        :label (str (text :t.create-catalogue-item/title)
                                    " (" (str/upper-case (name language)) ")")
                        :placeholder (text :t.create-catalogue-item/title-placeholder)}])
+
+(defn- catalogue-item-infourl-field [language]
+  [text-field context {:keys [:infourl language]
+                       ;; no placeholder to make clear that field is optional
+                       :label (str (text :t.catalogue/more-info) " URL " ;; TODO localization
+                                   " (" (str/upper-case (name language)) ")")}])
 
 (defn- catalogue-item-workflow-field []
   (let [workflows @(rf/subscribe [::workflows])
@@ -267,7 +281,9 @@
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
                    (for [language languages]
-                     ^{:key language} [catalogue-item-title-field language])
+                     [:<>
+                      ^{:key (str "title-" language)} [catalogue-item-title-field language]
+                      ^{:key (str "infourl-" language)} [catalogue-item-infourl-field language]])
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
