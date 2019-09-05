@@ -51,10 +51,15 @@
      :always (into [:div]
                    (concat
                     (for [[langcode localization] (:localizations catalogue-item)]
-                      [inline-info-field
-                       (str (text :t.administration/title)
-                            " (" (str/upper-case (name langcode)) ")")
-                       (:title localization)])
+                      (let [suffix (str " (" (str/upper-case (name langcode)) ")")]
+                        [:<>
+                         [inline-info-field (str (text :t.administration/title) suffix)
+                          (:title localization)]
+                         [inline-info-field (str (text :t.catalogue/more-info) suffix)
+                          [:a {:href (:infourl localization) :target :_blank}
+                           (:infourl localization)
+                           " "
+                           [atoms/external-link]]]]))
                     [[inline-info-field (text :t.administration/resource)
                       [atoms/link nil
                        (str "#/administration/resources/" (:resource-id catalogue-item))
