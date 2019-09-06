@@ -59,9 +59,7 @@
         (let [max-length (max (count a) (count b))
               a (take max-length (concat a (repeat nil)))
               b (take max-length (concat b (repeat nil)))]
-          (->> (interleave a b)
-               (partition 2)
-               (map (fn [[x y]] (deep-merge x y)))))
+          (map deep-merge a b))
 
         (map? a)
         (merge-with deep-merge a b)
