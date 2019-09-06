@@ -59,7 +59,7 @@
         (let [max-length (max (count a) (count b))
               a (take max-length (concat a (repeat nil)))
               b (take max-length (concat b (repeat nil)))]
-          (map deep-merge a b))
+          (doall (map deep-merge a b)))
 
         (map? a)
         (merge-with deep-merge a b)
