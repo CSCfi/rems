@@ -5,6 +5,8 @@
 (deftest build-request-test
   (let [form {:title {:en "en title"
                       :fi "fi title"}
+              :infourl {:en "hello"
+                        :fi ""}
               :workflow-id 123
               :resource-id 456
               :form-id 789}
@@ -14,8 +16,10 @@
       (is (= {:wfid 123
               :resid 456
               :form 789
-              :localizations {:en {:title "en title"}
-                              :fi {:title "fi title"}}}
+              :localizations {:en {:title "en title"
+                                   :infourl "hello"}
+                              :fi {:title "fi title"
+                                   :infourl nil}}}
              (build-request form languages))))
 
     (testing "missing title"

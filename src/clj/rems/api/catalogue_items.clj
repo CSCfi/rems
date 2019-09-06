@@ -11,19 +11,24 @@
 (s/defschema GetCatalogueItemsResponse
   [CatalogueItem])
 
+(s/defschema WriteCatalogueItemLocalizations
+  {s/Keyword {:title s/Str
+              ;; s/optional-key to keep backwards compatibility. s/maybe to allow unsetting the field.
+              (s/optional-key :infourl) (s/maybe s/Str)}})
+
 ;; TODO resid is misleading: it's the internal id, not the string id
 ;; Should we take the string id instead?
 (s/defschema CreateCatalogueItemCommand
   {:form s/Int
    :resid s/Int
    :wfid s/Int
-   :localizations {s/Keyword {:title s/Str}}
+   :localizations WriteCatalogueItemLocalizations
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool})
 
 (s/defschema EditCatalogueItemCommand
   {:id s/Int
-   :localizations {s/Keyword {:title s/Str}}})
+   :localizations WriteCatalogueItemLocalizations})
 
 (s/defschema CreateCatalogueItemResponse
   {:success s/Bool

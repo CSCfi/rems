@@ -20,9 +20,10 @@
         loc-ids
         (doall
          (for [[langcode localization] localizations]
-           (:id (db/create-catalogue-item-localization! {:id id
+           (:id (db/upsert-catalogue-item-localization! {:id id
                                                          :langcode (name langcode)
-                                                         :title (:title localization)}))))]
+                                                         :title (:title localization)
+                                                         :infourl (:infourl localization)}))))]
     ;; Reset cache so that next call to get localizations will get these ones.
     (catalogue/reset-cache!)
     {:success (not (some nil? (cons id loc-ids)))
@@ -30,9 +31,10 @@
 
 (defn edit-catalogue-item! [{:keys [id localizations] :as command}]
   (doseq [[langcode localization] localizations]
-    (db/edit-catalogue-item-localization! {:id id
-                                           :langcode (name langcode)
-                                           :title (:title localization)}))
+    (db/upsert-catalogue-item-localization!
+     (merge {:id id
+             :langcode (name langcode)}
+            (select-keys localization [:title :infourl]))))
   ;; Reset cache so that next call to get localizations will get these ones.
   (catalogue/reset-cache!)
   {:success true})

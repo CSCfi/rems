@@ -49,6 +49,65 @@
         (is (response-is-not-found? response))
         (is (= "application/json" (get-in response [:headers "Content-Type"])))))))
 
+(deftest catalogue-items-edit-test
+  (let [form-id (test-data/create-form! {:form/title "form name"})
+        api-key "42"
+        owner "owner"
+        user "alice"]
+    (testing "create"
+      (let [create (-> (request :post "/api/catalogue-items/create")
+                       (authenticate api-key owner)
+                       (json-body {:form form-id
+                                   :resid 1
+                                   :wfid 1
+                                   :localizations {:en {:title "En title"}
+                                                   :sv {:title "Sv title"
+                                                        :infourl "http://info.se"}}})
+                       handler
+                       read-ok-body)
+            id (:id create)]
+        (is (:success create))
+        (testing "... and fetch"
+          (let [data (-> (request :get (str "/api/catalogue-items/" id))
+                         (authenticate api-key user)
+                         handler
+                         read-ok-body)]
+            (is (= id (:id data)))
+            (is (= {:title "En title"
+                    :infourl nil}
+                   (dissoc (get-in data [:localizations :en]) :id :langcode)))
+            (is (= {:title "Sv title"
+                    :infourl "http://info.se"}
+                   (dissoc (get-in data [:localizations :sv]) :id :langcode)))))
+        (testing "... and edit"
+          (let [response (-> (request :put "/api/catalogue-items/edit")
+                             (authenticate api-key owner)
+                             (json-body {:id id
+                                         :localizations {:sv {:title "Sv title 2"
+                                                              :infourl nil}
+                                                         :fi {:title "Fi title"
+                                                              :infourl "http://info.fi"}}})
+                             handler
+                             read-ok-body)]
+            (is (:success response) (pr-str response))
+            (testing "... and fetch"
+              (let [data (-> (request :get (str "/api/catalogue-items/" id))
+                             (authenticate api-key user)
+                             handler
+                             read-ok-body)]
+                (prn data)
+                (is (= id (:id data)))
+                (is (= {:title "En title"
+                        :infourl nil}
+                       (dissoc (get-in data [:localizations :en]) :id :langcode)))
+                (is (= {:title "Sv title 2"
+                        :infourl nil}
+                       (dissoc (get-in data [:localizations :sv]) :id :langcode)))
+                (is (= {:title "Fi title"
+                        :infourl "http://info.fi"}
+                       (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))))))
+
+
 (deftest catalogue-items-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/catalogue-items"))

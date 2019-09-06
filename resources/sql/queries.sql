@@ -128,19 +128,21 @@ WHERE id = :id;
 SELECT current_database();
 
 -- :name get-catalogue-item-localizations :? :*
-SELECT catid AS id, langcode, title
+SELECT catid AS id, langcode, title, infoUrl
 FROM catalogue_item_localization;
 
--- :name create-catalogue-item-localization! :insert
+-- :name upsert-catalogue-item-localization! :insert
+-- TODO now that we have the catalogue_item_localization_unique
+-- constraint, we can get rid of the synthetic id column
 INSERT INTO catalogue_item_localization
-  (catid, langcode, title)
-VALUES (:id, :langcode, :title);
-
--- :name edit-catalogue-item-localization! :!
-UPDATE catalogue_item_localization
+  (catid, langcode, title, infoUrl)
+VALUES (:id, :langcode, :title,
+  /*~ (if (:infourl params) */ :infourl /*~*/ NULL /*~ ) ~*/
+  )
+ON CONFLICT (catid, langcode)
+DO UPDATE
 SET (catid, langcode, title) = (:id, :langcode, :title)
-WHERE catid = :id
-  AND langcode = :langcode;
+--~ (when (contains? params :infourl) ", infoUrl = :infourl")
 
 -- :name get-form-templates :? :*
 SELECT

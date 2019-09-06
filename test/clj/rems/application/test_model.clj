@@ -41,10 +41,12 @@
        :formid 40
        :localizations {:en {:id 10
                             :langcode :en
-                            :title "en title"}
+                            :title "en title"
+                            :infourl "http://info.com"}
                        :fi {:id 10
                             :langcode :fi
-                            :title "fi title"}}
+                            :title "fi title"
+                            :infourl nil}}
        :start (DateTime. 100)
        :end nil
        :enabled true
@@ -57,10 +59,12 @@
        :formid 40
        :localizations {:en {:id 20
                             :langcode :en
-                            :title "en title"}
+                            :title "en title"
+                            :infourl "http://info.com"}
                        :fi {:id 20
                             :langcode :fi
-                            :title "fi title"}}
+                            :title "fi title"
+                            :infourl nil}}
        :start (DateTime. 100)
        :end nil
        :enabled true
@@ -73,10 +77,12 @@
        :formid 40
        :localizations {:en {:id 20
                             :langcode :en
-                            :title "en title"}
+                            :title "en title"
+                            :infourl "http://info.com"}
                        :fi {:id 20
                             :langcode :fi
-                            :title "fi title"}}
+                            :title "fi title"
+                            :infourl nil}}
        :start (DateTime. 100)
        :end nil
        :enabled true
