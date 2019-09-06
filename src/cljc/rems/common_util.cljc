@@ -55,14 +55,17 @@
       (is (= "(2)" (andstr "(" (:foo x) ")"))))))
 
 (defn deep-merge [a b]
-  (cond (and (sequential? a)
-             (sequential? b)) (let [max-length (max (count a) (count b))
-                                    a (take max-length (concat a (repeat nil)))
-                                    b (take max-length (concat b (repeat nil)))]
-                                (->> (interleave a b)
-                                     (partition 2)
-                                     (map (fn [[x y]] (deep-merge x y)))))
-        (map? a) (merge-with deep-merge a b)
+  (cond (and (sequential? a) (sequential? b))
+        (let [max-length (max (count a) (count b))
+              a (take max-length (concat a (repeat nil)))
+              b (take max-length (concat b (repeat nil)))]
+          (->> (interleave a b)
+               (partition 2)
+               (map (fn [[x y]] (deep-merge x y)))))
+
+        (map? a)
+        (merge-with deep-merge a b)
+
         :else b))
 
 (deftest test-deep-merge
