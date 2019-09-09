@@ -137,6 +137,7 @@
                  :id "Id"
                  :intro [:div.intro [:p "By filling and sending in this application, the applicants may be granted the applied resources. All the applicable terms of use must also be accepted by each applicant."]]
                  :last-activity "Last activity"
+                 :latest-activity "Latest activity"
                  :my-applications "My Applications"
                  :resource "Resource"
                  :state "State"
@@ -148,7 +149,7 @@
                           :submitted "Applied"
                           :unknown "Unknown"}
                  :submitted "Sent"
-                 :latest-activity "Latest activity"
+                 :todo "Action needed"
                  :view "View"}
   :cart {:add "Add to cart"
          :apply "Apply"

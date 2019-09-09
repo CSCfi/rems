@@ -58,6 +58,7 @@
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
                           value]})
+           :todo {:value ""} ; TODO
            :created (let [value (:application/created app)]
                       {:value value
                        :display-value (localize-time value)})
@@ -84,6 +85,8 @@
                       :title (text :t.applications/applicant)}
                      {:key :state
                       :title (text :t.applications/state)}
+                     {:key :todo
+                      :title (text :t.applications/todo)}
                      {:key :created
                       :title (text :t.applications/created)}
                      {:key :submitted
@@ -103,7 +106,7 @@
 (defn- application-list-defaults []
   (let [config @(rf/subscribe [:rems.config/config])
         id-column (get config :application-id-column :id)]
-    {:visible-columns #{id-column :description :resource :applicant :state :created :submitted :last-activity :view}
+    {:visible-columns #{id-column :description :resource :applicant :state :todo :created :submitted :last-activity :view}
      :default-sort-column :created
      :default-sort-order :desc}))
 

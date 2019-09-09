@@ -135,6 +135,7 @@
                  :id "Tunniste"
                  :intro [:div.intro [:p "Täyttämällä ja lähettämällä tämän hakemuksen kaikki hakijat voivat saada oikeuden haettuihin resursseihin. Kunkin hakijan on lisäksi hyväksyttävä käyttöehdot viimeistään hakemuksen käsittelyn jälkeen."]]
                  :last-activity "Muokattu"
+                 :latest-activity "Viimeisin toimenpide"
                  :my-applications "Omat hakemukset"
                  :resource "Resurssi"
                  :state "Tila"
@@ -146,7 +147,7 @@
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
                  :submitted "Lähetetty"
-                 :latest-activity "Viimeisin toimenpide"
+                 :todo "Toimia tarvitaan"
                  :view "Näytä"}
   :cart {:add "Lisää koriin"
          :apply "Hae"
