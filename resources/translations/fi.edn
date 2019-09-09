@@ -148,6 +148,13 @@
                           :unknown "Tuntematon"}
                  :submitted "Lähetetty"
                  :todo "Toimia tarvitaan"
+                 :todos {:new-application "Uusi hakemus"
+                         :resubmitted-application "Uudelleenlähetetty hakemus"
+                         :unknown "Tuntematon"
+                         :waiting-for-comment "Odottaa kommenttia"
+                         :waiting-for-decision "Odottaa päätöstä"
+                         :waiting-for-your-comment "Odottaa sinun kommenttiasi"
+                         :waiting-for-your-decision "Odottaa sinun päätöstäsi"}
                  :view "Näytä"}
   :cart {:add "Lisää koriin"
          :apply "Hae"

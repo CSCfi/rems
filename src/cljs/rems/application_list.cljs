@@ -8,7 +8,7 @@
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-time localized text]])
+            [rems.text :refer [localize-state localize-todo localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- view-button [app]
@@ -58,7 +58,7 @@
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
                           value]})
-           :todo {:value (str (:application/todo app))} ; TODO
+           :todo {:value (localize-todo (:application/todo app))}
            :created (let [value (:application/created app)]
                       {:value value
                        :display-value (localize-time value)})

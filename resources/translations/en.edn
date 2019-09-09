@@ -150,6 +150,13 @@
                           :unknown "Unknown"}
                  :submitted "Sent"
                  :todo "Action needed"
+                 :todos {:new-application "New application"
+                         :resubmitted-application "Resubmitted application"
+                         :unknown "Unknown"
+                         :waiting-for-comment "Waiting for a comment"
+                         :waiting-for-decision "Waiting for a decision"
+                         :waiting-for-your-comment "Waiting for your comment"
+                         :waiting-for-your-decision "Waiting for your decision"}
                  :view "View"}
   :cart {:add "Add to cart"
          :apply "Apply"
