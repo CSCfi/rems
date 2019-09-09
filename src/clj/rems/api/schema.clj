@@ -70,6 +70,9 @@
 (s/defschema LocalizedString
   {s/Keyword s/Str})
 
+(s/defschema OptionalLocalizedString
+  {s/Keyword (s/maybe s/Str)})
+
 (s/defschema LocalizedInt
   {s/Keyword s/Int})
 
@@ -78,6 +81,7 @@
    :resource/ext-id s/Str
    :catalogue-item/id s/Int
    :catalogue-item/title LocalizedString
+   :catalogue-item/infourl OptionalLocalizedString
    :catalogue-item/start DateTime
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool

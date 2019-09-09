@@ -452,6 +452,7 @@
                  :resource/ext-id (:resource/ext-id resource)
                  :resource/id (:resource-id item)
                  :catalogue-item/title (localization-for :title item)
+                 :catalogue-item/infourl (localization-for :infourl item)
                  ;; TODO: remove unused keys
                  :catalogue-item/start (:start item)
                  :catalogue-item/end (:end item)

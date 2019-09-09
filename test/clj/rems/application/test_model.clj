@@ -227,6 +227,7 @@
                                                            :resource/ext-id "urn:11"
                                                            :catalogue-item/title {:en "en title"
                                                                                   :fi "fi title"}
+                                                           :catalogue-item/infourl {:en "http://info.com"}
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
@@ -237,6 +238,7 @@
                                                            :resource/ext-id "urn:21"
                                                            :catalogue-item/title {:en "en title"
                                                                                   :fi "fi title"}
+                                                           :catalogue-item/infourl {:en "http://info.com"}
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
@@ -387,6 +389,7 @@
                                                                                         :resource/ext-id "urn:31"
                                                                                         :catalogue-item/title {:en "en title"
                                                                                                                :fi "fi title"}
+                                                                                        :catalogue-item/infourl {:en "http://info.com"}
                                                                                         :catalogue-item/start (DateTime. 100)
                                                                                         :catalogue-item/end nil
                                                                                         :catalogue-item/enabled true
@@ -511,6 +514,7 @@
                                                                                             :resource/ext-id "urn:31"
                                                                                             :catalogue-item/title {:en "en title"
                                                                                                                    :fi "fi title"}
+                                                                                            :catalogue-item/infourl {:en "http://info.com"}
                                                                                             :catalogue-item/start (DateTime. 100)
                                                                                             :catalogue-item/end nil
                                                                                             :catalogue-item/enabled true
@@ -590,6 +594,7 @@
                                                                                                :resource/ext-id "urn:11"
                                                                                                :catalogue-item/title {:en "en title"
                                                                                                                       :fi "fi title"}
+                                                                                               :catalogue-item/infourl {}
                                                                                                :catalogue-item/start (DateTime. 100)
                                                                                                :catalogue-item/end nil
                                                                                                :catalogue-item/enabled true
@@ -600,6 +605,7 @@
                                                                                                :resource/ext-id "urn:31"
                                                                                                :catalogue-item/title {:en "en title"
                                                                                                                       :fi "fi title"}
+                                                                                               :catalogue-item/infourl {}
                                                                                                :catalogue-item/start (DateTime. 100)
                                                                                                :catalogue-item/end nil
                                                                                                :catalogue-item/enabled true
