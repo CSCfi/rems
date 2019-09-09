@@ -965,4 +965,26 @@
                      (:application/invitation-tokens application)))
               (is (= #{{:name "member"
                         :email "member@example.com"}}
-                     (:application/invited-members application))))))))))
+                     (:application/invited-members application))))))))
+
+    (testing "personalized waiting for your comment"
+      (let [application (model/application-view application {:event/type :application.event/comment-requested
+                                                             :event/actor "handler"
+                                                             :application/commenters ["commenter1"]})]
+        (is (= :waiting-for-comment
+               (:application/todo (model/apply-user-permissions application "handler")))
+            "as seen by handler")
+        (is (= :waiting-for-your-comment
+               (:application/todo (model/apply-user-permissions application "commenter1")))
+            "as seen by commenter")))
+
+    (testing "personalized waiting for your decision"
+      (let [application (model/application-view application {:event/type :application.event/decision-requested
+                                                             :event/actor "handler"
+                                                             :application/deciders ["decider1"]})]
+        (is (= :waiting-for-decision
+               (:application/todo (model/apply-user-permissions application "handler")))
+            "as seen by handler")
+        (is (= :waiting-for-your-decision
+               (:application/todo (model/apply-user-permissions application "decider1")))
+            "as seen by decider")))))

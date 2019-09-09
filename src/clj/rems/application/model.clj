@@ -589,6 +589,14 @@
       (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
+(defn- personalize [application user-id]
+  (cond-> application
+    (contains? (::latest-comment-request-by-user application) user-id)
+    (assoc :application/todo :waiting-for-your-comment)
+
+    (contains? (::latest-decision-request-by-user application) user-id)
+    (assoc :application/todo :waiting-for-your-decision)))
+
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
         roles (permissions/user-roles application user-id)
@@ -598,6 +606,7 @@
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
+          (personalize user-id)
           (hide-non-public-information)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
