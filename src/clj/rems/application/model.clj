@@ -275,27 +275,39 @@
       (assoc :application/state :application.state/returned)
       (assoc :application/todo nil)))
 
+(defn- update-waiting-for-todo [application]
+  (cond-> (assoc application :application/todo nil)
+    (not (empty? (::latest-comment-request-by-user application)))
+    (assoc :application/todo :waiting-for-comment)
+
+    (not (empty? (::latest-decision-request-by-user application)))
+    (assoc :application/todo :waiting-for-decision)))
+
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
   (-> application
       (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
-                                                             (repeat (:application/request-id event))))))
+                                                             (repeat (:application/request-id event))))
+      (update-waiting-for-todo)))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
   (-> application
-      (update ::latest-comment-request-by-user dissoc (:event/actor event))))
+      (update ::latest-comment-request-by-user dissoc (:event/actor event))
+      (update-waiting-for-todo)))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
   (-> application
       (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
-                                                              (repeat (:application/request-id event))))))
+                                                              (repeat (:application/request-id event))))
+      (update-waiting-for-todo)))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
-      (update ::latest-decision-request-by-user dissoc (:event/actor event))))
+      (update ::latest-decision-request-by-user dissoc (:event/actor event))
+      (update-waiting-for-todo)))
 
 (defmethod event-type-specific-application-view :application.event/remarked
   [application _event]

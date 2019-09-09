@@ -718,6 +718,7 @@
                                 expected-application (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 4000)
                                                                   :application/events events
+                                                                  :application/todo :waiting-for-comment
                                                                   :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
                             (is (= expected-application (apply-events events)))
 
@@ -732,6 +733,7 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events events
+                                                                 :application/todo nil
                                                                  :rems.application.model/latest-comment-request-by-user {}})]
                                 (is (= expected-application (apply-events events)))))))
 
@@ -748,6 +750,7 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events events
+                                                             :application/todo :waiting-for-decision
                                                              :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
                             (is (= expected-application (apply-events events)))
 
@@ -763,6 +766,7 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events events
+                                                                 :application/todo nil
                                                                  :rems.application.model/latest-decision-request-by-user {}})]
                                 (is (= expected-application (apply-events events)))))))
 
