@@ -19,6 +19,7 @@
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol]]
+            [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
             [rems.fields :as fields]
@@ -645,7 +646,8 @@
    (localized (:catalogue-item/title resource))
    ;; slight duplication with rems.catalogue/catalogue-item-more-info,
    ;; but the data has a different schema here (V2Resource vs. CatalogueItem)
-   (when-let [url (localized (:catalogue-item/infourl resource))]
+   (when-let [url (or (localized (:catalogue-item/infourl resource))
+                      (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
      [:<>
       " "
       [:a.btn.btn-secondary {:href url :target :_blank}
