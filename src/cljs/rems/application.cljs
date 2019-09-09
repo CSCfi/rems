@@ -649,8 +649,8 @@
    (when-let [url (or (localized (:catalogue-item/infourl resource))
                       (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
      [:<>
-      " "
-      [:a.btn.btn-secondary {:href url :target :_blank}
+      ", "
+      [:a {:href url :target :_blank}
        (text :t.catalogue/more-info) " " [external-link]]])])
 
 (defn- applied-resources [application userid]
