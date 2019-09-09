@@ -174,8 +174,7 @@
     :application.state/draft
     :application.state/rejected
     :application.state/returned
-    :application.state/submitted
-    #_:application.state/withdrawn})
+    :application.state/submitted})
 
 (defmulti ^:private event-type-specific-application-view
   "See `application-view`"
@@ -187,6 +186,7 @@
       (assoc :application/id (:application/id event)
              :application/external-id (:application/external-id event)
              :application/state :application.state/draft
+             :application/todo nil
              :application/created (:event/time event)
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
@@ -200,8 +200,6 @@
              :application/accepted-licenses {}
              :application/events []
              :application/form {:form/id (:form/id event)}
-             ;; TODO: other workflows
-             ;; TODO: extract an event handler for dynamic workflow specific stuff
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)})))
 
@@ -265,13 +263,17 @@
       (assoc ::submitted-answers (::draft-answers application))
       (update :application/first-submitted #(or % (:event/time event)))
       (dissoc ::draft-answers)
-      (assoc :application/state :application.state/submitted)))
+      (assoc :application/state :application.state/submitted)
+      (assoc :application/todo (if (nil? (:application/first-submitted application))
+                                 :new-application
+                                 :resubmitted-application))))
 
 (defmethod event-type-specific-application-view :application.event/returned
-  [application event]
+  [application _event]
   (-> application
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
-      (assoc :application/state :application.state/returned)))
+      (assoc :application/state :application.state/returned)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
@@ -300,14 +302,16 @@
   application)
 
 (defmethod event-type-specific-application-view :application.event/approved
-  [application event]
+  [application _event]
   (-> application
-      (assoc :application/state :application.state/approved)))
+      (assoc :application/state :application.state/approved)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/rejected
-  [application event]
+  [application _event]
   (-> application
-      (assoc :application/state :application.state/rejected)))
+      (assoc :application/state :application.state/rejected)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/resources-changed
   [application event]
@@ -318,9 +322,10 @@
                                         (:application/licenses event)))))
 
 (defmethod event-type-specific-application-view :application.event/closed
-  [application event]
+  [application _event]
   (-> application
-      (assoc :application/state :application.state/closed)))
+      (assoc :application/state :application.state/closed)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/copied-from
   [application event]

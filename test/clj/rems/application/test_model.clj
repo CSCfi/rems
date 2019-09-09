@@ -211,6 +211,7 @@
             expected-application {:application/id 1
                                   :application/external-id "extid"
                                   :application/state :application.state/draft
+                                  :application/todo nil
                                   :application/created (DateTime. 1000)
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
@@ -414,7 +415,8 @@
                                                     {:application/last-activity (DateTime. 3000)
                                                      :application/events events
                                                      :application/first-submitted (DateTime. 3000)
-                                                     :application/state :application.state/submitted})]
+                                                     :application/state :application.state/submitted
+                                                     :application/todo :new-application})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> returned"
@@ -427,6 +429,7 @@
                                                              {:application/last-activity (DateTime. 4000)
                                                               :application/events events
                                                               :application/state :application.state/returned
+                                                              :application/todo nil
                                                               :application/form {:form/fields [{:field/previous-value "foo"}
                                                                                                {:field/previous-value "bar"}]}})]
                         (is (= expected-application (apply-events events)))
@@ -466,7 +469,8 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 7000)
                                                                  :application/events events
-                                                                 :application/state :application.state/submitted})]
+                                                                 :application/state :application.state/submitted
+                                                                 :application/todo :resubmitted-application})]
                                 (is (= expected-application (apply-events events)))))))
 
                         (testing "> submitted (no draft saved)"
@@ -479,6 +483,7 @@
                                                                  {:application/last-activity (DateTime. 7000)
                                                                   :application/events events
                                                                   :application/state :application.state/submitted
+                                                                  :application/todo :resubmitted-application
                                                                   ;; when there was no draft-saved event, the current and
                                                                   ;; previous submitted answers must be the same
                                                                   :application/form {:form/fields [{:field/value "foo"
@@ -563,7 +568,8 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events events
-                                                             :application/state :application.state/approved})]
+                                                             :application/state :application.state/approved
+                                                             :application/todo nil})]
                             (is (= expected-application (apply-events events)))
 
                             (testing "> resources changed by handler"
@@ -681,7 +687,8 @@
                                         expected-application (merge expected-application
                                                                     {:application/last-activity (DateTime. 5000)
                                                                      :application/events events
-                                                                     :application/state :application.state/closed})]
+                                                                     :application/state :application.state/closed
+                                                                     :application/todo nil})]
                                     (is (= expected-application (apply-events events)))))))))
 
                         (testing "> rejected"
@@ -694,7 +701,8 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events events
-                                                             :application/state :application.state/rejected})]
+                                                             :application/state :application.state/rejected
+                                                             :application/todo nil})]
                             (is (= expected-application (apply-events events)))))
 
                         (testing "> comment requested"
