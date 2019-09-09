@@ -36,12 +36,12 @@
                                                  (dissoc x :start :end :application-id)))
                                           (is (valid-date? (:start x)))
                                           (is (valid-date? (:end x))))
-        check-developer-entitlement (fn [x]
-                                      (is (= {:resource "urn:nbn:fi:lb-201403262"
-                                              :end nil
-                                              :mail "developer@example.com"}
-                                             (dissoc x :start :application-id)))
-                                      (is (valid-date? (:start x))))]
+        check-malice-entitlement (fn [x]
+                                   (is (= {:resource "urn:nbn:fi:lb-201403262"
+                                           :end nil
+                                           :mail "malice@example.com"}
+                                          (dissoc x :start :application-id)))
+                                   (is (valid-date? (:start x))))]
     (testing "all"
       (let [data (-> (request :get "/api/entitlements")
                      (authenticate api-key "developer")
@@ -49,7 +49,7 @@
                      read-body)]
         (is (= 2 (count data)))
         (check-alice-entitlement (first data))
-        (check-developer-entitlement (second data))))
+        (check-malice-entitlement (second data))))
 
     (doseq [userid ["developer" "owner" "reporter"]]
       (testing (str "all as " userid)
@@ -59,7 +59,7 @@
                        read-body)]
           (is (= 2 (count data)))
           (check-alice-entitlement (first data))
-          (check-developer-entitlement (second data)))))
+          (check-malice-entitlement (second data)))))
 
     (testing "just for alice as a developer"
       (let [data (-> (request :get "/api/entitlements?user=alice")
@@ -85,7 +85,7 @@
         (is (= 3 (count data)))
         (check-alice-entitlement (first data))
         (check-alice-expired-entitlement (second data))
-        (check-developer-entitlement (nth data 2))))
+        (check-malice-entitlement (nth data 2))))
 
     (testing "just for alice as a reporter"
       (let [data (-> (request :get "/api/entitlements?user=alice")

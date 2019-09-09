@@ -793,7 +793,7 @@
                                                     :form-id form
                                                     :workflow-id (:dynamic workflows)})]
       (create-disabled-applications! dynamic-disabled
-                                     (+fake-users+ :approver1) ; TODO: this should probably be :applicant1
+                                     (+fake-users+ :applicant2)
                                      (+fake-users+ :approver1))
       (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false}))
     (let [dynamic-expired (create-catalogue-item! {:title {:en "Dynamic workflow (expired)"
@@ -835,6 +835,6 @@
                                                     :form-id form
                                                     :workflow-id (:dynamic workflows)})]
       (create-disabled-applications! dynamic-disabled
-                                     (+demo-users+ :approver1) ; TODO: this should probably be :applicant1
+                                     (+demo-users+ :applicant2)
                                      (+demo-users+ :approver1))
       (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false}))))
