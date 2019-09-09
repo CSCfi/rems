@@ -151,10 +151,10 @@
                  :todos {:new-application "Uusi hakemus"
                          :resubmitted-application "Uudelleenlähetetty hakemus"
                          :unknown "Tuntematon"
-                         :waiting-for-comment "Odottaa kommenttia"
                          :waiting-for-decision "Odottaa päätöstä"
-                         :waiting-for-your-comment "Odottaa sinun kommenttiasi"
-                         :waiting-for-your-decision "Odottaa sinun päätöstäsi"}
+                         :waiting-for-review "Odottaa katselmointia"
+                         :waiting-for-your-decision "Odottaa sinun päätöstäsi"
+                         :waiting-for-your-review "Odottaa sinun katselmointiasi"}
                  :view "Näytä"}
   :cart {:add "Lisää koriin"
          :apply "Hae"

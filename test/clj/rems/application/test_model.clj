@@ -718,7 +718,7 @@
                                 expected-application (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 4000)
                                                                   :application/events events
-                                                                  :application/todo :waiting-for-comment
+                                                                  :application/todo :waiting-for-review
                                                                   :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
                             (is (= expected-application (apply-events events)))
 
@@ -967,16 +967,16 @@
                         :email "member@example.com"}}
                      (:application/invited-members application))))))))
 
-    (testing "personalized waiting for your comment"
+    (testing "personalized waiting for your review"
       (let [application (model/application-view application {:event/type :application.event/comment-requested
                                                              :event/actor "handler"
-                                                             :application/commenters ["commenter1"]})]
-        (is (= :waiting-for-comment
+                                                             :application/commenters ["reviewer1"]})]
+        (is (= :waiting-for-review
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
-        (is (= :waiting-for-your-comment
-               (:application/todo (model/apply-user-permissions application "commenter1")))
-            "as seen by commenter")))
+        (is (= :waiting-for-your-review
+               (:application/todo (model/apply-user-permissions application "reviewer1")))
+            "as seen by reviewer")))
 
     (testing "personalized waiting for your decision"
       (let [application (model/application-view application {:event/type :application.event/decision-requested

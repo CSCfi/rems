@@ -153,10 +153,10 @@
                  :todos {:new-application "New application"
                          :resubmitted-application "Resubmitted application"
                          :unknown "Unknown"
-                         :waiting-for-comment "Waiting for a comment"
                          :waiting-for-decision "Waiting for a decision"
-                         :waiting-for-your-comment "Waiting for your comment"
-                         :waiting-for-your-decision "Waiting for your decision"}
+                         :waiting-for-review "Waiting for a review"
+                         :waiting-for-your-decision "Waiting for your decision"
+                         :waiting-for-your-review "Waiting for your review"}
                  :view "View"}
   :cart {:add "Add to cart"
          :apply "Apply"

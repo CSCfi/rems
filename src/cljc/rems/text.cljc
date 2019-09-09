@@ -66,10 +66,10 @@
 (def ^:private todos
   {:new-application :t.applications.todos/new-application
    :resubmitted-application :t.applications.todos/resubmitted-application
-   :waiting-for-comment :t.applications.todos/waiting-for-comment
-   :waiting-for-your-comment :t.applications.todos/waiting-for-your-comment
    :waiting-for-decision :t.applications.todos/waiting-for-decision
-   :waiting-for-your-decision :t.applications.todos/waiting-for-your-decision})
+   :waiting-for-review :t.applications.todos/waiting-for-review
+   :waiting-for-your-decision :t.applications.todos/waiting-for-your-decision
+   :waiting-for-your-review :t.applications.todos/waiting-for-your-review})
 
 (defn localize-todo [todo]
   (if (nil? todo)

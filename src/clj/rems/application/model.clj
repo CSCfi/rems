@@ -278,7 +278,7 @@
 (defn- update-waiting-for-todo [application]
   (cond-> (assoc application :application/todo nil)
     (not (empty? (::latest-comment-request-by-user application)))
-    (assoc :application/todo :waiting-for-comment)
+    (assoc :application/todo :waiting-for-review)
 
     (not (empty? (::latest-decision-request-by-user application)))
     (assoc :application/todo :waiting-for-decision)))
@@ -592,7 +592,7 @@
 (defn- personalize [application user-id]
   (cond-> application
     (contains? (::latest-comment-request-by-user application) user-id)
-    (assoc :application/todo :waiting-for-your-comment)
+    (assoc :application/todo :waiting-for-your-review)
 
     (contains? (::latest-decision-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-decision)))

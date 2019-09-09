@@ -162,10 +162,10 @@
    :application/state s/Keyword
    :application/todo (s/maybe (s/enum :new-application
                                       :resubmitted-application
-                                      :waiting-for-comment
-                                      :waiting-for-your-comment
                                       :waiting-for-decision
-                                      :waiting-for-your-decision))
+                                      :waiting-for-review
+                                      :waiting-for-your-decision
+                                      :waiting-for-your-review))
    :application/created DateTime
    :application/modified DateTime
    (s/optional-key :application/first-submitted) DateTime
