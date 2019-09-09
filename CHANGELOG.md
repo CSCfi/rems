@@ -58,6 +58,7 @@ Changes since v2.4
 - Creating a new application as a copy from an older application (#832)
 - Re-naming a catalogue item (#1507)
 - Add enable/disable and archive/unarchive buttons to 'View' pages (#1438)
+- Optional "More info" link for catalogue items (#1369)
 
 ### Enhancements
 - Improved version information in footer
@@ -70,7 +71,7 @@ Changes since v2.4
 
 ### Fixes
 - Entitlement API
-- Search on the catalogue and admin pages did not support multiple search terms (#1541) 
+- Search on the catalogue and admin pages did not support multiple search terms (#1541)
 
 ## v2.5 "Maarintie" 2019-07-18
 
