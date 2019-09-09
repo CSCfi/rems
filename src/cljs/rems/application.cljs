@@ -652,7 +652,17 @@
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
                        ^{:key (:catalogue-item/id resource)}
-                       [:div.application-resource (localized (:catalogue-item/title resource))]))]
+                       [:div.application-resource
+                        (localized (:catalogue-item/title resource))
+                        ;; slight duplication with
+                        ;; rems.catalogue/catalogue-item-more-info,
+                        ;; but the data has a different schema
+                        ;; here (V2Resource vs. CatalogueItem)
+                        (when-let [url (localized (:catalogue-item/infourl resource))]
+                          [:<>
+                           " "
+                           [:a.btn.btn-secondary {:href url :target :_blank}
+                            (text :t.catalogue/more-info) " " [external-link]]])]))]
       :footer [:div
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
