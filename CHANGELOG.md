@@ -58,6 +58,7 @@ Changes since v2.4
 - Creating a new application as a copy from an older application (#832)
 - Re-naming a catalogue item (#1507)
 - Add enable/disable and archive/unarchive buttons to 'View' pages (#1438)
+- Show separately for each license if it has been accepted by the member (#1591)
 
 ### Enhancements
 - Improved version information in footer

@@ -41,6 +41,9 @@
    [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
    [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]])
 
+(defn empty-symbol []
+  [:i.fa-stack])
+
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])
