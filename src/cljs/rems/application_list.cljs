@@ -58,7 +58,12 @@
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
                           value]})
-           :todo {:value (localize-todo (:application/todo app))}
+           :todo (let [value (localize-todo (:application/todo app))]
+                   {:value value
+                    :td [:td.state
+                         {:class (when (str/includes? (str (:application/todo app)) "-your-")
+                                   "text-highlight")}
+                         value]})
            :created (let [value (:application/created app)]
                       {:value value
                        :display-value (localize-time value)})
