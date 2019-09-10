@@ -81,12 +81,6 @@
           {:key (:id license)
            :title {:value (get-localized-title license language)}
            :type {:value (:licensetype license)}
-           :start (let [value (:start license)]
-                    {:value value
-                     :display-value (localize-time value)})
-           :end (let [value (:end license)]
-                  {:value value
-                   :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? license)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
@@ -103,10 +97,6 @@
                                    :title (text :t.administration/licenses)}
                                   {:key :type
                                    :title (text :t.administration/type)}
-                                  {:key :start
-                                   :title (text :t.administration/created)}
-                                  {:key :end
-                                   :title (text :t.administration/end)}
                                   {:key :active
                                    :title (text :t.administration/active)
                                    :filterable? false}
