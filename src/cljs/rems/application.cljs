@@ -644,8 +644,11 @@
   ^{:key (:catalogue-item/id resource)}
   [:div.application-resource
    (localized (:catalogue-item/title resource))
-   ;; slight duplication with rems.catalogue/catalogue-item-more-info,
+   ;; Slight duplication with rems.catalogue/catalogue-item-more-info,
    ;; but the data has a different schema here (V2Resource vs. CatalogueItem)
+   ;;
+   ;; NB! localized falls back to the default language, so the fallback logic
+   ;; here is subtly different
    (when-let [url (or (localized (:catalogue-item/infourl resource))
                       (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
      [:<>
