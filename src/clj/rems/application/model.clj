@@ -174,8 +174,7 @@
     :application.state/draft
     :application.state/rejected
     :application.state/returned
-    :application.state/submitted
-    #_:application.state/withdrawn})
+    :application.state/submitted})
 
 (defmulti ^:private event-type-specific-application-view
   "See `application-view`"
@@ -187,6 +186,7 @@
       (assoc :application/id (:application/id event)
              :application/external-id (:application/external-id event)
              :application/state :application.state/draft
+             :application/todo nil
              :application/created (:event/time event)
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
@@ -200,8 +200,6 @@
              :application/accepted-licenses {}
              :application/events []
              :application/form {:form/id (:form/id event)}
-             ;; TODO: other workflows
-             ;; TODO: extract an event handler for dynamic workflow specific stuff
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)})))
 
@@ -265,49 +263,69 @@
       (assoc ::submitted-answers (::draft-answers application))
       (update :application/first-submitted #(or % (:event/time event)))
       (dissoc ::draft-answers)
-      (assoc :application/state :application.state/submitted)))
+      (assoc :application/state :application.state/submitted)
+      (assoc :application/todo (if (:application/first-submitted application)
+                                 :resubmitted-application
+                                 :new-application))))
 
 (defmethod event-type-specific-application-view :application.event/returned
-  [application event]
+  [application _event]
   (-> application
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
-      (assoc :application/state :application.state/returned)))
+      (assoc :application/state :application.state/returned)
+      (assoc :application/todo nil)))
+
+(defn- update-todo-for-requests [application]
+  (assoc application :application/todo
+         (cond
+           (not (empty? (::latest-comment-request-by-user application)))
+           :waiting-for-review
+           (not (empty? (::latest-decision-request-by-user application)))
+           :waiting-for-decision
+           :else
+           :no-pending-requests)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
   (-> application
       (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
-                                                             (repeat (:application/request-id event))))))
+                                                             (repeat (:application/request-id event))))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
   (-> application
-      (update ::latest-comment-request-by-user dissoc (:event/actor event))))
+      (update ::latest-comment-request-by-user dissoc (:event/actor event))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
   (-> application
       (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
-                                                              (repeat (:application/request-id event))))))
+                                                              (repeat (:application/request-id event))))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
-      (update ::latest-decision-request-by-user dissoc (:event/actor event))))
+      (update ::latest-decision-request-by-user dissoc (:event/actor event))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/remarked
   [application _event]
   application)
 
 (defmethod event-type-specific-application-view :application.event/approved
-  [application event]
+  [application _event]
   (-> application
-      (assoc :application/state :application.state/approved)))
+      (assoc :application/state :application.state/approved)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/rejected
-  [application event]
+  [application _event]
   (-> application
-      (assoc :application/state :application.state/rejected)))
+      (assoc :application/state :application.state/rejected)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/resources-changed
   [application event]
@@ -318,9 +336,10 @@
                                         (:application/licenses event)))))
 
 (defmethod event-type-specific-application-view :application.event/closed
-  [application event]
+  [application _event]
   (-> application
-      (assoc :application/state :application.state/closed)))
+      (assoc :application/state :application.state/closed)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/copied-from
   [application event]
@@ -572,6 +591,14 @@
       (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
+(defn- personalize-todo [application user-id]
+  (cond-> application
+    (contains? (::latest-comment-request-by-user application) user-id)
+    (assoc :application/todo :waiting-for-your-review)
+
+    (contains? (::latest-decision-request-by-user application) user-id)
+    (assoc :application/todo :waiting-for-your-decision)))
+
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
         roles (permissions/user-roles application user-id)
@@ -581,6 +608,7 @@
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
+          (personalize-todo user-id)
           (hide-non-public-information)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)

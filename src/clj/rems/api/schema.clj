@@ -160,6 +160,13 @@
   {:application/id s/Int
    :application/external-id s/Str
    :application/state s/Keyword
+   :application/todo (s/maybe (s/enum :new-application
+                                      :no-pending-requests
+                                      :resubmitted-application
+                                      :waiting-for-decision
+                                      :waiting-for-review
+                                      :waiting-for-your-decision
+                                      :waiting-for-your-review))
    :application/created DateTime
    :application/modified DateTime
    (s/optional-key :application/first-submitted) DateTime

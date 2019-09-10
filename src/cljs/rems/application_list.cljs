@@ -8,7 +8,7 @@
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-time localized text]])
+            [rems.text :refer [localize-state localize-todo localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- view-button [app]
@@ -32,6 +32,16 @@
   [:div {:class "application-applicant"
          :title applicant}
    applicant])
+
+(defn- current-user-needs-to-do-something? [app]
+  (or (contains? #{:waiting-for-your-decision
+                   :waiting-for-your-review}
+                 (:application/todo app))
+      (and (contains? (:application/roles app) :handler)
+           (contains? #{:new-application
+                        :no-pending-requests
+                        :resubmitted-application}
+                      (:application/todo app)))))
 
 (rf/reg-sub
  ::table-rows
@@ -58,6 +68,12 @@
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
                           value]})
+           :todo (let [value (localize-todo (:application/todo app))]
+                   {:value value
+                    :td [:td.state
+                         {:class (when (current-user-needs-to-do-something? app)
+                                   "text-highlight")}
+                         value]})
            :created (let [value (:application/created app)]
                       {:value value
                        :display-value (localize-time value)})
@@ -84,6 +100,8 @@
                       :title (text :t.applications/applicant)}
                      {:key :state
                       :title (text :t.applications/state)}
+                     {:key :todo
+                      :title (text :t.applications/todo)}
                      {:key :created
                       :title (text :t.applications/created)}
                      {:key :submitted
@@ -103,7 +121,7 @@
 (defn- application-list-defaults []
   (let [config @(rf/subscribe [:rems.config/config])
         id-column (get config :application-id-column :id)]
-    {:visible-columns #{id-column :description :resource :applicant :state :created :submitted :last-activity :view}
+    {:visible-columns #{id-column :description :resource :applicant :state :todo :created :submitted :last-activity :view}
      :default-sort-column :created
      :default-sort-order :desc}))
 
