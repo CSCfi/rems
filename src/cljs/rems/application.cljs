@@ -1,5 +1,6 @@
 (ns rems.application
   (:require [clojure.string :as str]
+            [goog.string]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
@@ -652,7 +653,7 @@
    (when-let [url (or (localized (:catalogue-item/infourl resource))
                       (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
      [:<>
-      ", "
+      (goog.string/unescapeEntities " &mdash; ")
       [:a {:href url :target :_blank}
        (text :t.catalogue/more-info) " " [external-link]]])])
 
