@@ -64,7 +64,6 @@ Changes since v2.4
 - More systematic use of db transactions
 - Improved table widget
 - Hide language switcher when only one language configured
-- PDFs are now downloaded as \<application-id\>.pdf instead of pdf.pdf
 - Improved table performance: added a "show all rows" button for long tables
 - Modal popups have been replaced with flash messages (#1469)
 
