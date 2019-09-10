@@ -7,6 +7,7 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
+            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
@@ -200,16 +201,17 @@
         item-selected? #(= (:id %) selected-workflow-id)]
     [:div.form-group
      [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
-     [dropdown/dropdown
-      {:id workflow-dropdown-id
-       :items workflows
-       :item-disabled? (if editing?
-                         (comp not item-selected?)
-                         (constantly false))
-       :item-key :id
-       :item-label :title
-       :item-selected? item-selected?
-       :on-change #(rf/dispatch [::set-selected-workflow-id (:id %)])}]]))
+     (if editing?
+       (let [workflow (first (filter item-selected? workflows))]
+         [fields/readonly-field {:id workflow-dropdown-id
+                                 :value (:title workflow)}])
+       [dropdown/dropdown
+        {:id workflow-dropdown-id
+         :items workflows
+         :item-key :id
+         :item-label :title
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-workflow-id (:id %)])}])]))
 
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])
@@ -218,16 +220,17 @@
         item-selected? #(= (:id %) selected-resource-id)]
     [:div.form-group
      [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
-     [dropdown/dropdown
-      {:id resource-dropdown-id
-       :items resources
-       :item-disabled? (if editing?
-                         (comp not item-selected?)
-                         (constantly false))
-       :item-key :id
-       :item-label :resid
-       :item-selected? item-selected?
-       :on-change #(rf/dispatch [::set-selected-resource-id (:id %)])}]]))
+     (if editing?
+       (let [resource (first (filter item-selected? resources))]
+         [fields/readonly-field {:id resource-dropdown-id
+                                 :value (:resid resource)}])
+       [dropdown/dropdown
+        {:id resource-dropdown-id
+         :items resources
+         :item-key :id
+         :item-label :resid
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-resource-id (:id %)])}])]))
 
 (defn- catalogue-item-form-field []
   (let [forms @(rf/subscribe [::forms])
@@ -236,16 +239,17 @@
         item-selected? #(= (:form/id %) selected-form-id)]
     [:div.form-group
      [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
-     [dropdown/dropdown
-      {:id form-dropdown-id
-       :items forms
-       :item-disabled? (if editing?
-                         (comp not item-selected?)
-                         (constantly false))
-       :item-key :id
-       :item-label :form/title
-       :item-selected? item-selected?
-       :on-change #(rf/dispatch [::set-selected-form-id (:id %)])}]]))
+     (if editing?
+       (let [form (first (filter item-selected? forms))]
+         [fields/readonly-field {:id form-dropdown-id
+                                 :value (:form/title form)}])
+       [dropdown/dropdown
+        {:id form-dropdown-id
+         :items forms
+         :item-key :id
+         :item-label :form/title
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-form-id (:id %)])}])]))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
