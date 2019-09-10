@@ -57,6 +57,12 @@
                       (text/with-language lang
                         #(text/localize-state (:application/state app)))))
                (str/join " "))
+   :todo (->> (:languages env)
+              (map (fn [lang]
+                     (text/with-language lang
+                       #(text/localize-todo (:application/todo app)))))
+              (cons (str (:application/todo app)))
+              (str/join " "))
    :form (->> (:form/fields (:application/form app))
               (map (fn [field]
                      ;; TODO: filter out checkboxes, attachments etc?
