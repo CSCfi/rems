@@ -31,7 +31,7 @@
 (defn- invitation-link [token]
   (str (:public-url env) "accept-invitation?token=" token))
 
-(defn- application-id-for-email [application]
+(defn- format-application-for-email [application]
   (str
    (case (util/getx env :application-id-column)
      :external-id (:application/external-id application)
@@ -78,7 +78,7 @@
           :subject (text-format subject-text
                                 (user-for-email recipient)
                                 (user-for-email (:event/actor event))
-                                (application-id-for-email application)
+                                (format-application-for-email application)
                                 (user-for-email (:application/applicant application))
                                 (resources-for-email application)
                                 (link-to-application (:application/id event)))
@@ -86,7 +86,7 @@
                  (text-format body-text
                               (user-for-email recipient)
                               (user-for-email (:event/actor event))
-                              (application-id-for-email application)
+                              (format-application-for-email application)
                               (user-for-email (:application/applicant application))
                               (resources-for-email application)
                               (link-to-application (:application/id event)))
