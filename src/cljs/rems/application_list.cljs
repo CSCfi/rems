@@ -61,7 +61,9 @@
            :todo (let [value (localize-todo (:application/todo app))]
                    {:value value
                     :td [:td.state
-                         {:class (when (str/includes? (str (:application/todo app)) "-your-")
+                         {:class (when (contains? #{:waiting-for-your-decision
+                                                    :waiting-for-your-review}
+                                                  (:application/todo app))
                                    "text-highlight")}
                          value]})
            :created (let [value (:application/created app)]
