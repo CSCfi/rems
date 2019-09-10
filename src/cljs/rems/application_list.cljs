@@ -33,6 +33,16 @@
          :title applicant}
    applicant])
 
+(defn- current-user-needs-to-do-something? [app]
+  (or (contains? #{:waiting-for-your-decision
+                   :waiting-for-your-review}
+                 (:application/todo app))
+      (and (contains? (:application/roles app) :handler)
+           (contains? #{:new-application
+                        :no-pending-requests
+                        :resubmitted-application}
+                      (:application/todo app)))))
+
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
@@ -61,9 +71,7 @@
            :todo (let [value (localize-todo (:application/todo app))]
                    {:value value
                     :td [:td.state
-                         {:class (when (contains? #{:waiting-for-your-decision
-                                                    :waiting-for-your-review}
-                                                  (:application/todo app))
+                         {:class (when (current-user-needs-to-do-something? app)
                                    "text-highlight")}
                          value]})
            :created (let [value (:application/created app)]
