@@ -39,6 +39,12 @@
    (when-not (empty? (:application/description application))
      (str " \"" (:application/description application) "\""))))
 
+(defn- user-for-email [user]
+  (let [user-attributes (users/get-user-attributes user)]
+    (or (:commonName user-attributes)
+        (:eppn user-attributes)
+        user)))
+
 (defn- resources-for-email [application]
   (->> (:application/resources application)
        (map #(get-in % [:catalogue-item/title context/*lang*]))
@@ -70,18 +76,18 @@
        (fn []
          {:to-user recipient
           :subject (text-format subject-text
-                                recipient
-                                (:event/actor event)
+                                (user-for-email recipient)
+                                (user-for-email (:event/actor event))
                                 (application-id-for-email application)
-                                (:application/applicant application)
+                                (user-for-email (:application/applicant application))
                                 (resources-for-email application)
                                 (link-to-application (:application/id event)))
           :body (str
                  (text-format body-text
-                              recipient
-                              (:event/actor event)
+                              (user-for-email recipient)
+                              (user-for-email (:event/actor event))
                               (application-id-for-email application)
-                              (:application/applicant application)
+                              (user-for-email (:application/applicant application))
                               (resources-for-email application)
                               (link-to-application (:application/id event)))
                  (text :t.email/footer))})))))
