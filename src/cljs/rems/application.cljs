@@ -1,5 +1,6 @@
 (ns rems.application
   (:require [clojure.string :as str]
+            [goog.string]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
@@ -19,6 +20,7 @@
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol]]
+            [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
             [rems.fields :as fields]
@@ -639,6 +641,22 @@
                                   actions)]
                       forms)}])))
 
+(defn- render-resource [resource]
+  ^{:key (:catalogue-item/id resource)}
+  [:div.application-resource
+   (localized (:catalogue-item/title resource))
+   ;; Slight duplication with rems.catalogue/catalogue-item-more-info,
+   ;; but the data has a different schema here (V2Resource vs. CatalogueItem)
+   ;;
+   ;; NB! localized falls back to the default language, so the fallback logic
+   ;; here is subtly different
+   (when-let [url (or (localized (:catalogue-item/infourl resource))
+                      (urn-catalogue-item-link {:resid (:resource/ext-id resource)} {}))]
+     [:<>
+      (goog.string/unescapeEntities " &mdash; ")
+      [:a {:href url :target :_blank}
+       (text :t.catalogue/more-info) " " [external-link]]])])
+
 (defn- applied-resources [application userid]
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
@@ -651,8 +669,7 @@
       :always [:div.form-items.form-group
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
-                       ^{:key (:catalogue-item/id resource)}
-                       [:div.application-resource (localized (:catalogue-item/title resource))]))]
+                       [render-resource resource]))]
       :footer [:div
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]

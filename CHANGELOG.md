@@ -59,7 +59,8 @@ Changes since v2.4
 - Re-naming a catalogue item (#1507)
 - Add enable/disable and archive/unarchive buttons to 'View' pages (#1438)
 - On the Actions page, highlight when the application is waiting for some
-  actions form the user (#1596)
+  actions from the user (#1596)
+- Optional "More info" link for catalogue items (#1369)
 
 ### Enhancements
 - Improved version information in footer

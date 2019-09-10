@@ -78,6 +78,7 @@
    :resource/ext-id s/Str
    :catalogue-item/id s/Int
    :catalogue-item/title LocalizedString
+   :catalogue-item/infourl LocalizedString
    :catalogue-item/start DateTime
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
