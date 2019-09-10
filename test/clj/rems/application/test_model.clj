@@ -211,6 +211,7 @@
             expected-application {:application/id 1
                                   :application/external-id "extid"
                                   :application/state :application.state/draft
+                                  :application/todo nil
                                   :application/created (DateTime. 1000)
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
@@ -227,6 +228,7 @@
                                                            :resource/ext-id "urn:11"
                                                            :catalogue-item/title {:en "en title"
                                                                                   :fi "fi title"}
+                                                           :catalogue-item/infourl {:en "http://info.com"}
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
@@ -237,6 +239,7 @@
                                                            :resource/ext-id "urn:21"
                                                            :catalogue-item/title {:en "en title"
                                                                                   :fi "fi title"}
+                                                           :catalogue-item/infourl {:en "http://info.com"}
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
@@ -387,6 +390,7 @@
                                                                                         :resource/ext-id "urn:31"
                                                                                         :catalogue-item/title {:en "en title"
                                                                                                                :fi "fi title"}
+                                                                                        :catalogue-item/infourl {:en "http://info.com"}
                                                                                         :catalogue-item/start (DateTime. 100)
                                                                                         :catalogue-item/end nil
                                                                                         :catalogue-item/enabled true
@@ -414,7 +418,8 @@
                                                     {:application/last-activity (DateTime. 3000)
                                                      :application/events events
                                                      :application/first-submitted (DateTime. 3000)
-                                                     :application/state :application.state/submitted})]
+                                                     :application/state :application.state/submitted
+                                                     :application/todo :new-application})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> returned"
@@ -427,6 +432,7 @@
                                                              {:application/last-activity (DateTime. 4000)
                                                               :application/events events
                                                               :application/state :application.state/returned
+                                                              :application/todo nil
                                                               :application/form {:form/fields [{:field/previous-value "foo"}
                                                                                                {:field/previous-value "bar"}]}})]
                         (is (= expected-application (apply-events events)))
@@ -466,7 +472,8 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 7000)
                                                                  :application/events events
-                                                                 :application/state :application.state/submitted})]
+                                                                 :application/state :application.state/submitted
+                                                                 :application/todo :resubmitted-application})]
                                 (is (= expected-application (apply-events events)))))))
 
                         (testing "> submitted (no draft saved)"
@@ -479,6 +486,7 @@
                                                                  {:application/last-activity (DateTime. 7000)
                                                                   :application/events events
                                                                   :application/state :application.state/submitted
+                                                                  :application/todo :resubmitted-application
                                                                   ;; when there was no draft-saved event, the current and
                                                                   ;; previous submitted answers must be the same
                                                                   :application/form {:form/fields [{:field/value "foo"
@@ -511,6 +519,7 @@
                                                                                             :resource/ext-id "urn:31"
                                                                                             :catalogue-item/title {:en "en title"
                                                                                                                    :fi "fi title"}
+                                                                                            :catalogue-item/infourl {:en "http://info.com"}
                                                                                             :catalogue-item/start (DateTime. 100)
                                                                                             :catalogue-item/end nil
                                                                                             :catalogue-item/enabled true
@@ -563,7 +572,8 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events events
-                                                             :application/state :application.state/approved})]
+                                                             :application/state :application.state/approved
+                                                             :application/todo nil})]
                             (is (= expected-application (apply-events events)))
 
                             (testing "> resources changed by handler"
@@ -590,6 +600,7 @@
                                                                                                :resource/ext-id "urn:11"
                                                                                                :catalogue-item/title {:en "en title"
                                                                                                                       :fi "fi title"}
+                                                                                               :catalogue-item/infourl {}
                                                                                                :catalogue-item/start (DateTime. 100)
                                                                                                :catalogue-item/end nil
                                                                                                :catalogue-item/enabled true
@@ -600,6 +611,7 @@
                                                                                                :resource/ext-id "urn:31"
                                                                                                :catalogue-item/title {:en "en title"
                                                                                                                       :fi "fi title"}
+                                                                                               :catalogue-item/infourl {}
                                                                                                :catalogue-item/start (DateTime. 100)
                                                                                                :catalogue-item/end nil
                                                                                                :catalogue-item/enabled true
@@ -681,7 +693,8 @@
                                         expected-application (merge expected-application
                                                                     {:application/last-activity (DateTime. 5000)
                                                                      :application/events events
-                                                                     :application/state :application.state/closed})]
+                                                                     :application/state :application.state/closed
+                                                                     :application/todo nil})]
                                     (is (= expected-application (apply-events events)))))))))
 
                         (testing "> rejected"
@@ -694,7 +707,8 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events events
-                                                             :application/state :application.state/rejected})]
+                                                             :application/state :application.state/rejected
+                                                             :application/todo nil})]
                             (is (= expected-application (apply-events events)))))
 
                         (testing "> comment requested"
@@ -710,6 +724,7 @@
                                 expected-application (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 4000)
                                                                   :application/events events
+                                                                  :application/todo :waiting-for-review
                                                                   :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
                             (is (= expected-application (apply-events events)))
 
@@ -724,6 +739,7 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events events
+                                                                 :application/todo :no-pending-requests
                                                                  :rems.application.model/latest-comment-request-by-user {}})]
                                 (is (= expected-application (apply-events events)))))))
 
@@ -740,6 +756,7 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events events
+                                                             :application/todo :waiting-for-decision
                                                              :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
                             (is (= expected-application (apply-events events)))
 
@@ -755,6 +772,7 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events events
+                                                                 :application/todo :no-pending-requests
                                                                  :rems.application.model/latest-decision-request-by-user {}})]
                                 (is (= expected-application (apply-events events)))))))
 
@@ -953,4 +971,26 @@
                      (:application/invitation-tokens application)))
               (is (= #{{:name "member"
                         :email "member@example.com"}}
-                     (:application/invited-members application))))))))))
+                     (:application/invited-members application))))))))
+
+    (testing "personalized waiting for your review"
+      (let [application (model/application-view application {:event/type :application.event/comment-requested
+                                                             :event/actor "handler"
+                                                             :application/commenters ["reviewer1"]})]
+        (is (= :waiting-for-review
+               (:application/todo (model/apply-user-permissions application "handler")))
+            "as seen by handler")
+        (is (= :waiting-for-your-review
+               (:application/todo (model/apply-user-permissions application "reviewer1")))
+            "as seen by reviewer")))
+
+    (testing "personalized waiting for your decision"
+      (let [application (model/application-view application {:event/type :application.event/decision-requested
+                                                             :event/actor "handler"
+                                                             :application/deciders ["decider1"]})]
+        (is (= :waiting-for-decision
+               (:application/todo (model/apply-user-permissions application "handler")))
+            "as seen by handler")
+        (is (= :waiting-for-your-decision
+               (:application/todo (model/apply-user-permissions application "decider1")))
+            "as seen by decider")))))

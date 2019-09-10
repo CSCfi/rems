@@ -5,6 +5,7 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
+            [rems.common-util :as common-util]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -30,10 +31,19 @@
 (defn- invitation-link [token]
   (str (:public-url env) "accept-invitation?token=" token))
 
-(defn- application-id-for-email [application]
-  (case (util/getx env :application-id-column)
-    :external-id (:application/external-id application)
-    :id (:application/id application)))
+(defn- format-application-for-email [application]
+  (str
+   (case (util/getx env :application-id-column)
+     :external-id (:application/external-id application)
+     :id (:application/id application))
+   (when-not (empty? (:application/description application))
+     (str ", \"" (:application/description application) "\""))))
+
+(defn- user-for-email [user]
+  (let [user-attributes (users/get-user-attributes user)]
+    (or (:commonName user-attributes)
+        (:eppn user-attributes)
+        user)))
 
 (defn- resources-for-email [application]
   (->> (:application/resources application)
@@ -66,18 +76,18 @@
        (fn []
          {:to-user recipient
           :subject (text-format subject-text
-                                recipient
-                                (:event/actor event)
-                                (application-id-for-email application)
-                                (:application/applicant application)
+                                (user-for-email recipient)
+                                (user-for-email (:event/actor event))
+                                (format-application-for-email application)
+                                (user-for-email (:application/applicant application))
                                 (resources-for-email application)
                                 (link-to-application (:application/id event)))
           :body (str
                  (text-format body-text
-                              recipient
-                              (:event/actor event)
-                              (application-id-for-email application)
-                              (:application/applicant application)
+                              (user-for-email recipient)
+                              (user-for-email (:event/actor event))
+                              (format-application-for-email application)
+                              (user-for-email (:application/applicant application))
                               (resources-for-email application)
                               (link-to-application (:application/id event)))
                  (text :t.email/footer))})))))

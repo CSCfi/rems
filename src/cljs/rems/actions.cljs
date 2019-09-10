@@ -64,7 +64,7 @@
                  [search/application-search-tips]
                  [application-list/component {:applications ::todo-applications
                                               :empty-message :t.actions/empty
-                                              :hidden-columns #{:created}
+                                              :hidden-columns #{:state :created}
                                               :default-sort-column :last-activity
                                               :default-sort-order :desc}]]}]
     [collapsible/component
@@ -78,6 +78,6 @@
                  [search/application-search-tips]
                  [application-list/component {:applications ::handled-applications
                                               :empty-message :t.actions/no-handled-yet
-                                              :hidden-columns #{:created :submitted}
+                                              :hidden-columns #{:todo :created :submitted}
                                               :default-sort-column :last-activity
                                               :default-sort-order :desc}]]}]]])

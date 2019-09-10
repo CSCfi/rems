@@ -84,9 +84,6 @@
            :start (let [value (:start resource)]
                     {:value value
                      :display-value (localize-time value)})
-           :end (let [value (:end resource)]
-                  {:value value
-                   :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
@@ -105,8 +102,6 @@
                                     :title (text :t.administration/resource)}
                                    {:key :start
                                     :title (text :t.administration/created)}
-                                   {:key :end
-                                    :title (text :t.administration/end)}
                                    {:key :active
                                     :title (text :t.administration/active)
                                     :filterable? false}

@@ -37,7 +37,7 @@
                               :searching? @(rf/subscribe [::my-applications :searching?])}]
         [search/application-search-tips]
         [application-list/component {:applications ::my-applications
-                                     :hidden-columns #{:applicant}
+                                     :hidden-columns #{:applicant :todo}
                                      :default-sort-column :created
                                      :default-sort-order :desc}]
         (when (roles/show-all-applications? (:roles identity))
@@ -48,6 +48,6 @@
                                  :searching? @(rf/subscribe [::all-applications :searching?])}]
            [search/application-search-tips]
            [application-list/component {:applications ::all-applications
-                                        :hidden-columns #{:created :submitted}
+                                        :hidden-columns #{:todo :created :submitted}
                                         :default-sort-column :last-activity
                                         :default-sort-order :desc}]])])]))

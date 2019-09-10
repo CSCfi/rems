@@ -5,4 +5,5 @@
   (and resid (str/starts-with? resid "urn:")))
 
 (defn urn-catalogue-item-link [{:keys [resid]} {:keys [urn-organization]}]
-  (str (or urn-organization "http://urn.fi/") resid))
+  (when resid
+    (str (or urn-organization "http://urn.fi/") resid)))

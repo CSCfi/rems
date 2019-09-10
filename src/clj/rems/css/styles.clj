@@ -186,7 +186,8 @@
    ;; TODO: Change naming of :color3? It is used as text color here,
    ;;   which means that it should have a good contrast with light background.
    ;;   This could be made explicit by changing the name accordingly.
-   [:.text-highlight {:color (util/get-theme-attribute :color3)}]))
+   [:.text-highlight {:color (util/get-theme-attribute :color3)
+                      :font-weight "bold"}]))
 
 (def ^:private dashed-form-group
   {:position "relative"

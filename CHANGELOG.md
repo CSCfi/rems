@@ -58,6 +58,9 @@ Changes since v2.4
 - Creating a new application as a copy from an older application (#832)
 - Re-naming a catalogue item (#1507)
 - Add enable/disable and archive/unarchive buttons to 'View' pages (#1438)
+- On the Actions page, highlight when the application is waiting for some
+  actions from the user (#1596)
+- Optional "More info" link for catalogue items (#1369)
 - Show separately for each license if it has been accepted by the member (#1591)
 
 ### Enhancements
@@ -65,13 +68,13 @@ Changes since v2.4
 - More systematic use of db transactions
 - Improved table widget
 - Hide language switcher when only one language configured
-- PDFs are now downloaded as \<application-id\>.pdf instead of pdf.pdf
 - Improved table performance: added a "show all rows" button for long tables
 - Modal popups have been replaced with flash messages (#1469)
+- Email messages now use the application title and full names of users
 
 ### Fixes
 - Entitlement API
-- Search on the catalogue and admin pages did not support multiple search terms (#1541) 
+- Search on the catalogue and admin pages did not support multiple search terms (#1541)
 
 ## v2.5 "Maarintie" 2019-07-18
 
