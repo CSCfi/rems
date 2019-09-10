@@ -275,39 +275,41 @@
       (assoc :application/state :application.state/returned)
       (assoc :application/todo nil)))
 
-(defn- update-waiting-for-todo [application]
-  (cond-> (assoc application :application/todo :no-pending-requests)
-    (not (empty? (::latest-comment-request-by-user application)))
-    (assoc :application/todo :waiting-for-review)
-
-    (not (empty? (::latest-decision-request-by-user application)))
-    (assoc :application/todo :waiting-for-decision)))
+(defn- update-todo-for-requests [application]
+  (assoc application :application/todo
+         (cond
+           (not (empty? (::latest-comment-request-by-user application)))
+           :waiting-for-review
+           (not (empty? (::latest-decision-request-by-user application)))
+           :waiting-for-decision
+           :else
+           :no-pending-requests)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
   (-> application
       (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
                                                              (repeat (:application/request-id event))))
-      (update-waiting-for-todo)))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
   (-> application
       (update ::latest-comment-request-by-user dissoc (:event/actor event))
-      (update-waiting-for-todo)))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
   (-> application
       (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
                                                               (repeat (:application/request-id event))))
-      (update-waiting-for-todo)))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
       (update ::latest-decision-request-by-user dissoc (:event/actor event))
-      (update-waiting-for-todo)))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/remarked
   [application _event]
@@ -589,7 +591,7 @@
       (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
-(defn- personalize [application user-id]
+(defn- personalize-todo [application user-id]
   (cond-> application
     (contains? (::latest-comment-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-review)
@@ -606,7 +608,7 @@
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
-          (personalize user-id)
+          (personalize-todo user-id)
           (hide-non-public-information)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
