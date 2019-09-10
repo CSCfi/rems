@@ -349,10 +349,9 @@
 (defn- application-licenses [application edit-application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
     (let [application-id (:application/id application)
-          show-accepted-licenses?
-          (or (= (:application/applicant application) userid)
-              (contains? (set (map :userid (:application/members application)))
-                         userid))
+          roles (:application/roles application)
+          show-accepted-licenses? (or (contains? roles :member)
+                                      (contains? roles :applicant))
           accepted-licenses (get (:application/accepted-licenses application) userid)
           permissions (:application/permissions application)
           form-fields-editable? (form-fields-editable? application)
