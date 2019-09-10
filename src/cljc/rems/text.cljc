@@ -63,6 +63,20 @@
 (defn localize-state [state]
   (text (get states state :t.applications.states/unknown)))
 
+(def ^:private todos
+  {:new-application :t.applications.todos/new-application
+   :no-pending-requests :t.applications.todos/no-pending-requests
+   :resubmitted-application :t.applications.todos/resubmitted-application
+   :waiting-for-decision :t.applications.todos/waiting-for-decision
+   :waiting-for-review :t.applications.todos/waiting-for-review
+   :waiting-for-your-decision :t.applications.todos/waiting-for-your-decision
+   :waiting-for-your-review :t.applications.todos/waiting-for-your-review})
+
+(defn localize-todo [todo]
+  (if (nil? todo)
+    ""
+    (text (get todos todo :t.applications.todos/unknown))))
+
 (def ^:private event-types
   {:application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed

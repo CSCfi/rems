@@ -79,6 +79,22 @@
       (is (= #{app-id} (search/find-applications "state:Approved")) "en status")
       (is (= #{app-id} (search/find-applications "state:Hyväksytty")) "fi status")))
 
+  (testing "find by todo"
+    (let [app-id (test-data/create-application! {:actor "alice"})]
+      (test-data/command! {:type :application.command/submit
+                           :application-id app-id
+                           :actor "alice"})
+      (test-data/command! {:type :application.command/request-comment
+                           :application-id app-id
+                           :actor "developer"
+                           :commenters ["bob"]
+                           :comment ""})
+      (is (= #{app-id} (search/find-applications "\"Waiting for a review\"")) "en todo, any field")
+      (is (= #{app-id} (search/find-applications "\"waiting-for-review\"")) "keyword todo, any field")
+      (is (= #{app-id} (search/find-applications "todo:\"Waiting for a review\"")) "en todo")
+      (is (= #{app-id} (search/find-applications "todo:\"Odottaa katselmointia\"")) "fi todo")
+      (is (= #{app-id} (search/find-applications "todo:\"waiting-for-review\"")) "keyword todo, any field")))
+
   (testing "find by form content"
     (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
                                                           :field/title {:en "Text field"}
