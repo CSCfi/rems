@@ -733,7 +733,7 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events events
-                                                                 :application/todo nil
+                                                                 :application/todo :no-pending-requests
                                                                  :rems.application.model/latest-comment-request-by-user {}})]
                                 (is (= expected-application (apply-events events)))))))
 
@@ -766,7 +766,7 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events events
-                                                                 :application/todo nil
+                                                                 :application/todo :no-pending-requests
                                                                  :rems.application.model/latest-decision-request-by-user {}})]
                                 (is (= expected-application (apply-events events)))))))
 

@@ -276,7 +276,7 @@
       (assoc :application/todo nil)))
 
 (defn- update-waiting-for-todo [application]
-  (cond-> (assoc application :application/todo nil)
+  (cond-> (assoc application :application/todo :no-pending-requests)
     (not (empty? (::latest-comment-request-by-user application)))
     (assoc :application/todo :waiting-for-review)
 

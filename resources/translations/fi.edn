@@ -149,6 +149,7 @@
                  :submitted "Lähetetty"
                  :todo "Toimia tarvitaan"
                  :todos {:new-application "Uusi hakemus"
+                         :no-pending-requests "Pyyntöihin on vastattu"
                          :resubmitted-application "Uudelleenlähetetty hakemus"
                          :unknown "Tuntematon"
                          :waiting-for-decision "Odottaa päätöstä"

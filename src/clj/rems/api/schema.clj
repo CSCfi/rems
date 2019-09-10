@@ -161,6 +161,7 @@
    :application/external-id s/Str
    :application/state s/Keyword
    :application/todo (s/maybe (s/enum :new-application
+                                      :no-pending-requests
                                       :resubmitted-application
                                       :waiting-for-decision
                                       :waiting-for-review

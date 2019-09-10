@@ -151,6 +151,7 @@
                  :submitted "Sent"
                  :todo "Action needed"
                  :todos {:new-application "New application"
+                         :no-pending-requests "All requests have been responded to"
                          :resubmitted-application "Resubmitted application"
                          :unknown "Unknown"
                          :waiting-for-decision "Waiting for a decision"

@@ -65,6 +65,7 @@
 
 (def ^:private todos
   {:new-application :t.applications.todos/new-application
+   :no-pending-requests :t.applications.todos/no-pending-requests
    :resubmitted-application :t.applications.todos/resubmitted-application
    :waiting-for-decision :t.applications.todos/waiting-for-decision
    :waiting-for-review :t.applications.todos/waiting-for-review
