@@ -85,7 +85,6 @@
                                                        :get-user get-nothing
                                                        :get-users-with-role get-nothing
                                                        :get-attachments-for-application get-nothing}))]
-    (prn :APPLICATION application)
     (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
                   rems.db.users/get-user-attributes get-user-attributes
                   user-settings/get-user-settings (constantly {:language :en})]
