@@ -61,6 +61,7 @@ Changes since v2.4
 - On the Actions page, highlight when the application is waiting for some
   actions from the user (#1596)
 - Optional "More info" link for catalogue items (#1369)
+- Show separately for each license if it has been accepted by the member (#1591)
 
 ### Enhancements
 - Improved version information in footer

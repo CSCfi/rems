@@ -1,5 +1,6 @@
 (ns rems.application
-  (:require [clojure.string :as str]
+  (:require [clojure.set :refer [union]]
+            [clojure.string :as str]
             [goog.string]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
@@ -19,7 +20,7 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
-            [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol]]
+            [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
             [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
@@ -253,48 +254,50 @@
 
 ;;;; UI components
 
-(defn- link-license [opts]
-  (let [title (localized (:license/title opts))
-        link (localized (:license/link opts))]
-    [:div.license
-     [:a.license-title {:href link :target :_blank}
-      title " " [external-link]]]))
+(defn- link-license [license]
+  (let [title (localized (:license/title license))
+        link (localized (:license/link license))]
+    [:a.license-title {:href link :target :_blank}
+     title " " [external-link]]))
 
-(defn- text-license [opts]
-  (let [id (:license/id opts)
+(defn- text-license [license]
+  (let [id (:license/id license)
         collapse-id (str "collapse" id)
-        title (localized (:license/title opts))
-        text (localized (:license/text opts))]
-    [:div.license
-     [:div.license-panel
-      [:span.license-title
-       [:a.license-header.collapsed {:data-toggle "collapse"
-                                     :href (str "#" collapse-id)
-                                     :aria-expanded "false"
-                                     :aria-controls collapse-id}
-        title]]
-      [:div.collapse {:id collapse-id
-                      :ref (fn [elem]
-                             (when elem
-                               (.on (js/$ elem)
-                                    "shown.bs.collapse"
-                                    #(.focus elem))))
-                      :tab-index "-1"}
-       [:div.license-block (str/trim (str text))]]]]))
+        title (localized (:license/title license))
+        text (localized (:license/text license))]
+    [:div.license-panel
+     [:span.license-title
+      [:a.license-header.collapsed {:data-toggle "collapse"
+                                    :href (str "#" collapse-id)
+                                    :aria-expanded "false"
+                                    :aria-controls collapse-id}
+       title]]
+     [:div.collapse {:id collapse-id
+                     :ref (fn [elem]
+                            (when elem
+                              (.on (js/$ elem)
+                                   "shown.bs.collapse"
+                                   #(.focus elem))))
+                     :tab-index "-1"}
+      [:div.license-block (str/trim (str text))]]]))
 
-(defn- attachment-license [opts]
-  (let [title (localized (:license/title opts))
-        link (str "/api/licenses/attachments/" (localized (:license/attachment-id opts)))]
-    [:div.license
-     [:a.license-title {:href link :target :_blank}
-      title " " [file-download]]]))
+(defn- attachment-license [license]
+  (let [title (localized (:license/title license))
+        link (str "/api/licenses/attachments/" (localized (:license/attachment-id license)))]
+    [:a.license-title {:href link :target :_blank}
+     title " " [file-download]]))
 
-(defn license-field [f]
-  (case (:license/type f)
-    :link [link-license f]
-    :text [text-license f]
-    :attachment [attachment-license f]
-    [fields/unsupported-field f]))
+(defn license-field [license show-accepted-licenses?]
+  [:div.license
+   (when show-accepted-licenses?
+     (if (:accepted license)
+       (success-symbol)
+       (empty-symbol)))
+   (case (:license/type license)
+     :link [link-license license]
+     :text [text-license license]
+     :attachment [attachment-license license]
+     [fields/unsupported-field license])])
 
 (defn- save-button []
   [button-wrapper {:id "save"
@@ -348,6 +351,9 @@
 (defn- application-licenses [application edit-application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
     (let [application-id (:application/id application)
+          roles (:application/roles application)
+          show-accepted-licenses? (or (contains? roles :member)
+                                      (contains? roles :applicant))
           accepted-licenses (get (:application/accepted-licenses application) userid)
           permissions (:application/permissions application)
           form-fields-editable? (form-fields-editable? application)
@@ -360,11 +366,13 @@
          [:p (text :t.form/must-accept-licenses)]
          (into [:div#licenses]
                (for [license licenses]
-                 [license-field (assoc license
-                                       :accepted (contains? accepted-licenses (:license/id license))
-                                       :readonly readonly?)]))
+                 [license-field
+                  (assoc license
+                         :accepted (contains? accepted-licenses (:license/id license))
+                         :readonly readonly?)
+                  show-accepted-licenses?]))
          (if (accepted-licenses? application userid)
-           [:div#has-accepted-licenses.alert.alert-success (success-symbol) (text :t.form/has-accepted-licenses)]
+           [:div#has-accepted-licenses.alert.alert-success (text :t.form/has-accepted-licenses)]
            (when (contains? permissions :application.command/accept-licenses)
              [:div.commands
               ;; TODO consider saving the form first so that no data is lost for the applicant
