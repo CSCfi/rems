@@ -243,7 +243,7 @@
                     :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %6"}
           :decision-requested {:subject "Decision requested (%2: %3)"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3.\n\nView application: %6"}
-          :footer "\n\nPlease don't reply to this automatically generated message."
+          :footer "\n\nPlease do not reply to this automatically generated message."
           :member-added {:subject "Added as a member of an application (%3)"
                          :message "Dear %1,\n\nYou've been added as a member of application %3.\n\nView application: %6"}
           :member-invited {:subject "Invitation to participate in an application"
