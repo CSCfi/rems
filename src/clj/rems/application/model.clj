@@ -264,9 +264,9 @@
       (update :application/first-submitted #(or % (:event/time event)))
       (dissoc ::draft-answers)
       (assoc :application/state :application.state/submitted)
-      (assoc :application/todo (if (nil? (:application/first-submitted application))
-                                 :new-application
-                                 :resubmitted-application))))
+      (assoc :application/todo (if (:application/first-submitted application)
+                                 :resubmitted-application
+                                 :new-application))))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application _event]
