@@ -37,7 +37,7 @@
      :external-id (:application/external-id application)
      :id (:application/id application))
    (when-not (empty? (:application/description application))
-     (str " \"" (:application/description application) "\""))))
+     (str ", \"" (:application/description application) "\""))))
 
 (defn- user-for-email [user]
   (let [user-attributes (users/get-user-attributes user)]
