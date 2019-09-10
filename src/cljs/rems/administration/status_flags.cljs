@@ -47,7 +47,9 @@
     (text :t.administration/display-old)]])
 
 (defn active? [item]
-  (and (not (:expired item)) (:enabled item) (not (:archived item))))
+  (and (:enabled item)
+       (not (:expired item))
+       (not (:archived item))))
 
 (defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows]}]
   (let [language @(rf/subscribe [:language])]

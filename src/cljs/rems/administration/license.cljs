@@ -71,9 +71,7 @@
                                 " (" (str/upper-case (name langcode)) ")")
                            [attachment-link (:attachment-id localization) (:title localization)]
                            {:box? false}])))
-                    [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
-                     [inline-info-field (text :t.administration/end) (localize-time (:end license))]
-                     [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? license)]]]))}]
+                    [[inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? license)]]]))}]
    (let [id (:id license)]
      [:div.col.commands
       [back-button]
@@ -110,9 +108,7 @@
                        (str (text :t.create-license/license-attachment)
                             " (" (str/upper-case (name langcode)) ")")
                        [attachment-link (:attachment-id localization) (:title localization)]
-                       {:box? false}])))
-                [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
-                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
+                       {:box? false}]))))))
 
 (defn licenses-view [licenses language]
   [collapsible/component

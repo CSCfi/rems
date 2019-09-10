@@ -83,9 +83,6 @@
            :start (let [value (:start workflow)]
                     {:value value
                      :display-value (localize-time value)})
-           :end (let [value (:end workflow)]
-                  {:value value
-                   :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
@@ -105,8 +102,6 @@
                                     :title (text :t.administration/workflow)}
                                    {:key :start
                                     :title (text :t.administration/created)}
-                                   {:key :end
-                                    :title (text :t.administration/end)}
                                    {:key :active
                                     :title (text :t.administration/active)
                                     :filterable? false}
