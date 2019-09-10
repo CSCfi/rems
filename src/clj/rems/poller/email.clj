@@ -5,6 +5,7 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
+            [rems.common-util :as common-util]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -31,9 +32,12 @@
   (str (:public-url env) "accept-invitation?token=" token))
 
 (defn- application-id-for-email [application]
-  (case (util/getx env :application-id-column)
-    :external-id (:application/external-id application)
-    :id (:application/id application)))
+  (str
+   (case (util/getx env :application-id-column)
+     :external-id (:application/external-id application)
+     :id (:application/id application))
+   (when-not (empty? (:application/description application))
+     (str " \"" (:application/description application) "\""))))
 
 (defn- resources-for-email [application]
   (->> (:application/resources application)
