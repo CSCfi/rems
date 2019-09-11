@@ -304,7 +304,7 @@
                   :subject "A new application has been submitted (2001/3, \"Application title\")"
                   :body "Dear Hannah Handler,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
                 [{:to-user "applicant"
-                  :subject "Application has been returned for modifications (2001/3, \"Application title\")"
+                  :subject "Your application has been returned for modifications (2001/3, \"Application title\")"
                   :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned to you for modifications.\n\nYou can modify and resubmit the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                  {:to-user "assistant"
                   :subject "Application has been returned for modifications (2001/3, \"Application title\")"

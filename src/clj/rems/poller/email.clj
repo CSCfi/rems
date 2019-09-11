@@ -125,11 +125,11 @@
 (defmethod event-to-emails-impl :application.event/returned [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-returned/subject
+                                :t.email.application-returned/subject-to-applicant
                                 :t.email.application-returned/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-returned/subject
+                                :t.email.application-returned/subject-to-handler
                                 :t.email.application-returned/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/licenses-added [event application]
