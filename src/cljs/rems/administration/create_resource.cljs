@@ -49,8 +49,9 @@
      (post! "/api/resources/create"
             {:params request
              ;; TODO: render the catalogue items that use this resource in the error handler
-             :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/resources/" (:id %))))
-             :error-handler (flash-message/default-error-handler description)}))
+             :handler (flash-message/default-success-handler
+                       :top description #(dispatch! (str "#/administration/resources/" (:id %))))
+             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 ;; available licenses
@@ -126,7 +127,7 @@
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-resource)]
-     [flash-message/component]
+     [flash-message/component :top]
      [collapsible/component
       {:id "create-resource"
        :title (text :t.administration/create-resource)

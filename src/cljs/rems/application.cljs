@@ -7,12 +7,12 @@
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
-            [rems.actions.add-member :refer [add-member-action-button add-member-form add-member-status]]
+            [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
-            [rems.actions.invite-member :refer [invite-member-action-button invite-member-form invite-member-status]]
+            [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
@@ -142,10 +142,11 @@
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
           :handler (flash-message/default-success-handler
+                    :top
                     description
                     (fn [_]
                       (rf/dispatch [::fetch-application application-id])))
-          :error-handler (flash-message/default-error-handler description)}))
+          :error-handler (flash-message/default-error-handler :top description)}))
 
 (rf/reg-event-fx
  ::save-application
@@ -166,10 +167,10 @@
           :handler (fn [response]
                      (cond
                        (not (:success response))
-                       (flash-message/show-default-error! description)
+                       (flash-message/show-default-error! :top description)
 
                        (not (accepted-licenses? application userid))
-                       (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
+                       (flash-message/show-error! :top (text :t.actions/licenses-not-accepted-error))
 
                        :else
                        (post! "/api/applications/submit"
@@ -178,12 +179,12 @@
                                           (if (:success response)
                                             (do
                                               (rf/dispatch [::fetch-application application-id])
-                                              (flash-message/show-default-success! description))
+                                              (flash-message/show-default-success! :top description))
                                             (do
                                               (rf/dispatch [::set-validation-errors (:errors response)])
-                                              (flash-message/show-error! [format-validation-errors application (:errors response)]))))
-                               :error-handler (flash-message/default-error-handler description)})))
-          :error-handler (flash-message/default-error-handler description)}))
+                                              (flash-message/show-error! :top [format-validation-errors application (:errors response)]))))
+                               :error-handler (flash-message/default-error-handler :top description)})))
+          :error-handler (flash-message/default-error-handler :top description)}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -205,11 +206,12 @@
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
              :handler (flash-message/default-success-handler
+                       :top
                        description
                        (fn [response]
                          (rf/dispatch [:rems.spa/user-triggered-navigation])
                          (dispatch! (str "/#/application/" (:application-id response)))))
-             :error-handler (flash-message/default-error-handler description)}))
+             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
@@ -222,13 +224,14 @@
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
             :handler (flash-message/default-success-handler
+                      :top
                       description
                       (fn [response]
                         ;; no race condition here: events are handled in a FIFO manner
                         (rf/dispatch [::set-field-value field-id (str (:id response))])
                         (rf/dispatch [::set-attachment-success field-id])
                         (rf/dispatch [::save-application description])))
-            :error-handler (flash-message/default-error-handler description)})
+            :error-handler (flash-message/default-error-handler :top description)})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
@@ -363,6 +366,7 @@
         :title (text :t.form/licenses)
         :always
         [:div
+         [flash-message/component :accept-licenses]
          [:p (text :t.form/must-accept-licenses)]
          (into [:div#licenses]
                (for [license licenses]
@@ -573,6 +577,7 @@
       :title (text :t.applicant-info/applicants)
       :always
       (into [:div
+             [flash-message/component :change-members]
              [member-info {:element-id "applicant"
                            :attributes applicant
                            :application application
@@ -596,8 +601,6 @@
                              :group? true
                              :can-remove? can-uninvite?}])))
       :footer [:div
-               [invite-member-status]
-               [add-member-status]
                [:div.commands
                 (when can-invite? [invite-member-action-button])
                 (when can-add? [add-member-action-button])]
@@ -675,6 +678,7 @@
      {:id "resources"
       :title (text :t.form/resources)
       :always [:div.form-items.form-group
+               [flash-message/component :change-resources]
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
                        [render-resource resource]))]
@@ -691,7 +695,7 @@
    [:div.row
     [:div.col-lg-4.order-lg-last
      [:div#float-actions.mb-3
-      [flash-message/component]
+      [flash-message/component :top]
       [disabled-items-warning application]
       [actions-form application]]]
     [:div.col-lg-8

@@ -42,8 +42,9 @@
             {:handler (fn [response]
                         (if (:success response)
                           (dispatch! (str "/#/administration/edit-form/" id))
-                          (flash-message/show-default-error! description (status-flags/format-update-failure response))))
-             :error-handler (flash-message/default-error-handler description)}))
+                          (flash-message/show-default-error!
+                           :top description (status-flags/format-update-failure response))))
+             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (defn- back-button []
@@ -92,7 +93,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/form)]
-       [flash-message/component]
+       [flash-message/component :top]
        (if @loading?
          [spinner/big]
          [form-view @form])])))

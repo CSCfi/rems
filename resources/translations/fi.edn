@@ -23,8 +23,6 @@
             :licenses-not-accepted-error "Käyttöehtoja ei ole hyväksytty."
             :load-application-states "Lataa hakemusten tilat"
             :member "Jäsen"
-            :member-added "Jäsen lisätty."
-            :member-invited "Jäsen kutsuttu."
             :member-name "Nimi"
             :member-email "Sähköposti"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."

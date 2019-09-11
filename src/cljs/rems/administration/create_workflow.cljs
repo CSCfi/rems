@@ -89,8 +89,9 @@
    (let [description (text :t.administration/create-workflow)]
      (post! "/api/workflows/create"
             {:params request
-             :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/workflows/" (:id %))))
-             :error-handler (flash-message/default-error-handler description)}))
+             :handler (flash-message/default-success-handler
+                       :top description #(dispatch! (str "#/administration/workflows/" (:id %))))
+             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (rf/reg-event-fx
@@ -99,8 +100,9 @@
    (let [description (text :t.administration/edit-workflow)]
      (put! "/api/workflows/edit"
            {:params request
-            :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/workflows/" (:id request))))
-            :error-handler (flash-message/default-error-handler description)}))
+            :handler (flash-message/default-success-handler
+                      :top description #(dispatch! (str "#/administration/workflows/" (:id request))))
+            :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
@@ -208,7 +210,7 @@
     [:div
      [administration-navigator-container]
      [document-title title]
-     [flash-message/component]
+     [flash-message/component :top]
      [collapsible/component
       {:id "create-workflow"
        :title title

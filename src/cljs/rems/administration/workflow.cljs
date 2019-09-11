@@ -81,7 +81,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/workflow)]
-       [flash-message/component]
+       [flash-message/component :top]
        (if @loading?
          [spinner/big]
          [workflow-view @workflow @language])])))

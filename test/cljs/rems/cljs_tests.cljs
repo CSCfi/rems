@@ -6,6 +6,7 @@
             rems.administration.test-create-resource
             rems.administration.test-create-workflow
             rems.administration.test-items
+            rems.flash-message
             rems.test-fields
             rems.test-table
             rems.test-util))
@@ -16,6 +17,7 @@
            'rems.administration.test-create-resource
            'rems.administration.test-create-workflow
            'rems.administration.test-items
+           'rems.flash-message
            'rems.test-fields
            'rems.test-table
            'rems.test-util)

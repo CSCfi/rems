@@ -1,7 +1,7 @@
 (ns rems.actions.invite-member
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
-            [rems.atoms :as atoms]
+            [rems.flash-message :as flash-message]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -10,7 +10,6 @@
  ::open-form
  (fn [db _]
    (assoc db
-          ::done? false
           ::name ""
           ::email "")))
 
@@ -19,9 +18,6 @@
 
 (rf/reg-event-db ::set-email (fn [db [_ email]] (assoc db ::email email)))
 (rf/reg-sub ::email (fn [db _] (::email db)))
-
-(rf/reg-event-db ::set-done? (fn [db [_ done]] (assoc db ::done? done)))
-(rf/reg-sub ::done? (fn [db _] (::done? db)))
 
 (def ^:private action-form-id "invite-member")
 
@@ -33,16 +29,19 @@
 (rf/reg-event-fx
  ::send-invite-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-   (if-let [errors (validate-member member)]
-     (status-modal/set-error! {:result {:errors errors}})
-     (post! "/api/applications/invite-member"
-            {:params {:application-id application-id
-                      :member member}
-             :handler (fn [_]
-                        (collapse-action-form action-form-id)
-                        (rf/dispatch [::set-done? true])
-                        (on-finished))
-             :error-handler status-modal/common-error-handler!}))
+   (let [description (text :t.actions/invite-member)]
+     (if-let [errors (validate-member member)]
+       (flash-message/show-error! :invite-member-errors (status-modal/format-errors errors))
+       (post! "/api/applications/invite-member"
+              {:params {:application-id application-id
+                        :member member}
+               :handler (flash-message/default-success-handler
+                         :change-members
+                         description
+                         (fn [_]
+                           (collapse-action-form action-form-id)
+                           (on-finished)))
+               :error-handler (flash-message/default-error-handler :invite-member-errors description)})))
    {}))
 
 (defn invite-member-action-button []
@@ -51,25 +50,25 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 ;; TODO refactor to common input-field ?
-(defn input-field [{:keys [id label placeholder value type on-change normalizer]}]
-  (let [normalizer (or normalizer identity)]
-    [:div.form-group.field
-     [:label {:for id} label]
-     [:input.form-control {:type type
-                           :id id
-                           :placeholder placeholder
-                           :value value
-                           :on-change on-change}]]))
+(defn input-field [{:keys [id label placeholder value type on-change]}]
+  [:div.form-group.field
+   [:label {:for id} label]
+   [:input.form-control {:type type
+                         :id id
+                         :placeholder placeholder
+                         :value value
+                         :on-change on-change}]])
 
 (defn invite-member-view
-  [{:keys [name email done? on-send]}]
+  [{:keys [name email on-send]}]
   [action-form-view action-form-id
    (text :t.actions/invite-member)
    [[button-wrapper {:id "invite-member"
                      :text (text :t.actions/invite-member)
-                      :class "btn-primary"
+                     :class "btn-primary"
                      :on-click on-send}]]
    [:div
+    [flash-message/component :invite-member-errors]
     [input-field {:id "member-name"
                   :label (text :t.actions/member-name)
                   :value name
@@ -82,15 +81,9 @@
                   :on-change #(rf/dispatch [::set-email (.. % -target -value)])}]]
    {:collapse-id "member-action-forms"}])
 
-(defn invite-member-status []
-  (when @(rf/subscribe [::done?])
-    [atoms/flash-message {:status :success
-                          :contents (text :t.actions/member-invited)}]))
-
 (defn invite-member-form [application-id on-finished]
   (let [name @(rf/subscribe [::name])
-        email @(rf/subscribe [::email])
-        done? @(rf/subscribe [::done?])]
+        email @(rf/subscribe [::email])]
     [invite-member-view {:name name
                          :email email
                          :on-send #(rf/dispatch [::send-invite-member {:application-id application-id

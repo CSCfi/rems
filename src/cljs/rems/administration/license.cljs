@@ -130,7 +130,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/license)]
-       [flash-message/component]
+       [flash-message/component :top]
        (if @loading?
          [spinner/big]
          [license-view @license @language])])))

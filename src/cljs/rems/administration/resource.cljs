@@ -65,7 +65,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/resource)]
-       [flash-message/component]
+       [flash-message/component :top]
        (if @loading?
          [spinner/big]
          [resource-view @resource @language])])))

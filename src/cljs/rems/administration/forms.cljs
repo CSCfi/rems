@@ -42,8 +42,9 @@
    (put! "/api/forms/archived"
          {:params {:id (:form/id form)
                    :archived (:archived form)}
-          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
-          :error-handler (flash-message/default-error-handler description)})
+          :handler (flash-message/status-update-handler
+                    :top description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
 (rf/reg-event-fx
@@ -52,8 +53,9 @@
    (put! "/api/forms/enabled"
          {:params {:id (:form/id form)
                    :enabled (:enabled form)}
-          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
-          :error-handler (flash-message/default-error-handler description)})
+          :handler (flash-message/status-update-handler
+                    :top description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
 (rf/reg-event-fx
@@ -127,7 +129,7 @@
   (into [:div
          [administration-navigator-container]
          [document-title (text :t.administration/forms)]
-         [flash-message/component]]
+         [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-form]

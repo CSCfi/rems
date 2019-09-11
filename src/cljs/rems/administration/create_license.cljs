@@ -63,8 +63,9 @@
    (let [description (text :t.administration/create-license)]
      (post! "/api/licenses/create"
             {:params request
-             :handler (flash-message/default-success-handler description #(dispatch! (str "#/administration/licenses/" (:id %))))
-             :error-handler (flash-message/default-error-handler description)}))
+             :handler (flash-message/default-success-handler
+                       :top description #(dispatch! (str "#/administration/licenses/" (:id %))))
+             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (defn- save-attachment [language form-data]
@@ -200,7 +201,7 @@
     [:div
      [administration-navigator-container]
      [document-title (text :t.administration/create-license)]
-     [flash-message/component]
+     [flash-message/component :top]
      [collapsible/component
       {:id "create-license"
        :title (text :t.administration/create-license)

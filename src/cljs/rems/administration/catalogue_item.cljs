@@ -90,7 +90,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.administration/catalogue-item)]
-       [flash-message/component]
+       [flash-message/component :top]
        (if @loading?
          [spinner/big]
          [catalogue-item-view @catalogue-item @language])])))
