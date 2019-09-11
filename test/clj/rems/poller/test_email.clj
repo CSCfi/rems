@@ -85,7 +85,7 @@
   (sort-by email-recipient emails))
 
 (defn email-recipients [emails]
-  (set (mapv #(or (:to %) (:to-user %)) emails)))
+  (set (mapv email-recipient emails)))
 
 (defn email-to [user emails]
   ;; return arbitrary email if none match to get better errors from tests
