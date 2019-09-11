@@ -366,6 +366,7 @@
         :title (text :t.form/licenses)
         :always
         [:div
+         [flash-message/component :accept-licenses]
          [:p (text :t.form/must-accept-licenses)]
          (into [:div#licenses]
                (for [license licenses]
