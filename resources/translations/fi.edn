@@ -245,7 +245,7 @@
           :decided {:subject "Päätös lähetetty (%3)"
                     :message "Hyvä %1,\n\n%2 on lähettänyt päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
           :decision-requested {:subject "Päätöspyyntö (%3)"
-                               :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
+                               :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta: %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
           :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
                          :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta: %6"}
