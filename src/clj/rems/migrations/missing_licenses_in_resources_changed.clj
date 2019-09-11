@@ -60,9 +60,8 @@ WHERE id = :id;
           licenses (->> cat-ids
                         (mapcat #(get-catalogue-item-license-ids % conn))
                         distinct)
-          json-value (format "{\"application/licenses\": [%s]}"
-                             (clojure.string/join
-                              ", "
-                              (map #(str "{\"license/id\": " % "}") licenses)))]
+          value (json/generate-string
+                 {:application/licenses
+                  (map (fn [licid] {:license/id licid}) licenses)})]
       (update-event! conn {:id id
-                           :value json-value}))))
+                           :value value}))))
