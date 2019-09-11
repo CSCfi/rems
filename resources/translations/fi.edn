@@ -225,15 +225,15 @@
                                  :subject-to-handler "Hakemus hylätty (%3)"
                                  :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
           :application-closed {:subject-to-applicant "Hakemuksesi on suljettu (%3)"
-                               :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nTarkastele hakemusta: %5"
+                               :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nVoit tarkastella hakemusta: %5"
                                :subject-to-handler "Hakemus suljettu (%3)"
-                               :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
+                               :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %5"}
           :application-returned {:subject-to-applicant "Hakemuksesi on palautettu (%3)"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksi.\n\nVoit muokata hakemusta ja lähettää sen uudelleen: %6"
                                  :subject-to-handler "Hakemus palautettu (%3)"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %6"}
+                                 :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
           :application-licenses-added {:subject "Hakemukseen lisätty käyttöehtoja (%3)"
-                                       :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi uusiin käyttöehtoihin hakemukselle %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %6"}
+                                       :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi uusille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %6"}
           :application-resubmitted {:subject "Hakemus lähetetty uudelleen (%3)"
                                     :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
           :application-submitted {:subject "Uusi hakemus (%3)"
@@ -248,7 +248,7 @@
                                :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
           :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
-                         :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nTarkastele hakemusta: %6"}
+                         :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta: %6"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen"
                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen. Hakemuksen otsikko on %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %4"}
           :remarked {:subject "Hakemusta kommentoitu (%3)"
