@@ -193,14 +193,14 @@
                 :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
                 :body "Dear somebody,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
               [{:to-user "decider",
-                :subject "Decision requested (assistant: 2001/3, \"Application title\")",
-                :body "Dear decider,\n\nassistant has requested your decision on application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+                :subject "Decision requested (2001/3, \"Application title\")",
+                :body "Dear decider,\n\nassistant has requested your decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can review application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
               [{:to-user "assistant",
-                :subject "Decision made (decider: 2001/3, \"Application title\")",
-                :body "Dear assistant,\n\ndecider has made a decision on application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "Decision notification (2001/3, \"Application title\")",
+                :body "Dear assistant,\n\ndecider has sent a decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                {:to-user "handler",
-                :subject "Decision made (decider: 2001/3, \"Application title\")",
-                :body "Dear Hannah Handler,\n\ndecider has made a decision on application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+                :subject "Decision notification (2001/3, \"Application title\")",
+                :body "Dear Hannah Handler,\n\ndecider has sent a decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
               [{:to-user "applicant"
                 :subject "Application approved (2001/3, \"Application title\")",
                 :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}

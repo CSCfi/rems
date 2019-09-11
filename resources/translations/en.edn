@@ -240,10 +240,10 @@
                               :message "Dear %1,\n\n%2 has requested your review on application %3 submitted by %4.\n\nYou can review the application: %6"}
           :commented {:subject "Application has been reviewed (%3)"
                       :message "Dear %1,\n\n%2 has reviewed the application %3 submitted by %4.\n\nYou can view the application and the review: %6"}
-          :decided {:subject "Decision made (%2: %3)"
-                    :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %6"}
-          :decision-requested {:subject "Decision requested (%2: %3)"
-                               :message "Dear %1,\n\n%2 has requested your decision on application %3.\n\nView application: %6"}
+          :decided {:subject "Decision notification (%3)"
+                    :message "Dear %1,\n\n%2 has sent a decision on application %3 submitted by %4.\n\nYou can view the application and the decision: %6"}
+          :decision-requested {:subject "Decision requested (%3)"
+                               :message "Dear %1,\n\n%2 has requested your decision on application %3 submitted by %4.\n\nYou can review application: %6"}
           :footer "\n\nPlease do not reply to this automatically generated message."
           :member-added {:subject "Added as a member of an application (%3)"
                          :message "Dear %1,\n\nYou've been added as a member of application %3.\n\nView application: %6"}
