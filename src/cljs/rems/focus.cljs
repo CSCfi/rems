@@ -12,17 +12,17 @@
         (.scrollBy js/window 0 (- element-top navbar-height))))))
 
 (defn focus-element-async
-  "Focus an element when it appears. Options can include:
-    :tries -- number of times to poll, defaults to 100"
-  [selector & [options]]
-  (let [tries (get options :tries 100)]
-    (when (pos? tries)
-      (if-let [element (.querySelector js/document selector)]
-        (do
-          (.setAttribute element "tabindex" "-1")
-          ;; Focusing the element scrolls it into the viewport, but
-          ;; it can still be hidden behind the navigation menu.
-          (.focus element)
-          (scroll-below-navigation-menu element))
-        (js/setTimeout #(focus-element-async selector (assoc options :tries (dec tries)))
-                       10)))))
+  "Focus an element when it appears."
+  ([selector]
+   (focus-element-async selector 100))
+  ([selector tries]
+   (when (pos? tries)
+     (if-let [element (.querySelector js/document selector)]
+       (do
+         (.setAttribute element "tabindex" "-1")
+         ;; Focusing the element scrolls it into the viewport, but
+         ;; it can still be hidden behind the navigation menu.
+         (.focus element)
+         (scroll-below-navigation-menu element))
+       (js/setTimeout #(focus-element-async selector (dec tries))
+                      10)))))
