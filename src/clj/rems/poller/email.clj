@@ -179,16 +179,16 @@
                         :t.email.member-added/subject
                         :t.email.member-added/message))
 
-(defmethod event-to-emails-impl :application.event/member-invited [event _application]
+(defmethod event-to-emails-impl :application.event/member-invited [event application]
   (with-language (:default-language env)
     (fn []
       [{:to (:email (:application/member event))
-        :subject (text-format :t.email.member-invited/subject
-                              (:email (:application/member event))
-                              (invitation-link (:invitation/token event)))
+        :subject (text-format :t.email.member-invited/subject)
         :body (str
                (text-format :t.email.member-invited/message
-                            (:email (:application/member event))
+                            (:name (:application/member event))
+                            (user-for-email (:application/applicant application))
+                            (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
                (text :t.email/footer))}])))
 

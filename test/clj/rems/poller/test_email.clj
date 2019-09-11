@@ -156,7 +156,7 @@
                 :body "Dear Hannah Handler,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
               [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
-                :body "Hello,\n\nThis email address (somebody@example.com) has been invited to participate in an application.\n\nParticipate: http://example.com/accept-invitation?token=abc\n\nPlease do not reply to this automatically generated message."}]
+                :body "Dear Some Body,\n\nYou have been invited to participate in an application submitted by Alice Applicant. The title of the application is 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/accept-invitation?token=abc\n\nPlease do not reply to this automatically generated message."}]
               [{:to-user "commenter1",
                 :subject "Review requested (Hannah Handler: 2001/3, \"Application title\")",
                 :body "Dear commenter1,\n\nHannah Handler has requested a review on application 2001/3, \"Application title\".\n\nComment: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
