@@ -238,8 +238,8 @@
                                   :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can view the application: %6"}
           :comment-requested {:subject "Review request (%3)"
                               :message "Dear %1,\n\n%2 has requested your review on application %3 submitted by %4.\n\nYou can review the application: %6"}
-          :commented {:subject "Review added (%2: %3)"
-                      :message "Dear %1,\n\n%2 has reviewed application %3.\n\nView application: %6"}
+          :commented {:subject "Application has been reviewed (%3)"
+                      :message "Dear %1,\n\n%2 has reviewed the application %3 submitted by %4.\n\nYou can view the application and the review: %6"}
           :decided {:subject "Decision made (%2: %3)"
                     :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %6"}
           :decision-requested {:subject "Decision requested (%2: %3)"

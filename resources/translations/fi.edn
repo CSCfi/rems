@@ -236,8 +236,8 @@
                                   :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta: %6"}
           :comment-requested {:subject "Katselmointipyyntö (%3)"
                               :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit katselmoida hakemuksen: %6"}
-          :commented {:subject "Hakemus katselmoitu (%2: %3)"
-                      :message "Hyvä %1,\n\n%2 on katselmoinut hakemuksen %3.\n\nTarkastele hakemusta: %6"}
+          :commented {:subject "Hakemus katselmoitu (%3)"
+                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta ja lukea kommentit: %6"}
           :decided {:subject "Päätös tehty (%2: %3)"
                     :message "Hyvä %1,\n\n%2 on tehnyt päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
           :decision-requested {:subject "Päätöspyyntö (%2: %3)"
