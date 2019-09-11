@@ -218,12 +218,14 @@
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
-  :email {:application-approved {:subject "Application approved (%3)"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nView application: %6"
-                                 :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nView application: %6"}
-          :application-rejected {:subject "Application rejected (%3)"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been rejected.\n\nView application: %6"
-                                 :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nView application: %6"}
+  :email {:application-approved {:subject-to-applicant "Your application has been approved (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nYou can review the application and the decision: %6"
+                                 :subject-to-handler "Application approved (%3)"
+                                 :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nYou can review the application and the decision: %6"}
+          :application-rejected {:subject-to-applicant "Your application has been rejected (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been rejected.\n\nYou can review the application and the decision: %6"
+                                 :subject-to-handler "Application rejected (%3)"
+                                 :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nYou can review the application and the decision: %6"}
           :application-closed {:subject "Application closed (%3)"
                                :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nView application: %6"
                                :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nView application: %6"}

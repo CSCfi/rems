@@ -95,21 +95,21 @@
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-approved/subject
+                                :t.email.application-approved/subject-to-applicant
                                 :t.email.application-approved/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-approved/subject
+                                :t.email.application-approved/subject-to-handler
                                 :t.email.application-approved/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-rejected/subject
+                                :t.email.application-rejected/subject-to-applicant
                                 :t.email.application-rejected/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-rejected/subject
+                                :t.email.application-rejected/subject-to-handler
                                 :t.email.application-rejected/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]

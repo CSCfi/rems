@@ -216,12 +216,14 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
-  :email {:application-approved {:subject "Hakemus hyväksytty (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nTarkastele hakemusta: %5"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
-          :application-rejected {:subject "Hakemus hylätty (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nTarkastele hakemusta: %5"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
+  :email {:application-approved {:subject-to-applicant "Hakemuksesi on hyväksytty (%3)"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä: %6"
+                                 :subject-to-handler "Hakemus hyväksytty (%3)"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
+          :application-rejected {:subject-to-applicant "Hakemuksesi on hylätty (%3)"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nVoit tarkastella hakemusta ja päätöstä: %6"
+                                 :subject-to-handler "Hakemus hylätty (%3)"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
           :application-closed {:subject "Hakemus suljettu (%3)"
                                :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nTarkastele hakemusta: %5"
                                :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
@@ -240,8 +242,8 @@
                       :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta ja lukea kommentit: %6"}
           :decided {:subject "Päätös lähetetty (%3)"
                     :message "Hyvä %1,\n\n%2 on lähettänyt päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :decision-requested {:subject "Päätöspyyntö (%2: %3)"
-                               :message "Hyvä %1,\n\n%2 on pyytänyt sinua tekemään päätöksen hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
+          :decision-requested {:subject "Päätöspyyntö (%3)"
+                               :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nTarkastele hakemusta: %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
           :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
                          :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nTarkastele hakemusta: %6"}
