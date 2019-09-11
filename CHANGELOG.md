@@ -71,6 +71,7 @@ Changes since v2.4
 - Improved table performance: added a "show all rows" button for long tables
 - Modal popups have been replaced with flash messages (#1469)
 - Email messages now use the application title and full names of users
+- Email message texts improved
 
 ### Fixes
 - Entitlement API

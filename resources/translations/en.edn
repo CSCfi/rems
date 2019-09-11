@@ -218,36 +218,43 @@
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
-  :email {:application-approved {:subject "Application approved (%3)"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nView application: %6"
-                                 :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nView application: %6"}
-          :application-rejected {:subject "Application rejected (%3)"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been rejected.\n\nView application: %6"
-                                 :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nView application: %6"}
-          :application-closed {:subject "Application closed (%3)"
-                               :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nView application: %6"
-                               :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nView application: %6"}
-          :application-returned {:subject "Application returned (%3)"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been returned.\n\nView application: %6"
-                                 :message-to-handler "Dear %1,\n\n%2 has returned the application %3 from %4.\n\nView application: %6"}
-          :application-licenses-added {:subject "Terms of use added to application (%3)"
-                                       :message-to-applicant "Dear %1,\n\nTerms of use have been added to your application %3. They need to be accepted before gaining access to the resources.\n\nView application: %6"
-                                       :message-to-handler "Dear %1,\n\n%2 has added terms of use to the application %3 from %4.\n\nView application: %6"}
-          :application-submitted {:subject "Application submitted (%4: %3)"
-                                  :message "Dear %1,\n\n%4 has submitted an application (%3): %5.\n\nView application: %6"}
-          :comment-requested {:subject "Review requested (%2: %3)"
-                              :message "Dear %1,\n\n%2 has requested a review on application %3.\n\nComment: %6"}
-          :commented {:subject "Review added (%2: %3)"
-                      :message "Dear %1,\n\n%2 has reviewed application %3.\n\nView application: %6"}
-          :decided {:subject "Decision made (%2: %3)"
-                    :message "Dear %1,\n\n%2 has made a decision on application %3.\n\nView application: %6"}
-          :decision-requested {:subject "Decision requested (%2: %3)"
-                               :message "Dear %1,\n\n%2 has requested your decision on application %3.\n\nView application: %6"}
-          :footer "\n\nPlease don't reply to this automatically generated message."
+  :email {:application-approved {:subject-to-applicant "Your application has been approved (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nYou can view the application and the decision: %6"
+                                 :subject-to-handler "Application approved (%3)"
+                                 :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nYou can view the application and the decision: %6"}
+          :application-rejected {:subject-to-applicant "Your application has been rejected (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been rejected.\n\nYou can view the application and the decision: %6"
+                                 :subject-to-handler "Application rejected (%3)"
+                                 :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nYou can view the application and the decision: %6"}
+          :application-closed {:subject-to-applicant "Your application has been closed (%3)"
+                               :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nYou can view the application: %6"
+                               :subject-to-handler "Application closed (%3)"
+                               :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nYou can view the application: %6"}
+          :application-returned {:subject-to-applicant "Your application has been returned for modifications (%3)"
+                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been returned to you for modifications.\n\nYou can modify and resubmit the application: %6"
+                                 :subject-to-handler "Application has been returned for modifications (%3)"
+                                 :message-to-handler "Dear %1,\n\n%2 has returned the application %3 to the applicant %4 for modifications.\n\nYou can view the application: %6"}
+          :application-licenses-added {:subject "New terms of use waiting for approval (%3)"
+                                       :message "Dear %1,\n\n%2 has requested your acceptance for new terms of use for application %3.\n\nYou can view the application and accept the terms of use: %6"}
+          :application-resubmitted {:subject "Application has been resubmitted (%3)"
+                                    :message "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can view the application: %6"}
+          :application-submitted {:subject "A new application has been submitted (%3)"
+                                  :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can view the application: %6"}
+          :comment-requested {:subject "Review request (%3)"
+                              :message "Dear %1,\n\n%2 has requested your review on application %3 submitted by %4.\n\nYou can review the application: %6"}
+          :commented {:subject "Application has been reviewed (%3)"
+                     :message "Dear %1,\n\n%2 has reviewed the application %3 submitted by %4.\n\nYou can view the application and the review: %6"}
+          :decided {:subject "Decision notification (%3)"
+                    :message "Dear %1,\n\n%2 has sent a decision on application %3 submitted by %4.\n\nYou can view the application and the decision: %6"}
+          :decision-requested {:subject "Decision requested (%3)"
+                               :message "Dear %1,\n\n%2 has requested your decision on application %3 submitted by %4.\n\nYou can view application: %6"}
+          :footer "\n\nPlease do not reply to this automatically generated message."
           :member-added {:subject "Added as a member of an application (%3)"
                          :message "Dear %1,\n\nYou've been added as a member of application %3.\n\nView application: %6"}
           :member-invited {:subject "Invitation to participate in an application"
-                           :message "Hello,\n\nThis email address (%1) has been invited to participate in an application.\n\nParticipate: %2"}}
+                           :message "Dear %1,\n\nYou have been invited to participate in an application submitted by %2. The title of the application is %3.\n\nYou can view the application and accept the terms of use: %4"}
+          :remarked {:subject "Application has been commented on (%3)"
+                     :message "Dear %1,\n\n%2 has commented on the application %3 submitted by %4.\n\nYou can view the application and the comment: %6"}}
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"

@@ -95,58 +95,60 @@
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-approved/subject
+                                :t.email.application-approved/subject-to-applicant
                                 :t.email.application-approved/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-approved/subject
+                                :t.email.application-approved/subject-to-handler
                                 :t.email.application-approved/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-rejected/subject
+                                :t.email.application-rejected/subject-to-applicant
                                 :t.email.application-rejected/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-rejected/subject
+                                :t.email.application-rejected/subject-to-handler
                                 :t.email.application-rejected/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-closed/subject
+                                :t.email.application-closed/subject-to-applicant
                                 :t.email.application-closed/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-closed/subject
+                                :t.email.application-closed/subject-to-handler
                                 :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/returned [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-returned/subject
+                                :t.email.application-returned/subject-to-applicant
                                 :t.email.application-returned/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-returned/subject
+                                :t.email.application-returned/subject-to-handler
                                 :t.email.application-returned/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/licenses-added [event application]
-  (concat (emails-to-recipients (applicant-and-members application)
-                                event application
-                                :t.email.application-licenses-added/subject
-                                :t.email.application-licenses-added/message-to-applicant)
-          (emails-to-recipients (other-handlers event application)
-                                event application
-                                :t.email.application-licenses-added/subject
-                                :t.email.application-licenses-added/message-to-handler)))
+  (emails-to-recipients (applicant-and-members application)
+                        event application
+                        :t.email.application-licenses-added/subject
+                        :t.email.application-licenses-added/message))
 
 (defmethod event-to-emails-impl :application.event/submitted [event application]
-  (emails-to-recipients (handlers application)
-                        event application
-                        :t.email.application-submitted/subject
-                        :t.email.application-submitted/message))
+  (if (= (:event/time event)
+         (:application/first-submitted application))
+    (emails-to-recipients (handlers application)
+                          event application
+                          :t.email.application-submitted/subject
+                          :t.email.application-submitted/message)
+    (emails-to-recipients (handlers application)
+                          event application
+                          :t.email.application-resubmitted/subject
+                          :t.email.application-resubmitted/message)))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
   (emails-to-recipients (:application/commenters event)
@@ -159,6 +161,12 @@
                         event application
                         :t.email.commented/subject
                         :t.email.commented/message))
+
+(defmethod event-to-emails-impl :application.event/remarked [event application]
+  (emails-to-recipients (handlers application)
+                        event application
+                        :t.email.remarked/subject
+                        :t.email.remarked/message))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (emails-to-recipients (handlers application)
@@ -179,16 +187,16 @@
                         :t.email.member-added/subject
                         :t.email.member-added/message))
 
-(defmethod event-to-emails-impl :application.event/member-invited [event _application]
+(defmethod event-to-emails-impl :application.event/member-invited [event application]
   (with-language (:default-language env)
     (fn []
       [{:to (:email (:application/member event))
-        :subject (text-format :t.email.member-invited/subject
-                              (:email (:application/member event))
-                              (invitation-link (:invitation/token event)))
+        :subject (text-format :t.email.member-invited/subject)
         :body (str
                (text-format :t.email.member-invited/message
-                            (:email (:application/member event))
+                            (:name (:application/member event))
+                            (user-for-email (:application/applicant application))
+                            (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
                (text :t.email/footer))}])))
 
