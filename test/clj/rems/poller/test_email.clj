@@ -132,7 +132,11 @@
                     :event/type :application.event/commented
                     :event/actor "commenter2"
                     :application/request-id "r1"
-                    :application/comment ["this is a comment"]}
+                    :application/comment "this is a comment"}
+                   {:application/id 7
+                    :event/type :application.event/remarked
+                    :event/actor "remarker"
+                    :application/comment "remark!"}
                    {:application/id 7
                     :event/type :application.event/member-added
                     :event/actor "handler"
@@ -180,6 +184,12 @@
                {:to-user "handler"
                 :subject "Application has been reviewed (2001/3, \"Application title\")"
                 :body "Dear Hannah Handler,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the review: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+              [{:to-user "assistant"
+                :subject "Application has been commented (2001/3, \"Application title\")"
+                :body "Dear assistant,\n\nremarker has commented on the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the comment: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+               {:to-user "handler"
+                :subject "Application has been commented (2001/3, \"Application title\")"
+                :body "Dear Hannah Handler,\n\nremarker has commented on the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the comment: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
               [{:to-user "member",
                 :subject "Added as a member of an application (2001/3, \"Application title\")",
                 :body "Dear member,\n\nYou've been added as a member of application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]

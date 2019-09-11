@@ -162,6 +162,12 @@
                         :t.email.commented/subject
                         :t.email.commented/message))
 
+(defmethod event-to-emails-impl :application.event/remarked [event application]
+  (emails-to-recipients (handlers application)
+                        event application
+                        :t.email.remarked/subject
+                        :t.email.remarked/message))
+
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (emails-to-recipients (handlers application)
                         event application

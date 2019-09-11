@@ -249,7 +249,9 @@
           :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
                          :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nTarkastele hakemusta: %6"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen"
-                           :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen. Hakemuksen otsikko on %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %4"}}
+                           :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen. Hakemuksen otsikko on %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %4"}
+          :remarked {:subject "Hakemusta kommentoitu (%3)"
+                     :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta ja lukea kommentin: %6"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
   :form {:accepted-licenses "Käyttöehdot hyväksytty"
          :actions "Toiminnot"

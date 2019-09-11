@@ -242,7 +242,7 @@
           :comment-requested {:subject "Review request (%3)"
                               :message "Dear %1,\n\n%2 has requested your review on application %3 submitted by %4.\n\nYou can review the application: %6"}
           :commented {:subject "Application has been reviewed (%3)"
-                      :message "Dear %1,\n\n%2 has reviewed the application %3 submitted by %4.\n\nYou can view the application and the review: %6"}
+                     :message "Dear %1,\n\n%2 has reviewed the application %3 submitted by %4.\n\nYou can view the application and the review: %6"}
           :decided {:subject "Decision notification (%3)"
                     :message "Dear %1,\n\n%2 has sent a decision on application %3 submitted by %4.\n\nYou can view the application and the decision: %6"}
           :decision-requested {:subject "Decision requested (%3)"
@@ -251,7 +251,9 @@
           :member-added {:subject "Added as a member of an application (%3)"
                          :message "Dear %1,\n\nYou've been added as a member of application %3.\n\nView application: %6"}
           :member-invited {:subject "Invitation to participate in an application"
-                           :message "Dear %1,\n\nYou have been invited to participate in an application submitted by %2. The title of the application is %3.\n\nYou can view the application and accept the terms of use: %4"}}
+                           :message "Dear %1,\n\nYou have been invited to participate in an application submitted by %2. The title of the application is %3.\n\nYou can view the application and accept the terms of use: %4"}
+          :remarked {:subject "Application has been commented (%3)"
+                     :message "Dear %1,\n\n%2 has commented on the application %3 submitted by %4.\n\nYou can view the application and the comment: %6"}}
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"
