@@ -232,6 +232,8 @@
                                  :message-to-handler "Dear %1,\n\n%2 has returned the application %3 for modifications to the applicant %4.\n\nView application: %6"}
           :application-licenses-added {:subject "New terms of use waiting for approval (%3)"
                                        :message "Dear %1,\n\n%2 has requested your acceptance for new terms of use for application %3.\n\nYou can view the application and accept the terms of use: %6"}
+          :application-resubmitted {:subject "Application has been re-submitted (%3)"
+                                    :message "Dear %1,\n\nApplication %3 has been re-submitted by %4.\n\nYou can view the application: %6"}
           :application-submitted {:subject "A new application has been submitted (%3)"
                                   :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can view the application: %6"}
           :comment-requested {:subject "Review requested (%2: %3)"

@@ -111,7 +111,8 @@
                       :application/field-values {1 "Application title"}}
                      {:application/id 7
                       :event/type :application.event/submitted
-                      :event/actor "applicant"}]]
+                      :event/actor "applicant"
+                      :event/time 13}]]
     (let [events (into
                   base-events
                   [{:application/id 7
@@ -299,9 +300,9 @@
                   :subject "Application has been returned for modifications (2001/3, \"Application title\")"
                   :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" for modifications to the applicant Alice Applicant.\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
                 [{:to-user "assistant"
-                  :subject "A new application has been submitted (2001/3, \"Application title\")"
-                  :body "Dear assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                  :subject "Application has been re-submitted (2001/3, \"Application title\")"
+                  :body "Dear assistant,\n\nApplication 2001/3, \"Application title\" has been re-submitted by Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                  {:to-user "handler"
-                  :subject "A new application has been submitted (2001/3, \"Application title\")"
-                  :body "Dear Hannah Handler,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]]
+                  :subject "Application has been re-submitted (2001/3, \"Application title\")"
+                  :body "Dear Hannah Handler,\n\nApplication 2001/3, \"Application title\" has been re-submitted by Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]]
                (events-to-emails events)))))))

@@ -139,10 +139,16 @@
                         :t.email.application-licenses-added/message))
 
 (defmethod event-to-emails-impl :application.event/submitted [event application]
-  (emails-to-recipients (handlers application)
-                        event application
-                        :t.email.application-submitted/subject
-                        :t.email.application-submitted/message))
+  (if (= (:event/time event)
+         (:application/first-submitted application))
+    (emails-to-recipients (handlers application)
+                          event application
+                          :t.email.application-submitted/subject
+                          :t.email.application-submitted/message)
+    (emails-to-recipients (handlers application)
+                          event application
+                          :t.email.application-resubmitted/subject
+                          :t.email.application-resubmitted/message)))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
   (emails-to-recipients (:application/commenters event)
