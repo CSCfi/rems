@@ -35,7 +35,7 @@
             {:params {:application-id application-id
                       :member member}
              :handler (fn [_]
-                        (flash-message/show-success! :invite-member (text :t.actions/member-invited))
+                        (flash-message/show-success! :change-members (text :t.actions/member-invited))
                         (collapse-action-form action-form-id)
                         (on-finished))
              :error-handler (flash-message/default-error-handler :invite-member-errors (text :t.actions/invite-member))}))

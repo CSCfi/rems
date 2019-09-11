@@ -33,12 +33,12 @@
                                 (select-keys member [:name :email]))
                       :comment comment}
              :handler (flash-message/default-success-handler
-                       :top
+                       :change-members
                        description
                        (fn [_]
                          (collapse-action-form collapse-id)
                          (on-finished)))
-             :error-handler (flash-message/default-error-handler :top description)}))
+             :error-handler (flash-message/default-error-handler :change-members description)}))
    {}))
 
 (defn remove-member-action-button [element-id]
