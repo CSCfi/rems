@@ -2,8 +2,8 @@
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.dropdown :as dropdown]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text get-localized-title]]
             [rems.util :refer [fetch post!]]))
 
@@ -38,15 +38,19 @@
 (rf/reg-event-fx
  ::send-change-resources
  (fn [_ [_ {:keys [application-id resources comment on-finished]}]]
-   (post! "/api/applications/change-resources"
-          {:params (merge {:application-id application-id
-                           :catalogue-item-ids (vec resources)}
-                          (when comment
-                            {:comment comment}))
-           :handler (fn [_]
-                      (collapse-action-form action-form-id)
-                      (on-finished))
-           :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.actions/change-resources)]
+     (post! "/api/applications/change-resources"
+            {:params (merge {:application-id application-id
+                             :catalogue-item-ids (vec resources)}
+                            (when comment
+                              {:comment comment}))
+             :handler (flash-message/default-success-handler
+                       :change-resources
+                       description
+                       (fn [_]
+                         (collapse-action-form action-form-id)
+                         (on-finished)))
+             :error-handler (flash-message/default-error-handler :change-resources description)}))
    {}))
 
 (defn change-resources-action-button [initial-resources]

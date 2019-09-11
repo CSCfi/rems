@@ -678,6 +678,7 @@
      {:id "resources"
       :title (text :t.form/resources)
       :always [:div.form-items.form-group
+               [flash-message/component :change-resources]
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
                        [render-resource resource]))]
