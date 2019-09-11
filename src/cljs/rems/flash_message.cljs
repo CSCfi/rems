@@ -1,5 +1,6 @@
 (ns rems.flash-message
-  (:require [re-frame.core :as rf]
+  (:require [cljs.test :refer-macros [deftest is testing]]
+            [re-frame.core :as rf]
             [reagent.core :as reagent]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms]
@@ -20,10 +21,22 @@
   (let [expires (get message :expires 0)]
     (< expires (current-time-millis))))
 
+(defn- location-to-id [location]
+  (str "flash-message-"
+       (cond
+         (keyword? location) (name location)
+         (vector? location) (str (name (first location))
+                                 "-"
+                                 (second location)))))
+
+(deftest location-to-id-test
+  (is (= "flash-message-top" (location-to-id :top)))
+  (is (= "flash-message-attachment-10" (location-to-id [:attachment 10]))))
+
 (rf/reg-event-fx
  ::show-flash-message
  (fn [{:keys [db]} [_ message]]
-   (focus/focus-element-async "#flash-message")
+   (focus/focus-element-async (str "#" (location-to-id (:location message))))
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message (assoc message :expires (+ 500 (current-time-millis))))}))
 
@@ -53,7 +66,9 @@
     (fn []
       (let [message @(rf/subscribe [::message])]
         (when (= location (:location message))
-          [atoms/flash-message message])))}))
+          [atoms/flash-message {:id (location-to-id (:location message))
+                                :status (:status message)
+                                :contents (:contents message)}])))}))
 
 ;;; Helpers for typical messages
 

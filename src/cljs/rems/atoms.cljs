@@ -51,11 +51,14 @@
 (defn flash-message
   "Displays a notification (aka flash) message.
 
+   :id - HTML element ID
    :status   - one of the alert types from Bootstrap i.e. :success, :info, :warning or :danger
    :contents - content to show inside the notification"
-  [{status :status contents :contents}]
+  [{:keys [id status contents]}]
   (when status
-    [:div#flash-message.alert {:class (str "alert-" (name status))} contents]))
+    [:div.alert {:class (str "alert-" (name status))
+                 :id id}
+     contents]))
 
 (defn readonly-checkbox
   "Displays a checkbox."
