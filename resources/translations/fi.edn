@@ -224,8 +224,9 @@
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nVoit tarkastella hakemusta ja päätöstä: %6"
                                  :subject-to-handler "Hakemus hylätty (%3)"
                                  :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :application-closed {:subject "Hakemus suljettu (%3)"
+          :application-closed {:subject-to-applicant "Hakemuksesi on suljettu (%3)"
                                :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nTarkastele hakemusta: %5"
+                               :subject-to-handler "Hakemus suljettu (%3)"
                                :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %5"}
           :application-returned {:subject "Hakemus palautettu (%3)"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksi.\n\nVoit muokata hakemusta ja lähettää sen uudelleen: %6"

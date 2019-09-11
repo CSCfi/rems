@@ -115,11 +115,11 @@
 (defmethod event-to-emails-impl :application.event/closed [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
-                                :t.email.application-closed/subject
+                                :t.email.application-closed/subject-to-applicant
                                 :t.email.application-closed/message-to-applicant)
           (emails-to-recipients (other-handlers event application)
                                 event application
-                                :t.email.application-closed/subject
+                                :t.email.application-closed/subject-to-handler
                                 :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/returned [event application]
