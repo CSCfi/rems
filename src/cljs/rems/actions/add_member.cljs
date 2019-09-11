@@ -50,7 +50,7 @@
                       (collapse-action-form action-form-id)
                       (rf/dispatch [::set-done? true])
                       (on-finished))
-           :error-handler (flash-message/default-error-handler (text :t.actions/add-member))})
+           :error-handler (flash-message/default-error-handler :top (text :t.actions/add-member))})
    {}))
 
 (defn add-member-action-button []

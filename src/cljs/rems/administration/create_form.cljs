@@ -183,13 +183,14 @@
        (send-verb send-url
                   {:params request
                    :handler (flash-message/default-success-handler
+                             :top
                              description
                              (fn [response]
                                (dispatch! (str "#/administration/forms/"
                                                (if edit?
                                                  (::form-id db)
                                                  (response :id))))))
-                   :error-handler (flash-message/default-error-handler description)}))
+                   :error-handler (flash-message/default-error-handler :top description)}))
      {:db (assoc db ::form-errors form-errors)})))
 
 ;;;; preview auto-scrolling
@@ -444,7 +445,7 @@
     [:div
      [administration-navigator-container]
      [document-title (page-title edit-form?)]
-     [flash-message/component]
+     [flash-message/component :top]
      (if loading-form?
        [:div [spinner/big]]
        [:div.container-fluid.editor-content

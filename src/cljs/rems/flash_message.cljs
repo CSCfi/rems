@@ -27,17 +27,17 @@
    ;; TODO: flash the message with CSS
    {:db (assoc db ::message (assoc message :expires (+ 500 (current-time-millis))))}))
 
-(defn show-success! [contents]
+(defn show-success! [location contents]
   (rf/dispatch [::show-flash-message {:status :success
                                       :contents contents
                                       :page @(rf/subscribe [:page])}]))
 
-(defn show-error! [contents]
+(defn show-error! [location contents]
   (rf/dispatch [::show-flash-message {:status :danger
                                       :contents contents
                                       :page @(rf/subscribe [:page])}]))
 
-(defn component []
+(defn component [location]
   (reagent/create-class
    {:display-name "rems.flash-message/component"
 
@@ -54,33 +54,33 @@
 
 ;;; Helpers for typical messages
 
-(defn show-default-success! [description]
-  (show-success! [:div#status-success.flash-message-title
-                  (str description ": " (text :t.form/success))]))
+(defn show-default-success! [location description]
+  (show-success! location [:div#status-success.flash-message-title
+                           (str description ": " (text :t.form/success))]))
 
-(defn show-default-error! [description & more]
-  (show-error! (into [:<> [:div#status-failed.flash-message-title
-                           (str description ": " (text :t.form/failed))]]
-                     more)))
+(defn show-default-error! [location description & more]
+  (show-error! location (into [:<> [:div#status-failed.flash-message-title
+                                    (str description ": " (text :t.form/failed))]]
+                              more)))
 
-(defn default-success-handler [description on-success]
+(defn default-success-handler [location description on-success]
   (fn [response]
     (if (:success response)
       (do
-        (show-default-success! description)
+        (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! description))))
+      (show-default-error! location description))))
 
-(defn status-update-handler [description on-success]
+(defn status-update-handler [location description on-success]
   (fn [response]
     (if (:success response)
       (do
-        (show-default-success! description)
+        (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! description (status-flags/format-update-failure response)))))
+      (show-default-error! location description (status-flags/format-update-failure response)))))
 
-(defn default-error-handler [description]
+(defn default-error-handler [location description]
   (fn [response]
-    (show-default-error! description (:status-text response))))
+    (show-default-error! location description (:status-text response))))

@@ -87,11 +87,12 @@
                         ;; create disabled catalogue items by default
                         (assoc :enabled false))
             :handler (flash-message/default-success-handler
+                      :top
                       description
                       (fn [response]
                         (dispatch! (str "#/administration/catalogue-items/"
                                         (:id response)))))
-            :error-handler (flash-message/default-error-handler description)}))
+            :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
 (defn- edit-catalogue-item! [{:keys [db]} [_ request]]
@@ -101,10 +102,11 @@
           {:params {:id id
                     :localizations (:localizations request)}
            :handler (flash-message/default-success-handler
+                     :top
                      description
                      (fn [_]
                        (dispatch! (str "#/administration/catalogue-items/" id))))
-           :error-handler (flash-message/default-error-handler description)}))
+           :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
 (rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)
@@ -276,7 +278,7 @@
     [:div
      [administration-navigator-container]
      [document-title (page-title editing?)]
-     [flash-message/component]
+     [flash-message/component :top]
      [collapsible/component
       {:id "create-catalogue-item"
        :title (page-title editing?)

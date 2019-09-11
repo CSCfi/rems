@@ -142,10 +142,11 @@
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
           :handler (flash-message/default-success-handler
+                    :top
                     description
                     (fn [_]
                       (rf/dispatch [::fetch-application application-id])))
-          :error-handler (flash-message/default-error-handler description)}))
+          :error-handler (flash-message/default-error-handler :top description)}))
 
 (rf/reg-event-fx
  ::save-application
@@ -166,10 +167,10 @@
           :handler (fn [response]
                      (cond
                        (not (:success response))
-                       (flash-message/show-default-error! description)
+                       (flash-message/show-default-error! :top description)
 
                        (not (accepted-licenses? application userid))
-                       (flash-message/show-error! (text :t.actions/licenses-not-accepted-error))
+                       (flash-message/show-error! :top (text :t.actions/licenses-not-accepted-error))
 
                        :else
                        (post! "/api/applications/submit"
@@ -178,12 +179,12 @@
                                           (if (:success response)
                                             (do
                                               (rf/dispatch [::fetch-application application-id])
-                                              (flash-message/show-default-success! description))
+                                              (flash-message/show-default-success! :top description))
                                             (do
                                               (rf/dispatch [::set-validation-errors (:errors response)])
-                                              (flash-message/show-error! [format-validation-errors application (:errors response)]))))
-                               :error-handler (flash-message/default-error-handler description)})))
-          :error-handler (flash-message/default-error-handler description)}))
+                                              (flash-message/show-error! :top [format-validation-errors application (:errors response)]))))
+                               :error-handler (flash-message/default-error-handler :top description)})))
+          :error-handler (flash-message/default-error-handler :top description)}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -205,11 +206,12 @@
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
              :handler (flash-message/default-success-handler
+                       :top
                        description
                        (fn [response]
                          (rf/dispatch [:rems.spa/user-triggered-navigation])
                          (dispatch! (str "/#/application/" (:application-id response)))))
-             :error-handler (flash-message/default-error-handler description)}))
+             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
@@ -222,13 +224,14 @@
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
             :handler (flash-message/default-success-handler
+                      :top
                       description
                       (fn [response]
                         ;; no race condition here: events are handled in a FIFO manner
                         (rf/dispatch [::set-field-value field-id (str (:id response))])
                         (rf/dispatch [::set-attachment-success field-id])
                         (rf/dispatch [::save-application description])))
-            :error-handler (flash-message/default-error-handler description)})
+            :error-handler (flash-message/default-error-handler :top description)})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
@@ -691,7 +694,7 @@
    [:div.row
     [:div.col-lg-4.order-lg-last
      [:div#float-actions.mb-3
-      [flash-message/component]
+      [flash-message/component :top]
       [disabled-items-warning application]
       [actions-form application]]]
     [:div.col-lg-8

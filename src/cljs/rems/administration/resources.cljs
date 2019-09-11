@@ -42,8 +42,9 @@
  (fn [_ [_ item description dispatch-on-finished]]
    (put! "/api/resources/archived"
          {:params (select-keys item [:id :archived])
-          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
-          :error-handler (flash-message/default-error-handler description)})
+          :handler (flash-message/status-update-handler
+                    :top description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
 (rf/reg-event-fx
@@ -51,8 +52,9 @@
  (fn [_ [_ item description dispatch-on-finished]]
    (put! "/api/resources/enabled"
          {:params (select-keys item [:id :enabled])
-          :handler (flash-message/status-update-handler description #(rf/dispatch dispatch-on-finished))
-          :error-handler (flash-message/default-error-handler description)})
+          :handler (flash-message/status-update-handler
+                    :top description #(rf/dispatch dispatch-on-finished))
+          :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
 (rf/reg-event-fx
@@ -118,7 +120,7 @@
   (into [:div
          [administration-navigator-container]
          [document-title (text :t.administration/resources)]
-         [flash-message/component]]
+         [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]
