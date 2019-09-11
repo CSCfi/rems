@@ -308,7 +308,7 @@
                   :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned to you for modifications.\n\nYou can modify and resubmit the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                  {:to-user "assistant"
                   :subject "Application has been returned for modifications (2001/3, \"Application title\")"
-                  :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" for modifications to the applicant Alice Applicant.\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+                  :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
                 [{:to-user "assistant"
                   :subject "Application has been resubmitted (2001/3, \"Application title\")"
                   :body "Dear assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}

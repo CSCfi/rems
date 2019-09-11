@@ -232,7 +232,7 @@
                                :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nYou can review the application: %6"}
           :application-returned {:subject "Application has been returned for modifications (%3)"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been returned to you for modifications.\n\nYou can modify and resubmit the application: %6"
-                                 :message-to-handler "Dear %1,\n\n%2 has returned the application %3 for modifications to the applicant %4.\n\nView application: %6"}
+                                 :message-to-handler "Dear %1,\n\n%2 has returned the application %3 to the applicant %4 for modifications.\n\nYou can view the application: %6"}
           :application-licenses-added {:subject "New terms of use waiting for approval (%3)"
                                        :message "Dear %1,\n\n%2 has requested your acceptance for new terms of use for application %3.\n\nYou can view the application and accept the terms of use: %6"}
           :application-resubmitted {:subject "Application has been resubmitted (%3)"
