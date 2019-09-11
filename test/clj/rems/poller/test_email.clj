@@ -39,9 +39,6 @@
               :from "rems@rems.rems"}
              @message-atom)))))
 
-(defn sort-emails [emails]
-  (sort-by #(or (:to %) (:to-user %)) emails))
-
 (def ^:private get-catalogue-item
   {10 {:localizations {:en {:langcode :en
                             :title "en title 11"}
@@ -81,6 +78,20 @@
    "handler" {:commonName "Hannah Handler"
               :email "hannah@handler.com"}})
 
+(defn email-recipient [email]
+  (or (:to email) (:to-user email)))
+
+(defn sort-emails [emails]
+  (sort-by email-recipient emails))
+
+(defn email-recipients [emails]
+  (set (mapv #(or (:to %) (:to-user %)) emails)))
+
+(defn email-to [user emails]
+  ;; return arbitrary email if none match to get better errors from tests
+  (or (first (filter #(= user (email-recipient %)) emails))
+      (first emails)))
+
 (defn emails [base-events event]
   (let [all-events (concat base-events [event])
         application (-> (reduce model/application-view nil all-events)
@@ -116,13 +127,12 @@
                       :event/time 13}
         base-events (conj created-events submit-event)]
     (testing "submitted"
-      (is (= [{:to-user "assistant"
-               :subject "A new application has been submitted (2001/3, \"Application title\")"
-               :body "Dear assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-              {:to-user "handler"
-               :subject "A new application has been submitted (2001/3, \"Application title\")"
-               :body "Dear Hannah Handler,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-             (emails created-events submit-event))))
+      (let [mails (emails created-events submit-event)]
+        (is (= #{"assistant" "handler"} (email-recipients mails)))
+        (is (= {:to-user "assistant"
+                :subject "A new application has been submitted (2001/3, \"Application title\")"
+                :body "Dear assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+               (email-to "assistant" mails)))))
     (testing "member-invited"
       (is (= [{:to "somebody@example.com",
                :subject "Invitation to participate in an application",
@@ -140,36 +150,33 @@
                    :application/commenters ["commenter1" "commenter2"]}
           requested-events (conj base-events request)]
       (testing "comment-request"
-        (is (= [{:to-user "commenter1"
-                 :subject "Review request (2001/3, \"Application title\")"
-                 :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can review the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "commenter2"
-                 :subject "Review request (2001/3, \"Application title\")"
-                 :body "Dear commenter2,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can review the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails base-events request))))
+        (let [mails (emails base-events request)]
+          (is (= #{"commenter1" "commenter2"} (email-recipients mails)))
+          (is (= {:to-user "commenter1"
+                  :subject "Review request (2001/3, \"Application title\")"
+                  :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can review the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "commenter1" mails)))))
       (testing "commented"
-        (is (= [{:to-user "assistant"
-                 :subject "Application has been reviewed (2001/3, \"Application title\")"
-                 :body "Dear assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the review: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "handler"
-                 :subject "Application has been reviewed (2001/3, \"Application title\")"
-                 :body "Dear Hannah Handler,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the review: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails requested-events {:application/id 7
-                                         :event/type :application.event/commented
-                                         :event/actor "commenter2"
-                                         :application/request-id "r1"
-                                         :application/comment "this is a comment"})))))
+        (let [mails (emails requested-events {:application/id 7
+                                              :event/type :application.event/commented
+                                              :event/actor "commenter2"
+                                              :application/request-id "r1"
+                                              :application/comment "this is a comment"})]
+          (is (= #{"assistant" "handler"} (email-recipients mails)))
+          (is (= {:to-user "assistant"
+                  :subject "Application has been reviewed (2001/3, \"Application title\")"
+                  :body "Dear assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the review: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "assistant" mails))))))
     (testing "remarked"
-      (is (= [{:to-user "assistant"
+      (let [mails (emails base-events {:application/id 7
+                                       :event/type :application.event/remarked
+                                       :event/actor "remarker"
+                                       :application/comment "remark!"})]
+        (is (= #{"assistant" "handler"} (email-recipients mails)))
+        (is (= {:to-user "assistant"
                :subject "Application has been commented on (2001/3, \"Application title\")"
-               :body "Dear assistant,\n\nremarker has commented on the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the comment: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-              {:to-user "handler"
-               :subject "Application has been commented on (2001/3, \"Application title\")"
-               :body "Dear Hannah Handler,\n\nremarker has commented on the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the comment: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-             (emails base-events {:application/id 7
-                                  :event/type :application.event/remarked
-                                  :event/actor "remarker"
-                                  :application/comment "remark!"}))))
+                :body "Dear assistant,\n\nremarker has commented on the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the comment: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+               (email-to "assistant" mails)))))
     (let [add-member {:application/id 7
                       :event/type :application.event/member-added
                       :event/actor "handler"
@@ -183,53 +190,46 @@
                  :subject "Added as a member of an application (2001/3, \"Application title\")",
                  :body "Dear member,\n\nYou've been added as a member of application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
                (emails base-events add-member))))
-      ;; TODO test member emails separately
       (testing "licenses-added"
-        (is (= [{:to-user "applicant"
-                 :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
-                 :body "Dear Alice Applicant,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "member"
-                 :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
-                 :body "Dear member,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "somebody"
-                 :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
-                 :body "Dear somebody,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails member-events {:application/id 7
-                                      :event/type :application.event/licenses-added
-                                      :event/actor "handler"
-                                      :application/licenses [{:license/id 1234}]}))))
+        (let [mails (emails member-events {:application/id 7
+                                           :event/type :application.event/licenses-added
+                                           :event/actor "handler"
+                                           :application/licenses [{:license/id 1234}]})]
+          (is (= #{"applicant" "member" "somebody"} (email-recipients mails)))
+          (is (= {:to-user "applicant"
+                  :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
+                  :body "Dear Alice Applicant,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "applicant" mails)))))
       (testing "approved"
-        (is (= [{:to-user "applicant"
+        (let [mails (emails member-events {:application/id 7
+                                           :event/type :application.event/approved
+                                           :event/actor "handler"})]
+          (is (= #{"applicant" "member" "somebody" "assistant"} (email-recipients mails)))
+          (is (= {:to-user "applicant"
+                  :subject "Your application has been approved (2001/3, \"Application title\")"
+                  :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "applicant" mails)))
+          (is (= {:to-user "member"
                  :subject "Your application has been approved (2001/3, \"Application title\")"
-                 :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "assistant"
-                 :subject "Application approved (2001/3, \"Application title\")"
-                 :body "Dear assistant,\n\nHannah Handler has approved the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "member"
-                 :subject "Your application has been approved (2001/3, \"Application title\")"
-                 :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "somebody"
-                 :subject "Your application has been approved (2001/3, \"Application title\")"
-                 :body "Dear somebody,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails member-events {:application/id 7
-                                      :event/type :application.event/approved
-                                      :event/actor "handler"}))))
+                  :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "member" mails)))
+          (is (= {:to-user "assistant"
+                  :subject "Application approved (2001/3, \"Application title\")"
+                  :body "Dear assistant,\n\nHannah Handler has approved the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "assistant" mails)))))
       (testing "closed"
-        (is (= [{:to-user "applicant"
+        (let [mails (emails member-events {:application/id 7
+                                           :event/type :application.event/closed
+                                           :event/actor "assistant"})]
+          (is (= #{"applicant" "member" "somebody" "handler"} (email-recipients mails)))
+          (is (= {:to-user "applicant"
                  :subject "Your application has been closed (2001/3, \"Application title\")"
-                 :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "handler"
-                 :subject "Application closed (2001/3, \"Application title\")"
-                 :body "Dear Hannah Handler,\n\nassistant has closed the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "member"
-                 :subject "Your application has been closed (2001/3, \"Application title\")"
-                 :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "somebody"
-                 :subject "Your application has been closed (2001/3, \"Application title\")"
-                 :body "Dear somebody,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails member-events {:application/id 7
-                                      :event/type :application.event/closed
-                                      :event/actor "assistant"})))))
+                  :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "applicant" mails)))
+          (is (= {:to-user "handler"
+                  :subject "Application closed (2001/3, \"Application title\")"
+                  :body "Dear Hannah Handler,\n\nassistant has closed the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "handler" mails))))))
     (let [decision-request {:application/id 7
                             :event/type :application.event/decision-requested
                             :event/actor "assistant"
@@ -242,16 +242,15 @@
                  :body "Dear decider,\n\nassistant has requested your decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
                (emails base-events decision-request))))
       (testing "decided"
-        (is (= [{:to-user "assistant",
-                 :subject "Decision notification (2001/3, \"Application title\")",
-                 :body "Dear assistant,\n\ndecider has sent a decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "handler",
-                 :subject "Decision notification (2001/3, \"Application title\")",
-                 :body "Dear Hannah Handler,\n\ndecider has sent a decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails requested-events {:application/id 7
-                                         :event/type :application.event/decided
-                                         :event/actor "decider"
-                                         :application/decision :approved})))))
+        (let [mails (emails requested-events {:application/id 7
+                                              :event/type :application.event/decided
+                                              :event/actor "decider"
+                                              :application/decision :approved})]
+          (is (= #{"assistant" "handler"} (email-recipients mails)))
+          (is (= {:to-user "assistant",
+                  :subject "Decision notification (2001/3, \"Application title\")",
+                  :body "Dear assistant,\n\ndecider has sent a decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "assistant" mails))))))
     (testing "application rejected"
       (is (= [{:to-user "applicant"
                :subject "Your application has been rejected (2001/3, \"Application title\")",
@@ -262,33 +261,28 @@
              (emails base-events {:application/id 7
                                   :event/type :application.event/rejected
                                   :event/actor "handler"}))))
-    (testing "id field can be overrided"
+    (testing "id field can be overridden"
       (with-redefs [rems.config/env (assoc rems.config/env :application-id-column :id)]
-        (is (= [{:to-user "assistant"
-                 :subject "A new application has been submitted (7, \"Application title\")"
-                 :body "Dear assistant,\n\nAlice Applicant has submitted a new application 7, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "handler"
-                 :subject "A new application has been submitted (7, \"Application title\")"
-                 :body "Dear Hannah Handler,\n\nAlice Applicant has submitted a new application 7, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails created-events submit-event)))))
+        (is (= {:to-user "assistant"
+                :subject "A new application has been submitted (7, \"Application title\")"
+                :body "Dear assistant,\n\nAlice Applicant has submitted a new application 7, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+               (email-to "assistant" (emails created-events submit-event))))))
     (testing "application title is optional"
-      (is (= [{:to-user "assistant"
-               :subject "A new application has been submitted (2001/3)"
-               :body "Dear assistant,\n\nAlice Applicant has submitted a new application 2001/3 to access resource(s) en title 11.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-              {:to-user "handler"
-               :subject "A new application has been submitted (2001/3)"
-               :body "Dear Hannah Handler,\n\nAlice Applicant has submitted a new application 2001/3 to access resource(s) en title 11.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-             (emails [{:application/id 7
-                       :application/external-id "2001/3"
-                       :event/type :application.event/created
-                       :event/actor "applicant"
-                       :application/resources [{:catalogue-item/id 10
-                                                :resource/ext-id "urn:11"}]
-                       :workflow/id 5
-                       :workflow/type :workflow/dynamic}]
-                     {:application/id 7
-                      :event/type :application.event/submitted
-                      :event/actor "applicant"}))))
+      (is (= {:to-user "assistant"
+              :subject "A new application has been submitted (2001/3)"
+              :body "Dear assistant,\n\nAlice Applicant has submitted a new application 2001/3 to access resource(s) en title 11.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+             (email-to "assistant"
+                       (emails [{:application/id 7
+                                 :application/external-id "2001/3"
+                                 :event/type :application.event/created
+                                 :event/actor "applicant"
+                                 :application/resources [{:catalogue-item/id 10
+                                                          :resource/ext-id "urn:11"}]
+                                 :workflow/id 5
+                                 :workflow/type :workflow/dynamic}]
+                               {:application/id 7
+                                :event/type :application.event/submitted
+                                :event/actor "applicant"})))))
     (testing "returning application to applicant and resubmitting"
       (let [return {:application/id 7
                     :event/type :application.event/returned
@@ -305,10 +299,9 @@
                  :subject "Application has been returned for modifications (2001/3, \"Application title\")"
                  :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
                (emails base-events return)))
-        (is (= [{:to-user "assistant"
-                 :subject "Application has been resubmitted (2001/3, \"Application title\")"
-                 :body "Dear assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
-                {:to-user "handler"
-                 :subject "Application has been resubmitted (2001/3, \"Application title\")"
-                 :body "Dear Hannah Handler,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-               (emails returned-events resubmit)))))))
+        (let [mails (emails returned-events resubmit)]
+          (is (= #{"assistant" "handler"} (email-recipients mails)))
+          (is (= {:to-user "assistant"
+                  :subject "Application has been resubmitted (2001/3, \"Application title\")"
+                  :body "Dear assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                 (email-to "assistant" mails))))))))
