@@ -29,11 +29,13 @@
 
 (defn show-success! [location contents]
   (rf/dispatch [::show-flash-message {:status :success
+                                      :location location
                                       :contents contents
                                       :page @(rf/subscribe [:page])}]))
 
 (defn show-error! [location contents]
   (rf/dispatch [::show-flash-message {:status :danger
+                                      :location location
                                       :contents contents
                                       :page @(rf/subscribe [:page])}]))
 
@@ -50,7 +52,8 @@
     :reagent-render
     (fn []
       (let [message @(rf/subscribe [::message])]
-        [atoms/flash-message message]))}))
+        (when (= location (:location message))
+          [atoms/flash-message message])))}))
 
 ;;; Helpers for typical messages
 
