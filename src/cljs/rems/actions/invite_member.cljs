@@ -29,16 +29,19 @@
 (rf/reg-event-fx
  ::send-invite-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-   (if-let [errors (validate-member member)]
-     (flash-message/show-error! :invite-member-errors (status-modal/format-errors errors))
-     (post! "/api/applications/invite-member"
-            {:params {:application-id application-id
-                      :member member}
-             :handler (fn [_]
-                        (flash-message/show-success! :change-members (text :t.actions/member-invited))
-                        (collapse-action-form action-form-id)
-                        (on-finished))
-             :error-handler (flash-message/default-error-handler :invite-member-errors (text :t.actions/invite-member))}))
+   (let [description (text :t.actions/invite-member)]
+     (if-let [errors (validate-member member)]
+       (flash-message/show-error! :invite-member-errors (status-modal/format-errors errors))
+       (post! "/api/applications/invite-member"
+              {:params {:application-id application-id
+                        :member member}
+               :handler (flash-message/default-success-handler
+                         :change-members
+                         description
+                         (fn [_]
+                           (collapse-action-form action-form-id)
+                           (on-finished)))
+               :error-handler (flash-message/default-error-handler :invite-member-errors description)})))
    {}))
 
 (defn invite-member-action-button []

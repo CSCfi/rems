@@ -39,14 +39,17 @@
 (rf/reg-event-fx
  ::send-add-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-   (post! "/api/applications/add-member"
-          {:params {:application-id application-id
-                    :member (select-keys member [:userid])}
-           :handler (fn [_]
-                      (flash-message/show-success! :change-members (text :t.actions/member-added))
-                      (collapse-action-form action-form-id)
-                      (on-finished))
-           :error-handler (flash-message/default-error-handler :change-members (text :t.actions/add-member))})
+   (let [description (text :t.actions/add-member)]
+     (post! "/api/applications/add-member"
+            {:params {:application-id application-id
+                      :member (select-keys member [:userid])}
+             :handler (flash-message/default-success-handler
+                       :change-members
+                       description
+                       (fn [_]
+                         (collapse-action-form action-form-id)
+                         (on-finished)))
+             :error-handler (flash-message/default-error-handler :change-members description)}))
    {}))
 
 (defn add-member-action-button []

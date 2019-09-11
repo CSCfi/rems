@@ -23,8 +23,6 @@
             :licenses-not-accepted-error "Terms of use not accepted."
             :load-application-states "Load application states"
             :member "Member"
-            :member-invited "Member invited."
-            :member-added "Member added."
             :member-name "Name"
             :member-email "Email"
             :name-and-email-required "Name and email are required."
