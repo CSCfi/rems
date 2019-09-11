@@ -26,6 +26,29 @@
   (is (= (map-structure (loc-en))
          (map-structure (loc-fi)))))
 
+(defn extract-format-parameters [string]
+  (set (re-seq #"%\d+" string)))
+
+(deftest test-extract-format-parameters
+  (is (= #{} (extract-format-parameters "hey you are 100% correct!")))
+  (is (= #{"%3" "%5" "%7"} (extract-format-parameters "user %3 has made %7 alterations in %5!"))))
+
+(deftest test-format-parameters-match
+  (letfn [(check [left right]
+            (cond
+              (string? left)
+              (do
+                (is (string? right))
+                (is (= (extract-format-parameters left)
+                       (extract-format-parameters right))))
+              (map? left)
+              (doseq [k (keys left)]
+                (is (map? right))
+                (testing k
+                  (check (get left k) (get right k))))))]
+    (testing "[:en vs :fi]"
+      (check (loc-en) (loc-fi)))))
+
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
   ;; --include is needed to exclude editor backup files etc.
