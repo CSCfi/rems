@@ -12,7 +12,7 @@
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
-            [rems.actions.invite-member :refer [invite-member-action-button invite-member-form invite-member-status]]
+            [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
@@ -600,7 +600,7 @@
                              :group? true
                              :can-remove? can-uninvite?}])))
       :footer [:div
-               [invite-member-status]
+               [flash-message/component :invite-member]
                [add-member-status]
                [:div.commands
                 (when can-invite? [invite-member-action-button])
