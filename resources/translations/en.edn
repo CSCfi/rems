@@ -230,9 +230,8 @@
           :application-returned {:subject "Application has been returned for modifications (%3)"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been returned to you for modifications.\n\nYou can modify and re-submit the application: %6"
                                  :message-to-handler "Dear %1,\n\n%2 has returned the application %3 for modifications to the applicant %4.\n\nView application: %6"}
-          :application-licenses-added {:subject "Terms of use added to application (%3)"
-                                       :message-to-applicant "Dear %1,\n\nTerms of use have been added to your application %3. They need to be accepted before gaining access to the resources.\n\nView application: %6"
-                                       :message-to-handler "Dear %1,\n\n%2 has added terms of use to the application %3 from %4.\n\nView application: %6"}
+          :application-licenses-added {:subject "New terms of use waiting for approval (%3)"
+                                       :message "Dear %1,\n\n%2 has requested your acceptance for new terms of use for application %3.\n\nYou can view the application and accept the terms of use: %6"}
           :application-submitted {:subject "A new application has been submitted (%3)"
                                   :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can view the application: %6"}
           :comment-requested {:subject "Review requested (%2: %3)"

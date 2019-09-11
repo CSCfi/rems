@@ -133,14 +133,10 @@
                                 :t.email.application-returned/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/licenses-added [event application]
-  (concat (emails-to-recipients (applicant-and-members application)
-                                event application
-                                :t.email.application-licenses-added/subject
-                                :t.email.application-licenses-added/message-to-applicant)
-          (emails-to-recipients (other-handlers event application)
-                                event application
-                                :t.email.application-licenses-added/subject
-                                :t.email.application-licenses-added/message-to-handler)))
+  (emails-to-recipients (applicant-and-members application)
+                        event application
+                        :t.email.application-licenses-added/subject
+                        :t.email.application-licenses-added/message))
 
 (defmethod event-to-emails-impl :application.event/submitted [event application]
   (emails-to-recipients (handlers application)

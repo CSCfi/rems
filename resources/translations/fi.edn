@@ -229,8 +229,7 @@
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksi.\n\nVoit muokata hakemusta ja lähettää sen uudelleen: %6"
                                  :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nTarkastele hakemusta: %6"}
           :application-licenses-added {:subject "Hakemukseen lisätty käyttöehtoja (%3)"
-                                       :message-to-applicant "Hyvä %1,\n\nHakemukseesi %3 on lisätty käyttöehtoja. Käyttöehdot täytyy hyväksyä ennen käyttöoikeuden saamista.\n\nTarkastele hakemusta: %5"
-                                       :message-to-handler "Hyvä %1,\n\n%2 on lisännyt käyttöehtoja käyttäjän %4 hakemukseen %3.\n\nTarkastele hakemusta: %5"}
+                                       :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi uusiin käyttöehtoihin hakemukselle %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %6"}
           :application-submitted {:subject "Uusi hakemus (%3)"
                                   :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nTarkastele hakemusta: %6"}
           :comment-requested {:subject "Katselmointipyyntö (%2: %3)"

@@ -67,6 +67,11 @@
                               :field/optional false
                               :field/type :description}]}))
 
+(def ^:private get-license
+  (constantly {:id 1234
+               :licensetype "text"
+               :textcontent "foobar"}))
+
 (defn ^:private get-nothing [& _]
   nil)
 
@@ -81,7 +86,7 @@
                         (model/enrich-with-injections {:get-workflow get-workflow
                                                        :get-catalogue-item get-catalogue-item
                                                        :get-form-template get-form-template
-                                                       :get-license get-nothing
+                                                       :get-license get-license
                                                        :get-user get-nothing
                                                        :get-users-with-role get-nothing
                                                        :get-attachments-for-application get-nothing}))]
@@ -132,6 +137,10 @@
                     :event/actor "handler"
                     :application/member {:userid "member"}}
                    {:application/id 7
+                    :event/type :application.event/licenses-added
+                    :event/actor "handler"
+                    :application/licenses [{:license/id 1234}]}
+                   {:application/id 7
                     :event/type :application.event/decision-requested
                     :event/actor "assistant"
                     :application/request-id "r2"
@@ -173,6 +182,15 @@
               [{:to-user "member",
                 :subject "Added as a member of an application (2001/3, \"Application title\")",
                 :body "Dear member,\n\nYou've been added as a member of application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+              [{:to-user "applicant"
+                :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
+                :body "Dear Alice Applicant,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+               {:to-user "member"
+                :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
+                :body "Dear member,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+               {:to-user "somebody"
+                :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
+                :body "Dear somebody,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
               [{:to-user "decider",
                 :subject "Decision requested (assistant: 2001/3, \"Application title\")",
                 :body "Dear decider,\n\nassistant has requested your decision on application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
