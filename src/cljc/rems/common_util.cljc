@@ -13,9 +13,16 @@
 
 (defn index-by
   "Index the collection coll with given keys `ks`.
+  Result is a nested map, `(count ks)` levels deep, e.g.
 
-  Result is a map indexed by the first key
-  that contains a map indexed by the second key."
+    (index-by [:a :b] [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
+      ==> {1 {\"x\" {:a 1 :b \"x\"}
+              \"y\" {:a 1 :b \"y\"}}}
+
+  In case of non-unique keys, index-by picks the first value, e.g.
+
+    (index-by [:a] [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
+      ==> {1 {:a 1 :b \"x\"}}"
   [ks coll]
   (if (empty? ks)
     (first coll)
@@ -23,6 +30,13 @@
          (group-by (first ks))
          (map (fn [[k v]] [k (index-by (rest ks) v)]))
          (into {}))))
+
+(deftest test-index-by
+  (is (= {1 {"x" {:a 1 :b "x"}
+             "y" {:a 1 :b "y"}}}
+         (index-by [:a :b] [{:a 1 :b "x"} {:a 1 :b "y"}])))
+  (is (= {false 1 true 2}
+         (index-by [even?] [1 2 3 4]))))
 
 (defn distinct-by
   "Remove duplicates from sequence, comparing the value returned by key-fn.
