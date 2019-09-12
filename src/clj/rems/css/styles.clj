@@ -545,9 +545,7 @@
    [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
    [".children-inline-blocks > *" {:display :inline-block}]
-   [:.form-group {:text-align "initial"}
-    ;; make fieldset legends look the same as normal labels
-    [:legend {:font-size "inherit"}]]
+
    [:.navbar-flex {:display "flex"
                    :flex-direction "row"
                    :justify-content "space-between"
@@ -567,6 +565,11 @@
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
+   [:.form-group {:text-align "initial"}
+    ;; make fieldset legends look the same as normal labels
+    [:legend {:font-size "inherit"}]]
+   [:#application-fields
+    [:.application-field-label {:font-weight "bold"}]]
 
    ;; workflow editor
    [:.workflow-round dashed-form-group

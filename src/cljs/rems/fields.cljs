@@ -82,8 +82,8 @@
          :aria-describedby (when validation
                              (str (id-to-name id) "-error"))}))
      [(if fieldset
-        :legend
-        :label)
+        :legend.application-field-label
+        :label.application-field-label)
       (when (not fieldset)
         {:for (id-to-name id)})
       title " "
