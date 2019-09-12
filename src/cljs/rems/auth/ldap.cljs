@@ -1,10 +1,12 @@
 (ns rems.auth.ldap
   (:require [rems.atoms :refer [document-title]]
+            [rems.flash-message :as flash-message]
             [rems.text :refer [text]]))
 
 (defn login-component []
   [:div
    [document-title (text :t.ldap/title)]
+   [flash-message/component :top]
    [:form
     {:action "/ldap/login" :method "post"}
     [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]

@@ -9,6 +9,7 @@
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
+            [rems.flash-message :as flash-message]
             [rems.language-switcher :as language-switcher]
             [rems.modal :as modal]
             [rems.navbar :as nav]
@@ -79,6 +80,7 @@
   [:div.container
    [:div.example-page
     [document-title "Component Guide"]
+    [flash-message/component :top]
 
     [:h2 "Colors"]
     (example "Brand colors" [color-boxes])
