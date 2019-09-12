@@ -256,11 +256,9 @@
         upload-field-id (str (id-to-name id) "-input")
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document upload-field-id))))
         link (fn [attachment-id filename]
-               (if (empty? attachment-id)
-                 [:div.field.mr-2
-                  [:span.btn.btn-secondary.disabled (text :t.form/no-attachment)]]
+               (when-not (empty? attachment-id)
                  [:div.field
-                  [:a.btn.btn-secondary.mr-2
+                  [:a.btn.btn-outline-secondary.mr-2
                    {:href (str "/api/applications/attachment/" attachment-id)
                     :target :_blank}
                    filename " " [file-download]]]))
@@ -278,12 +276,12 @@
                                                               (.append "file" filecontent))]
                                               (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
-                      [:button.btn.btn-secondary
+                      [:button.btn.btn-outline-secondary
                        {:id (id-to-name id)
                         :type :button
                         :on-click click-upload}
                        (text :t.form/upload)]]
-        remove-button [:button.btn.btn-secondary.mr-2
+        remove-button [:button.btn.btn-outline-secondary.mr-2
                        {:type :button
                         :on-click (fn [event]
                                     (on-change "")
