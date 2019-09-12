@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.application :as application]
             [rems.atoms :refer [document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -13,14 +14,17 @@
 (rf/reg-event-fx
  ::enter-new-application-page
  (fn [{:keys [db]} [_ catalogue-item-ids]]
-   (post! "/api/applications/create"
-          {:params {:catalogue-item-ids catalogue-item-ids}
-           :handler (fn [response]
-                      (remove-catalogue-items-from-cart! catalogue-item-ids)
-                      (application/navigate-to (:application-id response) true))})
+   (let [description (text :t.applications/application)]
+     (post! "/api/applications/create"
+            {:params {:catalogue-item-ids catalogue-item-ids}
+             :handler (fn [response]
+                        (remove-catalogue-items-from-cart! catalogue-item-ids)
+                        (application/navigate-to (:application-id response) true))
+             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (defn new-application-page []
   [:div
    [document-title (text :t.applications/application)]
+   [flash-message/component :top]
    [spinner/big]])
