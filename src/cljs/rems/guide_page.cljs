@@ -11,11 +11,9 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.language-switcher :as language-switcher]
-            [rems.modal :as modal]
             [rems.navbar :as nav]
             [rems.phase :as phase]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table])
   (:require-macros [rems.guide-macros :refer [example]]))
 
@@ -110,10 +108,6 @@
 
     [:h2 "Collapsible component"]
     [collapsible/guide]
-
-    [:h2 "Modal"]
-    [modal/guide]
-    [status-modal/guide]
 
     [:h2 "Applications"]
     [application/guide]

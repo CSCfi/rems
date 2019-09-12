@@ -27,7 +27,6 @@
             :member-email "Sähköposti"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
             :no-handled-yet "Ei käsiteltyjä hakemuksia."
-            :ok "OK"
             :todo-applications "Avoimet hakemukset"
             :reject "Hylkää"
             :remark "Kirjaa huomio"
@@ -304,7 +303,6 @@
           :text "Kirjaudu sisään Haka-tunnuksin"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
-  :modal {:close-dialog "Sulje ilmoitus"}
   :navigation {:actions "Toiminnot"
                :administration "Ylläpito"
                :applications "Hakemukset"

@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
-            [rems.status-modal :as status-modal]
             [secretary.core :as secretary]))
 
 ;; TODO move to cljc
@@ -139,7 +138,6 @@
 (defn in-page-anchor-link [id]
   (fn [event]
     (.preventDefault event)
-    (status-modal/close) ; in case this link is from a modal dialog to the page behind it
     (when-let [element (.getElementById js/document id)]
       (.focus element))))
 

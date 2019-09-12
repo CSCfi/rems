@@ -5,7 +5,6 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms]
             [rems.focus :as focus]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]))
 
 (rf/reg-sub ::message (fn [db _] (::message db)))
@@ -83,8 +82,17 @@
                               more)))
 
 (defn format-errors [errors]
-  ;; TODO: inline when removing status modal
-  (status-modal/format-errors errors))
+  ;; TODO: copied as-is from status-modal; consider refactoring
+  (into [:<>]
+        (for [error errors]
+          [:p
+           (when (:key error)
+             (text (:key error)))
+           (when (:type error)
+             (text (:type error)))
+           (when-let [text (:status-text error)] text)
+           (when-let [text (:status error)]
+             (str " (" text ")"))])))
 
 (defn format-response-error [response]
   (if (:errors response)

@@ -35,7 +35,6 @@
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [dispatch! fetch parse-int]]
@@ -251,7 +250,6 @@
         grab-focus? @(rf/subscribe [::grab-focus?])]
     [:div
      [nav/navigation-widget page-id]
-     [status-modal/status-modal]
      [logo]
      [main-content page-id grab-focus?]
      [footer]]))

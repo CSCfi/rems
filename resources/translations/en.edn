@@ -27,7 +27,6 @@
             :member-email "Email"
             :name-and-email-required "Name and email are required."
             :no-handled-yet "No processed applications."
-            :ok "OK"
             :todo-applications "Open applications"
             :reject "Reject"
             :remark "Remark"
@@ -306,7 +305,6 @@
           :text "Login with Haka credentials"
           :title "Login"}
   :missing "Missing translation %1"
-  :modal {:close-dialog "Close dialog"}
   :navigation {:actions "Actions"
                :administration "Administration"
                :applications "Applications"
