@@ -31,7 +31,7 @@
  (fn [_ [_ {:keys [member application-id on-finished]}]]
    (let [description (text :t.actions/invite-member)]
      (if-let [errors (validate-member member)]
-       (flash-message/show-error! :invite-member-errors (status-modal/format-errors errors))
+       (flash-message/show-error! :invite-member-errors (flash-message/format-errors errors))
        (post! "/api/applications/invite-member"
               {:params {:application-id application-id
                         :member member}

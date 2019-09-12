@@ -5,6 +5,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms]
             [rems.focus :as focus]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]))
 
 (rf/reg-sub ::message (fn [db _] (::message db)))
@@ -81,6 +82,15 @@
                                     (str description ": " (text :t.form/failed))]]
                               more)))
 
+(defn format-errors [errors]
+  ;; TODO: inline when removing status modal
+  (status-modal/format-errors errors))
+
+(defn- format-response-error [response]
+  (if (:errors response)
+    (format-errors (:errors response))
+    (:status-text response)))
+
 (defn default-success-handler [location description on-success]
   (fn [response]
     (if (:success response)
@@ -88,7 +98,7 @@
         (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! location description))))
+      (show-default-error! location description (format-response-error response)))))
 
 (defn status-update-handler [location description on-success]
   (fn [response]
@@ -101,4 +111,4 @@
 
 (defn default-error-handler [location description]
   (fn [response]
-    (show-default-error! location description (:status-text response))))
+    (show-default-error! location description (format-response-error response))))
