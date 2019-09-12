@@ -20,10 +20,12 @@
 (rf/reg-event-db
  ::fetch-workflows
  (fn [db]
-   (fetch "/api/workflows/" {:url-params {:disabled true
-                                          :archived (::display-old? db)
-                                          :expired (::display-old? db)}
-                             :handler #(rf/dispatch [::fetch-workflows-result %])})
+   (let [description (text :t.administration/workflows)]
+     (fetch "/api/workflows/" {:url-params {:disabled true
+                                            :archived (::display-old? db)
+                                            :expired (::display-old? db)}
+                               :handler #(rf/dispatch [::fetch-workflows-result %])
+                               :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
 
 (rf/reg-event-db
