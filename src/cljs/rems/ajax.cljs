@@ -20,7 +20,8 @@
     (str/split str " ")))
 
 (defn save-roles [response]
-  (set-roles! (split-words (-get-response-header response "x-rems-roles")))
+  (if-let [roles (-get-response-header response "x-rems-roles")]
+    (set-roles! (split-words roles)))
   response)
 
 (defn load-interceptors! []
