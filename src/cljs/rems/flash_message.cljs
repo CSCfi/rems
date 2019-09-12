@@ -86,7 +86,7 @@
   ;; TODO: inline when removing status modal
   (status-modal/format-errors errors))
 
-(defn- format-response-error [response]
+(defn format-response-error [response]
   (if (:errors response)
     (format-errors (:errors response))
     (:status-text response)))

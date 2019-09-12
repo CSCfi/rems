@@ -2,8 +2,8 @@
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.atoms :refer [close-symbol]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
@@ -17,6 +17,7 @@
   - Handler `[::foo]` fetches data from `/url`, i.e. get all items
   - Handler `[::foo \"bar\"]` fetches data from `/url?query=bar`, i.e. do a search
   - Subscription `[::foo]` returns the data that was last fetched
+  - Subscription `[::foo :error]` returns the error message if the fetch failed
   - Subscription `[::foo :initialized?]` returns `true` if the data has been
     fetched at least once
   - Subscription `[::foo :fetching?]` returns `true` if a fetch is in progress
@@ -35,11 +36,13 @@
          (fetch url
                 {:url-params (when query
                                {:query query})
-                 :handler #(rf/dispatch [result-id % query])
-                 ;; TODO: no title for the error modal. That's fine since this will only fail very exceptionally.
-                 :error-handler #(do
-                                   (status-modal/common-error-handler! %)
-                                   (rf/dispatch [result-id nil query]))}))
+                 :handler #(rf/dispatch [result-id {:data %} query])
+                 :error-handler (fn [response]
+                                  ;; We use a custom error reporting mechanism instead of flash-message
+                                  ;; because grabbing the focus is problematic for continuous search.
+                                  (rf/dispatch [result-id
+                                                {:error (flash-message/format-response-error response)}
+                                                query]))}))
        {:db (-> db
                 (assoc-in [id :query] query)
                 (assoc-in [id :fetching?] true))}))
@@ -52,7 +55,8 @@
          (when-not (= query latest-query)
            (rf/dispatch [id latest-query])))
        (-> db
-           (assoc-in [id :data] result)
+           (assoc-in [id :data] (:data result))
+           (assoc-in [id :error] (:error result))
            (assoc-in [id :initialized?] true)
            (assoc-in [id :fetching?] false))))
 
