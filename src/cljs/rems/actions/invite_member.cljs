@@ -2,7 +2,6 @@
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
             [rems.flash-message :as flash-message]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 

@@ -1,7 +1,7 @@
 {:t
  {:actions {:accept-invitation "Hyväksy kutsu"
-            :accept-invitation-success [:div [:p "Hakemukseen liittyminen onnistui."] [:p "Siirry hakemukseen."]]
-            :accept-invitation-already-member [:div. [:p "Olet jo jäsen."] [:p "Siirry hakemukseen."]]
+            :accept-invitation-success "Hakemukseen liittyminen onnistui."
+            :accept-invitation-already-member "Olet jo jäsen."
             :accept-licenses "Hyväksy käyttöehdot"
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
