@@ -403,7 +403,7 @@
   (let [form @(rf/subscribe [::form])
         errors @(rf/subscribe [::form-errors])]
     (when errors
-      [:div.alert.alert-danger (text :t.form.validation/errors)
+      [:div.alert.alert-danger (text :t.actions.errors/submission-failed)
        [format-validation-errors errors form]])))
 
 (defn- form-fields [fields]

@@ -163,7 +163,7 @@
                            :content [:p "This did not go as planned"]}])
    (example "status-modal for result with errors"
             [status-modal {:open? true
-                           :result {:errors [{:type :t.form.validation/errors}]}
+                           :result {:errors [{:type :t.form.validation/invalid-user}]}
                            :shade? false
                            :title "Example"
                            :content [:p "You should check the errors"]}])])

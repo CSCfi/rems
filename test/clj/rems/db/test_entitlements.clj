@@ -107,6 +107,10 @@
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
       (testing "submitted application should not yet cause entitlements"
         (with-stub-server server
+          (test-data/command! {:type :application.command/accept-licenses
+                               :application-id app-id
+                               :accepted-licenses [lic-id1 lic-id2]
+                               :actor applicant})
           (test-data/command! {:type :application.command/submit
                                :application-id app-id
                                :actor applicant})
@@ -119,23 +123,12 @@
           (is (empty? (db/get-entitlements {:application app-id})))
           (is (empty? (stub/recorded-requests server))))
 
-        (testing "approved application should not yet cause entitlements"
+        (testing "approved application, licenses accepted by one user generates entitlements for that user"
           (with-stub-server server
             (test-data/command! {:type :application.command/approve
                                  :application-id app-id
                                  :actor admin
                                  :comment ""})
-            (entitlements-poller/run)
-
-            (is (empty? (db/get-entitlements {:application app-id})))
-            (is (empty? (stub/recorded-requests server)))))
-
-        (testing "approved application, licenses accepted by one user generates entitlements for that user"
-          (with-stub-server server
-            (test-data/command! {:type :application.command/accept-licenses
-                                 :application-id app-id
-                                 :actor applicant
-                                 :accepted-licenses [lic-id1 lic-id2]})
             (test-data/command! {:type :application.command/accept-licenses
                                  :application-id app-id
                                  :actor member

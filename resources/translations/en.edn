@@ -15,12 +15,14 @@
             :comment-placeholder "Comment"
             :decide "Decide"
             :empty "No applications to process."
-            :errors {:invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]}
+            :errors {:disabled-catalogue-item "Resource no longer available."
+                     :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
+                     :licenses-not-accepted "Terms of use not accepted."
+                     :submission-failed "Submission failed. Check the following errors:"}
             :export-entitlements "Export entitlements as CSV"
             :handled-applications "Processed applications"
             :invite-member "Invite member"
             :licenses-selection "Add terms of use"
-            :licenses-not-accepted-error "Terms of use not accepted."
             :load-application-states "Load application states"
             :member "Member"
             :member-name "Name"
@@ -259,7 +261,7 @@
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
          :add-remark "Add remark (shown or hidden to applicant)"
-         :alert-disabled-resources "Resources no longer available."
+         :alert-disabled-resources "Resources no longer available:"
          :application "Application"
          :attachment-remove "Remove"
          :checkbox-checked "Yes"
@@ -284,8 +286,7 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
-         :validation {:errors "Submission failed. Check the following errors."
-                      :invalid-user "Invalid user."
+         :validation {:invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
                       :toolong "Text in field \"%1\" too long."}}

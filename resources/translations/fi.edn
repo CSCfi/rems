@@ -15,12 +15,14 @@
             :comment-placeholder "Kommentti"
             :decide "Päätä"
             :empty "Ei käsiteltäviä hakemuksia."
-            :errors {:invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]}
+            :errors {:disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
+                     :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
+                     :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
+                     :submission-failed "Lähettäminen epäonnistui. Tarkasta seuraavat virheet:"}
             :export-entitlements "Lataa käyttöoikeudet CSV-tiedostona"
             :handled-applications "Käsitellyt hakemukset"
             :invite-member "Kutsu jäsen"
             :licenses-selection "Lisää käyttöehtoja"
-            :licenses-not-accepted-error "Käyttöehtoja ei ole hyväksytty."
             :load-application-states "Lataa hakemusten tilat"
             :member "Jäsen"
             :member-name "Nimi"
@@ -257,7 +259,7 @@
          :add-comments-not-shown-to-applicant "Kommentoi (ei näy hakijalle)"
          :add-comments-shown-to-applicant "Kommentoi (näkyy hakijalle)"
          :add-remark "Lisää huomio (näytetään tai piilotetaan hakijalta)"
-         :alert-disabled-resources "Resurssit eivät ole enää saatavilla."
+         :alert-disabled-resources "Resurssit eivät ole enää saatavilla:"
          :application "Tiedot"
          :attachment-remove "Poista"
          :checkbox-checked "Kyllä"
@@ -282,8 +284,7 @@
          :submit "Lähetä hakemus"
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
-         :validation {:errors "Lähettäminen epäonnistui. Tarkasta seuraavat virheet."
-                      :invalid-user "Käyttäjä ei kelpaa."
+         :validation {:invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" sisältö on liian pitkä."}}

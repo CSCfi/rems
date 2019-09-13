@@ -62,6 +62,7 @@ Changes since v2.4
   actions from the user (#1596)
 - Optional "More info" link for catalogue items (#1369)
 - Show separately for each license if it has been accepted by the member (#1591)
+- Show all errors preventing application submission at the same time (#1594)
 
 ### Enhancements
 - Improved version information in footer
