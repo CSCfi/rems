@@ -65,21 +65,21 @@
   (dispatch! (str "#/application/" id) replace?))
 
 (defn- format-validation-error [type field]
-  [:li [:a {:href "#"
-            :on-click (in-page-anchor-link (fields/id-to-name (:field/id field)))}
-        (text-format type (localized (:field/title field)))]])
+  [:a {:href "#"
+       :on-click (in-page-anchor-link (fields/id-to-name (:field/id field)))}
+   (text-format type (localized (:field/title field)))])
 
-(defn- format-validation-errors
+(defn- format-submission-errors
   [application errors]
   (let [fields-by-id (->> (get-in application [:application/form :form/fields])
                           (index-by [:field/id]))]
-    [:div (text :t.form.validation/errors)
+    [:div (text :t.actions.errors/submission-failed)
      (into [:ul]
            (concat
-            (for [{:keys [type field-id]} errors
-                  :when field-id]
-              (let [field (get fields-by-id field-id)]
-                (format-validation-error type field)))))]))
+            (for [{:keys [type field-id]} errors]
+              [:li (if field-id
+                     (format-validation-error type (get fields-by-id field-id))
+                     (text type))])))]))
 
 
 ;;;; State
@@ -169,9 +169,6 @@
                        (not (:success response))
                        (flash-message/show-default-error! :top description)
 
-                       (not (accepted-licenses? application userid))
-                       (flash-message/show-error! :top (text :t.actions/licenses-not-accepted-error))
-
                        :else
                        (post! "/api/applications/submit"
                               {:params {:application-id application-id}
@@ -181,8 +178,10 @@
                                               (rf/dispatch [::fetch-application application-id])
                                               (flash-message/show-default-success! :top description))
                                             (do
-                                              (rf/dispatch [::set-validation-errors (:errors response)])
-                                              (flash-message/show-error! :top [format-validation-errors application (:errors response)]))))
+                                              (let [validation-errors
+                                                    (filter :field-id (:errors response))]
+                                                (rf/dispatch [::set-validation-errors validation-errors]))
+                                              (flash-message/show-error! :top [format-submission-errors application (:errors response)]))))
                                :error-handler (flash-message/default-error-handler :top description)})))
           :error-handler (flash-message/default-error-handler :top description)}))
 

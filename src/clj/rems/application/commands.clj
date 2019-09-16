@@ -4,6 +4,7 @@
             [schema.core :as s]
             [schema-refined.core :as r]
             [rems.application.model :as model]
+            [rems.application-util :refer [accepted-licenses?]]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex try-catch-ex]])
   (:import [org.joda.time DateTime]
@@ -203,9 +204,13 @@
                      :when (or (not (getx item :catalogue-item/enabled))
                                (getx item :catalogue-item/archived)
                                (getx item :catalogue-item/expired))]
-                 {:type :disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
+                 {:type :t.actions.errors/disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
     (when (not (empty? errors))
       {:errors (vec errors)})))
+
+(defn- licenses-not-accepted-error [application userid]
+  (when-not (accepted-licenses? application userid)
+    {:errors [{:type :t.actions.errors/licenses-not-accepted}]}))
 
 (defn- invalid-catalogue-items
   "Checks the given catalogue items for validity and merges the errors"
@@ -339,9 +344,11 @@
        :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
 (defmethod command-handler :application.command/submit
-  [_cmd application injections]
-  (or (validation-error application injections)
-      (disabled-catalogue-items-error application injections)
+  [cmd application injections]
+  (or (merge-with concat
+                  (disabled-catalogue-items-error application injections)
+                  (licenses-not-accepted-error application (:actor cmd))
+                  (validation-error application injections))
       (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler :application.command/approve

@@ -143,7 +143,7 @@
       (is (= {:success true} (send-command user-id
                                            {:type :application.command/accept-licenses
                                             :application-id application-id
-                                            :accepted-licenses []}))))
+                                            :accepted-licenses [license-id1 license-id2]}))))
 
     (testing "save draft"
       (is (= {:success true} (send-command user-id
@@ -424,7 +424,7 @@
                                                             :enabled false})))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
-              :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
+              :errors [{:type "t.actions.errors/disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "submit with archived catalogue item fails"
@@ -434,7 +434,7 @@
                                                              :archived true})))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
-              :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
+              :errors [{:type "t.actions.errors/disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "submit with normal catalogue item succeeds"

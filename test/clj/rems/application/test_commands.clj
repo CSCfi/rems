@@ -23,6 +23,14 @@
                                     :form/id 1
                                     :workflow/id 1
                                     :workflow/type :workflow/dynamic})
+(def ^:private dummy-licenses {1 {:id 1
+                                  :licensetype "link"
+                                  :localizations {:en {:title "en title"
+                                                       :textcontent "en link"
+                                                       :attachment-id 1}
+                                                  :fi {:title "fi title"
+                                                       :textcontent "fi link"
+                                                       :attachment-id 2}}}})
 (def ^:private dummy-workflows {1 {:workflow {:handlers [{:userid handler-user-id
                                                           :name "user"
                                                           :email "user@example.com"}]}}})
@@ -36,7 +44,7 @@
   {:get-workflow dummy-workflows
    :get-form-template dummy-forms
    :get-catalogue-item dummy-get-catalogue-item
-   :get-license (constantly nil)
+   :get-license dummy-licenses
    :get-user (constantly nil)
    :get-users-with-role (constantly nil)
    :get-attachments-for-application (constantly nil)})
@@ -487,7 +495,7 @@
                                                 :resource/ext-id "urn:11"}
                                                {:catalogue-item/id 20
                                                 :resource/ext-id "urn:21"}]
-                       :application/licenses []
+                       :application/licenses [{:license/id 1}]
                        :form/id 40
                        :workflow/id 50
                        :workflow/type :workflow/dynamic}
@@ -497,11 +505,21 @@
                            :application/id app-id
                            :application/field-values {41 "foo"
                                                       42 "bar"}}
+        licenses-accepted-event {:event/type :application.event/licenses-accepted
+                                 :event/time test-time
+                                 :event/actor applicant-user-id
+                                 :application/id app-id
+                                 :application/accepted-licenses #{1}}
         submit-command {:type :application.command/submit
                         :actor applicant-user-id}
-        application (apply-events nil [created-event draft-saved-event])]
+        application-no-licenses (apply-events nil [created-event draft-saved-event])
+        application (apply-events application-no-licenses [licenses-accepted-event])]
 
-    (testing "can submit a valid form"
+    (testing "cannot submit a valid form if licenses are not accepted"
+      (is (= {:errors [{:type :t.actions.errors/licenses-not-accepted}]}
+             (fail-command application-no-licenses submit-command injections))))
+
+    (testing "can submit a valid form when licenses are accepted"
       (is (= {:event/type :application.event/submitted
               :event/time test-time
               :event/actor applicant-user-id
@@ -517,14 +535,15 @@
 
     (testing "cannot submit if catalogue item is disabled"
       (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
-        (is (= {:errors [{:type :disabled-catalogue-item, :catalogue-item-id 20}]}
+        (is (= {:errors [{:type :t.actions.errors/disabled-catalogue-item, :catalogue-item-id 20}]}
                (fail-command disabled submit-command injections)))))
 
     (testing "non-applicant cannot submit"
-      (is (= {:errors [{:type :forbidden}]}
-             (fail-command application
-                           (assoc submit-command :actor "non-applicant")
-                           injections))))
+      (let [application (apply-events application [(assoc licenses-accepted-event :event/actor "non-applicant")])]
+        (is (= {:errors [{:type :forbidden}]}
+               (fail-command application
+                             (assoc submit-command :actor "non-applicant")
+                             injections)))))
 
     (testing "cannot submit twice"
       (is (= {:errors [{:type :forbidden}]}
