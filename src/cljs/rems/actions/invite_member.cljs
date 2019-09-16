@@ -2,7 +2,6 @@
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
             [rems.flash-message :as flash-message]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 
@@ -31,7 +30,7 @@
  (fn [_ [_ {:keys [member application-id on-finished]}]]
    (let [description (text :t.actions/invite-member)]
      (if-let [errors (validate-member member)]
-       (flash-message/show-error! :invite-member-errors (status-modal/format-errors errors))
+       (flash-message/show-error! :invite-member-errors (flash-message/format-errors errors))
        (post! "/api/applications/invite-member"
               {:params {:application-id application-id
                         :member member}

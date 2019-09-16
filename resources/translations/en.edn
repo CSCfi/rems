@@ -1,7 +1,7 @@
 {:t
  {:actions {:accept-invitation "Accept invitation"
-            :accept-invitation-success [:div [:p "Successfully joined the application."] [:p "Proceed to the application."]]
-            :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Proceed to the application."]]
+            :accept-invitation-success "Successfully joined the application."
+            :accept-invitation-already-member "You are already a member."
             :accept-licenses "Accept terms of use"
             :add-licenses "Add terms of use"
             :add-member "Add member"
@@ -27,7 +27,6 @@
             :member-email "Email"
             :name-and-email-required "Name and email are required."
             :no-handled-yet "No processed applications."
-            :ok "OK"
             :todo-applications "Open applications"
             :reject "Reject"
             :remark "Remark"
@@ -241,7 +240,7 @@
           :comment-requested {:subject "Review request (%3)"
                               :message "Dear %1,\n\n%2 has requested your review on application %3 submitted by %4.\n\nYou can review the application: %6"}
           :commented {:subject "Application has been reviewed (%3)"
-                     :message "Dear %1,\n\n%2 has reviewed the application %3 submitted by %4.\n\nYou can view the application and the review: %6"}
+                      :message "Dear %1,\n\n%2 has reviewed the application %3 submitted by %4.\n\nYou can view the application and the review: %6"}
           :decided {:subject "Decision notification (%3)"
                     :message "Dear %1,\n\n%2 has sent a decision on application %3 submitted by %4.\n\nYou can view the application and the decision: %6"}
           :decision-requested {:subject "Decision requested (%3)"
@@ -306,7 +305,6 @@
           :text "Login with Haka credentials"
           :title "Login"}
   :missing "Missing translation %1"
-  :modal {:close-dialog "Close dialog"}
   :navigation {:actions "Actions"
                :administration "Administration"
                :applications "Applications"

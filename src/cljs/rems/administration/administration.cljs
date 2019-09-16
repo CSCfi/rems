@@ -1,6 +1,7 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms :refer [document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch!]])
@@ -79,6 +80,7 @@
       [:div
        [administration-navigator-container]
        [document-title (text :t.navigation/administration)]
+       [flash-message/component :top]
        (if @loading?
          [spinner/big]
          (text :t.administration/intro))])))

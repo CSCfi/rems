@@ -1,52 +1,48 @@
 (ns rems.actions.accept-invitation
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text text-format]]
             [rems.util :refer [dispatch! post!]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ token]]
-   (status-modal/common-pending-handler! (text :t.actions/accept-invitation))
    {:db (assoc db ::token token)
     ::accept-invitation token}))
 
 (rf/reg-sub ::token (fn [db] (::token db "")))
 
-(defn- errors-to-content [errors]
-  [:div (for [{:keys [type token]} errors]
-          [:p
-           (case type
-             :t.actions.errors/invalid-token (text-format :t.actions.errors/invalid-token token)
-             (text type))])])
-
-(defn- error-handler [response]
-  (status-modal/set-error!
-   (merge {:on-close #(dispatch! "#/catalogue")}
-          (if (:error response)
-            {:result {:error response}}
-            {:error-content (errors-to-content (:errors response))}))))
-
-(defn- success-handler [response]
-  (cond (:success response)
-        (status-modal/set-success! {:content (text :t.actions/accept-invitation-success)
-                                    :on-close #(dispatch! (str "#/application/" (:application-id response)))})
-
-        (= :already-member (:type (first (:errors response))))
-        (status-modal/set-success! {:content (text :t.actions/accept-invitation-already-member)
-                                    :on-close #(dispatch! (str "#/application/" (:application-id (first (:errors response)))))})
-
-        :else (error-handler response)))
-
 (rf/reg-fx
  ::accept-invitation
  (fn [token]
-   (post! "/api/applications/accept-invitation"
-          {:url-params {:invitation-token token}
-           :handler success-handler
-           :error-handler error-handler})))
+   (let [error-handler (fn [response]
+                         ((flash-message/default-error-handler :top (text :t.actions/accept-invitation))
+                          response)
+                         (dispatch! "#/catalogue"))]
+     (post! "/api/applications/accept-invitation"
+            {:url-params {:invitation-token token}
+             :handler (fn [response]
+                        (let [error (first (:errors response))]
+                          (cond
+                            (:success response)
+                            (do
+                              (flash-message/show-success! :top (text :t.actions/accept-invitation-success))
+                              (dispatch! (str "#/application/" (:application-id response))))
+
+                            (= :already-member (:type error))
+                            (do
+                              (flash-message/show-success! :top (text :t.actions/accept-invitation-already-member))
+                              (dispatch! (str "#/application/" (:application-id error))))
+
+                            (= :t.actions.errors/invalid-token (:type error))
+                            (do
+                              (flash-message/show-error! :top (text-format :t.actions.errors/invalid-token (:token error)))
+                              (dispatch! "#/catalogue"))
+
+                            :else (error-handler response))))
+             :error-handler error-handler}))))
 
 (defn accept-invitation-page []
   [:div

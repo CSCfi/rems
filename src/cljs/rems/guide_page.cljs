@@ -9,12 +9,11 @@
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
+            [rems.flash-message :as flash-message]
             [rems.language-switcher :as language-switcher]
-            [rems.modal :as modal]
             [rems.navbar :as nav]
             [rems.phase :as phase]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table])
   (:require-macros [rems.guide-macros :refer [example]]))
 
@@ -79,6 +78,7 @@
   [:div.container
    [:div.example-page
     [document-title "Component Guide"]
+    [flash-message/component :top]
 
     [:h2 "Colors"]
     (example "Brand colors" [color-boxes])
@@ -108,10 +108,6 @@
 
     [:h2 "Collapsible component"]
     [collapsible/guide]
-
-    [:h2 "Modal"]
-    [modal/guide]
-    [status-modal/guide]
 
     [:h2 "Applications"]
     [application/guide]

@@ -19,10 +19,13 @@
 (rf/reg-event-db
  ::fetch-licenses
  (fn [db]
-   (fetch "/api/licenses/" {:url-params {:disabled true
-                                         :expired (::display-old? db)
-                                         :archived (::display-old? db)}
-                            :handler #(rf/dispatch [::fetch-licenses-result %])})
+   (let [description (text :t.administration/licenses)]
+     (fetch "/api/licenses/"
+            {:url-params {:disabled true
+                          :expired (::display-old? db)
+                          :archived (::display-old? db)}
+             :handler #(rf/dispatch [::fetch-licenses-result %])
+             :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
 
 (rf/reg-event-db

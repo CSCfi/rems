@@ -133,6 +133,9 @@
     (not @(rf/subscribe [applications :initialized?]))
     [spinner/big]
 
+    @(rf/subscribe [applications :error])
+    [:div.applications.alert.alert-danger @(rf/subscribe [applications :error])]
+
     (empty? @(rf/subscribe [applications]))
     [:div.applications.alert.alert-success (text (or empty-message :t.applications/empty))]
 

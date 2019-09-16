@@ -5,6 +5,7 @@
             [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
             [rems.catalogue-util :refer [urn-catalogue-item-link urn-catalogue-item?]]
+            [rems.flash-message :as flash-message]
             [rems.guide-functions]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
@@ -130,6 +131,7 @@
         loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
      [document-title (text :t.catalogue/catalogue)]
+     [flash-message/component :top]
      (text :t.catalogue/intro)
      (if (or loading-catalogue? loading-drafts?)
        [spinner/big]

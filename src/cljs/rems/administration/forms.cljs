@@ -20,10 +20,13 @@
 (rf/reg-event-db
  ::fetch-forms
  (fn [db]
-   (fetch "/api/forms/" {:url-params {:disabled true
-                                      :expired (::display-old? db)
-                                      :archived (::display-old? db)}
-                         :handler #(rf/dispatch [::fetch-forms-result %])})
+   (let [description (text :t.administration/forms)]
+     (fetch "/api/forms/"
+            {:url-params {:disabled true
+                          :expired (::display-old? db)
+                          :archived (::display-old? db)}
+             :handler #(rf/dispatch [::fetch-forms-result %])
+             :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
 
 (rf/reg-event-db

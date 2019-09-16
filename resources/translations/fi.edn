@@ -1,7 +1,7 @@
 {:t
  {:actions {:accept-invitation "Hyväksy kutsu"
-            :accept-invitation-success [:div [:p "Hakemukseen liittyminen onnistui."] [:p "Siirry hakemukseen."]]
-            :accept-invitation-already-member [:div. [:p "Olet jo jäsen."] [:p "Siirry hakemukseen."]]
+            :accept-invitation-success "Hakemukseen liittyminen onnistui."
+            :accept-invitation-already-member "Olet jo jäsen."
             :accept-licenses "Hyväksy käyttöehdot"
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
@@ -27,7 +27,6 @@
             :member-email "Sähköposti"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
             :no-handled-yet "Ei käsiteltyjä hakemuksia."
-            :ok "OK"
             :todo-applications "Avoimet hakemukset"
             :reject "Hylkää"
             :remark "Kirjaa huomio"
@@ -304,7 +303,6 @@
           :text "Kirjaudu sisään Haka-tunnuksin"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
-  :modal {:close-dialog "Sulje ilmoitus"}
   :navigation {:actions "Toiminnot"
                :administration "Ylläpito"
                :applications "Hakemukset"
