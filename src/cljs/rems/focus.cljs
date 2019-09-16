@@ -6,10 +6,10 @@
   "Scrolls an element into view if it's behind the navigation menu."
   [element]
   (when-let [navbar (.querySelector js/document ".fixed-top")]
-    (let [navbar-height (.-height (.getBoundingClientRect navbar))
+    (let [navbar-bottom (.-bottom (.getBoundingClientRect navbar))
           element-top (.-top (.getBoundingClientRect element))]
-      (when (< element-top navbar-height)
-        (.scrollBy js/window 0 (- element-top navbar-height))))))
+      (when (< element-top navbar-bottom)
+        (.scrollBy js/window 0 (- element-top navbar-bottom))))))
 
 (defn focus-element-async
   "Focus an element when it appears."
