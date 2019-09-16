@@ -1,6 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
+            [clojure.tools.logging :as log]
             [medley.core :refer [map-vals]]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.licenses :as licenses]
@@ -669,6 +670,7 @@
                  :comment ""}))))
 
 (defn create-performance-test-data! []
+  (log/info "Creating performance test data")
   (let [resource-count 1000
         application-count 1000
         user-count 1000
@@ -717,7 +719,8 @@
                                                     :mail (str user-id "@example.com")
                                                     :commonName (str "Performance Tester " n)})
                           user-id)))]
-    (dotimes [_ application-count]
+    (dotimes [i application-count]
+      (log/info "Creating performance test application" i "/" application-count)
       (let [cat-item-id (rand-nth cat-item-ids)
             user-id (rand-nth user-ids)
             handler (rand-nth handlers)
