@@ -694,17 +694,17 @@
    [flash-message/component :top]
    (text :t.applications/intro)
    [:div.row
-    [:div.col-lg-4.order-lg-last
-     [:div#float-actions.mb-3
-      [flash-message/component :actions]
-      [disabled-items-warning application]
-      [actions-form application]]]
     [:div.col-lg-8
      [application-state application config]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
      [:div.my-3 [application-licenses application edit-application userid]]
-     [:div.my-3 [application-fields application edit-application attachment-success]]]]])
+     [:div.my-3 [application-fields application edit-application attachment-success]]]
+    [:div.col-lg-4
+     [:div#float-actions.mb-3
+      [flash-message/component :actions]
+      [disabled-items-warning application]
+      [actions-form application]]]]])
 
 ;;;; Entrypoint
 
