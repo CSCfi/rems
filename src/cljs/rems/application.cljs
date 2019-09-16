@@ -142,11 +142,11 @@
          {:params {:application-id application-id
                    :field-values (field-values-to-api field-values)}
           :handler (flash-message/default-success-handler
-                    :top
+                    :actions
                     description
                     (fn [_]
                       (rf/dispatch [::fetch-application application-id])))
-          :error-handler (flash-message/default-error-handler :top description)}))
+          :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
  ::save-application
@@ -167,7 +167,7 @@
           :handler (fn [response]
                      (cond
                        (not (:success response))
-                       (flash-message/show-default-error! :top description)
+                       (flash-message/show-default-error! :actions description)
 
                        :else
                        (post! "/api/applications/submit"
@@ -176,14 +176,15 @@
                                           (if (:success response)
                                             (do
                                               (rf/dispatch [::fetch-application application-id])
-                                              (flash-message/show-default-success! :top description))
+                                              (flash-message/show-default-success! :actions description))
                                             (do
                                               (let [validation-errors
                                                     (filter :field-id (:errors response))]
                                                 (rf/dispatch [::set-validation-errors validation-errors]))
+                                              ;; validation errors can be too long for :actions location
                                               (flash-message/show-error! :top [format-submission-errors application (:errors response)]))))
-                               :error-handler (flash-message/default-error-handler :top description)})))
-          :error-handler (flash-message/default-error-handler :top description)}))
+                               :error-handler (flash-message/default-error-handler :actions description)})))
+          :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -205,12 +206,12 @@
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
              :handler (flash-message/default-success-handler
-                       :top
+                       :top ; the message will be shown on the new application's page
                        description
                        (fn [response]
                          (rf/dispatch [:rems.spa/user-triggered-navigation])
                          (dispatch! (str "/#/application/" (:application-id response)))))
-             :error-handler (flash-message/default-error-handler :top description)}))
+             :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
@@ -223,14 +224,14 @@
             ;; this ensures that the attachment is not left
             ;; dangling (with no references to it)
             :handler (flash-message/default-success-handler
-                      :top
+                      :actions
                       description
                       (fn [response]
                         ;; no race condition here: events are handled in a FIFO manner
                         (rf/dispatch [::set-field-value field-id (str (:id response))])
                         (rf/dispatch [::set-attachment-success field-id])
                         (rf/dispatch [::save-application description])))
-            :error-handler (flash-message/default-error-handler :top description)})
+            :error-handler (flash-message/default-error-handler :actions description)})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
@@ -690,11 +691,12 @@
 (defn- render-application [{:keys [application edit-application attachment-success config userid]}]
   [:div.container-fluid.editor-content
    [document-title (str (text :t.applications/application) " " (format-application-id config application))]
+   [flash-message/component :top]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-4.order-lg-last
      [:div#float-actions.mb-3
-      [flash-message/component :top]
+      [flash-message/component :actions]
       [disabled-items-warning application]
       [actions-form application]]]
     [:div.col-lg-8

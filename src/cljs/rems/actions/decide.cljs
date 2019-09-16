@@ -24,12 +24,12 @@
                       :decision decision
                       :comment comment}
              :handler (flash-message/default-success-handler
-                       :top
+                       :actions
                        description
                        (fn [_]
                          (collapse-action-form action-form-id)
                          (on-finished)))
-             :error-handler (flash-message/default-error-handler :top description)}))
+             :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
 (defn decide-action-button []
