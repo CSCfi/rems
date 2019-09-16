@@ -512,7 +512,14 @@
    [(s/descendant :.example-page :.example) {:margin-bottom (u/rem 4)}]
    [:.example-content {:border "1px dashed black"}]
    [:.example-content-end {:clear "both"}]
-   [:textarea.form-control {:overflow "hidden"}]
+   [:textarea.form-control {:overflow "hidden"}
+    ;; XXX: Override the browser's default validation for textarea that has
+    ;;   the attribute 'required': If a required element is invalid, do not
+    ;;   show the box shadow, which is used at least by Firefox to highlight
+    ;;   the invalid element. If the element is also in focus, show
+    ;;   Bootstrap's default box shadow instead.
+    [:&:required:invalid {:-webkit-box-shadow :none}
+     [:&:focus {:-webkit-box-shadow "0 0 0 .2rem rgba(0,123,255,.25)"}]]]
    [:.group {:position "relative"
              :border "1px solid #ccc"
              :border-radius (u/rem 0.4)
