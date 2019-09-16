@@ -23,12 +23,12 @@
             {:params {:application-id application-id
                       :comment comment}
              :handler (flash-message/default-success-handler
-                       :top
+                       :actions
                        description
                        (fn [_]
                          (collapse-action-form action-form-id)
                          (on-finished)))
-             :error-handler (flash-message/default-error-handler :top description)}))
+             :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
 (rf/reg-event-fx
@@ -39,12 +39,12 @@
             {:params {:application-id application-id
                       :comment comment}
              :handler (flash-message/default-success-handler
-                       :top
+                       :actions
                        description
                        (fn [_]
                          (collapse-action-form action-form-id)
                          (on-finished)))
-             :error-handler (flash-message/default-error-handler :top description)}))
+             :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
 (defn approve-reject-action-button []

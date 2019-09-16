@@ -27,9 +27,10 @@
          (keyword? location) (name location)
          (vector? location) (str (name (first location))
                                  "-"
-                                 (second location)))))
+                                 (second location))
+         :else (assert false {:location location}))))
 
-(deftest location-to-id-test
+(deftest test-location-to-id
   (is (= "flash-message-top" (location-to-id :top)))
   (is (= "flash-message-attachment-10" (location-to-id [:attachment 10]))))
 
