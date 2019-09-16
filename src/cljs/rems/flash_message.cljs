@@ -7,7 +7,9 @@
             [rems.focus :as focus]
             [rems.text :refer [text]]))
 
-(rf/reg-sub ::message (fn [db _] (::message db)))
+(rf/reg-sub ::message (fn [db _]
+                        (-> (::message db)
+                            (assoc ::message-id (::message-id db)))))
 
 (rf/reg-event-fx
  ::reset
@@ -39,7 +41,9 @@
  (fn [{:keys [db]} [_ message]]
    (focus/focus-element-async (str "#" (location-to-id (:location message))))
    ;; TODO: flash the message with CSS
-   {:db (assoc db ::message (assoc message :expires (+ 500 (current-time-millis))))}))
+   {:db (-> db
+            (assoc ::message (assoc message :expires (+ 500 (current-time-millis))))
+            (update ::message-id inc))}))
 
 (defn show-success! [location contents]
   (rf/dispatch [::show-flash-message {:status :success
@@ -67,6 +71,7 @@
     (fn []
       (let [message @(rf/subscribe [::message])]
         (when (= location (:location message))
+          ^{:key (::message-id message)} ; re-render to trigger CSS animations
           [atoms/flash-message {:id (location-to-id (:location message))
                                 :status (:status message)
                                 :contents (:contents message)}])))}))
