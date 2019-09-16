@@ -376,7 +376,7 @@
                          :readonly readonly?)
                   show-accepted-licenses?]))
          (if (accepted-licenses? application userid)
-           [:div#has-accepted-licenses.alert.alert-success (text :t.form/has-accepted-licenses)]
+           [:div#has-accepted-licenses (text :t.form/has-accepted-licenses)]
            (when (contains? permissions :application.command/accept-licenses)
              [:div.commands
               ;; TODO consider saving the form first so that no data is lost for the applicant
