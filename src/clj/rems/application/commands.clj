@@ -204,7 +204,7 @@
                      :when (or (not (getx item :catalogue-item/enabled))
                                (getx item :catalogue-item/archived)
                                (getx item :catalogue-item/expired))]
-        {:type :t.actions.errors/disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
+                 {:type :t.actions.errors/disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
     (when (not (empty? errors))
       {:errors (vec errors)})))
 
@@ -273,7 +273,7 @@
 
 (defn already-member-error [application userid]
   (when (contains? (all-members application) userid)
-    {:errors [{:type :already-member :application-id (:id application)}]}))
+    {:errors [{:type :already-member :application-id (:application/id application)}]}))
 
 (defn- ok-with-data [data events]
   (assoc data :events events))

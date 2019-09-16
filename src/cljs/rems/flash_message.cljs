@@ -81,6 +81,24 @@
                                     (str description ": " (text :t.form/failed))]]
                               more)))
 
+(defn format-errors [errors]
+  ;; TODO: copied as-is from status-modal; consider refactoring
+  (into [:<>]
+        (for [error errors]
+          [:p
+           (when (:key error)
+             (text (:key error)))
+           (when (:type error)
+             (text (:type error)))
+           (when-let [text (:status-text error)] text)
+           (when-let [text (:status error)]
+             (str " (" text ")"))])))
+
+(defn format-response-error [response]
+  (if (:errors response)
+    (format-errors (:errors response))
+    (:status-text response)))
+
 (defn default-success-handler [location description on-success]
   (fn [response]
     (if (:success response)
@@ -88,7 +106,7 @@
         (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! location description))))
+      (show-default-error! location description (format-response-error response)))))
 
 (defn status-update-handler [location description on-success]
   (fn [response]
@@ -101,4 +119,4 @@
 
 (defn default-error-handler [location description]
   (fn [response]
-    (show-default-error! location description (:status-text response))))
+    (show-default-error! location description (format-response-error response))))

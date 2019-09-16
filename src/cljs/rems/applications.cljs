@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.atoms :refer [document-title]]
+            [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.search :as search]
             [rems.spinner :as spinner]
@@ -27,6 +28,7 @@
   (let [identity @(rf/subscribe [:identity])]
     [:<>
      [document-title (text :t.applications/applications)]
+     [flash-message/component :top]
      (if (not @(rf/subscribe [::my-applications :initialized?]))
        [spinner/big]
        [:<>

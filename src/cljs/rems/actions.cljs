@@ -4,6 +4,7 @@
             [rems.application-list :as application-list]
             [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
+            [rems.flash-message :as flash-message]
             [rems.guide-functions]
             [rems.search :as search]
             [rems.text :refer [text]]))
@@ -52,6 +53,7 @@
 (defn actions-page []
   [:div
    [document-title (text :t.navigation/actions)]
+   [flash-message/component :top]
    [:div.spaced-sections
     [collapsible/component
      {:id "todo-applications"

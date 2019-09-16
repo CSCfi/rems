@@ -6,7 +6,6 @@
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
             [rems.util :refer [dispatch! fetch put!]]))
@@ -21,12 +20,14 @@
 (rf/reg-event-fx
  ::fetch-catalogue
  (fn [{:keys [db]}]
-   (fetch "/api/catalogue-items/" {:url-params {:expand :names
-                                                :disabled true
-                                                :expired (::display-old? db)
-                                                :archived (::display-old? db)}
-                                   :handler #(rf/dispatch [::fetch-catalogue-result %])
-                                   :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.administration/catalogue-items)]
+     (fetch "/api/catalogue-items/"
+            {:url-params {:expand :names
+                          :disabled true
+                          :expired (::display-old? db)
+                          :archived (::display-old? db)}
+             :handler #(rf/dispatch [::fetch-catalogue-result %])
+             :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db

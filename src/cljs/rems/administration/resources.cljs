@@ -5,7 +5,6 @@
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [fetch put!]]))
@@ -20,11 +19,13 @@
 (rf/reg-event-fx
  ::fetch-resources
  (fn [{:keys [db]}]
-   (fetch "/api/resources" {:url-params {:disabled true
-                                         :expired (::display-old? db)
-                                         :archived (::display-old? db)}
-                            :handler #(rf/dispatch [::fetch-resources-result %])
-                            :error-handler status-modal/common-error-handler!})
+   (let [description (text :t.administration/resources)]
+     (fetch "/api/resources"
+            {:url-params {:disabled true
+                          :expired (::display-old? db)
+                          :archived (::display-old? db)}
+             :handler #(rf/dispatch [::fetch-resources-result %])
+             :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db

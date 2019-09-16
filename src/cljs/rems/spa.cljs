@@ -30,11 +30,11 @@
             [rems.catalogue :refer [catalogue-page]]
             [rems.config :as config]
             [rems.extra-pages :refer [extra-pages]]
+            [rems.flash-message :as flash-message]
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
-            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [dispatch! fetch parse-int]]
@@ -168,16 +168,19 @@
 (defn unauthorized-page []
   [:div
    [document-title (text :t.unauthorized-page/unauthorized)]
+   [flash-message/component :top]
    [:p (text :t.unauthorized-page/you-are-unauthorized)]])
 
 (defn forbidden-page []
   [:div
    [document-title (text :t.forbidden-page/forbidden)]
+   [flash-message/component :top]
    [:p (text :t.forbidden-page/you-are-forbidden)]])
 
 (defn not-found-page []
   [:div
    [document-title (text :t.not-found-page/not-found)]
+   [flash-message/component :top]
    [:p (text :t.not-found-page/page-was-not-found)]])
 
 (def pages
@@ -247,7 +250,6 @@
         grab-focus? @(rf/subscribe [::grab-focus?])]
     [:div
      [nav/navigation-widget page-id]
-     [status-modal/status-modal]
      [logo]
      [main-content page-id grab-focus?]
      [footer]]))

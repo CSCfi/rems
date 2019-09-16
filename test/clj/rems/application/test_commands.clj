@@ -882,7 +882,7 @@
                                         :event/actor applicant-user-id
                                         :application/id app-id
                                         :application/member {:userid "somebody"}}])]
-        (is (= {:errors [{:type :already-member :application-id (:id application)}]}
+        (is (= {:errors [{:type :already-member :application-id app-id}]}
                (fail-command application
                              {:type :application.command/accept-invitation
                               :actor "somebody"

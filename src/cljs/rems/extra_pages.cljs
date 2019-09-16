@@ -2,6 +2,7 @@
   (:require [markdown.core :as md]
             [re-frame.core :as rf]
             [rems.atoms :refer [document-title]]
+            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
@@ -58,6 +59,7 @@
         language @(rf/subscribe [:language])]
     [:div
      [document-title title]
+     [flash-message/component :top]
      (if loading?
        [spinner/big]
        (if (= extra-page :not-found)
