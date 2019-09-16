@@ -692,6 +692,7 @@
   [:div.container-fluid.editor-content
    [document-title (str (text :t.applications/application) " " (format-application-id config application))]
    [flash-message/component :top]
+   [disabled-items-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
@@ -703,7 +704,6 @@
     [:div.col-lg-4
      [:div#float-actions.mb-3
       [flash-message/component :actions]
-      [disabled-items-warning application]
       [actions-form application]]]]])
 
 ;;;; Entrypoint
