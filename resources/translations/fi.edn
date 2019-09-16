@@ -271,7 +271,6 @@
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
-         :no-attachment "Ei liitetiedostoa"
          :optional "(ei pakollinen)"
          :please-wait "Odota hetkinen"
          :previous-value "Edellinen"
