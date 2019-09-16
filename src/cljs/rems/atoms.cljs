@@ -56,8 +56,8 @@
    :contents - content to show inside the notification"
   [{:keys [id status contents]}]
   (when status
-    [:div.alert {:class (str "alert-" (name status))
-                 :id id}
+    [:div.flash-message.alert {:class (str "alert-" (name status))
+                               :id id}
      contents]))
 
 (defn readonly-checkbox
