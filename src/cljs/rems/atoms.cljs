@@ -45,7 +45,7 @@
   [:i.fa-stack])
 
 (defn textarea [attrs]
-  [autosize/textarea (merge {:min-rows 5}
+  [autosize/textarea (merge {:min-rows 4}
                             (update attrs :class #(str/trim (str "form-control " %))))])
 
 (defn flash-message
