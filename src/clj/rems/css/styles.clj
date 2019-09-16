@@ -313,8 +313,7 @@
                     :margin-top (u/px -212)}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn {:white-space :nowrap
-           :font-weight (button-navbar-font-weight)
-           :font-size (u/px 19)}]
+           :font-weight (button-navbar-font-weight)}]
    ;; Bootstrap has inaccessible focus indicators in particular
    ;; for .btn-link and .btn-secondary, so we define our own.
    [:a:focus :button:focus :.btn.focus :.btn:focus
