@@ -32,6 +32,8 @@
     [:div.form-group
      [:label {:for id} label]
      [textarea {:id id
+                :min-rows 4
+                :max-rows 4
                 :name id
                 :placeholder (text :t.actions/comment-placeholder)
                 :value comment
