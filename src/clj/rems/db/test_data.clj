@@ -22,7 +22,7 @@
   {:applicant1 "alice"
    :applicant2 "malice"
    :approver1 "developer"
-   :approver2 "bob"
+   :approver2 "handler"
    :owner "owner"
    :reporter "reporter"
    :reviewer "carl"
@@ -33,7 +33,7 @@
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
    "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant"}
    "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant" :twinOf "alice" :other "Attribute Value"}
-   "bob" {:eppn "bob" :mail "bob@example.com" :commonName "Bob Approver"}
+   "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler"}
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
@@ -506,11 +506,12 @@
 
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
+        approver2 (users :approver2)
         owner (users :owner)
         dynamic (create-dynamic-workflow! {:actor owner
                                            :organization "nbn"
                                            :title "dynamic workflow"
-                                           :handlers [approver1]})]
+                                           :handlers [approver1 approver2]})]
 
     ;; attach both kinds of licenses to all workflows
     (let [link (create-license! {:actor owner

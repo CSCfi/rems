@@ -29,11 +29,11 @@
       (test-data/command! {:type :application.command/add-member
                            :application-id app-id
                            :actor "developer"
-                           :member {:userid "bob"}})
-      (is (= #{app-id} (search/find-applications "bob")) "user ID, any field")
-      (is (= #{app-id} (search/find-applications "member:bob")) "user ID")
-      (is (= #{app-id} (search/find-applications "member:\"Bob Approver\"")) "name")
-      (is (= #{app-id} (search/find-applications "member:\"bob@example.com\"")) "email")))
+                           :member {:userid "elsa"}})
+      (is (= #{app-id} (search/find-applications "elsa")) "user ID, any field")
+      (is (= #{app-id} (search/find-applications "member:elsa")) "user ID")
+      (is (= #{app-id} (search/find-applications "member:\"Elsa Roleless\"")) "name")
+      (is (= #{app-id} (search/find-applications "member:\"elsa@example.com\"")) "email")))
 
   (testing "find by ID"
     (let [app-id (test-data/create-application! {:actor "alice"})
@@ -87,7 +87,7 @@
       (test-data/command! {:type :application.command/request-comment
                            :application-id app-id
                            :actor "developer"
-                           :commenters ["bob"]
+                           :commenters ["elsa"]
                            :comment ""})
       (is (= #{app-id} (search/find-applications "\"Waiting for a review\"")) "en todo, any field")
       (is (= #{app-id} (search/find-applications "\"waiting-for-review\"")) "keyword todo, any field")

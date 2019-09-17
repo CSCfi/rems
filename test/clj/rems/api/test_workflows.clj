@@ -19,7 +19,7 @@
   {:organization "abc"
    :title "dynamic workflow"
    :workflow {:type "workflow/dynamic"
-              :handlers [{:userid "bob" :email "bob@example.com" :name "Bob Approver"}
+              :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
                          {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
    :enabled true
    :expired false
@@ -73,7 +73,7 @@
                    (json-body {:organization "abc"
                                :title "dynamic workflow"
                                :type :dynamic
-                               :handlers ["bob" "carl"]})
+                               :handlers ["handler" "carl"]})
                    (authenticate "42" "owner")
                    handler
                    assert-response-is-ok
@@ -90,7 +90,7 @@
         user-id "owner"
         wfid (test-data/create-dynamic-workflow! {:organization "abc"
                                                   :title "dynamic workflow"
-                                                  :handlers ["bob" "carl"]})
+                                                  :handlers ["handler" "carl"]})
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
 
@@ -140,7 +140,7 @@
         user-id "owner"
         wfid (test-data/create-dynamic-workflow! {:organization "abc"
                                                   :title "dynamic workflow"
-                                                  :handlers ["bob" "carl"]})
+                                                  :handlers ["handler" "carl"]})
         fetch #(fetch api-key user-id wfid)
         edit! #(-> (request :put "/api/workflows/edit")
                    (json-body (merge {:id wfid} %))
@@ -199,7 +199,7 @@
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval
-                                               :actors ["bob"]}]})
+                                               :actors ["handler"]}]})
                          handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
@@ -217,7 +217,7 @@
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval
-                                               :actors ["bob"]}]})
+                                               :actors ["handler"]}]})
                          (authenticate "42" "alice")
                          handler)]
         (is (response-is-forbidden? response))
