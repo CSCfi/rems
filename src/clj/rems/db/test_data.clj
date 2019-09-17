@@ -720,7 +720,7 @@
                                                     :commonName (str "Performance Tester " n)})
                           user-id)))]
     (dotimes [i application-count]
-      (log/info "Creating performance test application" i "/" application-count)
+      (log/info "Creating performance test application" (inc i) "/" application-count)
       (let [cat-item-id (rand-nth cat-item-ids)
             user-id (rand-nth user-ids)
             handler (rand-nth handlers)
