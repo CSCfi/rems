@@ -2,11 +2,22 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf :refer [reg-event-fx reg-sub]]))
 
+(def ^:private language-cookie-name "rems-user-preferred-language")
+
+(defn get-language-cookie []
+  (when-let [value (.. js/document -cookie)]
+    (keyword (second (str/split value #"=")))))
+
+(defn- set-language-cookie! [language]
+  (let [year-from-now (.setFullYear (js/Date.) (inc (.getFullYear (js/Date.))))]
+    (set! (.. js/document -cookie)
+          (str language-cookie-name "=" (name language) "; expires=" (.toString year-from-now) "; path=/"))))
+
 (reg-sub
  :language
  (fn [db _]
-   (or (get-in db [:user-settings :language])
-       (:non-user-language db) ; for when the user is not logged in
+   (or (get-language-cookie)
+       (get-in db [:user-settings :language])
        (:default-language db))))
 
 (reg-sub
@@ -31,13 +42,12 @@
 
 (defn update-language [language]
   (set! (.. js/document -documentElement -lang) (name language))
+  (set-language-cookie! language)
+  (rf/dispatch [:rems.flash-message/reset]) ; may have saved localized content
   (update-css language))
 
 (reg-event-fx
  ::set-language
- (fn [{:keys [db]} [_ language]]
-   (let [user-id (get-in db [:identity :user :eppn])]
-     (if user-id
-       (rf/dispatch [:rems.user-settings/update-user-settings {:language language}])
-       (do (update-language language)
-           {:db (assoc db :non-user-language language)})))))
+ (fn [_ [_ language]]
+   (update-language language)
+   {:dispatch [:rems.user-settings/update-user-settings {:language language}]}))
