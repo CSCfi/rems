@@ -215,18 +215,18 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
-  :email {:application-approved {:subject-to-applicant "Hakemuksesi on hyväksytty (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä: %6"
-                                 :subject-to-handler "Hakemus hyväksytty (%3)"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :application-rejected {:subject-to-applicant "Hakemuksesi on hylätty (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nVoit tarkastella hakemusta ja päätöstä: %6"
-                                 :subject-to-handler "Hakemus hylätty (%3)"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :application-closed {:subject-to-applicant "Hakemuksesi on suljettu (%3)"
+  :email {:application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"
+                                 :subject-to-handler "Hakemus %3 on hyväksytty"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}
+          :application-rejected {:subject-to-applicant "Hakemuksesi %3 on hylätty"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"
+                                 :subject-to-handler "Hakemus %3 on hylätty"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}
+          :application-closed {:subject-to-applicant "Hakemuksesi %3 on suljettu"
                                :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nVoit tarkastella hakemusta: %6"
                                :subject-to-handler "Hakemus suljettu (%3)"
-                               :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
+                               :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :application-returned {:subject-to-applicant "Hakemuksesi on palautettu (%3)"
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksi.\n\nVoit muokata hakemusta ja lähettää sen uudelleen: %6"
                                  :subject-to-handler "Hakemus palautettu (%3)"

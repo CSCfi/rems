@@ -217,16 +217,16 @@
                                          :event/actor "handler"})]
         (is (= #{"applicant" "member" "somebody" "assistant"} (email-recipients mails)))
         (is (= {:to-user "applicant"
-                :subject "Your application has been approved (2001/3, \"Application title\")"
-                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "Your application 2001/3, \"Application title\" has been approved"
+                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "applicant" mails)))
         (is (= {:to-user "member"
-                :subject "Your application has been approved (2001/3, \"Application title\")"
-                :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "Your application 2001/3, \"Application title\" has been approved"
+                :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "member" mails)))
         (is (= {:to-user "assistant"
-                :subject "Application approved (2001/3, \"Application title\")"
-                :body "Dear assistant,\n\nHannah Handler has approved the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "Application 2001/3, \"Application title\" has been approved"
+                :body "Dear assistant,\n\nHannah Handler has approved the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "assistant" mails)))))
     (testing "closed"
       (let [mails (emails member-events {:application/id 7
@@ -234,12 +234,12 @@
                                          :event/actor "assistant"})]
         (is (= #{"applicant" "member" "somebody" "handler"} (email-recipients mails)))
         (is (= {:to-user "applicant"
-                :subject "Your application has been closed (2001/3, \"Application title\")"
-                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "Your application 2001/3, \"Application title\" has been closed"
+                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "applicant" mails)))
         (is (= {:to-user "handler"
-                :subject "Application closed (2001/3, \"Application title\")"
-                :body "Dear Hannah Handler,\n\nassistant has closed the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "Application 2001/3, \"Application title\" has been closed"
+                :body "Dear Hannah Handler,\n\nassistant has closed the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "handler" mails)))))))
 
 (deftest test-decisions
@@ -267,11 +267,11 @@
 
 (deftest test-rejected
   (is (= [{:to-user "applicant"
-           :subject "Your application has been rejected (2001/3, \"Application title\")",
-           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been rejected.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+           :subject "Your application 2001/3, \"Application title\" has been rejected",
+           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been rejected.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
           {:to-user "assistant"
-           :subject "Application rejected (2001/3, \"Application title\")",
-           :body "Dear assistant,\n\nHannah Handler has rejected the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+           :subject "Application 2001/3, \"Application title\" has been rejected",
+           :body "Dear assistant,\n\nHannah Handler has rejected the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
          (emails base-events {:application/id 7
                               :event/type :application.event/rejected
                               :event/actor "handler"}))))
