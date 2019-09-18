@@ -223,80 +223,89 @@
                                             :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
-(defn- create-basic-form!
-  "Creates a bilingual form with all supported field types. Returns id of the form meta."
+(defn- create-all-field-types-example-form!
+  "Creates a bilingual form with all supported field types. Returns the form ID."
   [users]
   (create-form!
    {:actor (users :owner)
     :form/organization "nbn"
-    :form/title "Basic form"
-    :form/fields [;; all form field types
-                  {:field/title {:en "Project name"
-                                 :fi "Projektin nimi"}
-                   :field/optional false
-                   :field/type :description
-                   :field/placeholder {:en "Project"
-                                       :fi "Projekti"}}
-
-                  {:field/title {:en "Here would be some helpful instructions."
-                                 :fi "Tässä olisi jotain täyttöohjeita."}
+    :form/title "Example form with all field types"
+    :form/fields [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
+                                 :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
                    :field/optional false
                    :field/type :label}
 
-                  {:field/title {:en "Purpose of the project"
-                                 :fi "Projektin tarkoitus"}
+                  {:field/title {:en "Application title field"
+                                 :fi "Hakemuksen otsikko -kenttä"}
+                   :field/optional false
+                   :field/type :description}
+
+                  {:field/title {:en "Text field"
+                                 :fi "Tekstikenttä"}
+                   :field/optional false
+                   :field/type :text
+                   :field/placeholder {:en "Placeholder text"
+                                       :fi "Täyteteksti"}}
+
+                  {:field/title {:en "Text area"
+                                 :fi "Tekstialue"}
                    :field/optional false
                    :field/type :texta
-                   :field/placeholder {:en "The purpose of the project is to..."
-                                       :fi "Projektin tarkoitus on..."}}
+                   :field/placeholder {:en "Placeholder text"
+                                       :fi "Täyteteksti"}}
 
-                  {:field/title {:en "Start date of the project"
-                                 :fi "Projektin aloituspäivä"}
+                  {:field/title {:en "Date field"
+                                 :fi "Päivämääräkenttä"}
                    :field/optional true
                    :field/type :date}
 
-                  {:field/title {:en "Project plan"
-                                 :fi "Projektisuunnitelma"}
+                  {:field/title {:en "Attachment"
+                                 :fi "Liitetiedosto"}
                    :field/optional true
                    :field/type :attachment}
 
-                  {:field/title {:en "Project team size"
-                                 :fi "Projektitiimin koko"}
+                  {:field/title {:en "Option list"
+                                 :fi "Valintalista"}
                    :field/optional true
                    :field/type :option
-                   :field/options [{:key "1-5"
-                                    :label {:en "1-5 persons"
-                                            :fi "1-5 henkilöä"}}
-                                   {:key "6-20"
-                                    :label {:en "6-20 persons"
-                                            :fi "6-20 henkilöä"}}
-                                   {:key "20+"
-                                    :label {:en "over 20 persons"
-                                            :fi "yli 20 henkilöä"}}]}
+                   :field/options [{:key "Option1"
+                                    :label {:en "First option"
+                                            :fi "Ensimmäinen vaihtoehto"}}
+                                   {:key "Option2"
+                                    :label {:en "Second option"
+                                            :fi "Toinen vaihtoehto"}}
+                                   {:key "Option3"
+                                    :label {:en "Third option"
+                                            :fi "Kolmas vaihtoehto"}}]}
 
-                  {:field/title {:en "Where will the data be used?"
-                                 :fi "Missä dataa tullaan käyttämään?"}
+                  {:field/title {:en "Multi-select list"
+                                 :fi "Monivalintalista"}
                    :field/optional true
                    :field/type :multiselect
-                   :field/options [{:key "EU"
-                                    :label {:en "Inside EU"
-                                            :fi "EU:n sisällä"}}
-                                   {:key "USA"
-                                    :label {:en "Inside USA"
-                                            :fi "Yhdysvalloissa"}}
-                                   {:key "Other"
-                                    :label {:en "Elsewhere"
-                                            :fi "Muualla"}}]}
+                   :field/options [{:key "Option1"
+                                    :label {:en "First option"
+                                            :fi "Ensimmäinen vaihtoehto"}}
+                                   {:key "Option2"
+                                    :label {:en "Second option"
+                                            :fi "Toinen vaihtoehto"}}
+                                   {:key "Option3"
+                                    :label {:en "Third option"
+                                            :fi "Kolmas vaihtoehto"}}]}
+
+                  {:field/title {:en "The following field types can have a max length."
+                                 :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."}
+                   :field/optional false
+                   :field/type :label}
 
                   ;; fields which support maxlength
-                  {:field/title {:en "Project acronym"
-                                 :fi "Projektin lyhenne"}
+                  {:field/title {:en "Text field with max length"
+                                 :fi "Tekstikenttä pituusrajalla"}
                    :field/optional true
                    :field/type :text
                    :field/max-length 10}
 
-                  {:field/title {:en "Research plan"
-                                 :fi "Tutkimussuunnitelma"}
+                  {:field/title {:en "Text area with max length"
+                                 :fi "Tekstialue pituusrajalla"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}]}))
@@ -721,7 +730,7 @@
                                                     :commonName (str "Performance Tester " n)})
                           user-id)))]
     (dotimes [i application-count]
-      (log/info "Creating performance test application" i "/" application-count)
+      (log/info "Creating performance test application" (inc i) "/" application-count)
       (let [cat-item-id (rand-nth cat-item-ids)
             user-id (rand-nth user-ids)
             handler (rand-nth handlers)
@@ -771,7 +780,7 @@
                                 :owneruserid (+fake-users+ :owner)
                                 :modifieruserid (+fake-users+ :owner)
                                 :end (time/minus (time/now) (time/years 1))})
-        form (create-basic-form! +fake-users+)
+        form (create-all-field-types-example-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
     (create-disabled-license! (+fake-users+ :owner))
@@ -821,7 +830,7 @@
                                 :organization "nbn"
                                 :actor (+demo-users+ :owner)})
         _ (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
-        form (create-basic-form! +demo-users+)
+        form (create-all-field-types-example-form! +demo-users+)
         workflows (create-workflows! +demo-users+)]
     (create-disabled-license! (+demo-users+ :owner))
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
