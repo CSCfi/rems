@@ -24,6 +24,7 @@
             [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
+            [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
@@ -103,7 +104,7 @@
           {:handler #(rf/dispatch [::fetch-application-result %])
            :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
                                 (flash-message/default-error-handler :top (text :t.applications/application)))})
-   {:db (assoc-in db [::application :fetching?] true)}))
+   {:db (update db ::application fetcher/started)}))
 
 (defn- initialize-edit-application [db]
   (let [application (get-in db [::application :data])
@@ -118,9 +119,7 @@
  ::fetch-application-result
  (fn [db [_ application]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
-     (cond-> (assoc db ::application {:data application
-                                      :initialized? true
-                                      :fetching? false})
+     (cond-> (update db ::application fetcher/finished application)
        initial-fetch? (initialize-edit-application)))))
 
 (rf/reg-event-db
@@ -139,8 +138,7 @@
           :handler (flash-message/default-success-handler
                     :actions
                     description
-                    (fn [_]
-                      (rf/dispatch [::fetch-application application-id])))
+                    #(rf/dispatch [::fetch-application application-id]))
           :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
@@ -705,10 +703,8 @@
   (let [config @(rf/subscribe [:rems.config/config])
         application-id @(rf/subscribe [::application-id])
         application @(rf/subscribe [::application])
-        initialized? @(rf/subscribe [::application :initialized?])
-        fetching? @(rf/subscribe [::application :fetching?])
-        loading? (and fetching? (not initialized?))
-        reloading? (and fetching? initialized?)
+        loading? @(rf/subscribe [::application :loading?])
+        reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
         attachment-success @(rf/subscribe [::attachment-success])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
