@@ -29,12 +29,9 @@
   (is (= (recursive-keys (loc-en))
          (recursive-keys (loc-fi)))))
 
-(defn extract-format-parameters [string]
-  (set (re-seq #"%\d+" string)))
-
 (deftest test-extract-format-parameters
-  (is (= #{} (extract-format-parameters "hey you are 100% correct!")))
-  (is (= #{"%3" "%5" "%7"} (extract-format-parameters "user %3 has made %7 alterations in %5!"))))
+  (is (= #{} (locales/extract-format-parameters "hey you are 100% correct!")))
+  (is (= #{"%3" "%5" "%7"} (locales/extract-format-parameters "user %3 has made %7 alterations in %5!"))))
 
 (deftest test-format-parameters-match
   (testing "[:en vs :fi]"
@@ -42,11 +39,8 @@
           fi (loc-fi)]
       (doseq [k (recursive-keys en)] ;; we check that keys match separately
         (testing k
-          (let [en-string (getx-in en (vec k))
-                fi-string (getx-in fi (vec k))]
-            (when (string? en-string)
-              (is (= (extract-format-parameters en-string)
-                     (extract-format-parameters fi-string))))))))))
+          (is (= (locales/extract-format-parameters (getx-in en (vec k)))
+                 (locales/extract-format-parameters (getx-in fi (vec k))))))))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
@@ -121,13 +115,18 @@
                                                    :theme-path "./example-theme/theme.edn"}))]
     (testing "extra translations override translations"
       (is (= "Catalogue" (getx-in translations [:en :t :administration :catalogue-items])))
-      (is (= "Text" (getx-in translations [:en :t :create-license :license-text]))))
+      (is (= "Text %1" (getx-in translations [:en :t :create-license :license-text]))))
     (testing "extra translations don't override keys that are not defined in extras"
       (is (= "Active" (getx-in translations [:en :t :administration :active]))))
-    (testing "warning for unknown keys"
-      (is (= 1 (count @log)))
-      (is (.contains (first @log) ":unused-key")
-          (pr-str @log)))))
+    ;; XXX the logging tests break for some reason when running through CIDER
+    (testing "warnings"
+      (is (< 0 (count @log)))
+      (testing "for unused key"
+        (is (some #(.contains % ":unused-key") @log)
+            (pr-str @log)))
+      (testing "for extra format parameters"
+        (is (some #(.contains % "%1") @log)
+            (pr-str @log))))))
 
 (deftest theme-path-given-no-extra-translations
   (testing "translations work with theme-path in config and no extra-translations"
