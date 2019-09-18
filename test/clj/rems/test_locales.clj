@@ -11,12 +11,6 @@
             [taoensso.tempura.impl :refer [compile-dictionary]])
   (:import (java.io FileNotFoundException)))
 
-(deftest test-recursive-keys
-  (let [recursive-keys #'rems.locales/recursive-keys]
-    (is (= [[:a] [:b]] (recursive-keys {:a [1] :b "foo"})))
-    (is (= [[:a :b] [:a :c] [:a :d :e] [:a :d :f]]
-           (recursive-keys {:a {:b 1 :c nil :d {:e "foo" :f [3]}}})))))
-
 (deftest test-unused-translation-keys
   (let [unused-translation-keys #'rems.locales/unused-translation-keys]
     (is (= nil (unused-translation-keys {:a {:b "x" :c "x"}} {:a {:b "y"}})))

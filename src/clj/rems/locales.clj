@@ -5,7 +5,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [mount.core :refer [defstate]]
-            [rems.common-util :refer [deep-merge]]
+            [rems.common-util :refer [deep-merge recursive-keys]]
             [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
 
@@ -27,13 +27,6 @@
   (let [path (str/join "/" (butlast (str/split theme-path #"/"))) ;;Theme-path is of form /foo/bar/theme.edn
         translations-path (str path "/extra-translations/")]
     translations-path))
-
-(defn- recursive-keys [m]
-  (mapcat (fn [[k v]]
-            (if (map? v)
-              (map (partial cons k) (recursive-keys v))
-              [(list k)]))
-          m))
 
 (defn- unused-translation-keys [translations extras]
   (let [keys (set (recursive-keys translations))
