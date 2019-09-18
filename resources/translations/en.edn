@@ -250,8 +250,8 @@
           :footer "\n\nPlease do not reply to this automatically generated message."
           :member-added {:subject "Added as a member of an application (%3)"
                          :message "Dear %1,\n\nYou've been added as a member of application %3.\n\nView application: %6"}
-          :member-invited {:subject "Invitation to participate in an application"
-                           :message "Dear %1,\n\nYou have been invited to participate in an application submitted by %2. The title of the application is %3.\n\nYou can view the application and accept the terms of use: %4"}
+          :member-invited {:subject "Invitation to participate in application %3"
+                           :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
           :remarked {:subject "Application has been commented on (%3)"
                      :message "Dear %1,\n\n%2 has commented on the application %3 submitted by %4.\n\nYou can view the application and the comment: %6"}}
   :footer "CSC – IT Center for Science"

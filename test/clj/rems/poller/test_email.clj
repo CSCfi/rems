@@ -140,9 +140,9 @@
            (email-to "assistant" mails)))))
 
 (deftest test-member-invited
-  (is (= [{:to "somebody@example.com",
-           :subject "Invitation to participate in an application",
-           :body "Dear Some Body,\n\nYou have been invited to participate in an application submitted by Alice Applicant. The title of the application is 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/accept-invitation?token=abc\n\nPlease do not reply to this automatically generated message."}]
+  (is (= [{:to "somebody@example.com"
+           :subject "Invitation to participate in application 2001/3, \"Application title\""
+           :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://example.com/accept-invitation?token=abc\n\nPlease do not reply to this automatically generated message."}]
          (emails base-events
                  {:application/id 7
                   :event/type :application.event/member-invited
