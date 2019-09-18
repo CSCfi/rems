@@ -310,11 +310,11 @@
                   :event/type :application.event/submitted
                   :event/actor "applicant"}]
     (is (= [{:to-user "applicant"
-             :subject "Your application has been returned for modifications (2001/3, \"Application title\")"
-             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned to you for modifications.\n\nYou can modify and resubmit the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+             :subject "Your application 2001/3, \"Application title\" needs to be amended"
+             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can review the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
             {:to-user "assistant"
-             :subject "Application has been returned for modifications (2001/3, \"Application title\")"
-             :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+             :subject "Application 2001/3, \"Application title\" has been returned to applicant"
+             :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
            (emails base-events return)))
     (let [mails (emails returned-events resubmit)]
       (is (= #{"assistant" "handler"} (email-recipients mails)))

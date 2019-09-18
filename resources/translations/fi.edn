@@ -226,11 +226,11 @@
           :application-closed {:subject-to-applicant "Hakemuksesi %3 on suljettu"
                                :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nVoit tarkastella hakemusta: %6"
                                :subject-to-handler "Hakemus suljettu (%3)"
-                               :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
-          :application-returned {:subject-to-applicant "Hakemuksesi on palautettu (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksi.\n\nVoit muokata hakemusta ja lähettää sen uudelleen: %6"
+                               :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
+          :application-returned {:subject-to-applicant "Hakemus %3 vaatii täydentämistä"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksesi. Ole hyvä, ja täydennä hakemusta kommenttien mukaan.\n\nVoit tarkastella hakemusta osoitteessa %6"
                                  :subject-to-handler "Hakemus palautettu (%3)"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
+                                 :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :application-licenses-added {:subject "Hakemukseen lisätty käyttöehtoja (%3)"
                                        :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi uusille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %6"}
           :application-resubmitted {:subject "Hakemus lähetetty uudelleen (%3)"
