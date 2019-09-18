@@ -36,7 +36,7 @@
 ;;;; Helpers
 
 (defn reload! [application-id]
-  (rf/dispatch [:rems.application/reload-application-page application-id]))
+  (rf/dispatch [::fetch-application application-id]))
 
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
@@ -84,49 +84,45 @@
 
 ;;;; State
 
-(rf/reg-sub ::application (fn [db _] (::application db)))
+(rf/reg-sub ::application-id (fn [db _] (::application-id db)))
+(rf/reg-sub ::application (fn [db [_ k]] (get-in db [::application (or k :data)])))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
 
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   {:db (dissoc db ::application ::edit-application ::attachment-success)
+   {:db (-> db
+            (assoc ::application-id id)
+            (dissoc ::application ::edit-application ::attachment-success))
     :dispatch [::fetch-application id]}))
 
 (rf/reg-event-fx
  ::fetch-application
- (fn [_ [_ id]]
+ (fn [{:keys [db]} [_ id]]
    (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])})
-   {}))
+          {:handler #(rf/dispatch [::fetch-application-result {:data %}])
+           :error-handler (comp #(rf/dispatch [::fetch-application-result {:error %}])
+                                (flash-message/default-error-handler :top (text :t.applications/application)))})
+   {:db (assoc-in db [::application :fetching?] true)}))
+
+(defn- initialize-edit-application [db]
+  (let [application (get-in db [::application :data])
+        field-values (->> (get-in application [:application/form :form/fields])
+                          (map (juxt :field/id :field/value))
+                          (into {}))]
+    (assoc db ::edit-application {:field-values field-values
+                                  :show-diff {}
+                                  :validation-errors nil})))
 
 (rf/reg-event-db
  ::fetch-application-result
- (fn [db [_ application]]
-   (assoc db
-          ::application application
-          ::edit-application {:field-values (->> (get-in application [:application/form :form/fields])
-                                                 (map (juxt :field/id :field/value))
-                                                 (into {}))
-                              :show-diff {}
-                              :validation-errors nil})))
-
-(rf/reg-event-fx
- ::reload-application-page
- (fn [{:keys [db]} [_ id]]
-   {::reload-application id}))
-
-(rf/reg-fx
- ::reload-application
- (fn [id]
-   (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::reload-application-result %])})))
-
-(rf/reg-event-db
- ::reload-application-result
- (fn [db [_ application]]
-   (assoc db
-          ::application application)))
+ (fn [db [_ result]]
+   (let [initial-fetch? (not (:initialized? (::application db)))]
+     (cond-> (assoc db ::application {:data (:data result)
+                                      :error (:error result)
+                                      :initialized? true
+                                      :fetching? false})
+       initial-fetch? (initialize-edit-application)))))
 
 (rf/reg-event-db
  ::set-validation-errors
@@ -151,7 +147,7 @@
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ description]]
-   (let [application (::application db)
+   (let [application (:data (::application db))
          edit-application (::edit-application db)]
      (save-application! description
                         (:application/id application)
@@ -189,7 +185,7 @@
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
-   (let [application (::application db)
+   (let [application (:data (::application db))
          edit-application (::edit-application db)]
      (submit-application! application
                           description
@@ -201,7 +197,7 @@
 (rf/reg-event-fx
  ::copy-as-new-application
  (fn [{:keys [db]} _]
-   (let [application-id (get-in db [::application :application/id])
+   (let [application-id (get-in db [::application :data :application/id])
          description (text :t.form/copy-as-new)]
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
@@ -215,7 +211,7 @@
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
-  (let [application-id (get-in db [::application :application/id])]
+  (let [application-id (get-in db [::application :data :application/id])]
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id
                          :field-id field-id}
@@ -689,9 +685,7 @@
                 [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
 (defn- render-application [{:keys [application edit-application attachment-success config userid]}]
-  [:div.container-fluid.editor-content
-   [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-   [flash-message/component :top]
+  [:<>
    [disabled-items-warning application]
    (text :t.applications/intro)
    [:div.row
@@ -710,21 +704,32 @@
 
 (defn application-page []
   (let [config @(rf/subscribe [:rems.config/config])
+        application-id @(rf/subscribe [::application-id])
         application @(rf/subscribe [::application])
+        initialized? @(rf/subscribe [::application :initialized?])
+        fetching? @(rf/subscribe [::application :fetching?])
+        loading? (and fetching? (not initialized?))
+        reloading? (and fetching? initialized?)
         edit-application @(rf/subscribe [::edit-application])
         attachment-success @(rf/subscribe [::attachment-success])
-        userid (get-in @(rf/subscribe [:identity]) [:user :eppn])
-        loading? (not application)]
-    (if loading?
-      [:div
-       [document-title (text :t.applications/application)]
-       [spinner/big]]
-      [render-application {:application application
-                           :edit-application edit-application
-                           :attachment-success attachment-success
-                           :config config
-                           :userid userid}])))
-
+        userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
+    [:div.container-fluid
+     {:key application-id} ; re-render to clear flash messages when navigating to another application
+     (when reloading?
+       [:div {:style {:float :right}}
+        [spinner/small]])
+     [document-title (if application
+                       (str (text :t.applications/application) " " (format-application-id config application))
+                       (text :t.applications/application))]
+     [flash-message/component :top]
+     (when loading?
+       [spinner/big])
+     (when application
+       [render-application {:application application
+                            :edit-application edit-application
+                            :attachment-success attachment-success
+                            :config config
+                            :userid userid}])]))
 
 ;;;; Guide
 

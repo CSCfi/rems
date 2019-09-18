@@ -448,7 +448,7 @@
      [flash-message/component :top]
      (if loading-form?
        [:div [spinner/big]]
-       [:div.container-fluid.editor-content
+       [:div.container-fluid
         [validation-errors-summary]
         [:div.row
          [:div.col-lg

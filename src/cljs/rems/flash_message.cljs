@@ -112,7 +112,8 @@
         (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! location description (format-response-error response)))))
+      (show-default-error! location description (format-response-error response)))
+    response))
 
 (defn status-update-handler [location description on-success]
   (fn [response]
@@ -121,8 +122,10 @@
         (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! location description (status-flags/format-update-failure response)))))
+      (show-default-error! location description (status-flags/format-update-failure response)))
+    response))
 
 (defn default-error-handler [location description]
   (fn [response]
-    (show-default-error! location description (format-response-error response))))
+    (show-default-error! location description (format-response-error response))
+    response))
