@@ -80,7 +80,7 @@
 
   (testing "loads external translations"
     (let [translations-dir (create-temp-dir)
-          config {:translations-directory (str translations-dir "/") ;; TODO remove
+          config {:translations-directory translations-dir
                   :extra-translations-directory nil
                   :languages [:xx]}
           translation {:some-key "some val"}]

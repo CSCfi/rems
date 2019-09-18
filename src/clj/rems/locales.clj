@@ -9,20 +9,21 @@
             [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
 
-(defn- translations-from-file [path]
-  (let [file (io/file path)
-        resource (io/resource path)
+(defn- translations-from-file [file]
+  (let [file (io/file file)
+        resource (io/resource (str file))
         chosen (cond
                  (and file (.exists file)) file
                  resource resource
                  :else (throw (FileNotFoundException.
-                               (str "translations could not be found in file or resource \"" path "\""))))]
+                               (str "translations could not be found in file or resource \"" file "\""))))]
     (read-string (slurp chosen))))
 
 (defn- extra-translations-path [theme-path]
-  (let [path (str/join "/" (butlast (str/split theme-path #"/"))) ;;Theme-path is of form /foo/bar/theme.edn
-        translations-path (str path "/extra-translations/")]
-    translations-path))
+  (-> theme-path
+      (io/file)
+      (.getParentFile)
+      (io/file "extra-translations")))
 
 (defn extract-format-parameters [string]
   (when (string? string)
@@ -45,14 +46,15 @@
 
 (defn- load-translation [language translations-directory theme-path]
   (let [filename (str (name language) ".edn")
-        translations (translations-from-file (str translations-directory filename))
+        translations (translations-from-file (io/file translations-directory filename))
         extra-path (when theme-path (extra-translations-path theme-path))]
-    (if (and extra-path (.exists (io/file extra-path)))
-      (let [extra-translations (translations-from-file (str extra-path filename))]
+    (if (and extra-path (.exists extra-path))
+      (let [extra-file (io/file extra-path filename)
+            extra-translations (translations-from-file extra-file)]
         (when-let [unused (unused-translation-keys translations extra-translations)]
-          (log/warn "Unused translation keys defined in" extra-path ":" unused))
+          (log/warn "Unused translation keys defined in" (str extra-file) ":" unused))
         (when-let [errors (nonmatching-format-parameters translations extra-translations)]
-          (log/warn "Nonmatching format parameters in" extra-path ":" (pr-str errors)))
+          (log/warn "Nonmatching format parameters in" (str extra-file) ":" (pr-str errors)))
         (deep-merge {language translations} {language extra-translations}))
       {language translations})))
 
