@@ -487,7 +487,8 @@
                           (map (partial sort-by :event/time))
                           (sort-by #(:event/time (first %)))
                           reverse
-                          (map #(map format-event %)))]
+                          (map #(map format-event %)))
+        [event-groups-show-always event-groups-collapse] (split-at 3 event-groups)]
     [collapsible/component
      {:id "header"
       :title (text :t.applications/state)
@@ -512,12 +513,12 @@
                       (text :t.applications/latest-activity)
                       (localize-time last-activity)
                       {:inline? true}]]
-                    (when-let [g (first event-groups)]
+                    (when (seq event-groups-show-always)
                       (into [[:h3 (text :t.form/events)]]
-                            (render-event-groups [g]))))
-      :collapse (when-let [g (seq (rest event-groups))]
+                            (render-event-groups event-groups-show-always))))
+      :collapse (when (seq event-groups-collapse)
                   (into [:div]
-                        (render-event-groups g)))}]))
+                        (render-event-groups event-groups-collapse)))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application

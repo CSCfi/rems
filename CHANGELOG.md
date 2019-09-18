@@ -73,6 +73,7 @@ Changes since v2.4
 - Modal popups have been replaced with flash messages (#1469)
 - Email messages now use the application title and full names of users
 - Email message texts improved
+- Show three latest events as a default on the application page (#1632)
 
 ### Fixes
 - Entitlement API
