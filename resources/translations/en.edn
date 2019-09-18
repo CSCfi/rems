@@ -219,19 +219,19 @@
              :placeholder "Select..."}
   :email {:application-approved {:subject-to-applicant "Your application %3 has been approved"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nYou can view the application and the decision at %6"
-                                 :subject-to-handler "Application %3 has been approved"
+                                 :subject-to-handler "(%3) Application has been approved"
                                  :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nYou can view the application and the decision at %6"}
           :application-rejected {:subject-to-applicant "Your application %3 has been rejected"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been rejected.\n\nYou can view the application and the decision at %6"
-                                 :subject-to-handler "Application %3 has been rejected"
+                                 :subject-to-handler "(%3) Application has been rejected"
                                  :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nYou can view the application and the decision at %6"}
           :application-closed {:subject-to-applicant "Your application %3 has been closed"
                                :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nYou can view the application at %6"
-                               :subject-to-handler "Application %3 has been closed"
+                               :subject-to-handler "(%3) Application has been closed"
                                :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nYou can view the application at %6"}
           :application-returned {:subject-to-applicant "Your application %3 needs to be amended"
                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can review the application at %6"
-                                 :subject-to-handler "Application %3 has been returned to applicant"
+                                 :subject-to-handler "(%3) Application has been returned to applicant"
                                  :message-to-handler "Dear %1,\n\n%2 has returned the application %3 to the applicant %4 for modifications.\n\nYou can view the application at %6"}
           :application-licenses-added {:subject "Your application's %3 terms of use have changed"
                                        :message "Dear %1,\n\n%2 has requested your approval for changed terms of use to application %3.\n\nYou can review the application and approve the changed the terms of use at %6"}

@@ -225,7 +225,7 @@
                 :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "member" mails)))
         (is (= {:to-user "assistant"
-                :subject "Application 2001/3, \"Application title\" has been approved"
+                :subject "(2001/3, \"Application title\") Application has been approved"
                 :body "Dear assistant,\n\nHannah Handler has approved the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "assistant" mails)))))
     (testing "closed"
@@ -238,7 +238,7 @@
                 :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "applicant" mails)))
         (is (= {:to-user "handler"
-                :subject "Application 2001/3, \"Application title\" has been closed"
+                :subject "(2001/3, \"Application title\") Application has been closed"
                 :body "Dear Hannah Handler,\n\nassistant has closed the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "handler" mails)))))))
 
@@ -270,7 +270,7 @@
            :subject "Your application 2001/3, \"Application title\" has been rejected",
            :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been rejected.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
           {:to-user "assistant"
-           :subject "Application 2001/3, \"Application title\" has been rejected",
+           :subject "(2001/3, \"Application title\") Application has been rejected",
            :body "Dear assistant,\n\nHannah Handler has rejected the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
          (emails base-events {:application/id 7
                               :event/type :application.event/rejected
@@ -318,7 +318,7 @@
              :subject "Your application 2001/3, \"Application title\" needs to be amended"
              :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can review the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
             {:to-user "assistant"
-             :subject "Application 2001/3, \"Application title\" has been returned to applicant"
+             :subject "(2001/3, \"Application title\") Application has been returned to applicant"
              :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
            (emails added return)))
     (let [mails (emails returned-events resubmit)]
