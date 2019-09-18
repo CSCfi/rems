@@ -161,8 +161,8 @@
       (let [mails (emails base-events request)]
         (is (= #{"commenter1" "commenter2"} (email-recipients mails)))
         (is (= {:to-user "commenter1"
-                :subject "Review request (2001/3, \"Application title\")"
-                :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can review the application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "(2001/3, \"Application title\") Review request"
+                :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "commenter1" mails)))))
     (testing "commented"
       (let [mails (emails requested-events {:application/id 7
@@ -172,8 +172,8 @@
                                             :application/comment "this is a comment"})]
         (is (= #{"assistant" "handler"} (email-recipients mails)))
         (is (= {:to-user "assistant"
-                :subject "Application has been reviewed (2001/3, \"Application title\")"
-                :body "Dear assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the review: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "(2001/3, \"Application title\") Application has been reviewed"
+                :body "Dear assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "assistant" mails)))))))
 
 (deftest test-remarked
@@ -183,8 +183,8 @@
                                    :application/comment "remark!"})]
     (is (= #{"assistant" "handler"} (email-recipients mails)))
     (is (= {:to-user "assistant"
-            :subject "Application has been commented on (2001/3, \"Application title\")"
-            :body "Dear assistant,\n\nremarker has commented on the application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the comment: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+            :subject "(2001/3, \"Application title\") Application has been commented"
+            :body "Dear assistant,\n\nremarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
            (email-to "assistant" mails)))))
 
 (deftest test-members-licenses-approved-closed
@@ -251,8 +251,8 @@
         requested-events (conj base-events decision-request)]
     (testing "decision-requested"
       (is (= [{:to-user "decider",
-               :subject "Decision requested (2001/3, \"Application title\")",
-               :body "Dear decider,\n\nassistant has requested your decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+               :subject "(2001/3, \"Application title\") Decision request",
+               :body "Dear decider,\n\nassistant has requested your decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
              (emails base-events decision-request))))
     (testing "decided"
       (let [mails (emails requested-events {:application/id 7
@@ -261,8 +261,8 @@
                                             :application/decision :approved})]
         (is (= #{"assistant" "handler"} (email-recipients mails)))
         (is (= {:to-user "assistant",
-                :subject "Decision notification (2001/3, \"Application title\")",
-                :body "Dear assistant,\n\ndecider has sent a decision on application 2001/3, \"Application title\" submitted by Alice Applicant.\n\nYou can view the application and the decision: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "(2001/3, \"Application title\") Application decision notification",
+                :body "Dear assistant,\n\ndecider has filed a decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "assistant" mails)))))))
 
 (deftest test-rejected
@@ -334,6 +334,6 @@
     (let [mails (emails :fi created-events submit-event)]
       (is (= #{"assistant" "handler"} (email-recipients mails)))
       (is (= {:to-user "handler"
-              :subject "Uusi hakemus (2001/3, \"Application title\")"
-              :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta: http://example.com/#/application/7\n\nTämä on automaattinen viesti. Älä vastaa."}
+              :subject "(2001/3, \"Application title\") Uusi hakemus"
+              :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta osoitteessa http://example.com/#/application/7\n\nTämä on automaattinen viesti. Älä vastaa."}
              (email-to "handler" mails))))))

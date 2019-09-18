@@ -237,21 +237,21 @@
                                     :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :application-submitted {:subject "(%3) Uusi hakemus"
                                   :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
-          :comment-requested {:subject "Katselmointipyyntö (%3)"
-                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit katselmoida hakemuksen: %6"}
-          :commented {:subject "Hakemus katselmoitu (%3)"
-                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta ja lukea kommentit: %6"}
-          :decided {:subject "Päätös lähetetty (%3)"
-                    :message "Hyvä %1,\n\n%2 on lähettänyt päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :decision-requested {:subject "Päätöspyyntö (%3)"
-                               :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta: %6"}
+          :comment-requested {:subject "(%3) Katselmointipyyntö"
+                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :commented {:subject "(%3) Hakemus katselmoitu"
+                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :decided {:subject "(%3) Päätös lähetetty"
+                    :message "Hyvä %1,\n\n%2 on lähettänyt päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :decision-requested {:subject "(%3) Päätöspyyntö"
+                               :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
           :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
                          :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta: %6"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen %3"
                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %4"}
-          :remarked {:subject "Hakemusta kommentoitu (%3)"
-                     :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta ja lukea kommentin: %6"}}
+          :remarked {:subject "(%3) Hakemusta kommentoitu"
+                     :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
   :form {:accepted-licenses "Käyttöehdot hyväksytty"
          :actions "Toiminnot"
