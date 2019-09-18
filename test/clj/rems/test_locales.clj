@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging]
+            [rems.common-util :refer [recursive-keys]]
             [rems.locales :as locales]
             [rems.testing-util :refer [create-temp-dir delete-recursively]]
             [rems.util :refer [getx-in]]
@@ -24,15 +25,9 @@
 (defn loc-fi []
   (read-string (slurp (io/resource "translations/fi.edn"))))
 
-(defn map-structure
-  "Recurse into map m and replace all leaves with true."
-  [m]
-  (let [transform (fn [v] (if (map? v) (map-structure v) true))]
-    (reduce-kv (fn [m k v] (assoc m k (transform v))) {} m)))
-
 (deftest test-all-languages-defined
-  (is (= (map-structure (loc-en))
-         (map-structure (loc-fi)))))
+  (is (= (recursive-keys (loc-en))
+         (recursive-keys (loc-fi)))))
 
 (defn extract-format-parameters [string]
   (set (re-seq #"%\d+" string)))
@@ -42,20 +37,16 @@
   (is (= #{"%3" "%5" "%7"} (extract-format-parameters "user %3 has made %7 alterations in %5!"))))
 
 (deftest test-format-parameters-match
-  (letfn [(check [left right]
-            (cond
-              (string? left)
-              (do
-                (is (string? right))
-                (is (= (extract-format-parameters left)
-                       (extract-format-parameters right))))
-              (map? left)
-              (doseq [k (keys left)]
-                (is (map? right))
-                (testing k
-                  (check (get left k) (get right k))))))]
-    (testing "[:en vs :fi]"
-      (check (loc-en) (loc-fi)))))
+  (testing "[:en vs :fi]"
+    (let [en (loc-en)
+          fi (loc-fi)]
+      (doseq [k (recursive-keys en)] ;; we check that keys match separately
+        (testing k
+          (let [en-string (getx-in en (vec k))
+                fi-string (getx-in fi (vec k))]
+            (when (string? en-string)
+              (is (= (extract-format-parameters en-string)
+                     (extract-format-parameters fi-string))))))))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
