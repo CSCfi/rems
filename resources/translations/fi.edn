@@ -233,10 +233,10 @@
                                  :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :application-licenses-added {:subject "Hakemukseen %3 käyttöehdot ovat muuttuneet"
                                        :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi muuttuneille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä muuttuneet käyttöehdot osoitteessa %6"}
-          :application-resubmitted {:subject "Hakemus lähetetty uudelleen (%3)"
-                                    :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
-          :application-submitted {:subject "Uusi hakemus (%3)"
-                                  :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta: %6"}
+          :application-resubmitted {:subject "(%3) Hakemus lähetetty uudelleen"
+                                    :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :application-submitted {:subject "(%3) Uusi hakemus"
+                                  :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :comment-requested {:subject "Katselmointipyyntö (%3)"
                               :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit katselmoida hakemuksen: %6"}
           :commented {:subject "Hakemus katselmoitu (%3)"

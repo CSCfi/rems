@@ -235,10 +235,10 @@
                                  :message-to-handler "Dear %1,\n\n%2 has returned the application %3 to the applicant %4 for modifications.\n\nYou can view the application at %6"}
           :application-licenses-added {:subject "Your application's %3 terms of use have changed"
                                        :message "Dear %1,\n\n%2 has requested your approval for changed terms of use to application %3.\n\nYou can review the application and approve the changed the terms of use at %6"}
-          :application-resubmitted {:subject "Application has been resubmitted (%3)"
-                                    :message "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can view the application: %6"}
-          :application-submitted {:subject "A new application has been submitted (%3)"
-                                  :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can view the application: %6"}
+          :application-resubmitted {:subject "(%3) Application has been resubmitted"
+                                    :message "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can view the application at %6"}
+          :application-submitted {:subject "(%3) A new application has been submitted"
+                                  :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can view the application at %6"}
           :comment-requested {:subject "Review request (%3)"
                               :message "Dear %1,\n\n%2 has requested your review on application %3 submitted by %4.\n\nYou can review the application: %6"}
           :commented {:subject "Application has been reviewed (%3)"
