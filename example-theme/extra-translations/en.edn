@@ -1,3 +1,4 @@
 {:t
  {:administration {:catalogue-items "Catalogue"}
-  :create-license {:license-text "Text"}}}
+  :create-license {:license-text "Text"}
+  :unused-key "Unused"}}

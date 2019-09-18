@@ -4,11 +4,25 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer :all]
+            [clojure.tools.logging]
             [rems.locales :as locales]
             [rems.testing-util :refer [create-temp-dir delete-recursively]]
             [rems.util :refer [getx-in]]
             [taoensso.tempura.impl :refer [compile-dictionary]])
   (:import (java.io FileNotFoundException)))
+
+(deftest test-recursive-keys
+  (let [recursive-keys #'rems.locales/recursive-keys]
+    (is (= [[:a] [:b]] (recursive-keys {:a [1] :b "foo"})))
+    (is (= [[:a :b] [:a :c] [:a :d :e] [:a :d :f]]
+           (recursive-keys {:a {:b 1 :c nil :d {:e "foo" :f [3]}}})))))
+
+(deftest test-unused-translation-keys
+  (let [unused-translation-keys #'rems.locales/unused-translation-keys]
+    (is (= nil (unused-translation-keys {:a {:b "x" :c "x"}} {:a {:b "y"}})))
+    (is (= (set [[:x] [:a :d]])
+           (set (unused-translation-keys {:a {:b "x" :c "x"}}
+                                         {:a {:b "y" :d "y"} :x "y"}))))))
 
 (defn loc-en []
   (read-string (slurp (io/resource "translations/en.edn"))))
@@ -114,30 +128,21 @@
                                                       :languages [:xx]})))))
 
 (deftest override-translations-with-extra-translations
-  (testing "extra translations override translations"
-    (let [translations (locales/load-translations {:languages [:en]
+  (let [log (atom [])
+        ;; redeffing log* is hacky, could instead set *logger-factory* to a fake logger
+        translations (with-redefs [clojure.tools.logging/log* (fn [_ _ _ msg] (swap! log conj (str msg)))]
+                       (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
-                                                   :theme-path "./example-theme/theme.edn"})]
+                                                   :theme-path "./example-theme/theme.edn"}))]
+    (testing "extra translations override translations"
       (is (= "Catalogue" (getx-in translations [:en :t :administration :catalogue-items])))
-      (is (= "Text" (getx-in translations [:en :t :create-license :license-text])))))
-  (testing "extra translations don't override keys that are not defined in extras"
-    (let [translations (locales/load-translations {:languages [:en]
-                                                   :translations-directory "translations/"
-                                                   :theme-path "example-theme/theme.edn"})]
-      (is (= "Active" (getx-in translations [:en :t :administration :active])))))
-  ;; TODO: This should rather be part of validation of all custom themes, but
-  ;;   it's probably better to at least have it here than not at all.
-  (testing "extra translations don't add keys that are not defined in original"
-    (doseq [lang [:en :fi]]
-      (let [translations
-            (locales/load-translations {:languages [lang]
-                                        :translations-directory "translations/"
-                                        :theme-path "example-theme/theme.edn"})
-            translations-without-extras
-            (locales/load-translations {:languages [lang]
-                                        :translations-directory "translations/"})]
-        (is (= (map-structure translations)
-               (map-structure translations-without-extras)))))))
+      (is (= "Text" (getx-in translations [:en :t :create-license :license-text]))))
+    (testing "extra translations don't override keys that are not defined in extras"
+      (is (= "Active" (getx-in translations [:en :t :administration :active]))))
+    (testing "warning for unknown keys"
+      (is (= 1 (count @log)))
+      (is (.contains (first @log) ":unused-key")
+          (pr-str @log)))))
 
 (deftest theme-path-given-no-extra-translations
   (testing "translations work with theme-path in config and no extra-translations"
