@@ -118,7 +118,6 @@
       (is (= "Text %1" (getx-in translations [:en :t :create-license :license-text]))))
     (testing "extra translations don't override keys that are not defined in extras"
       (is (= "Active" (getx-in translations [:en :t :administration :active]))))
-    ;; XXX the logging tests break for some reason when running through CIDER
     (testing "warnings"
       (is (< 0 (count @log)))
       (testing "for unused key"
