@@ -246,8 +246,8 @@
           :decision-requested {:subject "(%3) Päätöspyyntö"
                                :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
-          :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
-                         :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta: %6"}
+          :member-added {:subject "Lisätty hakemuksen %3 jäseneksi"
+                         :message "Hyvä %1,\n\nSinut on lisätty käyttäjän %4 jättämän hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %6"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen %3"
                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %4"}
           :remarked {:subject "(%3) Hakemusta kommentoitu"

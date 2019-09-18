@@ -198,8 +198,8 @@
         member-events (conj base-events add-member join)]
     (testing "member-added"
       (is (= [{:to-user "member",
-               :subject "Added as a member of an application (2001/3, \"Application title\")",
-               :body "Dear member,\n\nYou've been added as a member of application 2001/3, \"Application title\".\n\nView application: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
+               :subject "Added as a member of an application 2001/3, \"Application title\"",
+               :body "Dear member,\n\nYou've been added as a member of application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view application and accept the terms of use at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
              (emails base-events add-member))))
     (testing "licenses-added"
       (let [mails (emails member-events {:application/id 7

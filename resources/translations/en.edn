@@ -248,8 +248,8 @@
           :decision-requested {:subject "(%3) Decision request"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3, submitted by %4.\n\nYou can review application at %6"}
           :footer "\n\nPlease do not reply to this automatically generated message."
-          :member-added {:subject "Added as a member of an application (%3)"
-                         :message "Dear %1,\n\nYou've been added as a member of application %3.\n\nView application: %6"}
+          :member-added {:subject "Added as a member of an application %3"
+                         :message "Dear %1,\n\nYou've been added as a member of application %3, submitted by %4.\n\nYou can view application and accept the terms of use at %6"}
           :member-invited {:subject "Invitation to participate in application %3"
                            :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
           :remarked {:subject "(%3) Application has been commented"
