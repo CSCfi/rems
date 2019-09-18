@@ -301,11 +301,16 @@
                             :event/actor "applicant"})))))
 
 (deftest test-return-resubmit
-  (let [return {:application/id 7
+  (let [add-member {:application/id 7
+                    :event/type :application.event/member-added
+                    :event/actor "handler"
+                    :application/member {:userid "member"}}
+        added (conj base-events add-member)
+        return {:application/id 7
                 :event/type :application.event/returned
                 :event/actor "handler"
                 :application/comment ["requesting changes"]}
-        returned-events (conj base-events return)
+        returned-events (conj added return)
         resubmit {:application/id 7
                   :event/type :application.event/submitted
                   :event/actor "applicant"}]
@@ -315,7 +320,7 @@
             {:to-user "assistant"
              :subject "Application 2001/3, \"Application title\" has been returned to applicant"
              :body "Dear assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}]
-           (emails base-events return)))
+           (emails added return)))
     (let [mails (emails returned-events resubmit)]
       (is (= #{"assistant" "handler"} (email-recipients mails)))
       (is (= {:to-user "assistant"
