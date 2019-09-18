@@ -26,8 +26,9 @@
       (io/file "extra-translations")))
 
 (defn extract-format-parameters [string]
-  (when (string? string)
-    (set (re-seq #"%\d+" string))))
+  (set
+   (when (string? string)
+     (re-seq #"%\d+" string))))
 
 (defn- unused-translation-keys [translations extras]
   (let [keys (set (recursive-keys translations))
@@ -51,6 +52,7 @@
     (if (and extra-path (.exists extra-path))
       (let [extra-file (io/file extra-path filename)
             extra-translations (translations-from-file extra-file)]
+        (log/info "Loaded extra translations from" (str extra-file))
         (when-let [unused (unused-translation-keys translations extra-translations)]
           (log/warn "Unused translation keys defined in" (str extra-file) ":" unused))
         (when-let [errors (nonmatching-format-parameters translations extra-translations)]
