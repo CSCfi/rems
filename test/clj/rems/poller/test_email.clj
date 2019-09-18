@@ -208,8 +208,8 @@
                                          :application/licenses [{:license/id 1234}]})]
         (is (= #{"applicant" "member" "somebody"} (email-recipients mails)))
         (is (= {:to-user "applicant"
-                :subject "New terms of use waiting for approval (2001/3, \"Application title\")"
-                :body "Dear Alice Applicant,\n\nHannah Handler has requested your acceptance for new terms of use for application 2001/3, \"Application title\".\n\nYou can view the application and accept the terms of use: http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
+                :subject "Your application's 2001/3, \"Application title\" terms of use have changed"
+                :body "Dear Alice Applicant,\n\nHannah Handler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can review the application and approve the changed the terms of use at http://example.com/#/application/7\n\nPlease do not reply to this automatically generated message."}
                (email-to "applicant" mails)))))
     (testing "approved"
       (let [mails (emails member-events {:application/id 7
