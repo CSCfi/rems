@@ -709,13 +709,13 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
     [:div.container-fluid
-     {:key application-id} ; re-render to clear flash messages when navigating to another application
      (when reloading?
        [:div {:style {:float :right}}
         [spinner/small]])
      [document-title (if application
                        (str (text :t.applications/application) " " (format-application-id config application))
                        (text :t.applications/application))]
+     ^{:key application-id} ; re-render to clear flash messages when navigating to another application
      [flash-message/component :top]
      (when loading?
        [spinner/big])
