@@ -20,7 +20,7 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import [rems.auth ForbiddenException NotAuthorizedException]
+  (:import [rems.auth ForbiddenException UnauthorizedException]
            rems.InvalidRequestException))
 
 (defn unauthorized-handler
@@ -82,7 +82,7 @@
      :formats muuntaja
      :middleware [cors-middleware
                   transaction-middleware]
-     :exceptions {:handlers {NotAuthorizedException unauthorized-handler
+     :exceptions {:handlers {UnauthorizedException unauthorized-handler
                              ForbiddenException forbidden-handler
                              InvalidRequestException invalid-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler

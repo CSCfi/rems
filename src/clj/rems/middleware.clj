@@ -27,7 +27,7 @@
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [redirect header]])
   (:import [javax.servlet ServletContext]
-           [rems.auth ForbiddenException NotAuthorizedException]))
+           [rems.auth ForbiddenException UnauthorizedException]))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
@@ -160,7 +160,7 @@
   (fn [req]
     (try
       (handler req)
-      (catch NotAuthorizedException e
+      (catch UnauthorizedException e
         (on-unauthorized-error req))
       (catch ForbiddenException e
         (on-forbidden-error req)))))
