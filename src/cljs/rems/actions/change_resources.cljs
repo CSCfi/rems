@@ -5,7 +5,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
-            [rems.util :refer [fetch post!]]))
+            [rems.util :refer [post!]]))
 
 (rf/reg-event-fx
  ::open-form

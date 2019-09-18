@@ -20,7 +20,8 @@
 
 (defn- fetch-form [form-id]
   (fetch (str "/api/forms/" form-id)
-         {:handler #(rf/dispatch [::fetch-form-result %])}))
+         {:handler #(rf/dispatch [::fetch-form-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch form")}))
 
 (rf/reg-fx ::fetch-form (fn [[form-id]] (fetch-form form-id)))
 

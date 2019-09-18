@@ -20,7 +20,8 @@
 
 (defn- fetch-resource [resource-id]
   (fetch (str "/api/resources/" resource-id)
-         {:handler #(rf/dispatch [::fetch-resource-result %])}))
+         {:handler #(rf/dispatch [::fetch-resource-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch resource")}))
 
 (rf/reg-fx ::fetch-resource (fn [[resource-id]] (fetch-resource resource-id)))
 

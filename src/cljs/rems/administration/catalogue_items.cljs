@@ -21,7 +21,7 @@
  ::fetch-catalogue
  (fn [{:keys [db]}]
    (let [description (text :t.administration/catalogue-items)]
-     (fetch "/api/catalogue-items/"
+     (fetch "/api/catalogue-items"
             {:url-params {:expand :names
                           :disabled true
                           :expired (::display-old? db)

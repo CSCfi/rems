@@ -19,7 +19,8 @@
 
 (defn- fetch-license [license-id]
   (fetch (str "/api/licenses/" license-id)
-         {:handler #(rf/dispatch [::fetch-license-result %])}))
+         {:handler #(rf/dispatch [::fetch-license-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch license")}))
 
 (rf/reg-fx ::fetch-license (fn [[license-id]] (fetch-license license-id)))
 

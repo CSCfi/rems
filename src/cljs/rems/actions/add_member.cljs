@@ -12,7 +12,9 @@
 (rf/reg-fx
  ::fetch-potential-members
  (fn [on-success]
-   (fetch "/api/applications/members" {:handler on-success})))
+   (fetch "/api/applications/members"
+          {:handler on-success
+           :error-handler (flash-message/default-error-handler :top "Fetch potential members")})))
 
 (rf/reg-event-fx
  ::open-form
