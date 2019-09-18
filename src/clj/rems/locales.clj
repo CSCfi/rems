@@ -9,15 +9,23 @@
             [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
 
+(defn- file-or-resource
+  "Given a path (a String or File), resolve it to either an existing file or existing resource.
+  Returns a File or URL object, or nil if file nor resource can be found.
+  Prefers files over resources."
+  [path]
+  (let [file (io/file path)
+        resource (io/resource (str file))]
+    (cond
+      (and file (.exists file)) file
+      resource resource
+      :else nil)))
+
 (defn- translations-from-file [file]
-  (let [file (io/file file)
-        resource (io/resource (str file))
-        chosen (cond
-                 (and file (.exists file)) file
-                 resource resource
-                 :else (throw (FileNotFoundException.
-                               (str "translations could not be found in file or resource \"" file "\""))))]
-    (read-string (slurp chosen))))
+  (if-let [chosen (file-or-resource file)]
+    (read-string (slurp chosen))
+    (throw (FileNotFoundException.
+            (str "translations could not be found in file or resource \"" file "\"")))))
 
 (defn- extra-translations-path [theme-path]
   (-> theme-path
