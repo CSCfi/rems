@@ -80,7 +80,7 @@
 
   (testing "loads external translations"
     (let [translations-dir (create-temp-dir)
-          config {:translations-directory translations-dir
+          config {:translations-directory (str translations-dir "/") ;; TODO remove
                   :extra-translations-directory nil
                   :languages [:xx]}
           translation {:some-key "some val"}]
@@ -102,7 +102,7 @@
                           (locales/load-translations {:languages [:xx]}))))
 
   (testing "missing translations is an error"
-    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations could not be found in some-dir/xx.edn file or some-dir/xx.edn resource\E$"
+    (is (thrown-with-msg? FileNotFoundException #"^translations could not be found in file or resource \"some-dir/xx.edn\"$"
                           (locales/load-translations {:translations-directory "some-dir/"
                                                       :languages [:xx]})))))
 
