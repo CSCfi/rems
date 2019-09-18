@@ -100,8 +100,8 @@
  ::fetch-application
  (fn [{:keys [db]} [_ id]]
    (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result {:data %}])
-           :error-handler (comp #(rf/dispatch [::fetch-application-result {:error %}])
+          {:handler #(rf/dispatch [::fetch-application-result %])
+           :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
                                 (flash-message/default-error-handler :top (text :t.applications/application)))})
    {:db (assoc-in db [::application :fetching?] true)}))
 
@@ -116,10 +116,9 @@
 
 (rf/reg-event-db
  ::fetch-application-result
- (fn [db [_ result]]
+ (fn [db [_ application]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
-     (cond-> (assoc db ::application {:data (:data result)
-                                      :error (:error result)
+     (cond-> (assoc db ::application {:data application
                                       :initialized? true
                                       :fetching? false})
        initial-fetch? (initialize-edit-application)))))
