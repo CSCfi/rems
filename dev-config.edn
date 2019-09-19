@@ -5,6 +5,8 @@
  :search-index-path "target/search-index-dev"
  :theme-path "example-theme/theme.edn"
  :authentication :fake-shibboleth
+ ; when shibboleth is removed, we can use oidc exclusively
+ ;:authentication :oidc
  :public-url "http://localhost:3000/"
  :render-css-file? true
  :extra-pages [{:id "about"

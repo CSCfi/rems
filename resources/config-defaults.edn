@@ -14,12 +14,18 @@
  ;; Path to a writable directory where to store the Lucene search index files.
  :search-index-path "search-index"
 
- ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :ldap
+ ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :ldap, :oidc
  :authentication :shibboleth
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
  :alternative-login-url nil
+
+ ;; Open ID Connect settings
+ ; These allow login to http://localhost:3000/oidc-callback only
+ :oidc-domain "remsdev.eu.auth0.com"
+ :oidc-client-id "65TIN1Joo6EvsHSPCN4zyCaxxPh0WJF1"
+ :oidc-client-secret "e1yr9R_8WW3Xg03wm6wJ4UmNVVjiqdVhwFGvHhttyoRS3h04F4MGh0zRaV7vKm30"
 
  ;; Sending email.
  :smtp-host nil

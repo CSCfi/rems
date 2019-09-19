@@ -5,6 +5,7 @@
             [compojure.core :refer [GET routes]]
             [rems.auth.fake-shibboleth :as fake-shibboleth]
             [rems.auth.ldap :as ldap]
+            [rems.auth.oidc :as oidc]
             [rems.auth.shibboleth :as shibboleth]
             [rems.config :refer [env]]
             [rems.util :refer [never-match-route]]
@@ -27,6 +28,7 @@
   (case (:authentication env)
     :shibboleth (shibboleth/login-url)
     :fake-shibboleth (fake-shibboleth/login-url)
+    :oidc (oidc/login-url)
     :ldap (ldap/login-url)))
 
 (defn- logout-url []
@@ -46,4 +48,5 @@
      :fake-shibboleth (routes
                        fake-shibboleth/routes
                        ldap/routes)
-     :ldap ldap/routes)))
+     :ldap ldap/routes
+     :oidc oidc/routes)))

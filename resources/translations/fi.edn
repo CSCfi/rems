@@ -298,6 +298,7 @@
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
+          :auth0-text "Kirjaudu sisään Auth0:lla"
           :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "#/extra-pages/about"} "Info-sivulla"] "."]
                   [:p "Ole hyvä ja kirjaudu sisään."]]
           :text "Kirjaudu sisään Haka-tunnuksin"

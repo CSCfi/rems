@@ -12,7 +12,7 @@
            [java.util Base64 Date]))
 
 (mount/defstate ^:dynamic ^JwkProvider jwk-provider
-  :start (-> (JwkProviderBuilder. ^String (getx env :auth0-domain))
+  :start (-> (JwkProviderBuilder. ^String (getx env :oidc-domain))
              (.build)))
 
 (defn- fetch-public-key [^String jwt]
@@ -24,15 +24,15 @@
       (.decode base64-str)
       (String. StandardCharsets/UTF_8)))
 
-(defn validate [^String jwt env]
+(defn validate [^String jwt issuer audience now]
   (let [public-key (fetch-public-key jwt)
         algorithm (Algorithm/RSA256 public-key nil)
         clock (reify Clock
                 (getToday [_]
-                  (Date/from ((getx env :now)))))
+                  (Date/from now)))
         verifier (-> (JWT/require algorithm)
-                     (.withIssuer (into-array String [(getx env :jwt-issuer)]))
-                     (.withAudience (into-array String [(getx env :jwt-audience)]))
+                     (.withIssuer (into-array String [issuer]))
+                     (.withAudience (into-array String [audience]))
                      (->> ^JWTVerifier$BaseVerification (cast JWTVerifier$BaseVerification))
                      (.build clock))]
     (-> (.verify verifier jwt)
