@@ -848,7 +848,8 @@
                                                                  :application/events events
                                                                  :application/members #{}
                                                                  :application/past-members #{{:userid "member"}}})]
-                                (is (= expected-application (apply-events events)))))))))))))))))))
+                                (is (= expected-application (apply-events events))))))))))
+                  )))))))))
 
 (deftest test-calculate-permissions
   ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?

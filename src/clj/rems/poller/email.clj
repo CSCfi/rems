@@ -123,7 +123,7 @@
                                 :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/returned [event application]
-  (concat (emails-to-recipients (applicant-and-members application)
+  (concat (emails-to-recipients [(:application/applicant application)]
                                 event application
                                 :t.email.application-returned/subject-to-applicant
                                 :t.email.application-returned/message-to-applicant)
@@ -191,7 +191,11 @@
   (with-language (:default-language env)
     (fn []
       [{:to (:email (:application/member event))
-        :subject (text-format :t.email.member-invited/subject)
+        :subject (text-format :t.email.member-invited/subject
+                              (:name (:application/member event))
+                              (user-for-email (:application/applicant application))
+                              (format-application-for-email application)
+                              (invitation-link (:invitation/token event)))
         :body (str
                (text-format :t.email.member-invited/message
                             (:name (:application/member event))
