@@ -4,7 +4,7 @@
             [rems.api.util :refer :all]
             [rems.context :as context]
             [ring.util.http-response :refer :all])
-  (:import (rems.auth ForbiddenException NotAuthorizedException)))
+  (:import (rems.auth ForbiddenException UnauthorizedException)))
 
 (deftest route-role-check-test
   (testing "no roles required"
@@ -42,7 +42,7 @@
       (testing "but user is not logged in"
         (binding [context/*roles* #{:role1}
                   context/*user* nil]
-          (is (thrown? NotAuthorizedException
+          (is (thrown? UnauthorizedException
                        (route {:request-method :get
                                :uri "/foo"})))))))
 

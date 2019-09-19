@@ -1,10 +1,10 @@
 (ns rems.auth.util
-  (:import [rems.auth NotAuthorizedException ForbiddenException]))
+  (:import [rems.auth UnauthorizedException ForbiddenException]))
 
 (defn throw-unauthorized
-  "Helper for throwing `NotAuthorizedException`."
+  "Helper for throwing `UnauthorizedException`."
   []
-  (throw (NotAuthorizedException.)))
+  (throw (UnauthorizedException.)))
 
 (defn throw-forbidden
   "Helper for throwing `ForbiddenException`."
