@@ -20,7 +20,7 @@
  ::fetch-licenses
  (fn [db]
    (let [description (text :t.administration/licenses)]
-     (fetch "/api/licenses/"
+     (fetch "/api/licenses"
             {:url-params {:disabled true
                           :expired (::display-old? db)
                           :archived (::display-old? db)}

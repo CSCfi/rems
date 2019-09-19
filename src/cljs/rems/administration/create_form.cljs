@@ -28,7 +28,8 @@
  (fn [{:keys [db]} [_ form-id]]
    (when form-id
      (fetch (str "/api/forms/" form-id)
-            {:handler #(rf/dispatch [::fetch-form-result %])})
+            {:handler #(rf/dispatch [::fetch-form-result %])
+             :error-handler (flash-message/default-error-handler :top "Fetch form")})
      {:db (assoc db ::loading-form? true)})))
 
 (rf/reg-event-db
@@ -439,7 +440,7 @@
      [flash-message/component :top]
      (if loading-form?
        [:div [spinner/big]]
-       [:div.container-fluid.editor-content
+       [:div.container-fluid
         [validation-errors-summary]
         [:div.row
          [:div.col-lg

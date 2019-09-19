@@ -59,7 +59,8 @@
 (defn- fetch-licenses []
   (fetch "/api/licenses"
          {:url-params {:active true}
-          :handler #(rf/dispatch [::fetch-licenses-result %])}))
+          :handler #(rf/dispatch [::fetch-licenses-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch licenses")}))
 
 (rf/reg-fx ::fetch-licenses (fn [_] (fetch-licenses)))
 

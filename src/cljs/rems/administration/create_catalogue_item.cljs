@@ -113,7 +113,9 @@
 (rf/reg-event-fx ::edit-catalogue-item edit-catalogue-item!)
 
 (defn- fetch-workflows []
-  (fetch "/api/workflows" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
+  (fetch "/api/workflows"
+         {:handler #(rf/dispatch [::fetch-workflows-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch workflows")}))
 
 (rf/reg-fx ::fetch-workflows fetch-workflows)
 
@@ -126,7 +128,9 @@
 (rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 
 (defn- fetch-resources []
-  (fetch "/api/resources" {:handler #(rf/dispatch [::fetch-resources-result %])}))
+  (fetch "/api/resources"
+         {:handler #(rf/dispatch [::fetch-resources-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch resources")}))
 
 (rf/reg-fx ::fetch-resources fetch-resources)
 
@@ -140,7 +144,9 @@
 
 
 (defn- fetch-forms []
-  (fetch "/api/forms" {:handler #(rf/dispatch [::fetch-forms-result %])}))
+  (fetch "/api/forms"
+         {:handler #(rf/dispatch [::fetch-forms-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch forms")}))
 
 (rf/reg-fx ::fetch-forms fetch-forms)
 
@@ -155,7 +161,8 @@
 
 (defn- fetch-catalogue-item [id]
   (fetch (str "/api/catalogue-items/" id)
-         {:handler #(rf/dispatch [::fetch-catalogue-item-result %])}))
+         {:handler #(rf/dispatch [::fetch-catalogue-item-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch catalogue item")}))
 
 (rf/reg-fx
  ::fetch-catalogue-item

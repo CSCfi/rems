@@ -21,7 +21,8 @@
 
 (defn- fetch-workflow [workflow-id]
   (fetch (str "/api/workflows/" workflow-id)
-         {:handler #(rf/dispatch [::fetch-workflow-result %])}))
+         {:handler #(rf/dispatch [::fetch-workflow-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch workflow")}))
 
 (rf/reg-fx ::fetch-workflow (fn [[workflow-id]] (fetch-workflow workflow-id)))
 

@@ -19,7 +19,8 @@
 
 (defn- fetch-catalogue-item [catalogue-item-id]
   (fetch (str "/api/catalogue-items/" catalogue-item-id)
-         {:handler #(rf/dispatch [::fetch-catalogue-item-result %])}))
+         {:handler #(rf/dispatch [::fetch-catalogue-item-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch catalogue items")}))
 
 (rf/reg-fx ::fetch-catalogue-item (fn [[catalogue-item-id]] (fetch-catalogue-item catalogue-item-id)))
 

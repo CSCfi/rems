@@ -423,10 +423,14 @@
 ;; Initialize app
 
 (defn fetch-translations! []
-  (fetch "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])}))
+  (fetch "/api/translations"
+         {:handler #(rf/dispatch [:loaded-translations %])
+          :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
 
 (defn fetch-theme! []
-  (fetch "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])}))
+  (fetch "/api/theme"
+         {:handler #(rf/dispatch [:loaded-theme %])
+          :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
 (defn mount-components []
   (rf/clear-subscription-cache!)

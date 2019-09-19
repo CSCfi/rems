@@ -10,7 +10,9 @@
 (rf/reg-fx
  ::fetch-potential-deciders
  (fn [on-success]
-   (fetch "/api/applications/deciders" {:handler on-success})))
+   (fetch "/api/applications/deciders"
+          {:handler on-success
+           :error-handler (flash-message/default-error-handler :top "Fetch potential deciders")})))
 
 (rf/reg-event-fx
  ::open-form

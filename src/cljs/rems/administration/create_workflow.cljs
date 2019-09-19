@@ -39,7 +39,8 @@
  (fn [workflow-id]
    (when workflow-id
      (fetch (str "/api/workflows/" workflow-id)
-            {:handler #(rf/dispatch [::fetch-workflow-result %])}))))
+            {:handler #(rf/dispatch [::fetch-workflow-result %])
+             :error-handler (flash-message/default-error-handler :top "Fetch workflow")}))))
 
 (rf/reg-event-db
  ::fetch-workflow-result
@@ -108,7 +109,9 @@
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
 
 (defn- fetch-actors []
-  (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
+  (fetch "/api/workflows/actors"
+         {:handler #(rf/dispatch [::fetch-actors-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch actors")}))
 
 (rf/reg-fx ::fetch-actors fetch-actors)
 

@@ -21,7 +21,7 @@
  ::fetch-forms
  (fn [db]
    (let [description (text :t.administration/forms)]
-     (fetch "/api/forms/"
+     (fetch "/api/forms"
             {:url-params {:disabled true
                           :expired (::display-old? db)
                           :archived (::display-old? db)}
