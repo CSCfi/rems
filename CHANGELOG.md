@@ -74,10 +74,12 @@ Changes since v2.4
 - Email messages now use the application title and full names of users
 - Email message texts improved
 - Show three latest events as a default on the application page (#1632)
+- User's language setting is stored in a cookie so that it persists after login. Also the language is possibly correct already at login because the cookie is remembered.
 
 ### Fixes
 - Entitlement API
 - Search on the catalogue and admin pages did not support multiple search terms (#1541)
+- Hide flash message when changing language so mixed language content is not shown
 
 ## v2.5 "Maarintie" 2019-07-18
 
