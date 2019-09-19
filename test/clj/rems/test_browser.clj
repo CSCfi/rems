@@ -236,3 +236,36 @@
     ;; if there is a js exception, nothing renders, so let's check
     ;; that we have lots of examples in the dom:
     (is (< 60 (count (query-all *driver* {:class :example}))))))
+
+(deftest test-language-change
+  (with-postmortem *driver* {:dir reporting-dir}
+    (testing "default language is English"
+      (go *driver* +test-url+)
+      (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
+      (login-as "alice")
+      (wait-visible *driver* {:tag :h1, :fn/text "Catalogue"})
+      (wait-page-loaded))
+
+    (testing "changing language while logged out"
+      (click *driver* :logout)
+      (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
+      (click *driver* [{:fn/has-class :btn-link :fn/text "FI"}])
+      (wait-visible *driver* {:tag :h1 :fn/text "Tervetuloa REMSiin"}))
+
+    (testing "changed language must persist after login"
+      (login-as "alice")
+      (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"})
+      (wait-page-loaded))
+
+    (testing "changed language must have been saved for user"
+      (click *driver* :logout)
+      (click *driver* [{:fn/has-class :btn-link :fn/text "EN"}])
+      (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
+      (delete-cookies *driver*)
+      (login-as "alice")
+      (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"}))
+
+    (testing "changing language while logged in"
+      (click *driver* [{:fn/has-class :btn-link :fn/text "EN"}])
+      (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
+    (is true))) ; avoid no assertions warning
