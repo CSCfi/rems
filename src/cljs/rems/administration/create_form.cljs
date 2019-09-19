@@ -341,38 +341,37 @@
    "/#/administration/forms"
    (text :t.administration/cancel)])
 
+(defn- format-validation-link [target content]
+  [:li [:a {:href "#" :on-click (in-page-anchor-link target)}
+        content]])
+
 (defn- format-field-validation [field field-errors]
   (let [field-id (:field/id field)]
     [:li (text-format :t.create-form/field-n (inc field-id))
      (into [:ul]
            (concat
             (for [[lang error] (:field/title field-errors)]
-              [:li [:a {:href "#"
-                        :on-click (in-page-anchor-link (str "fields-" field-id "-title-" (name lang)))}
-                    (text-format error (str (text :t.create-form/field-title)
-                                            " (" (.toUpperCase (name lang)) ")"))]])
+              (format-validation-link (str "fields-" field-id "-title-" (name lang))
+                                      (text-format error (str (text :t.create-form/field-title)
+                                                              " (" (.toUpperCase (name lang)) ")"))))
             (for [[lang error] (:field/placeholder field-errors)]
-              [:li [:a {:href "#"
-                        :on-click (in-page-anchor-link (str "fields-" field-id "-placeholder-" (name lang)))}
-                    (text-format error (str (text :t.create-form/placeholder)
-                                            " (" (.toUpperCase (name lang)) ")"))]])
+              (format-validation-link (str "fields-" field-id "-placeholder-" (name lang))
+                                      (text-format error (str (text :t.create-form/placeholder)
+                                                              " (" (.toUpperCase (name lang)) ")"))))
             (when (:field/max-length field-errors)
-              [[:li [:a {:href "#"
-                         :on-click (in-page-anchor-link (str "fields-" field-id "-max-length"))}
-                     (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))]]])
+              [(format-validation-link (str "fields-" field-id "-max-length")
+                                       (str (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))))])
             (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
               [:li (text-format :t.create-form/option-n (inc option-id))
                [:ul
                 (when (:key option-errors)
-                  [:li [:a {:href "#"
-                            :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-key"))}
-                        (text-format (:key option-errors) (text :t.create-form/option-key))]])
+                  (format-validation-link (str "fields-" field-id "-options-" option-id "-key")
+                                          (text-format (:key option-errors) (text :t.create-form/option-key))))
                 (into [:<>]
                       (for [[lang error] (:label option-errors)]
-                        [:li [:a {:href "#"
-                                  :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-label-" (name lang)))}
-                              (text-format error (str (text :t.create-form/option-label)
-                                                      " (" (.toUpperCase (name lang)) ")"))]]))]])))]))
+                        (format-validation-link (str "fields-" field-id "-options-" option-id "-label-" (name lang))
+                                                (text-format error (str (text :t.create-form/option-label)
+                                                                        " (" (.toUpperCase (name lang)) ")")))))]])))]))
 
 (defn- format-validation-errors [form-errors form]
   ;; TODO: deduplicate with field definitions
