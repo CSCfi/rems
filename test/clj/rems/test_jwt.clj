@@ -18,9 +18,9 @@
 
 (def token "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlJqWTFNekEzTlRKR1JrTTFRVGt5TlVaRk1UazNOa1UyT1Rjd1FVRXdSakV6TWpSQ1FUQkNOQSJ9.eyJnaXZlbl9uYW1lIjoiRXNrbyIsImZhbWlseV9uYW1lIjoiTHVvbnRvbGEiLCJuaWNrbmFtZSI6ImVza28ubHVvbnRvbGEiLCJuYW1lIjoiRXNrbyBMdW9udG9sYSIsInBpY3R1cmUiOiJodHRwczovL2xoNi5nb29nbGV1c2VyY29udGVudC5jb20vLUFtRHYtVlZoUUJVL0FBQUFBQUFBQUFJL0FBQUFBQUFBQWVJL2JIUDhsVk5ZMWFBL3Bob3RvLmpwZyIsImxvY2FsZSI6ImVuLUdCIiwidXBkYXRlZF9hdCI6IjIwMTgtMTEtMDNUMTY6MTY6NDcuNTAyWiIsImlzcyI6Imh0dHBzOi8vbHVvbnRvbGEuZXUuYXV0aDAuY29tLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTAyODgzMjM3Nzk0NDUxMTExNDU5IiwiYXVkIjoiOHRWa2Rmbnc4eW5aNnJYTm5kRDZlWjZFcnNIZElnUGkiLCJpYXQiOjE1NDEyNjE4MDcsImV4cCI6MTU0MTI5NzgwNywibm9uY2UiOiI5UGlFemxtTDk3d0xudTFBLVVPakZ-VFAyekVYU3dvLSJ9.v3avK87uM7ncT3Bx8aJ7NbbCaOjgv_TQ9lRR6hs6CTFteA3yhbZpX0isB3_2Lxf46AsqVEWWFvY-Afslc_32_UzLfaWEPH5HwQwRAwUW9m34tx-RYhNtP02jFAmJIZG-akhz0TYlEzcblU1tOKJbLFuVHyRAOWKRSvlJXioVDfqEdsApNAI78-aoEjhf3ouLzDQVl15AfPBP8Czmp2wmwRfD_2ES66e-_q7cm9zzkcWTjub0wLmiNhDCQfnZJxfA9r5XUQLThbUFHHPnSx-QfLqP8tXmMLm9B9BV8J7G1humG8gaCycq_Q-9ieSDAjpvZ8C5ePTNLVOga4j-MaaFtA")
 
-(def env {:jwt-issuer "https://luontola.eu.auth0.com/"
-          :jwt-audience "8tVkdfnw8ynZ6rXNndD6eZ6ErsHdIgPi"
-          :now #(Instant/parse "2018-11-03T16:17:00.000Z")})
+(def jwt-issuer "https://luontola.eu.auth0.com/")
+(def jwt-audience "8tVkdfnw8ynZ6rXNndD6eZ6ErsHdIgPi")
+(def now (Instant/parse "2018-11-03T16:17:00.000Z"))
 
 (def fake-jwk-provider
   (reify JwkProvider
@@ -33,26 +33,26 @@
   (binding [jwt/jwk-provider fake-jwk-provider]
     (testing "decodes valid tokens"
       (is (= {:name "Esko Luontola"}
-             (select-keys (jwt/validate token env) [:name]))))
+             (select-keys (jwt/validate token jwt-issuer jwt-audience now) [:name]))))
 
     ;; What needs to be validated from a JWT token
     ;; https://auth0.com/docs/tokens/id-token#validate-an-id-token
 
     (testing "verifies token signature"
       (is (thrown-with-msg? SignatureVerificationException #"The Token's Signature resulted invalid"
-                            (jwt/validate (clojure.string/replace token #"A$" "a") env))))
+                            (jwt/validate (clojure.string/replace token #"A$" "a") jwt-issuer jwt-audience now))))
 
     (testing "validates token expiration"
       (is (thrown-with-msg? TokenExpiredException #"The Token has expired"
-                            (jwt/validate token (assoc env :now #(Instant/parse "2018-11-04T16:17:00.000Z"))))))
+                            (jwt/validate token jwt-issuer jwt-audience (Instant/parse "2018-11-04T16:17:00.000Z")))))
 
     (testing "validates token issuer"
       (is (thrown-with-msg? InvalidClaimException #"The Claim 'iss' value doesn't match the required issuer."
-                            (jwt/validate token (assoc env :jwt-issuer "x")))))
+                            (jwt/validate token "x" jwt-audience now))))
 
     (testing "validates token audience"
       (is (thrown-with-msg? InvalidClaimException #"The Claim 'aud' value doesn't contain the required audience."
-                            (jwt/validate token (assoc env :jwt-audience "x")))))))
+                            (jwt/validate token jwt-issuer "x" now))))))
 
 (deftest test-jwt-expired
   (testing "expire time in past"

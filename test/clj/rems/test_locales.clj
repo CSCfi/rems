@@ -52,7 +52,7 @@
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
   ;; --include is needed to exclude editor backup files etc.
-  (let [grep (sh/sh "grep" "-ERho" "--include=*.clj[cs]" "--include=*.clj" ":t[./][-a-z./]+" "src")]
+  (let [grep (sh/sh "grep" "-ERho" "--include=*.clj[cs]" "--include=*.clj" ":t[./][-a-z0-9./]+" "src")]
     (assert (= 0 (:exit grep))
             (pr-str grep))
     (->> grep
