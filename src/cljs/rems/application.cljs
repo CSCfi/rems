@@ -697,11 +697,6 @@
       [flash-message/component :actions]
       [actions-form application]]]]])
 
-(defn- reload-indicator [reloading?]
-  (when reloading?
-    [:div {:style {:float :right}}
-     [spinner/small]]))
-
 ;;;; Entrypoint
 
 (defn application-page []
@@ -714,7 +709,6 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
     [:div.container-fluid
-     [reload-indicator reloading?]
      [document-title (if application
                        (str (text :t.applications/application) " " (format-application-id config application))
                        (text :t.applications/application))]
@@ -727,7 +721,12 @@
                             :edit-application edit-application
                             :attachment-success attachment-success
                             :config config
-                            :userid userid}])]))
+                            :userid userid}])
+     ;; Located after the application to avoid re-rendering the application
+     ;; when this element is added or removed from virtual DOM.
+     (when reloading?
+       [:div.reload-indicator
+        [spinner/small]])]))
 
 ;;;; Guide
 

@@ -714,6 +714,10 @@
    [:#main-content.page-application {:max-width (u/px (int (* 1.5 (:magnitude content-width))))}]
    [:#float-actions {:position :sticky
                      :top "100px"}]
+   [:.reload-indicator {:position :fixed
+                        :bottom "15px"
+                        :right "15px"
+                        :z-index 1000}] ; over re-frisk devtool
 
    ;; application list
    [:.rems-table
