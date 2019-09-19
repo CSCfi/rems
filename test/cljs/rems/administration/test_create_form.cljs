@@ -310,6 +310,9 @@
                      [:form/fields 0 :field/placeholder :fi])
              :t.form.validation/required)))
 
+    (testing "placeholder is not validated if it is not used"
+      (is (empty? (validate-form (assoc-in form [:form/fields 0 :field/type] :label)))))
+
     (testing "option fields"
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :option)
@@ -328,6 +331,12 @@
                  (get-in (validate-form (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages)
                          [:form/fields 0 :field/options 0 :key])
                  :t.form.validation/required)))
+
+        (testing "... are not validated when options are not used"
+          (let [form (-> form
+                         (assoc-in [:form/fields 0 :field/options 0 :key] "")
+                         (assoc-in [:form/fields 0 :field/type] :texta))]
+            (is (empty? (validate-form form)))))
 
         (testing "missing option label"
           (let [empty-label (validate-form (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
