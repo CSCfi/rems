@@ -4,91 +4,74 @@ Authors: @hukka
 
 # Terms
 
-JWS: JSON Web Signature, RFC 7515
-     A standard format to sign JSON data.
+<dl>
+<dt>JWS</dt>
+<dd>
+JSON Web Signature, RFC 7515; a standard format to sign JSON data.
 
-     Consists of three parts:
-     JWS Protected Header that specifies that the message is JWS and the signing algorithm,
-     the payload,
-     and the HMAC of the first two parts.
+Consists of three parts:
+- JWS Protected Header that specifies that the message is JWS and the signing algorithm,
+- the payload,
+- and the HMAC of the first two parts.
 
-     The human readable header is for example:
-     ```
-     {"typ":"JWT",
-      "alg":"HS256"}
-     ```
-     and the payload (valid JWT in this example)
-     ```
-     {"iss":"joe",
-      "exp":1300819380,
-      "http://example.com/is_root":true}
-     ```
+The human readable header is for example:
+```
+{"typ":"JWT",
+ "alg":"HS256"}
+```
+and the payload (valid JWT in this example)
+```
+{"iss":"joe",
+ "exp":1300819380,
+ "http://example.com/is_root":true}
+```
 
-     Base64URL encoded and concatenated with the corresponding signature using JWK
-     ```
-     {"kty":"oct",
-      "k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75
-           aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
-     }
-     ```
-     (which is not included in the JWS message, but could be linked with `kid` parameter)
-     the final message is:
-     ```
-     eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9
-     .
-     eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt
-     cGxlLmNvbS9pc19yb290Ijp0cnVlfQ
-     .
-     dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
-     ```
+Base64URL encoded and concatenated with the corresponding signature using JWK
+```
+{"kty":"oct",
+ "k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75
+      aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
+}
+```
+(which is not included in the JWS message, but could be linked with `kid` parameter)
+the final message is:
+```
+eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9
+.
+eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt
+cGxlLmNvbS9pc19yb290Ijp0cnVlfQ
+.
+dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+```
+</dd>
 
-JWE: JSON Web Encryption, RFC 7516
-     A standard format to encrypt JSON data.
+<dt>JWT</dt>
+<dd>JSON Web Token, RFC 7519; JSON based, Base64url encoded format for transferring claims.
+Data can be transferred as unsecured, or in JWS or JWE payload
+(note that OIDC allows only signed JWT, with or without encryption).
+</dd>
 
-     Consists of two parts:
-     JWE Protected Header and the payload
+<dt>OAuth2</dt>
+<dd>RFC 6749; authorization protocol based on browser redirects and JSON, supersedes OAuth1.</dd>
 
-     Human readable header
-     ```
-     {"alg":"RSA-OAEP","enc":"A256GCM"}
-     ```
-     and payload of "The true sign of intelligence is not knowledge but imagination."
-     could be encoded (the initialization vector is random) as:
-     ```
-     eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ.
-     OKOawDo13gRp2ojaHV7LFpZcgV7T6DVZKTyKOMTYUmKoTCVJRgckCL9kiMT03JGe
-     ipsEdY3mx_etLbbWSrFr05kLzcSr4qKAq7YN7e9jwQRb23nfa6c9d-StnImGyFDb
-     Sv04uVuxIp5Zms1gNxKKK2Da14B8S4rzVRltdYwam_lDp5XnZAYpQdb76FdIKLaV
-     mqgfwX7XWRxv2322i-vDxRfqNzo_tETKzpVLzfiwQyeyPGLBIO56YJ7eObdv0je8
-     1860ppamavo35UgoRdbYaBcoh9QcfylQr66oc6vFWXRcZ_ZT2LawVCWTIy3brGPi
-     6UklfCpIMfIjf7iGdXKHzg.
-     48V1_ALb6US04U3b.
-     5eym8TW_c8SuK0ltJ3rpYIzOeDQz7TALvtu6UG9oMo4vpzs9tX_EFShS8iB7j6ji
-     SdiwkIr3ajwQzaBtQD_A.
-     XFBoMYUZodetZdvTiFvSkQ
-     ```
-     (the used public key isn't included or even specified in the message).
+<dt>OIDC</dt>
+<dd>OpenID Connect; authentication protocol on top of OAuth2 and signed JWT, supersedes OpenId 2.0.</dd>
 
-JWK: JSON Web Key, RFC 7517
-     A standard format to represent cryptographic keys as JSON. For example a symmetric key:
-     ```
-     {"kty":"oct",
-      "k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75
-           aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
-     }
-     ```
+<dt>OIDC client</dt>
+<dd>a system that requires authentication services — in this context REMS is a client, while the actual person is user and service doing the authentication is identity provider.</dd>
 
-JWT: JSON Web Token, RFC 7519; JSON based, Base64url encoded format for transferring claims.
-     Data can be transferred as unsecured, or in JWS or JWE payload
-     (note that OIDC allows only signed JWT, with or without encryption).
+<dt>SAML</dt>
+<dd>Security Assertion Markup Language; XML based protocol for authentication and authorization.</dd>
 
-OAuth2: RFC 6749; authorization protocol based on browser redirects and JSON, supersedes OAuth1
-OIDC: OpenID Connect; authentication protocol on top of OAuth2 and signed JWT, supersedes OpenId 2.0
-OIDC client: a system that requires authentication services — in this context REMS is a client, while the actual person is user and service doing the authentication is identity provider
-SAML: Security Assertion Markup Language; XML based protocol for authentication and authorization
-Shibboleth: Single Sign-On system based on SAML
-Elixir: EU level life sciences consortium
-Elixir AAI proxy: Autehntication and Authorisation Infrastructure; Elixir's authentication system that aggregates different ways for users to log in, and works as a SAML and OIDC identity provider for other systems, like REMS
+<dt>Shibboleth</dt>
+<dd>Single Sign-On system based on SAML.</dd>
+
+<dt>Elixir</dt>
+<dd>EU level life sciences consortium.</dd>
+
+<dt>Elixir AAI proxy</dt>
+<dd>Autehntication and Authorisation Infrastructure; Elixir's authentication system that aggregates different ways for users to log in, and works as a SAML and OIDC identity provider for other systems, like REMS.</dd>
+</dl>
 
 # Background
 
