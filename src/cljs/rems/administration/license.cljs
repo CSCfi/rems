@@ -36,7 +36,7 @@
 
 (defn- back-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/licenses"
+   "/administration/licenses"
    (text :t.administration/back)])
 
 (defn- license-view [license language]

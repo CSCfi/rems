@@ -68,12 +68,12 @@
 
 (defn- to-create-license []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-license"
+   "/administration/create-license"
    (text :t.administration/create-license)])
 
 (defn- to-view-license [license-id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/licenses/" license-id)
+   (str "/administration/licenses/" license-id)
    (text :t.administration/view)])
 
 (rf/reg-sub

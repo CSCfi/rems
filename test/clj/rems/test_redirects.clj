@@ -20,7 +20,7 @@
           response (-> (request :get "/apply-for?resource=urn:one-matching-resource")
                        handler)]
       (is (= 302 (:status response)))
-      (is (= (str "http://localhost/#/application?items=" catid) (get-in response [:headers "Location"])))))
+      (is (= (str "http://localhost/application?items=" catid) (get-in response [:headers "Location"])))))
 
   (testing "fails if no catalogue item is found"
     (let [response (-> (request :get "/apply-for?resource=urn:no-such-resource")
@@ -45,4 +45,4 @@
           response (-> (request :get "/apply-for?resource=urn:enabled-and-disabled-items")
                        handler)]
       (is (= 302 (:status response)))
-      (is (= (str "http://localhost/#/application?items=" new-catid) (get-in response [:headers "Location"]))))))
+      (is (= (str "http://localhost/application?items=" new-catid) (get-in response [:headers "Location"]))))))

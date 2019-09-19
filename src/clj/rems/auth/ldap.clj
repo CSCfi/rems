@@ -74,7 +74,7 @@
 (defroutes routes
   (GET "/ldap/logout" req
     (let [session (get req :session)]
-      (assoc (redirect "/#/redirect") :session (dissoc session :identity))))
+      (assoc (redirect "/redirect") :session (dissoc session :identity))))
   (GET "/ldap/login" [] (login-page))
   (POST "/ldap/login" req
     (let [session (get req :session)

@@ -48,7 +48,7 @@
 
 (defn- apply-button [items]
   [atoms/link {:class "btn btn-primary apply-for-catalogue-items"}
-   (str "#/application?items=" (str/join "," (sort (map :id items))))
+   (str "/application?items=" (str/join "," (sort (map :id items))))
    (text :t.cart/apply)])
 
 (defn- item-view [item language apply-button?]

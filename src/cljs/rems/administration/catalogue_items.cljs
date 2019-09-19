@@ -69,12 +69,12 @@
 
 (defn- to-create-catalogue-item []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-catalogue-item"
+   "/administration/create-catalogue-item"
    (text :t.administration/create-catalogue-item)])
 
 (defn- to-catalogue-item [catalogue-item-id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/catalogue-items/" catalogue-item-id)
+   (str "/administration/catalogue-items/" catalogue-item-id)
    (text :t.administration/view)])
 
 (rf/reg-sub
@@ -90,19 +90,19 @@
                        {:value value
                         :td [:td.resource
                              [atoms/link nil
-                              (str "#/administration/resources/" (:resource-id item))
+                              (str "/administration/resources/" (:resource-id item))
                               value]]})
            :form (let [value (:form-name item)]
                    {:value value
                     :td [:td.form
                          [atoms/link nil
-                          (str "#/administration/forms/" (:formid item))
+                          (str "/administration/forms/" (:formid item))
                           value]]})
            :workflow (let [value (:workflow-name item)]
                        {:value value
                         :td [:td.workflow
                              [atoms/link nil
-                              (str "#/administration/workflows/" (:wfid item))
+                              (str "/administration/workflows/" (:wfid item))
                               value]]})
            :created (let [value (:start item)]
                       {:value value

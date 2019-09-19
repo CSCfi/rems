@@ -90,7 +90,7 @@
                       :top
                       description
                       (fn [response]
-                        (dispatch! (str "#/administration/catalogue-items/"
+                        (dispatch! (str "/administration/catalogue-items/"
                                         (:id response)))))
             :error-handler (flash-message/default-error-handler :top description)}))
   {})
@@ -105,7 +105,7 @@
                      :top
                      description
                      (fn [_]
-                       (dispatch! (str "#/administration/catalogue-items/" id))))
+                       (dispatch! (str "/administration/catalogue-items/" id))))
            :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
@@ -262,7 +262,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/catalogue-items"
+   "/administration/catalogue-items"
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button [form languages editing?]

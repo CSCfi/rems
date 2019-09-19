@@ -64,7 +64,7 @@
      (post! "/api/licenses/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(dispatch! (str "#/administration/licenses/" (:id %))))
+                       :top description #(dispatch! (str "/administration/licenses/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -195,7 +195,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/licenses"
+   "/administration/licenses"
    (text :t.administration/cancel)])
 
 (defn create-license-page []

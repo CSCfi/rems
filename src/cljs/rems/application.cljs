@@ -63,7 +63,7 @@
 
   `replace?` parameter can be given to replace history state instead of push."
   [id & [replace?]]
-  (dispatch! (str "#/application/" id) replace?))
+  (dispatch! (str "/application/" id) replace?))
 
 (defn- format-validation-error [type field]
   [:a {:href "#"
@@ -203,7 +203,7 @@
                        description
                        (fn [response]
                          (rf/dispatch [:rems.spa/user-triggered-navigation])
-                         (dispatch! (str "/#/application/" (:application-id response)))))
+                         (dispatch! (str "/application/" (:application-id response)))))
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
@@ -384,7 +384,7 @@
 
 (defn- application-link [application prefix]
   (let [config @(rf/subscribe [:rems.config/config])]
-    [:a {:href (str "/#/application/" (:application/id application))}
+    [:a {:href (str "/application/" (:application/id application))}
      (when prefix
        (str prefix " "))
      (format-application-id config application)]))

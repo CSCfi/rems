@@ -91,7 +91,7 @@
      (post! "/api/workflows/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(dispatch! (str "#/administration/workflows/" (:id %))))
+                       :top description #(dispatch! (str "/administration/workflows/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -102,7 +102,7 @@
      (put! "/api/workflows/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(dispatch! (str "#/administration/workflows/" (:id request))))
+                      :top description #(dispatch! (str "/administration/workflows/" (:id request))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -172,7 +172,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/workflows"
+   "/administration/workflows"
    (text :t.administration/cancel)])
 
 (defn workflow-type-description [description]

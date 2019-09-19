@@ -18,22 +18,22 @@
    (::loading? db)))
 
 (defn- to-administration [class]
-  [atoms/link {:class class} "/#/administration" (text :t.navigation/administration)])
+  [atoms/link {:class class} "/administration" (text :t.navigation/administration)])
 
 (defn- to-catalogue-items [class]
-  [atoms/link {:class class} "/#/administration/catalogue-items" (text :t.administration/catalogue-items)])
+  [atoms/link {:class class} "/administration/catalogue-items" (text :t.administration/catalogue-items)])
 
 (defn- to-resources [class]
-  [atoms/link {:class class} "/#/administration/resources" (text :t.administration/resources)])
+  [atoms/link {:class class} "/administration/resources" (text :t.administration/resources)])
 
 (defn- to-forms [class]
-  [atoms/link {:class class} "/#/administration/forms" (text :t.administration/forms)])
+  [atoms/link {:class class} "/administration/forms" (text :t.administration/forms)])
 
 (defn- to-workflows [class]
-  [atoms/link {:class class} "/#/administration/workflows" (text :t.administration/workflows)])
+  [atoms/link {:class class} "/administration/workflows" (text :t.administration/workflows)])
 
 (defn- to-licenses [class]
-  [atoms/link {:class class} "/#/administration/licenses" (text :t.administration/licenses)])
+  [atoms/link {:class class} "/administration/licenses" (text :t.administration/licenses)])
 
 (defn administration-navigator [selected]
   [:div.navbar.mb-4.mr-auto.ml-auto

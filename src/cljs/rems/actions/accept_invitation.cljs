@@ -20,7 +20,7 @@
    (let [error-handler (fn [response]
                          ((flash-message/default-error-handler :top (text :t.actions/accept-invitation))
                           response)
-                         (dispatch! "#/catalogue"))]
+                         (dispatch! "/catalogue"))]
      (post! "/api/applications/accept-invitation"
             {:url-params {:invitation-token token}
              :handler (fn [response]
@@ -29,17 +29,17 @@
                             (:success response)
                             (do
                               (flash-message/show-success! :top (text :t.actions/accept-invitation-success))
-                              (dispatch! (str "#/application/" (:application-id response))))
+                              (dispatch! (str "/application/" (:application-id response))))
 
                             (= :already-member (:type error))
                             (do
                               (flash-message/show-success! :top (text :t.actions/accept-invitation-already-member))
-                              (dispatch! (str "#/application/" (:application-id error))))
+                              (dispatch! (str "/application/" (:application-id error))))
 
                             (= :t.actions.errors/invalid-token (:type error))
                             (do
                               (flash-message/show-error! :top (text-format :t.actions.errors/invalid-token (:token error)))
-                              (dispatch! "#/catalogue"))
+                              (dispatch! "/catalogue"))
 
                             :else (error-handler response))))
              :error-handler error-handler}))))

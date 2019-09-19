@@ -190,7 +190,7 @@
                              :top
                              description
                              (fn [response]
-                               (dispatch! (str "#/administration/forms/"
+                               (dispatch! (str "/administration/forms/"
                                                (if edit?
                                                  (::form-id db)
                                                  (response :id))))))
@@ -339,7 +339,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/forms"
+   "/administration/forms"
    (text :t.administration/cancel)])
 
 (defn- format-validation-link [target content]
