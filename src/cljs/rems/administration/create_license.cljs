@@ -72,7 +72,8 @@
   (post! "/api/licenses/add_attachment"
          {:body form-data
           :handler (fn [response]
-                     (rf/dispatch [::attachment-saved language (:id response)]))}))
+                     (rf/dispatch [::attachment-saved language (:id response)]))
+          :error-handler (flash-message/default-error-handler :top "Save attachment")}))
 
 (rf/reg-event-db
  ::attachment-saved
@@ -82,7 +83,8 @@
 (defn- remove-attachment [attachment-id]
   (post! "/api/licenses/remove_attachment"
          {:url-params {:attachment-id attachment-id}
-          :body {}}))
+          :body {}
+          :error-handler (flash-message/default-error-handler :top "Remove attachment")}))
 
 (rf/reg-event-fx
  ::save-attachment
