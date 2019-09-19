@@ -311,7 +311,10 @@
              :t.form.validation/required)))
 
     (testing "placeholder is not validated if it is not used"
-      (is (empty? (validate-form (assoc-in form [:form/fields 0 :field/type] :label)))))
+      (let [form (-> form
+                     (assoc-in [:form/fields 0 :field/type] :label)
+                     (assoc-in [:form/fields 0 :field/placeholder :fi] ""))]
+        (is (empty? (validate-form form)))))
 
     (testing "option fields"
       (let [form (-> form
