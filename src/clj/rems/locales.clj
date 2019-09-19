@@ -28,10 +28,8 @@
             (str "translations could not be found in file or resource \"" file "\"")))))
 
 (defn- extra-translations-path [theme-path]
-  (-> theme-path
-      (io/file)
-      (.getParentFile)
-      (io/file "extra-translations")))
+  (let [theme-dir (.getParentFile (io/file theme-path))]
+    (io/file theme-dir "extra-translations")))
 
 (defn extract-format-parameters [string]
   (set
