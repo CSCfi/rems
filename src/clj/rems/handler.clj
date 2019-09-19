@@ -8,7 +8,7 @@
             [rems.config :refer [env]]
             [rems.entitlements :as entitlements]
             [rems.home :as home]
-            [rems.layout :refer [error-page]]
+            [rems.layout :as layout]
             [rems.middleware :as middleware]
             [rems.poller.email] ;; to enable email polling
             [rems.poller.entitlements] ;; to enable entitlement polling
@@ -33,9 +33,11 @@
   (shutdown-agents)
   (log/info "Rems has shut down!"))
 
-(defn not-found-handler [req]
-  (error-page {:status 404
-               :title "Page not found"}))
+(defn not-found-handler [_req]
+  ;; TODO: serve 404 for routes which the frontend doesn't recognize
+  #_(layout/error-page {:status 404
+                        :title "Page not found"})
+  (layout/home-page))
 
 (defn public-routes []
   (routes

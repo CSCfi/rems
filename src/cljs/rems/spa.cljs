@@ -40,7 +40,7 @@
             [rems.util :refer [dispatch! fetch parse-int]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
-  (:import goog.History))
+  (:import goog.history.Html5History))
 
 ;;; subscriptions
 
@@ -265,8 +265,6 @@
 ;; -------------------------
 ;; Routes
 
-(secretary/set-config! :prefix "#")
-
 (secretary/defroute "/" []
   (rf/dispatch [:set-active-page :home]))
 
@@ -398,11 +396,6 @@
       (dispatch! url))
     (rf/dispatch [:landing-page-redirect!])))
 
-;; XXX: A workaround to prevent the skip navigation link (an anchor link with
-;;   href "#main-content") from triggering a page change: define a matching
-;;   route that does nothing.
-(secretary/defroute "/main-content" [])
-
 (secretary/defroute "*" []
   (rf/dispatch [:set-active-page :not-found]))
 
@@ -411,13 +404,19 @@
 ;; must be called after routes have been defined
 
 (defn hook-browser-navigation! []
-  (doto (History.)
-    (events/listen
-     HistoryEventType/NAVIGATE
-     (fn [event]
-       (js/window.rems.hooks.navigate (.-token event))
-       (secretary/dispatch! (.-token event))))
-    (.setEnabled true)))
+  (let [previous-token (atom nil)
+        navigate (fn [event]
+                   (let [token (.-token event)]
+                     ;; avoid re-rendering the page when just clicking a same-page link
+                     (when-not (= token @previous-token)
+                       (reset! previous-token token)
+                       (js/console.info "Navigate to" (pr-str token))
+                       (js/window.rems.hooks.navigate token)
+                       (secretary/dispatch! token))))]
+    (doto (Html5History.)
+      (events/listen HistoryEventType/NAVIGATE navigate)
+      (.setUseFragment false)
+      (.setEnabled true))))
 
 ;; -------------------------
 ;; Initialize app
