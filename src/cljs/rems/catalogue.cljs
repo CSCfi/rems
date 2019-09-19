@@ -31,6 +31,7 @@
 (rf/reg-event-fx
  ::fetch-catalogue
  (fn [{:keys [db]} _]
+   ;; TODO: better error handler, don't show spinner if request has failed
    (fetch "/api/catalogue"
           {:handler #(rf/dispatch [::fetch-catalogue-result %])
            :error-handler (flash-message/default-error-handler :top "Fetch catalogue")})
@@ -61,6 +62,7 @@
 (rf/reg-event-fx
  ::fetch-drafts
  (fn [{:keys [db]} _]
+   ;; TODO: better error handler, don't show spinner if request has failed
    (fetch "/api/my-applications"
           {:handler #(rf/dispatch [::fetch-drafts-result %])
            :error-handler (flash-message/default-error-handler :top "Fetch drafts")})

@@ -697,6 +697,11 @@
       [flash-message/component :actions]
       [actions-form application]]]]])
 
+(defn- reload-indicator [reloading?]
+  (when reloading?
+    [:div {:style {:float :right}}
+     [spinner/small]]))
+
 ;;;; Entrypoint
 
 (defn application-page []
@@ -709,9 +714,7 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
     [:div.container-fluid
-     (when reloading?
-       [:div {:style {:float :right}}
-        [spinner/small]])
+     [reload-indicator reloading?]
      [document-title (if application
                        (str (text :t.applications/application) " " (format-application-id config application))
                        (text :t.applications/application))]
