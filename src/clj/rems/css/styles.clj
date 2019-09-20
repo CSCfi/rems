@@ -768,8 +768,16 @@
     [:body {:display :block}]
 
     ;; hide some unnecessary elements
-    [:.fixed-top {:display :none}])
+    ;; TODO: consider a hide-print class?
+    [:.fixed-top {:display :none}]
+    [:#actions {:display :none}]
+    [:.commands {:display :none}]
+    [:#member-action-forms {:display :none}]
+    [:#resource-action-forms {:display :none}]
 
+    ;; open "show more" drawers
+    [".collapse:not(.show)" {:display :block}]
+    [:.collapse-toggle.collapse {:display :none}])
 
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
