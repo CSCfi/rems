@@ -27,11 +27,6 @@
    (sort (comp not= (:default-language db))
          (:languages db))))
 
-(reg-sub
- :default-language
- (fn [db _]
-   (:default-language db)))
-
 (defn- update-css [language]
   (let [localized-css (str "/css/" (name language) "/screen.css")]
     ;; Figwheel replaces the linked stylesheet
