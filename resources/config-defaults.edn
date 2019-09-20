@@ -20,6 +20,9 @@
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
  :alternative-login-url nil
+ :oidc-domain nil
+ :oidc-client-id nil
+ :oidc-client-secret nil
 
  ;; Sending email.
  :smtp-host nil

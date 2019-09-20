@@ -43,12 +43,11 @@
     ; name - non-unique name
     ; locale – could be used to set preferred lang on first login
     ; email – non-unique (!) email
-    (assoc (redirect "/") ; TODO Could redirect with state param
-           :session (assoc (:session request)
-                           :identity
-                           {:eppn (:sub oidc-data)
-                            :commonName (:name oidc-data)
-                            :mail (:email oidc-data)}))))
+    (-> (redirect "/") ; TODO Could redirect with state param
+        (assoc :session (:session request))
+        (assoc-in [:session :identity] {:eppn (:sub oidc-data)
+                                        :commonName (:name oidc-data)
+                                        :mail (:email oidc-data)}))))
 
 ; TODO Logout. Federated or not?
 ; TODO Silent login when we have a new session, but user has logged in to auth provider

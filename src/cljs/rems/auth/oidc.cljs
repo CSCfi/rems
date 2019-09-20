@@ -6,7 +6,7 @@
 (defn login-component []
   [:div
    [document-title (text :t.login/title)]
-   [:p (text :t.login/auth0-text)]
+   [:p (text :t.login/oidc-text)]
    [:div
     [atoms/link nil
      (nav/url-dest "/oidc-login")
