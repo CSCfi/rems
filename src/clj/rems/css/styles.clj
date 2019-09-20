@@ -765,7 +765,11 @@
     [:#app {:display :block}]
     [(s/> :#app :div) {:display :block}]
     [:#main-content {:display :block}]
-    [:body {:display :block}])
+    [:body {:display :block}]
+
+    ;; hide some unnecessary elements
+    [:.fixed-top {:display :none}])
+
 
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
