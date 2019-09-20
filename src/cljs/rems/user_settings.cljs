@@ -14,7 +14,7 @@
      ;; if the user has changed language before login
      ;; the cookie will not match the language setting
      ;; and we should save the new language setting
-     (when-not (= (language/get-language-cookie) (:language user-settings))
+     (when (and new-language (not= new-language (:language user-settings)))
        (rf/dispatch [::update-user-settings new-settings]))
      {:db (assoc db :user-settings new-settings)})))
 
