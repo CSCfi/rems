@@ -1,5 +1,6 @@
 (ns rems.util
-  (:require [ajax.core :refer [GET PUT POST]]
+  (:require [accountant.core :as accountant]
+            [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
@@ -44,7 +45,7 @@
        (.replaceState (.-history js/window) nil url url)
        (js/window.rems.hooks.navigate url)
        (secretary/dispatch! url))
-     (set! (.-location js/window) url))))
+     (accountant/navigate! url))))
 
 (defn unauthorized! []
   (rf/dispatch [:unauthorized! (.. js/window -location -href)]))
