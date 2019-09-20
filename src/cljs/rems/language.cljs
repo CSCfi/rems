@@ -9,7 +9,7 @@
     (keyword (second (str/split value #"=")))))
 
 (defn- set-language-cookie! [language]
-  (let [year-from-now (.setFullYear (js/Date.) (inc (.getFullYear (js/Date.))))]
+  (let [year-from-now (doto (js/Date.) (.setFullYear (inc (.getFullYear (js/Date.)))))]
     (set! (.. js/document -cookie)
           (str language-cookie-name "=" (name language) "; expires=" (.toUTCString year-from-now) "; path=/"))))
 
