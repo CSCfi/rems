@@ -74,7 +74,8 @@ Changes since v2.4
 - Email messages now use the application title and full names of users
 - Email message texts improved
 - Show three latest events as a default on the application page (#1632)
-- User's language setting is stored in a cookie so that it persists after login. Also the language is possibly correct already at login because the cookie is remembered.
+- A change of language persists now after login thanks to a new language setting cookie.
+- A returning user will see the login screen in the correct language if he or she has the cookie.
 
 ### Fixes
 - Entitlement API
