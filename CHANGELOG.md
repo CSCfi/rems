@@ -78,6 +78,7 @@ Changes since v2.4
 ### Fixes
 - Entitlement API
 - Search on the catalogue and admin pages did not support multiple search terms (#1541)
+- Printing application pages now works (except for drafts) (#1643)
 
 ## v2.5 "Maarintie" 2019-07-18
 
