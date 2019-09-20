@@ -68,7 +68,8 @@
                  [ring/ring-core "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-devel "1.7.1"]
-                 [ring/ring-servlet "1.7.1"]]
+                 [ring/ring-servlet "1.7.1"]
+                 [venantius/accountant "0.2.4"]]
 
   :min-lein-version "2.0.0"
 

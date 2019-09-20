@@ -69,7 +69,12 @@
   [navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-id user])
 
 (defn skip-navigation []
-  [:a {:href "#main-content" :class "skip-navigation"}
+  [:a.skip-navigation
+   {:href "#main-content"
+    :on-click (fn [event]
+                ;; XXX: workaround for https://github.com/venantius/accountant/issues/25
+                (.preventDefault event)
+                (js/window.location.assign "#main-content"))}
    (text :t.navigation/skip-navigation)])
 
 (defn navigation-widget [page-id]

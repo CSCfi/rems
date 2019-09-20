@@ -1,5 +1,6 @@
 (ns rems.spa
-  (:require [goog.events :as events]
+  (:require [accountant.core :as accountant]
+            [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [re-frame.core :as rf]
             [reagent.core :as r]
@@ -147,16 +148,10 @@
   (if @(rf/subscribe [:user])
     (do
       (fetch-user-settings!)
-      ;; TODO this is a hack to show something useful on the home page
-      ;; when we are logged in. We can't really perform a dispatch!
-      ;; here, because that would be a race condition with #fragment
-      ;; handling in hook-history-navigation!
-      ;;
-      ;; One possibility is to have a separate :init default page that
-      ;; does the navigation/redirect logic, instead of using :home as
-      ;; the default.
-      (rf/dispatch [:rems.catalogue/enter-page])
-      [catalogue-page])
+      ;; TODO: separate :init default page that does the navigation/redirect logic, instead of using :home as the default
+      (when (= "/" (-> js/window .-location .-pathname))
+        (accountant/navigate! "/catalogue"))
+      nil)
     [:div
      [:div.row.justify-content-center
       [:div.col-md-6.row.justify-content-center
@@ -404,19 +399,27 @@
 ;; must be called after routes have been defined
 
 (defn hook-browser-navigation! []
-  (let [previous-token (atom nil)
-        navigate (fn [event]
-                   (let [token (.-token event)]
-                     ;; avoid re-rendering the page when just clicking a same-page link
-                     (when-not (= token @previous-token)
-                       (reset! previous-token token)
-                       (js/console.info "Navigate to" (pr-str token))
-                       (js/window.rems.hooks.navigate token)
-                       (secretary/dispatch! token))))]
-    (doto (Html5History.)
-      (events/listen HistoryEventType/NAVIGATE navigate)
-      (.setUseFragment false)
-      (.setEnabled true))))
+  (accountant/configure-navigation!
+   {:nav-handler (fn [path]
+                   ;; XXX: workaround for Secretary/Accountant considering URLs with different hash to be different pages
+                   ;; TODO: this still causes a page re-render when clicking same-page links
+                   (let [url (js/URL. path js/location)
+                         path-without-hash (str (.-pathname url) (.-search url))]
+                     (secretary/dispatch! path-without-hash)))
+    :path-exists? (fn [path]
+                    (let [route (secretary/locate-route path)
+                          not-found-page? (= "*" (secretary/route-value (:route route)))]
+                      (when-not not-found-page?
+                        route)))})
+  (events/listen accountant/history
+                 HistoryEventType/NAVIGATE
+                 (fn []
+                   ;; move focus to the beginning of the page on navigation
+                   ;; (except on full page load, which is why this is after `dispatch-current!`)
+                   (rf/dispatch [:rems.spa/user-triggered-navigation])))
+  (accountant/dispatch-current!))
+
+
 
 ;; -------------------------
 ;; Initialize app
