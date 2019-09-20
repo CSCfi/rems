@@ -774,6 +774,7 @@
     [:.commands {:display :none}]
     [:#member-action-forms {:display :none}]
     [:#resource-action-forms {:display :none}]
+    [:.flash-message {:display :none}]
 
     ;; open "show more" drawers
     [".collapse:not(.show)" {:display :block}]
