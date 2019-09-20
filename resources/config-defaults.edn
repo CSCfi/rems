@@ -14,12 +14,15 @@
  ;; Path to a writable directory where to store the Lucene search index files.
  :search-index-path "search-index"
 
- ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :ldap
+ ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :ldap, :oidc
  :authentication :shibboleth
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
  :alternative-login-url nil
+ :oidc-domain nil
+ :oidc-client-id nil
+ :oidc-client-secret nil
 
  ;; Sending email.
  :smtp-host nil
