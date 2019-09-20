@@ -11,7 +11,7 @@
 (defn- set-language-cookie! [language]
   (let [year-from-now (.setFullYear (js/Date.) (inc (.getFullYear (js/Date.))))]
     (set! (.. js/document -cookie)
-          (str language-cookie-name "=" (name language) "; expires=" (.toString year-from-now) "; path=/"))))
+          (str language-cookie-name "=" (name language) "; expires=" (.toUTCString year-from-now) "; path=/"))))
 
 (reg-sub
  :language
