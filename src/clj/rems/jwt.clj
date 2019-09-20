@@ -12,8 +12,9 @@
            [java.util Base64 Date]))
 
 (mount/defstate ^:dynamic ^JwkProvider jwk-provider
-  :start (-> (JwkProviderBuilder. ^String (getx env :oidc-domain))
-             (.build)))
+  :start (when-let [oidc-domain (env :oidc-domain)]
+           (-> (JwkProviderBuilder. ^String oidc-domain)
+              (.build))))
 
 (defn- fetch-public-key [^String jwt]
   (let [key-id (.getKeyId (JWT/decode jwt))]
