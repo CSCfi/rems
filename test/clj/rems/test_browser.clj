@@ -98,6 +98,9 @@
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "applications-page.png")))
 
+(defn change-language [language]
+  (click *driver* [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
+
 ;;; catalogue page
 
 (defn add-to-cart [resource-name]
@@ -249,7 +252,7 @@
     (testing "changing language while logged out"
       (click *driver* :logout)
       (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
-      (click *driver* [{:css ".language-switcher"} {:fn/text "FI"}])
+      (change-language :fi)
       (wait-visible *driver* {:tag :h1 :fn/text "Tervetuloa REMSiin"}))
 
     (testing "changed language must persist after login"
@@ -259,13 +262,13 @@
 
     (testing "changed language must have been saved for user"
       (click *driver* :logout)
-      (click *driver* [{:css ".language-switcher"} {:fn/text "EN"}])
+      (change-language :en)
       (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
       (delete-cookies *driver*)
       (login-as "alice")
       (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"}))
 
     (testing "changing language while logged in"
-      (click *driver* [{:css ".language-switcher"} {:fn/text "EN"}])
+      (change-language :en)
       (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
     (is true))) ; avoid no assertions warning
