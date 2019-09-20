@@ -249,7 +249,7 @@
     (testing "changing language while logged out"
       (click *driver* :logout)
       (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
-      (click *driver* [{:fn/has-class :btn-link :fn/text "FI"}])
+      (click *driver* [{:css ".language-switcher"} {:fn/text "FI"}])
       (wait-visible *driver* {:tag :h1 :fn/text "Tervetuloa REMSiin"}))
 
     (testing "changed language must persist after login"
@@ -259,13 +259,13 @@
 
     (testing "changed language must have been saved for user"
       (click *driver* :logout)
-      (click *driver* [{:fn/has-class :btn-link :fn/text "EN"}])
+      (click *driver* [{:css ".language-switcher"} {:fn/text "EN"}])
       (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
       (delete-cookies *driver*)
       (login-as "alice")
       (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"}))
 
     (testing "changing language while logged in"
-      (click *driver* [{:fn/has-class :btn-link :fn/text "EN"}])
+      (click *driver* [{:css ".language-switcher"} {:fn/text "EN"}])
       (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
     (is true))) ; avoid no assertions warning
