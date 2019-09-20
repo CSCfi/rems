@@ -294,9 +294,9 @@
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
                    (for [language languages]
-                     [:<>
-                      ^{:key (str "title-" language)} [catalogue-item-title-field language]
-                      ^{:key (str "infourl-" language)} [catalogue-item-infourl-field language]])
+                     [:<> {:key language}
+                      [catalogue-item-title-field language]
+                      [catalogue-item-infourl-field language]])
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
