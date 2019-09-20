@@ -35,6 +35,7 @@
   (case (:authentication env)
     :shibboleth (shibboleth/logout-url)
     :fake-shibboleth (fake-shibboleth/logout-url)
+    :oidc (oidc/logout-url)
     :ldap (ldap/logout-url)))
 
 (defn auth-routes []

@@ -19,6 +19,9 @@
        "&scope=openid profile email"))
        ; "&state=STATE")) ; FIXME We could use the state for intelligent redirect. Also check if we need it for CSRF protection as Auth0 docs say.
 
+(defn logout-url []
+  "/oidc-logout")
+
 (defn oidc-callback [request]
   (let [jwt (-> (http/post (str "https://"
                                 (getx env :oidc-domain)
@@ -54,4 +57,7 @@
 
 (defroutes routes
   (GET "/oidc-login" req (redirect (login-url)))
+  (GET "/oidc-logout" req
+    (let [session (get req :session)]
+      (assoc (redirect "/#/redirect") :session (dissoc session :identity))))
   (GET "/oidc-callback" req (oidc-callback req)))
