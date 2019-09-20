@@ -80,6 +80,9 @@
     (wait-visible :logout)
     (screenshot (io/file reporting-dir "logged-in.png"))))
 
+(defn logout []
+  (click *driver* :logout))
+
 (defn- wait-page-loaded []
   (wait-invisible *driver* {:css ".fa-spinner"}))
 
@@ -250,7 +253,7 @@
       (wait-page-loaded))
 
     (testing "changing language while logged out"
-      (click *driver* :logout)
+      (logout)
       (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
       (change-language :fi)
       (wait-visible *driver* {:tag :h1 :fn/text "Tervetuloa REMSiin"}))
@@ -261,7 +264,7 @@
       (wait-page-loaded))
 
     (testing "changed language must have been saved for user"
-      (click *driver* :logout)
+      (logout)
       (change-language :en)
       (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
       (delete-cookies *driver*)
