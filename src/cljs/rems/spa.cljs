@@ -399,6 +399,10 @@
 ;; must be called after routes have been defined
 
 (defn hook-browser-navigation! []
+  (events/listen accountant/history
+                 HistoryEventType/NAVIGATE
+                 (fn [event]
+                   (js/window.rems.hooks.navigate (.-token event))))
   (accountant/configure-navigation!
    {:nav-handler (fn [path]
                    ;; XXX: workaround for Secretary/Accountant considering URLs with different hash to be different pages
@@ -411,14 +415,13 @@
                           not-found-page? (= "*" (secretary/route-value (:route route)))]
                       (when-not not-found-page?
                         route)))})
+  (accountant/dispatch-current!)
   (events/listen accountant/history
                  HistoryEventType/NAVIGATE
-                 (fn []
+                 (fn [_event]
                    ;; move focus to the beginning of the page on navigation
-                   ;; (except on full page load, which is why this is after `dispatch-current!`)
-                   (rf/dispatch [:rems.spa/user-triggered-navigation])))
-  (accountant/dispatch-current!))
-
+                   ;; (except on full page load, which is why this is after accountant config)
+                   (rf/dispatch [:rems.spa/user-triggered-navigation]))))
 
 
 ;; -------------------------
