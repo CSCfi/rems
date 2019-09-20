@@ -397,8 +397,8 @@
      (format-application-id config application)]))
 
 (defn- format-event [event]
-  {:userid (:event/actor event)
-   :event (localize-event (:event/type event))
+  {:user (:commonName (:event/actor-attributes event))
+   :event (localize-event event)
    :comment (case (:event/type event)
               :application.event/decided
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
@@ -411,18 +411,17 @@
 
               (:application/comment event))
    :request-id (:application/request-id event)
-   :commenters (:application/commenters event)
-   :deciders (:application/deciders event)
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time userid event comment commenters deciders]}]
+(defn- event-view [{:keys [time user event comment]}]
   [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
-    [:div.col-form-label [:span userid] " — " [:span event]
-     (when-let [targets (seq (concat commenters deciders))]
-       [:span ": " (str/join ", " targets)])]
-    (when comment [:div comment])]])
+    [:div.col-form-label event]
+    (when (not (empty? comment))
+      [:div
+       (str (text :t.actions/comment) ": ")
+       comment])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
