@@ -754,6 +754,19 @@
 
    (generate-phase-styles)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
+
+   ;; print styling
+   (stylesheet/at-media
+    {:print true}
+    ;; workaround for firefox only printing one page of flex elements
+    ;; https://github.com/twbs/bootstrap/issues/23489
+    ;; https://bugzilla.mozilla.org/show_bug.cgi?id=939897
+    [:.row {:display :block}]
+    [:#app {:display :block}]
+    [(s/> :#app :div) {:display :block}]
+    [:#main-content {:display :block}]
+    [:body {:display :block}])
+
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
 
