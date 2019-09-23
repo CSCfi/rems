@@ -404,12 +404,14 @@
                  (fn [event]
                    (js/window.rems.hooks.navigate (.-token event))))
   (accountant/configure-navigation!
-   {:nav-handler (fn [path]
-                   ;; XXX: workaround for Secretary/Accountant considering URLs with different hash to be different pages
-                   ;; TODO: this still causes a page re-render when clicking same-page links
-                   (let [url (js/URL. path js/location)
-                         path-without-hash (str (.-pathname url) (.-search url))]
-                     (secretary/dispatch! path-without-hash)))
+   {:nav-handler (let [previous-path (atom nil)]
+                   (fn [path]
+                     ;; XXX: workaround for Secretary/Accountant considering URLs with different hash to be different pages
+                     (let [url (js/URL. path js/location)
+                           path-without-hash (str (.-pathname url) (.-search url))]
+                       (when-not (= @previous-path path-without-hash)
+                         (reset! previous-path path-without-hash)
+                         (secretary/dispatch! path-without-hash)))))
     :path-exists? (fn [path]
                     (let [route (secretary/locate-route path)
                           not-found-page? (= "*" (secretary/route-value (:route route)))]

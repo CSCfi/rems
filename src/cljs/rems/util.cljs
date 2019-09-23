@@ -135,10 +135,10 @@
     (map #(if (link? %) [:a {:href %} %] %)
          (interpose " " (str/split s " ")))))
 
-;; XXX: since REMS uses hash-based URLs, it's not possible to have normal in-page anchor links, but they need to be emulated with JavaScript
-(defn in-page-anchor-link [id]
+(defn focus-input-field [id]
   (fn [event]
     (.preventDefault event)
+    ;; focusing input fields requires JavaScript; <a href="#id"> links don't work
     (when-let [element (.getElementById js/document id)]
       (.focus element))))
 

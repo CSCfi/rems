@@ -70,11 +70,7 @@
 
 (defn skip-navigation []
   [:a.skip-navigation
-   {:href "#main-content"
-    :on-click (fn [event]
-                ;; XXX: workaround for https://github.com/venantius/accountant/issues/25
-                (.preventDefault event)
-                (js/window.location.assign "#main-content"))}
+   {:href "#main-content"}
    (text :t.navigation/skip-navigation)])
 
 (defn navigation-widget [page-id]
