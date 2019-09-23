@@ -97,10 +97,12 @@
    (component-info item-view)
    (example "item-view, single"
             [:table.rems-table.cart
-             [item-view {:title "Item title"} nil true]])
+             [:tbody
+              [item-view {:title "Item title"} nil true]]])
    (example "item-view, one of many has no apply button"
             [:table.rems-table.cart
-             [item-view {:title "Item title"} nil false]])
+             [:tbody
+              [item-view {:title "Item title"} nil false]]])
 
    (component-info bundle-view)
    (example "bundle-view"
