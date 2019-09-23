@@ -50,14 +50,19 @@
 (defn redirect-when-unauthorized-or-forbidden [{:keys [status status-text]}]
   (let [current-url (.. js/window -location -href)]
     (case status
-      401 (rf/dispatch [:unauthorized! current-url])
-      403 (rf/dispatch [:forbidden! current-url])
-      nil)))
+      401 (do
+            (rf/dispatch [:unauthorized! current-url])
+            true)
+      403 (do
+            (rf/dispatch [:forbidden! current-url])
+            true)
+      false)))
 
 (defn- wrap-default-error-handler [handler]
   (fn [err]
-    (redirect-when-unauthorized-or-forbidden err)
-    (when handler (handler err))))
+    (when-not (redirect-when-unauthorized-or-forbidden err)
+      (when handler
+        (handler err)))))
 
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.

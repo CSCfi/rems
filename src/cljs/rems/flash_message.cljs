@@ -127,6 +127,5 @@
 
 (defn default-error-handler [location description]
   (fn [response]
-    (when-not (= 401 (:status response)) ; redirect to login page is handled elsewhere
-      (show-default-error! location description (format-response-error response)))
+    (show-default-error! location description (format-response-error response))
     response))

@@ -20,8 +20,7 @@
    (let [error-handler (fn [response]
                          ((flash-message/default-error-handler :top (text :t.actions/accept-invitation))
                           response)
-                         (when-not (= 401 (:status response)) ; redirect to login page is handled elsewhere
-                           (navigate! "/catalogue")))]
+                         (navigate! "/catalogue"))]
      (post! "/api/applications/accept-invitation"
             {:url-params {:invitation-token token}
              :handler (fn [response]
