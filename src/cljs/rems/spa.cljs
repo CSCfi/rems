@@ -38,7 +38,7 @@
             [rems.roles :as roles]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
-            [rems.util :refer [dispatch! fetch parse-int]]
+            [rems.util :refer [navigate! fetch parse-int]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.history.Html5History))
@@ -103,7 +103,7 @@
  (fn [_ [_ current-url]]
    (println "Received unauthorized from" current-url)
    (.setItem js/sessionStorage "rems-redirect-url" current-url)
-   (dispatch! "/")
+   (navigate! "/")
    {}))
 
 (rf/reg-event-fx
@@ -121,9 +121,9 @@
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
-         (roles/show-admin-pages? roles) (dispatch! "/administration")
-         (roles/show-reviews? roles) (dispatch! "/actions")
-         :else (dispatch! "/catalogue"))
+         (roles/show-admin-pages? roles) (navigate! "/administration")
+         (roles/show-reviews? roles) (navigate! "/actions")
+         :else (navigate! "/catalogue"))
        {})
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
@@ -150,7 +150,7 @@
       (fetch-user-settings!)
       ;; TODO: separate :init default page that does the navigation/redirect logic, instead of using :home as the default
       (when (= "/" (-> js/window .-location .-pathname))
-        (accountant/navigate! "/catalogue"))
+        (navigate! "/catalogue"))
       nil)
     [:div
      [:div.row.justify-content-center
@@ -388,7 +388,7 @@
     (do
       (println "Redirecting to" url "after authorization")
       (.removeItem js/sessionStorage "rems-redirect-url")
-      (dispatch! url))
+      (navigate! url))
     (rf/dispatch [:landing-page-redirect!])))
 
 (secretary/defroute "*" []

@@ -3,8 +3,7 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
-            [rems.util :refer [dispatch!]])
+            [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx

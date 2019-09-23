@@ -31,7 +31,7 @@
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch parse-int post! focus-input-field]])
+            [rems.util :refer [navigate! fetch parse-int post! focus-input-field]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -57,13 +57,6 @@
        (into [:ul]
              (for [resource resources]
                [:li (localized (:catalogue-item/title resource))]))])))
-
-(defn navigate-to
-  "Navigates to the application with the given id.
-
-  `replace?` parameter can be given to replace history state instead of push."
-  [id & [replace?]]
-  (dispatch! (str "/application/" id) replace?))
 
 (defn- format-validation-error [type field]
   [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
@@ -200,9 +193,7 @@
              :handler (flash-message/default-success-handler
                        :top ; the message will be shown on the new application's page
                        description
-                       (fn [response]
-                         (rf/dispatch [:rems.spa/user-triggered-navigation])
-                         (dispatch! (str "/application/" (:application-id response)))))
+                       #(navigate! (str "/application/" (:application-id %))))
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 

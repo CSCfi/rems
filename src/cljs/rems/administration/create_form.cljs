@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio focus-input-field]]))
+            [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio focus-input-field]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -190,7 +190,7 @@
                              :top
                              description
                              (fn [response]
-                               (dispatch! (str "/administration/forms/"
+                               (navigate! (str "/administration/forms/"
                                                (if edit?
                                                  (::form-id db)
                                                  (response :id))))))

@@ -7,7 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! post!]]))
+            [rems.util :refer [navigate! post!]]))
 
 (rf/reg-event-db
  ::enter-page
@@ -64,7 +64,7 @@
      (post! "/api/licenses/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(dispatch! (str "/administration/licenses/" (:id %))))
+                       :top description #(navigate! (str "/administration/licenses/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 

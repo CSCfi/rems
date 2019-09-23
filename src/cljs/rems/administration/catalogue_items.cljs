@@ -8,7 +8,7 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page

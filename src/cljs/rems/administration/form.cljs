@@ -10,7 +10,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -42,7 +42,7 @@
      (fetch (str "/api/forms/" id "/editable")
             {:handler (fn [response]
                         (if (:success response)
-                          (dispatch! (str "/administration/edit-form/" id))
+                          (navigate! (str "/administration/edit-form/" id))
                           (flash-message/show-default-error!
                            :top description (status-flags/format-update-failure response))))
              :error-handler (flash-message/default-error-handler :top description)}))

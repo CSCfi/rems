@@ -31,21 +31,18 @@
                                           v)])
                          m))))
 
-(defn dispatch!
-  "Dispatches to the given url.
+(defn replace-url!
+  "Navigates to the given URL without adding a browser history entry."
+  [url]
+  (.replaceState js/window.history nil "" url)
+  ;; when manipulating history, secretary won't catch the changes automatically
+  (js/window.rems.hooks.navigate url)
+  (accountant/dispatch-current!))
 
-  If `replace?` is given, then browser history is replaced and not pushed."
-  ([url]
-   (dispatch! url false))
-  ([url replace?]
-   (if replace?
-     (do
-       ;; when manipulating history,
-       ;;secretary won't catch the changes automatically
-       (.replaceState (.-history js/window) nil url url)
-       (js/window.rems.hooks.navigate url)
-       (secretary/dispatch! url))
-     (accountant/navigate! url))))
+(defn navigate!
+  "Navigates to the given URL."
+  [url]
+  (accountant/navigate! url))
 
 (defn unauthorized! []
   (rf/dispatch [:unauthorized! (.. js/window -location -href)]))

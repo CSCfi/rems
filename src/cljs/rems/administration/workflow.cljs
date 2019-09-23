@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
