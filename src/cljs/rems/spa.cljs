@@ -149,7 +149,7 @@
     (do
       (fetch-user-settings!)
       ;; TODO: separate :init default page that does the navigation/redirect logic, instead of using :home as the default
-      (when (= "/" (-> js/window .-location .-pathname))
+      (when (= "/" js/window.location.pathname)
         (navigate! "/catalogue"))
       nil)
     [:div
