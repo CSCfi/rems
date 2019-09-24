@@ -110,34 +110,38 @@
   [:div
    (component-info component)
    (example "collapsible closed by default"
-            [component {:id "hello2"
+            [component {:id "hello1"
                         :title "Collapse minimized"
                         :always [:p "I am content that is always visible"]
                         :collapse [:p "I am content that you can hide"]}])
    (example "collapsible expanded by default and footer"
-            [component {:id "hello"
+            [component {:id "hello2"
                         :open? true
                         :title "Collapse expanded"
                         :always [:p "I am content that is always visible"]
                         :collapse [:p "I am content that you can hide"]
                         :footer [:p "I am the footer that is always visible"]}])
    (example "collapsible without title"
-            [component {:id "hello5"
+            [component {:id "hello3"
                         :open? true
                         :title nil
                         :always [:p "I am content that is always visible"]}])
    (example "collapsible without hideable content can't be opened"
-            [component {:id "hello3"
+            [component {:id "hello4"
                         :title "Collapse without children"
                         :always [:p "I am content that is always visible"]}])
+   (example "collapsible without always content"
+            [component {:id "hello5"
+                        :title "Collapse without always content"
+                        :collapse [:p "I am content that you can hide"]}])
    (example "collapsible that opens slowly"
-            [component {:id "hello4"
+            [component {:id "hello6"
                         :class "slow"
                         :title "Collapse expanded"
                         :always [:p "I am content that is always visible"]
                         :collapse (into [:div] (repeat 5 [:p "I am content that you can hide"]))}])
    (example "collapsible with two show less buttons"
-            [component {:id "hello5"
+            [component {:id "hello7"
                         :class "slow"
                         :title "Collapse expanded"
                         :always [:p "I am content that is always visible"]
