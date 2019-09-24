@@ -399,8 +399,6 @@
 ;; must be called after routes have been defined
 
 (defn hook-browser-navigation! []
-  ;; This listener is called when the page is first loaded
-  ;; an on every subsequent navigation.
   (events/listen accountant/history
                  HistoryEventType/NAVIGATE
                  (fn [event]
@@ -422,9 +420,9 @@
                         route)))})
   (accountant/dispatch-current!)
 
-  ;; This listener is NOT called on the initial page load,
-  ;; but only on subsequent navigations. On the initial
-  ;; full page load the focus does not need to be changed.
+  ;; Since this listener is registered after configuring Accountant,
+  ;; it will NOT be called on the initial page load; we don't need nor
+  ;; want to change focus on the initial full page load.
   (events/listen accountant/history
                  HistoryEventType/NAVIGATE
                  (fn [_event]
