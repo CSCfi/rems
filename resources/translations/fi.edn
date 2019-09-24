@@ -169,7 +169,9 @@
               :continue-existing-application "Jatka hakemusta"
               :continue-existing-application-intro [:div.intro [:p "Sinulla on keskeneräisiä hakemuksia, joita voit jatkaa tästä:"]]
               :apply-resources "Hae uusia resursseja"}
-  :collapse {:show-less "Näytä vähemmän"
+  :collapse {:hide "Piilota"
+             :show "Näytä"
+             :show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
   :create-catalogue-item {:form-selection "Lomake"
                           :infourl "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
@@ -275,6 +277,7 @@
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
          :optional "(ei pakollinen)"
          :please-wait "Odota hetkinen"
+         :previous-applications "Hakijan edeltävät hakemukset"
          :previous-value "Edellinen"
          :required "*"
          :resources "Resurssit"

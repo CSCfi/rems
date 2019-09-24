@@ -19,6 +19,7 @@
             [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
+            [rems.application-list :as application-list]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
             [rems.catalogue-util :refer [urn-catalogue-item-link]]
@@ -29,6 +30,7 @@
             [rems.flash-message :as flash-message]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
+            [rems.search :as search]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.util :refer [navigate! fetch parse-int post! focus-input-field]])
@@ -237,6 +239,8 @@
  ::toggle-diff
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
+
+(search/reg-fetcher ::previous-applications "/api/applications")
 
 ;;;; UI components
 
@@ -672,6 +676,16 @@
                [:div#resource-action-forms
                 [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
+(defn- previous-applications [applicant]
+  [collapsible/component
+   {:id "previous-applications"
+    :title (text :t.form/previous-applications)
+    :on-open #(rf/dispatch [::previous-applications (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")])
+    :collapse [application-list/component {:applications ::previous-applications
+                                           :hidden-columns #{:created :todo :last-activity}
+                                           :default-sort-column :submitted
+                                           :default-sort-order :desc}]}])
+
 (defn- render-application [{:keys [application edit-application attachment-success config userid]}]
   [:<>
    [disabled-items-warning application]
@@ -681,6 +695,8 @@
      [application-state application config]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
+     (when (contains? (:application/permissions application) :see-everything)
+       [:div.mt-3 [previous-applications (get application :application/applicant)]])
      [:div.my-3 [application-licenses application edit-application userid]]
      [:div.my-3 [application-fields application edit-application attachment-success]]]
     [:div.col-lg-4

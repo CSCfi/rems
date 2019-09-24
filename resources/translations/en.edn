@@ -171,7 +171,9 @@
               :continue-existing-application "Continue application"
               :continue-existing-application-intro [:div.intro [:p "You have unfinished applications that you can continue from here:"]]
               :apply-resources "Apply for resources"}
-  :collapse {:show-less "Show less"
+  :collapse {:hide "Hide"
+             :show "Show"
+             :show-less "Show less"
              :show-more "Show more"}
   :create-catalogue-item {:form-selection "Form"
                           :infourl "More info URL (optional, defaults to resource URN)"
@@ -277,6 +279,7 @@
          :must-accept-licenses "Each member is required to accept the terms of use to access the resources."
          :optional "(optional)"
          :please-wait "Please wait"
+         :previous-applications "Applicant's previous applications"
          :previous-value "Previous"
          :required "*"
          :resources "Resources"
