@@ -680,7 +680,7 @@
   [collapsible/component
    {:id "previous-applications"
     :title "Previous applications"
-    :on-open #(rf/dispatch [::previous-applications (str "applicant:" applicant)])
+    :on-open #(rf/dispatch [::previous-applications (str "-state:draft +applicant:" applicant)])
     :collapse [application-list/component {:applications ::previous-applications
                                            :hidden-columns #{:created :todo :last-activity}
                                            :default-sort-column :submitted
