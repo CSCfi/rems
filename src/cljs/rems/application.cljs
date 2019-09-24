@@ -695,7 +695,8 @@
      [application-state application config]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
-     [:div.mt-3 [previous-applications (get application :application/applicant)]]
+     (when (get-in application [:application/permissions :see-everything])
+       [:div.mt-3 [previous-applications (get application :application/applicant)]])
      [:div.my-3 [application-licenses application edit-application userid]]
      [:div.my-3 [application-fields application edit-application attachment-success]]]
     [:div.col-lg-4
