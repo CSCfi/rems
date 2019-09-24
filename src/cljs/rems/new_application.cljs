@@ -1,6 +1,5 @@
 (ns rems.new-application
   (:require [re-frame.core :as rf]
-            [rems.application :as application]
             [rems.atoms :refer [document-title]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
