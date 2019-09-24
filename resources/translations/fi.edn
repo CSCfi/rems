@@ -275,6 +275,7 @@
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
          :optional "(ei pakollinen)"
          :please-wait "Odota hetkinen"
+         :previous-applications "Hakijan edeltävät hakemukset"
          :previous-value "Edellinen"
          :required "*"
          :resources "Resurssit"
