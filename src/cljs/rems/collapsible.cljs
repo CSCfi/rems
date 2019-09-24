@@ -8,7 +8,7 @@
   [:h2.card-header {:class ["rems-card-margin-fix" (or title-class "rems-card-header")]} title])
 
 (defn- show-more-button
-  [id expanded callback]
+  [label id expanded callback]
   [:div.mb-3.collapse.collapse-toggle {:class (str (str id "more ") (when-not expanded "show"))}
    [:a {:href "#"
         :id (str id "-more-link")
@@ -21,10 +21,10 @@
                     (when callback
                       (callback))
                     (.collapse (js/$ (str "." id "less")) "show"))}
-    (text :t.collapse/show-more)]])
+    label]])
 
 (defn- show-less-button
-  [id expanded]
+  [label id expanded]
   [:div.mb-3.collapse.collapse-toggle {:class (str (str id "less ") (when expanded "show"))}
    [:a {:href "#"
         :on-click (fn [event]
@@ -33,21 +33,32 @@
                     (.collapse (js/$ (str "." id "more")) "show")
                     (.collapse (js/$ (str "." id "less")) "hide")
                     (.focus (js/$ (str "#" id "more-link"))))}
-    (text :t.collapse/show-less)]])
+    label]])
 
 (defn- block [id expanded callback content-always content-hideable content-footer top-less-button? bottom-less-button?]
-  [:div.collapse-content
-   content-always
-   (when (seq content-hideable)
-     [:div
-      (when top-less-button? [show-less-button id expanded])
-      [:div.collapse {:id (str id "collapse")
-                      :class (when expanded "show")
-                      :tab-index "-1"}
-       content-hideable]
-      [show-more-button id expanded callback]
-      (when-not (false? bottom-less-button?) [show-less-button id expanded])])
-   content-footer])
+  (let [always? (not-empty content-always)
+        show-more [show-more-button
+                   (if always?
+                     (text :t.collapse/show-more)
+                     (text :t.collapse/show))
+                   id expanded callback]
+        show-less [show-less-button
+                   (if always?
+                     (text :t.collapse/show-less)
+                     (text :t.collapse/hide))
+                   id expanded]]
+    [:div.collapse-content
+     content-always
+     (when (seq content-hideable)
+       [:div
+        (when top-less-button? show-less)
+        [:div.collapse {:id (str id "collapse")
+                        :class (when expanded "show")
+                        :tab-index "-1"}
+         content-hideable]
+        show-more
+        (when-not (false? bottom-less-button?) show-less)])
+     content-footer]))
 
 (defn minimal
   "Displays a minimal collapsible block of content.
