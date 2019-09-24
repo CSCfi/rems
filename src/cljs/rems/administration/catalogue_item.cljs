@@ -9,7 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -36,12 +36,12 @@
 
 (defn- back-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/catalogue-items"
+   "/administration/catalogue-items"
    (text :t.administration/back)])
 
 (defn edit-button [id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/edit-catalogue-item/" id)
+   (str "/administration/edit-catalogue-item/" id)
    (text :t.administration/edit)])
 
 (defn catalogue-item-view [catalogue-item language]
@@ -63,15 +63,15 @@
                            [atoms/external-link]]]]))
                     [[inline-info-field (text :t.administration/resource)
                       [atoms/link nil
-                       (str "#/administration/resources/" (:resource-id catalogue-item))
+                       (str "/administration/resources/" (:resource-id catalogue-item))
                        (:resource-name catalogue-item)]]
                      [inline-info-field (text :t.administration/workflow)
                       [atoms/link nil
-                       (str "#/administration/workflows/" (:wfid catalogue-item))
+                       (str "/administration/workflows/" (:wfid catalogue-item))
                        (:workflow-name catalogue-item)]]
                      [inline-info-field (text :t.administration/form)
                       [atoms/link nil
-                       (str "#/administration/workflows/" (:formid catalogue-item))
+                       (str "/administration/workflows/" (:formid catalogue-item))
                        (:form-name catalogue-item)]]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]

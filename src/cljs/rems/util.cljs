@@ -1,5 +1,6 @@
 (ns rems.util
-  (:require [ajax.core :refer [GET PUT POST]]
+  (:require [accountant.core :as accountant]
+            [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
@@ -30,36 +31,41 @@
                                           v)])
                          m))))
 
-(defn dispatch!
-  "Dispatches to the given url.
+(defn replace-url!
+  "Navigates to the given URL without adding a browser history entry."
+  [url]
+  (.replaceState js/window.history nil "" url)
+  ;; when manipulating history, secretary won't catch the changes automatically
+  (js/window.rems.hooks.navigate url)
+  (accountant/dispatch-current!))
 
-  If `replace?` is given, then browser history is replaced and not pushed."
-  ([url]
-   (dispatch! url false))
-  ([url replace?]
-   (if replace?
-     (do
-       ;; when manipulating history,
-       ;;secretary won't catch the changes automatically
-       (.replaceState (.-history js/window) nil url url)
-       (js/window.rems.hooks.navigate url)
-       (secretary/dispatch! url))
-     (set! (.-location js/window) url))))
+(defn navigate!
+  "Navigates to the given URL."
+  [url]
+  (accountant/navigate! url))
 
 (defn unauthorized! []
   (rf/dispatch [:unauthorized! (.. js/window -location -href)]))
 
-(defn redirect-when-unauthorized-or-forbidden [{:keys [status status-text]}]
+(defn redirect-when-unauthorized-or-forbidden!
+  "If the request was unauthorized or forbidden, redirects the user
+  to an error page and returns true. Otherwise returns false."
+  [{:keys [status status-text]}]
   (let [current-url (.. js/window -location -href)]
     (case status
-      401 (rf/dispatch [:unauthorized! current-url])
-      403 (rf/dispatch [:forbidden! current-url])
-      nil)))
+      401 (do
+            (rf/dispatch [:unauthorized! current-url])
+            true)
+      403 (do
+            (rf/dispatch [:forbidden! current-url])
+            true)
+      false)))
 
 (defn- wrap-default-error-handler [handler]
   (fn [err]
-    (redirect-when-unauthorized-or-forbidden err)
-    (when handler (handler err))))
+    (when-not (redirect-when-unauthorized-or-forbidden! err)
+      (when handler
+        (handler err)))))
 
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
@@ -134,10 +140,10 @@
     (map #(if (link? %) [:a {:href %} %] %)
          (interpose " " (str/split s " ")))))
 
-;; XXX: since REMS uses hash-based URLs, it's not possible to have normal in-page anchor links, but they need to be emulated with JavaScript
-(defn in-page-anchor-link [id]
+(defn focus-input-field [id]
   (fn [event]
     (.preventDefault event)
+    ;; focusing input fields requires JavaScript; <a href="#id"> links don't work
     (when-let [element (.getElementById js/document id)]
       (.focus element))))
 

@@ -67,12 +67,12 @@
 
 (defn- to-create-resource []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-resource"
+   "/administration/create-resource"
    (text :t.administration/create-resource)])
 
 (defn- to-view-resource [resource-id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/resources/" resource-id)
+   (str "/administration/resources/" resource-id)
    (text :t.administration/view)])
 
 (rf/reg-sub

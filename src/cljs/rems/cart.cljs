@@ -48,7 +48,7 @@
 
 (defn- apply-button [items]
   [atoms/link {:class "btn btn-primary apply-for-catalogue-items"}
-   (str "#/application?items=" (str/join "," (sort (map :id items))))
+   (str "/application?items=" (str/join "," (sort (map :id items))))
    (text :t.cart/apply)])
 
 (defn- item-view [item language apply-button?]
@@ -97,33 +97,35 @@
    (component-info item-view)
    (example "item-view, single"
             [:table.rems-table.cart
-             [item-view {:title "Item title"} nil true]])
+             [:tbody
+              [item-view {:localizations {:en {:title "Item title"}}} nil true]]])
    (example "item-view, one of many has no apply button"
             [:table.rems-table.cart
-             [item-view {:title "Item title"} nil false]])
+             [:tbody
+              [item-view {:localizations {:en {:title "Item title"}}} nil false]]])
 
    (component-info bundle-view)
    (example "bundle-view"
             [:table.rems-table.cart
-             [bundle-view [{:title "Item title 1"}
-                           {:title "Item title 2"}
-                           {:title "Item title 3"}] nil]])
+             [bundle-view [{:localizations {:en {:title "Item title 1"}}}
+                           {:localizations {:en {:title "Item title 2"}}}
+                           {:localizations {:en {:title "Item title 3"}}}] nil]])
 
    (component-info cart-list)
    (example "cart-list empty"
             [cart-list [] nil])
    (example "cart-list with two items of different workflow"
-            [cart-list [{:title "Item title" :wfid 1}
-                        {:title "Another title" :wfid 2}] nil])
+            [cart-list [{:localizations {:en {:title "Item title"}} :wfid 1}
+                        {:localizations {:en {:title "Another title"}} :wfid 2}] nil])
    (example "cart-list with three items of same workflow and two of different"
-            [cart-list [{:title "First title" :wfid 2}
-                        {:title "Second title" :wfid 1}
-                        {:title "Third title" :wfid 1}
-                        {:title "Fourth title" :wfid 1}
-                        {:title "Fifth title" :wfid 3}] nil])
+            [cart-list [{:localizations {:en {:title "First title"}} :wfid 2}
+                        {:localizations {:en {:title "Second title"}} :wfid 1}
+                        {:localizations {:en {:title "Third title"}} :wfid 1}
+                        {:localizations {:en {:title "Fourth title"}} :wfid 1}
+                        {:localizations {:en {:title "Fifth title"}} :wfid 3}] nil])
    (example "cart-list with five items of same workflow but of two different forms"
-            [cart-list [{:title "First form" :wfid 1 :formid 1}
-                        {:title "Second form" :wfid 1 :formid 2}
-                        {:title "First form" :wfid 1 :formid 1}
-                        {:title "Second form" :wfid 1 :formid 2}
-                        {:title "First form" :wfid 1 :formid 1}] nil])])
+            [cart-list [{:localizations {:en {:title "First form"}} :wfid 1 :formid 1}
+                        {:localizations {:en {:title "Second form"}} :wfid 1 :formid 2}
+                        {:localizations {:en {:title "First form"}} :wfid 1 :formid 1}
+                        {:localizations {:en {:title "Second form"}} :wfid 1 :formid 2}
+                        {:localizations {:en {:title "First form"}} :wfid 1 :formid 1}] nil])])

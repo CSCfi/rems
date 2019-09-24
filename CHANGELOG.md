@@ -32,6 +32,8 @@ Changes since v2.4
     or /api/licenses, respectively.
 - API endpoint for editing forms has been changed from
   /api/forms/[form-id]/edit to /api/forms/edit.
+- The page addresses are no more prefixed with `/#/`, so for example the address
+  of the catalogue page was changed from `/#/catalogue` to `/catalogue` (#1258)
 
 ### Additions
 - New field types: description, option, multiselect

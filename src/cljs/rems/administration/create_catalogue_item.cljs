@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post! put!]]))
+            [rems.util :refer [navigate! fetch post! put!]]))
 
 (defn- update-loading [db]
   (let [progress (::loading-progress db)]
@@ -90,7 +90,7 @@
                       :top
                       description
                       (fn [response]
-                        (dispatch! (str "#/administration/catalogue-items/"
+                        (navigate! (str "/administration/catalogue-items/"
                                         (:id response)))))
             :error-handler (flash-message/default-error-handler :top description)}))
   {})
@@ -105,7 +105,7 @@
                      :top
                      description
                      (fn [_]
-                       (dispatch! (str "#/administration/catalogue-items/" id))))
+                       (navigate! (str "/administration/catalogue-items/" id))))
            :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
@@ -262,7 +262,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/catalogue-items"
+   "/administration/catalogue-items"
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button [form languages editing?]
@@ -294,9 +294,9 @@
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
                    (for [language languages]
-                     [:<>
-                      ^{:key (str "title-" language)} [catalogue-item-title-field language]
-                      ^{:key (str "infourl-" language)} [catalogue-item-infourl-field language]])
+                     [:<> {:key language}
+                      [catalogue-item-title-field language]
+                      [catalogue-item-infourl-field language]])
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]

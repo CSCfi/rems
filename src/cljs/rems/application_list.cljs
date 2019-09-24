@@ -14,7 +14,7 @@
 (defn- view-button [app]
   [atoms/link {:class "btn btn-primary"
                :aria-label (str (text :t.applications/view) ": " (:application/description app))}
-   (str "#/application/" (:application/id app))
+   (str "/application/" (:application/id app))
    (text :t.applications/view)])
 
 (defn- format-catalogue-items [app]

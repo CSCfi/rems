@@ -68,12 +68,12 @@
 
 (defn- to-create-workflow []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-workflow"
+   "/administration/create-workflow"
    (text :t.administration/create-workflow)])
 
 (defn- to-view-workflow [workflow-id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/workflows/" workflow-id)
+   (str "/administration/workflows/" workflow-id)
    (text :t.administration/view)])
 
 (rf/reg-sub

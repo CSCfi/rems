@@ -9,7 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [navigate! fetch post!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -50,7 +50,7 @@
             {:params request
              ;; TODO: render the catalogue items that use this resource in the error handler
              :handler (flash-message/default-success-handler
-                       :top description #(dispatch! (str "#/administration/resources/" (:id %))))
+                       :top description #(navigate! (str "/administration/resources/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -119,7 +119,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/resources"
+   "/administration/resources"
    (text :t.administration/cancel)])
 
 (defn create-resource-page []

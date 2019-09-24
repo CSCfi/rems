@@ -60,34 +60,34 @@
              [:li
               (text :t.administration/catalogue-item) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/catalogue-items/" (:id ci))}
+                   :href (str "/administration/catalogue-items/" (:id ci))}
                (get-localized-title ci language)]]))
      (into [:ul]
            (for [f forms]
              [:li
               (text :t.administration/form) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/forms/" (:id f))}
+                   :href (str "/administration/forms/" (:id f))}
                (:form/title f)]]))
      (into [:ul]
            (for [lic licenses]
              [:li
               (text :t.administration/license) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/licenses/" (:id lic))}
+                   :href (str "/administration/licenses/" (:id lic))}
                (get-localized-title lic language)]]))
      (into [:ul]
            (for [r resources]
              [:li
               (text :t.administration/resource) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/resources/" (:id r))} (:resid r)]]))
+                   :href (str "/administration/resources/" (:id r))} (:resid r)]]))
      (into [:ul]
            (for [w workflows]
              [:li
               (text :t.administration/workflow) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/workflows/" (:id w))} (:title w)]]))]))
+                   :href (str "/administration/workflows/" (:id w))} (:title w)]]))]))
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]

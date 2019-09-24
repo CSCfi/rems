@@ -37,7 +37,7 @@
 
 (defn- back-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/resources"
+   "/administration/resources"
    (text :t.administration/back)])
 
 (defn resource-view [resource language]

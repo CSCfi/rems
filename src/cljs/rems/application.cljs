@@ -31,7 +31,7 @@
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch parse-int post! in-page-anchor-link]])
+            [rems.util :refer [navigate! fetch parse-int post! focus-input-field]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -58,16 +58,8 @@
              (for [resource resources]
                [:li (localized (:catalogue-item/title resource))]))])))
 
-(defn navigate-to
-  "Navigates to the application with the given id.
-
-  `replace?` parameter can be given to replace history state instead of push."
-  [id & [replace?]]
-  (dispatch! (str "#/application/" id) replace?))
-
 (defn- format-validation-error [type field]
-  [:a {:href "#"
-       :on-click (in-page-anchor-link (fields/id-to-name (:field/id field)))}
+  [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
    (text-format type (localized (:field/title field)))])
 
 (defn- format-submission-errors
@@ -201,9 +193,7 @@
              :handler (flash-message/default-success-handler
                        :top ; the message will be shown on the new application's page
                        description
-                       (fn [response]
-                         (rf/dispatch [:rems.spa/user-triggered-navigation])
-                         (dispatch! (str "/#/application/" (:application-id response)))))
+                       #(navigate! (str "/application/" (:application-id %))))
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
@@ -384,7 +374,7 @@
 
 (defn- application-link [application prefix]
   (let [config @(rf/subscribe [:rems.config/config])]
-    [:a {:href (str "/#/application/" (:application/id application))}
+    [:a {:href (str "/application/" (:application/id application))}
      (when prefix
        (str prefix " "))
      (format-application-id config application)]))

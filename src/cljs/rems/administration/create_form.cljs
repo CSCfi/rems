@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio in-page-anchor-link]]))
+            [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio focus-input-field]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -190,7 +190,7 @@
                              :top
                              description
                              (fn [response]
-                               (dispatch! (str "#/administration/forms/"
+                               (navigate! (str "/administration/forms/"
                                                (if edit?
                                                  (::form-id db)
                                                  (response :id))))))
@@ -339,11 +339,11 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/forms"
+   "/administration/forms"
    (text :t.administration/cancel)])
 
 (defn- format-validation-link [target content]
-  [:li [:a {:href "#" :on-click (in-page-anchor-link target)}
+  [:li [:a {:href "#" :on-click (focus-input-field target)}
         content]])
 
 (defn- format-field-validation [field field-errors]
@@ -378,13 +378,11 @@
   ;; TODO: deduplicate with field definitions
   (into [:ul
          (when (:form/organization form-errors)
-           [:li [:a {:href "#"
-                     :on-click (in-page-anchor-link "organization")}
+           [:li [:a {:href "#" :on-click (focus-input-field "organization")}
                  (text-format (:form/organization form-errors) (text :t.administration/organization))]])
 
          (when (:form/title form-errors)
-           [:li [:a {:href "#"
-                     :on-click (in-page-anchor-link "title")}
+           [:li [:a {:href "#" :on-click (focus-input-field "title")}
                  (text-format (:form/title form-errors) (text :t.create-form/title))]])]
 
         (for [[field-id field-errors] (into (sorted-map) (:form/fields form-errors))]

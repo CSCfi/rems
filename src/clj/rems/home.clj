@@ -15,7 +15,7 @@
                               (content-type "text/plain"))
       (< 1 (count items)) (-> (not-found "Resource ID is not unique")
                               (content-type "text/plain"))
-      :else (redirect (str "/#/application?items=" (:id (first items)))))))
+      :else (redirect (str "/application?items=" (:id (first items)))))))
 
 (defn render-css
   "Helper function for rendering styles that has parameters for
@@ -30,9 +30,9 @@
 
 (defroutes normal-routes
   (GET "/" [] (layout/home-page))
-  (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/#/application/accept-invitation/" token)))
+  (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/application/accept-invitation/" token)))
   (GET "/apply-for" {{:keys [resource]} :params} (apply-for-resource resource))
-  (GET "/landing_page" req (redirect "/#/redirect")) ; DEPRECATED: legacy url redirect
+  (GET "/landing_page" req (redirect "/redirect")) ; DEPRECATED: legacy url redirect
   (GET "/favicon.ico" [] (redirect "/img/favicon.ico")))
 
 (defroutes css-routes

@@ -440,7 +440,7 @@
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "test.txt"}]])
-      (example "field of type \"attachment\", file uploaded, success indicator"
+   (example "field of type \"attachment\", file uploaded, success indicator"
             [:form
              [field {:app-id 5
                      :field/id 6

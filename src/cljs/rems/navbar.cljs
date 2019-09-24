@@ -32,7 +32,7 @@
     (when extra-pages
       (for [page extra-pages]
         (let [url (or (page :url)
-                      (str "/#/extra-pages/" (page :id)))
+                      (str "/extra-pages/" (page :id)))
               text (get-in page [:translations language :title] (text :t/missing))]
           [nav-link url text (and (= page-id :extra-pages)
                                   (= extra-page-id (page :id)))])))))
@@ -42,17 +42,17 @@
   (let [roles (:roles identity)]
     [e (into [:div.navbar-nav.mr-auto
               (when (roles/is-logged-in? roles)
-                [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)])
+                [nav-link "/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)])
               (when (roles/show-applications? roles)
-                [nav-link "#/applications" (text :t.navigation/applications)
+                [nav-link "/applications" (text :t.navigation/applications)
                  (contains? #{:application :applications} page-id)])
               (when (roles/show-reviews? roles)
-                [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
+                [nav-link "/actions" (text :t.navigation/actions) (= page-id :actions)])
               (when (roles/show-admin-pages? roles)
-                [nav-link "#/administration" (text :t.navigation/administration)
+                [nav-link "/administration" (text :t.navigation/administration)
                  (and page-id (namespace page-id) (str/starts-with? (namespace page-id) "rems.administration"))])
               (when-not (:user identity)
-                [nav-link "#/" (text :t.navigation/home) (= page-id :home)])]
+                [nav-link "/" (text :t.navigation/home) (= page-id :home)])]
              (navbar-extra-pages page-id))
      [language-switcher]]))
 
@@ -69,7 +69,8 @@
   [navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-id user])
 
 (defn skip-navigation []
-  [:a {:href "#main-content" :class "skip-navigation"}
+  [:a.skip-navigation
+   {:href "#main-content"}
    (text :t.navigation/skip-navigation)])
 
 (defn navigation-widget [page-id]
