@@ -682,7 +682,8 @@
     :title "Previous applications"
     :on-open #(rf/dispatch [::previous-applications (str "applicant:" applicant)])
     :collapse [application-list/component {:applications ::previous-applications
-                                           :default-sort-column :last-activity
+                                           :hidden-columns #{:created :todo :last-activity}
+                                           :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
 
 (defn- render-application [{:keys [application edit-application attachment-success config userid]}]
