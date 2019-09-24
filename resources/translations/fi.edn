@@ -308,6 +308,7 @@
                :administration "Ylläpito"
                :applications "Hakemukset"
                :catalogue "Aineistoluettelo"
+               :change-language "Vaihda kieleksi %1"
                :home "Etusivu"
                :logout "Kirjaudu ulos"
                :skip-navigation "Siirry sivun pääsisältöön"}

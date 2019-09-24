@@ -310,6 +310,7 @@
                :administration "Administration"
                :applications "Applications"
                :catalogue "Catalogue"
+               :change-language "Change language to %1"
                :home "Home"
                :logout "Sign out"
                :skip-navigation "Skip to main content"}
