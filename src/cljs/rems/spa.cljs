@@ -399,10 +399,13 @@
 ;; must be called after routes have been defined
 
 (defn hook-browser-navigation! []
+  ;; This listener is called when the page is first loaded
+  ;; an on every subsequent navigation.
   (events/listen accountant/history
                  HistoryEventType/NAVIGATE
                  (fn [event]
                    (js/window.rems.hooks.navigate (.-token event))))
+
   (accountant/configure-navigation!
    {:nav-handler (let [previous-path (atom nil)]
                    (fn [path]
@@ -418,11 +421,13 @@
                       (when-not not-found-page?
                         route)))})
   (accountant/dispatch-current!)
+
+  ;; This listener is NOT called on the initial page load,
+  ;; but only on subsequent navigations. On the initial
+  ;; full page load the focus does not need to be changed.
   (events/listen accountant/history
                  HistoryEventType/NAVIGATE
                  (fn [_event]
-                   ;; move focus to the beginning of the page on navigation
-                   ;; (except on full page load, which is why this is after accountant config)
                    (rf/dispatch [:rems.spa/user-triggered-navigation]))))
 
 

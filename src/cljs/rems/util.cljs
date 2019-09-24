@@ -47,7 +47,10 @@
 (defn unauthorized! []
   (rf/dispatch [:unauthorized! (.. js/window -location -href)]))
 
-(defn redirect-when-unauthorized-or-forbidden [{:keys [status status-text]}]
+(defn redirect-when-unauthorized-or-forbidden!
+  "If the request was unauthorized or forbidden, redirects the user
+  to an error page and returns true. Otherwise returns false."
+  [{:keys [status status-text]}]
   (let [current-url (.. js/window -location -href)]
     (case status
       401 (do
@@ -60,7 +63,7 @@
 
 (defn- wrap-default-error-handler [handler]
   (fn [err]
-    (when-not (redirect-when-unauthorized-or-forbidden err)
+    (when-not (redirect-when-unauthorized-or-forbidden! err)
       (when handler
         (handler err)))))
 
