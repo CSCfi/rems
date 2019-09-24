@@ -12,8 +12,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::status-flags/display-archived? false)
-    :dispatch-n [[::fetch-licenses]
+   {:dispatch-n [[::fetch-licenses]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-db
@@ -22,8 +21,8 @@
    (let [description (text :t.administration/licenses)]
      (fetch "/api/licenses"
             {:url-params {:disabled true
-                          :expired (::status-flags/display-archived? db)
-                          :archived (::status-flags/display-archived? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-licenses-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))

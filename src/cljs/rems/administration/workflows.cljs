@@ -13,8 +13,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::status-flags/display-archived? false)
-    :dispatch-n [[::fetch-workflows]
+   {:dispatch-n [[::fetch-workflows]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-db
@@ -23,8 +22,8 @@
    (let [description (text :t.administration/workflows)]
      (fetch "/api/workflows"
             {:url-params {:disabled true
-                          :archived (::status-flags/display-archived? db)
-                          :expired (::status-flags/display-archived? db)}
+                          :archived (status-flags/display-archived? db)
+                          :expired (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-workflows-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))

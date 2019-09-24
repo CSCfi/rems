@@ -12,8 +12,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::status-flags/display-archived? false)
-    :dispatch-n [[::fetch-resources]
+   {:dispatch-n [[::fetch-resources]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
@@ -22,8 +21,8 @@
    (let [description (text :t.administration/resources)]
      (fetch "/api/resources"
             {:url-params {:disabled true
-                          :expired (::status-flags/display-archived? db)
-                          :archived (::status-flags/display-archived? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-resources-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))

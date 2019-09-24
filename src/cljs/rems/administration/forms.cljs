@@ -13,8 +13,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::status-flags/display-archived? false)
-    :dispatch-n [[::fetch-forms]
+   {:dispatch-n [[::fetch-forms]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-db
@@ -23,8 +22,8 @@
    (let [description (text :t.administration/forms)]
      (fetch "/api/forms"
             {:url-params {:disabled true
-                          :expired (::status-flags/display-archived? db)
-                          :archived (::status-flags/display-archived? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-forms-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))

@@ -13,8 +13,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::status-flags/display-archived? false)
-    :dispatch-n [[::fetch-catalogue]
+   {:dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
@@ -24,8 +23,8 @@
      (fetch "/api/catalogue-items"
             {:url-params {:expand :names
                           :disabled true
-                          :expired (::status-flags/display-archived? db)
-                          :archived (::status-flags/display-archived? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-catalogue-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))

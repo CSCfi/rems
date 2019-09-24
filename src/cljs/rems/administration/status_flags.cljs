@@ -42,7 +42,11 @@
  (fn [{:keys [db]} [_ display-archived?]]
    {:db (assoc db ::display-archived? display-archived?)}))
 
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+(defn display-archived? [db]
+  ;; coerce default nil to false, since there is no global place to initialize db
+  (boolean (::display-archived? db)))
+
+(rf/reg-sub ::display-archived? (fn [db _] (display-archived? db)))
 
 (defn display-archived-toggle [on-change]
   (let [display-archived? @(rf/subscribe [::display-archived?])
