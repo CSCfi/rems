@@ -37,14 +37,14 @@
     [unarchive-button item on-change]
     [archive-button item on-change]))
 
-(defn display-old-toggle [display-old? on-change]
+(defn display-archived-toggle [display-archived? on-change]
   [:div.form-check.form-check-inline {:style {:float "right"}}
    [:input.form-check-input {:type "checkbox"
-                             :id "display-old"
-                             :checked display-old?
-                             :on-change #(on-change (not display-old?))}]
-   [:label.form-check-label {:for "display-old"}
-    (text :t.administration/display-old)]])
+                             :id "display-archived"
+                             :checked display-archived?
+                             :on-change #(on-change (not display-archived?))}]
+   [:label.form-check-label {:for "display-archived"}
+    (text :t.administration/display-archived)]])
 
 (defn active? [item]
   (and (:enabled item)

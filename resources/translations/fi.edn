@@ -56,7 +56,7 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :disable "Poista käytöstä"
-                   :display-old "Näytä vanhat"
+                   :display-archived "Näytä arkistoidut"
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-form "Muokkaa lomaketta"

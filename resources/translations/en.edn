@@ -56,7 +56,7 @@
                    :create-workflow "Create workflow"
                    :created "Created"
                    :disable "Disable"
-                   :display-old "Display old"
+                   :display-archived "Display archived"
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-form "Edit form"

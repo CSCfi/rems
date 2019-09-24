@@ -12,7 +12,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-old? false)
+   {:db (assoc db ::display-archived? false)
     :dispatch-n [[::fetch-licenses]
                  [:rems.table/reset]]}))
 
@@ -22,8 +22,8 @@
    (let [description (text :t.administration/licenses)]
      (fetch "/api/licenses"
             {:url-params {:disabled true
-                          :expired (::display-old? db)
-                          :archived (::display-old? db)}
+                          :expired (::display-archived? db)
+                          :archived (::display-archived? db)}
              :handler #(rf/dispatch [::fetch-licenses-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
@@ -59,12 +59,12 @@
    {}))
 
 (rf/reg-event-fx
- ::set-display-old?
- (fn [{:keys [db]} [_ display-old?]]
-   {:db (assoc db ::display-old? display-old?)
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
     :dispatch [::fetch-licenses]}))
 
-(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (defn- to-create-license []
   [atoms/link {:class "btn btn-primary"}
@@ -122,7 +122,7 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-license]
-           [status-flags/display-old-toggle
-            @(rf/subscribe [::display-old?])
-            #(rf/dispatch [::set-display-old? %])]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [licenses-list]])))
