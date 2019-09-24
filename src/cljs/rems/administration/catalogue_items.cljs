@@ -13,7 +13,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-archived? false)
+   {:db (assoc db ::status-flags/display-archived? false)
     :dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]]}))
 
@@ -24,8 +24,8 @@
      (fetch "/api/catalogue-items"
             {:url-params {:expand :names
                           :disabled true
-                          :expired (::display-archived? db)
-                          :archived (::display-archived? db)}
+                          :expired (::status-flags/display-archived? db)
+                          :archived (::status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-catalogue-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))
@@ -59,13 +59,6 @@
                     :top description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
-
-(rf/reg-event-fx
- ::set-display-archived?
- (fn [{:keys [db]} [_ display-archived?]]
-   {:db (assoc db ::display-archived? display-archived?)
-    :dispatch [::fetch-catalogue]}))
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (defn- to-create-catalogue-item []
   [atoms/link {:class "btn btn-primary"}
@@ -150,7 +143,5 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
-           [status-flags/display-archived-toggle
-            @(rf/subscribe [::display-archived?])
-            #(rf/dispatch [::set-display-archived? %])]
+           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
            [catalogue-list]])))

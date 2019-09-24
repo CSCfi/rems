@@ -37,14 +37,26 @@
     [unarchive-button item on-change]
     [archive-button item on-change]))
 
-(defn display-archived-toggle [display-archived? on-change]
-  [:div.form-check.form-check-inline {:style {:float "right"}}
-   [:input.form-check-input {:type "checkbox"
-                             :id "display-archived"
-                             :checked display-archived?
-                             :on-change #(on-change (not display-archived?))}]
-   [:label.form-check-label {:for "display-archived"}
-    (text :t.administration/display-archived)]])
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)}))
+
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+
+(defn display-archived-toggle [on-change]
+  (let [display-archived? @(rf/subscribe [::display-archived?])
+        on-change (fn [value]
+                    (rf/dispatch [::set-display-archived? value])
+                    (when on-change
+                      (on-change)))]
+    [:div.form-check.form-check-inline {:style {:float "right"}}
+     [:input.form-check-input {:type "checkbox"
+                               :id "display-archived"
+                               :checked display-archived?
+                               :on-change #(on-change (not display-archived?))}]
+     [:label.form-check-label {:for "display-archived"}
+      (text :t.administration/display-archived)]]))
 
 (defn active? [item]
   (and (:enabled item)
