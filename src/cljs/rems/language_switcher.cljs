@@ -22,7 +22,7 @@
                  [:button {:type :button
                            :class (lang-link-classes current-language language)
                            :on-click (fn []
-                                       (rf/dispatch [:rems.language/set-language language])
+                                       (rf/dispatch [:rems.user-settings/set-language language])
                                        (rf/dispatch [:rems.spa/user-triggered-navigation]))}
                   lang-str]]))))))
 
