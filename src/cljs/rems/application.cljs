@@ -700,9 +700,11 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
     [:div.container-fluid
-     [document-title (if application
-                       (str (text :t.applications/application) " " (format-application-id config application))
-                       (text :t.applications/application))]
+     [document-title (str (text :t.applications/application)
+                          (when application
+                            (str " " (format-application-id config application)))
+                          (when-not (str/blank? (:application/description application))
+                            (str ": " (:application/description application))))]
      ^{:key application-id} ; re-render to clear flash messages when navigating to another application
      [flash-message/component :top]
      (when loading?
