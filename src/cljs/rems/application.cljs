@@ -365,7 +365,7 @@
               ;; TODO consider saving the form first so that no data is lost for the applicant
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
-(defn- format-application-id [config application]
+(defn format-application-id [config application]
   (let [id-column (get config :application-id-column :id)]
     (case id-column
       :external-id (:application/external-id application)
