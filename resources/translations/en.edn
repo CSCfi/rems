@@ -157,7 +157,9 @@
                          :waiting-for-review "Waiting for a review"
                          :waiting-for-your-decision "Waiting for your decision"
                          :waiting-for-your-review "Waiting for your review"}
-                 :view "View"}
+                 :view "View"
+                 :view-application-with-description "View application %1: %2"
+                 :view-application-without-description "View application %1 for resources: %2"}
   :cart {:add "Add to cart"
          :apply "Apply"
          :apply-for-bundle "Apply for %1 resources as a bundle "

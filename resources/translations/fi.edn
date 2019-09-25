@@ -155,7 +155,9 @@
                          :waiting-for-review "Odottaa katselmointia"
                          :waiting-for-your-decision "Odottaa sinun päätöstäsi"
                          :waiting-for-your-review "Odottaa sinun katselmointiasi"}
-                 :view "Näytä"}
+                 :view "Näytä"
+                 :view-application-with-description "Näytä hakemus %1: %2"
+                 :view-application-without-description "Näytä hakemus %1 resursseille: %2"}
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "

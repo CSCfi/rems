@@ -8,20 +8,34 @@
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-todo localize-time localized text]])
+            [rems.text :refer [localize-state localize-todo localize-time localized text text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
-
-(defn- view-button [app]
-  [atoms/link {:class "btn btn-primary"
-               :aria-label (str (text :t.applications/view) ": " (:application/description app))}
-   (str "/application/" (:application/id app))
-   (text :t.applications/view)])
 
 (defn- format-catalogue-items [app]
   (->> (:application/resources app)
        (map :catalogue-item/title)
        (map localized)
        (str/join ", ")))
+
+(defn- displayed-id [app]
+  (let [config @(rf/subscribe [:rems.config/config])
+        id-column (get config :application-id-column :id)]
+    (if (= :external-id id-column)
+      (:application/external-id app)
+      (:application/id app))))
+
+(defn- view-button [app]
+  [atoms/link
+   {:class "btn btn-primary"
+    :aria-label (if (str/blank? (:application/description app))
+                  (text-format :t.applications/view-application-without-description
+                               (displayed-id app)
+                               (format-catalogue-items app))
+                  (text-format :t.applications/view-application-with-description
+                               (displayed-id app)
+                               (:application/description app)))}
+   (str "/application/" (:application/id app))
+   (text :t.applications/view)])
 
 (defn- format-description [app]
   [:div {:class "application-description"
