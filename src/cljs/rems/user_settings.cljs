@@ -72,7 +72,7 @@
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
-         {:handler #(rf/dispatch [:loaded-user-settings %])
+         {:handler #(rf/dispatch-sync [:loaded-user-settings %])
           :error-handler (flash-message/default-error-handler :top "Fetch user settings")}))
 
 (rf/reg-event-fx

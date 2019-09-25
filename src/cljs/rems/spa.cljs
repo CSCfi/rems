@@ -154,7 +154,6 @@
 (defn home-page []
   (if @(rf/subscribe [:user])
     (do
-      (fetch-user-settings!)
       ;; TODO: separate :init default page that does the navigation/redirect logic, instead of using :home as the default
       (when (= "/" js/window.location.pathname)
         (navigate! "/catalogue"))
@@ -458,7 +457,8 @@
   (load-interceptors!)
   (-> (p/all [(fetch-translations!)
               (fetch-theme!)
-              (config/fetch-config!)])
+              (config/fetch-config!)
+              (fetch-user-settings!)])
       ;; all preceding code must use `rf/dispatch-sync` to avoid
       ;; the first render flashing with e.g. missing translations
       (p/finally (fn []
