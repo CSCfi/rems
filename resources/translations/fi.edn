@@ -56,6 +56,7 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :disable "Poista käytöstä"
+                   :disabled-and-archived-explanation "Poistaminen käytöstä on asioille, joita ei vielä haluta näyttää käyttäjille, esim. juuri luodut asiat. Arkistointi on vanhoille asioille, joita ei haluta muistella."
                    :display-archived "Näytä arkistoidut"
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"

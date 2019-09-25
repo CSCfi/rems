@@ -121,4 +121,5 @@
           [[spinner/big]]
           [[to-create-workflow]
            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
+           [status-flags/disabled-and-archived-explanation]
            [workflows-list]])))

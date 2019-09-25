@@ -118,4 +118,5 @@
           [[spinner/big]]
           [[to-create-resource]
            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-resources])]
+           [status-flags/disabled-and-archived-explanation]
            [resources-list]])))

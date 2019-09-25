@@ -143,4 +143,5 @@
           [[spinner/big]]
           [[to-create-catalogue-item]
            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
+           [status-flags/disabled-and-archived-explanation]
            [catalogue-list]])))

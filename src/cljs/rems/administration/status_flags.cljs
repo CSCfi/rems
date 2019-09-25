@@ -62,6 +62,9 @@
      [:label.form-check-label {:for "display-archived"}
       (text :t.administration/display-archived)]]))
 
+(defn disabled-and-archived-explanation []
+  [:p.mt-1 (text :t.administration/disabled-and-archived-explanation)])
+
 (defn active? [item]
   (and (:enabled item)
        (not (:expired item))

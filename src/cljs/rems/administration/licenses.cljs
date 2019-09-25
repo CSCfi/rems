@@ -114,4 +114,5 @@
           [[spinner/big]]
           [[to-create-license]
            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-licenses])]
+           [status-flags/disabled-and-archived-explanation]
            [licenses-list]])))

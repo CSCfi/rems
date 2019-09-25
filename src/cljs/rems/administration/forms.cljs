@@ -128,4 +128,5 @@
           [[spinner/big]]
           [[to-create-form]
            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
+           [status-flags/disabled-and-archived-explanation]
            [forms-list]])))
