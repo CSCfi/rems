@@ -29,6 +29,7 @@
                                     :prefs {"intl.accept_languages" "en-US"}}
                                    driver
                (binding [*driver* driver]
+                 (delete-cookies *driver*) ; start with a clean slate
                  (f)))]
     (try
       (run)
