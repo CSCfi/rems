@@ -509,17 +509,24 @@
 (defn- enrich-events [events get-user get-catalogue-item]
   (->> events
        (map (fn [event]
-              (merge event
-                     (when (= (:event/type event) :application.event/resources-changed)
-                       {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)})
-                     (when (:event/actor event)
-                       {:event/actor-attributes (get-user (:event/actor event))})
-                     (when (:application/deciders event)
-                       {:application/deciders (mapv get-user (:application/deciders event))})
-                     (when (:application/commenters event)
-                       {:application/commenters (mapv get-user (:application/commenters event))})
-                     (when (= (:event/type event) :application.event/member-added)
-                       {:application/member (get-user (:userid (:application/member event)))}))))))
+              (let [event-type (:event/type event)]
+                (merge event
+                       {:event/actor-attributes (get-user (:event/actor event))}
+                       (case event-type
+                         :application.event/resources-changed
+                         {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
+
+                         :application.event/decision-requested
+                         {:application/deciders (mapv get-user (:application/deciders event))}
+
+                         :application.event/comment-requested
+                         {:application/commenters (mapv get-user (:application/commenters event))}
+
+                         (:application.event/member-added
+                          :application.event/member-removed)
+                         {:application/member (get-user (:userid (:application/member event)))}
+
+                         {})))))))
 
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]

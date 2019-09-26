@@ -89,7 +89,6 @@
    :application.event/copied-from :t.applications.events/copied-from
    :application.event/copied-to :t.applications.events/copied-to
    :application.event/created :t.applications.events/created
-   :application.event/decided :t.applications.events/decided
    :application.event/decision-requested :t.applications.events/decision-requested
    :application.event/draft-saved :t.applications.events/draft-saved
    :application.event/licenses-accepted :t.applications.events/licenses-accepted
@@ -105,34 +104,42 @@
    :application.event/returned :t.applications.events/returned
    :application.event/submitted :t.applications.events/submitted})
 
+(defn- decision-to-text [decision]
+  (case decision
+    :approved :t.applications.events/approved
+    :rejected :t.applications.events/rejected
+    :t.applications.events/unknown))
+
 (defn localize-event [event]
-  (let [event-type (:event/type event)]
+  (let [event-type (:event/type event)
+        base (case event-type
+               :application.event/decided
+               (decision-to-text (:application/decision event))
+
+               (get event-types event-type :t.applications.events/unknown))]
     (text-format
-     (get event-types event-type :t.applications.events/unknown)
+     base
+     (application-util/get-member-name (:event/actor-attributes event))
      (case event-type
        :application.event/comment-requested
        (str/join ", " (mapv application-util/get-member-name
-                            (:event/commenters event)))
+                            (:application/commenters event)))
 
        :application.event/decision-requested
        (str/join ", " (mapv application-util/get-member-name
-                            (:event/deciders event)))
+                            (:application/deciders event)))
 
-       (:application.event/member-added :application.event/member-invited)
-       (application-util/get-member-name (:event/actor-attributes event))
+       (:application.event/member-added
+        :application.event/member-invited
+        :application.event/member-removed
+        :application.event/member-uninvited)
+       (application-util/get-member-name (:application/member event))
 
        :application.event/resources-changed
        (str/join ", " (mapv #(localized (:catalogue-item/title %))
                             (:application/resources event)))
 
-       :else
-       (application-util/get-member-name (:application/member event))))))
-
-(defn localize-decision [decision]
-  (text (case decision
-          :approved :t.applications.events/approved
-          :rejected :t.applications.events/rejected
-          :t.applications.events/unknown)))
+       nil))))
 
 (def ^:private time-format
   (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))

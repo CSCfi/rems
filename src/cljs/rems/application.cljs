@@ -29,7 +29,7 @@
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
+            [rems.text :refer [localize-event localized localize-state localize-time text text-format]]
             [rems.util :refer [dispatch! fetch parse-int post! in-page-anchor-link]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -400,16 +400,15 @@
   {:user (:commonName (:event/actor-attributes event))
    :event (localize-event event)
    :comment (case (:event/type event)
-              :application.event/decided
-              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
-
               :application.event/copied-from
               [application-link (:application/copied-from event) (text :t.applications/application)]
 
               :application.event/copied-to
               [application-link (:application/copied-to event) (text :t.applications/application)]
 
-              (:application/comment event))
+              (let [comment (:application/comment event)]
+                (when (not (empty? comment))
+                  (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
    :time (localize-time (:event/time event))})
 
@@ -418,10 +417,8 @@
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label event]
-    (when (not (empty? comment))
-      [:div
-       (str (text :t.actions/comment) ": ")
-       comment])]])
+    (when comment
+      [:div comment])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
