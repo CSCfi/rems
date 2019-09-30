@@ -3,7 +3,6 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.application :as application]
             [rems.application-util :as application-util]
             [rems.atoms :as atoms]
             [rems.guide-functions]
@@ -18,9 +17,16 @@
        (map localized)
        (str/join ", ")))
 
+(defn format-application-id [config application]
+  (let [id-column (get config :application-id-column :id)]
+    (case id-column
+      :external-id (:application/external-id application)
+      :id (:application/id application)
+      (:application/id application))))
+
 (defn- view-button [app]
   (let [config @(rf/subscribe [:rems.config/config])
-        id (application/format-application-id config app)]
+        id (format-application-id config app)]
     [atoms/link
      {:class "btn btn-primary"
       :aria-label (if (str/blank? (:application/description app))
