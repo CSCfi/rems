@@ -369,19 +369,12 @@
               ;; TODO consider saving the form first so that no data is lost for the applicant
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
-(defn format-application-id [config application]
-  (let [id-column (get config :application-id-column :id)]
-    (case id-column
-      :external-id (:application/external-id application)
-      :id (:application/id application)
-      (:application/id application))))
-
 (defn- application-link [application prefix]
   (let [config @(rf/subscribe [:rems.config/config])]
     [:a {:href (str "/application/" (:application/id application))}
      (when prefix
        (str prefix " "))
-     (format-application-id config application)]))
+     (application-list/format-application-id config application)]))
 
 (defn- format-event [event]
   {:userid (:event/actor event)
@@ -485,7 +478,7 @@
                      [info-field
                       (text :t.applications/application)
                       [:<>
-                       [:span#application-id (format-application-id config application)]
+                       [:span#application-id (application-list/format-application-id config application)]
                        [application-copy-notice application]]
                       {:inline? true}]
                      [info-field
@@ -718,7 +711,7 @@
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
                           (when application
-                            (str " " (format-application-id config application)))
+                            (str " " (application-list/format-application-id config application)))
                           (when-not (str/blank? (:application/description application))
                             (str ": " (:application/description application))))]
      ^{:key application-id} ; re-render to clear flash messages when navigating to another application
