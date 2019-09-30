@@ -70,6 +70,12 @@
       (when handler
         (handler err)))))
 
+(defn- prepend-handler [old-handler new-handler]
+  (fn [response]
+    (new-handler response)
+    (when old-handler
+      (old-handler response))))
+
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
 
@@ -83,18 +89,8 @@
      (GET url (-> (merge {:response-format :transit}
                          opts
                          {:error-handler (wrap-default-error-handler (:error-handler opts))})
-                  (update :handler
-                          (fn [handler]
-                            (fn [response]
-                              (resolve response)
-                              (when handler
-                                (handler response)))))
-                  (update :error-handler
-                          (fn [handler]
-                            (fn [response]
-                              (reject response)
-                              (when handler
-                                (handler response))))))))))
+                  (update :handler prepend-handler resolve)
+                  (update :error-handler prepend-handler reject))))))
 
 (defn put!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.
