@@ -18,7 +18,7 @@
 (rf/reg-event-fx
  ::send-review
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description (text :t.actions/review)]
+   (let [description [text :t.actions/review]]
      (post! "/api/applications/comment"
             {:params {:application-id application-id
                       :comment comment}

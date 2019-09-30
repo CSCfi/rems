@@ -18,7 +18,7 @@
 (rf/reg-event-fx
  ::send-close
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description (text :t.actions/close)]
+   (let [description [text :t.actions/close]]
      (post! "/api/applications/close"
             {:params {:application-id application-id
                       :comment comment}

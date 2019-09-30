@@ -18,7 +18,7 @@
 (rf/reg-event-fx
  ::fetch-resources
  (fn [{:keys [db]}]
-   (let [description (text :t.administration/resources)]
+   (let [description [text :t.administration/resources]]
      (fetch "/api/resources"
             {:url-params {:disabled true
                           :expired (status-flags/display-archived? db)

@@ -97,7 +97,7 @@
    (fetch (str "/api/applications/" id)
           {:handler #(rf/dispatch [::fetch-application-result %])
            :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
-                                (flash-message/default-error-handler :top (text :t.applications/application)))})
+                                (flash-message/default-error-handler :top [text :t.applications/application]))})
    {:db (update db ::application fetcher/started)}))
 
 (defn- initialize-edit-application [db]
@@ -189,7 +189,7 @@
  ::copy-as-new-application
  (fn [{:keys [db]} _]
    (let [application-id (get-in db [::application :data :application/id])
-         description (text :t.form/copy-as-new)]
+         description [text :t.form/copy-as-new]]
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
              :handler (flash-message/default-success-handler

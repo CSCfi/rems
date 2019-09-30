@@ -50,7 +50,7 @@
 (rf/reg-event-fx
  ::send-add-licenses
  (fn [_ [_ {:keys [application-id licenses comment on-finished]}]]
-   (let [description (text :t.actions/add-licenses)]
+   (let [description [text :t.actions/add-licenses]]
      (post! "/api/applications/add-licenses"
             {:params {:application-id application-id
                       :comment comment

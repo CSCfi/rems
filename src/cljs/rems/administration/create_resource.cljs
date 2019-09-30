@@ -45,7 +45,7 @@
 (rf/reg-event-fx
  ::create-resource
  (fn [_ [_ request]]
-   (let [description (text :t.administration/save)]
+   (let [description [text :t.administration/save]]
      (post! "/api/resources/create"
             {:params request
              ;; TODO: render the catalogue items that use this resource in the error handler

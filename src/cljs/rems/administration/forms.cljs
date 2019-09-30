@@ -19,7 +19,7 @@
 (rf/reg-event-db
  ::fetch-forms
  (fn [db]
-   (let [description (text :t.administration/forms)]
+   (let [description [text :t.administration/forms]]
      (fetch "/api/forms"
             {:url-params {:disabled true
                           :expired (status-flags/display-archived? db)

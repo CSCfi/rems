@@ -19,7 +19,7 @@
 (rf/reg-event-db
  ::fetch-workflows
  (fn [db]
-   (let [description (text :t.administration/workflows)]
+   (let [description [text :t.administration/workflows]]
      (fetch "/api/workflows"
             {:url-params {:disabled true
                           :archived (status-flags/display-archived? db)

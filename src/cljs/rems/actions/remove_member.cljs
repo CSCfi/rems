@@ -23,7 +23,7 @@
 (rf/reg-event-fx
  ::remove-member
  (fn [_ [_ {:keys [collapse-id application-id member comment on-finished]}]]
-   (let [description (text :t.actions/remove-member)]
+   (let [description [text :t.actions/remove-member]]
      (post! (if (:userid member)
               "/api/applications/remove-member"
               "/api/applications/uninvite-member")

@@ -179,7 +179,7 @@
          send-url (str "/api/forms/" (if edit?
                                        "edit"
                                        "create"))
-         description (page-title edit?)
+         description [page-title edit?]
          request (merge (build-request (::form db) (:languages db))
                         (when edit?
                           {:form/id (::form-id db)}))]

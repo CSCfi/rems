@@ -80,11 +80,11 @@
 
 (defn show-default-success! [location description]
   (show-success! location [:div#status-success.flash-message-title
-                           (str description ": " (text :t.form/success))]))
+                           description ": " (text :t.form/success)]))
 
 (defn show-default-error! [location description & more]
   (show-error! location (into [:<> [:div#status-failed.flash-message-title
-                                    (str description ": " (text :t.form/failed))]]
+                                    description ": " (text :t.form/failed)]]
                               more)))
 
 (defn format-errors [errors]

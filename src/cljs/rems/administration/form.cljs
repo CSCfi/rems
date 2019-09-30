@@ -38,7 +38,7 @@
 (rf/reg-event-fx
  ::edit-form
  (fn [_ [_ id]]
-   (let [description (text :t.administration/edit)]
+   (let [description [text :t.administration/edit]]
      (fetch (str "/api/forms/" id "/editable")
             {:handler (fn [response]
                         (if (:success response)
