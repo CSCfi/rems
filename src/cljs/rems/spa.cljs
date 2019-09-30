@@ -113,6 +113,12 @@
    {:dispatch [:set-active-page :forbidden]}))
 
 (rf/reg-event-fx
+ :not-found!
+ (fn [_ [_ current-url]]
+   (println "Received not-found from" current-url)
+   {:dispatch [:set-active-page :not-found]}))
+
+(rf/reg-event-fx
  :landing-page-redirect!
  (fn [{:keys [db]}]
    ;; do we have the roles set by set-identity already?

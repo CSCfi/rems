@@ -59,6 +59,9 @@
       403 (do
             (rf/dispatch [:forbidden! current-url])
             true)
+      404 (do
+            (rf/dispatch [:not-found! current-url])
+            true)
       false)))
 
 (defn- wrap-default-error-handler [handler]
