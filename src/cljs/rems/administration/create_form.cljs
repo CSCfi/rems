@@ -213,7 +213,7 @@
     (.scrollTo frame 0 position)))
 
 (defn first-partially-visible-edit-field []
-  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field"))
+  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field:not(.new-form-field)"))
         visible? #(<= 0 (-> % .getBoundingClientRect .-bottom))]
     (first (filter visible? fields))))
 
