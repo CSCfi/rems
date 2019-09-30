@@ -15,7 +15,16 @@
   (let [year-in-seconds (* 3600 24 365)]
     (.set goog.net.cookies language-cookie-name (name language) year-in-seconds "/")))
 
-(rf/reg-sub :language (fn [db _] (get-in db [:user-settings :language] (:default-language db))))
+
+(defn get-language [db]
+  (or (get-language-cookie)
+      (get-in db [:user-settings :language])
+      (:default-language db)))
+
+(rf/reg-sub
+ :language
+ (fn [db _]
+   (get-language db)))
 
 (rf/reg-sub
  :languages
@@ -43,20 +52,24 @@
  (fn [{:keys [db]} [_ language]]
    (update-language language)
    {:db (assoc-in db [:user-settings :language] language)
-    :dispatch [:rems.user-settings/save-user-settings]}))
+    :dispatch [::save-user-settings!]}))
+
+(rf/reg-event-fx
+ :check-if-should-save-settings!
+ (fn [{:keys [db]} _]
+   (let [current-language (get-language db)
+         settings-language (get-in db [:user-settings :language])]
+     ;; user can change language before login
+     ;; so we should sometimes save the language
+     ;; to the profile after login
+     (when (and current-language (not= current-language settings-language))
+       {:dispatch [::save-user-settings!]}))))
 
 (rf/reg-event-fx
  :loaded-user-settings
  (fn [{:keys [db]} [_ user-settings]]
-   (let [new-language (or (get-language-cookie)
-                          (:language user-settings))
-         new-settings (assoc user-settings :language new-language)]
-     (update-language new-language)
-     {:db (assoc db :user-settings new-settings)
-     ;; if the user has changed language before login
-     ;; the cookie will not match the language setting
-     ;; and we should save the new language setting
-      :dispatch (when (and new-language (not= new-language (:language user-settings))) [::save-user-settings!])})))
+   {:db (assoc db :user-settings user-settings)
+    :dispatch [:check-if-should-save-settings!]}))
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
@@ -67,7 +80,8 @@
  ::save-user-settings!
  (fn [{:keys [db]} [_]]
    (let [user-id (get-in db [:identity :user :eppn])
-         new-settings (:user-settings db)]
+         new-settings (assoc (:user-settings db)
+                             :language (get-language db))]
      (when user-id
        (put! "/api/user-settings"
              {:params new-settings
