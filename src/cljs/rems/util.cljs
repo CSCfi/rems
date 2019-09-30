@@ -3,8 +3,8 @@
             [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
             [goog.string :refer [parseInt]]
-            [re-frame.core :as rf]
-            [secretary.core :as secretary]))
+            [promesa.core :as p]
+            [re-frame.core :as rf]))
 
 ;; TODO move to cljc
 (defn getx
@@ -78,9 +78,23 @@
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.get url (clj->js opts))
-  (GET url (merge {:response-format :transit}
-                  opts
-                  {:error-handler (wrap-default-error-handler (:error-handler opts))})))
+  (p/create
+   (fn [resolve reject]
+     (GET url (-> (merge {:response-format :transit}
+                         opts
+                         {:error-handler (wrap-default-error-handler (:error-handler opts))})
+                  (update :handler
+                          (fn [handler]
+                            (fn [response]
+                              (resolve response)
+                              (when handler
+                                (handler response)))))
+                  (update :error-handler
+                          (fn [handler]
+                            (fn [response]
+                              (reject response)
+                              (when handler
+                                (handler response))))))))))
 
 (defn put!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.
