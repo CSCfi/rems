@@ -11,7 +11,9 @@
 (rf/reg-fx
  ::fetch-potential-reviewers
  (fn [on-success]
-   (fetch "/api/applications/commenters" {:handler on-success})))
+   (fetch "/api/applications/commenters"
+          {:handler on-success
+           :error-handler (flash-message/default-error-handler :top "Fetch potential reviewers")})))
 
 (rf/reg-event-fx
  ::open-form

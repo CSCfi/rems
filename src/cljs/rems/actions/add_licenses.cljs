@@ -10,7 +10,9 @@
 (rf/reg-fx
  ::fetch-licenses
  (fn [on-success]
-   (fetch "/api/licenses" {:handler on-success})))
+   (fetch "/api/licenses"
+          {:handler on-success
+           :error-handler (flash-message/default-error-handler :top "Fetch licenses")})))
 
 (rf/reg-event-fx
  ::open-form

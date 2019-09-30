@@ -37,14 +37,33 @@
     [unarchive-button item on-change]
     [archive-button item on-change]))
 
-(defn display-old-toggle [display-old? on-change]
-  [:div.form-check.form-check-inline {:style {:float "right"}}
-   [:input.form-check-input {:type "checkbox"
-                             :id "display-old"
-                             :checked display-old?
-                             :on-change #(on-change (not display-old?))}]
-   [:label.form-check-label {:for "display-old"}
-    (text :t.administration/display-old)]])
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)}))
+
+(defn display-archived? [db]
+  ;; coerce default nil to false, since there is no global place to initialize db
+  (boolean (::display-archived? db)))
+
+(rf/reg-sub ::display-archived? (fn [db _] (display-archived? db)))
+
+(defn display-archived-toggle [on-change]
+  (let [display-archived? @(rf/subscribe [::display-archived?])
+        on-change (fn [value]
+                    (rf/dispatch [::set-display-archived? value])
+                    (when on-change
+                      (on-change)))]
+    [:div.form-check.form-check-inline {:style {:float "right"}}
+     [:input.form-check-input {:type "checkbox"
+                               :id "display-archived"
+                               :checked display-archived?
+                               :on-change #(on-change (not display-archived?))}]
+     [:label.form-check-label {:for "display-archived"}
+      (text :t.administration/display-archived)]]))
+
+(defn disabled-and-archived-explanation []
+  [:p.mt-1 (text :t.administration/disabled-and-archived-explanation)])
 
 (defn active? [item]
   (and (:enabled item)
@@ -60,34 +79,34 @@
              [:li
               (text :t.administration/catalogue-item) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/catalogue-items/" (:id ci))}
+                   :href (str "/administration/catalogue-items/" (:id ci))}
                (get-localized-title ci language)]]))
      (into [:ul]
            (for [f forms]
              [:li
               (text :t.administration/form) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/forms/" (:id f))}
+                   :href (str "/administration/forms/" (:id f))}
                (:form/title f)]]))
      (into [:ul]
            (for [lic licenses]
              [:li
               (text :t.administration/license) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/licenses/" (:id lic))}
+                   :href (str "/administration/licenses/" (:id lic))}
                (get-localized-title lic language)]]))
      (into [:ul]
            (for [r resources]
              [:li
               (text :t.administration/resource) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/resources/" (:id r))} (:resid r)]]))
+                   :href (str "/administration/resources/" (:id r))} (:resid r)]]))
      (into [:ul]
            (for [w workflows]
              [:li
               (text :t.administration/workflow) ": "
               [:a {:target :_blank
-                   :href (str "#/administration/workflows/" (:id w))} (:title w)]]))]))
+                   :href (str "/administration/workflows/" (:id w))} (:title w)]]))]))
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]

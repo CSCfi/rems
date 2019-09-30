@@ -4,11 +4,20 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer :all]
+            [clojure.tools.logging]
+            [rems.common-util :refer [recursive-keys]]
             [rems.locales :as locales]
             [rems.testing-util :refer [create-temp-dir delete-recursively]]
             [rems.util :refer [getx-in]]
             [taoensso.tempura.impl :refer [compile-dictionary]])
   (:import (java.io FileNotFoundException)))
+
+(deftest test-unused-translation-keys
+  (let [unused-translation-keys #'rems.locales/unused-translation-keys]
+    (is (= nil (unused-translation-keys {:a {:b "x" :c "x"}} {:a {:b "y"}})))
+    (is (= (set [[:x] [:a :d]])
+           (set (unused-translation-keys {:a {:b "x" :c "x"}}
+                                         {:a {:b "y" :d "y"} :x "y"}))))))
 
 (defn loc-en []
   (read-string (slurp (io/resource "translations/en.edn"))))
@@ -16,43 +25,27 @@
 (defn loc-fi []
   (read-string (slurp (io/resource "translations/fi.edn"))))
 
-(defn map-structure
-  "Recurse into map m and replace all leaves with true."
-  [m]
-  (let [transform (fn [v] (if (map? v) (map-structure v) true))]
-    (reduce-kv (fn [m k v] (assoc m k (transform v))) {} m)))
-
 (deftest test-all-languages-defined
-  (is (= (map-structure (loc-en))
-         (map-structure (loc-fi)))))
-
-(defn extract-format-parameters [string]
-  (set (re-seq #"%\d+" string)))
+  (is (= (recursive-keys (loc-en))
+         (recursive-keys (loc-fi)))))
 
 (deftest test-extract-format-parameters
-  (is (= #{} (extract-format-parameters "hey you are 100% correct!")))
-  (is (= #{"%3" "%5" "%7"} (extract-format-parameters "user %3 has made %7 alterations in %5!"))))
+  (is (= #{} (locales/extract-format-parameters "hey you are 100% correct!")))
+  (is (= #{"%3" "%5" "%7"} (locales/extract-format-parameters "user %3 has made %7 alterations in %5!"))))
 
 (deftest test-format-parameters-match
-  (letfn [(check [left right]
-            (cond
-              (string? left)
-              (do
-                (is (string? right))
-                (is (= (extract-format-parameters left)
-                       (extract-format-parameters right))))
-              (map? left)
-              (doseq [k (keys left)]
-                (is (map? right))
-                (testing k
-                  (check (get left k) (get right k))))))]
-    (testing "[:en vs :fi]"
-      (check (loc-en) (loc-fi)))))
+  (testing "[:en vs :fi]"
+    (let [en (loc-en)
+          fi (loc-fi)]
+      (doseq [k (recursive-keys en)] ;; we check that keys match separately
+        (testing k
+          (is (= (locales/extract-format-parameters (getx-in en (vec k)))
+                 (locales/extract-format-parameters (getx-in fi (vec k))))))))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
   ;; --include is needed to exclude editor backup files etc.
-  (let [grep (sh/sh "grep" "-ERho" "--include=*.clj[cs]" "--include=*.clj" ":t[./][-a-z./]+" "src")]
+  (let [grep (sh/sh "grep" "-ERho" "--include=*.clj[cs]" "--include=*.clj" ":t[./][-a-z0-9./]+" "src")]
     (assert (= 0 (:exit grep))
             (pr-str grep))
     (->> grep
@@ -109,35 +102,30 @@
                           (locales/load-translations {:languages [:xx]}))))
 
   (testing "missing translations is an error"
-    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations could not be found in some-dir/xx.edn file or some-dir/xx.edn resource\E$"
+    (is (thrown-with-msg? FileNotFoundException #"^translations could not be found in file or resource \"some-dir/xx.edn\"$"
                           (locales/load-translations {:translations-directory "some-dir/"
                                                       :languages [:xx]})))))
 
 (deftest override-translations-with-extra-translations
-  (testing "extra translations override translations"
-    (let [translations (locales/load-translations {:languages [:en]
+  (let [log (atom [])
+        ;; redeffing log* is hacky, could instead set *logger-factory* to a fake logger
+        translations (with-redefs [clojure.tools.logging/log* (fn [_ _ _ msg] (swap! log conj (str msg)))]
+                       (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
-                                                   :theme-path "./example-theme/theme.edn"})]
+                                                   :theme-path "./example-theme/theme.edn"}))]
+    (testing "extra translations override translations"
       (is (= "Catalogue" (getx-in translations [:en :t :administration :catalogue-items])))
-      (is (= "Text" (getx-in translations [:en :t :create-license :license-text])))))
-  (testing "extra translations don't override keys that are not defined in extras"
-    (let [translations (locales/load-translations {:languages [:en]
-                                                   :translations-directory "translations/"
-                                                   :theme-path "example-theme/theme.edn"})]
-      (is (= "Active" (getx-in translations [:en :t :administration :active])))))
-  ;; TODO: This should rather be part of validation of all custom themes, but
-  ;;   it's probably better to at least have it here than not at all.
-  (testing "extra translations don't add keys that are not defined in original"
-    (doseq [lang [:en :fi]]
-      (let [translations
-            (locales/load-translations {:languages [lang]
-                                        :translations-directory "translations/"
-                                        :theme-path "example-theme/theme.edn"})
-            translations-without-extras
-            (locales/load-translations {:languages [lang]
-                                        :translations-directory "translations/"})]
-        (is (= (map-structure translations)
-               (map-structure translations-without-extras)))))))
+      (is (= "Text %1" (getx-in translations [:en :t :create-license :license-text]))))
+    (testing "extra translations don't override keys that are not defined in extras"
+      (is (= "Active" (getx-in translations [:en :t :administration :active]))))
+    (testing "warnings"
+      (is (< 0 (count @log)))
+      (testing "for unused key"
+        (is (some #(.contains % ":unused-key") @log)
+            (pr-str @log)))
+      (testing "for extra format parameters"
+        (is (some #(.contains % "%1") @log)
+            (pr-str @log))))))
 
 (deftest theme-path-given-no-extra-translations
   (testing "translations work with theme-path in config and no extra-translations"

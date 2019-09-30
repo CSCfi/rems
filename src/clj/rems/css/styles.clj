@@ -714,6 +714,10 @@
    [:#main-content.page-application {:max-width (u/px (int (* 1.5 (:magnitude content-width))))}]
    [:#float-actions {:position :sticky
                      :top "100px"}]
+   [:.reload-indicator {:position :fixed
+                        :bottom "15px"
+                        :right "15px"
+                        :z-index 1000}] ; over re-frisk devtool
 
    ;; application list
    [:.rems-table
@@ -754,6 +758,32 @@
 
    (generate-phase-styles)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
+
+   ;; print styling
+   (stylesheet/at-media
+    {:print true}
+    ;; workaround for firefox only printing one page of flex elements
+    ;; https://github.com/twbs/bootstrap/issues/23489
+    ;; https://bugzilla.mozilla.org/show_bug.cgi?id=939897
+    [:.row {:display :block}]
+    [:#app {:display :block}]
+    [(s/> :#app :div) {:display :block}]
+    [:#main-content {:display :block}]
+    [:body {:display :block}]
+
+    ;; hide some unnecessary elements
+    ;; TODO: consider a hide-print class?
+    [:.fixed-top {:display :none}]
+    [:#actions {:display :none}]
+    [:.commands {:display :none}]
+    [:#member-action-forms {:display :none}]
+    [:#resource-action-forms {:display :none}]
+    [:.flash-message {:display :none}]
+
+    ;; open "show more" drawers
+    [".collapse:not(.show)" {:display :block}]
+    [:.collapse-toggle.collapse {:display :none}])
+
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
 

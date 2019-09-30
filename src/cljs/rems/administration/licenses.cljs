@@ -12,18 +12,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-old? false)
-    :dispatch-n [[::fetch-licenses]
+   {:dispatch-n [[::fetch-licenses]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-db
  ::fetch-licenses
  (fn [db]
    (let [description (text :t.administration/licenses)]
-     (fetch "/api/licenses/"
+     (fetch "/api/licenses"
             {:url-params {:disabled true
-                          :expired (::display-old? db)
-                          :archived (::display-old? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-licenses-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
@@ -58,22 +57,14 @@
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
-(rf/reg-event-fx
- ::set-display-old?
- (fn [{:keys [db]} [_ display-old?]]
-   {:db (assoc db ::display-old? display-old?)
-    :dispatch [::fetch-licenses]}))
-
-(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
-
 (defn- to-create-license []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-license"
+   "/administration/create-license"
    (text :t.administration/create-license)])
 
 (defn- to-view-license [license-id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/licenses/" license-id)
+   (str "/administration/licenses/" license-id)
    (text :t.administration/view)])
 
 (rf/reg-sub
@@ -122,7 +113,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-license]
-           [status-flags/display-old-toggle
-            @(rf/subscribe [::display-old?])
-            #(rf/dispatch [::set-display-old? %])]
+           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-licenses])]
+           [status-flags/disabled-and-archived-explanation]
            [licenses-list]])))

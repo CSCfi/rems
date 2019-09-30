@@ -5,6 +5,14 @@
  :search-index-path "target/search-index-dev"
  :theme-path "example-theme/theme.edn"
  :authentication :fake-shibboleth
+ ; when shibboleth is removed, we can use oidc exclusively
+ ;; Open ID Connect settings
+ ; These allow login to http://localhost:3000/oidc-callback only
+ ;:authentication :oidc
+ :oidc-domain "remsdev.eu.auth0.com"
+ :oidc-client-id "65TIN1Joo6EvsHSPCN4zyCaxxPh0WJF1"
+ :oidc-client-secret "e1yr9R_8WW3Xg03wm6wJ4UmNVVjiqdVhwFGvHhttyoRS3h04F4MGh0zRaV7vKm30"
+
  :public-url "http://localhost:3000/"
  :render-css-file? true
  :extra-pages [{:id "about"

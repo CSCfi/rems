@@ -9,7 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -19,7 +19,8 @@
 
 (defn- fetch-license [license-id]
   (fetch (str "/api/licenses/" license-id)
-         {:handler #(rf/dispatch [::fetch-license-result %])}))
+         {:handler #(rf/dispatch [::fetch-license-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch license")}))
 
 (rf/reg-fx ::fetch-license (fn [[license-id]] (fetch-license license-id)))
 
@@ -35,7 +36,7 @@
 
 (defn- back-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/licenses"
+   "/administration/licenses"
    (text :t.administration/back)])
 
 (defn- license-view [license language]

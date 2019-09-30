@@ -15,6 +15,8 @@
                  [cljsjs/react-select "2.4.4-0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
+                 [com.auth0/java-jwt "3.8.1"]
+                 [com.auth0/jwks-rsa "0.8.2"]
                  [com.draines/postal "2.0.3"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.10.0.pr1"]
                  [com.taoensso/tempura "1.2.1"]
@@ -68,7 +70,8 @@
                  [ring/ring-core "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-devel "1.7.1"]
-                 [ring/ring-servlet "1.7.1"]]
+                 [ring/ring-servlet "1.7.1"]
+                 [venantius/accountant "0.2.4"]]
 
   :min-lein-version "2.0.0"
 

@@ -7,7 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! post!]]))
+            [rems.util :refer [navigate! post!]]))
 
 (rf/reg-event-db
  ::enter-page
@@ -64,7 +64,7 @@
      (post! "/api/licenses/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(dispatch! (str "#/administration/licenses/" (:id %))))
+                       :top description #(navigate! (str "/administration/licenses/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -72,7 +72,8 @@
   (post! "/api/licenses/add_attachment"
          {:body form-data
           :handler (fn [response]
-                     (rf/dispatch [::attachment-saved language (:id response)]))}))
+                     (rf/dispatch [::attachment-saved language (:id response)]))
+          :error-handler (flash-message/default-error-handler :top "Save attachment")}))
 
 (rf/reg-event-db
  ::attachment-saved
@@ -82,7 +83,8 @@
 (defn- remove-attachment [attachment-id]
   (post! "/api/licenses/remove_attachment"
          {:url-params {:attachment-id attachment-id}
-          :body {}}))
+          :body {}
+          :error-handler (flash-message/default-error-handler :top "Remove attachment")}))
 
 (rf/reg-event-fx
  ::save-attachment
@@ -193,7 +195,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/licenses"
+   "/administration/licenses"
    (text :t.administration/cancel)])
 
 (defn create-license-page []
