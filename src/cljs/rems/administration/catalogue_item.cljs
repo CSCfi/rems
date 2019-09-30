@@ -57,10 +57,9 @@
                          [inline-info-field (str (text :t.administration/title) suffix)
                           (:title localization)]
                          [inline-info-field (str (text :t.catalogue/more-info) suffix)
-                          [:a {:href (:infourl localization) :target :_blank}
-                           (:infourl localization)
-                           " "
-                           [atoms/external-link]]]]))
+                          (let [infourl (:infourl localization)]
+                            (when-not (empty? infourl)
+                              [:a {:href infourl  :target :_blank} infourl " " [atoms/external-link]]))]]))
                     [[inline-info-field (text :t.administration/resource)
                       [atoms/link nil
                        (str "/administration/resources/" (:resource-id catalogue-item))
