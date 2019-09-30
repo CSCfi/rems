@@ -3,25 +3,33 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.application :as application]
             [rems.application-util :as application-util]
             [rems.atoms :as atoms]
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-todo localize-time localized text]])
+            [rems.text :refer [localize-state localize-todo localize-time localized text text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
-
-(defn- view-button [app]
-  [atoms/link {:class "btn btn-primary"
-               :aria-label (str (text :t.applications/view) ": " (:application/description app))}
-   (str "/application/" (:application/id app))
-   (text :t.applications/view)])
 
 (defn- format-catalogue-items [app]
   (->> (:application/resources app)
        (map :catalogue-item/title)
        (map localized)
        (str/join ", ")))
+
+(defn- view-button [app]
+  (let [config @(rf/subscribe [:rems.config/config])
+        id (application/format-application-id config app)]
+    [atoms/link
+     {:class "btn btn-primary"
+      :aria-label (if (str/blank? (:application/description app))
+                    (text-format :t.applications/view-application-without-description
+                                 id (format-catalogue-items app))
+                    (text-format :t.applications/view-application-with-description
+                                 id (:application/description app)))}
+     (str "/application/" (:application/id app))
+     (text :t.applications/view)]))
 
 (defn- format-description [app]
   [:div {:class "application-description"

@@ -35,10 +35,13 @@
 
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
-  [item]
+  [item language]
   [:button.btn.btn-secondary.remove-from-cart
    {:type :button
-    :on-click #(rf/dispatch [::remove-item (:id item)])}
+    :on-click #(rf/dispatch [::remove-item (:id item)])
+    :aria-label (str (text :t.cart/remove)
+                     ": "
+                     (get-localized-title item language))}
    (text :t.cart/remove)])
 
 ;; TODO make util for other pages to use?
@@ -46,8 +49,13 @@
   (->> (str/split items-string #",")
        (mapv edn/read-string)))
 
-(defn- apply-button [items]
-  [atoms/link {:class "btn btn-primary apply-for-catalogue-items"}
+(defn- apply-button [items language]
+  [atoms/link {:class "btn btn-primary apply-for-catalogue-items"
+               :aria-label (str (text :t.cart/apply)
+                                ": "
+                                (->> items
+                                     (map #(get-localized-title % language))
+                                     (str/join ", ")))}
    (str "/application?items=" (str/join "," (sort (map :id items))))
    (text :t.cart/apply)])
 
@@ -55,8 +63,8 @@
   [:tr.cart-item
    [:td.title (get-localized-title item language)]
    [:td.commands
-    [remove-from-cart-button item]
-    (when apply-button? [apply-button [item]])]])
+    [remove-from-cart-button item language]
+    (when apply-button? [apply-button [item] language])]])
 
 (defn- bundle-view [items language]
   (let [many-items? (< 1 (count items))]
@@ -68,7 +76,7 @@
                     [[:tr [:td.commands.text-right {:col-span 2}
                            (text-format :t.cart/apply-for-bundle (count items))
                            [:span.mr-3]
-                           [apply-button items]]]])))))
+                           [apply-button items language]]]])))))
 
 (defn cart-list
   "List of shopping cart items"
