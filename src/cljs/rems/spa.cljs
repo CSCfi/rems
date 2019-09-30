@@ -2,6 +2,7 @@
   (:require [accountant.core :as accountant]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
+            [promesa.core :as p]
             [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.actions :refer [actions-page]]
@@ -455,8 +456,9 @@
 (defn init! []
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
-  (fetch-translations!)
-  (fetch-theme!)
-  (config/fetch-config!)
-  (hook-browser-navigation!)
-  (mount-components))
+  (-> (p/all [(fetch-translations!)
+              (fetch-theme!)
+              (config/fetch-config!)])
+      (p/finally (fn []
+                   (hook-browser-navigation!)
+                   (mount-components)))))
