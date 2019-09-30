@@ -37,14 +37,33 @@
     [unarchive-button item on-change]
     [archive-button item on-change]))
 
-(defn display-old-toggle [display-old? on-change]
-  [:div.form-check.form-check-inline {:style {:float "right"}}
-   [:input.form-check-input {:type "checkbox"
-                             :id "display-old"
-                             :checked display-old?
-                             :on-change #(on-change (not display-old?))}]
-   [:label.form-check-label {:for "display-old"}
-    (text :t.administration/display-old)]])
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)}))
+
+(defn display-archived? [db]
+  ;; coerce default nil to false, since there is no global place to initialize db
+  (boolean (::display-archived? db)))
+
+(rf/reg-sub ::display-archived? (fn [db _] (display-archived? db)))
+
+(defn display-archived-toggle [on-change]
+  (let [display-archived? @(rf/subscribe [::display-archived?])
+        on-change (fn [value]
+                    (rf/dispatch [::set-display-archived? value])
+                    (when on-change
+                      (on-change)))]
+    [:div.form-check.form-check-inline {:style {:float "right"}}
+     [:input.form-check-input {:type "checkbox"
+                               :id "display-archived"
+                               :checked display-archived?
+                               :on-change #(on-change (not display-archived?))}]
+     [:label.form-check-label {:for "display-archived"}
+      (text :t.administration/display-archived)]]))
+
+(defn disabled-and-archived-explanation []
+  [:p.mt-1 (text :t.administration/disabled-and-archived-explanation)])
 
 (defn active? [item]
   (and (:enabled item)
