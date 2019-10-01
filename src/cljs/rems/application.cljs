@@ -244,19 +244,28 @@
 
 ;;;; UI components
 
-(defn- link-license [license]
+(defn- license-acceptance [license]
+  (if (:accepted license)
+    (success-symbol)
+    (empty-symbol)))
+
+(defn- link-license [license show-accepted-licenses?]
   (let [title (localized (:license/title license))
         link (localized (:license/link license))]
     [:div
+     (when show-accepted-licenses?
+       [license-acceptance license])
      [:a.license-title {:href link :target :_blank}
       title " " [external-link]]]))
 
-(defn- text-license [license]
+(defn- text-license [license show-accepted-licenses?]
   (let [id (:license/id license)
         collapse-id (str "collapse" id)
         title (localized (:license/title license))
         text (localized (:license/text license))]
     [:div.license-panel
+     (when show-accepted-licenses?
+       [license-acceptance license])
      [:span.license-title
       [:a.license-header.collapsed {:data-toggle "collapse"
                                     :href (str "#" collapse-id)
@@ -272,22 +281,21 @@
                      :tab-index "-1"}
       [:div.license-block (str/trim (str text))]]]))
 
-(defn- attachment-license [license]
+(defn- attachment-license [license show-accepted-licenses?]
   (let [title (localized (:license/title license))
         link (str "/api/licenses/attachments/" (localized (:license/attachment-id license)))]
-    [:a.license-title {:href link :target :_blank}
-     title " " [file-download]]))
+    [:div
+     (when show-accepted-licenses?
+       [license-acceptance license])
+     [:a.license-title {:href link :target :_blank}
+      title " " [file-download]]]))
 
 (defn license-field [license show-accepted-licenses?]
-  [:div.license.flex-row.d-flex.align-items-center
-   [:div (when show-accepted-licenses?
-           (if (:accepted license)
-             (success-symbol)
-             (empty-symbol)))]
+  [:div.license
    (case (:license/type license)
-     :link [link-license license]
-     :text [text-license license]
-     :attachment [attachment-license license]
+     :link [link-license license show-accepted-licenses?]
+     :text [text-license license show-accepted-licenses?]
+     :attachment [attachment-license license show-accepted-licenses?]
      [fields/unsupported-field license])])
 
 (defn- save-button []
