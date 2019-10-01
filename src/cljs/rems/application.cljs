@@ -362,6 +362,10 @@
                          :accepted (contains? accepted-licenses (:license/id license))
                          :readonly readonly?)
                   show-accepted-licenses?]))
+         (when (contains? permissions :application.command/add-licenses)
+           [:<>
+            [:div.commands [add-licenses-action-button]]
+            [add-licenses-form application-id (partial reload! application-id)]])
          (if (accepted-licenses? application userid)
            [:div#has-accepted-licenses (text :t.form/has-accepted-licenses)]
            (when (contains? permissions :application.command/accept-licenses)
@@ -597,7 +601,6 @@
                               :application.command/comment [review-action-button]
                               :application.command/request-decision [request-decision-action-button]
                               :application.command/decide [decide-action-button]
-                              :application.command/add-licenses [add-licenses-action-button]
                               :application.command/remark [remark-action-button]
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
@@ -623,7 +626,6 @@
                 [close-form app-id show-comment-field? reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
-                [add-licenses-form app-id reload]
                 [approve-reject-form app-id reload]]]]
     (when (seq actions)
       [collapsible/component
