@@ -103,7 +103,7 @@
   (screenshot *driver* (io/file reporting-dir "applications-page.png")))
 
 (defn change-language [language]
-  (click *driver* [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
+  (scroll-and-click *driver* [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
 ;;; catalogue page
 
