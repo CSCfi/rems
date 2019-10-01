@@ -247,8 +247,9 @@
 (defn- link-license [license]
   (let [title (localized (:license/title license))
         link (localized (:license/link license))]
-    [:a.license-title {:href link :target :_blank}
-     title " " [external-link]]))
+    [:div
+     [:a.license-title {:href link :target :_blank}
+      title " " [external-link]]]))
 
 (defn- text-license [license]
   (let [id (:license/id license)
@@ -278,11 +279,11 @@
      title " " [file-download]]))
 
 (defn license-field [license show-accepted-licenses?]
-  [:div.license
-   (when show-accepted-licenses?
-     (if (:accepted license)
-       (success-symbol)
-       (empty-symbol)))
+  [:div.license.flex-row.d-flex.align-items-center
+   [:div (when show-accepted-licenses?
+           (if (:accepted license)
+             (success-symbol)
+             (empty-symbol)))]
    (case (:license/type license)
      :link [link-license license]
      :text [text-license license]
