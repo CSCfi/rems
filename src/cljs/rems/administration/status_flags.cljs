@@ -5,13 +5,13 @@
 (defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :enabled false) (text :t.administration/disable))}
+    :on-click #(on-change (assoc item :enabled false) [text :t.administration/disable])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :enabled true) (text :t.administration/enable))}
+    :on-click #(on-change (assoc item :enabled true) [text :t.administration/enable])}
    (text :t.administration/enable)])
 
 (defn enabled-toggle [item on-change]
@@ -23,13 +23,13 @@
 (defn- archive-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :archived true) (text :t.administration/archive))}
+    :on-click #(on-change (assoc item :archived true) [text :t.administration/archive])}
    (text :t.administration/archive)])
 
 (defn- unarchive-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :archived false) (text :t.administration/unarchive))}
+    :on-click #(on-change (assoc item :archived false) [text :t.administration/unarchive])}
    (text :t.administration/unarchive)])
 
 (defn archived-toggle [item on-change]

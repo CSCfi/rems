@@ -293,13 +293,13 @@
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
+                   :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
 (defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
+                   :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
 (defn- copy-as-new-button []
   [button-wrapper {:id "copy-as-new"
