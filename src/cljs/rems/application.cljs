@@ -279,7 +279,7 @@
      title " " [file-download]]))
 
 (defn license-field [license show-accepted-licenses?]
-  [:div.license.flex-row.d-flex.align-items-center
+  [:div.license.flex-row.d-flex
    [:div (when show-accepted-licenses?
            (if (:accepted license)
              (success-symbol)
