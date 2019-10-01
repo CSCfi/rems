@@ -296,7 +296,7 @@
                                            [:div
                                             (text :t.form/current-value) ": "
                                             (link value filename)]])
-     [:div {:style {:display :flex :justify-content :flex-start}}
+     [:div.flex-row.d-flex.align-items-center
       (link value filename)
       (if (empty? value)
         upload-field
