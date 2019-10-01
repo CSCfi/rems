@@ -70,11 +70,13 @@
       (when handler
         (handler err)))))
 
-(defn- prepend-handler [old-handler new-handler]
+(defn- append-handler [old-handler new-handler]
   (fn [response]
-    (new-handler response)
-    (when old-handler
-      (old-handler response))))
+    (try
+      (when old-handler
+        (old-handler response))
+      (finally
+       (new-handler response)))))
 
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
@@ -84,13 +86,14 @@
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.get url (clj->js opts))
+  ;; TODO: change also put! and post! to return a promise?
   (p/create
    (fn [resolve reject]
      (GET url (-> (merge {:response-format :transit}
                          opts
                          {:error-handler (wrap-default-error-handler (:error-handler opts))})
-                  (update :handler prepend-handler resolve)
-                  (update :error-handler prepend-handler reject))))))
+                  (update :handler append-handler resolve)
+                  (update :error-handler append-handler reject))))))
 
 (defn put!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.

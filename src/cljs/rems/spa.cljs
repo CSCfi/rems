@@ -441,12 +441,12 @@
 
 (defn fetch-translations! []
   (fetch "/api/translations"
-         {:handler #(rf/dispatch [:loaded-translations %])
+         {:handler #(rf/dispatch-sync [:loaded-translations %])
           :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
 
 (defn fetch-theme! []
   (fetch "/api/theme"
-         {:handler #(rf/dispatch [:loaded-theme %])
+         {:handler #(rf/dispatch-sync [:loaded-theme %])
           :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
 (defn mount-components []
@@ -459,6 +459,8 @@
   (-> (p/all [(fetch-translations!)
               (fetch-theme!)
               (config/fetch-config!)])
+      ;; all preceding code must use `rf/dispatch-sync` to avoid
+      ;; the first render flashing with e.g. missing translations
       (p/finally (fn []
                    (hook-browser-navigation!)
                    (mount-components)))))
