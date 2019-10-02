@@ -201,38 +201,24 @@
                 (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
 (defn guide []
-  (rf/reg-sub
-   ::example-table-rows
-   (fn [_ _]
-     (->> [{:id 1
-            :first-name "Cody"
-            :last-name "Turner"}
-           {:id 2
-            :first-name "Melanie"
-            :last-name "Palmer"}
-           {:id 3
-            :first-name "Henry"
-            :last-name "Herring"}
-           {:id 4
-            :first-name "Reagan"
-            :last-name "Melton"}]
-          (map (fn [person]
-                 (let [{:keys [id first-name last-name]} person]
-                   {:key id
-                    :first-name {:value first-name}
-                    :last-name {:value last-name}
-                    :commands {:td [:td.commands
-                                    [:button.btn.btn-primary
-                                     {:type :button
-                                      :on-click (fn [] (js/alert (str "View user " id)))}
-                                     "View"]
-                                    [:button.btn.btn-secondary
-                                     {:type :button
-                                      :on-click (fn [] (js/alert (str "Delete user " id)))}
-                                     "Delete"]]}}))))))
+
 
   [:div
    (component-info table)
+   ;; slight abuse of example macro, but it works since reg-sub returns a fn which reagent doesn't render
+   (example "data for examples"
+            (rf/reg-sub
+             ::example-table-rows
+             (fn [_ _]
+               [{:id {:value 1}
+                 :first-name {:value "Cody"}
+                 :last-name {:value "Turner"}}
+                {:id {:value 2}
+                 :first-name {:value "Melanie"}
+                 :last-name {:value "Palmer"}}
+                {:id {:value 3}
+                 :first-name {:value "Henry"}
+                 :last-name {:value "Herring"}}])))
    (example "static table"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
@@ -241,9 +227,6 @@
                                        :filterable? false}
                                       {:key :last-name
                                        :title "Last name"
-                                       :sortable? false
-                                       :filterable? false}
-                                      {:key :commands
                                        :sortable? false
                                        :filterable? false}]
                             :rows [::example-table-rows]
