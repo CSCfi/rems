@@ -1,4 +1,21 @@
 (ns rems.table
+  "Sortable and filterable table component, which is optimized for
+  continuous filtering between every key press - without lag.
+
+  The implementation uses a non-conventional re-frame solution
+  in order to support multiple components on the same page and
+  to make filtering the table performant.
+
+  - The `table` parameter is passed as a parameter to dynamic subscriptions,
+    so that we can have multiple table components on the same page.
+  - The rows are processed in stages by chaining subscriptions:
+      (:rows table) -> [::rows table] -> [::sorted-rows table] -> [::sorted-and-filtered-rows table]
+    This way only the last subscription, which does the filtering,
+    needs to be recalculated when the user types the search parameters.
+    Likewise, changing sorting only recalculates the last two subscriptions.
+
+  (The users of this component don't need to know about these intermediate
+  subscriptions and all other performance optimizations.)"
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
