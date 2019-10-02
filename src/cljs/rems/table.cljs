@@ -172,6 +172,8 @@
    (->> rows
         (s/validate Rows)
         (map apply-row-defaults)
+        ;; TODO: this second validation could be done with a schema where s/optional-key is not used
+        ;;       (or then we could just not validate these internal row representations)
         (s/validate Rows))))
 
 (rf/reg-sub
