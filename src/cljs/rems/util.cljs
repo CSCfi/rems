@@ -83,7 +83,10 @@
 
   Has sensible defaults with error handler, JSON and keywords.
 
-  Additionally calls event hooks."
+  Additionally calls event hooks.
+
+  Returns a promise, but it's okay to ignore it if you prefer using
+  the `:handler` and `:error-handler` callbacks instead."
   [url opts]
   (js/window.rems.hooks.get url (clj->js opts))
   ;; TODO: change also put! and post! to return a promise?
