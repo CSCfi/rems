@@ -179,7 +179,7 @@
          send-url (str "/api/forms/" (if edit?
                                        "edit"
                                        "create"))
-         description (page-title edit?)
+         description [page-title edit?]
          request (merge (build-request (::form db) (:languages db))
                         (when edit?
                           {:form/id (::form-id db)}))]
@@ -213,7 +213,7 @@
     (.scrollTo frame 0 position)))
 
 (defn first-partially-visible-edit-field []
-  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field"))
+  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field:not(.new-form-field)"))
         visible? #(<= 0 (-> % .getBoundingClientRect .-bottom))]
     (first (filter visible? fields))))
 

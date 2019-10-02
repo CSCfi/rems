@@ -97,7 +97,7 @@
    (fetch (str "/api/applications/" id)
           {:handler #(rf/dispatch [::fetch-application-result %])
            :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
-                                (flash-message/default-error-handler :top (text :t.applications/application)))})
+                                (flash-message/default-error-handler :top [text :t.applications/application]))})
    {:db (update db ::application fetcher/started)}))
 
 (defn- initialize-edit-application [db]
@@ -189,7 +189,7 @@
  ::copy-as-new-application
  (fn [{:keys [db]} _]
    (let [application-id (get-in db [::application :data :application/id])
-         description (text :t.form/copy-as-new)]
+         description [text :t.form/copy-as-new]]
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
              :handler (flash-message/default-success-handler
@@ -293,13 +293,13 @@
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
+                   :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
 (defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
+                   :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
 (defn- copy-as-new-button []
   [button-wrapper {:id "copy-as-new"

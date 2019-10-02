@@ -2,6 +2,7 @@
   (:require [accountant.core :as accountant]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
+            [promesa.core :as p]
             [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.actions :refer [actions-page]]
@@ -111,6 +112,12 @@
  (fn [_ [_ current-url]]
    (println "Received forbidden from" current-url)
    {:dispatch [:set-active-page :forbidden]}))
+
+(rf/reg-event-fx
+ :not-found!
+ (fn [_ [_ current-url]]
+   (println "Received not-found from" current-url)
+   {:dispatch [:set-active-page :not-found]}))
 
 (rf/reg-event-fx
  :landing-page-redirect!
@@ -434,12 +441,12 @@
 
 (defn fetch-translations! []
   (fetch "/api/translations"
-         {:handler #(rf/dispatch [:loaded-translations %])
+         {:handler #(rf/dispatch-sync [:loaded-translations %])
           :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
 
 (defn fetch-theme! []
   (fetch "/api/theme"
-         {:handler #(rf/dispatch [:loaded-theme %])
+         {:handler #(rf/dispatch-sync [:loaded-theme %])
           :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
 (defn mount-components []
@@ -449,8 +456,11 @@
 (defn init! []
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
-  (fetch-translations!)
-  (fetch-theme!)
-  (config/fetch-config!)
-  (hook-browser-navigation!)
-  (mount-components))
+  (-> (p/all [(fetch-translations!)
+              (fetch-theme!)
+              (config/fetch-config!)])
+      ;; all preceding code must use `rf/dispatch-sync` to avoid
+      ;; the first render flashing with e.g. missing translations
+      (p/finally (fn []
+                   (hook-browser-navigation!)
+                   (mount-components)))))

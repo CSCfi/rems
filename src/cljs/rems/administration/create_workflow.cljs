@@ -87,7 +87,7 @@
 (rf/reg-event-fx
  ::create-workflow
  (fn [_ [_ request]]
-   (let [description (text :t.administration/create-workflow)]
+   (let [description [text :t.administration/create-workflow]]
      (post! "/api/workflows/create"
             {:params request
              :handler (flash-message/default-success-handler
@@ -98,7 +98,7 @@
 (rf/reg-event-fx
  ::edit-workflow
  (fn [_ [_ request]]
-   (let [description (text :t.administration/edit-workflow)]
+   (let [description [text :t.administration/edit-workflow]]
      (put! "/api/workflows/edit"
            {:params request
             :handler (flash-message/default-success-handler

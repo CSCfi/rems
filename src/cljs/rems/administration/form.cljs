@@ -38,13 +38,13 @@
 (rf/reg-event-fx
  ::edit-form
  (fn [_ [_ id]]
-   (let [description (text :t.administration/edit)]
+   (let [description [text :t.administration/edit]]
      (fetch (str "/api/forms/" id "/editable")
             {:handler (fn [response]
                         (if (:success response)
                           (navigate! (str "/administration/edit-form/" id))
                           (flash-message/show-default-error!
-                           :top description (status-flags/format-update-failure response))))
+                           :top description [status-flags/format-update-failure response])))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 

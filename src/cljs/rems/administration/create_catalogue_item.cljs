@@ -81,7 +81,7 @@
     (text :t.administration/create-catalogue-item)))
 
 (defn- create-catalogue-item! [_ [_ request]]
-  (let [description (text :t.administration/create-catalogue-item)]
+  (let [description [text :t.administration/create-catalogue-item]]
     (post! "/api/catalogue-items/create"
            {:params (-> request
                         ;; create disabled catalogue items by default
@@ -97,7 +97,7 @@
 
 (defn- edit-catalogue-item! [{:keys [db]} [_ request]]
   (let [id (::catalogue-item-id db)
-        description (text :t.administration/edit-catalogue-item)]
+        description [text :t.administration/edit-catalogue-item]]
     (put! "/api/catalogue-items/edit"
           {:params {:id id
                     :localizations (:localizations request)}

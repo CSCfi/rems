@@ -240,6 +240,7 @@
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}
     (go *driver* (str +test-url+ "guide"))
+    (wait-visible *driver* {:tag :h1 :fn/text "Component Guide"})
     ;; if there is a js exception, nothing renders, so let's check
     ;; that we have lots of examples in the dom:
     (is (< 60 (count (query-all *driver* {:class :example}))))))

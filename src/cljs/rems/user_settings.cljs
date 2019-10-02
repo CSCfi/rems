@@ -44,7 +44,6 @@
 (defn update-language [language]
   (set! (.. js/document -documentElement -lang) (name language))
   (set-language-cookie! language)
-  (rf/dispatch [:rems.flash-message/reset]) ; may have saved localized content
   (update-css language))
 
 (rf/reg-event-fx

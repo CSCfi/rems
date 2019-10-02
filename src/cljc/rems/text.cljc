@@ -14,6 +14,13 @@
                     context/*tempura* (partial tr (locales/tempura-config) [lang])]
             (f))))
 
+(defn- failsafe-fallback
+  "Fallback for when loading the translations has failed."
+  [k args]
+  (pr-str (vec (if (= :t/missing k)
+                 (first args)
+                 (cons k args)))))
+
 (defn text-format
   "Return the tempura translation for a given key & format arguments"
   [k & args]
@@ -22,7 +29,7 @@
                  language (rf/subscribe [:language])]
              (tr {:dict @translations}
                  [@language]
-                 [k :t/missing]
+                 [k :t/missing (failsafe-fallback k args)]
                  (vec args)))))
 
 (defn text

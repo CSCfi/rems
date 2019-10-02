@@ -18,7 +18,7 @@
 (rf/reg-event-db
  ::fetch-licenses
  (fn [db]
-   (let [description (text :t.administration/licenses)]
+   (let [description [text :t.administration/licenses]]
      (fetch "/api/licenses"
             {:url-params {:disabled true
                           :expired (status-flags/display-archived? db)

@@ -80,11 +80,11 @@
 
 (defn show-default-success! [location description]
   (show-success! location [:div#status-success.flash-message-title
-                           (str description ": " (text :t.form/success))]))
+                           description ": " [text :t.form/success]]))
 
 (defn show-default-error! [location description & more]
   (show-error! location (into [:<> [:div#status-failed.flash-message-title
-                                    (str description ": " (text :t.form/failed))]]
+                                    description ": " [text :t.form/failed]]]
                               more)))
 
 (defn format-errors [errors]
@@ -112,7 +112,7 @@
         (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! location description (format-response-error response)))
+      (show-default-error! location description [format-response-error response]))
     response))
 
 (defn status-update-handler [location description on-success]
@@ -122,10 +122,10 @@
         (show-default-success! location description)
         (when on-success
           (on-success response)))
-      (show-default-error! location description (status-flags/format-update-failure response)))
+      (show-default-error! location description [status-flags/format-update-failure response]))
     response))
 
 (defn default-error-handler [location description]
   (fn [response]
-    (show-default-error! location description (format-response-error response))
+    (show-default-error! location description [format-response-error response])
     response))

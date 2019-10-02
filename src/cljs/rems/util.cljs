@@ -3,8 +3,8 @@
             [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
             [goog.string :refer [parseInt]]
-            [re-frame.core :as rf]
-            [secretary.core :as secretary]))
+            [promesa.core :as p]
+            [re-frame.core :as rf]))
 
 ;; TODO move to cljc
 (defn getx
@@ -59,6 +59,9 @@
       403 (do
             (rf/dispatch [:forbidden! current-url])
             true)
+      404 (do
+            (rf/dispatch [:not-found! current-url])
+            true)
       false)))
 
 (defn- wrap-default-error-handler [handler]
@@ -67,17 +70,33 @@
       (when handler
         (handler err)))))
 
+(defn- append-handler [old-handler new-handler]
+  (fn [response]
+    (try
+      (when old-handler
+        (old-handler response))
+      (finally
+       (new-handler response)))))
+
 (defn fetch
   "Fetches data from the given url with optional map of options like #'ajax.core/GET.
 
   Has sensible defaults with error handler, JSON and keywords.
 
-  Additionally calls event hooks."
+  Additionally calls event hooks.
+
+  Returns a promise, but it's okay to ignore it if you prefer using
+  the `:handler` and `:error-handler` callbacks instead."
   [url opts]
   (js/window.rems.hooks.get url (clj->js opts))
-  (GET url (merge {:response-format :transit}
-                  opts
-                  {:error-handler (wrap-default-error-handler (:error-handler opts))})))
+  ;; TODO: change also put! and post! to return a promise?
+  (p/create
+   (fn [resolve reject]
+     (GET url (-> (merge {:response-format :transit}
+                         opts
+                         {:error-handler (wrap-default-error-handler (:error-handler opts))})
+                  (update :handler append-handler resolve)
+                  (update :error-handler append-handler reject))))))
 
 (defn put!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.

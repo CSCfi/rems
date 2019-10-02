@@ -18,7 +18,7 @@
 (rf/reg-event-fx
  ::send-approve
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description (text :t.actions/approve)]
+   (let [description [text :t.actions/approve]]
      (post! "/api/applications/approve"
             {:params {:application-id application-id
                       :comment comment}
@@ -34,7 +34,7 @@
 (rf/reg-event-fx
  ::send-reject
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description (text :t.actions/reject)]
+   (let [description [text :t.actions/reject]]
      (post! "/api/applications/reject"
             {:params {:application-id application-id
                       :comment comment}
