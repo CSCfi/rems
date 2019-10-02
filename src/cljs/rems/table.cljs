@@ -236,7 +236,11 @@
                                  "table-row"
                                  "none")}}]
         (for [column (:columns table)]
-          (get-in row [(:key column) :td]))))
+          (let [cell (get row (:key column))]
+            (assert cell {:error "the row is missing a column"
+                          :column (:key column)
+                          :row row})
+            (:td cell)))))
 
 (defn table
   "A filterable and sortable table component.
@@ -282,13 +286,16 @@
              (fn [_ _]
                [{:key 1
                  :first-name {:value "Cody"}
-                 :last-name {:value "Turner"}}
+                 :last-name {:value "Turner"}
+                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
                 {:key 2
                  :first-name {:value "Melanie"}
-                 :last-name {:value "Palmer"}}
+                 :last-name {:value "Palmer"}
+                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
                 {:key 3
                  :first-name {:value "Henry"}
-                 :last-name {:value "Herring"}}])))
+                 :last-name {:value "Herring"}
+                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}])))
    (example "static table"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
