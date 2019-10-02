@@ -248,6 +248,10 @@
                [table example2]]))
    (example "richer example data"
             (do
+              (comment "Hawks have a special sort-value so they are always listed first (or last if order is flipped)."
+                       "Also, filtering ignores the word \"Team\"."
+                       "Also, the score has special styling."
+                       "Eagles have special styling. :value is used for sorting & filtering but :td for rendering.")
               (rf/reg-sub
                ::example-rich-table-rows
                (fn [_ _]
