@@ -201,38 +201,24 @@
                 (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
 (defn guide []
-  (rf/reg-sub
-   ::example-table-rows
-   (fn [_ _]
-     (->> [{:id 1
-            :first-name "Cody"
-            :last-name "Turner"}
-           {:id 2
-            :first-name "Melanie"
-            :last-name "Palmer"}
-           {:id 3
-            :first-name "Henry"
-            :last-name "Herring"}
-           {:id 4
-            :first-name "Reagan"
-            :last-name "Melton"}]
-          (map (fn [person]
-                 (let [{:keys [id first-name last-name]} person]
-                   {:key id
-                    :first-name {:value first-name}
-                    :last-name {:value last-name}
-                    :commands {:td [:td.commands
-                                    [:button.btn.btn-primary
-                                     {:type :button
-                                      :on-click (fn [] (js/alert (str "View user " id)))}
-                                     "View"]
-                                    [:button.btn.btn-secondary
-                                     {:type :button
-                                      :on-click (fn [] (js/alert (str "Delete user " id)))}
-                                     "Delete"]]}}))))))
+
 
   [:div
    (component-info table)
+   ;; slight abuse of example macro, but it works since reg-sub returns a fn which reagent doesn't render
+   (example "data for examples"
+            (rf/reg-sub
+             ::example-table-rows
+             (fn [_ _]
+               [{:id {:value 1}
+                 :first-name {:value "Cody"}
+                 :last-name {:value "Turner"}}
+                {:id {:value 2}
+                 :first-name {:value "Melanie"}
+                 :last-name {:value "Palmer"}}
+                {:id {:value 3}
+                 :first-name {:value "Henry"}
+                 :last-name {:value "Herring"}}])))
    (example "static table"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
@@ -241,9 +227,6 @@
                                        :filterable? false}
                                       {:key :last-name
                                        :title "Last name"
-                                       :sortable? false
-                                       :filterable? false}
-                                      {:key :commands
                                        :sortable? false
                                        :filterable? false}]
                             :rows [::example-table-rows]
@@ -262,4 +245,32 @@
                             :default-sort-column :first-name}]
               [:div
                [search example2]
-               [table example2]]))])
+               [table example2]]))
+   (example "richer example data"
+            (do
+              (comment "Hawks have a special sort-value so they are always listed first (or last if order is flipped)."
+                       "Also, filtering ignores the word \"Team\"."
+                       "Also, the score has special styling."
+                       "Eagles have special styling. :value is used for sorting & filtering but :td for rendering.")
+              (rf/reg-sub
+               ::example-rich-table-rows
+               (fn [_ _]
+                 [{:team {:display-value "Team Hawks"
+                          :filter-value "hawks"
+                          :sort-value "0000hawks"}
+                   :points {:value 3
+                            :display-value "-> 3 <-"}}
+                  {:team {:value "Eagles"
+                          :td [:td.eagles-are-best [:em "Eagles"]]}
+                   :points {:value 4}}
+                  {:team {:value "Ravens"}
+                   :points {:value 0}}]))
+              (let [example3 {:id ::example3
+                              :columns [{:key :team
+                                         :title "Team"}
+                                        {:key :points
+                                         :title "Points"}]
+                              :rows [::example-rich-table-rows]}]
+                [:div
+                 [search example3]
+                 [table example3]])))])
