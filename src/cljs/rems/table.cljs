@@ -245,4 +245,28 @@
                             :default-sort-column :first-name}]
               [:div
                [search example2]
-               [table example2]]))])
+               [table example2]]))
+   (example "richer example data"
+            (do
+              (rf/reg-sub
+               ::example-rich-table-rows
+               (fn [_ _]
+                 [{:team {:display-value "Team Hawks"
+                          :filter-value "hawks"
+                          :sort-value "0000hawks"}
+                   :points {:value 3
+                            :display-value "-> 3 <-"}}
+                  {:team {:value "Eagles"
+                          :td [:td.eagles-are-best [:em "Eagles"]]}
+                   :points {:value 4}}
+                  {:team {:value "Ravens"}
+                   :points {:value 0}}]))
+              (let [example3 {:id ::example3
+                              :columns [{:key :team
+                                         :title "Team"}
+                                        {:key :points
+                                         :title "Points"}]
+                              :rows [::example-rich-table-rows]}]
+                [:div
+                 [search example3]
+                 [table example3]])))])
