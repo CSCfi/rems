@@ -1,5 +1,7 @@
 (ns rems.application.test-model
-  (:require [clojure.test :refer :all]
+  (:require [clojure.set :as set]
+            [clojure.test :refer :all]
+            [hiccup.core :as hiccup]
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
@@ -184,10 +186,15 @@
                     :get-users-with-role get-users-with-role
                     :get-workflow get-workflow
                     :get-attachments-for-application get-attachments-for-application}
+        sample-applications (atom [])
+        save-sample-application (fn [app]
+                                  (swap! sample-applications conj app)
+                                  app)
         apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events
                                              (model/build-application-view injections)
+                                             save-sample-application
                                              permissions/cleanup)]
                          (is (contains? model/states (:application/state application)))
                          application))]
@@ -848,10 +855,49 @@
                                                                  :application/events events
                                                                  :application/members #{}
                                                                  :application/past-members #{{:userid "member"}}})]
-                                (is (= expected-application (apply-events events)))))))))))))))))))
+                                (is (= expected-application (apply-events events)))))))))))))))))
+
+    (testing "generate report: permissions by role and state"
+      (let [apps @sample-applications
+            state-role-permissions (fn [app]
+                                     (map (fn [[role permissions]]
+                                            {:state (:application/state app)
+                                             :role role
+                                             :permissions permissions})
+                                          (:rems.permissions/role-permissions app)))
+            data (mapcat state-role-permissions apps)
+            states (->> data (map :state) distinct) ; keep states in the order they appear in the tests
+            roles (->> data (map :role) distinct sort)]
+        (->> (hiccup/html
+              [:table {:border 1}
+               [:tr
+                [:th "State \\ Role"]
+                (for [role roles]
+                  [:th (str role)])]
+               (for [state states]
+                 [:tr
+                  [:th {:style "text-align: left; vertical-align: top"}
+                   (str state)]
+                  (for [role roles]
+                    (let [perm-sets (->> data
+                                         (filter #(= state (:state %)))
+                                         (filter #(= role (:role %)))
+                                         (map :permissions))
+                          all-perms (apply set/union perm-sets)
+                          ;; the states and permissions are not guaranteed to have a 1:1 mapping,
+                          ;; so we separate conditional permissions from those that are always there
+                          always-perms (if (empty? perm-sets)
+                                         #{}
+                                         (apply set/intersection perm-sets))
+                          sometimes-perms (set/difference all-perms always-perms)]
+                      [:td {:style "vertical-align: top"}
+                       (for [perm (sort always-perms)]
+                         [:div (str perm)])
+                       (for [perm (sort sometimes-perms)]
+                         [:div [:i "(" (str perm) ")"]])]))])])
+             (spit "docs/application-permissions.html"))))))
 
 (deftest test-calculate-permissions
-  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
   (testing "commenter may comment only once"
     (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
                                                               :event/actor "applicant"}
