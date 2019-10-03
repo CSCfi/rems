@@ -13,18 +13,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-old? false)
-    :dispatch-n [[::fetch-forms]
+   {:dispatch-n [[::fetch-forms]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-db
  ::fetch-forms
  (fn [db]
-   (let [description (text :t.administration/forms)]
-     (fetch "/api/forms/"
+   (let [description [text :t.administration/forms]]
+     (fetch "/api/forms"
             {:url-params {:disabled true
-                          :expired (::display-old? db)
-                          :archived (::display-old? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-forms-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
@@ -61,27 +60,19 @@
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
-(rf/reg-event-fx
- ::set-display-old?
- (fn [{:keys [db]} [_ display-old?]]
-   {:db (assoc db ::display-old? display-old?)
-    :dispatch [::fetch-forms]}))
-
-(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
-
 (defn- to-create-form []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-form"
+   "/administration/create-form"
    (text :t.administration/create-form)])
 
 (defn- to-view-form [form]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/forms/" (:form/id form))
+   (str "/administration/forms/" (:form/id form))
    (text :t.administration/view)])
 
 (defn- copy-as-new-form [form]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/create-form/" (:form/id form))
+   (str "/administration/create-form/" (:form/id form))
    (text :t.administration/copy-as-new)])
 
 (rf/reg-sub
@@ -136,7 +127,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-form]
-           [status-flags/display-old-toggle
-            @(rf/subscribe [::display-old?])
-            #(rf/dispatch [::set-display-old? %])]
+           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
+           [status-flags/disabled-and-archived-explanation]
            [forms-list]])))

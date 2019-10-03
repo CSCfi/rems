@@ -96,7 +96,7 @@ lein alltests
 
 ## Component Guide
 
-You can access the component guide at `/#/guide`. It contains all the
+You can access the component guide at `/guide`. It contains all the
 components in various configurations.
 
 ## Contributing

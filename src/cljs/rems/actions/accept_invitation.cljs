@@ -4,7 +4,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! post!]]))
+            [rems.util :refer [navigate! post!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -18,9 +18,9 @@
  ::accept-invitation
  (fn [token]
    (let [error-handler (fn [response]
-                         ((flash-message/default-error-handler :top (text :t.actions/accept-invitation))
+                         ((flash-message/default-error-handler :top [text :t.actions/accept-invitation])
                           response)
-                         (dispatch! "#/catalogue"))]
+                         (navigate! "/catalogue"))]
      (post! "/api/applications/accept-invitation"
             {:url-params {:invitation-token token}
              :handler (fn [response]
@@ -28,18 +28,18 @@
                           (cond
                             (:success response)
                             (do
-                              (flash-message/show-success! :top (text :t.actions/accept-invitation-success))
-                              (dispatch! (str "#/application/" (:application-id response))))
+                              (flash-message/show-success! :top [text :t.actions/accept-invitation-success])
+                              (navigate! (str "/application/" (:application-id response))))
 
                             (= :already-member (:type error))
                             (do
-                              (flash-message/show-success! :top (text :t.actions/accept-invitation-already-member))
-                              (dispatch! (str "#/application/" (:application-id error))))
+                              (flash-message/show-success! :top [text :t.actions/accept-invitation-already-member])
+                              (navigate! (str "/application/" (:application-id error))))
 
                             (= :t.actions.errors/invalid-token (:type error))
                             (do
-                              (flash-message/show-error! :top (text-format :t.actions.errors/invalid-token (:token error)))
-                              (dispatch! "#/catalogue"))
+                              (flash-message/show-error! :top [text-format :t.actions.errors/invalid-token (:token error)])
+                              (navigate! "/catalogue"))
 
                             :else (error-handler response))))
              :error-handler error-handler}))))

@@ -11,7 +11,9 @@
 (rf/reg-fx
  ::fetch-potential-reviewers
  (fn [on-success]
-   (fetch "/api/applications/commenters" {:handler on-success})))
+   (fetch "/api/applications/commenters"
+          {:handler on-success
+           :error-handler (flash-message/default-error-handler :top "Fetch potential reviewers")})))
 
 (rf/reg-event-fx
  ::open-form
@@ -43,7 +45,7 @@
 (rf/reg-event-fx
  ::send-request-review
  (fn [_ [_ {:keys [application-id reviewers comment on-finished]}]]
-   (let [description (text :t.actions/request-review)]
+   (let [description [text :t.actions/request-review]]
      (post! "/api/applications/request-comment"
             {:params {:application-id application-id
                       :comment comment

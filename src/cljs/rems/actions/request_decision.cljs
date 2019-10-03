@@ -10,7 +10,9 @@
 (rf/reg-fx
  ::fetch-potential-deciders
  (fn [on-success]
-   (fetch "/api/applications/deciders" {:handler on-success})))
+   (fetch "/api/applications/deciders"
+          {:handler on-success
+           :error-handler (flash-message/default-error-handler :top "Fetch potential deciders")})))
 
 (rf/reg-event-fx
  ::open-form
@@ -41,7 +43,7 @@
 (rf/reg-event-fx
  ::send-request-decision
  (fn [_ [_ {:keys [deciders application-id comment on-finished]}]]
-   (let [description (text :t.actions/request-decision)]
+   (let [description [text :t.actions/request-decision]]
      (post! "/api/applications/request-decision"
             {:params {:application-id application-id
                       :comment comment

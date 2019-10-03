@@ -56,7 +56,8 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :disable "Poista käytöstä"
-                   :display-old "Näytä vanhat"
+                   :disabled-and-archived-explanation "Poistaminen käytöstä on asioille, joita ei vielä haluta näyttää käyttäjille, esim. juuri luodut asiat. Arkistointi on vanhoille asioille, joita ei haluta muistella."
+                   :display-archived "Näytä arkistoidut"
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-form "Muokkaa lomaketta"
@@ -155,7 +156,9 @@
                          :waiting-for-review "Odottaa katselmointia"
                          :waiting-for-your-decision "Odottaa sinun päätöstäsi"
                          :waiting-for-your-review "Odottaa sinun katselmointiasi"}
-                 :view "Näytä"}
+                 :view "Näytä"
+                 :view-application-with-description "Näytä hakemus %1: %2"
+                 :view-application-without-description "Näytä hakemus %1 resursseille: %2"}
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
@@ -169,7 +172,9 @@
               :continue-existing-application "Jatka hakemusta"
               :continue-existing-application-intro [:div.intro [:p "Sinulla on keskeneräisiä hakemuksia, joita voit jatkaa tästä:"]]
               :apply-resources "Hae uusia resursseja"}
-  :collapse {:show-less "Näytä vähemmän"
+  :collapse {:hide "Piilota"
+             :show "Näytä"
+             :show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
   :create-catalogue-item {:form-selection "Lomake"
                           :infourl "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
@@ -215,43 +220,43 @@
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}
-  :email {:application-approved {:subject-to-applicant "Hakemuksesi on hyväksytty (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä: %6"
-                                 :subject-to-handler "Hakemus hyväksytty (%3)"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :application-rejected {:subject-to-applicant "Hakemuksesi on hylätty (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nVoit tarkastella hakemusta ja päätöstä: %6"
-                                 :subject-to-handler "Hakemus hylätty (%3)"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :application-closed {:subject-to-applicant "Hakemuksesi on suljettu (%3)"
+  :email {:application-approved {:subject-to-applicant "Hakemuksesi %3 on hyväksytty"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hyväksytty.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"
+                                 :subject-to-handler "(%3) Hakemus on hyväksytty"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hyväksynyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}
+          :application-rejected {:subject-to-applicant "Hakemuksesi %3 on hylätty"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on hylätty.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"
+                                 :subject-to-handler "(%3) Hakemus on hylätty"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on hylännyt käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta ja päätöstä osoitteessa %6"}
+          :application-closed {:subject-to-applicant "Hakemuksesi %3 on suljettu"
                                :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on suljettu.\n\nVoit tarkastella hakemusta: %6"
-                               :subject-to-handler "Hakemus suljettu (%3)"
+                               :subject-to-handler "(%3) Hakemus on suljettu"
                                :message-to-handler "Hyvä %1,\n\n%2 on sulkenut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
-          :application-returned {:subject-to-applicant "Hakemuksesi on palautettu (%3)"
-                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksi.\n\nVoit muokata hakemusta ja lähettää sen uudelleen: %6"
-                                 :subject-to-handler "Hakemus palautettu (%3)"
-                                 :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
-          :application-licenses-added {:subject "Hakemukseen lisätty käyttöehtoja (%3)"
-                                       :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi uusille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %6"}
-          :application-resubmitted {:subject "Hakemus lähetetty uudelleen (%3)"
-                                    :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
-          :application-submitted {:subject "Uusi hakemus (%3)"
-                                  :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta: %6"}
-          :comment-requested {:subject "Katselmointipyyntö (%3)"
-                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit katselmoida hakemuksen: %6"}
-          :commented {:subject "Hakemus katselmoitu (%3)"
-                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta ja lukea kommentit: %6"}
-          :decided {:subject "Päätös lähetetty (%3)"
-                    :message "Hyvä %1,\n\n%2 on lähettänyt päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta ja päätöstä: %6"}
-          :decision-requested {:subject "Päätöspyyntö (%3)"
-                               :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta: %6"}
+          :application-returned {:subject-to-applicant "Hakemuksesi %3 vaatii täydentämistä"
+                                 :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksesi. Ole hyvä ja täydennä hakemusta kommenttien mukaan.\n\nVoit tarkastella hakemusta osoitteessa %6"
+                                 :subject-to-handler "(%3) Hakemus on palautettu"
+                                 :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :application-licenses-added {:subject "Hakemuksen %3 käyttöehdot ovat muuttuneet"
+                                       :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi muuttuneille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä muuttuneet käyttöehdot osoitteessa %6"}
+          :application-resubmitted {:subject "(%3) Hakemus lähetetty uudelleen"
+                                    :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :application-submitted {:subject "(%3) Uusi hakemus"
+                                  :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :comment-requested {:subject "(%3) Katselmointipyyntö"
+                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :commented {:subject "(%3) Hakemus katselmoitu"
+                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :decided {:subject "(%3) Päätös lähetetty"
+                    :message "Hyvä %1,\n\n%2 on antanut päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :decision-requested {:subject "(%3) Päätöspyyntö"
+                               :message "Hyvä %1,\n\n%2 on pyytänyt sinulta päätöstä käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :footer "\n\nTämä on automaattinen viesti. Älä vastaa."
-          :member-added {:subject "Lisätty hakemuksen jäseneksi (%3)"
-                         :message "Hyvä %1,\n\nSinut on lisätty hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta: %6"}
-          :member-invited {:subject "Kutsu osallistumaan hakemukseen"
-                           :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen. Hakemuksen otsikko on %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot: %4"}
-          :remarked {:subject "Hakemusta kommentoitu (%3)"
-                     :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta ja lukea kommentin: %6"}}
+          :member-added {:subject "Lisätty hakemuksen %3 jäseneksi"
+                         :message "Hyvä %1,\n\nSinut on lisätty käyttäjän %4 jättämän hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %6"}
+          :member-invited {:subject "Kutsu osallistumaan hakemukseen %3"
+                           :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %4"}
+          :remarked {:subject "(%3) Hakemusta kommentoitu"
+                     :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
   :form {:accepted-licenses "Käyttöehdot hyväksytty"
          :actions "Toiminnot"
@@ -275,6 +280,7 @@
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
          :optional "(ei pakollinen)"
          :please-wait "Odota hetkinen"
+         :previous-applications "Hakijan edeltävät hakemukset"
          :previous-value "Edellinen"
          :required "*"
          :resources "Resurssit"
@@ -298,8 +304,9 @@
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
-          :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "#/extra-pages/about"} "Info-sivulla"] "."]
+          :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "/extra-pages/about"} "Info-sivulla"] "."]
                   [:p "Ole hyvä ja kirjaudu sisään."]]
+          :oidc-text "Kirjaudu sisään käyttäen OpenID Connectia"
           :text "Kirjaudu sisään Haka-tunnuksin"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu %1"
@@ -307,6 +314,7 @@
                :administration "Ylläpito"
                :applications "Hakemukset"
                :catalogue "Aineistoluettelo"
+               :change-language "Vaihda kieleksi %1"
                :home "Etusivu"
                :logout "Kirjaudu ulos"
                :skip-navigation "Siirry sivun pääsisältöön"}

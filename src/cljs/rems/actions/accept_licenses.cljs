@@ -8,7 +8,7 @@
 (rf/reg-event-fx
  ::send-accept-licenses
  (fn [_ [_ {:keys [application-id licenses on-finished]}]]
-   (let [description (text :t.actions/accept-licenses)]
+   (let [description [text :t.actions/accept-licenses]]
      (post! "/api/applications/accept-licenses"
             {:params {:application-id application-id
                       :accepted-licenses licenses}

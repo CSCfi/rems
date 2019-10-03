@@ -5,7 +5,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
-            [rems.util :refer [fetch post!]]))
+            [rems.util :refer [post!]]))
 
 (rf/reg-event-fx
  ::open-form
@@ -38,7 +38,7 @@
 (rf/reg-event-fx
  ::send-change-resources
  (fn [_ [_ {:keys [application-id resources comment on-finished]}]]
-   (let [description (text :t.actions/change-resources)]
+   (let [description [text :t.actions/change-resources]]
      (post! "/api/applications/change-resources"
             {:params (merge {:application-id application-id
                              :catalogue-item-ids (vec resources)}

@@ -19,24 +19,27 @@
             [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
+            [rems.application-list :as application-list]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
             [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
+            [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
+            [rems.search :as search]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-event localized localize-state localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch parse-int post! in-page-anchor-link]])
+            [rems.util :refer [navigate! fetch parse-int post! focus-input-field]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
 
 (defn reload! [application-id]
-  (rf/dispatch [:rems.application/reload-application-page application-id]))
+  (rf/dispatch [::fetch-application application-id]))
 
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
@@ -57,16 +60,8 @@
              (for [resource resources]
                [:li (localized (:catalogue-item/title resource))]))])))
 
-(defn navigate-to
-  "Navigates to the application with the given id.
-
-  `replace?` parameter can be given to replace history state instead of push."
-  [id & [replace?]]
-  (dispatch! (str "#/application/" id) replace?))
-
 (defn- format-validation-error [type field]
-  [:a {:href "#"
-       :on-click (in-page-anchor-link (fields/id-to-name (:field/id field)))}
+  [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
    (text-format type (localized (:field/title field)))])
 
 (defn- format-submission-errors
@@ -84,49 +79,42 @@
 
 ;;;; State
 
-(rf/reg-sub ::application (fn [db _] (::application db)))
+(rf/reg-sub ::application-id (fn [db _] (::application-id db)))
+(rf/reg-sub ::application (fn [db [_ k]] (get-in db [::application (or k :data)])))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
 
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   {:db (dissoc db ::application ::edit-application ::attachment-success)
+   {:db (-> db
+            (assoc ::application-id id)
+            (dissoc ::application ::edit-application ::attachment-success))
     :dispatch [::fetch-application id]}))
 
 (rf/reg-event-fx
  ::fetch-application
- (fn [_ [_ id]]
+ (fn [{:keys [db]} [_ id]]
    (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])})
-   {}))
+          {:handler #(rf/dispatch [::fetch-application-result %])
+           :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
+                                (flash-message/default-error-handler :top [text :t.applications/application]))})
+   {:db (update db ::application fetcher/started)}))
+
+(defn- initialize-edit-application [db]
+  (let [application (get-in db [::application :data])
+        field-values (->> (get-in application [:application/form :form/fields])
+                          (map (juxt :field/id :field/value))
+                          (into {}))]
+    (assoc db ::edit-application {:field-values field-values
+                                  :show-diff {}
+                                  :validation-errors nil})))
 
 (rf/reg-event-db
  ::fetch-application-result
  (fn [db [_ application]]
-   (assoc db
-          ::application application
-          ::edit-application {:field-values (->> (get-in application [:application/form :form/fields])
-                                                 (map (juxt :field/id :field/value))
-                                                 (into {}))
-                              :show-diff {}
-                              :validation-errors nil})))
-
-(rf/reg-event-fx
- ::reload-application-page
- (fn [{:keys [db]} [_ id]]
-   {::reload-application id}))
-
-(rf/reg-fx
- ::reload-application
- (fn [id]
-   (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::reload-application-result %])})))
-
-(rf/reg-event-db
- ::reload-application-result
- (fn [db [_ application]]
-   (assoc db
-          ::application application)))
+   (let [initial-fetch? (not (:initialized? (::application db)))]
+     (cond-> (update db ::application fetcher/finished application)
+       initial-fetch? (initialize-edit-application)))))
 
 (rf/reg-event-db
  ::set-validation-errors
@@ -144,14 +132,13 @@
           :handler (flash-message/default-success-handler
                     :actions
                     description
-                    (fn [_]
-                      (rf/dispatch [::fetch-application application-id])))
+                    #(rf/dispatch [::fetch-application application-id]))
           :error-handler (flash-message/default-error-handler :actions description)}))
 
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ description]]
-   (let [application (::application db)
+   (let [application (:data (::application db))
          edit-application (::edit-application db)]
      (save-application! description
                         (:application/id application)
@@ -189,7 +176,7 @@
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
-   (let [application (::application db)
+   (let [application (:data (::application db))
          edit-application (::edit-application db)]
      (submit-application! application
                           description
@@ -201,21 +188,19 @@
 (rf/reg-event-fx
  ::copy-as-new-application
  (fn [{:keys [db]} _]
-   (let [application-id (get-in db [::application :application/id])
-         description (text :t.form/copy-as-new)]
+   (let [application-id (get-in db [::application :data :application/id])
+         description [text :t.form/copy-as-new]]
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
              :handler (flash-message/default-success-handler
                        :top ; the message will be shown on the new application's page
                        description
-                       (fn [response]
-                         (rf/dispatch [:rems.spa/user-triggered-navigation])
-                         (dispatch! (str "/#/application/" (:application-id response)))))
+                       #(navigate! (str "/application/" (:application-id %))))
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
-  (let [application-id (get-in db [::application :application/id])]
+  (let [application-id (get-in db [::application :data :application/id])]
     (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id
                          :field-id field-id}
@@ -255,13 +240,16 @@
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
 
+(search/reg-fetcher ::previous-applications "/api/applications")
+
 ;;;; UI components
 
 (defn- link-license [license]
   (let [title (localized (:license/title license))
         link (localized (:license/link license))]
-    [:a.license-title {:href link :target :_blank}
-     title " " [external-link]]))
+    [:div
+     [:a.license-title {:href link :target :_blank}
+      title " " [external-link]]]))
 
 (defn- text-license [license]
   (let [id (:license/id license)
@@ -291,11 +279,11 @@
      title " " [file-download]]))
 
 (defn license-field [license show-accepted-licenses?]
-  [:div.license
-   (when show-accepted-licenses?
-     (if (:accepted license)
-       (success-symbol)
-       (empty-symbol)))
+  [:div.license.flex-row.d-flex
+   [:div (when show-accepted-licenses?
+           (if (:accepted license)
+             (success-symbol)
+             (empty-symbol)))]
    (case (:license/type license)
      :link [link-license license]
      :text [text-license license]
@@ -305,13 +293,13 @@
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
+                   :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
 (defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
+                   :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
 (defn- copy-as-new-button []
   [button-wrapper {:id "copy-as-new"
@@ -375,6 +363,10 @@
                          :accepted (contains? accepted-licenses (:license/id license))
                          :readonly readonly?)
                   show-accepted-licenses?]))
+         (when (contains? permissions :application.command/add-licenses)
+           [:<>
+            [:div.commands [add-licenses-action-button]]
+            [add-licenses-form application-id (partial reload! application-id)]])
          (if (accepted-licenses? application userid)
            [:div#has-accepted-licenses (text :t.form/has-accepted-licenses)]
            (when (contains? permissions :application.command/accept-licenses)
@@ -382,19 +374,12 @@
               ;; TODO consider saving the form first so that no data is lost for the applicant
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
-(defn- format-application-id [config application]
-  (let [id-column (get config :application-id-column :id)]
-    (case id-column
-      :external-id (:application/external-id application)
-      :id (:application/id application)
-      (:application/id application))))
-
 (defn- application-link [application prefix]
   (let [config @(rf/subscribe [:rems.config/config])]
-    [:a {:href (str "/#/application/" (:application/id application))}
+    [:a {:href (str "/application/" (:application/id application))}
      (when prefix
        (str prefix " "))
-     (format-application-id config application)]))
+     (application-list/format-application-id config application)]))
 
 (defn- format-event [event]
   {:user (:commonName (:event/actor-attributes event))
@@ -494,7 +479,7 @@
                      [info-field
                       (text :t.applications/application)
                       [:<>
-                       [:span#application-id (format-application-id config application)]
+                       [:span#application-id (application-list/format-application-id config application)]
                        [application-copy-notice application]]
                       {:inline? true}]
                      [info-field
@@ -613,7 +598,6 @@
                               :application.command/comment [review-action-button]
                               :application.command/request-decision [request-decision-action-button]
                               :application.command/decide [decide-action-button]
-                              :application.command/add-licenses [add-licenses-action-button]
                               :application.command/remark [remark-action-button]
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
@@ -639,7 +623,6 @@
                 [close-form app-id show-comment-field? reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
-                [add-licenses-form app-id reload]
                 [approve-reject-form app-id reload]]]]
     (when (seq actions)
       [collapsible/component
@@ -685,10 +668,18 @@
                [:div#resource-action-forms
                 [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
+(defn- previous-applications [applicant]
+  [collapsible/component
+   {:id "previous-applications"
+    :title (text :t.form/previous-applications)
+    :on-open #(rf/dispatch [::previous-applications (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")])
+    :collapse [application-list/component {:applications ::previous-applications
+                                           :hidden-columns #{:created :todo :last-activity}
+                                           :default-sort-column :submitted
+                                           :default-sort-order :desc}]}])
+
 (defn- render-application [{:keys [application edit-application attachment-success config userid]}]
-  [:div.container-fluid.editor-content
-   [document-title (str (text :t.applications/application) " " (format-application-id config application))]
-   [flash-message/component :top]
+  [:<>
    [disabled-items-warning application]
    (text :t.applications/intro)
    [:div.row
@@ -696,6 +687,8 @@
      [application-state application config]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
+     (when (contains? (:application/permissions application) :see-everything)
+       [:div.mt-3 [previous-applications (get application :application/applicant)]])
      [:div.my-3 [application-licenses application edit-application userid]]
      [:div.my-3 [application-fields application edit-application attachment-success]]]
     [:div.col-lg-4
@@ -707,21 +700,34 @@
 
 (defn application-page []
   (let [config @(rf/subscribe [:rems.config/config])
+        application-id @(rf/subscribe [::application-id])
         application @(rf/subscribe [::application])
+        loading? @(rf/subscribe [::application :loading?])
+        reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
         attachment-success @(rf/subscribe [::attachment-success])
-        userid (get-in @(rf/subscribe [:identity]) [:user :eppn])
-        loading? (not application)]
-    (if loading?
-      [:div
-       [document-title (text :t.applications/application)]
-       [spinner/big]]
-      [render-application {:application application
-                           :edit-application edit-application
-                           :attachment-success attachment-success
-                           :config config
-                           :userid userid}])))
-
+        userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
+    [:div.container-fluid
+     [document-title (str (text :t.applications/application)
+                          (when application
+                            (str " " (application-list/format-application-id config application)))
+                          (when-not (str/blank? (:application/description application))
+                            (str ": " (:application/description application))))]
+     ^{:key application-id} ; re-render to clear flash messages when navigating to another application
+     [flash-message/component :top]
+     (when loading?
+       [spinner/big])
+     (when application
+       [render-application {:application application
+                            :edit-application edit-application
+                            :attachment-success attachment-success
+                            :config config
+                            :userid userid}])
+     ;; Located after the application to avoid re-rendering the application
+     ;; when this element is added or removed from virtual DOM.
+     (when reloading?
+       [:div.reload-indicator
+        [spinner/small]])]))
 
 ;;;; Guide
 

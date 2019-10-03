@@ -1,7 +1,8 @@
 (ns rems.language-switcher
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.guide-functions])
+            [rems.guide-functions]
+            [rems.text :refer [text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn lang-link-classes [current-language language]
@@ -22,8 +23,9 @@
                  [:button {:type :button
                            :class (lang-link-classes current-language language)
                            :on-click (fn []
-                                       (rf/dispatch [:rems.language/set-language language])
-                                       (rf/dispatch [:rems.spa/user-triggered-navigation]))}
+                                       (rf/dispatch [:rems.user-settings/set-language language])
+                                       (rf/dispatch [:rems.spa/user-triggered-navigation]))
+                           :aria-label (text-format :t.navigation/change-language lang-str)}
                   lang-str]]))))))
 
 (defn guide []

@@ -8,24 +8,23 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-old? false)
-    :dispatch-n [[::fetch-catalogue]
+   {:dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
  ::fetch-catalogue
  (fn [{:keys [db]}]
-   (let [description (text :t.administration/catalogue-items)]
-     (fetch "/api/catalogue-items/"
+   (let [description [text :t.administration/catalogue-items]]
+     (fetch "/api/catalogue-items"
             {:url-params {:expand :names
                           :disabled true
-                          :expired (::display-old? db)
-                          :archived (::display-old? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-catalogue-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))
@@ -60,21 +59,14 @@
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
-(rf/reg-event-fx
- ::set-display-old?
- (fn [{:keys [db]} [_ display-old?]]
-   {:db (assoc db ::display-old? display-old?)
-    :dispatch [::fetch-catalogue]}))
-(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
-
 (defn- to-create-catalogue-item []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-catalogue-item"
+   "/administration/create-catalogue-item"
    (text :t.administration/create-catalogue-item)])
 
 (defn- to-catalogue-item [catalogue-item-id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/catalogue-items/" catalogue-item-id)
+   (str "/administration/catalogue-items/" catalogue-item-id)
    (text :t.administration/view)])
 
 (rf/reg-sub
@@ -90,19 +82,19 @@
                        {:value value
                         :td [:td.resource
                              [atoms/link nil
-                              (str "#/administration/resources/" (:resource-id item))
+                              (str "/administration/resources/" (:resource-id item))
                               value]]})
            :form (let [value (:form-name item)]
                    {:value value
                     :td [:td.form
                          [atoms/link nil
-                          (str "#/administration/forms/" (:formid item))
+                          (str "/administration/forms/" (:formid item))
                           value]]})
            :workflow (let [value (:workflow-name item)]
                        {:value value
                         :td [:td.workflow
                              [atoms/link nil
-                              (str "#/administration/workflows/" (:wfid item))
+                              (str "/administration/workflows/" (:wfid item))
                               value]]})
            :created (let [value (:start item)]
                       {:value value
@@ -150,7 +142,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
-           [status-flags/display-old-toggle
-            @(rf/subscribe [::display-old?])
-            #(rf/dispatch [::set-display-old? %])]
+           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
+           [status-flags/disabled-and-archived-explanation]
            [catalogue-list]])))

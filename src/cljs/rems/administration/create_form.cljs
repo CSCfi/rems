@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [dispatch! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio in-page-anchor-link]]))
+            [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio focus-input-field]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -28,7 +28,8 @@
  (fn [{:keys [db]} [_ form-id]]
    (when form-id
      (fetch (str "/api/forms/" form-id)
-            {:handler #(rf/dispatch [::fetch-form-result %])})
+            {:handler #(rf/dispatch [::fetch-form-result %])
+             :error-handler (flash-message/default-error-handler :top "Fetch form")})
      {:db (assoc db ::loading-form? true)})))
 
 (rf/reg-event-db
@@ -146,9 +147,12 @@
 (defn- validate-field [field id languages]
   {id (merge (validate-text-field field :field/type)
              (validate-localized-text-field field :field/title languages)
-             (validate-optional-localized-field field :field/placeholder languages)
-             (validate-max-length (:field/max-length field))
-             (validate-options (:field/options field) languages))})
+             (when (supports-placeholder? field)
+               (validate-optional-localized-field field :field/placeholder languages))
+             (when (supports-max-length? field)
+               (validate-max-length (:field/max-length field)))
+             (when (supports-options? field)
+               (validate-options (:field/options field) languages)))})
 
 (defn- nil-if-empty [m]
   (when-not (empty? m)
@@ -175,7 +179,7 @@
          send-url (str "/api/forms/" (if edit?
                                        "edit"
                                        "create"))
-         description (page-title edit?)
+         description [page-title edit?]
          request (merge (build-request (::form db) (:languages db))
                         (when edit?
                           {:form/id (::form-id db)}))]
@@ -186,7 +190,7 @@
                              :top
                              description
                              (fn [response]
-                               (dispatch! (str "#/administration/forms/"
+                               (navigate! (str "/administration/forms/"
                                                (if edit?
                                                  (::form-id db)
                                                  (response :id))))))
@@ -209,7 +213,7 @@
     (.scrollTo frame 0 position)))
 
 (defn first-partially-visible-edit-field []
-  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field"))
+  (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field:not(.new-form-field)"))
         visible? #(<= 0 (-> % .getBoundingClientRect .-bottom))]
     (first (filter visible? fields))))
 
@@ -335,69 +339,55 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/forms"
+   "/administration/forms"
    (text :t.administration/cancel)])
+
+(defn- format-validation-link [target content]
+  [:li [:a {:href "#" :on-click (focus-input-field target)}
+        content]])
+
+(defn- format-field-validation [field field-errors]
+  (let [field-id (:field/id field)]
+    [:li (text-format :t.create-form/field-n (inc field-id))
+     (into [:ul]
+           (concat
+            (for [[lang error] (:field/title field-errors)]
+              (format-validation-link (str "fields-" field-id "-title-" (name lang))
+                                      (text-format error (str (text :t.create-form/field-title)
+                                                              " (" (.toUpperCase (name lang)) ")"))))
+            (for [[lang error] (:field/placeholder field-errors)]
+              (format-validation-link (str "fields-" field-id "-placeholder-" (name lang))
+                                      (text-format error (str (text :t.create-form/placeholder)
+                                                              " (" (.toUpperCase (name lang)) ")"))))
+            (when (:field/max-length field-errors)
+              [(format-validation-link (str "fields-" field-id "-max-length")
+                                       (str (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))))])
+            (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
+              [:li (text-format :t.create-form/option-n (inc option-id))
+               [:ul
+                (when (:key option-errors)
+                  (format-validation-link (str "fields-" field-id "-options-" option-id "-key")
+                                          (text-format (:key option-errors) (text :t.create-form/option-key))))
+                (into [:<>]
+                      (for [[lang error] (:label option-errors)]
+                        (format-validation-link (str "fields-" field-id "-options-" option-id "-label-" (name lang))
+                                                (text-format error (str (text :t.create-form/option-label)
+                                                                        " (" (.toUpperCase (name lang)) ")")))))]])))]))
 
 (defn- format-validation-errors [form-errors form]
   ;; TODO: deduplicate with field definitions
   (into [:ul
          (when (:form/organization form-errors)
-           [:li [:a {:href "#"
-                     :on-click (in-page-anchor-link "organization")}
+           [:li [:a {:href "#" :on-click (focus-input-field "organization")}
                  (text-format (:form/organization form-errors) (text :t.administration/organization))]])
 
          (when (:form/title form-errors)
-           [:li [:a {:href "#"
-                     :on-click (in-page-anchor-link "title")}
+           [:li [:a {:href "#" :on-click (focus-input-field "title")}
                  (text-format (:form/title form-errors) (text :t.create-form/title))]])]
 
         (for [[field-id field-errors] (into (sorted-map) (:form/fields form-errors))]
           (let [field (get-in form [:form/fields field-id])]
-            [:li (text-format :t.create-form/field-n (inc field-id))
-             [:ul
-
-              (when (:field/title field-errors)
-                (into [:<>]
-                      (for [[lang error] (:field/title field-errors)]
-                        [:li [:a {:href "#"
-                                  :on-click (in-page-anchor-link (str "fields-" field-id "-title-" (name lang)))}
-                              (text-format error (str (text :t.create-form/field-title)
-                                                      " (" (.toUpperCase (name lang)) ")"))]])))
-
-              (when (supports-placeholder? field)
-                (when (:field/placeholder field-errors)
-                  (into [:<>]
-                        (for [[lang error] (:field/placeholder field-errors)]
-                          [:li [:a {:href "#"
-                                    :on-click (in-page-anchor-link (str "fields-" field-id "-placeholder-" (name lang)))}
-                                (text-format error (str (text :t.create-form/placeholder)
-                                                        " (" (.toUpperCase (name lang)) ")"))]]))))
-
-              (when (supports-max-length? field)
-                (when (:field/max-length field-errors)
-                  [:li [:a {:href "#"
-                            :on-click (in-page-anchor-link (str "fields-" field-id "-max-length"))}
-                        (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))]]))
-
-              (when (supports-options? field)
-                (when (:field/options field-errors)
-                  (into [:<>]
-                        (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
-                          [:li (text-format :t.create-form/option-n (inc option-id))
-                           [:ul
-
-                            (when (:key option-errors)
-                              [:li [:a {:href "#"
-                                        :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-key"))}
-                                    (text-format (:key option-errors) (text :t.create-form/option-key))]])
-
-                            (when (:label option-errors)
-                              (into [:<>]
-                                    (for [[lang error] (:label option-errors)]
-                                      [:li [:a {:href "#"
-                                                :on-click (in-page-anchor-link (str "fields-" field-id "-options-" option-id "-label-" (name lang)))}
-                                            (text-format error (str (text :t.create-form/option-label)
-                                                                    " (" (.toUpperCase (name lang)) ")"))]])))]]))))]]))))
+            [format-field-validation field field-errors]))))
 
 (defn- validation-errors-summary []
   (let [form @(rf/subscribe [::form])
@@ -448,7 +438,7 @@
      [flash-message/component :top]
      (if loading-form?
        [:div [spinner/big]]
-       [:div.container-fluid.editor-content
+       [:div.container-fluid
         [validation-errors-summary]
         [:div.row
          [:div.col-lg

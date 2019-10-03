@@ -10,7 +10,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -20,7 +20,8 @@
 
 (defn- fetch-form [form-id]
   (fetch (str "/api/forms/" form-id)
-         {:handler #(rf/dispatch [::fetch-form-result %])}))
+         {:handler #(rf/dispatch [::fetch-form-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch form")}))
 
 (rf/reg-fx ::fetch-form (fn [[form-id]] (fetch-form form-id)))
 
@@ -37,19 +38,19 @@
 (rf/reg-event-fx
  ::edit-form
  (fn [_ [_ id]]
-   (let [description (text :t.administration/edit)]
+   (let [description [text :t.administration/edit]]
      (fetch (str "/api/forms/" id "/editable")
             {:handler (fn [response]
                         (if (:success response)
-                          (dispatch! (str "/#/administration/edit-form/" id))
+                          (navigate! (str "/administration/edit-form/" id))
                           (flash-message/show-default-error!
-                           :top description (status-flags/format-update-failure response))))
+                           :top description [status-flags/format-update-failure response])))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (defn- back-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/forms"
+   "/administration/forms"
    (text :t.administration/back)])
 
 (defn edit-button [id]
@@ -62,7 +63,7 @@
 
 (defn- copy-as-new-button [id]
   [atoms/link {:class "btn btn-secondary"}
-   (str "/#/administration/create-form/" id)
+   (str "/administration/create-form/" id)
    (text :t.administration/copy-as-new)])
 
 (defn form-view [form]

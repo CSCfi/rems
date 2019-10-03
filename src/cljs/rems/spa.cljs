@@ -1,6 +1,8 @@
 (ns rems.spa
-  (:require [goog.events :as events]
+  (:require [accountant.core :as accountant]
+            [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
+            [promesa.core :as p]
             [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.actions :refer [actions-page]]
@@ -37,10 +39,10 @@
             [rems.roles :as roles]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
-            [rems.util :refer [dispatch! fetch parse-int]]
+            [rems.util :refer [navigate! fetch parse-int]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
-  (:import goog.History))
+  (:import goog.history.Html5History))
 
 ;;; subscriptions
 
@@ -102,7 +104,7 @@
  (fn [_ [_ current-url]]
    (println "Received unauthorized from" current-url)
    (.setItem js/sessionStorage "rems-redirect-url" current-url)
-   (dispatch! "/")
+   (navigate! "/")
    {}))
 
 (rf/reg-event-fx
@@ -110,6 +112,12 @@
  (fn [_ [_ current-url]]
    (println "Received forbidden from" current-url)
    {:dispatch [:set-active-page :forbidden]}))
+
+(rf/reg-event-fx
+ :not-found!
+ (fn [_ [_ current-url]]
+   (println "Received not-found from" current-url)
+   {:dispatch [:set-active-page :not-found]}))
 
 (rf/reg-event-fx
  :landing-page-redirect!
@@ -120,9 +128,9 @@
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
-         (roles/show-admin-pages? roles) (dispatch! "/#/administration")
-         (roles/show-reviews? roles) (dispatch! "/#/actions")
-         :else (dispatch! "/#/catalogue"))
+         (roles/show-admin-pages? roles) (navigate! "/administration")
+         (roles/show-reviews? roles) (navigate! "/actions")
+         :else (navigate! "/catalogue"))
        {})
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
@@ -147,16 +155,10 @@
   (if @(rf/subscribe [:user])
     (do
       (fetch-user-settings!)
-      ;; TODO this is a hack to show something useful on the home page
-      ;; when we are logged in. We can't really perform a dispatch!
-      ;; here, because that would be a race condition with #fragment
-      ;; handling in hook-history-navigation!
-      ;;
-      ;; One possibility is to have a separate :init default page that
-      ;; does the navigation/redirect logic, instead of using :home as
-      ;; the default.
-      (rf/dispatch [:rems.catalogue/enter-page])
-      [catalogue-page])
+      ;; TODO: separate :init default page that does the navigation/redirect logic, instead of using :home as the default
+      (when (= "/" js/window.location.pathname)
+        (navigate! "/catalogue"))
+      nil)
     [:div
      [:div.row.justify-content-center
       [:div.col-md-6.row.justify-content-center
@@ -264,8 +266,6 @@
 
 ;; -------------------------
 ;; Routes
-
-(secretary/set-config! :prefix "#")
 
 (secretary/defroute "/" []
   (rf/dispatch [:set-active-page :home]))
@@ -395,13 +395,8 @@
     (do
       (println "Redirecting to" url "after authorization")
       (.removeItem js/sessionStorage "rems-redirect-url")
-      (dispatch! url))
+      (navigate! url))
     (rf/dispatch [:landing-page-redirect!])))
-
-;; XXX: A workaround to prevent the skip navigation link (an anchor link with
-;;   href "#main-content") from triggering a page change: define a matching
-;;   route that does nothing.
-(secretary/defroute "/main-content" [])
 
 (secretary/defroute "*" []
   (rf/dispatch [:set-active-page :not-found]))
@@ -411,22 +406,48 @@
 ;; must be called after routes have been defined
 
 (defn hook-browser-navigation! []
-  (doto (History.)
-    (events/listen
-     HistoryEventType/NAVIGATE
-     (fn [event]
-       (js/window.rems.hooks.navigate (.-token event))
-       (secretary/dispatch! (.-token event))))
-    (.setEnabled true)))
+  (events/listen accountant/history
+                 HistoryEventType/NAVIGATE
+                 (fn [event]
+                   (js/window.rems.hooks.navigate (.-token event))))
+
+  (accountant/configure-navigation!
+   {:nav-handler (let [previous-path (atom nil)]
+                   (fn [path]
+                     ;; XXX: workaround for Secretary/Accountant considering URLs with different hash to be different pages
+                     (let [url (js/URL. path js/location)
+                           path-without-hash (str (.-pathname url) (.-search url))]
+                       (when-not (= @previous-path path-without-hash)
+                         (reset! previous-path path-without-hash)
+                         (secretary/dispatch! path-without-hash)))))
+    :path-exists? (fn [path]
+                    (let [route (secretary/locate-route path)
+                          not-found-page? (= "*" (secretary/route-value (:route route)))]
+                      (when-not not-found-page?
+                        route)))})
+  (accountant/dispatch-current!)
+
+  ;; Since this listener is registered after configuring Accountant,
+  ;; it will NOT be called on the initial page load; we don't need nor
+  ;; want to change focus on the initial full page load.
+  (events/listen accountant/history
+                 HistoryEventType/NAVIGATE
+                 (fn [_event]
+                   (rf/dispatch [:rems.spa/user-triggered-navigation]))))
+
 
 ;; -------------------------
 ;; Initialize app
 
 (defn fetch-translations! []
-  (fetch "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])}))
+  (fetch "/api/translations"
+         {:handler #(rf/dispatch-sync [:loaded-translations %])
+          :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
 
 (defn fetch-theme! []
-  (fetch "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])}))
+  (fetch "/api/theme"
+         {:handler #(rf/dispatch-sync [:loaded-theme %])
+          :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
 (defn mount-components []
   (rf/clear-subscription-cache!)
@@ -435,8 +456,11 @@
 (defn init! []
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
-  (fetch-translations!)
-  (fetch-theme!)
-  (config/fetch-config!)
-  (hook-browser-navigation!)
-  (mount-components))
+  (-> (p/all [(fetch-translations!)
+              (fetch-theme!)
+              (config/fetch-config!)])
+      ;; all preceding code must use `rf/dispatch-sync` to avoid
+      ;; the first render flashing with e.g. missing translations
+      (p/finally (fn []
+                   (hook-browser-navigation!)
+                   (mount-components)))))

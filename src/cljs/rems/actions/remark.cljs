@@ -23,7 +23,7 @@
 (rf/reg-event-fx
  ::send-remark
  (fn [{:keys [db]} [_ {:keys [application-id on-finished]}]]
-   (let [description (text :t.actions/remark)]
+   (let [description [text :t.actions/remark]]
      (post! "/api/applications/remark"
             {:params {:application-id application-id
                       :comment (::comment db)

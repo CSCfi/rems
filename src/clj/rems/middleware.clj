@@ -27,7 +27,7 @@
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [redirect header]])
   (:import [javax.servlet ServletContext]
-           [rems.auth ForbiddenException NotAuthorizedException]))
+           [rems.auth ForbiddenException UnauthorizedException]))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
@@ -160,7 +160,7 @@
   (fn [req]
     (try
       (handler req)
-      (catch NotAuthorizedException e
+      (catch UnauthorizedException e
         (on-unauthorized-error req))
       (catch ForbiddenException e
         (on-forbidden-error req)))))
@@ -196,7 +196,10 @@
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] (ttl-memory-store (* 60 30)))
-      (assoc-in [:session :flash] true)))
+      (assoc-in [:session :flash] true)
+      ; ring-defaults sets the cookies with strict same-site limits, but this breaks OpenID Connect logins.
+      ; Different options for using lax cookies are described in the authentication ADR.
+      (assoc-in [:session :cookie-attrs] {:http-only true, :same-site :lax})))
 
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)

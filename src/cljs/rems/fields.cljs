@@ -296,7 +296,7 @@
                                            [:div
                                             (text :t.form/current-value) ": "
                                             (link value filename)]])
-     [:div {:style {:display :flex :justify-content :flex-start}}
+     [:div.flex-row.d-flex.align-items-center
       (link value filename)
       (if (empty? value)
         upload-field
@@ -440,7 +440,7 @@
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "test.txt"}]])
-      (example "field of type \"attachment\", file uploaded, success indicator"
+   (example "field of type \"attachment\", file uploaded, success indicator"
             [:form
              [field {:app-id 5
                      :field/id 6

@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -21,7 +21,8 @@
 
 (defn- fetch-workflow [workflow-id]
   (fetch (str "/api/workflows/" workflow-id)
-         {:handler #(rf/dispatch [::fetch-workflow-result %])}))
+         {:handler #(rf/dispatch [::fetch-workflow-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch workflow")}))
 
 (rf/reg-fx ::fetch-workflow (fn [[workflow-id]] (fetch-workflow workflow-id)))
 
@@ -37,12 +38,12 @@
 
 (defn- back-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/workflows"
+   "/administration/workflows"
    (text :t.administration/back)])
 
 (defn edit-button [id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/edit-workflow/" id)
+   (str "/administration/edit-workflow/" id)
    (text :t.administration/edit)])
 
 (defn workflow-view [workflow language]

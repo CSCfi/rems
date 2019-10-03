@@ -10,7 +10,9 @@
 (rf/reg-fx
  ::fetch-licenses
  (fn [on-success]
-   (fetch "/api/licenses" {:handler on-success})))
+   (fetch "/api/licenses"
+          {:handler on-success
+           :error-handler (flash-message/default-error-handler :top "Fetch licenses")})))
 
 (rf/reg-event-fx
  ::open-form
@@ -48,7 +50,7 @@
 (rf/reg-event-fx
  ::send-add-licenses
  (fn [_ [_ {:keys [application-id licenses comment on-finished]}]]
-   (let [description (text :t.actions/add-licenses)]
+   (let [description [text :t.actions/add-licenses]]
      (post! "/api/applications/add-licenses"
             {:params {:application-id application-id
                       :comment comment

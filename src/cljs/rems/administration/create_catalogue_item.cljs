@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post! put!]]))
+            [rems.util :refer [navigate! fetch post! put!]]))
 
 (defn- update-loading [db]
   (let [progress (::loading-progress db)]
@@ -81,7 +81,7 @@
     (text :t.administration/create-catalogue-item)))
 
 (defn- create-catalogue-item! [_ [_ request]]
-  (let [description (text :t.administration/create-catalogue-item)]
+  (let [description [text :t.administration/create-catalogue-item]]
     (post! "/api/catalogue-items/create"
            {:params (-> request
                         ;; create disabled catalogue items by default
@@ -90,14 +90,14 @@
                       :top
                       description
                       (fn [response]
-                        (dispatch! (str "#/administration/catalogue-items/"
+                        (navigate! (str "/administration/catalogue-items/"
                                         (:id response)))))
             :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
 (defn- edit-catalogue-item! [{:keys [db]} [_ request]]
   (let [id (::catalogue-item-id db)
-        description (text :t.administration/edit-catalogue-item)]
+        description [text :t.administration/edit-catalogue-item]]
     (put! "/api/catalogue-items/edit"
           {:params {:id id
                     :localizations (:localizations request)}
@@ -105,7 +105,7 @@
                      :top
                      description
                      (fn [_]
-                       (dispatch! (str "#/administration/catalogue-items/" id))))
+                       (navigate! (str "/administration/catalogue-items/" id))))
            :error-handler (flash-message/default-error-handler :top description)}))
   {})
 
@@ -113,7 +113,9 @@
 (rf/reg-event-fx ::edit-catalogue-item edit-catalogue-item!)
 
 (defn- fetch-workflows []
-  (fetch "/api/workflows" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
+  (fetch "/api/workflows"
+         {:handler #(rf/dispatch [::fetch-workflows-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch workflows")}))
 
 (rf/reg-fx ::fetch-workflows fetch-workflows)
 
@@ -126,7 +128,9 @@
 (rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 
 (defn- fetch-resources []
-  (fetch "/api/resources" {:handler #(rf/dispatch [::fetch-resources-result %])}))
+  (fetch "/api/resources"
+         {:handler #(rf/dispatch [::fetch-resources-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch resources")}))
 
 (rf/reg-fx ::fetch-resources fetch-resources)
 
@@ -140,7 +144,9 @@
 
 
 (defn- fetch-forms []
-  (fetch "/api/forms" {:handler #(rf/dispatch [::fetch-forms-result %])}))
+  (fetch "/api/forms"
+         {:handler #(rf/dispatch [::fetch-forms-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch forms")}))
 
 (rf/reg-fx ::fetch-forms fetch-forms)
 
@@ -155,7 +161,8 @@
 
 (defn- fetch-catalogue-item [id]
   (fetch (str "/api/catalogue-items/" id)
-         {:handler #(rf/dispatch [::fetch-catalogue-item-result %])}))
+         {:handler #(rf/dispatch [::fetch-catalogue-item-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch catalogue item")}))
 
 (rf/reg-fx
  ::fetch-catalogue-item
@@ -255,7 +262,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/catalogue-items"
+   "/administration/catalogue-items"
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button [form languages editing?]
@@ -287,9 +294,9 @@
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
                    (for [language languages]
-                     [:<>
-                      ^{:key (str "title-" language)} [catalogue-item-title-field language]
-                      ^{:key (str "infourl-" language)} [catalogue-item-infourl-field language]])
+                     [:<> {:key language}
+                      [catalogue-item-title-field language]
+                      [catalogue-item-infourl-field language]])
                    [catalogue-item-workflow-field]
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]

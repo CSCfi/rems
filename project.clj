@@ -15,12 +15,15 @@
                  [cljsjs/react-select "2.4.4-0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
+                 [com.auth0/java-jwt "3.8.1"]
+                 [com.auth0/jwks-rsa "0.8.2"]
                  [com.draines/postal "2.0.3"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.10.0.pr1"]
                  [com.taoensso/tempura "1.2.1"]
                  [compojure "1.6.1"]
                  [conman "0.8.3"]
                  [cprop "0.1.14"]
+                 [funcool/promesa "4.0.0-SNAPSHOT"] ; version 3.0.0 is broken with JavaScript Promises https://github.com/funcool/promesa/issues/71
                  [garden "1.3.9"]
                  [haka-buddy "0.2.3" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
@@ -68,7 +71,8 @@
                  [ring/ring-core "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-devel "1.7.1"]
-                 [ring/ring-servlet "1.7.1"]]
+                 [ring/ring-servlet "1.7.1"]
+                 [venantius/accountant "0.2.4"]]
 
   :min-lein-version "2.0.0"
 

@@ -1,11 +1,10 @@
 (ns rems.new-application
   (:require [re-frame.core :as rf]
-            [rems.application :as application]
             [rems.atoms :refer [document-title]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.util :refer [post! replace-url!]]))
 
 (defn remove-catalogue-items-from-cart! [catalogue-item-ids]
   (doseq [id catalogue-item-ids]
@@ -14,12 +13,12 @@
 (rf/reg-event-fx
  ::enter-new-application-page
  (fn [{:keys [db]} [_ catalogue-item-ids]]
-   (let [description (text :t.applications/application)]
+   (let [description [text :t.applications/application]]
      (post! "/api/applications/create"
             {:params {:catalogue-item-ids catalogue-item-ids}
              :handler (fn [response]
                         (remove-catalogue-items-from-cart! catalogue-item-ids)
-                        (application/navigate-to (:application-id response) true))
+                        (replace-url! (str "/application/" (:application-id response))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 

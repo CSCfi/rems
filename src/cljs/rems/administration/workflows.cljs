@@ -13,19 +13,19 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-old? false)
-    :dispatch-n [[::fetch-workflows]
+   {:dispatch-n [[::fetch-workflows]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-db
  ::fetch-workflows
  (fn [db]
-   (let [description (text :t.administration/workflows)]
-     (fetch "/api/workflows/" {:url-params {:disabled true
-                                            :archived (::display-old? db)
-                                            :expired (::display-old? db)}
-                               :handler #(rf/dispatch [::fetch-workflows-result %])
-                               :error-handler (flash-message/default-error-handler :top description)}))
+   (let [description [text :t.administration/workflows]]
+     (fetch "/api/workflows"
+            {:url-params {:disabled true
+                          :archived (status-flags/display-archived? db)
+                          :expired (status-flags/display-archived? db)}
+             :handler #(rf/dispatch [::fetch-workflows-result %])
+             :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
 
 (rf/reg-event-db
@@ -58,21 +58,14 @@
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
-(rf/reg-event-fx
- ::set-display-old?
- (fn [{:keys [db]} [_ display-old?]]
-   {:db (assoc db ::display-old? display-old?)
-    :dispatch [::fetch-workflows]}))
-(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
-
 (defn- to-create-workflow []
   [atoms/link {:class "btn btn-primary"}
-   "/#/administration/create-workflow"
+   "/administration/create-workflow"
    (text :t.administration/create-workflow)])
 
 (defn- to-view-workflow [workflow-id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/#/administration/workflows/" workflow-id)
+   (str "/administration/workflows/" workflow-id)
    (text :t.administration/view)])
 
 (rf/reg-sub
@@ -127,7 +120,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-workflow]
-           [status-flags/display-old-toggle
-            @(rf/subscribe [::display-old?])
-            #(rf/dispatch [::set-display-old? %])]
+           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
+           [status-flags/disabled-and-archived-explanation]
            [workflows-list]])))

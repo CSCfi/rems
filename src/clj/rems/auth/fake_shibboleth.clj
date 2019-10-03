@@ -45,7 +45,7 @@ a:visited { color: #fff; }
 ")
 
 (defn- fake-login [session username]
-  (assoc (redirect "/#/redirect")
+  (assoc (redirect "/redirect")
          :session (assoc session :identity (-> (db/get-user-attributes {:user username})
                                                :userattrs
                                                json/parse-string))))

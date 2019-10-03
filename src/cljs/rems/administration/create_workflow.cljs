@@ -9,7 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post! put!]]))
+            [rems.util :refer [navigate! fetch post! put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -39,7 +39,8 @@
  (fn [workflow-id]
    (when workflow-id
      (fetch (str "/api/workflows/" workflow-id)
-            {:handler #(rf/dispatch [::fetch-workflow-result %])}))))
+            {:handler #(rf/dispatch [::fetch-workflow-result %])
+             :error-handler (flash-message/default-error-handler :top "Fetch workflow")}))))
 
 (rf/reg-event-db
  ::fetch-workflow-result
@@ -86,29 +87,31 @@
 (rf/reg-event-fx
  ::create-workflow
  (fn [_ [_ request]]
-   (let [description (text :t.administration/create-workflow)]
+   (let [description [text :t.administration/create-workflow]]
      (post! "/api/workflows/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(dispatch! (str "#/administration/workflows/" (:id %))))
+                       :top description #(navigate! (str "/administration/workflows/" (:id %))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (rf/reg-event-fx
  ::edit-workflow
  (fn [_ [_ request]]
-   (let [description (text :t.administration/edit-workflow)]
+   (let [description [text :t.administration/edit-workflow]]
      (put! "/api/workflows/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(dispatch! (str "#/administration/workflows/" (:id request))))
+                      :top description #(navigate! (str "/administration/workflows/" (:id request))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
 
 (defn- fetch-actors []
-  (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
+  (fetch "/api/workflows/actors"
+         {:handler #(rf/dispatch [::fetch-actors-result %])
+          :error-handler (flash-message/default-error-handler :top "Fetch actors")}))
 
 (rf/reg-fx ::fetch-actors fetch-actors)
 
@@ -169,7 +172,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/#/administration/workflows"
+   "/administration/workflows"
    (text :t.administration/cancel)])
 
 (defn workflow-type-description [description]

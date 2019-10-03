@@ -1,7 +1,6 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
-            [re-frame.core :as rf]
             [reagent.core :as reagent]
             [rems.guide-functions]
             [rems.text :refer [text]])
@@ -16,8 +15,7 @@
        :aria-label (text :t.link/download-file)}])
 
 (defn link [opts uri title]
-  [:a (merge opts {:href uri
-                   :on-click (fn [] (rf/dispatch [:rems.spa/user-triggered-navigation]))})
+  [:a (merge opts {:href uri})
    title])
 
 (defn image [opts src]
@@ -37,7 +35,8 @@
   [:i.fa {:class "fa-times"}])
 
 (defn success-symbol []
-  [:span.fa-stack {:aria-label (text :t.form/success)}
+  ;; fa-stack has weird spacing, try to fix it by unsetting line-height (which is 2em by default)
+  [:span.fa-stack {:aria-label (text :t.form/success) :style {:line-height :inherit}}
    [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
    [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]])
 
@@ -63,7 +62,7 @@
 (defn readonly-checkbox
   "Displays a checkbox."
   [checked?]
-  (if checked?
+   (if checked?
     [:i.far.fa-lg.fa-check-square {:aria-label (text :t.form/checkbox-checked)}]
     [:i.far.fa-lg.fa-square {:aria-label (text :t.form/checkbox-unchecked)}]))
 
