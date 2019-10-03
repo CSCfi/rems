@@ -1,3 +1,6 @@
+---
+---
+
 # 002: Event side effects
 
 Authors: @opqdonut @Macroz @luontola @cscwooller

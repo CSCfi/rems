@@ -1,3 +1,6 @@
+---
+---
+
 # Configuration
 
 REMS contains a number of configuration options that can be used to alter authentication options, theming or to add integration points, just to name a few.

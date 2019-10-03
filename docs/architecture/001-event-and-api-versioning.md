@@ -1,3 +1,6 @@
+---
+---
+
 # 001: Event and API versioning
 
 Authors: @opqdonut @Macroz @luontola @cscwooller

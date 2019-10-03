@@ -1,3 +1,6 @@
+---
+---
+
 # 006: Authentication using OIDC
 
 Authors: @hukka

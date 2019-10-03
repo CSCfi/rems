@@ -1,3 +1,6 @@
+---
+---
+
 # 003: Namespaced keywords
 
 Authors: @opqdonut @Macroz @luontola @cscwooller

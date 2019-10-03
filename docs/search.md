@@ -1,3 +1,6 @@
+---
+---
+
 # Search
 
 ## Application Search

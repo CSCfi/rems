@@ -1,3 +1,6 @@
+---
+---
+
 # 004: re-frame handlers
 
 Authors: @hukka
@@ -10,6 +13,7 @@ The input consists of the event vector with the event name and parameters, and a
 
 **This is how re-frame suggests you should to do things:**
 
+{% raw  %}
 ```clojure
 (rf/reg-event-fx
  ::send-request-decision
@@ -28,7 +32,8 @@ The input consists of the event vector with the event name and parameters, and a
 [action-button {:id action-form-id
                 :text (text :t.actions/request-decision)
                 :on-click #(rf/dispatch [::send-request-decision])}])         ; first indirection
-```
+```       
+{% endraw  %}
 
 [The listed reasons are](https://github.com/Day8/re-frame/blob/master/docs/EffectfulHandlers.md#bad-why)
 
@@ -46,6 +51,7 @@ Furthermore we haven't used a time travelling debugger or anything else that ben
 
 **We will therefore write our handlers like this:**
 
+{% raw  %}
 ```clojure
 (rf/reg-event-fx
  ::send-request-decision
@@ -57,9 +63,11 @@ Furthermore we haven't used a time travelling debugger or anything else that ben
            :handler #(rf/dispatch [::decision-results %]})})
    {}))
 ```
+{% endraw  %}
 
 In particular we do not want to mix side-effects and effect handlers in the same flow! **Please avoid doing this mixed model** because it's even more confusing than either solution!
 
+{% raw  %}
 ```clojure
 (rf/reg-event-fx
  ::send-request-decision
@@ -67,6 +75,7 @@ In particular we do not want to mix side-effects and effect handlers in the same
    (do-another-kind-of-side-effect!)
    {:request-decision-effect [deciders application-id comment]}))
 ```
+{% endraw  %}
 
 ## Handling user interaction in components
 
