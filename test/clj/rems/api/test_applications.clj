@@ -185,6 +185,7 @@
                  "application.command/invite-member"
                  "application.command/uninvite-member"
                  "application.command/change-resources"
+                 "application.command/close"
                  "see-everything"}
                (set (get application :application/permissions))))))
 

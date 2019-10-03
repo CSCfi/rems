@@ -46,7 +46,8 @@
     :application.command/request-decision
     :application.command/return
     :application.command/approve
-    :application.command/reject})
+    :application.command/reject
+    :application.command/close})
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
