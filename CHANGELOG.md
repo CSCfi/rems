@@ -67,7 +67,7 @@ Changes since v2.4
 - Show all errors preventing application submission at the same time (#1594)
 - Show applicant's previous applications to handler (#1653)
 - Handler can close an application whenever after initial submission (#1669)
-- Documentation about [user permissions by application state](docs/application-permissions.html)
+- Documentation about [user permissions by application state](https://raw.githack.com/CSCfi/rems/master/docs/application-permissions.html)
 
 ### Enhancements
 - Improved version information in footer
