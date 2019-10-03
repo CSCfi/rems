@@ -118,7 +118,6 @@
                           :copied-from "%1 copied the application from an old application."
                           :copied-to "%1 copied the application to a new application."
                           :created "%1 created a new application."
-                          :decided "%1 made a decision."
                           :decision-requested "%1 requested a decision from %2."
                           :draft-saved "%1 saved the application as a draft."
                           :licenses-accepted "%1 accepted the terms of use."
