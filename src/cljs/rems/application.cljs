@@ -272,13 +272,16 @@
                      :tab-index "-1"}
       [:div.license-block (str/trim (str text))]]]))
 
-(defn- attachment-license [license]
+(defn- attachment-license [application license]
   (let [title (localized (:license/title license))
-        link (str "/api/licenses/attachments/" (localized (:license/attachment-id license)))]
+        language @(rf/subscribe [:language])
+        link (str "/api/applications/" (:application/id application)
+                  "/license-attachment/" (:license/id license)
+                  "/" (name language))]
     [:a.license-title {:href link :target :_blank}
      title " " [file-download]]))
 
-(defn license-field [license show-accepted-licenses?]
+(defn license-field [application license show-accepted-licenses?]
   [:div.license.flex-row.d-flex
    [:div (when show-accepted-licenses?
            (if (:accepted license)
@@ -287,7 +290,7 @@
    (case (:license/type license)
      :link [link-license license]
      :text [text-license license]
-     :attachment [attachment-license license]
+     :attachment [attachment-license application license]
      [fields/unsupported-field license])])
 
 (defn- save-button []
@@ -359,6 +362,7 @@
          (into [:div#licenses]
                (for [license licenses]
                  [license-field
+                  application
                   (assoc license
                          :accepted (contains? accepted-licenses (:license/id license))
                          :readonly readonly?)
