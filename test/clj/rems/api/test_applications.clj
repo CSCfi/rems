@@ -579,28 +579,42 @@
         cat-id (test-data/create-catalogue-item! {})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})
-        testfile (clojure.java.io/file "./test-data/test.txt")
-        filecontent {:tempfile testfile
-                     :content-type "text/plain"
-                     :filename "test.txt"
-                     :size (.length testfile)}
-        attachment-id (-> (request :post "/api/licenses/add_attachment")
-                          (assoc :params {"file" filecontent})
-                          (assoc :multipart-params {"file" filecontent})
-                          (authenticate api-key owner)
-                          handler
-                          read-ok-body
-                          :id)
+        file-en (clojure.java.io/file "./test-data/test.txt")
+        filecontent-en {:tempfile file-en
+                        :content-type "text/plain"
+                        :filename "test.txt"
+                        :size (.length file-en)}
+        en-attachment-id (-> (request :post "/api/licenses/add_attachment")
+                             (assoc :params {"file" filecontent-en})
+                             (assoc :multipart-params {"file" filecontent-en})
+                             (authenticate api-key owner)
+                             handler
+                             read-ok-body
+                             :id)
+
+        file-fi (clojure.java.io/file "./test-data/test-fi.txt")
+        filecontent-fi {:tempfile file-fi
+                        :content-type "text/plain"
+                        :filename "test.txt"
+                        :size (.length file-fi)}
+        fi-attachment-id (-> (request :post "/api/licenses/add_attachment")
+                             (assoc :params {"file" filecontent-fi})
+                             (assoc :multipart-params {"file" filecontent-fi})
+                             (authenticate api-key owner)
+                             handler
+                             read-ok-body
+                             :id)
+
         license-id (-> (request :post "/api/licenses/create")
                        (authenticate api-key owner)
                        (json-body {:licensetype "attachment"
                                    ;; TODO different content for different languages
                                    :localizations {:en {:title "en title"
                                                         :textcontent "en text"
-                                                        :attachment-id attachment-id}
+                                                        :attachment-id en-attachment-id}
                                                    :fi {:title "fi title"
                                                         :textcontent "fi text"
-                                                        :attachment-id attachment-id}}})
+                                                        :attachment-id fi-attachment-id}}})
                        handler
                        read-ok-body
                        :id)]
@@ -622,7 +636,15 @@
                    handler
                    assert-response-is-ok
                    :body
-                   slurp))))
+                   slurp)))
+        (testing "in finnish"
+          (is (= "tervehdys tiedostosta\n"
+                 (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/fi"))
+                     (authenticate api-key applicant)
+                     handler
+                     assert-response-is-ok
+                     :body
+                     slurp)))))
       (testing "as handler"
         (is (= "hello from file\n"
                (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/en"))
