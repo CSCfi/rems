@@ -11,6 +11,7 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
+            [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
@@ -277,4 +278,25 @@
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (applications/get-application (getx-user-id) application-id)]
         (ok app)
+        (api-util/not-found-json-response)))
+
+    (GET "/:application-id/license-attachment/:license-id/:language" []
+      :summary "Get file associated with licence of type attachment associated with application."
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")
+                    license-id :- (describe s/Int "license id")
+                    language :- (describe s/Keyword "language code")]
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
+        (if-let [license (some #(when (= license-id (:license/id %)) %)
+                               (:application/licenses app))]
+          (if-let [attachment-id (get-in license [:license/attachment-id language])]
+            (if-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
+              (do (attachments/check-attachment-content-type (:type attachment))
+                  (-> (:data attachment)
+                      (java.io.ByteArrayInputStream.)
+                      (ok)
+                      (content-type (:type attachment))))
+              (api-util/not-found-json-response))
+            (api-util/not-found-json-response))
+          (api-util/not-found-json-response))
         (api-util/not-found-json-response)))))

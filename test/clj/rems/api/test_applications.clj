@@ -570,6 +570,73 @@
                          handler)]
         (is (response-is-forbidden? response))))))
 
+(deftest test-application-api-license-attachments
+  (let [api-key "42"
+        applicant "alice"
+        non-applicant "bob"
+        owner "owner"
+        handler-user "developer"
+        cat-id (test-data/create-catalogue-item! {})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor applicant})
+        testfile (clojure.java.io/file "./test-data/test.txt")
+        filecontent {:tempfile testfile
+                     :content-type "text/plain"
+                     :filename "test.txt"
+                     :size (.length testfile)}
+        attachment-id (-> (request :post "/api/licenses/add_attachment")
+                          (assoc :params {"file" filecontent})
+                          (assoc :multipart-params {"file" filecontent})
+                          (authenticate api-key owner)
+                          handler
+                          read-ok-body
+                          :id)
+        license-id (-> (request :post "/api/licenses/create")
+                       (authenticate api-key owner)
+                       (json-body {:licensetype "attachment"
+                                   ;; TODO different content for different languages
+                                   :localizations {:en {:title "en title"
+                                                        :textcontent "en text"
+                                                        :attachment-id attachment-id}
+                                                   :fi {:title "fi title"
+                                                        :textcontent "fi text"
+                                                        :attachment-id attachment-id}}})
+                       handler
+                       read-ok-body
+                       :id)]
+    (testing "submit application"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id}))))
+    (testing "attach license to application"
+      (is (= {:success true}
+             (send-command handler-user {:type :application.command/add-licenses
+                                         :application-id app-id
+                                         :comment ""
+                                         :licenses [license-id]}))))
+    (testing "access license"
+      (testing "as applicant"
+        (is (= "hello from file\n"
+               (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/en"))
+                   (authenticate api-key applicant)
+                   handler
+                   assert-response-is-ok
+                   :body
+                   slurp))))
+      (testing "as handler"
+        (is (= "hello from file\n"
+               (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/en"))
+                   (authenticate api-key handler-user)
+                   handler
+                   assert-response-is-ok
+                   :body
+                   slurp))))
+      (testing "as non-applicant"
+        (is (response-is-forbidden?
+             (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/en"))
+                 (authenticate api-key non-applicant)
+                 handler)))))))
+
 (deftest test-applications-api-security
   (let [api-key "42"
         applicant "alice"
