@@ -4,7 +4,7 @@
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s]
-            [schema.utils] )
+            [schema.utils])
   (:import (org.joda.time DateTime)))
 
 ;; TODO copied from rems.application.events:
@@ -19,20 +19,8 @@
    :blacklist/resource s/Str ;; i.e. resource/ext-id
    :event/comment (s/maybe s/Str)})
 
-;; TODO copied from rems.db.events:
-(defn- datestring->datetime [s]
-  (if (string? s)
-    (time-format/parse s)
-    s))
-(def ^:private datestring-coercion-matcher
-  {DateTime datestring->datetime})
-(defn- coercion-matcher [schema]
-  (or (datestring-coercion-matcher schema)
-      (coerce/string-coercion-matcher schema)))
-
-
 (def ^:private coerce-event
-  (coerce/coercer BlacklistEvent coercion-matcher))
+  (coerce/coercer BlacklistEvent json/coercion-matcher))
 
 ;; TODO factor out some utils from here and rems.db.events?
 (defn- json->event [json]
