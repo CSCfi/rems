@@ -147,6 +147,7 @@
                           :draft "Draft"
                           :rejected "Rejected"
                           :returned "Returned"
+                          :revoked "Revoked"
                           :submitted "Applied"
                           :unknown "Unknown"}
                  :submitted "Sent"

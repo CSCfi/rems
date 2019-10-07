@@ -179,6 +179,7 @@
     :application.state/draft
     :application.state/rejected
     :application.state/returned
+    :application.state/revoked
     :application.state/submitted})
 
 (defmulti ^:private event-type-specific-application-view
@@ -348,8 +349,9 @@
 
 (defmethod event-type-specific-application-view :application.event/revoked
   [application _event]
-  ;; TODO
-  application)
+  (-> application
+      (assoc :application/state :application.state/revoked)
+      (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/copied-from
   [application event]

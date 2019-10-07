@@ -145,6 +145,7 @@
                           :draft "Luonnos"
                           :rejected "Hylätty"
                           :returned "Palautettu"
+                          :revoked "Peruttu"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
                  :submitted "Lähetetty"
