@@ -112,6 +112,16 @@
                                 :t.email.application-rejected/subject-to-handler
                                 :t.email.application-rejected/message-to-handler)))
 
+(defmethod event-to-emails-impl :application.event/revoked [event application]
+  (concat (emails-to-recipients (applicant-and-members application)
+                                event application
+                                :t.email.application-revoked/subject-to-applicant
+                                :t.email.application-revoked/message-to-applicant)
+          (emails-to-recipients (other-handlers event application)
+                                event application
+                                :t.email.application-revoked/subject-to-handler
+                                :t.email.application-revoked/message-to-handler)))
+
 (defmethod event-to-emails-impl :application.event/closed [event application]
   (concat (emails-to-recipients (applicant-and-members application)
                                 event application
