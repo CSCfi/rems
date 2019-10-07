@@ -38,6 +38,16 @@
          :application/request-id s/Uuid
          :application/commenters [s/Str]
          :application/comment s/Str))
+(s/defschema CopiedFromEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/copied-from)
+         :application/copied-from {:application/id s/Int
+                                   :application/external-id s/Str}))
+(s/defschema CopiedToEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/copied-to)
+         :application/copied-to {:application/id s/Int
+                                 :application/external-id s/Str}))
 (s/defschema CreatedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/created)
@@ -121,22 +131,14 @@
 (s/defschema SubmittedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/submitted)))
-(s/defschema CopiedFromEvent
-  (assoc EventBase
-         :event/type (s/enum :application.event/copied-from)
-         :application/copied-from {:application/id s/Int
-                                   :application/external-id s/Str}))
-(s/defschema CopiedToEvent
-  (assoc EventBase
-         :event/type (s/enum :application.event/copied-to)
-         :application/copied-to {:application/id s/Int
-                                 :application/external-id s/Str}))
 
 (def event-schemas
   {:application.event/approved ApprovedEvent
    :application.event/closed ClosedEvent
-   :application.event/commented CommentedEvent
    :application.event/comment-requested CommentRequestedEvent
+   :application.event/commented CommentedEvent
+   :application.event/copied-from CopiedFromEvent
+   :application.event/copied-to CopiedToEvent
    :application.event/created CreatedEvent
    :application.event/decided DecidedEvent
    :application.event/decision-requested DecisionRequestedEvent
@@ -152,9 +154,7 @@
    :application.event/remarked RemarkedEvent
    :application.event/resources-changed ResourcesChangedEvent
    :application.event/returned ReturnedEvent
-   :application.event/submitted SubmittedEvent
-   :application.event/copied-from CopiedFromEvent
-   :application.event/copied-to CopiedToEvent})
+   :application.event/submitted SubmittedEvent})
 
 (s/defschema Event
   (apply r/dispatch-on :event/type (flatten (seq event-schemas))))
