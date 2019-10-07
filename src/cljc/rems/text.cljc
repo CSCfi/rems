@@ -106,6 +106,7 @@
    :application.event/remarked :t.applications.events/remarked
    :application.event/resources-changed :t.applications.events/resources-changed
    :application.event/returned :t.applications.events/returned
+   :application.event/revoked :t.applications.events/revoked
    :application.event/submitted :t.applications.events/submitted})
 
 (defn localize-event [event-type]

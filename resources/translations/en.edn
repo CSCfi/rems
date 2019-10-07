@@ -132,6 +132,7 @@
                           :remarked "Remarked"
                           :resources-changed "Resources changed"
                           :returned "Changes requested"
+                          :revoked "Revoked"
                           :submitted "Applied"
                           :unknown "Unknown"}
                  :id "Id"

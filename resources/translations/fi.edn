@@ -130,6 +130,7 @@
                           :remarked "Huomio kirjattu"
                           :resources-changed "Resursseja muutettu"
                           :returned "Palautettu muokattavaksi"
+                          :revoked "Peruttu"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
                  :id "Tunniste"

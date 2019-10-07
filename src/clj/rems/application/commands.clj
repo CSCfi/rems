@@ -85,6 +85,9 @@
 (s/defschema ReturnCommand
   (assoc CommandBase
          :comment s/Str))
+(s/defschema RevokeCommand
+  (assoc CommandBase
+         :comment s/Str))
 (s/defschema SaveDraftCommand
   (assoc CommandBase
          ;; {s/Int s/Str} is what we want, but that isn't nicely representable as JSON
@@ -117,6 +120,7 @@
    :application.command/request-comment RequestCommentCommand
    :application.command/request-decision RequestDecisionCommand
    :application.command/return ReturnCommand
+   :application.command/revoke RevokeCommand
    :application.command/save-draft SaveDraftCommand
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand})
@@ -349,6 +353,11 @@
 (defmethod command-handler :application.command/close
   [cmd _application _injections]
   (ok {:event/type :application.event/closed
+       :application/comment (:comment cmd)}))
+
+(defmethod command-handler :application.command/revoke
+  [cmd _application _injections]
+  (ok {:event/type :application.event/revoked
        :application/comment (:comment cmd)}))
 
 (defmethod command-handler :application.command/request-decision
