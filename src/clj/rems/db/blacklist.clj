@@ -10,13 +10,15 @@
 ;; TODO copied from rems.application.events:
 (def UserId s/Str)
 
+(def ResourceId s/Str)
+
 (def BlacklistEvent
   {(s/optional-key :event/id) s/Int
    :event/type (s/enum :blacklist.event/add :blacklist.event/remove)
    :event/time DateTime
    :event/actor UserId
-   :blacklist/user s/Str
-   :blacklist/resource s/Str ;; i.e. resource/ext-id
+   :blacklist/user UserId
+   :blacklist/resource ResourceId ;; resource/ext-id
    :event/comment (s/maybe s/Str)})
 
 (def ^:private coerce-event
