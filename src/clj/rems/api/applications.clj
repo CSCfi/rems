@@ -264,6 +264,7 @@
     (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
     (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
     (command-endpoint :application.command/return commands/ReturnCommand)
+    (command-endpoint :application.command/revoke commands/RevokeCommand)
     (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
     (command-endpoint :application.command/submit commands/SubmitCommand)
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
