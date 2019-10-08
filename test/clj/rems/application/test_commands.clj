@@ -621,6 +621,28 @@
                         :actor handler-user-id
                         :comment "outdated"})))))
 
+(deftest test-revoke
+  (let [application (apply-events nil
+                                  [dummy-created-event
+                                   {:event/type :application.event/submitted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id}
+                                   {:event/type :application.event/approved
+                                    :event/time test-time
+                                    :event/actor handler-user-id
+                                    :application/id app-id
+                                    :application/comment ""}])]
+    (is (= {:event/type :application.event/revoked
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment "license violated"}
+           (ok-command application
+                       {:type :application.command/revoke
+                        :actor handler-user-id
+                        :comment "license violated"})))))
+
 (deftest test-decision
   (let [application (apply-events nil
                                   [dummy-created-event

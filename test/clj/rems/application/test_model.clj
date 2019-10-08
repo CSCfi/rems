@@ -695,6 +695,20 @@
                                                                      :application/events events
                                                                      :application/state :application.state/closed
                                                                      :application/todo nil})]
+                                    (is (= expected-application (apply-events events)))))
+
+                                (testing "> revoked"
+                                  (let [events (conj events
+                                                     {:event/type :application.event/revoked
+                                                      :event/time (DateTime. 5000)
+                                                      :event/actor "handler"
+                                                      :application/id 1
+                                                      :application/comment "license terms were violated"})
+                                        expected-application (merge expected-application
+                                                                    {:application/last-activity (DateTime. 5000)
+                                                                     :application/events events
+                                                                     :application/state :application.state/revoked
+                                                                     :application/todo nil})]
                                     (is (= expected-application (apply-events events)))))))))
 
                         (testing "> rejected"

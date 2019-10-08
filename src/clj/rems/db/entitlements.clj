@@ -94,41 +94,39 @@
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
   then we end the entitlement and call the REST callback."
   [application]
-  (when (contains? #{:application.state/approved :application.state/closed}
-                   (:application/state application))
-    (let [application-id (:application/id application)
-          current-members (set (concat (map :userid (:application/members application))
-                                       [(:application/applicant application)]))
-          past-members (set (map :userid (:application/past-members application)))
-          application-state (:application/state application)
-          application-resources (->> application
-                                     :application/resources
-                                     (map :resource/id)
-                                     set)
-          application-entitlements (get-entitlements-by-user application-id)
-          is-entitled? (fn [userid resource-id]
-                         (and (= :application.state/approved application-state)
-                              (contains? current-members userid)
-                              (accepted-licenses? application userid)
-                              (contains? application-resources resource-id)))
-          entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
-          entitlements-to-add (->> (for [userid (union current-members past-members)
-                                         :let [current-resource-ids (entitlements-by-user userid)]
-                                         resource-id application-resources
-                                         :when (is-entitled? userid resource-id)
-                                         :when (not (contains? current-resource-ids resource-id))]
-                                     {userid #{resource-id}})
-                                   (apply merge-with union))
-          entitlements-to-remove (->> (for [userid (union current-members past-members)
-                                            :let [resource-ids (entitlements-by-user userid)]
-                                            resource-id resource-ids
-                                            :when (not (is-entitled? userid resource-id))]
-                                        {userid #{resource-id}})
-                                      (apply merge-with union))
-          members-to-update (keys (merge entitlements-to-add entitlements-to-remove))]
-      (when (seq members-to-update)
-        (log/info "updating entitlements on application" application-id)
-        (doseq [[userid resource-ids] entitlements-to-add]
-          (grant-entitlements! application-id userid resource-ids))
-        (doseq [[userid resource-ids] entitlements-to-remove]
-          (revoke-entitlements! application-id userid resource-ids))))))
+  (let [application-id (:application/id application)
+        current-members (set (concat (map :userid (:application/members application))
+                                     [(:application/applicant application)]))
+        past-members (set (map :userid (:application/past-members application)))
+        application-state (:application/state application)
+        application-resources (->> application
+                                   :application/resources
+                                   (map :resource/id)
+                                   set)
+        application-entitlements (get-entitlements-by-user application-id)
+        is-entitled? (fn [userid resource-id]
+                       (and (= :application.state/approved application-state)
+                            (contains? current-members userid)
+                            (accepted-licenses? application userid)
+                            (contains? application-resources resource-id)))
+        entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
+        entitlements-to-add (->> (for [userid (union current-members past-members)
+                                       :let [current-resource-ids (entitlements-by-user userid)]
+                                       resource-id application-resources
+                                       :when (is-entitled? userid resource-id)
+                                       :when (not (contains? current-resource-ids resource-id))]
+                                   {userid #{resource-id}})
+                                 (apply merge-with union))
+        entitlements-to-remove (->> (for [userid (union current-members past-members)
+                                          :let [resource-ids (entitlements-by-user userid)]
+                                          resource-id resource-ids
+                                          :when (not (is-entitled? userid resource-id))]
+                                      {userid #{resource-id}})
+                                    (apply merge-with union))
+        members-to-update (keys (merge entitlements-to-add entitlements-to-remove))]
+    (when (seq members-to-update)
+      (log/info "updating entitlements on application" application-id)
+      (doseq [[userid resource-ids] entitlements-to-add]
+        (grant-entitlements! application-id userid resource-ids))
+      (doseq [[userid resource-ids] entitlements-to-remove]
+        (revoke-entitlements! application-id userid resource-ids)))))

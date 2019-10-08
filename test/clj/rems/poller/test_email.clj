@@ -5,8 +5,7 @@
             [rems.config]
             [rems.db.user-settings :as user-settings]
             [rems.locales]
-            [rems.poller.email :refer :all]
-            [rems.text :as text]))
+            [rems.poller.email :refer :all]))
 
 (use-fixtures
   :once
@@ -274,6 +273,17 @@
            :body "Dear assistant,\n\nHannah Handler has rejected the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}]
          (emails base-events {:application/id 7
                               :event/type :application.event/rejected
+                              :event/actor "handler"}))))
+
+(deftest test-revoked
+  (is (= [{:to-user "applicant"
+           :subject "Your application 2001/3, \"Application title\" has been revoked",
+           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been revoked.\n\nYou can view the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+          {:to-user "assistant"
+           :subject "(2001/3, \"Application title\") Application has been revoked",
+           :body "Dear assistant,\n\nHannah Handler has revoked the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}]
+         (emails base-events {:application/id 7
+                              :event/type :application.event/revoked
                               :event/actor "handler"}))))
 
 (deftest test-id-field

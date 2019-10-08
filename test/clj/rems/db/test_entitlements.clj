@@ -241,4 +241,35 @@
                   data (map #(assoc % :body (cheshire/parse-string (get-in % [:body "postData"]) keyword)) data)]
               (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
                       {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}]
+                     (map #(select-keys % [:path :body]) data))))))))
+
+    (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
+      (test-data/command! {:type :application.command/accept-licenses
+                           :application-id app-id
+                           :accepted-licenses [lic-id1 lic-id2]
+                           :actor applicant})
+      (test-data/command! {:type :application.command/submit
+                           :application-id app-id
+                           :actor applicant})
+      (test-data/command! {:type :application.command/approve
+                           :application-id app-id
+                           :actor admin
+                           :comment ""})
+      (entitlements-poller/run)
+
+      (testing "revoked application should end entitlements"
+        (with-stub-server server
+          (test-data/command! {:type :application.command/revoke
+                               :application-id app-id
+                               :actor admin
+                               :comment "Banned"})
+          (entitlements-poller/run)
+
+          (is (= 1 (count (stub/recorded-requests server))))
+          (testing "db"
+            (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
+          (testing "POST"
+            (let [data (stub/recorded-requests server)
+                  data (map #(assoc % :body (cheshire/parse-string (get-in % [:body "postData"]) keyword)) data)]
+              (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
                      (map #(select-keys % [:path :body]) data))))))))))

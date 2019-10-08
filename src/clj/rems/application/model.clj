@@ -91,7 +91,8 @@
               :application.command/remove-member
               :application.command/invite-member
               :application.command/uninvite-member
-              :application.command/close}})
+              :application.command/close
+              :application.command/revoke}})
 
 (def ^:private closed-permissions
   {:applicant #{:application.command/copy-as-new}
@@ -178,6 +179,7 @@
     :application.state/draft
     :application.state/rejected
     :application.state/returned
+    :application.state/revoked
     :application.state/submitted})
 
 (defmulti ^:private event-type-specific-application-view
@@ -343,6 +345,12 @@
   [application _event]
   (-> application
       (assoc :application/state :application.state/closed)
+      (assoc :application/todo nil)))
+
+(defmethod event-type-specific-application-view :application.event/revoked
+  [application _event]
+  (-> application
+      (assoc :application/state :application.state/revoked)
       (assoc :application/todo nil)))
 
 (defmethod event-type-specific-application-view :application.event/copied-from

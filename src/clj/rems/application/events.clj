@@ -128,6 +128,10 @@
   (assoc EventBase
          :event/type (s/enum :application.event/returned)
          :application/comment s/Str))
+(s/defschema RevokedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/revoked)
+         :application/comment s/Str))
 (s/defschema SubmittedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/submitted)))
@@ -154,6 +158,7 @@
    :application.event/remarked RemarkedEvent
    :application.event/resources-changed ResourcesChangedEvent
    :application.event/returned ReturnedEvent
+   :application.event/revoked RevokedEvent
    :application.event/submitted SubmittedEvent})
 
 (s/defschema Event

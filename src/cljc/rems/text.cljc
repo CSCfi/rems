@@ -65,7 +65,8 @@
    :application.state/approved :t.applications.states/approved
    :application.state/rejected :t.applications.states/rejected
    :application.state/closed :t.applications.states/closed
-   :application.state/returned :t.applications.states/returned})
+   :application.state/returned :t.applications.states/returned
+   :application.state/revoked :t.applications.states/revoked})
 
 (defn localize-state [state]
   (text (get states state :t.applications.states/unknown)))
@@ -106,6 +107,7 @@
    :application.event/remarked :t.applications.events/remarked
    :application.event/resources-changed :t.applications.events/resources-changed
    :application.event/returned :t.applications.events/returned
+   :application.event/revoked :t.applications.events/revoked
    :application.event/submitted :t.applications.events/submitted})
 
 (defn localize-event [event-type]
