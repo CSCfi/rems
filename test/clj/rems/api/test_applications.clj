@@ -570,6 +570,95 @@
                          handler)]
         (is (response-is-forbidden? response))))))
 
+(deftest test-application-api-license-attachments
+  (let [api-key "42"
+        applicant "alice"
+        non-applicant "bob"
+        owner "owner"
+        handler-user "developer"
+        cat-id (test-data/create-catalogue-item! {})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor applicant})
+        file-en (clojure.java.io/file "./test-data/test.txt")
+        filecontent-en {:tempfile file-en
+                        :content-type "text/plain"
+                        :filename "test.txt"
+                        :size (.length file-en)}
+        en-attachment-id (-> (request :post "/api/licenses/add_attachment")
+                             (assoc :params {"file" filecontent-en})
+                             (assoc :multipart-params {"file" filecontent-en})
+                             (authenticate api-key owner)
+                             handler
+                             read-ok-body
+                             :id)
+
+        file-fi (clojure.java.io/file "./test-data/test-fi.txt")
+        filecontent-fi {:tempfile file-fi
+                        :content-type "text/plain"
+                        :filename "test.txt"
+                        :size (.length file-fi)}
+        fi-attachment-id (-> (request :post "/api/licenses/add_attachment")
+                             (assoc :params {"file" filecontent-fi})
+                             (assoc :multipart-params {"file" filecontent-fi})
+                             (authenticate api-key owner)
+                             handler
+                             read-ok-body
+                             :id)
+
+        license-id (-> (request :post "/api/licenses/create")
+                       (authenticate api-key owner)
+                       (json-body {:licensetype "attachment"
+                                   ;; TODO different content for different languages
+                                   :localizations {:en {:title "en title"
+                                                        :textcontent "en text"
+                                                        :attachment-id en-attachment-id}
+                                                   :fi {:title "fi title"
+                                                        :textcontent "fi text"
+                                                        :attachment-id fi-attachment-id}}})
+                       handler
+                       read-ok-body
+                       :id)]
+    (testing "submit application"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id}))))
+    (testing "attach license to application"
+      (is (= {:success true}
+             (send-command handler-user {:type :application.command/add-licenses
+                                         :application-id app-id
+                                         :comment ""
+                                         :licenses [license-id]}))))
+    (testing "access license"
+      (testing "as applicant"
+        (is (= "hello from file\n"
+               (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/en"))
+                   (authenticate api-key applicant)
+                   handler
+                   assert-response-is-ok
+                   :body
+                   slurp)))
+        (testing "in finnish"
+          (is (= "tervehdys tiedostosta\n"
+                 (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/fi"))
+                     (authenticate api-key applicant)
+                     handler
+                     assert-response-is-ok
+                     :body
+                     slurp)))))
+      (testing "as handler"
+        (is (= "hello from file\n"
+               (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/en"))
+                   (authenticate api-key handler-user)
+                   handler
+                   assert-response-is-ok
+                   :body
+                   slurp))))
+      (testing "as non-applicant"
+        (is (response-is-forbidden?
+             (-> (request :get (str "/api/applications/" app-id "/license-attachment/" license-id "/en"))
+                 (authenticate api-key non-applicant)
+                 handler)))))))
+
 (deftest test-applications-api-security
   (let [api-key "42"
         applicant "alice"
