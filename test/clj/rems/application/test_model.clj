@@ -884,7 +884,8 @@
                   [:th (nowrap (name role))])]
                (for [state states]
                  [:tr
-                  [:th (nowrap (name state))]
+                  [:th {:valign :top}
+                   (nowrap (name state))]
                   (for [role roles]
                     (let [perm-sets (->> data
                                          (filter #(= state (:state %)))
@@ -897,7 +898,7 @@
                                          #{}
                                          (apply set/intersection perm-sets))
                           sometimes-perms (set/difference all-perms always-perms)]
-                      [:td {:style "vertical-align: top"}
+                      [:td {:valign :top}
                        "<!-- role: " (name role) " -->"
                        (for [perm (sort always-perms)]
                          [:div (nowrap (name perm))])
