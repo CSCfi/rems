@@ -300,22 +300,36 @@
    (component-info table)
    ;; slight abuse of example macro, but it works since reg-sub returns a fn which reagent doesn't render
    (example "data for examples"
-            (rf/reg-sub
-             ::example-table-rows
-             (fn [_ _]
-               [{:key 1
-                 :first-name {:value "Cody"}
-                 :last-name {:value "Turner"}
-                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
-                {:key 2
-                 :first-name {:value "Melanie"}
-                 :last-name {:value "Palmer"}
-                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
-                {:key 3
-                 :first-name {:value "Henry"}
-                 :last-name {:value "Herring"}
-                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}])))
-   (example "static table"
+            [:<>
+             (rf/reg-sub ::empty-table-rows (fn [_ _] []))
+             (rf/reg-sub
+              ::example-table-rows
+              (fn [_ _]
+                [{:key 1
+                  :first-name {:value "Cody"}
+                  :last-name {:value "Turner"}
+                  :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
+                 {:key 2
+                  :first-name {:value "Melanie"}
+                  :last-name {:value "Palmer"}
+                  :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
+                 {:key 3
+                  :first-name {:value "Henry"}
+                  :last-name {:value "Herring"}
+                  :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}]))])
+   (example "empty table"
+            [table {:id ::example0
+                    :columns [{:key :first-name
+                               :title "First name"
+                               :sortable? false
+                               :filterable? false}
+                              {:key :last-name
+                               :title "Last name"
+                               :sortable? false
+                               :filterable? false}]
+                    :rows [::empty-table-rows]
+                    :default-sort-column :first-name}])
+   (example "static table with three rows"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
                                        :title "First name"
