@@ -875,11 +875,11 @@
                [:tr
                 [:th "State \\ Role"]
                 (for [role roles]
-                  [:th (str role)])]
+                  [:th (name role)])]
                (for [state states]
                  [:tr
                   [:th {:style "text-align: left; vertical-align: top"}
-                   (str state)]
+                   (name state)]
                   (for [role roles]
                     (let [perm-sets (->> data
                                          (filter #(= state (:state %)))
@@ -894,9 +894,9 @@
                           sometimes-perms (set/difference all-perms always-perms)]
                       [:td {:style "vertical-align: top"}
                        (for [perm (sort always-perms)]
-                         [:div (str perm)])
+                         [:div (name perm)])
                        (for [perm (sort sometimes-perms)]
-                         [:div [:i "(" (str perm) ")"]])]))])])
+                         [:div [:i "(" (name perm) ")"]])]))])])
              (bw/beautify-html)
              (spit "docs/application-permissions.md"))))))
 
