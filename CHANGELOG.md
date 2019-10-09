@@ -68,6 +68,7 @@ Changes since v2.4
 - Show applicant's previous applications to handler (#1653)
 - Handler can close an application whenever after initial submission (#1669)
 - Documentation about [user permissions by application state](docs/application-permissions.md)
+- Revoking already approved applications (#1661)
 
 ### Enhancements
 - Improved version information in footer
