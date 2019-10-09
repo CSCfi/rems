@@ -799,15 +799,16 @@
                                     (is (= expected-application (apply-events events)))))
 
                                 (testing "> revoked"
-                                  (let [events (conj events
-                                                     {:event/type :application.event/revoked
-                                                      :event/time (DateTime. 5000)
-                                                      :event/actor "handler"
-                                                      :application/id 1
-                                                      :application/comment "license terms were violated"})
+                                  (let [new-event {:event/type :application.event/revoked
+                                                   :event/time (DateTime. 5000)
+                                                   :event/actor "handler"
+                                                   :application/id 1
+                                                   :application/comment "license terms were violated"}
+                                        events (conj events new-event)
+                                        enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
                                         expected-application (merge expected-application
                                                                     {:application/last-activity (DateTime. 5000)
-                                                                     :application/events events
+                                                                     :application/events enriched-events
                                                                      :application/state :application.state/revoked
                                                                      :application/todo nil})]
                                     (is (= expected-application (apply-events events)))))))))
