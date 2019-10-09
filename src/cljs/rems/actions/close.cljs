@@ -59,5 +59,4 @@
                  :on-set-comment #(rf/dispatch [::set-comment %])
                  :on-send #(rf/dispatch [::send-close {:application-id application-id
                                                        :comment comment
-                                                       :decision %
                                                        :on-finished on-finished}])}]))

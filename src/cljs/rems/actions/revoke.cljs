@@ -55,5 +55,4 @@
                   :on-set-comment #(rf/dispatch [::set-comment %])
                   :on-send #(rf/dispatch [::send-revoke {:application-id application-id
                                                          :comment comment
-                                                         :decision %
                                                          :on-finished on-finished}])}]))
