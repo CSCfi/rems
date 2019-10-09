@@ -19,6 +19,7 @@
             [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
+            [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
@@ -420,7 +421,7 @@
             [event-view e]))))
 
 (defn- get-application-phases [state]
-  (cond (contains? #{:application.state/rejected} state)
+  (cond (contains? #{:application.state/rejected :application.state/revoked} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
@@ -609,6 +610,7 @@
                               :application.command/remark [remark-action-button]
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
+                              :application.command/revoke [revoke-action-button]
                               :application.command/close [close-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
     (distinct (for [[command action] (partition 2 commands-and-actions)
@@ -629,6 +631,7 @@
                 [review-form app-id reload]
                 [remark-form app-id reload]
                 [close-form app-id show-comment-field? reload]
+                [revoke-form app-id reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
                 [approve-reject-form app-id reload]]]]

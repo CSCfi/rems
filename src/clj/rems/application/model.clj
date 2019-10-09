@@ -171,6 +171,10 @@
   (-> application
       (permissions/update-role-permissions closed-permissions)))
 
+(defmethod calculate-permissions :application.event/revoked
+  [application _event]
+  (-> application
+      (permissions/update-role-permissions closed-permissions)))
 
 ;;;; Application
 
