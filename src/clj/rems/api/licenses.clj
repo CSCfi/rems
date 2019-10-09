@@ -7,15 +7,27 @@
             [rems.api.services.licenses :as licenses]
             [rems.util :refer [getx-user-id]]
             [ring.middleware.multipart-params :as multipart]
+            [ring.swagger.json-schema :as rjs]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
+(s/defschema LicenseLocalization
+  {:title s/Str
+   :textcontent s/Str
+   (s/optional-key :attachment-id) (rjs/describe (s/maybe s/Int) "For licenses of type attachment")})
+
+(s/defschema LicenseLocalizations
+  (rjs/field {Language LicenseLocalization}
+             {:description "Licence localizations keyed by language"
+              :example {:en {:title "English title"
+                             :textcontent "English content"}
+                        :fi {:title "Finnish title"
+                             :textcontent "Finnish content"}}}))
+
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")
-   :localizations {s/Keyword {:title s/Str
-                              :textcontent s/Str
-                              (s/optional-key :attachment-id) (s/maybe s/Int)}}})
+   :localizations LicenseLocalizations})
 
 (s/defschema AttachmentMetadata
   {:id s/Int})
