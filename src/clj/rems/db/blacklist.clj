@@ -24,7 +24,6 @@
 (def ^:private coerce-event
   (coerce/coercer BlacklistEvent json/coercion-matcher))
 
-;; TODO factor out some utils from here and rems.db.events?
 (defn- json->event [json]
   (let [result (-> json
                    json/parse-string
@@ -43,7 +42,7 @@
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))
-         :event/id (:id event))) ;; TODO :event/id ranges conflict between blacklist_event and application_event
+         :event/id (:id event)))
 
 (defn get-events [params]
   (mapv event-from-db (db/get-blacklist-events {:user (:blacklist/user params)
