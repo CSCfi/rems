@@ -62,6 +62,7 @@
                  [org.webjars/font-awesome "5.10.1"]
                  [org.webjars/jquery "3.4.1"]
                  [prismatic/schema-generators "0.1.3"]
+                 [px0/beautify-web "0.1.1"]
                  [re-frame "0.10.8"]
                  [reagent "0.9.0-rc1"] ; includes React 16.9 support https://github.com/reagent-project/reagent/pull/443
                  [reagent-utils "0.3.3"]

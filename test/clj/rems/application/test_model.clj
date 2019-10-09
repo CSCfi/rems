@@ -1,5 +1,6 @@
 (ns rems.application.test-model
-  (:require [clojure.set :as set]
+  (:require [beautify-web.core :as bw]
+            [clojure.set :as set]
             [clojure.test :refer :all]
             [hiccup.core :as hiccup]
             [rems.api.schema :as schema]
@@ -869,6 +870,7 @@
             states (->> data (map :state) distinct) ; keep states in the order they appear in the tests
             roles (->> data (map :role) distinct sort)]
         (->> (hiccup/html
+              "# Application Permissions Reference\n\n"
               [:table {:border 1}
                [:tr
                 [:th "State \\ Role"]
@@ -895,7 +897,8 @@
                          [:div (str perm)])
                        (for [perm (sort sometimes-perms)]
                          [:div [:i "(" (str perm) ")"]])]))])])
-             (spit "docs/application-permissions.html"))))))
+             (bw/beautify-html)
+             (spit "docs/application-permissions.md"))))))
 
 (deftest test-calculate-permissions
   (testing "commenter may comment only once"
