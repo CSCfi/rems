@@ -1,15 +1,15 @@
 {:t
  {:actions {:accept-invitation "Hyväksy kutsu"
-            :accept-invitation-success "Hakemukseen liittyminen onnistui."
             :accept-invitation-already-member "Olet jo jäsen."
+            :accept-invitation-success "Hakemukseen liittyminen onnistui."
             :accept-licenses "Hyväksy käyttöehdot"
             :add-licenses "Lisää käyttöehto"
             :add-member "Lisää jäsen"
-            :change-resources "Muuta resursseja"
             :approve "Hyväksy"
             :approve-reject "Hyväksy tai hylkää"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama hakemuslomake ja työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
+            :change-resources "Muuta resursseja"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
             :comment "Kommentti"
@@ -25,11 +25,10 @@
             :licenses-selection "Lisää käyttöehtoja"
             :load-application-states "Lataa hakemusten tilat"
             :member "Jäsen"
-            :member-name "Nimi"
             :member-email "Sähköposti"
+            :member-name "Nimi"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
             :no-handled-yet "Ei käsiteltyjä hakemuksia."
-            :todo-applications "Avoimet hakemukset"
             :reject "Hylkää"
             :remark "Kirjaa huomio"
             :remark-public "Näytä huomio hakijalle"
@@ -41,7 +40,8 @@
             :return "Palauta hakijalle"
             :review "Katselmoi"
             :show-publications "Näytä julkaisut"
-            :show-throughput-times "Näytä käsittelyajat"}
+            :show-throughput-times "Näytä käsittelyajat"
+            :todo-applications "Avoimet hakemukset"}
   :administration {:active "Aktiivinen"
                    :archive "Arkistoi"
                    :back "Takaisin"
