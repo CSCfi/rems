@@ -48,3 +48,20 @@
 (defn get-events [params]
   (mapv event-from-db (db/get-blacklist-events {:user (:blacklist/user params)
                                                 :resource (:blacklist/resource params)})))
+
+(defn- events->blacklist [events]
+  ;; TODO: move computation to db for performance
+  ;; should be enough to check latest event per user-resource pair
+  (reduce (fn [blacklist event]
+            (let [entry {:resource (:blacklist/resource event)
+                         :user (:blacklist/user event)}]
+              (case (:event/type event)
+                :blacklist.event/add
+                (conj blacklist entry)
+                :blacklist.event/remove
+                (disj blacklist entry))))
+          #{}
+          events))
+
+(defn get-blacklist [params]
+  (vec (sort-by (juxt :resource :user) (events->blacklist (get-events params)))))

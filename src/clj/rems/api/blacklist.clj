@@ -1,7 +1,9 @@
 (ns rems.api.blacklist
-  (:require [compojure.api.sweet :refer :all]
+  (:require [clj-time.core :as time]
+            [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.db.blacklist :as blacklist]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]))
 
@@ -15,19 +17,31 @@
   [{:resource blacklist/ResourceId
     :user blacklist/UserId}])
 
+(defn- command->event [command]
+  {:event/type (case (:command command)
+                 :add :blacklist.event/add
+                 :remove :blacklist.event/remove)
+   :event/actor (getx-user-id)
+   :event/time (time/now)
+   :blacklist/user (:user command)
+   :blacklist/resource (:resource command)
+   :event/comment (:comment command)})
+
 (def blacklist-api
   (context "/blacklist" []
     :tags ["blacklist"]
     (GET "/" []
       :summary "Get blacklist entries"
       :roles #{:handler :owner}
-      :query-params [{user :- blacklist/UserId false}
-                     {resource :- blacklist/ResourceId false}]
+      :query-params [{user :- blacklist/UserId nil}
+                     {resource :- blacklist/ResourceId nil}]
       :return BlacklistResponse
-      (ok []))
+      (ok (blacklist/get-blacklist {:blacklist/user user
+                                    :blacklist/resource resource})))
     (POST "/command" []
       :summary "Add or remove a blacklist entry"
       :roles #{:owner}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
+      (blacklist/add-event! (command->event command))
       (ok {:success true}))))

@@ -535,4 +535,5 @@ WHERE 1=1
 /*~ (when (:user params) */
   AND eventdata->>'blacklist/user' = :user
 /*~ ) ~*/
+ORDER BY id ASC
 ;
