@@ -287,42 +287,25 @@
         <th valign="top">revoked</th>
         <td valign="top">
             <!-- role: applicant -->
-            <div>accept‑licenses</div>
             <div>copy‑as‑new</div>
-            <div>remove‑member</div>
-            <div>uninvite‑member</div>
         </td>
         <td valign="top">
             <!-- role: commenter -->
             <div>see‑everything</div>
-            <div>comment</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
             <div>see‑everything</div>
-            <div>decide</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: everyone-else -->
-            <div>accept‑invitation</div>
         </td>
         <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
-            <div>add‑member</div>
-            <div>change‑resources</div>
-            <div>close</div>
-            <div>invite‑member</div>
-            <div>remark</div>
-            <div>remove‑member</div>
-            <div>revoke</div>
-            <div>uninvite‑member</div>
         </td>
         <td valign="top">
             <!-- role: member -->
-            <div>accept‑licenses</div>
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
