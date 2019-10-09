@@ -7,7 +7,7 @@
      (rems.guide-functions/render-component-info
       (:name m#)
       (ns-name (:ns m#))
-      (:doc m#))))
+      m#)))
 
 (defmacro example
   ([title content]
