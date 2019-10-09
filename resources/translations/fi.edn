@@ -39,7 +39,7 @@
             :resources-selection "Hakemukseen liitettävät resurssit:"
             :return "Palauta hakijalle"
             :review "Katselmoi"
-            :revoke "Peru"
+            :revoke "Peru käyttöoikeus"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä käsittelyajat"
             :todo-applications "Avoimet hakemukset"}

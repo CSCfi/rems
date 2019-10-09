@@ -39,7 +39,7 @@
             :resources-selection "Resources included in the application:"
             :return "Return to applicant"
             :review "Review"
-            :revoke "Revoke"
+            :revoke "Revoke entitlement"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
             :todo-applications "Open applications"}
