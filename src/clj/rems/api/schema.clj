@@ -71,12 +71,14 @@
 (s/defschema LocalizedString
   (rjs/field {s/Keyword s/Str}
              {:example {:fi "text in Finnish"
-                        :en "text in English"}}))
+                        :en "text in English"}
+              :description "Text values keyed by languages"}))
 
 (s/defschema LocalizedInt
   (rjs/field {s/Keyword s/Int}
              {:example {:fi 1
-                        :en 2}}))
+                        :en 2}
+              :description "Integers keyed by languages"}))
 
 (s/defschema V2Resource
   {:resource/id s/Int
