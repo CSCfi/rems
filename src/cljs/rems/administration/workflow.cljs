@@ -10,7 +10,7 @@
             [rems.common-util :refer [andstr]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title localize-time text text-format]]
+            [rems.text :refer [get-localized-title text text-format]]
             [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
@@ -63,8 +63,6 @@
                                                                          (map enrich-user)
                                                                          (map :display)
                                                                          (str/join ", "))]
-              [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
-              [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? workflow)]]]}]
    [licenses-view (:licenses workflow) language]
    (let [id (:id workflow)]
