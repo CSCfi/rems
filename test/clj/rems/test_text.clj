@@ -34,9 +34,7 @@
           (is (valid-localization? (localize-state s))))))))
 
 (deftest test-all-event-localizations
-  (let [event-types (-> events/event-schemas
-                        (dissoc :application.event/decided)
-                        keys)]
+  (let [event-types (keys events/event-schemas)]
     (is (= (-> (:events (:applications (:t (loc-en))))
                (dissoc :unknown)
                (keys)

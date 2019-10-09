@@ -97,6 +97,7 @@
    :application.event/copied-from :t.applications.events/copied-from
    :application.event/copied-to :t.applications.events/copied-to
    :application.event/created :t.applications.events/created
+   :application.event/decided :t.applications.events/decided
    :application.event/decision-requested :t.applications.events/decision-requested
    :application.event/draft-saved :t.applications.events/draft-saved
    :application.event/licenses-accepted :t.applications.events/licenses-accepted
@@ -113,21 +114,19 @@
    :application.event/revoked :t.applications.events/revoked
    :application.event/submitted :t.applications.events/submitted})
 
-(defn- decision-to-text [decision]
-  (case decision
-    :approved :t.applications.events/approved
-    :rejected :t.applications.events/rejected
-    :t.applications.events/unknown))
+(defn localize-decision [event]
+  (let [decision (:application/decision event)]
+    (text-format
+     (case decision
+       :approved :t.applications.events/approved
+       :rejected :t.applications.events/rejected
+       :t.applications.events/unknown)
+     (application-util/get-member-name (:event/actor-attributes event)))))
 
 (defn localize-event [event]
-  (let [event-type (:event/type event)
-        base (case event-type
-               :application.event/decided
-               (decision-to-text (:application/decision event))
-
-               (get event-types event-type :t.applications.events/unknown))]
+  (let [event-type (:event/type event)]
     (text-format
-     base
+     (get event-types event-type :t.applications.events/unknown)
      (application-util/get-member-name (:event/actor-attributes event))
      (case event-type
        :application.event/comment-requested

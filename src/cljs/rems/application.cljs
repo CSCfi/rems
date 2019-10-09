@@ -32,7 +32,7 @@
             [rems.phase :refer [phases]]
             [rems.search :as search]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-event localized localize-state localize-time text text-format]]
+            [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
             [rems.util :refer [navigate! fetch parse-int post! focus-input-field]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -384,6 +384,8 @@
 (defn- format-event [event]
   {:user (:commonName (:event/actor-attributes event))
    :event (localize-event event)
+   :decision (when (= (:event/type event) :application.event/decided)
+               (localize-decision event))
    :comment (case (:event/type event)
               :application.event/copied-from
               [application-link (:application/copied-from event) (text :t.applications/application)]
@@ -397,11 +399,13 @@
    :request-id (:application/request-id event)
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time user event comment]}]
+(defn- event-view [{:keys [time user event comment decision]}]
   [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label event]
+    (when decision
+      [:div decision])
     (when comment
       [:div comment])]])
 

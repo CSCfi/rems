@@ -117,6 +117,7 @@
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."
                           :created "%1 loi uuden hakemuksen."
                           :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
+                          :decided "%1 teki päätöksen hakemukselle."
                           :draft-saved "%1 tallensi hakemuksen luonnoksen."
                           :licenses-accepted "%1 hyväksyi käyttöehdot."
                           :licenses-added "%1 lisäsi käyttöehtoja."
