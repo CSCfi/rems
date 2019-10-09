@@ -893,6 +893,7 @@
                                          (apply set/intersection perm-sets))
                           sometimes-perms (set/difference all-perms always-perms)]
                       [:td {:style "vertical-align: top"}
+                       "<!-- role: " (name role) " -->"
                        (for [perm (sort always-perms)]
                          [:div (name perm)])
                        (for [perm (sort sometimes-perms)]

@@ -16,6 +16,7 @@
     <tr>
         <th style="text-align: left; vertical-align: top">draft</th>
         <td style="vertical-align: top">
+            <!-- role: applicant -->
             <div>accept-licenses</div>
             <div>change-resources</div>
             <div>close</div>
@@ -26,19 +27,32 @@
             <div>submit</div>
             <div>uninvite-member</div>
         </td>
-        <td style="vertical-align: top"></td>
-        <td style="vertical-align: top"></td>
         <td style="vertical-align: top">
+            <!-- role: commenter -->
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: decider -->
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: everyone-else -->
             <div>accept-invitation</div>
         </td>
-        <td style="vertical-align: top"></td>
         <td style="vertical-align: top">
+            <!-- role: handler -->
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: member -->
             <div>accept-licenses</div>
             <div>copy-as-new</div>
         </td>
-        <td style="vertical-align: top"></td>
-        <td style="vertical-align: top"></td>
         <td style="vertical-align: top">
+            <!-- role: past-commenter -->
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: past-decider -->
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: reporter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
@@ -46,25 +60,30 @@
     <tr>
         <th style="text-align: left; vertical-align: top">submitted</th>
         <td style="vertical-align: top">
+            <!-- role: applicant -->
             <div>accept-licenses</div>
             <div>copy-as-new</div>
             <div>remove-member</div>
             <div>uninvite-member</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: commenter -->
             <div>see-everything</div>
             <div>comment</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: decider -->
             <div>see-everything</div>
             <div>decide</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: everyone-else -->
             <div>accept-invitation</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: handler -->
             <div>see-everything</div>
             <div>add-licenses</div>
             <div>add-member</div>
@@ -81,18 +100,22 @@
             <div>uninvite-member</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: member -->
             <div>accept-licenses</div>
             <div>copy-as-new</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-commenter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-decider -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: reporter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
@@ -100,6 +123,7 @@
     <tr>
         <th style="text-align: left; vertical-align: top">returned</th>
         <td style="vertical-align: top">
+            <!-- role: applicant -->
             <div>accept-licenses</div>
             <div>change-resources</div>
             <div>close</div>
@@ -111,19 +135,23 @@
             <div>uninvite-member</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: commenter -->
             <div>see-everything</div>
             <div>comment</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: decider -->
             <div>see-everything</div>
             <div>decide</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: everyone-else -->
             <div>accept-invitation</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: handler -->
             <div>see-everything</div>
             <div>add-licenses</div>
             <div>add-member</div>
@@ -136,18 +164,22 @@
             <div>uninvite-member</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: member -->
             <div>accept-licenses</div>
             <div>copy-as-new</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-commenter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-decider -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: reporter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
@@ -155,25 +187,30 @@
     <tr>
         <th style="text-align: left; vertical-align: top">approved</th>
         <td style="vertical-align: top">
+            <!-- role: applicant -->
             <div>accept-licenses</div>
             <div>copy-as-new</div>
             <div>remove-member</div>
             <div>uninvite-member</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: commenter -->
             <div>see-everything</div>
             <div>comment</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: decider -->
             <div>see-everything</div>
             <div>decide</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: everyone-else -->
             <div>accept-invitation</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: handler -->
             <div>see-everything</div>
             <div>add-member</div>
             <div>change-resources</div>
@@ -184,18 +221,22 @@
             <div>uninvite-member</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: member -->
             <div>accept-licenses</div>
             <div>copy-as-new</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-commenter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-decider -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: reporter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
@@ -203,30 +244,40 @@
     <tr>
         <th style="text-align: left; vertical-align: top">closed</th>
         <td style="vertical-align: top">
+            <!-- role: applicant -->
             <div>copy-as-new</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: commenter -->
             <div>see-everything</div>
         </td>
         <td style="vertical-align: top">
-            <div>see-everything</div>
-        </td>
-        <td style="vertical-align: top"></td>
-        <td style="vertical-align: top">
+            <!-- role: decider -->
             <div>see-everything</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: everyone-else -->
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: handler -->
+            <div>see-everything</div>
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: member -->
             <div>copy-as-new</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-commenter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-decider -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: reporter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
@@ -234,30 +285,40 @@
     <tr>
         <th style="text-align: left; vertical-align: top">rejected</th>
         <td style="vertical-align: top">
+            <!-- role: applicant -->
             <div>copy-as-new</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: commenter -->
             <div>see-everything</div>
         </td>
         <td style="vertical-align: top">
-            <div>see-everything</div>
-        </td>
-        <td style="vertical-align: top"></td>
-        <td style="vertical-align: top">
+            <!-- role: decider -->
             <div>see-everything</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: everyone-else -->
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: handler -->
+            <div>see-everything</div>
+        </td>
+        <td style="vertical-align: top">
+            <!-- role: member -->
             <div>copy-as-new</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-commenter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: past-decider -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
         <td style="vertical-align: top">
+            <!-- role: reporter -->
             <div>see-everything</div>
             <div>remark</div>
         </td>
