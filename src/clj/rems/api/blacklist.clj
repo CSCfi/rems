@@ -8,12 +8,14 @@
             [schema.core :as s]))
 
 (s/defschema BlacklistCommand
+  ;; TODO should these be namespaced keywords?
   {:command (s/enum :add :remove)
    :resource blacklist/ResourceId
    :user blacklist/UserId
    :comment s/Str})
 
 (s/defschema BlacklistResponse
+  ;; TODO should these be namespaced keywords?
   [{:resource blacklist/ResourceId
     :user blacklist/UserId}])
 
@@ -40,6 +42,7 @@
                                     :blacklist/resource resource})))
     (POST "/command" []
       :summary "Add or remove a blacklist entry"
+      ;; TODO who can add entries?
       :roles #{:owner}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
