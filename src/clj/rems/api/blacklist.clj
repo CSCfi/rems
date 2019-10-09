@@ -8,8 +8,7 @@
             [schema.core :as s]))
 
 (s/defschema BlacklistCommand
-  {:command (s/enum :add :remove)
-   :resource blacklist/ResourceId
+  {:resource blacklist/ResourceId
    :user blacklist/UserId
    :comment s/Str})
 
@@ -18,10 +17,7 @@
     :user blacklist/UserId}])
 
 (defn- command->event [command]
-  {:event/type (case (:command command)
-                 :add :blacklist.event/add
-                 :remove :blacklist.event/remove)
-   :event/actor (getx-user-id)
+  {:event/actor (getx-user-id)
    :event/time (time/now)
    :blacklist/user (:user command)
    :blacklist/resource (:resource command)
@@ -38,11 +34,22 @@
       :return BlacklistResponse
       (ok (blacklist/get-blacklist {:blacklist/user user
                                     :blacklist/resource resource})))
-    (POST "/command" []
-      :summary "Add or remove a blacklist entry"
+    (POST "/add" []
+      :summary "Add a blacklist entry"
       ;; TODO who can add entries? (see #1682)
       :roles #{:owner}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (blacklist/add-event! (command->event command))
+      (blacklist/add-event! (assoc (command->event command)
+                                   :event/type :blacklist.event/add))
+      (ok {:success true}))
+
+    (POST "/remove" []
+      :summary "Remove a blacklist entry"
+      ;; TODO who can remove entries? (see #1682)
+      :roles #{:owner}
+      :body [command BlacklistCommand]
+      :return schema/SuccessResponse
+      (blacklist/add-event! (assoc (command->event command)
+                                   :event/type :blacklist.event/remove))
       (ok {:success true}))))
