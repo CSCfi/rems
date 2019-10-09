@@ -1,5 +1,9 @@
 (ns rems.application.test-model
-  (:require [clojure.test :refer :all]
+  (:require [beautify-web.core :as bw]
+            [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.test :refer :all]
+            [hiccup.core :as hiccup]
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
@@ -236,10 +240,15 @@
                     :get-users-with-role get-users-with-role
                     :get-workflow get-workflow
                     :get-attachments-for-application get-attachments-for-application}
+        sample-applications (atom [])
+        save-sample-application (fn [app]
+                                  (swap! sample-applications conj app)
+                                  app)
         apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events
                                              (model/build-application-view injections)
+                                             save-sample-application
                                              permissions/cleanup)]
                          (is (contains? model/states (:application/state application)))
                          application))]
@@ -982,10 +991,57 @@
                                                                  :application/events enriched-events
                                                                  :application/members #{}
                                                                  :application/past-members #{{:userid "member"}}})]
-                                (is (= expected-application (apply-events events)))))))))))))))))))
+                                (is (= expected-application (apply-events events)))))))))))))))))
+
+    (testing "generate report: permissions by role and state"
+      (let [apps @sample-applications
+            state-role-permissions (fn [app]
+                                     (map (fn [[role permissions]]
+                                            {:state (:application/state app)
+                                             :role role
+                                             :permissions permissions})
+                                          (:rems.permissions/role-permissions app)))
+            data (mapcat state-role-permissions apps)
+            states (->> data (map :state) distinct) ; keep states in the order they appear in the tests
+            roles (->> data (map :role) distinct sort)
+            nowrap (fn [s]
+                     ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
+                     (-> s
+                         (str/replace " " "\u00A0") ;  non-breaking space
+                         (str/replace "-" "\u2011")))] ; non-breaking hyphen
+        (->> (hiccup/html
+              "# Application Permissions Reference\n\n"
+              [:table {:border 1}
+               [:tr
+                [:th (nowrap "State \\ Role")]
+                (for [role roles]
+                  [:th (nowrap (name role))])]
+               (for [state states]
+                 [:tr
+                  [:th {:valign :top}
+                   (nowrap (name state))]
+                  (for [role roles]
+                    (let [perm-sets (->> data
+                                         (filter #(= state (:state %)))
+                                         (filter #(= role (:role %)))
+                                         (map :permissions))
+                          all-perms (apply set/union perm-sets)
+                          ;; the states and permissions are not guaranteed to have a 1:1 mapping,
+                          ;; so we separate conditional permissions from those that are always there
+                          always-perms (if (empty? perm-sets)
+                                         #{}
+                                         (apply set/intersection perm-sets))
+                          sometimes-perms (set/difference all-perms always-perms)]
+                      [:td {:valign :top}
+                       "<!-- role: " (name role) " -->"
+                       (for [perm (sort always-perms)]
+                         [:div (nowrap (name perm))])
+                       (for [perm (sort sometimes-perms)]
+                         [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
+             (bw/beautify-html)
+             (spit "docs/application-permissions.md"))))))
 
 (deftest test-calculate-permissions
-  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
   (testing "commenter may comment only once"
     (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
                                                               :event/actor "applicant"}
