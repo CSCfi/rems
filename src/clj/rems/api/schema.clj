@@ -68,14 +68,19 @@
   {:success s/Bool
    (s/optional-key :errors) [s/Any]})
 
+(s/defschema Language
+  (rjs/field s/Keyword
+             {:description "A language code"
+              :example "en"}))
+
 (s/defschema LocalizedString
-  (rjs/field {s/Keyword s/Str}
+  (rjs/field {Language s/Str}
              {:example {:fi "text in Finnish"
                         :en "text in English"}
               :description "Text values keyed by languages"}))
 
 (s/defschema LocalizedInt
-  (rjs/field {s/Keyword s/Int}
+  (rjs/field {Language s/Int}
              {:example {:fi 1
                         :en 2}
               :description "Integers keyed by languages"}))
