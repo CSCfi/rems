@@ -382,32 +382,32 @@
      (application-list/format-application-id config application)]))
 
 (defn- format-event [event]
-  {:userid (:event/actor event)
-   :event (localize-event (:event/type event))
+  {:user (:commonName (:event/actor-attributes event))
+   :event (localize-event event)
+   :decision (when (= (:event/type event) :application.event/decided)
+               (localize-decision event))
    :comment (case (:event/type event)
-              :application.event/decided
-              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
-
               :application.event/copied-from
               [application-link (:application/copied-from event) (text :t.applications/application)]
 
               :application.event/copied-to
               [application-link (:application/copied-to event) (text :t.applications/application)]
 
-              (:application/comment event))
+              (let [comment (:application/comment event)]
+                (when (not (empty? comment))
+                  (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
-   :commenters (:application/commenters event)
-   :deciders (:application/deciders event)
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time userid event comment commenters deciders]}]
+(defn- event-view [{:keys [time user event comment decision]}]
   [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
-    [:div.col-form-label [:span userid] " — " [:span event]
-     (when-let [targets (seq (concat commenters deciders))]
-       [:span ": " (str/join ", " targets)])]
-    (when comment [:div comment])]])
+    [:div.col-form-label event]
+    (when decision
+      [:div decision])
+    (when comment
+      [:div comment])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]

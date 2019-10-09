@@ -475,8 +475,8 @@
                          :field/value)]
     (assoc application :application/description (str description))))
 
-(defn- enrich-resources [app-resources get-catalogue-item]
-  (->> app-resources
+(defn- enrich-resources [resources get-catalogue-item]
+  (->> resources
        (map (fn [resource]
               (let [item (get-catalogue-item (:catalogue-item/id resource))]
                 {:catalogue-item/id (:catalogue-item/id resource)
@@ -513,6 +513,28 @@
                                                           :license/attachment-filename (localization-for :textcontent license)})))))
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
+
+(defn- enrich-events [events get-user get-catalogue-item]
+  (->> events
+       (map (fn [event]
+              (let [event-type (:event/type event)]
+                (merge event
+                       {:event/actor-attributes (get-user (:event/actor event))}
+                       (case event-type
+                         :application.event/resources-changed
+                         {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
+
+                         :application.event/decision-requested
+                         {:application/deciders (mapv get-user (:application/deciders event))}
+
+                         :application.event/comment-requested
+                         {:application/commenters (mapv get-user (:application/commenters event))}
+
+                         (:application.event/member-added
+                          :application.event/member-removed)
+                         {:application/member (get-user (:userid (:application/member event)))}
+
+                         {})))))))
 
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
@@ -561,6 +583,7 @@
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
+        (update :application/events enrich-events get-user get-catalogue-item)
         (assoc :application/applicant-attributes (get-user (:application/applicant application)))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)

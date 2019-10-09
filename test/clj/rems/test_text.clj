@@ -45,7 +45,10 @@
                 (sort))))
     (with-language :en
       (fn []
-        (is (not (valid-localization? (localize-event "foobar"))))
+        (is (not (valid-localization? (localize-event {:event/type "foobar"}))))
         (doseq [event-type event-types]
           (testing event-type
-            (is (valid-localization? (localize-event event-type)))))))))
+            (is (valid-localization? (localize-event
+                                      (merge {:event/type event-type}
+                                             (when (= event-type :application.event/decided)
+                                               {:application/decision :approved})))))))))))

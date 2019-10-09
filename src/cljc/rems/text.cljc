@@ -1,12 +1,16 @@
 (ns rems.text
   #?(:clj (:require [clj-time.core :as time]
                     [clj-time.format :as format]
+                    [clojure.string :as str]
+                    [rems.application-util :as application-util]
                     [rems.context :as context]
                     [rems.locales :as locales]
                     [taoensso.tempura :refer [tr]])
      :cljs (:require [cljs-time.core :as time]
                      [cljs-time.format :as format]
+                     [clojure.string :as str]
                      [re-frame.core :as rf]
+                     [rems.application-util :as application-util]
                      [taoensso.tempura :refer [tr]])))
 
 (defn with-language [lang f]
@@ -110,14 +114,40 @@
    :application.event/revoked :t.applications.events/revoked
    :application.event/submitted :t.applications.events/submitted})
 
-(defn localize-event [event-type]
-  (text (get event-types event-type :t.applications.events/unknown)))
+(defn localize-decision [event]
+  (let [decision (:application/decision event)]
+    (text-format
+     (case decision
+       :approved :t.applications.events/approved
+       :rejected :t.applications.events/rejected
+       :t.applications.events/unknown)
+     (application-util/get-member-name (:event/actor-attributes event)))))
 
-(defn localize-decision [decision]
-  (text (case decision
-          :approved :t.applications.events/approved
-          :rejected :t.applications.events/rejected
-          :t.applications.events/unknown)))
+(defn localize-event [event]
+  (let [event-type (:event/type event)]
+    (text-format
+     (get event-types event-type :t.applications.events/unknown)
+     (application-util/get-member-name (:event/actor-attributes event))
+     (case event-type
+       :application.event/comment-requested
+       (str/join ", " (mapv application-util/get-member-name
+                            (:application/commenters event)))
+
+       :application.event/decision-requested
+       (str/join ", " (mapv application-util/get-member-name
+                            (:application/deciders event)))
+
+       (:application.event/member-added
+        :application.event/member-invited
+        :application.event/member-removed
+        :application.event/member-uninvited)
+       (application-util/get-member-name (:application/member event))
+
+       :application.event/resources-changed
+       (str/join ", " (mapv #(localized (:catalogue-item/title %))
+                            (:application/resources event)))
+
+       nil))))
 
 (def ^:private time-format
   (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))

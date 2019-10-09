@@ -79,6 +79,7 @@ Changes since v2.4
 - Show three latest events as a default on the application page (#1632)
 - A change of language persists now after login thanks to a new language setting cookie.
 - A returning user will see the login screen in the correct language if he or she has the cookie.
+- Event descriptions on application page now use full name and are more thorough (#1634)
 
 ### Fixes
 - Entitlement API
