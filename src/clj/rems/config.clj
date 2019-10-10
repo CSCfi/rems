@@ -48,8 +48,5 @@
       (:body)
       (json/parse-string)))
 
-#_(get-oidc-config (getx env :oidc-domain))
-#_(get-oidc-config "test-user-auth.csc.fi")
-
 (defstate oidc-configuration :start (when-let [oidc-domain (env :oidc-domain)]
                                       (get-oidc-config (env :oidc-domain))))

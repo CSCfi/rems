@@ -27,8 +27,6 @@
                            {:basic-auth [(getx env :oidc-client-id)
                                          (getx env :oidc-client-secret)]
                             :form-params {:grant_type "authorization_code"
-                                          ;:client_id (getx env :oidc-client-id)
-                                          ;:client_secret (getx env :oidc-client-secret)
                                           :code (get-in request [:params :code])
                                           :redirect_uri (str (getx env :public-url) "oidc-callback")}})
                 ; FIXME Complains about Invalid cookie header in logs
