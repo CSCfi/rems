@@ -201,7 +201,7 @@
    :application/form Form
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
-                          (s/optional-key :workflow.dynamic/handlers) #{s/Str}}
+                          (s/optional-key :workflow.dynamic/handlers) [UserWithAttributes]}
    :application/roles #{s/Keyword}
    :application/permissions #{s/Keyword}
    :application/attachments [ApplicationAttachment]})
