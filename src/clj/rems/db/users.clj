@@ -79,5 +79,5 @@
   (-> userid
       get-user-attributes
       format-user
-      ;; hack for users without attributes
+      ;; in case user attributes were not found, return at least the userid
       (assoc :userid userid)))
