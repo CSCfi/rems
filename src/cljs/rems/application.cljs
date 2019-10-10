@@ -521,7 +521,7 @@
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         other-attributes (dissoc attributes :name :userid :email)
-        title (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
+        title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))]
     [collapsible/minimal
@@ -552,8 +552,7 @@
   "Renders the applicants, i.e. applicant and members."
   [application]
   (let [application-id (:application/id application)
-        applicant (merge {:userid (:application/applicant application)}
-                         (:application/applicant-attributes application))
+        applicant (:application/applicant application)
         members (:application/members application)
         invited-members (:application/invited-members application)
         permissions (:application/permissions application)
@@ -660,7 +659,7 @@
 (defn- applied-resources [application userid]
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
-        applicant? (= (:application/applicant application) userid)
+        applicant? (= (:userid (:application/applicant application)) userid)
         can-change-resources? (contains? permissions :application.command/change-resources)
         can-comment? (not applicant?)]
     [collapsible/component
@@ -697,7 +696,7 @@
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application userid]]
      (when (contains? (:application/permissions application) :see-everything)
-       [:div.mt-3 [previous-applications (get application :application/applicant)]])
+       [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application edit-application userid]]
      [:div.my-3 [application-fields application edit-application attachment-success]]]
     [:div.col-lg-4
@@ -751,7 +750,7 @@
                                        :organization "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42
-                                        :application/applicant "developer"}
+                                        :application/applicant {:userid "developer"}}
                           :accepted-licenses? true}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
@@ -760,12 +759,12 @@
                                        :name "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42
-                                        :application/applicant "developer"}}])
+                                        :application/applicant {:userid "developer"}}}])
    (example "member-info"
             [member-info {:element-id "info3"
                           :attributes {:userid "alice"}
                           :application {:application/id 42
-                                        :application/applicant "developer"}
+                                        :application/applicant {:userid "developer"}}
                           :group? true
                           :can-remove? true}])
    (example "member-info"
@@ -773,13 +772,13 @@
                           :attributes {:name "John Smith"
                                        :email "john.smith@invited.com"}
                           :application {:application/id 42
-                                        :application/applicant "developer"}
+                                        :application/applicant {:userid "developer"}}
                           :group? true}])
 
    (component-info applicants-info)
    (example "applicants-info"
             [applicants-info {:application/id 42
-                              :application/applicant "developer"
+                              :application/applicant {:userid "developer"}
                               :application/applicant-attributes {:userid "developer"
                                                                  :email "developer@uu.id"
                                                                  :name "Deve Loper"}

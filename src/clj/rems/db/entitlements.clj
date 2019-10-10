@@ -96,7 +96,7 @@
   [application]
   (let [application-id (:application/id application)
         current-members (set (concat (map :userid (:application/members application))
-                                     [(:application/applicant application)]))
+                                     [(:userid (:application/applicant application))]))
         past-members (set (map :userid (:application/past-members application)))
         application-state (:application/state application)
         application-resources (->> application

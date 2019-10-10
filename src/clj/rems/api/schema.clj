@@ -195,8 +195,7 @@
    (s/optional-key :application/copied-to) [{:application/id s/Int
                                              :application/external-id s/Str}]
    :application/last-activity DateTime
-   :application/applicant s/Str
-   :application/applicant-attributes UserWithAttributes
+   :application/applicant UserWithAttributes
    :application/members #{UserWithAttributes}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}

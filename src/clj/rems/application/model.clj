@@ -589,7 +589,8 @@
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
         (update :application/events enrich-events get-user get-catalogue-item)
-        (assoc :application/applicant-attributes (get-user (:application/applicant application)))
+        ;; TODO application/applicant should be {:userid "x"} originally
+        (assoc :application/applicant (get-user (:application/applicant application)))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)
         (enrich-workflow-handlers get-workflow)

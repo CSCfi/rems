@@ -20,4 +20,4 @@
          first)))
 
 (defn get-applicant-name [application]
-  (get-member-name (:application/applicant-attributes application)))
+  (get-member-name (:application/applicant application)))
