@@ -40,10 +40,9 @@
      (str ", \"" (:application/description application) "\""))))
 
 (defn- user-for-email [user]
-  (let [user-attributes (users/get-user-attributes user)]
-    (or (:commonName user-attributes)
-        (:eppn user-attributes)
-        user)))
+  (let [user-attributes (users/get-user user)]
+    (or (:name user-attributes)
+        (:userid user-attributes))))
 
 (defn- resources-for-email [application]
   (->> (:application/resources application)
@@ -261,8 +260,8 @@
         email (assoc email-spec
                      :from (:mail-from env)
                      :to (or (:to email-spec)
-                             (util/get-user-mail
-                              (users/get-user-attributes
+                             (:email
+                              (users/get-user
                                (:to-user email-spec)))))
         to-error (validate-address (:to email))]
     (log/info "sending email:" (pr-str email))

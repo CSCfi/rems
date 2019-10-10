@@ -15,12 +15,12 @@
   (testing "get-user-attributes"
     (is (= {:eppn "whatever"
             :some-attr "some value"}
-           (users/get-user-attributes "user1"))))
+           (#'users/get-user-attributes "user1"))))
 
   (testing "get-all-users"
     (is (= [{:eppn "whatever"
              :some-attr "some value"}]
-           (users/get-all-users))))
+           (#'users/get-all-users))))
 
   (testing "get-users-with-role"
     (roles/add-role! "user1" :owner)

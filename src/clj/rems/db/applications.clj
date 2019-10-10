@@ -55,7 +55,7 @@
     :items [catalogue-item-id]}))
 
 (defn- valid-user? [userid]
-  (not (nil? (users/get-user-attributes userid))))
+  (not (nil? (users/get-user userid))))
 
 (def ^:private command-injections
   {:valid-user? valid-user?
