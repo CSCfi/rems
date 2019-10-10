@@ -1,15 +1,14 @@
 (ns rems.application.commands
   (:require [clojure.test :refer :all]
-            [rems.util :refer [getx getx-in]]
-            [schema.core :as s]
-            [schema-refined.core :as r]
+            [rems.application-util :as application-util]
             [rems.application.model :as model]
-            [rems.application-util :refer [accepted-licenses?]]
             [rems.permissions :as permissions]
-            [rems.util :refer [assert-ex try-catch-ex]])
-  (:import [org.joda.time DateTime]
-           [clojure.lang ExceptionInfo]
-           [java.util UUID]))
+            [rems.util :refer [getx getx-in assert-ex try-catch-ex]]
+            [schema-refined.core :as r]
+            [schema.core :as s])
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]
+           [org.joda.time DateTime]))
 
 ;;; Schemas
 
@@ -193,7 +192,7 @@
       {:errors (vec errors)})))
 
 (defn- licenses-not-accepted-error [application userid]
-  (when-not (accepted-licenses? application userid)
+  (when-not (application-util/accepted-licenses? application userid)
     {:errors [{:type :t.actions.errors/licenses-not-accepted}]}))
 
 (defn- invalid-catalogue-items
@@ -254,12 +253,12 @@
   (when-not (valid-invitation-token? application token)
     {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
-(defn- all-members [application]
-  (conj (set (map :userid (:application/members application)))
-        (:userid (:application/applicant application))))
+(defn- member? [userid application]
+  (some #(= userid (:userid %))
+        (application-util/applicant-and-members application)))
 
 (defn already-member-error [application userid]
-  (when (contains? (all-members application) userid)
+  (when (member? userid application)
     {:errors [{:type :already-member :application-id (:application/id application)}]}))
 
 (defn- ok-with-data [data events]
@@ -361,8 +360,7 @@
 (defmethod command-handler :application.command/revoke
   [cmd application {:keys [add-to-blacklist!]}]
   (doseq [resource (:application/resources application)]
-    (doseq [user (cons (:application/applicant application)
-                       (:application/members application))]
+    (doseq [user (application-util/applicant-and-members application)]
       (add-to-blacklist! {:user (:userid user)
                           :resource (:resource/ext-id resource)
                           :actor (:actor cmd)
@@ -472,7 +470,7 @@
   [cmd application _injections]
   (or (when (= (:userid (:application/applicant application)) (:userid (:member cmd)))
         {:errors [{:type :cannot-remove-applicant}]})
-      (when-not (contains? (all-members application) (:userid (:member cmd)))
+      (when-not (member? (:userid (:member cmd)) application)
         {:errors [{:type :user-not-member :user (:member cmd)}]})
       (ok {:event/type :application.event/member-removed
            :application/member (:member cmd)

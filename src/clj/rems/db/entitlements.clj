@@ -4,8 +4,8 @@
             [clojure.set :refer [union]]
             [clojure.string :refer [join]]
             [clojure.tools.logging :as log]
+            [rems.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.application-util :refer [accepted-licenses?]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -95,8 +95,7 @@
   then we end the entitlement and call the REST callback."
   [application]
   (let [application-id (:application/id application)
-        current-members (set (concat (map :userid (:application/members application))
-                                     [(:userid (:application/applicant application))]))
+        current-members (set (map :userid (application-util/applicant-and-members application)))
         past-members (set (map :userid (:application/past-members application)))
         application-state (:application/state application)
         application-resources (->> application
@@ -107,7 +106,7 @@
         is-entitled? (fn [userid resource-id]
                        (and (= :application.state/approved application-state)
                             (contains? current-members userid)
-                            (accepted-licenses? application userid)
+                            (application-util/accepted-licenses? application userid)
                             (contains? application-resources resource-id)))
         entitlements-by-user (fn [userid] (or (application-entitlements userid) #{}))
         entitlements-to-add (->> (for [userid (union current-members past-members)
