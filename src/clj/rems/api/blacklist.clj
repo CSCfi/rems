@@ -3,6 +3,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.db.blacklist :as blacklist]
+            [rems.db.users :as users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]))
@@ -14,7 +15,7 @@
 
 (s/defschema BlacklistResponse
   [{:resource blacklist/ResourceId
-    :user blacklist/UserId}])
+    :user schema/UserWithAttributes}])
 
 (defn- command->event [command]
   {:event/actor (getx-user-id)
@@ -22,6 +23,9 @@
    :blacklist/user (:user command)
    :blacklist/resource (:resource command)
    :event/comment (:comment command)})
+
+(defn- format-blacklist-entry [entry]
+  (update entry :user users/get-user))
 
 (def blacklist-api
   (context "/blacklist" []
@@ -32,8 +36,10 @@
       :query-params [{user :- blacklist/UserId nil}
                      {resource :- blacklist/ResourceId nil}]
       :return BlacklistResponse
-      (ok (blacklist/get-blacklist {:blacklist/user user
-                                    :blacklist/resource resource})))
+      (->> (blacklist/get-blacklist {:blacklist/user user
+                                     :blacklist/resource resource})
+           (mapv format-blacklist-entry)
+           (ok)))
     (POST "/add" []
       :summary "Add a blacklist entry"
       :roles #{:owner :handler}
