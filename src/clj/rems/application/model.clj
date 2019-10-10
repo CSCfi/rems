@@ -100,7 +100,9 @@
    :member #{:application.command/copy-as-new}
    :handler #{:see-everything}
    :commenter #{:see-everything}
+   :past-commenter #{:see-everything}
    :decider #{:see-everything}
+   :past-decider #{:see-everything}
    :everyone-else #{}})
 
 (defmethod calculate-permissions :application.event/created

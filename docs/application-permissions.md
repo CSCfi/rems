@@ -270,12 +270,10 @@
         <td valign="top">
             <!-- role: past-commenter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: past-decider -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: reporter -->
@@ -311,12 +309,10 @@
         <td valign="top">
             <!-- role: past-commenter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: past-decider -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: reporter -->
@@ -352,12 +348,10 @@
         <td valign="top">
             <!-- role: past-commenter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: past-decider -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: reporter -->
