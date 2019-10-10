@@ -110,6 +110,13 @@
 
 (def UserId s/Str)
 
+(s/defschema User {:userid UserId})
+
+(s/defschema UserWithAttributes
+  {:userid UserId
+   :name s/Str
+   :email s/Str})
+
 (s/defschema Workflow
   {:id s/Int
    :organization s/Str
@@ -189,9 +196,8 @@
                                              :application/external-id s/Str}]
    :application/last-activity DateTime
    :application/applicant s/Str
-   :application/applicant-attributes {s/Keyword s/Str}
-   :application/members #{{:userid s/Str
-                           s/Keyword s/Str}}
+   :application/applicant-attributes UserWithAttributes
+   :application/members #{UserWithAttributes}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    :application/resources [V2Resource]
