@@ -6,6 +6,7 @@
             [mount.core :as mount]
             [postal.core :as postal]
             [rems.application-util :as application-util]
+            [rems.application.model]
             [rems.common-util :as common-util]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -40,11 +41,6 @@
    (when-not (empty? (:application/description application))
      (str ", \"" (:application/description application) "\""))))
 
-;; TODO user-for-email shouldn't need to call get-user since we add
-;; all this info to the application in rems.application.model/enrich-user-attributes
-(defn- user-for-email [user]
-  (application-util/get-member-name (users/get-user user)))
-
 (defn- resources-for-email [application]
   (->> (:application/resources application)
        (map #(get-in % [:catalogue-item/title context/*lang*]))
@@ -59,7 +55,7 @@
         (:application/applicant application)))
 
 (defn- handlers [application]
-  (mapv users/get-user
+  (mapv users/get-user ;; TODO get rid of this
         (get-in application [:application/workflow :workflow.dynamic/handlers])))
 
 (defn- other-handlers [event application]
@@ -79,7 +75,7 @@
          {:to-user (:userid recipient)
           :subject (text-format subject-text
                                 (application-util/get-member-name recipient)
-                                (user-for-email (:event/actor event))
+                                (application-util/get-member-name (:event/actor-attributes event))
                                 (format-application-for-email application)
                                 (application-util/get-applicant-name application)
                                 (resources-for-email application)
@@ -87,7 +83,7 @@
           :body (str
                  (text-format body-text
                               (application-util/get-member-name recipient)
-                              (user-for-email (:event/actor event))
+                              (application-util/get-member-name (:event/actor-attributes event))
                               (format-application-for-email application)
                               (application-util/get-applicant-name application)
                               (resources-for-email application)
@@ -163,7 +159,7 @@
                           :t.email.application-resubmitted/message)))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
-  (emails-to-recipients (mapv users/get-user (:application/commenters event))
+  (emails-to-recipients (:application/commenters event)
                         event application
                         :t.email.comment-requested/subject
                         :t.email.comment-requested/message))
@@ -187,14 +183,14 @@
                         :t.email.decided/message))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event application]
-  (emails-to-recipients (mapv users/get-user (:application/deciders event))
+  (emails-to-recipients (:application/deciders event)
                         event application
                         :t.email.decision-requested/subject
                         :t.email.decision-requested/message))
 
 (defmethod event-to-emails-impl :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
-  (emails-to-recipients [(users/get-user (:userid (:application/member event)))]
+  (emails-to-recipients [(:application/member event)]
                         event application
                         :t.email.member-added/subject
                         :t.email.member-added/message))
@@ -220,7 +216,8 @@
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
-    (event-to-emails-impl event (applications/get-unrestricted-application app-id))))
+    (event-to-emails-impl (rems.application.model/enrich-event event users/get-user (constantly nil))
+                          (applications/get-unrestricted-application app-id))))
 
 ;;; Generic poller infrastructure
 

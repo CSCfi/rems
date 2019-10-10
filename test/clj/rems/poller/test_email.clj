@@ -107,9 +107,11 @@
                                                         :get-users-with-role get-nothing
                                                         :get-attachments-for-application get-nothing}))]
      (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
-                   rems.db.users/get-user get-user
+                   rems.db.users/get-user get-user ;; TODO get rid of this
                    user-settings/get-user-settings (constantly {:language lang})]
-       (sort-emails (#'rems.poller.email/event-to-emails-impl event application)))))
+       (sort-emails (#'rems.poller.email/event-to-emails-impl
+                     (model/enrich-event event get-user #{})
+                     application)))))
   ([base-events event]
    (emails :en base-events event)))
 
