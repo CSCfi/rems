@@ -35,6 +35,9 @@
   [userid]
   (json/parse-string (:userattrs (db/get-user-attributes {:user userid}))))
 
+(defn user-exists? [userid]
+  (some? (get-user-attributes userid)))
+
 (defn- get-all-users []
   (->> (db/get-users)
        (map :userid)

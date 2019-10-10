@@ -54,11 +54,8 @@
    {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
     :items [catalogue-item-id]}))
 
-(defn- valid-user? [userid]
-  (some? (users/get-user userid)))
-
 (def ^:private command-injections
-  {:valid-user? valid-user?
+  {:valid-user? users/user-exists?
    :validate-fields form-validation/validate-fields
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
