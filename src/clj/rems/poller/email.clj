@@ -5,6 +5,7 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
+            [rems.application-util :as application-util]
             [rems.common-util :as common-util]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -42,9 +43,7 @@
 ;; TODO user-for-email shouldn't need to call get-user since we add
 ;; all this info to the application in rems.application.model/enrich-user-attributes
 (defn- user-for-email [user]
-  (let [user-attributes (users/get-user user)]
-    (or (:name user-attributes)
-        (:userid user-attributes))))
+  (application-util/get-member-name (users/get-user user)))
 
 (defn- resources-for-email [application]
   (->> (:application/resources application)
@@ -81,7 +80,7 @@
                                 (user-for-email recipient)
                                 (user-for-email (:event/actor event))
                                 (format-application-for-email application)
-                                (user-for-email (:userid (:application/applicant application)))
+                                (application-util/get-member-name (:application/applicant application))
                                 (resources-for-email application)
                                 (link-to-application (:application/id event)))
           :body (str
@@ -89,7 +88,7 @@
                               (user-for-email recipient)
                               (user-for-email (:event/actor event))
                               (format-application-for-email application)
-                              (user-for-email (:userid (:application/applicant application)))
+                              (application-util/get-member-name (:application/applicant application))
                               (resources-for-email application)
                               (link-to-application (:application/id event)))
                  (text :t.email/footer))})))))
@@ -205,13 +204,13 @@
       [{:to (:email (:application/member event))
         :subject (text-format :t.email.member-invited/subject
                               (:name (:application/member event))
-                              (user-for-email (:userid (:application/applicant application)))
+                              (application-util/get-member-name (:application/applicant application))
                               (format-application-for-email application)
                               (invitation-link (:invitation/token event)))
         :body (str
                (text-format :t.email.member-invited/message
                             (:name (:application/member event))
-                            (user-for-email (:userid (:application/applicant application)))
+                            (application-util/get-member-name (:application/applicant application))
                             (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
                (text :t.email/footer))}])))
