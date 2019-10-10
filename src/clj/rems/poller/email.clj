@@ -5,6 +5,8 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
+            [rems.application-util :as application-util]
+            [rems.application.model]
             [rems.common-util :as common-util]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -39,13 +41,6 @@
    (when-not (empty? (:application/description application))
      (str ", \"" (:application/description application) "\""))))
 
-;; TODO user-for-email shouldn't need to call get-user since we add
-;; all this info to the application in rems.application.model/enrich-user-attributes
-(defn- user-for-email [user]
-  (let [user-attributes (users/get-user user)]
-    (or (:name user-attributes)
-        (:userid user-attributes))))
-
 (defn- resources-for-email [application]
   (->> (:application/resources application)
        (map #(get-in % [:catalogue-item/title context/*lang*]))
@@ -56,14 +51,14 @@
 ;; added.
 ;; TODO this function occurs in so many places
 (defn- applicant-and-members [application]
-  (conj (map :userid (:application/members application))
-        (:userid (:application/applicant application))))
+  (conj (:application/members application)
+        (:application/applicant application)))
 
 (defn- handlers [application]
   (get-in application [:application/workflow :workflow.dynamic/handlers]))
 
 (defn- other-handlers [event application]
-  (filter #(not= % (:event/actor event)) (handlers application)))
+  (filter #(not= (:userid %) (:event/actor event)) (handlers application)))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -76,20 +71,20 @@
    (for [recipient recipients]
      (with-language (:language (user-settings/get-user-settings recipient))
        (fn []
-         {:to-user recipient
+         {:to-user (:userid recipient)
           :subject (text-format subject-text
-                                (user-for-email recipient)
-                                (user-for-email (:event/actor event))
+                                (application-util/get-member-name recipient)
+                                (application-util/get-member-name (:event/actor-attributes event))
                                 (format-application-for-email application)
-                                (user-for-email (:userid (:application/applicant application)))
+                                (application-util/get-applicant-name application)
                                 (resources-for-email application)
                                 (link-to-application (:application/id event)))
           :body (str
                  (text-format body-text
-                              (user-for-email recipient)
-                              (user-for-email (:event/actor event))
+                              (application-util/get-member-name recipient)
+                              (application-util/get-member-name (:event/actor-attributes event))
                               (format-application-for-email application)
-                              (user-for-email (:userid (:application/applicant application)))
+                              (application-util/get-applicant-name application)
                               (resources-for-email application)
                               (link-to-application (:application/id event)))
                  (text :t.email/footer))})))))
@@ -135,7 +130,7 @@
                                 :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/returned [event application]
-  (concat (emails-to-recipients [(:userid (:application/applicant application))]
+  (concat (emails-to-recipients [(:application/applicant application)]
                                 event application
                                 :t.email.application-returned/subject-to-applicant
                                 :t.email.application-returned/message-to-applicant)
@@ -194,7 +189,7 @@
 
 (defmethod event-to-emails-impl :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
-  (emails-to-recipients [(:userid (:application/member event))]
+  (emails-to-recipients [(:application/member event)]
                         event application
                         :t.email.member-added/subject
                         :t.email.member-added/message))
@@ -205,13 +200,13 @@
       [{:to (:email (:application/member event))
         :subject (text-format :t.email.member-invited/subject
                               (:name (:application/member event))
-                              (user-for-email (:userid (:application/applicant application)))
+                              (application-util/get-applicant-name application)
                               (format-application-for-email application)
                               (invitation-link (:invitation/token event)))
         :body (str
                (text-format :t.email.member-invited/message
                             (:name (:application/member event))
-                            (user-for-email (:userid (:application/applicant application)))
+                            (application-util/get-applicant-name application)
                             (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
                (text :t.email/footer))}])))
@@ -220,7 +215,8 @@
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
-    (event-to-emails-impl event (applications/get-unrestricted-application app-id))))
+    (event-to-emails-impl (rems.application.model/enrich-event event users/get-user (constantly nil))
+                          (applications/get-unrestricted-application app-id))))
 
 ;;; Generic poller infrastructure
 

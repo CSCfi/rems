@@ -349,7 +349,9 @@
                                   :application/attachments []
                                   :application/workflow {:workflow/id 50
                                                          :workflow/type :workflow/dynamic
-                                                         :workflow.dynamic/handlers #{"handler"}}}]
+                                                         :workflow.dynamic/handlers [{:userid "handler"
+                                                                                      :name "Handler"
+                                                                                      :email "handler@example.com"}]}}]
         (is (= expected-application (apply-events events)))
 
         (testing "> draft saved"

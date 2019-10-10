@@ -521,27 +521,25 @@
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
-(defn- enrich-events [events get-user get-catalogue-item]
-  (->> events
-       (map (fn [event]
-              (let [event-type (:event/type event)]
-                (merge event
-                       {:event/actor-attributes (get-user (:event/actor event))}
-                       (case event-type
-                         :application.event/resources-changed
-                         {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
+(defn enrich-event [event get-user get-catalogue-item]
+  (let [event-type (:event/type event)]
+    (merge event
+           {:event/actor-attributes (get-user (:event/actor event))}
+           (case event-type
+             :application.event/resources-changed
+             {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
 
-                         :application.event/decision-requested
-                         {:application/deciders (mapv get-user (:application/deciders event))}
+             :application.event/decision-requested
+             {:application/deciders (mapv get-user (:application/deciders event))}
 
-                         :application.event/comment-requested
-                         {:application/commenters (mapv get-user (:application/commenters event))}
+             :application.event/comment-requested
+             {:application/commenters (mapv get-user (:application/commenters event))}
 
-                         (:application.event/member-added
-                          :application.event/member-removed)
-                         {:application/member (get-user (:userid (:application/member event)))}
+             (:application.event/member-added
+              :application.event/member-removed)
+             {:application/member (get-user (:userid (:application/member event)))}
 
-                         {})))))))
+             {}))))
 
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
@@ -557,10 +555,10 @@
 (defn enrich-workflow-handlers [application get-workflow]
   (if (= :workflow/dynamic (get-in application [:application/workflow :workflow/type]))
     (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
-          handlers (set (mapv :userid (get-in workflow [:workflow :handlers])))]
+          handlers (get-in workflow [:workflow :handlers])]
       (-> application
           (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
-          (permissions/give-role-to-users :handler handlers)))
+          (permissions/give-role-to-users :handler (mapv :userid handlers))))
     application))
 
 (defn- enrich-super-users [application get-users-with-role]
@@ -590,7 +588,7 @@
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
-        (update :application/events enrich-events get-user get-catalogue-item)
+        (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
         (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)
