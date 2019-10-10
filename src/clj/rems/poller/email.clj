@@ -55,8 +55,7 @@
         (:application/applicant application)))
 
 (defn- handlers [application]
-  (mapv users/get-user ;; TODO get rid of this
-        (get-in application [:application/workflow :workflow.dynamic/handlers])))
+  (get-in application [:application/workflow :workflow.dynamic/handlers]))
 
 (defn- other-handlers [event application]
   (filter #(not= (:userid %) (:event/actor event)) (handlers application)))
