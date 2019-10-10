@@ -51,18 +51,6 @@
   ([user]
    (getx user :eppn)))
 
-(defn get-username
-  ([]
-   (get-username context/*user*))
-  ([user]
-   (:commonName user)))
-
-(defn get-user-mail
-  ([]
-   (get-user-mail context/*user*))
-  ([user]
-   (:mail user)))
-
 (def conj-set (fnil conj #{}))
 
 (def conj-vec (fnil conj []))
