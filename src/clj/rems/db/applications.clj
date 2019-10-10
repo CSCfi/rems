@@ -13,6 +13,7 @@
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.attachments :as attachments]
+            [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
@@ -64,7 +65,8 @@
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
-   :allocate-application-ids! allocate-application-ids!})
+   :allocate-application-ids! allocate-application-ids!
+   :add-to-blacklist! blacklist/add-to-blacklist!})
 
 (declare get-unrestricted-application)
 (defn command! [cmd]

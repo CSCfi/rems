@@ -1,5 +1,5 @@
 (ns rems.db.blacklist
-  (:require [clj-time.format :as time-format]
+  (:require [clj-time.core :as time]
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
@@ -64,3 +64,11 @@
 
 (defn get-blacklist [params]
   (vec (sort-by (juxt :resource :user) (events->blacklist (get-events params)))))
+
+(defn add-to-blacklist! [{:keys [user resource actor comment]}]
+  (add-event! {:event/type :blacklist.event/add
+               :event/actor actor
+               :event/time (time/now)
+               :blacklist/user user
+               :blacklist/resource resource
+               :event/comment comment}))

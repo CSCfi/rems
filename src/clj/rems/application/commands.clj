@@ -356,7 +356,12 @@
        :application/comment (:comment cmd)}))
 
 (defmethod command-handler :application.command/revoke
-  [cmd _application _injections]
+  [cmd application {:keys [add-to-blacklist!]}]
+  (doseq [resource (:application/resources application)]
+    (add-to-blacklist! {:user (:application/applicant application)
+                        :resource (:resource/ext-id resource)
+                        :actor (:actor cmd)
+                        :comment (:comment cmd)}))
   (ok {:event/type :application.event/revoked
        :application/comment (:comment cmd)}))
 
