@@ -54,7 +54,6 @@
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
     </tr>
     <tr>
@@ -117,7 +116,6 @@
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
     </tr>
     <tr>
@@ -181,7 +179,6 @@
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
     </tr>
     <tr>
@@ -239,7 +236,6 @@
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
     </tr>
     <tr>
@@ -278,7 +274,6 @@
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
     </tr>
     <tr>
@@ -317,7 +312,6 @@
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
     </tr>
     <tr>
@@ -356,7 +350,6 @@
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
-            <div>remark</div>
         </td>
     </tr>
 </table>

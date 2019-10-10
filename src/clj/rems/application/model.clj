@@ -60,8 +60,7 @@
   {:applicant submittable-application-commands
    :member #{:application.command/accept-licenses
              :application.command/copy-as-new}
-   :reporter #{:see-everything
-               :application.command/remark}
+   :reporter #{:see-everything}
    ;; member before accepting an invitation
    :everyone-else #{:application.command/accept-invitation}})
 
