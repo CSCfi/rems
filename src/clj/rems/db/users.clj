@@ -71,7 +71,7 @@
        (doall)))
 
 (defn get-user
-  "Given a userid, returns a map with keys :userid, :mail and :name."
+  "Given a userid, returns a map with keys :userid, :email and :name."
   [userid]
   (-> userid
       get-user-attributes
