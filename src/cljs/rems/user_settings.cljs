@@ -78,7 +78,7 @@
 (rf/reg-event-fx
  ::save-user-settings!
  (fn [{:keys [db]} [_]]
-   (let [user-id (get-in db [:identity :user :eppn])
+   (let [user-id (get-in db [:identity :user :userid])
          new-settings (assoc (:user-settings db)
                              :language (get-language db))]
      (when user-id

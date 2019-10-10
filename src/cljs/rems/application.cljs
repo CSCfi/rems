@@ -147,7 +147,7 @@
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- submit-application! [application description application-id field-values
-                            userid]
+                            userid] ;; TODO remove unused parameter
   ;; TODO: deduplicate with save-application!
   (post! "/api/applications/save-draft"
          {:params {:application-id application-id
@@ -183,7 +183,7 @@
                           description
                           (:application/id application)
                           (:field-values edit-application)
-                          (get-in (:identity db) [:user :eppn])))
+                          (get-in (:identity db) [:user :userid])))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (rf/reg-event-fx
@@ -717,7 +717,7 @@
         reloading? @(rf/subscribe [::application :reloading?])
         edit-application @(rf/subscribe [::edit-application])
         attachment-success @(rf/subscribe [::attachment-success])
-        userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
+        userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
                           (when application
