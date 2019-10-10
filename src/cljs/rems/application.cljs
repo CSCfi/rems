@@ -385,7 +385,7 @@
      (application-list/format-application-id config application)]))
 
 (defn- format-event [event]
-  {:user (:name (:event/actor-attributes event)) ;; TODO use get-member-name?
+  {:user (get-member-name (:event/actor-attributes event))
    :event (localize-event event)
    :decision (when (= (:event/type event) :application.event/decided)
                (localize-decision event))
