@@ -97,7 +97,8 @@
 (def ^:private closed-permissions
   {:applicant #{:application.command/copy-as-new}
    :member #{:application.command/copy-as-new}
-   :handler #{:see-everything}
+   :handler #{:see-everything
+              :application.command/remark}
    :commenter #{:see-everything}
    :past-commenter #{:see-everything}
    :decider #{:see-everything}
