@@ -23,14 +23,10 @@
 (defn- parse-db-row [row]
   (-> row
       (update :fields deserialize-fields)
-      db/assoc-expired
       (->> (map-keys {:id :form/id
                       :organization :form/organization
                       :title :form/title
                       :fields :form/fields
-                      :start :start
-                      :end :end
-                      :expired :expired
                       :enabled :enabled
                       :archived :archived}))))
 

@@ -118,9 +118,6 @@
    :title s/Str
    :workflow s/Any
    :licenses [License]
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool})
 
@@ -150,9 +147,6 @@
    :form/title s/Str
    :form/fields [FieldTemplate]
    ;; TODO: rename the following to use :status/ namespace (also in all other entities)
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool})
 

@@ -15,9 +15,6 @@
    :modifieruserid s/Str
    :organization s/Str
    :resid s/Str
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool
    :licenses [ResourceLicense]})
@@ -43,11 +40,9 @@
       :summary "Get resources"
       :roles #{:owner}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
-                     {expired :- (describe s/Bool "whether to include expired resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
-      (ok (resource/get-resources (merge (when-not expired {:expired false})
-                                         (when-not disabled {:enabled true})
+      (ok (resource/get-resources (merge (when-not disabled {:enabled true})
                                          (when-not archived {:archived false})))))
 
     (GET "/:resource-id" []

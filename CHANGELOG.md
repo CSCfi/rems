@@ -14,7 +14,8 @@ Changes since v2.4
   since the previous release, so no database migration should be needed.
 - The pdf button and API have been removed. We recommend using "print
   to pdf" in your browser.
-- The `start`, `end` and `expired` fields have been removed from licenses
+- The `start`, `end` and `expired` fields have been removed from licenses,
+  workflows, resources, and forms.
 - API for creating catalogue item and its localizations has been changed.
   There is now a single API call that is used to create both a catalogue
   item and the localizations, namely, /api/catalogue-items/create.

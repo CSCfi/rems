@@ -22,11 +22,10 @@
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
                          {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
    :enabled true
-   :expired false
    :archived false})
 
 (defn- fetch [api-key user-id wfid]
-  (let [wfs (-> (request :get "/api/workflows" {:archived true :expired true :disabled true})
+  (let [wfs (-> (request :get "/api/workflows" {:archived true :disabled true})
                 (authenticate api-key user-id)
                 handler
                 read-ok-body)]

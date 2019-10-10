@@ -21,7 +21,6 @@
    (let [description [text :t.administration/licenses]]
      (fetch "/api/licenses"
             {:url-params {:disabled true
-                          :expired (status-flags/display-archived? db)
                           :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-licenses-result %])
              :error-handler (flash-message/default-error-handler :top description)}))

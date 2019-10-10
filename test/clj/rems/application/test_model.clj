@@ -31,11 +31,8 @@
                       :field/options []
                       :field/max-length 100
                       :field/type :text}]
-       :start (DateTime. 100)
-       :end nil
        :enabled true
-       :archived false
-       :expired false}})
+       :archived false}})
 
 (def ^:private get-catalogue-item
   {10 {:id 10
@@ -173,11 +170,8 @@
        :licenses nil
        :owneruserid "owner"
        :modifieruserid "owner"
-       :start (DateTime. 100)
-       :end nil
        :enabled true
-       :archived false
-       :expired false}})
+       :archived false}})
 
 (def ^:private resource-id-11
   {:resource/id 11

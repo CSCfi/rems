@@ -77,8 +77,6 @@ SELECT
   modifieruserid,
   organization,
   resid,
-  start,
-  endt as "end",
   enabled,
   archived
 FROM resource;
@@ -90,8 +88,6 @@ SELECT
   modifieruserid,
   organization,
   resid,
-  start,
-  endt as "end",
   enabled,
   archived
 FROM resource
@@ -107,10 +103,8 @@ WHERE 1=1
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, organization, ownerUserId, modifieruserid, endt)
-VALUES (:resid, :organization, :owneruserid, :modifieruserid,
- /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/
-);
+(resid, organization, ownerUserId, modifieruserid)
+VALUES (:resid, :organization, :owneruserid, :modifieruserid);
 
 -- :name set-resource-enabled! :!
 -- TODO set modifieruserid?
@@ -149,8 +143,6 @@ SELECT
   id,
   organization,
   title,
-  start,
-  endt as "end",
   fields::TEXT,
   enabled,
   archived
@@ -161,8 +153,6 @@ SELECT
   id,
   organization,
   title,
-  start,
-  endt as "end",
   fields::TEXT,
   enabled,
   archived
@@ -303,13 +293,12 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(organization, ownerUserId, modifierUserId, title, endt, workflowBody)
+(organization, ownerUserId, modifierUserId, title, workflowBody)
 VALUES
 (:organization,
  :owneruserid,
  :modifieruserid,
  :title,
- /*~ (if (:end params) */ :end /*~*/ NULL /*~ ) ~*/,
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
 
@@ -355,7 +344,7 @@ WHERE wfid = :wfid
 
 -- :name get-workflow :? :1
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.start, wf.endt AS "end",
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title,
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf
 /*~ (when (:catid params) */
@@ -372,7 +361,7 @@ AND ci.id = :catid
 
 -- :name get-workflows :? :*
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.start, wf.endt as "end",
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title,
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf;
 

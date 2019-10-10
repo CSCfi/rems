@@ -36,11 +36,9 @@
       :summary "Get workflows"
       :roles #{:owner}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
-                     {expired :- (describe s/Bool "whether to include expired workflows") false}
                      {archived :- (describe s/Bool "whether to include archived workflows") false}]
       :return [Workflow]
-      (ok (workflow/get-workflows (merge (when-not expired {:expired false})
-                                         (when-not disabled {:enabled true})
+      (ok (workflow/get-workflows (merge (when-not disabled {:enabled true})
                                          (when-not archived {:archived false})))))
 
     (POST "/create" []

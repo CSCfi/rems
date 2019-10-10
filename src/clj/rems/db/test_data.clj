@@ -775,11 +775,6 @@
                                                   :organization "nbn"
                                                   :actor (+fake-users+ :owner)})
         _ (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
-        _ (db/create-resource! {:resid "Expired Resource, should not be seen"
-                                :organization "nbn"
-                                :owneruserid (+fake-users+ :owner)
-                                :modifieruserid (+fake-users+ :owner)
-                                :end (time/minus (time/now) (time/years 1))})
         form (create-all-field-types-example-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]

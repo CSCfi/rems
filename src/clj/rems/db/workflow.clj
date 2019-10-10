@@ -14,7 +14,6 @@
   (-> wf
       (update :workflow json/parse-string)
       (assoc :licenses (get-workflow-licenses (:id wf)))
-      db/assoc-expired
       (update-in [:workflow :type] keyword)
       (update-in [:workflow :handlers] #(mapv users/get-user %))))
 

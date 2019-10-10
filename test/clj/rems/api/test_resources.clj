@@ -133,18 +133,27 @@
             (is (true? (:success result)))))))))
 
 (deftest resources-api-filtering-test
-  (let [unfiltered (-> (request :get "/api/resources" {:expired true})
-                       (authenticate "42" "owner")
+  (let [api-key "42"
+        user-id "owner"
+        resources (-> (request :get "/api/resources")
+                      (authenticate api-key user-id)
+                      handler
+                      read-ok-body)
+        disabled-id (:id (first resources))
+        _ (resource-enabled! {:id disabled-id :enabled false}
+                             api-key user-id)
+        unfiltered (-> (request :get "/api/resources" {:disabled true})
+                       (authenticate api-key user-id)
                        handler
                        read-ok-body)
         filtered (-> (request :get "/api/resources")
-                     (authenticate "42" "owner")
+                     (authenticate api-key user-id)
                      handler
                      read-ok-body)]
     (is (coll-is-not-empty? unfiltered))
     (is (coll-is-not-empty? filtered))
-    (is (every? #(contains? % :expired) unfiltered))
-    (is (not-any? :expired filtered))
+    (is (not (every? :enabled unfiltered)))
+    (is (every? :enabled filtered))
     (is (< (count filtered) (count unfiltered)))))
 
 (deftest resources-api-security-test
