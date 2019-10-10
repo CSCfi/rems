@@ -60,8 +60,7 @@
   {:applicant submittable-application-commands
    :member #{:application.command/accept-licenses
              :application.command/copy-as-new}
-   :reporter #{:see-everything
-               :application.command/remark}
+   :reporter #{:see-everything}
    ;; member before accepting an invitation
    :everyone-else #{:application.command/accept-invitation}})
 
@@ -98,9 +97,12 @@
 (def ^:private closed-permissions
   {:applicant #{:application.command/copy-as-new}
    :member #{:application.command/copy-as-new}
-   :handler #{:see-everything}
+   :handler #{:see-everything
+              :application.command/remark}
    :commenter #{:see-everything}
+   :past-commenter #{:see-everything}
    :decider #{:see-everything}
+   :past-decider #{:see-everything}
    :everyone-else #{}})
 
 (defmethod calculate-permissions :application.event/created
