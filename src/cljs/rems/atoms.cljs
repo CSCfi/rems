@@ -87,7 +87,7 @@
   "Renders link to the attachment with `id` and name `title`."
   [id title]
   [:a.btn.btn-secondary.mr-2
-   {:href (str "api/licenses/attachments/" id)
+   {:href (str "/api/licenses/attachments/" id)
     :target :_blank}
    title " " [external-link]])
 

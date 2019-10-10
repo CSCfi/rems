@@ -35,6 +35,7 @@ Changes since v2.4
   /api/forms/[form-id]/edit to /api/forms/edit.
 - The page addresses are no more prefixed with `/#/`, so for example the address
   of the catalogue page was changed from `/#/catalogue` to `/catalogue` (#1258)
+- More consistent user attributes in (application) API
 
 ### Additions
 - New field types: description, option, multiselect
@@ -67,6 +68,7 @@ Changes since v2.4
 - Show separately for each license if it has been accepted by the member (#1591)
 - Show all errors preventing application submission at the same time (#1594)
 - Show applicant's previous applications to handler (#1653)
+- Support OpenID Connect, for example Auth0
 - Handler can close an application whenever after initial submission (#1669)
 - Documentation about [user permissions by application state](docs/application-permissions.md)
 - Revoking already approved applications (#1661)
@@ -91,7 +93,7 @@ Changes since v2.4
 - Search on the catalogue and admin pages did not support multiple search terms (#1541)
 - Hide flash message when changing language so mixed language content is not shown
 - Printing application pages now works (except for drafts) (#1643)
-- Applicant can now view attachment licenses (#1676)
+- Applicant and administrator can now view attachment licenses (#1676)
 
 ## v2.5 "Maarintie" 2019-07-18
 

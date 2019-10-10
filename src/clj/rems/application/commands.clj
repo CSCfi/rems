@@ -201,14 +201,19 @@
   [catalogue-item-ids injections]
   (apply merge-with into (keep #(invalid-catalogue-item-error % injections) catalogue-item-ids)))
 
+(defn- workflow-handlers [application]
+  (set (mapv :userid (get-in application [:application/workflow :workflow.dynamic/handlers]))))
+
+(defn- is-handler? [application user]
+  (contains? (workflow-handlers application) user))
+
 (defn- changes-original-workflow
   "Checks that the given catalogue items are compatible with the original application from where the workflow is from. Applicant can't do it."
   [application catalogue-item-ids actor {:keys [get-catalogue-item]}]
   (let [catalogue-items (map get-catalogue-item catalogue-item-ids)
         original-workflow-id (get-in application [:application/workflow :workflow/id])
-        new-workflow-ids (mapv :wfid catalogue-items)
-        handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
-    (when (and (not (contains? handlers actor))
+        new-workflow-ids (mapv :wfid catalogue-items)]
+    (when (and (not (is-handler? application actor))
                (apply not= original-workflow-id new-workflow-ids))
       {:errors [{:type :changes-original-workflow :workflow/id original-workflow-id :ids new-workflow-ids}]})))
 
@@ -217,9 +222,8 @@
   [application catalogue-item-ids actor {:keys [get-catalogue-item]}]
   (let [catalogue-items (map get-catalogue-item catalogue-item-ids)
         original-form-id (get-in application [:application/form :form/id])
-        new-form-ids (mapv :formid catalogue-items)
-        handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
-    (when (and (not (contains? handlers actor))
+        new-form-ids (mapv :formid catalogue-items)]
+    (when (and (not (is-handler? application actor))
                (apply not= original-form-id new-form-ids))
       {:errors [{:type :changes-original-form :form/id original-form-id :ids new-form-ids}]})))
 
@@ -235,9 +239,8 @@
 (defn- unbundlable-catalogue-items-for-actor
   "Checks that the given catalogue items are bundlable by the given actor."
   [application catalogue-item-ids actor injections]
-  (let [handlers (get-in application [:application/workflow :workflow.dynamic/handlers])]
-    (when-not (contains? handlers actor)
-      (unbundlable-catalogue-items catalogue-item-ids injections))))
+  (when-not (is-handler? application actor)
+    (unbundlable-catalogue-items catalogue-item-ids injections)))
 
 (defn- validation-error [application {:keys [validate-fields]}]
   (let [errors (validate-fields (getx-in application [:application/form :form/fields]))]

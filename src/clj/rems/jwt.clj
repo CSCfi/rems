@@ -1,19 +1,19 @@
 (ns rems.jwt
   (:require [clojure.data.json :as json]
             [mount.core :as mount]
-            [rems.config :refer [env]]
-            [rems.util :refer [getx]])
+            [rems.config :refer [oidc-configuration]])
   (:import [com.auth0.jwk JwkProviderBuilder JwkProvider]
            [com.auth0.jwt JWT JWTVerifier$BaseVerification]
            [com.auth0.jwt.algorithms Algorithm]
            [com.auth0.jwt.interfaces Clock]
+           [java.net URL]
            [java.nio.charset StandardCharsets]
            [java.time Instant]
            [java.util Base64 Date]))
 
 (mount/defstate ^:dynamic ^JwkProvider jwk-provider
-  :start (when-let [oidc-domain (env :oidc-domain)]
-           (-> (JwkProviderBuilder. ^String oidc-domain)
+  :start (when-let [jwks-uri (:jwks_uri oidc-configuration)]
+           (-> (JwkProviderBuilder. (URL. ^String jwks-uri))
               (.build))))
 
 (defn- fetch-public-key [^String jwt]
