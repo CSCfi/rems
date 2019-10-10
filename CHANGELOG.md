@@ -66,6 +66,7 @@ Changes since v2.4
 - Show separately for each license if it has been accepted by the member (#1591)
 - Show all errors preventing application submission at the same time (#1594)
 - Show applicant's previous applications to handler (#1653)
+- Support OpenID Connect, for example Auth0
 
 ### Enhancements
 - Improved version information in footer
