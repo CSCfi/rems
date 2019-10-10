@@ -54,11 +54,8 @@
    {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
     :items [catalogue-item-id]}))
 
-(defn- valid-user? [userid]
-  (not (nil? (users/get-user-attributes userid))))
-
 (def ^:private command-injections
-  {:valid-user? valid-user?
+  {:valid-user? users/user-exists?
    :validate-fields form-validation/validate-fields
    :secure-token secure-token
    :get-catalogue-item catalogue/get-localized-catalogue-item
@@ -91,7 +88,7 @@
    :get-form-template form/get-form-template
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-license licenses/get-license
-   :get-user users/get-user-attributes
+   :get-user users/get-user
    :get-users-with-role users/get-users-with-role
    :get-workflow workflow/get-workflow})
 

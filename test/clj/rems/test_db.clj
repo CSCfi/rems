@@ -61,15 +61,6 @@
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
         "should create entitlements for both resources")))
 
-(deftest test-users
-  (db/add-user! {:user "pekka", :userattrs nil})
-  (db/add-user! {:user "simo", :userattrs nil})
-  (is (= 2 (count (db/get-users))))
-  (db/add-user! {:user "pekka", :userattrs (cheshire/generate-string {:key "value"})})
-  (db/add-user! {:user "simo", :userattrs nil})
-  (is (= 2 (count (db/get-users))))
-  (is (= {:key "value"} (users/get-user-attributes "pekka"))))
-
 (deftest test-roles
   (db/add-user! {:user "pekka", :userattrs nil})
   (db/add-user! {:user "simo", :userattrs nil})

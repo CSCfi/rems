@@ -37,15 +37,15 @@
   {:id (->> [(:application/id app)
              (:application/external-id app)]
             (str/join " "))
-   :applicant (->> [(:application/applicant app)
+   :applicant (->> [(:userid (:application/applicant app))
                     (application-util/get-applicant-name app)
-                    (:mail (:application/applicant-attributes app))]
+                    (:email (:application/applicant app))]
                    (str/join " "))
    :member (->> (:application/members app)
                 (mapcat (fn [member]
                           [(:userid member)
                            (application-util/get-member-name member)
-                           (:mail member)]))
+                           (:email member)]))
                 (str/join " "))
    :title (:application/description app)
    :resource (->> (:application/resources app)

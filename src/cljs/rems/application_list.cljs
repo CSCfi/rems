@@ -171,42 +171,37 @@
      [{:application/id 1
        :application/resources [{:catalogue-item/title {:en "Item 5"}}]
        :application/state :application.state/draft
-       :application/applicant "alice"
-       :application/applicant-attributes {:eppn "alice"
-                                          :commonName "Alice Applicant"}
+       :application/applicant {:userid "alice"
+                               :name "Alice Applicant"}
        :application/created "1980-01-02T13:45:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 2
        :application/resources [{:catalogue-item/title {:en "Item 3"}}]
        :application/state :application.state/submitted
-       :application/applicant "bob"
-       :application/applicant-attributes {:eppn "bob"
-                                          :commonName "Bob Tester"}
+       :application/applicant {:userid "bob"
+                               :name "Bob Tester"}
        :application/created "1971-02-03T23:59:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 3
        :application/resources [{:catalogue-item/title {:en "Item 2"}}
                                {:catalogue-item/title {:en "Item 5"}}]
        :application/state :application.state/approved
-       :application/applicant "charlie"
-       :application/applicant-attributes {:eppn "charlie"
-                                          :commonName "Charlie Tester"}
+       :application/applicant {:userid "charlie"
+                               :name "Charlie Tester"}
        :application/created "1980-01-01T01:01:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 4
        :application/resources [{:catalogue-item/title {:en "Item 2"}}]
        :application/state :application.state/rejected
-       :application/applicant "david"
-       :application/applicant-attributes {:eppn "david"
-                                          :commonName "David Newuser"}
+       :application/applicant {:userid "david"
+                               :name "David Newuser"}
        :application/created "1972-12-12T12:12:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
       {:application/id 5
        :application/resources [{:catalogue-item/title {:en "Item 2"}}]
        :application/state :application.state/closed
-       :application/applicant "ernie"
-       :application/applicant-attributes {:eppn "ernie"
-                                          :commonName "Ernie Tester"}
+       :application/applicant {:userid "ernie"
+                               :name "Ernie Tester"}
        :application/created "1972-12-12T12:12:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}]))
 

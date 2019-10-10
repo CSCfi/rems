@@ -11,13 +11,9 @@
   (contains? (:application/permissions application)
              :application.command/save-draft))
 
-(def ^:private name-attribute-priority [:name :commonName :displayName :eppn])
-
 (defn get-member-name [attributes]
-  (when attributes
-    (->> (map attributes name-attribute-priority)
-         (remove nil?)
-         first)))
+  (or (:name attributes)
+      (:userid attributes)))
 
 (defn get-applicant-name [application]
-  (get-member-name (:application/applicant-attributes application)))
+  (get-member-name (:application/applicant application)))

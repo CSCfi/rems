@@ -23,18 +23,18 @@
                                          :smtp-port 25
                                          :mail-from "rems@rems.rems")
                   postal.core/send-message (fn [_host message] (reset! message-atom message))
-                  rems.db.users/get-user-attributes (constantly {:mail "user@example.com"})]
+                  rems.db.users/get-user (constantly {:email "user@example.com"})]
       (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})
       (is (= {:to "foo@example.com"
               :subject "ding"
               :body "boing"
               :from "rems@rems.rems"}
              @message-atom))
-      (send-email! {:to-user "user" :subject "ding" :body "boing"})
+      (send-email! {:to-user "user" :subject "x" :body "y"})
       (is (= {:to "user@example.com"
               :to-user "user"
-              :subject "ding"
-              :body "boing"
+              :subject "x"
+              :body "y"
               :from "rems@rems.rems"}
              @message-atom)))))
 
@@ -71,11 +71,15 @@
 (defn ^:private get-nothing [& _]
   nil)
 
-(def ^:private get-user-attributes
-  {"applicant" {:commonName "Alice Applicant"
-                :email "alice@applicant.com"}
-   "handler" {:commonName "Hannah Handler"
-              :email "hannah@handler.com"}})
+(defn- get-user [userid]
+  (case userid
+    "applicant" {:userid "applicant"
+                 :name "Alice Applicant"
+                 :email "alice@applicant.com"}
+    "handler" {:userid "handler"
+               :name "Hannah Handler"
+               :email "hannah@handler.com"}
+    {:userid userid}))
 
 (defn email-recipient [email]
   (or (:to email) (:to-user email)))
@@ -99,11 +103,11 @@
                                                         :get-catalogue-item get-catalogue-item
                                                         :get-form-template get-form-template
                                                         :get-license get-license
-                                                        :get-user get-nothing
+                                                        :get-user get-user
                                                         :get-users-with-role get-nothing
                                                         :get-attachments-for-application get-nothing}))]
      (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
-                   rems.db.users/get-user-attributes get-user-attributes
+                   rems.db.users/get-user get-user
                    user-settings/get-user-settings (constantly {:language lang})]
        (sort-emails (#'rems.poller.email/event-to-emails-impl event application)))))
   ([base-events event]

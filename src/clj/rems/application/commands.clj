@@ -253,7 +253,7 @@
 
 (defn- all-members [application]
   (conj (set (map :userid (:application/members application)))
-        (:application/applicant application)))
+        (:userid (:application/applicant application))))
 
 (defn already-member-error [application userid]
   (when (contains? (all-members application) userid)
@@ -460,7 +460,7 @@
 
 (defmethod command-handler :application.command/remove-member
   [cmd application _injections]
-  (or (when (= (:application/applicant application) (:userid (:member cmd)))
+  (or (when (= (:userid (:application/applicant application)) (:userid (:member cmd)))
         {:errors [{:type :cannot-remove-applicant}]})
       (when-not (contains? (all-members application) (:userid (:member cmd)))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
