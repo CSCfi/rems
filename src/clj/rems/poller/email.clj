@@ -55,14 +55,15 @@
 ;; added.
 ;; TODO this function occurs in so many places
 (defn- applicant-and-members [application]
-  (conj (map :userid (:application/members application))
-        (:userid (:application/applicant application))))
+  (conj (:application/members application)
+        (:application/applicant application)))
 
 (defn- handlers [application]
-  (get-in application [:application/workflow :workflow.dynamic/handlers]))
+  (mapv users/get-user
+        (get-in application [:application/workflow :workflow.dynamic/handlers])))
 
 (defn- other-handlers [event application]
-  (filter #(not= % (:event/actor event)) (handlers application)))
+  (filter #(not= (:userid %) (:event/actor event)) (handlers application)))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -75,20 +76,20 @@
    (for [recipient recipients]
      (with-language (:language (user-settings/get-user-settings recipient))
        (fn []
-         {:to-user recipient
+         {:to-user (:userid recipient)
           :subject (text-format subject-text
-                                (user-for-email recipient)
+                                (application-util/get-member-name recipient)
                                 (user-for-email (:event/actor event))
                                 (format-application-for-email application)
-                                (application-util/get-member-name (:application/applicant application))
+                                (application-util/get-applicant-name application)
                                 (resources-for-email application)
                                 (link-to-application (:application/id event)))
           :body (str
                  (text-format body-text
-                              (user-for-email recipient)
+                              (application-util/get-member-name recipient)
                               (user-for-email (:event/actor event))
                               (format-application-for-email application)
-                              (application-util/get-member-name (:application/applicant application))
+                              (application-util/get-applicant-name application)
                               (resources-for-email application)
                               (link-to-application (:application/id event)))
                  (text :t.email/footer))})))))
@@ -134,7 +135,7 @@
                                 :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/returned [event application]
-  (concat (emails-to-recipients [(:userid (:application/applicant application))]
+  (concat (emails-to-recipients [(:application/applicant application)]
                                 event application
                                 :t.email.application-returned/subject-to-applicant
                                 :t.email.application-returned/message-to-applicant)
@@ -162,7 +163,7 @@
                           :t.email.application-resubmitted/message)))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
-  (emails-to-recipients (:application/commenters event)
+  (emails-to-recipients (mapv users/get-user (:application/commenters event))
                         event application
                         :t.email.comment-requested/subject
                         :t.email.comment-requested/message))
@@ -186,14 +187,14 @@
                         :t.email.decided/message))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event application]
-  (emails-to-recipients (:application/deciders event)
+  (emails-to-recipients (mapv users/get-user (:application/deciders event))
                         event application
                         :t.email.decision-requested/subject
                         :t.email.decision-requested/message))
 
 (defmethod event-to-emails-impl :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
-  (emails-to-recipients [(:userid (:application/member event))]
+  (emails-to-recipients [(users/get-user (:userid (:application/member event)))]
                         event application
                         :t.email.member-added/subject
                         :t.email.member-added/message))
@@ -204,13 +205,13 @@
       [{:to (:email (:application/member event))
         :subject (text-format :t.email.member-invited/subject
                               (:name (:application/member event))
-                              (application-util/get-member-name (:application/applicant application))
+                              (application-util/get-applicant-name application)
                               (format-application-for-email application)
                               (invitation-link (:invitation/token event)))
         :body (str
                (text-format :t.email.member-invited/message
                             (:name (:application/member event))
-                            (application-util/get-member-name (:application/applicant application))
+                            (application-util/get-applicant-name application)
                             (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
                (text :t.email/footer))}])))
