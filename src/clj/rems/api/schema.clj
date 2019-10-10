@@ -84,10 +84,7 @@
    :catalogue-item/id s/Int
    :catalogue-item/title LocalizedString
    :catalogue-item/infourl LocalizedString
-   :catalogue-item/start DateTime
-   :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
-   :catalogue-item/expired s/Bool
    :catalogue-item/archived s/Bool})
 
 (s/defschema V2License
@@ -111,9 +108,6 @@
    :title s/Str
    :workflow s/Any
    :licenses [License]
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool})
 
@@ -143,9 +137,6 @@
    :form/title s/Str
    :form/fields [FieldTemplate]
    ;; TODO: rename the following to use :status/ namespace (also in all other entities)
-   :start DateTime
-   :end (s/maybe DateTime)
-   :expired s/Bool
    :enabled s/Bool
    :archived s/Bool})
 

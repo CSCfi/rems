@@ -7,7 +7,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
@@ -22,8 +22,7 @@
    (let [description [text :t.administration/workflows]]
      (fetch "/api/workflows"
             {:url-params {:disabled true
-                          :archived (status-flags/display-archived? db)
-                          :expired (status-flags/display-archived? db)}
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-workflows-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    (assoc db ::loading? true)))
@@ -77,9 +76,6 @@
           {:key (:id workflow)
            :organization {:value (:organization workflow)}
            :title {:value (:title workflow)}
-           :start (let [value (:start workflow)]
-                    {:value value
-                     :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
@@ -97,8 +93,6 @@
                                     :title (text :t.administration/organization)}
                                    {:key :title
                                     :title (text :t.administration/workflow)}
-                                   {:key :start
-                                    :title (text :t.administration/created)}
                                    {:key :active
                                     :title (text :t.administration/active)
                                     :filterable? false}

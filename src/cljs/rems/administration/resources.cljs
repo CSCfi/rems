@@ -6,7 +6,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
@@ -21,7 +21,6 @@
    (let [description [text :t.administration/resources]]
      (fetch "/api/resources"
             {:url-params {:disabled true
-                          :expired (status-flags/display-archived? db)
                           :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-resources-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
@@ -76,9 +75,6 @@
           {:key (:id resource)
            :organization {:value (:organization resource)}
            :title {:value (:resid resource)}
-           :start (let [value (:start resource)]
-                    {:value value
-                     :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
@@ -95,8 +91,6 @@
                                     :title (text :t.administration/organization)}
                                    {:key :title
                                     :title (text :t.administration/resource)}
-                                   {:key :start
-                                    :title (text :t.administration/created)}
                                    {:key :active
                                     :title (text :t.administration/active)
                                     :filterable? false}

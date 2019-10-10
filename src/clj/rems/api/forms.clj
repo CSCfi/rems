@@ -10,7 +10,7 @@
 (defn- get-form-templates [filters]
   (doall
    (for [form (form/get-form-templates filters)]
-     (select-keys form [:form/id :form/organization :form/title :start :end :expired :enabled :archived]))))
+     (select-keys form [:form/id :form/organization :form/title :enabled :archived]))))
 
 (s/defschema CreateFormCommand
   {:form/organization s/Str
@@ -32,11 +32,9 @@
       :summary "Get forms"
       :roles #{:owner}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled forms") false}
-                     {expired :- (describe s/Bool "whether to include expired forms") false}
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return [FormTemplateOverview]
-      (ok (get-form-templates (merge (when-not expired {:expired false})
-                                     (when-not disabled {:enabled true})
+      (ok (get-form-templates (merge (when-not disabled {:enabled true})
                                      (when-not archived {:archived false})))))
 
     (POST "/create" []

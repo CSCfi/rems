@@ -7,7 +7,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
@@ -22,7 +22,6 @@
    (let [description [text :t.administration/forms]]
      (fetch "/api/forms"
             {:url-params {:disabled true
-                          :expired (status-flags/display-archived? db)
                           :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-forms-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
@@ -84,9 +83,6 @@
           {:key (:form/id form)
            :organization {:value (:form/organization form)}
            :title {:value (:form/title form)}
-           :start (let [value (:start form)]
-                    {:value value
-                     :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? form)]
                      {:td [:td.active
                            [readonly-checkbox checked?]]
@@ -105,8 +101,6 @@
                                 :title (text :t.administration/organization)}
                                {:key :title
                                 :title (text :t.administration/title)}
-                               {:key :start
-                                :title (text :t.administration/created)}
                                {:key :active
                                 :title (text :t.administration/active)
                                 :filterable? false}
