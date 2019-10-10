@@ -224,7 +224,7 @@
 (defn search
   "Search field component for filtering a `rems.table/table` instance
   which takes the same `table` parameter as this component.
-  
+
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
@@ -264,7 +264,7 @@
 (defn table
   "A filterable and sortable table component.
   Meant to be used together with the `rems.table/search` component.
-  
+
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
