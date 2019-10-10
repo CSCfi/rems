@@ -21,6 +21,6 @@
 (defn render-example [title src content]
   [:div.example
    [:h3 title]
-   [:pre.example-source src]
+   [:div.example-source src]
    [:div.example-content content
     [:div.example-content-end]]])
