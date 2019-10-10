@@ -18,7 +18,7 @@
  ::accept-invitation
  (fn [token]
    (let [error-handler (fn [response]
-                         ((flash-message/default-error-handler :top (text :t.actions/accept-invitation))
+                         ((flash-message/default-error-handler :top [text :t.actions/accept-invitation])
                           response)
                          (navigate! "/catalogue"))]
      (post! "/api/applications/accept-invitation"
@@ -28,17 +28,17 @@
                           (cond
                             (:success response)
                             (do
-                              (flash-message/show-success! :top (text :t.actions/accept-invitation-success))
+                              (flash-message/show-success! :top [text :t.actions/accept-invitation-success])
                               (navigate! (str "/application/" (:application-id response))))
 
                             (= :already-member (:type error))
                             (do
-                              (flash-message/show-success! :top (text :t.actions/accept-invitation-already-member))
+                              (flash-message/show-success! :top [text :t.actions/accept-invitation-already-member])
                               (navigate! (str "/application/" (:application-id error))))
 
                             (= :t.actions.errors/invalid-token (:type error))
                             (do
-                              (flash-message/show-error! :top (text-format :t.actions.errors/invalid-token (:token error)))
+                              (flash-message/show-error! :top [text-format :t.actions.errors/invalid-token (:token error)])
                               (navigate! "/catalogue"))
 
                             :else (error-handler response))))

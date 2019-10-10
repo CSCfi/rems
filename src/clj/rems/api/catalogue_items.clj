@@ -5,16 +5,25 @@
             [rems.api.services.catalogue :as catalogue]
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
             [rems.db.core :as db]
+            [ring.swagger.json-schema :as rjs]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
 (s/defschema GetCatalogueItemsResponse
   [CatalogueItem])
 
+(s/defschema CatalogueItemLocalization
+  {:title s/Str
+   ;; s/optional-key to keep backwards compatibility. s/maybe to allow unsetting the field.
+   (s/optional-key :infourl) (s/maybe s/Str)})
+
 (s/defschema WriteCatalogueItemLocalizations
-  {s/Keyword {:title s/Str
-              ;; s/optional-key to keep backwards compatibility. s/maybe to allow unsetting the field.
-              (s/optional-key :infourl) (s/maybe s/Str)}})
+  (rjs/field {Language CatalogueItemLocalization}
+             {:description "Localizations keyed by language"
+              :example {:fi {:title "Title in Finnish"
+                             :infourl "http://example.fi"}
+                        :en {:title "Title in English"
+                             :infourl "http://example.com"}}}))
 
 ;; TODO resid is misleading: it's the internal id, not the string id
 ;; Should we take the string id instead?

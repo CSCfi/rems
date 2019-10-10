@@ -18,7 +18,7 @@
 (rf/reg-event-fx
  ::send-decide
  (fn [_ [_ {:keys [application-id comment decision on-finished]}]]
-   (let [description (text :t.actions/decide)]
+   (let [description [text :t.actions/decide]]
      (post! "/api/applications/decide"
             {:params {:application-id application-id
                       :decision decision

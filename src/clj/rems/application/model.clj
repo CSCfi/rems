@@ -46,7 +46,8 @@
     :application.command/request-decision
     :application.command/return
     :application.command/approve
-    :application.command/reject})
+    :application.command/reject
+    :application.command/close})
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
@@ -91,7 +92,8 @@
               :application.command/remove-member
               :application.command/invite-member
               :application.command/uninvite-member
-              :application.command/close}})
+              :application.command/close
+              :application.command/revoke}})
 
 (def ^:private closed-permissions
   {:applicant #{:application.command/copy-as-new}
@@ -169,6 +171,10 @@
   (-> application
       (permissions/update-role-permissions closed-permissions)))
 
+(defmethod calculate-permissions :application.event/revoked
+  [application _event]
+  (-> application
+      (permissions/update-role-permissions closed-permissions)))
 
 ;;;; Application
 
@@ -178,6 +184,7 @@
     :application.state/draft
     :application.state/rejected
     :application.state/returned
+    :application.state/revoked
     :application.state/submitted})
 
 (defmulti ^:private event-type-specific-application-view
@@ -345,6 +352,12 @@
       (assoc :application/state :application.state/closed)
       (assoc :application/todo nil)))
 
+(defmethod event-type-specific-application-view :application.event/revoked
+  [application _event]
+  (-> application
+      (assoc :application/state :application.state/revoked)
+      (assoc :application/todo nil)))
+
 (defmethod event-type-specific-application-view :application.event/copied-from
   [application event]
   (-> application
@@ -467,8 +480,8 @@
                          :field/value)]
     (assoc application :application/description (str description))))
 
-(defn- enrich-resources [app-resources get-catalogue-item]
-  (->> app-resources
+(defn- enrich-resources [resources get-catalogue-item]
+  (->> resources
        (map (fn [resource]
               (let [item (get-catalogue-item (:catalogue-item/id resource))]
                 {:catalogue-item/id (:catalogue-item/id resource)
@@ -505,6 +518,28 @@
                                                           :license/attachment-filename (localization-for :textcontent license)})))))
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
+
+(defn- enrich-events [events get-user get-catalogue-item]
+  (->> events
+       (map (fn [event]
+              (let [event-type (:event/type event)]
+                (merge event
+                       {:event/actor-attributes (get-user (:event/actor event))}
+                       (case event-type
+                         :application.event/resources-changed
+                         {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
+
+                         :application.event/decision-requested
+                         {:application/deciders (mapv get-user (:application/deciders event))}
+
+                         :application.event/comment-requested
+                         {:application/commenters (mapv get-user (:application/commenters event))}
+
+                         (:application.event/member-added
+                          :application.event/member-removed)
+                         {:application/member (get-user (:userid (:application/member event)))}
+
+                         {})))))))
 
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
@@ -553,6 +588,7 @@
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
         (update :application/licenses enrich-licenses get-license)
+        (update :application/events enrich-events get-user get-catalogue-item)
         (assoc :application/applicant-attributes (get-user (:application/applicant application)))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)

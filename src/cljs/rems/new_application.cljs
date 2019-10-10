@@ -13,7 +13,7 @@
 (rf/reg-event-fx
  ::enter-new-application-page
  (fn [{:keys [db]} [_ catalogue-item-ids]]
-   (let [description (text :t.applications/application)]
+   (let [description [text :t.applications/application]]
      (post! "/api/applications/create"
             {:params {:catalogue-item-ids catalogue-item-ids}
              :handler (fn [response]

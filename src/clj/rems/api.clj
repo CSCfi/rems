@@ -5,6 +5,7 @@
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
             [rems.api.applications :refer [applications-api my-applications-api]]
+            [rems.api.blacklist :refer [blacklist-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
@@ -19,28 +20,36 @@
             [rems.json :refer [muuntaja]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
+            [ring.util.response :as response]
             [schema.core :as s])
   (:import [rems.auth ForbiddenException UnauthorizedException]
            rems.InvalidRequestException))
 
+(defn- plain-text [response]
+  (response/content-type response "text/plain"))
+
 (defn unauthorized-handler
   [exception ex-data request]
   (log/info "unauthorized" (.getMessage exception))
-  (unauthorized "unauthorized"))
+  (-> (unauthorized "unauthorized")
+      (plain-text)))
 
 (defn forbidden-handler
   [exception ex-data request]
   (log/info "forbidden" (.getMessage exception))
-  (forbidden "forbidden"))
+  (-> (forbidden "forbidden")
+      (plain-text)))
 
 (defn invalid-handler
   [exception ex-data request]
   (log/info "bad-request" (.getMessage exception))
-  (bad-request (.getMessage exception)))
+  (-> (bad-request (.getMessage exception))
+      (plain-text)))
 
 (defn debug-handler
   [exception ex-data request]
-  (internal-server-error (with-out-str (print-cause-trace exception))))
+  (-> (internal-server-error (with-out-str (print-cause-trace exception)))
+      (plain-text)))
 
 (defn with-logging
   ;; Like in compojure.api.exception, but logs some of the data (with pprint)
@@ -107,6 +116,7 @@
 
       my-applications-api
       applications-api
+      blacklist-api
       catalogue-api
       catalogue-items-api
       entitlements-api

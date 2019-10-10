@@ -24,99 +24,82 @@
 (s/defschema CommandBase
   {:application-id s/Int})
 
-(s/defschema CreateCommand
-  {:catalogue-item-ids [s/Int]})
-
-(s/defschema SaveDraftCommand
+(s/defschema AcceptInvitationCommand
   (assoc CommandBase
-         ;; {s/Int s/Str} is what we want, but that isn't nicely representable as JSON
-         :field-values [{:field s/Int
-                         :value s/Str}]))
-
+         :token s/Str))
 (s/defschema AcceptLicensesCommand
   (assoc CommandBase
          :accepted-licenses [s/Int]))
-
-(s/defschema SubmitCommand
-  CommandBase)
-
+(s/defschema AddLicensesCommand
+  (assoc CommandBase
+         :comment s/Str
+         :licenses [s/Int]))
+(s/defschema AddMemberCommand
+  (assoc CommandBase
+         :member {:userid UserId}))
 (s/defschema ApproveCommand
   (assoc CommandBase
          :comment s/Str))
-
-(s/defschema RejectCommand
+(s/defschema ChangeResourcesCommand
   (assoc CommandBase
-         :comment s/Str))
-
-(s/defschema ReturnCommand
-  (assoc CommandBase
-         :comment s/Str))
-
+         (s/optional-key :comment) s/Str
+         :catalogue-item-ids [s/Int]))
 (s/defschema CloseCommand
   (assoc CommandBase
          :comment s/Str))
-
-(s/defschema RequestDecisionCommand
+(s/defschema CommentCommand
   (assoc CommandBase
-         :deciders [UserId]
          :comment s/Str))
-
+(s/defschema CopyAsNewCommand
+  CommandBase)
+(s/defschema CreateCommand
+  {:catalogue-item-ids [s/Int]})
 (s/defschema DecideCommand
   (assoc CommandBase
          :decision (s/enum :approved :rejected)
          :comment s/Str))
-
+(s/defschema InviteMemberCommand
+  (assoc CommandBase
+         :member {:name s/Str
+                  :email s/Str}))
+(s/defschema RejectCommand
+  (assoc CommandBase
+         :comment s/Str))
+(s/defschema RemarkCommand
+  (assoc CommandBase
+         :comment s/Str
+         :public s/Bool))
+(s/defschema RemoveMemberCommand
+  (assoc CommandBase
+         :member {:userid UserId}
+         :comment s/Str))
 ;; TODO RequestComment/Comment could be renamed to RequestReview/Review to be in line with the UI
 (s/defschema RequestCommentCommand
   (assoc CommandBase
          :commenters [UserId]
          :comment s/Str))
-
-(s/defschema CommentCommand
+(s/defschema RequestDecisionCommand
+  (assoc CommandBase
+         :deciders [UserId]
+         :comment s/Str))
+(s/defschema ReturnCommand
   (assoc CommandBase
          :comment s/Str))
-
-(s/defschema RemarkCommand
+(s/defschema RevokeCommand
   (assoc CommandBase
-         :comment s/Str
-         :public s/Bool))
-
-(s/defschema AddLicensesCommand
-  (assoc CommandBase
-         :comment s/Str
-         :licenses [s/Int]))
-
-(s/defschema AddMemberCommand
-  (assoc CommandBase
-         :member {:userid UserId}))
-
-(s/defschema ChangeResourcesCommand
-  (assoc CommandBase
-         (s/optional-key :comment) s/Str
-         :catalogue-item-ids [s/Int]))
-
-(s/defschema InviteMemberCommand
-  (assoc CommandBase
-         :member {:name s/Str
-                  :email s/Str}))
-
-(s/defschema AcceptInvitationCommand
-  (assoc CommandBase
-         :token s/Str))
-
-(s/defschema RemoveMemberCommand
-  (assoc CommandBase
-         :member {:userid UserId}
          :comment s/Str))
-
+(s/defschema SaveDraftCommand
+  (assoc CommandBase
+         ;; {s/Int s/Str} is what we want, but that isn't nicely representable as JSON
+         :field-values [{:field s/Int
+                         :value s/Str}]))
+(s/defschema SubmitCommand
+  CommandBase)
 (s/defschema UninviteMemberCommand
   (assoc CommandBase
          :member {:name s/Str
                   :email s/Str}
          :comment s/Str))
-
-(s/defschema CopyAsNewCommand
-  CommandBase)
 
 (def command-schemas
   {:application.command/accept-invitation AcceptInvitationCommand
@@ -137,6 +120,7 @@
    :application.command/request-comment RequestCommentCommand
    :application.command/request-decision RequestDecisionCommand
    :application.command/return ReturnCommand
+   :application.command/revoke RevokeCommand
    :application.command/save-draft SaveDraftCommand
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand})
@@ -369,6 +353,11 @@
 (defmethod command-handler :application.command/close
   [cmd _application _injections]
   (ok {:event/type :application.event/closed
+       :application/comment (:comment cmd)}))
+
+(defmethod command-handler :application.command/revoke
+  [cmd _application _injections]
+  (ok {:event/type :application.event/revoked
        :application/comment (:comment cmd)}))
 
 (defmethod command-handler :application.command/request-decision

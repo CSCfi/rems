@@ -1,6 +1,7 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
   (:require [rems.application.events :as events]
+            [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
@@ -67,11 +68,22 @@
   {:success s/Bool
    (s/optional-key :errors) [s/Any]})
 
+(s/defschema Language
+  (rjs/field s/Keyword
+             {:description "A language code"
+              :example "en"}))
+
 (s/defschema LocalizedString
-  {s/Keyword s/Str})
+  (rjs/field {Language s/Str}
+             {:example {:fi "text in Finnish"
+                        :en "text in English"}
+              :description "Text values keyed by languages"}))
 
 (s/defschema LocalizedInt
-  {s/Keyword s/Int})
+  (rjs/field {Language s/Int}
+             {:example {:fi 1
+                        :en 2}
+              :description "Integers keyed by languages"}))
 
 (s/defschema V2Resource
   {:resource/id s/Int

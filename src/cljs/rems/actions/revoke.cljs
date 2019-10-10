@@ -1,4 +1,4 @@
-(ns rems.actions.close
+(ns rems.actions.revoke
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
             [rems.flash-message :as flash-message]
@@ -13,13 +13,13 @@
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
-(def ^:private action-form-id "close")
+(def ^:private action-form-id "revoke")
 
 (rf/reg-event-fx
- ::send-close
+ ::send-revoke
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description [text :t.actions/close]]
-     (post! "/api/applications/close"
+   (let [description [text :t.actions/revoke]]
+     (post! "/api/applications/revoke"
             {:params {:application-id application-id
                       :comment comment}
              :handler (flash-message/default-success-handler
@@ -31,32 +31,28 @@
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
-(defn close-action-button []
+(defn revoke-action-button []
   [action-button {:id action-form-id
-                  :text (text :t.actions/close)
+                  :text (text :t.actions/revoke)
                   :on-click #(rf/dispatch [::open-form])}])
 
-(defn close-view
-  [{:keys [comment show-comment-field? on-set-comment on-send]}]
+(defn revoke-view
+  [{:keys [comment on-set-comment on-send]}]
   [action-form-view action-form-id
-   (text :t.actions/close)
-   [[button-wrapper {:id "close"
-                     :text (text :t.actions/close)
+   (text :t.actions/revoke)
+   [[button-wrapper {:id "revoke"
+                     :text (text :t.actions/revoke)
                      :class "btn-danger"
                      :on-click on-send}]]
-   [:div
-    (text :t.actions/close-intro)
-    (when show-comment-field?
-      [action-comment {:id action-form-id
-                       :label (text :t.form/add-comments-not-shown-to-applicant)
-                       :comment comment
-                       :on-comment on-set-comment}])]])
+   [action-comment {:id action-form-id
+                    :label (text :t.form/add-comments-shown-to-applicant)
+                    :comment comment
+                    :on-comment on-set-comment}]])
 
-(defn close-form [application-id show-comment-field? on-finished]
+(defn revoke-form [application-id on-finished]
   (let [comment @(rf/subscribe [::comment])]
-    [close-view {:comment comment
-                 :show-comment-field? show-comment-field?
-                 :on-set-comment #(rf/dispatch [::set-comment %])
-                 :on-send #(rf/dispatch [::send-close {:application-id application-id
-                                                       :comment comment
-                                                       :on-finished on-finished}])}]))
+    [revoke-view {:comment comment
+                  :on-set-comment #(rf/dispatch [::set-comment %])
+                  :on-send #(rf/dispatch [::send-revoke {:application-id application-id
+                                                         :comment comment
+                                                         :on-finished on-finished}])}]))

@@ -12,18 +12,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-old? false)
-    :dispatch-n [[::fetch-resources]
+   {:dispatch-n [[::fetch-resources]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
  ::fetch-resources
  (fn [{:keys [db]}]
-   (let [description (text :t.administration/resources)]
+   (let [description [text :t.administration/resources]]
      (fetch "/api/resources"
             {:url-params {:disabled true
-                          :expired (::display-old? db)
-                          :archived (::display-old? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-resources-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))
@@ -57,13 +56,6 @@
                     :top description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
-
-(rf/reg-event-fx
- ::set-display-old?
- (fn [{:keys [db]} [_ display-old?]]
-   {:db (assoc db ::display-old? display-old?)
-    :dispatch [::fetch-resources]}))
-(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
 (defn- to-create-resource []
   [atoms/link {:class "btn btn-primary"}
@@ -125,7 +117,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]
-           [status-flags/display-old-toggle
-            @(rf/subscribe [::display-old?])
-            #(rf/dispatch [::set-display-old? %])]
+           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-resources])]
+           [status-flags/disabled-and-archived-explanation]
            [resources-list]])))

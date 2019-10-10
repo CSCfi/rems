@@ -13,19 +13,18 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::display-old? false)
-    :dispatch-n [[::fetch-catalogue]
+   {:dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
  ::fetch-catalogue
  (fn [{:keys [db]}]
-   (let [description (text :t.administration/catalogue-items)]
+   (let [description [text :t.administration/catalogue-items]]
      (fetch "/api/catalogue-items"
             {:url-params {:expand :names
                           :disabled true
-                          :expired (::display-old? db)
-                          :archived (::display-old? db)}
+                          :expired (status-flags/display-archived? db)
+                          :archived (status-flags/display-archived? db)}
              :handler #(rf/dispatch [::fetch-catalogue-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))
@@ -59,13 +58,6 @@
                     :top description #(rf/dispatch dispatch-on-finished))
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
-
-(rf/reg-event-fx
- ::set-display-old?
- (fn [{:keys [db]} [_ display-old?]]
-   {:db (assoc db ::display-old? display-old?)
-    :dispatch [::fetch-catalogue]}))
-(rf/reg-sub ::display-old? (fn [db _] (::display-old? db)))
 
 (defn- to-create-catalogue-item []
   [atoms/link {:class "btn btn-primary"}
@@ -150,7 +142,6 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
-           [status-flags/display-old-toggle
-            @(rf/subscribe [::display-old?])
-            #(rf/dispatch [::set-display-old? %])]
+           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
+           [status-flags/disabled-and-archived-explanation]
            [catalogue-list]])))

@@ -67,6 +67,9 @@ Changes since v2.4
 - Show all errors preventing application submission at the same time (#1594)
 - Show applicant's previous applications to handler (#1653)
 - Support OpenID Connect, for example Auth0
+- Handler can close an application whenever after initial submission (#1669)
+- Documentation about [user permissions by application state](docs/application-permissions.md)
+- Revoking already approved applications (#1661)
 
 ### Enhancements
 - Improved version information in footer
@@ -78,11 +81,16 @@ Changes since v2.4
 - Email messages now use the application title and full names of users
 - Email message texts improved
 - Show three latest events as a default on the application page (#1632)
+- A change of language persists now after login thanks to a new language setting cookie.
+- A returning user will see the login screen in the correct language if he or she has the cookie.
+- Event descriptions on application page now use full name and are more thorough (#1634)
 
 ### Fixes
 - Entitlement API
 - Search on the catalogue and admin pages did not support multiple search terms (#1541)
+- Hide flash message when changing language so mixed language content is not shown
 - Printing application pages now works (except for drafts) (#1643)
+- Applicant can now view attachment licenses (#1676)
 
 ## v2.5 "Maarintie" 2019-07-18
 

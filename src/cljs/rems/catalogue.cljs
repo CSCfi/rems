@@ -87,7 +87,14 @@
         link (or more-info-link
                  urn-link)]
     (when link
-      [:a.btn.btn-secondary {:href link :target :_blank}
+      [:a.btn.btn-secondary
+       {:href link
+        :target :_blank
+        :aria-label (str (text :t.catalogue/more-info)
+                         ": "
+                         (get-localized-title item language)
+                         ", "
+                         (text :t.link/opens-in-new-window))}
        (text :t.catalogue/more-info) " " [external-link]])))
 
 (rf/reg-sub

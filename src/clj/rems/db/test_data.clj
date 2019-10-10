@@ -554,12 +554,12 @@
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
 
-  (let [appid1 (create-draft! applicant [catid] "approved application with disabled item")]
+  (let [appid1 (create-draft! applicant [catid] "submitted application with disabled item")]
     (command! {:type :application.command/submit
                :application-id appid1
                :actor applicant}))
 
-  (let [appid2 (create-draft! applicant [catid] "submitted application with disabled item")]
+  (let [appid2 (create-draft! applicant [catid] "approved application with disabled item")]
     (command! {:type :application.command/submit
                :application-id appid2
                :actor applicant})

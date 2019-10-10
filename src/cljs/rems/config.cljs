@@ -18,7 +18,7 @@
 
 (defn fetch-config! []
   (fetch "/api/config"
-         {:handler #(rf/dispatch [::loaded-config %])
+         {:handler #(rf/dispatch-sync [::loaded-config %])
           :error-handler (flash-message/default-error-handler :top "Fetch config")}))
 
 (defn dev-environment? []

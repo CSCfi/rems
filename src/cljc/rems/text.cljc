@@ -1,18 +1,29 @@
 (ns rems.text
   #?(:clj (:require [clj-time.core :as time]
                     [clj-time.format :as format]
+                    [clojure.string :as str]
+                    [rems.application-util :as application-util]
                     [rems.context :as context]
                     [rems.locales :as locales]
                     [taoensso.tempura :refer [tr]])
      :cljs (:require [cljs-time.core :as time]
                      [cljs-time.format :as format]
+                     [clojure.string :as str]
                      [re-frame.core :as rf]
+                     [rems.application-util :as application-util]
                      [taoensso.tempura :refer [tr]])))
 
 (defn with-language [lang f]
   #?(:clj (binding [context/*lang* lang
                     context/*tempura* (partial tr (locales/tempura-config) [lang])]
             (f))))
+
+(defn- failsafe-fallback
+  "Fallback for when loading the translations has failed."
+  [k args]
+  (pr-str (vec (if (= :t/missing k)
+                 (first args)
+                 (cons k args)))))
 
 (defn text-format
   "Return the tempura translation for a given key & format arguments"
@@ -22,7 +33,7 @@
                  language (rf/subscribe [:language])]
              (tr {:dict @translations}
                  [@language]
-                 [k :t/missing]
+                 [k :t/missing (failsafe-fallback k args)]
                  (vec args)))))
 
 (defn text
@@ -58,7 +69,8 @@
    :application.state/approved :t.applications.states/approved
    :application.state/rejected :t.applications.states/rejected
    :application.state/closed :t.applications.states/closed
-   :application.state/returned :t.applications.states/returned})
+   :application.state/returned :t.applications.states/returned
+   :application.state/revoked :t.applications.states/revoked})
 
 (defn localize-state [state]
   (text (get states state :t.applications.states/unknown)))
@@ -99,16 +111,43 @@
    :application.event/remarked :t.applications.events/remarked
    :application.event/resources-changed :t.applications.events/resources-changed
    :application.event/returned :t.applications.events/returned
+   :application.event/revoked :t.applications.events/revoked
    :application.event/submitted :t.applications.events/submitted})
 
-(defn localize-event [event-type]
-  (text (get event-types event-type :t.applications.events/unknown)))
+(defn localize-decision [event]
+  (let [decision (:application/decision event)]
+    (text-format
+     (case decision
+       :approved :t.applications.events/approved
+       :rejected :t.applications.events/rejected
+       :t.applications.events/unknown)
+     (application-util/get-member-name (:event/actor-attributes event)))))
 
-(defn localize-decision [decision]
-  (text (case decision
-          :approved :t.applications.events/approved
-          :rejected :t.applications.events/rejected
-          :t.applications.events/unknown)))
+(defn localize-event [event]
+  (let [event-type (:event/type event)]
+    (text-format
+     (get event-types event-type :t.applications.events/unknown)
+     (application-util/get-member-name (:event/actor-attributes event))
+     (case event-type
+       :application.event/comment-requested
+       (str/join ", " (mapv application-util/get-member-name
+                            (:application/commenters event)))
+
+       :application.event/decision-requested
+       (str/join ", " (mapv application-util/get-member-name
+                            (:application/deciders event)))
+
+       (:application.event/member-added
+        :application.event/member-invited
+        :application.event/member-removed
+        :application.event/member-uninvited)
+       (application-util/get-member-name (:application/member event))
+
+       :application.event/resources-changed
+       (str/join ", " (mapv #(localized (:catalogue-item/title %))
+                            (:application/resources event)))
+
+       nil))))
 
 (def ^:private time-format
   (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))

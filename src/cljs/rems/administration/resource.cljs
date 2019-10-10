@@ -9,7 +9,7 @@
             [rems.common-util :refer [andstr]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -48,8 +48,6 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:organization resource)]
               [inline-info-field (text :t.administration/resource) (:resid resource)]
-              [inline-info-field (text :t.administration/start) (localize-time (:start resource))]
-              [inline-info-field (text :t.administration/end) (localize-time (:end resource))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? resource)]]]}]
    [licenses-view (:licenses resource) language]
    (let [id (:id resource)]

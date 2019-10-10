@@ -9,7 +9,7 @@
             [rems.common-util :refer [andstr]]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [text]]
             [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
@@ -38,13 +38,13 @@
 (rf/reg-event-fx
  ::edit-form
  (fn [_ [_ id]]
-   (let [description (text :t.administration/edit)]
+   (let [description [text :t.administration/edit]]
      (fetch (str "/api/forms/" id "/editable")
             {:handler (fn [response]
                         (if (:success response)
                           (navigate! (str "/administration/edit-form/" id))
                           (flash-message/show-default-error!
-                           :top description (status-flags/format-update-failure response))))
+                           :top description [status-flags/format-update-failure response])))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -74,8 +74,6 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:form/organization form)]
               [inline-info-field (text :t.administration/title) (:form/title form)]
-              [inline-info-field (text :t.administration/start) (localize-time (:start form))]
-              [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? form)]]]}]
    (let [id (:form/id form)]
      [:div.col.commands

@@ -35,7 +35,7 @@
                 :min-rows 4
                 :max-rows 4
                 :name id
-                :placeholder (text :t.actions/comment-placeholder)
+                :placeholder (text :t.actions/comment)
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 

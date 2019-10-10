@@ -13,7 +13,8 @@
 
 (defn get-user-settings [user]
   (merge (default-settings)
-         (parse-settings (:settings (db/get-user-settings {:user user})))))
+         (when user
+           (parse-settings (:settings (db/get-user-settings {:user user}))))))
 
 (defn- validate-settings [settings]
   (let [{:keys [language]} settings]

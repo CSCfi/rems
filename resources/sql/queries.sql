@@ -521,3 +521,19 @@ VALUES (:prefix, :suffix);
 
 -- :name get-database-time :? :1
 SELECT now();
+
+-- :name add-blacklist-event! :!
+INSERT INTO blacklist_event (eventdata)
+VALUES (:eventdata::jsonb);
+
+-- :name get-blacklist-events :? :*
+SELECT id, eventdata::text FROM blacklist_event
+WHERE 1=1
+/*~ (when (:resource params) */
+  AND eventdata->>'blacklist/resource' = :resource
+/*~ ) ~*/
+/*~ (when (:user params) */
+  AND eventdata->>'blacklist/user' = :user
+/*~ ) ~*/
+ORDER BY id ASC
+;

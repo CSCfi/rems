@@ -19,6 +19,7 @@
             [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
+            [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
             [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
@@ -97,7 +98,7 @@
    (fetch (str "/api/applications/" id)
           {:handler #(rf/dispatch [::fetch-application-result %])
            :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
-                                (flash-message/default-error-handler :top (text :t.applications/application)))})
+                                (flash-message/default-error-handler :top [text :t.applications/application]))})
    {:db (update db ::application fetcher/started)}))
 
 (defn- initialize-edit-application [db]
@@ -189,7 +190,7 @@
  ::copy-as-new-application
  (fn [{:keys [db]} _]
    (let [application-id (get-in db [::application :data :application/id])
-         description (text :t.form/copy-as-new)]
+         description [text :t.form/copy-as-new]]
      (post! "/api/applications/copy-as-new"
             {:params {:application-id application-id}
              :handler (flash-message/default-success-handler
@@ -247,8 +248,9 @@
 (defn- link-license [license]
   (let [title (localized (:license/title license))
         link (localized (:license/link license))]
-    [:a.license-title {:href link :target :_blank}
-     title " " [external-link]]))
+    [:div
+     [:a.license-title {:href link :target :_blank}
+      title " " [external-link]]]))
 
 (defn- text-license [license]
   (let [id (:license/id license)
@@ -271,34 +273,37 @@
                      :tab-index "-1"}
       [:div.license-block (str/trim (str text))]]]))
 
-(defn- attachment-license [license]
+(defn- attachment-license [application license]
   (let [title (localized (:license/title license))
-        link (str "/api/licenses/attachments/" (localized (:license/attachment-id license)))]
+        language @(rf/subscribe [:language])
+        link (str "/api/applications/" (:application/id application)
+                  "/license-attachment/" (:license/id license)
+                  "/" (name language))]
     [:a.license-title {:href link :target :_blank}
      title " " [file-download]]))
 
-(defn license-field [license show-accepted-licenses?]
-  [:div.license
-   (when show-accepted-licenses?
-     (if (:accepted license)
-       (success-symbol)
-       (empty-symbol)))
+(defn license-field [application license show-accepted-licenses?]
+  [:div.license.flex-row.d-flex
+   [:div (when show-accepted-licenses?
+           (if (:accepted license)
+             (success-symbol)
+             (empty-symbol)))]
    (case (:license/type license)
      :link [link-license license]
      :text [text-license license]
-     :attachment [attachment-license license]
+     :attachment [attachment-license application license]
      [fields/unsupported-field license])])
 
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
+                   :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
 (defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
+                   :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
 (defn- copy-as-new-button []
   [button-wrapper {:id "copy-as-new"
@@ -358,10 +363,15 @@
          (into [:div#licenses]
                (for [license licenses]
                  [license-field
+                  application
                   (assoc license
                          :accepted (contains? accepted-licenses (:license/id license))
                          :readonly readonly?)
                   show-accepted-licenses?]))
+         (when (contains? permissions :application.command/add-licenses)
+           [:<>
+            [:div.commands [add-licenses-action-button]]
+            [add-licenses-form application-id (partial reload! application-id)]])
          (if (accepted-licenses? application userid)
            [:div#has-accepted-licenses (text :t.form/has-accepted-licenses)]
            (when (contains? permissions :application.command/accept-licenses)
@@ -369,47 +379,40 @@
               ;; TODO consider saving the form first so that no data is lost for the applicant
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
-(defn- format-application-id [config application]
-  (let [id-column (get config :application-id-column :id)]
-    (case id-column
-      :external-id (:application/external-id application)
-      :id (:application/id application)
-      (:application/id application))))
-
 (defn- application-link [application prefix]
   (let [config @(rf/subscribe [:rems.config/config])]
     [:a {:href (str "/application/" (:application/id application))}
      (when prefix
        (str prefix " "))
-     (format-application-id config application)]))
+     (application-list/format-application-id config application)]))
 
 (defn- format-event [event]
-  {:userid (:event/actor event)
-   :event (localize-event (:event/type event))
+  {:user (:commonName (:event/actor-attributes event))
+   :event (localize-event event)
+   :decision (when (= (:event/type event) :application.event/decided)
+               (localize-decision event))
    :comment (case (:event/type event)
-              :application.event/decided
-              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
-
               :application.event/copied-from
               [application-link (:application/copied-from event) (text :t.applications/application)]
 
               :application.event/copied-to
               [application-link (:application/copied-to event) (text :t.applications/application)]
 
-              (:application/comment event))
+              (let [comment (:application/comment event)]
+                (when (not (empty? comment))
+                  (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
-   :commenters (:application/commenters event)
-   :deciders (:application/deciders event)
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time userid event comment commenters deciders]}]
+(defn- event-view [{:keys [time user event comment decision]}]
   [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
-    [:div.col-form-label [:span userid] " — " [:span event]
-     (when-let [targets (seq (concat commenters deciders))]
-       [:span ": " (str/join ", " targets)])]
-    (when comment [:div comment])]])
+    [:div.col-form-label event]
+    (when decision
+      [:div decision])
+    (when comment
+      [:div comment])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
@@ -418,7 +421,7 @@
             [event-view e]))))
 
 (defn- get-application-phases [state]
-  (cond (contains? #{:application.state/rejected} state)
+  (cond (contains? #{:application.state/rejected :application.state/revoked} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
@@ -485,7 +488,7 @@
                      [info-field
                       (text :t.applications/application)
                       [:<>
-                       [:span#application-id (format-application-id config application)]
+                       [:span#application-id (application-list/format-application-id config application)]
                        [application-copy-notice application]]
                       {:inline? true}]
                      [info-field
@@ -604,10 +607,10 @@
                               :application.command/comment [review-action-button]
                               :application.command/request-decision [request-decision-action-button]
                               :application.command/decide [decide-action-button]
-                              :application.command/add-licenses [add-licenses-action-button]
                               :application.command/remark [remark-action-button]
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
+                              :application.command/revoke [revoke-action-button]
                               :application.command/close [close-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
     (distinct (for [[command action] (partition 2 commands-and-actions)
@@ -628,9 +631,9 @@
                 [review-form app-id reload]
                 [remark-form app-id reload]
                 [close-form app-id show-comment-field? reload]
+                [revoke-form app-id reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
-                [add-licenses-form app-id reload]
                 [approve-reject-form app-id reload]]]]
     (when (seq actions)
       [collapsible/component
@@ -716,9 +719,11 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (get-in @(rf/subscribe [:identity]) [:user :eppn])]
     [:div.container-fluid
-     [document-title (if application
-                       (str (text :t.applications/application) " " (format-application-id config application))
-                       (text :t.applications/application))]
+     [document-title (str (text :t.applications/application)
+                          (when application
+                            (str " " (application-list/format-application-id config application)))
+                          (when-not (str/blank? (:application/description application))
+                            (str ": " (:application/description application))))]
      ^{:key application-id} ; re-render to clear flash messages when navigating to another application
      [flash-message/component :top]
      (when loading?

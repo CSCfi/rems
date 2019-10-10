@@ -41,7 +41,7 @@
 (rf/reg-event-fx
  ::send-add-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-   (let [description (text :t.actions/add-member)]
+   (let [description [text :t.actions/add-member]]
      (post! "/api/applications/add-member"
             {:params {:application-id application-id
                       :member (select-keys member [:userid])}

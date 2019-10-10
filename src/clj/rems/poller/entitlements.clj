@@ -10,13 +10,13 @@
   (:import [org.joda.time Duration]))
 
 (defn- entitlements-for-event [event]
-  ;; we filter by event here, and by state in update-entitlements-for.
-  ;; this is for performance reasons only
+  ;; performance improvement: filter events which may affect entitlements
   (when (contains? #{:application.event/approved
+                     :application.event/closed
                      :application.event/licenses-accepted
                      :application.event/member-removed
                      :application.event/resources-changed
-                     :application.event/closed}
+                     :application.event/revoked}
                    (:event/type event))
     (let [application (applications/get-unrestricted-application (:application/id event))]
       (entitlements/update-entitlements-for application))))

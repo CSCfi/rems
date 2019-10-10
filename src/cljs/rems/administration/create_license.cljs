@@ -60,7 +60,7 @@
 (rf/reg-event-fx
  ::create-license
  (fn [_ [_ request]]
-   (let [description (text :t.administration/create-license)]
+   (let [description [text :t.administration/create-license]]
      (post! "/api/licenses/create"
             {:params request
              :handler (flash-message/default-success-handler

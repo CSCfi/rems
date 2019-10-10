@@ -8,23 +8,11 @@
             [schema-tools.core :as st])
   (:import [org.joda.time DateTime]))
 
-(defn- datestring->datetime [s]
-  (if (string? s)
-    (time-format/parse s)
-    s))
-
-(def ^:private datestring-coercion-matcher
-  {DateTime datestring->datetime})
-
-(defn- coercion-matcher [schema]
-  (or (datestring-coercion-matcher schema)
-      (coerce/string-coercion-matcher schema)))
-
 (def ^:private coerce-event-commons
-  (coerce/coercer (st/open-schema events/EventBase) coercion-matcher))
+  (coerce/coercer (st/open-schema events/EventBase) json/coercion-matcher))
 
 (def ^:private coerce-event-specifics
-  (coerce/coercer events/Event coercion-matcher))
+  (coerce/coercer events/Event json/coercion-matcher))
 
 (defn- coerce-event [event]
   ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
