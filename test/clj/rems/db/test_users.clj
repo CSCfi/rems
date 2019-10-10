@@ -26,3 +26,9 @@
     (roles/add-role! "user1" :owner)
     (is (= ["user1"] (users/get-users-with-role :owner)))
     (is (= [] (users/get-users-with-role :reporter)))))
+
+(deftest test-nonexistent-user
+  (is (= {:userid "nonexistent"
+          :name nil
+          :email nil}
+         (users/get-user "nonexistent"))))

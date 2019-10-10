@@ -3,8 +3,7 @@
             [rems.db.core :as db]
             [rems.json :as json]))
 
-;; XXX: Adding these attributes is not done consistently when retrieving
-;;   the data for a user.
+;; TODO could pass through additional (configurable?) attributes
 (defn format-user [u]
   {:userid (:eppn u)
    :name (:commonName u)
@@ -70,6 +69,8 @@
        (doall)))
 
 (defn get-user [userid]
-  (->> userid
-       get-user-attributes
-       format-user))
+  (-> userid
+      get-user-attributes
+      format-user
+      ;; hack for users without attributes
+      (assoc :userid userid)))

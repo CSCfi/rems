@@ -114,8 +114,8 @@
 
 (s/defschema UserWithAttributes
   {:userid UserId
-   :name s/Str
-   :email s/Str})
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
 
 (s/defschema Workflow
   {:id s/Int
