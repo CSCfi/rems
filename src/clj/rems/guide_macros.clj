@@ -1,6 +1,33 @@
 (ns rems.guide-macros
   "Utilities for component guide."
-  (:require [clojure.pprint :refer [code-dispatch write]]))
+  (:require [clojure.pprint :refer [code-dispatch write]]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is]]))
+
+(defn- normalize-file-path
+  "The file path may contain local filesystem parts that we want to remove
+  so that we can use the path to refer to e.g. project GitHub."
+  [path]
+  (str/replace (subs path (str/index-of path "src"))
+               "\\" "/"))
+
+(deftest normalize-file-path-test
+  (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))
+  (is (= "src/foo/bar.clj" (normalize-file-path "C:\\Users\\john\\rems\\src\\foo/bar.clj"))))
+
+(defmacro namespace-info [ns-symbol]
+  (let [ns (find-ns ns-symbol)
+        name (str (ns-name ns))
+        meta (meta ns)
+        meta (assoc meta
+                    :file (normalize-file-path (:file meta))
+                    :doc (-> &env :ns :doc))]
+    `(rems.guide-functions/render-namespace-info
+      ~name
+      ~meta)))
+
+(comment
+  (meta (find-ns 'rems.guide-macros)))
 
 (defmacro component-info [component]
   `(let [m# (meta (var ~component))]

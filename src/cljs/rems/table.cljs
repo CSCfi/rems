@@ -23,7 +23,7 @@
             [rems.search :as search]
             [rems.text :refer [text-format]]
             [schema.core :as s])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+  (:require-macros [rems.guide-macros :refer [component-info example namespace-info]]))
 
 (s/defschema ColumnKey
   s/Keyword)
@@ -297,6 +297,7 @@
 
 (defn guide []
   [:div
+   (namespace-info rems.table)
    (component-info table)
    ;; slight abuse of example macro, but it works since reg-sub returns a fn which reagent doesn't render
    (example "data for examples"
