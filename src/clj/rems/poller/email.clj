@@ -39,6 +39,8 @@
    (when-not (empty? (:application/description application))
      (str ", \"" (:application/description application) "\""))))
 
+;; TODO user-for-email shouldn't need to call get-user since we add
+;; all this info to the application in rems.application.model/enrich-user-attributes
 (defn- user-for-email [user]
   (let [user-attributes (users/get-user user)]
     (or (:name user-attributes)
