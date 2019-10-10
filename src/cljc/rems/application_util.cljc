@@ -12,9 +12,8 @@
              :application.command/save-draft))
 
 (defn get-member-name [attributes]
-  (when attributes
-    (or (:name attributes)
-        (:userid attributes))))
+  (or (:name attributes)
+      (:userid attributes)))
 
 (defn get-applicant-name [application]
   (get-member-name (:application/applicant application)))
