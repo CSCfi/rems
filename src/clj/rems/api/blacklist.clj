@@ -28,7 +28,7 @@
     :tags ["blacklist"]
     (GET "/" []
       :summary "Get blacklist entries"
-      :roles #{:handler :owner}
+      :roles #{:handler :owner :reporter}
       :query-params [{user :- blacklist/UserId nil}
                      {resource :- blacklist/ResourceId nil}]
       :return BlacklistResponse
@@ -36,8 +36,7 @@
                                     :blacklist/resource resource})))
     (POST "/add" []
       :summary "Add a blacklist entry"
-      ;; TODO who can add entries? (see #1682)
-      :roles #{:owner}
+      :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
       (blacklist/add-event! (assoc (command->event command)
@@ -46,8 +45,7 @@
 
     (POST "/remove" []
       :summary "Remove a blacklist entry"
-      ;; TODO who can remove entries? (see #1682)
-      :roles #{:owner}
+      :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
       (blacklist/add-event! (assoc (command->event command)
