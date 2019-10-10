@@ -79,7 +79,10 @@ window.rems = {
      (format "var csrfToken = '%s';" *anti-forgery-token*)]
     (include-js "/js/app.js")
     [:script {:type "text/javascript"}
-     (format "rems.app.setIdentity(%s);" (json/generate-string {:user context/*user* :roles context/*roles*}))])))
+     (format "rems.app.setIdentity(%s);"
+             (json/generate-string {:user (when context/*user*
+                                            (users/format-user context/*user*))
+                                    :roles context/*roles*}))])))
 
 (defn- error-content
   [error-details]

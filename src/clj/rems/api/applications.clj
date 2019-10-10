@@ -30,28 +30,17 @@
   (assoc SuccessResponse
          (s/optional-key :application-id) s/Int))
 
-(s/defschema User
-  {:userid s/Str
-   :name (s/maybe s/Str)
-   :email (s/maybe s/Str)})
-
 (s/defschema Applicant
-  {:userid s/Str
-   :name (s/maybe s/Str)
-   :email (s/maybe s/Str)})
+  UserWithAttributes)
 
 (s/defschema Commenter
-  {:userid s/Str
-   :name (s/maybe s/Str)
-   :email (s/maybe s/Str)})
+  UserWithAttributes)
 
 (s/defschema Commenters
   [Commenter])
 
 (s/defschema Decider
-  {:userid s/Str
-   :name (s/maybe s/Str)
-   :email (s/maybe s/Str)})
+  UserWithAttributes)
 
 (s/defschema Deciders
   [Decider])

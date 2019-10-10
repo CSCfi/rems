@@ -32,10 +32,10 @@
 
 (defn set-identity!
   "Receives as a parameter following kind of structure:
-   {:user {:eppn \"\"eppn\" \"developer\"
+   {:user {:userid \"developer\"
            :email \"developer@e.mail\"
-           :displayName \"deve\"
-           :surname \"loper\"
+           :name \"deve loper\"
+           :organization \"Foocorp\"
            ...}
     :roles [\"applicant\" \"approver\"]}
     Roles are converted to clojure keywords inside the function before dispatching"

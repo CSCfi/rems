@@ -3,8 +3,7 @@
             [rems.db.core :as db]
             [rems.json :as json]))
 
-;; XXX: Adding these attributes is not done consistently when retrieving
-;;   the data for a user.
+;; TODO could pass through additional (configurable?) attributes
 (defn format-user [u]
   {:userid (:eppn u)
    :name (:commonName u)
@@ -23,18 +22,23 @@
   (when user
     (add-user! user userattrs)))
 
-(defn get-user-attributes
+(defn- get-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
    Returns a structure like this:
    {:eppn \"developer\"
     :email \"developer@e.mail\"
     :displayName \"deve\"
     :surname \"loper\"
-    ...etc}"
+    ...etc}
+
+  You should use get-user instead."
   [userid]
   (json/parse-string (:userattrs (db/get-user-attributes {:user userid}))))
 
-(defn get-all-users []
+(defn user-exists? [userid]
+  (some? (get-user-attributes userid)))
+
+(defn- get-all-users []
   (->> (db/get-users)
        (map :userid)
        (map get-user-attributes)
@@ -69,7 +73,11 @@
        (map :userid)
        (doall)))
 
-(defn get-user [userid]
-  (->> userid
-       get-user-attributes
-       format-user))
+(defn get-user
+  "Given a userid, returns a map with keys :userid, :email and :name."
+  [userid]
+  (-> userid
+      get-user-attributes
+      format-user
+      ;; in case user attributes were not found, return at least the userid
+      (assoc :userid userid)))

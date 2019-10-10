@@ -45,7 +45,7 @@
    :get-form-template dummy-forms
    :get-catalogue-item dummy-get-catalogue-item
    :get-license dummy-licenses
-   :get-user (constantly nil)
+   :get-user (fn [userid] {:userid userid})
    :get-users-with-role (constantly nil)
    :get-attachments-for-application (constantly nil)})
 

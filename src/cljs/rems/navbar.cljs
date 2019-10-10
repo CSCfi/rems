@@ -21,7 +21,7 @@
   (when user
     [:div.user.px-2.px-sm-0
      [:i.fa.fa-user]
-     [:span.user-name (str (:commonName user) " /")]
+     [:span.user-name (str (:name user) " /")]
      [atoms/link {:id "logout", :class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout)]]))
 
 (defn navbar-extra-pages [page-id]

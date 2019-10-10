@@ -15,14 +15,20 @@
   (testing "get-user-attributes"
     (is (= {:eppn "whatever"
             :some-attr "some value"}
-           (users/get-user-attributes "user1"))))
+           (#'users/get-user-attributes "user1"))))
 
   (testing "get-all-users"
     (is (= [{:eppn "whatever"
              :some-attr "some value"}]
-           (users/get-all-users))))
+           (#'users/get-all-users))))
 
   (testing "get-users-with-role"
     (roles/add-role! "user1" :owner)
     (is (= ["user1"] (users/get-users-with-role :owner)))
     (is (= [] (users/get-users-with-role :reporter)))))
+
+(deftest test-nonexistent-user
+  (is (= {:userid "nonexistent"
+          :name nil
+          :email nil}
+         (users/get-user "nonexistent"))))

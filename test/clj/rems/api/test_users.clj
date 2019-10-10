@@ -16,15 +16,15 @@
 
 (deftest users-api-test
   (testing "create"
-    (is (= nil (users/get-user-attributes "david")))
+    (is (= nil (:name (users/get-user "david"))))
     (-> (request :post (str "/api/users/create"))
         (json-body new-user)
         (authenticate "42" "owner")
         handler
         assert-response-is-ok)
-    (is (= {:eppn "david"
-            :mail "d@av.id"
-            :commonName "David Newuser"} (users/get-user-attributes "david")))))
+    (is (= {:userid "david"
+            :email "d@av.id"
+            :name "David Newuser"} (users/get-user "david")))))
 
 (deftest workflows-api-security-test
   (testing "without authentication"

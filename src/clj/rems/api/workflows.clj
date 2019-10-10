@@ -1,7 +1,6 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.applications :refer [User]]
-            [rems.api.schema :refer [SuccessResponse ArchivedCommand EnabledCommand UserId Workflow]]
+            [rems.api.schema :refer [SuccessResponse ArchivedCommand EnabledCommand UserId UserWithAttributes Workflow]]
             [rems.api.services.workflow :as workflow]
             [rems.api.util] ; required for route :roles
             [rems.util :refer [getx-user-id]]
@@ -25,7 +24,7 @@
    :id s/Int})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
-(s/defschema AvailableActor User)
+(s/defschema AvailableActor UserWithAttributes)
 (s/defschema AvailableActors [AvailableActor])
 
 (def workflows-api
