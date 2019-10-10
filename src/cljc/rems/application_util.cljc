@@ -11,7 +11,7 @@
   (contains? (:application/permissions application)
              :application.command/save-draft))
 
-(def ^:private name-attribute-priority [:name :commonName :displayName :eppn])
+(def ^:private name-attribute-priority [:name :commonName :displayName :userid :eppn])
 
 (defn get-member-name [attributes]
   (when attributes

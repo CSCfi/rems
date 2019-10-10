@@ -387,7 +387,7 @@
      (application-list/format-application-id config application)]))
 
 (defn- format-event [event]
-  {:user (:commonName (:event/actor-attributes event))
+  {:user (:name (:event/actor-attributes event)) ;; TODO use get-member-name?
    :event (localize-event event)
    :decision (when (= (:event/type event) :application.event/decided)
                (localize-decision event))
@@ -521,8 +521,8 @@
   `:accepted-licenses?` - has the member accepted the licenses?"
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
-        user-id (or (:eppn attributes) (:userid attributes))
-        other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
+        user-id (:userid attributes)
+        other-attributes (dissoc attributes :name :userid :email)
         title (cond (= (:application/applicant application) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))]
@@ -538,7 +538,7 @@
       :collapse (into [:div
                        (when user-id
                          [info-field (text :t.applicant-info/username) user-id {:inline? true}])
-                       (when-let [mail (or (:mail attributes) (:email attributes))]
+                       (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
@@ -747,9 +747,9 @@
    (component-info member-info)
    (example "member-info"
             [member-info {:element-id "info1"
-                          :attributes {:eppn "developer@uu.id"
-                                       :mail "developer@uu.id"
-                                       :commonName "Deve Loper"
+                          :attributes {:userid "developer@uu.id"
+                                       :email "developer@uu.id"
+                                       :name "Deve Loper"
                                        :organization "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42
@@ -757,9 +757,9 @@
                           :accepted-licenses? true}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
-                          :attributes {:eppn "developer"
-                                       :mail "developer@uu.id"
-                                       :organization "Testers"
+                          :attributes {:userid "developer"
+                                       :email "developer@uu.id"
+                                       :name "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42
                                         :application/applicant "developer"}}])
@@ -782,11 +782,9 @@
    (example "applicants-info"
             [applicants-info {:application/id 42
                               :application/applicant "developer"
-                              :application/applicant-attributes {:eppn "developer"
-                                                                 :mail "developer@uu.id"
-                                                                 :commonName "Deve Loper"
-                                                                 :organization "Testers"
-                                                                 :address "Testikatu 1, 00100 Helsinki"}
+                              :application/applicant-attributes {:userid "developer"
+                                                                 :email "developer@uu.id"
+                                                                 :name "Deve Loper"}
                               :application/members #{{:userid "alice"}
                                                      {:userid "bob"}}
                               :application/invited-members #{{:name "John Smith" :email "john.smith@invited.com"}}
@@ -891,8 +889,8 @@
             [render-application
              {:application {:application/id 17
                             :application/state :application.state/approved
-                            :application/applicant-attributes {:eppn "eppn"
-                                                               :mail "email@example.com"
+                            :application/applicant-attributes {:userid "eppn"
+                                                               :email "email@example.com"
                                                                :additional "additional field"}
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
                             :application/form {:form/fields [{:field/id 1

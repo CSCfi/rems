@@ -142,21 +142,21 @@
        :archived false}})
 
 (def ^:private get-user
-  {"applicant" {:eppn "applicant"
-                :mail "applicant@example.com"
-                :commonName "Applicant"}
-   "commenter" {:eppn "commenter"
-                :mail "commenter@example.com"
-                :commonName "Commenter"}
-   "decider" {:eppn "decider"
-              :mail "decider@example.com"
-              :commonName "Decider"}
-   "handler" {:eppn "handler"
-              :mail "handler@example.com"
-              :commonName "Handler"}
-   "member" {:eppn "member"
-             :mail "member@example.com"
-             :commonName "Member"}})
+  {"applicant" {:userid "applicant"
+                :email "applicant@example.com"
+                :name "Applicant"}
+   "commenter" {:userid "commenter"
+                :email "commenter@example.com"
+                :name "Commenter"}
+   "decider" {:userid "decider"
+              :email "decider@example.com"
+              :name "Decider"}
+   "handler" {:userid "handler"
+              :email "handler@example.com"
+              :name "Handler"}
+   "member" {:userid "member"
+             :email "member@example.com"
+             :name "Member"}})
 
 (def ^:private get-users-with-role
   {:owner ["owner1"]
@@ -279,9 +279,9 @@
                                   :application/last-activity (DateTime. 1000)
                                   ;; TODO: unify applicant, members, handlers etc. to use either {:userid "user"} or "user"
                                   :application/applicant "applicant"
-                                  :application/applicant-attributes {:eppn "applicant"
-                                                                     :mail "applicant@example.com"
-                                                                     :commonName "Applicant"}
+                                  :application/applicant-attributes {:userid "applicant"
+                                                                     :email "applicant@example.com"
+                                                                     :name "Applicant"}
                                   :application/members #{}
                                   :application/past-members #{}
                                   :application/invitation-tokens {}
@@ -760,7 +760,7 @@
                                         expected-application (merge expected-application
                                                                     {:application/last-activity (DateTime. 4600)
                                                                      :application/events enriched-events
-                                                                     :application/members #{{:userid "member", :eppn "member", :mail "member@example.com", :commonName "Member"}}})]
+                                                                     :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}})]
                                     (is (= expected-application (apply-events events)))
                                     (testing "> licenses accepted for new member"
                                       (let [new-event {:event/type :application.event/licenses-accepted
@@ -955,7 +955,7 @@
                                     expected-application (merge expected-application
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events enriched-events
-                                                                 :application/members #{{:userid "member", :eppn "member", :mail "member@example.com", :commonName "Member"}}
+                                                                 :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
                                                                  :application/invitation-tokens {}})]
                                 (is (= expected-application (apply-events events)))))))
 
@@ -972,7 +972,7 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events enriched-events
-                                                             :application/members #{{:userid "member", :eppn "member", :mail "member@example.com", :commonName "Member"}}})]
+                                                             :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}})]
                             (is (= expected-application (apply-events events)))
 
                             (testing "> member removed"

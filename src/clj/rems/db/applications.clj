@@ -91,7 +91,7 @@
    :get-form-template form/get-form-template
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-license licenses/get-license
-   :get-user users/get-user-attributes
+   :get-user users/get-user
    :get-users-with-role users/get-users-with-role
    :get-workflow workflow/get-workflow})
 
