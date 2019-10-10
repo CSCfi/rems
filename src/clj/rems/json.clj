@@ -1,9 +1,13 @@
 (ns rems.json
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clj-time.core :as time]
+            [clj-time.format :as time-format]
+            [clojure.test :refer [deftest is testing]]
             [cognitect.transit :as transit]
             [cuerdas.core :refer [numeric? parse-number]]
             [jsonista.core :as j]
-            [muuntaja.core :as muuntaja])
+            [muuntaja.core :as muuntaja]
+            [schema.coerce :as coerce]
+            [schema.core :as s])
   (:import [com.fasterxml.jackson.datatype.joda JodaModule]
            [org.joda.time DateTime ReadableInstant DateTimeZone]
            [org.joda.time.format ISODateTimeFormat]))
@@ -63,3 +67,24 @@
                (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~t2000-01-01T12:00:00.000Z\"]")))
         (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0 DateTimeZone/UTC))}
                (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~m946728000000\"]")))))))
+
+;;; Utils for schema-based coercion
+
+(defn- datestring->datetime [s]
+  (if (string? s)
+    (time-format/parse s)
+    s))
+
+(def datestring-coercion-matcher
+  {DateTime datestring->datetime})
+
+(defn coercion-matcher [schema]
+  (or (datestring-coercion-matcher schema)
+      (coerce/string-coercion-matcher schema)))
+
+(deftest test-coercion-matcher
+  (let [coercer (coerce/coercer {:time DateTime :type s/Keyword} coercion-matcher)]
+    (is (= {:type :foo
+            :time (time/date-time 2019 03 04 10)}
+           (coercer {:type "foo"
+                     :time "2019-03-04T10:00:00.000Z"})))))
