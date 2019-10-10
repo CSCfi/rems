@@ -778,10 +778,9 @@
    (component-info applicants-info)
    (example "applicants-info"
             [applicants-info {:application/id 42
-                              :application/applicant {:userid "developer"}
-                              :application/applicant-attributes {:userid "developer"
-                                                                 :email "developer@uu.id"
-                                                                 :name "Deve Loper"}
+                              :application/applicant {:userid "developer"
+                                                      :email "developer@uu.id"
+                                                      :name "Deve Loper"}
                               :application/members #{{:userid "alice"}
                                                      {:userid "bob"}}
                               :application/invited-members #{{:name "John Smith" :email "john.smith@invited.com"}}
@@ -886,9 +885,9 @@
             [render-application
              {:application {:application/id 17
                             :application/state :application.state/approved
-                            :application/applicant-attributes {:userid "eppn"
-                                                               :email "email@example.com"
-                                                               :additional "additional field"}
+                            :application/applicant {:userid "eppn"
+                                                    :email "email@example.com"
+                                                    :additional "additional field"}
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
                             :application/form {:form/fields [{:field/id 1
                                                               :field/type :text
