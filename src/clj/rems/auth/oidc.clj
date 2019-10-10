@@ -2,7 +2,7 @@
   (:require [clj-http.client :as http]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
-            [rems.config :refer [env]]
+            [rems.config :refer [env oidc-configuration]]
             [rems.json :as json]
             [rems.jwt :as jwt]
             [rems.util :refer [getx]]
@@ -10,10 +10,8 @@
   (:import [java.time Instant]))
 
 (defn login-url []
-  (str "https://"
-       (getx env :oidc-domain)
-       "/authorize?"
-       "response_type=code"
+  (str (:authorization_endpoint oidc-configuration)
+       "?response_type=code"
        "&client_id=" (getx env :oidc-client-id)
        "&redirect_uri=" (getx env :public-url) "oidc-callback"
        "&scope=openid profile email"))
@@ -23,12 +21,14 @@
   "/oidc-logout")
 
 (defn oidc-callback [request]
-  (let [jwt (-> (http/post (str "https://"
-                                (getx env :oidc-domain)
-                                "/oauth/token")
-                           {:form-params {:grant_type "authorization_code"
-                                          :client_id (getx env :oidc-client-id)
-                                          :client_secret (getx env :oidc-client-secret)
+  (let [jwt (-> (http/post (:token_endpoint oidc-configuration)
+                           ; NOTE Some IdPs don't support client id and secret in form params,
+                           ;      and require us to use HTTP basic auth
+                           {:basic-auth [(getx env :oidc-client-id)
+                                         (getx env :oidc-client-secret)]
+                            :form-params {:grant_type "authorization_code"
+                                          ;:client_id (getx env :oidc-client-id)
+                                          ;:client_secret (getx env :oidc-client-secret)
                                           :code (get-in request [:params :code])
                                           :redirect_uri (str (getx env :public-url) "oidc-callback")}})
                 ; FIXME Complains about Invalid cookie header in logs
@@ -37,7 +37,7 @@
                 (:body)
                 (json/parse-string)
                 (:id_token))
-        issuer (str "https://" (getx env :oidc-domain) "/")
+        issuer (:issuer oidc-configuration)
         audience (getx env :oidc-client-id)
         now (Instant/now)
         oidc-data (jwt/validate jwt issuer audience now)]
@@ -49,7 +49,8 @@
     (-> (redirect "/") ; TODO Could redirect with state param
         (assoc :session (:session request))
         (assoc-in [:session :identity] {:eppn (:sub oidc-data)
-                                        :commonName (:name oidc-data)
+                                        ;; NOTE Some IdPs don't provide name, but family_name works
+                                        :commonName (some oidc-data [:name :family_name])
                                         :mail (:email oidc-data)}))))
 
 ; TODO Logout. Federated or not?

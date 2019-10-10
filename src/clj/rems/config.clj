@@ -1,9 +1,11 @@
 (ns rems.config
-  (:require [clojure.java.io :as io]
+  (:require [clj-http.client :as http]
+            [clojure.java.io :as io]
             [cprop.core :refer [load-config]]
             [cprop.source :as source]
             [cprop.tools :refer [merge-maps]]
-            [mount.core :refer [defstate]])
+            [mount.core :refer [defstate]]
+            [rems.json :as json])
   (:import (java.io FileNotFoundException)))
 
 (defn- file-sibling [file sibling-name]
@@ -37,3 +39,17 @@
                                       :file (System/getProperty "rems.config"))
                          (load-external-theme)
                          (validate-config)))
+
+(defn get-oidc-config [oidc-domain]
+  (-> (http/get
+        (str "https://"
+             oidc-domain
+             "/.well-known/openid-configuration"))
+      (:body)
+      (json/parse-string)))
+
+#_(get-oidc-config (getx env :oidc-domain))
+#_(get-oidc-config "test-user-auth.csc.fi")
+
+(defstate oidc-configuration :start (when-let [oidc-domain (env :oidc-domain)]
+                                      (get-oidc-config (env :oidc-domain))))
