@@ -358,10 +358,12 @@
 (defmethod command-handler :application.command/revoke
   [cmd application {:keys [add-to-blacklist!]}]
   (doseq [resource (:application/resources application)]
-    (add-to-blacklist! {:user (:application/applicant application)
-                        :resource (:resource/ext-id resource)
-                        :actor (:actor cmd)
-                        :comment (:comment cmd)}))
+    (doseq [user (cons (:application/applicant application)
+                       (map :userid (:application/members application)))]
+      (add-to-blacklist! {:user user
+                          :resource (:resource/ext-id resource)
+                          :actor (:actor cmd)
+                          :comment (:comment cmd)})))
   (ok {:event/type :application.event/revoked
        :application/comment (:comment cmd)}))
 

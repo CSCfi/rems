@@ -632,6 +632,16 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}
+                                   {:event/type :application.event/member-added
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id
+                                    :application/member {:userid "member1"}}
+                                   {:event/type :application.event/member-added
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id
+                                    :application/member {:userid "member2"}}
                                    {:event/type :application.event/approved
                                     :event/time test-time
                                     :event/actor handler-user-id
@@ -650,15 +660,34 @@
                         :actor handler-user-id
                         :comment "license violated"}
                        injections)))
-    (is (= [[:add-to-blacklist! {:user applicant-user-id
-                                 :resource "urn.fi/1"
-                                 :actor handler-user-id
-                                 :comment "license violated"}]
-            [:add-to-blacklist! {:user applicant-user-id
-                                 :resource "urn.fi/2"
-                                 :actor handler-user-id
-                                 :comment "license violated"}]]
-           @injection-calls))))
+
+    (testing "adds the applicant and all members to blacklist"
+      (is (= [[:add-to-blacklist! {:user applicant-user-id
+                                   :resource "urn.fi/1"
+                                   :actor handler-user-id
+                                   :comment "license violated"}]
+              [:add-to-blacklist! {:user "member1"
+                                   :resource "urn.fi/1"
+                                   :actor handler-user-id
+                                   :comment "license violated"}]
+              [:add-to-blacklist! {:user "member2"
+                                   :resource "urn.fi/1"
+                                   :actor handler-user-id
+                                   :comment "license violated"}]
+
+              [:add-to-blacklist! {:user applicant-user-id
+                                   :resource "urn.fi/2"
+                                   :actor handler-user-id
+                                   :comment "license violated"}]
+              [:add-to-blacklist! {:user "member1"
+                                   :resource "urn.fi/2"
+                                   :actor handler-user-id
+                                   :comment "license violated"}]
+              [:add-to-blacklist! {:user "member2"
+                                   :resource "urn.fi/2"
+                                   :actor handler-user-id
+                                   :comment "license violated"}]]
+             @injection-calls)))))
 
 (deftest test-decision
   (let [application (apply-events nil
