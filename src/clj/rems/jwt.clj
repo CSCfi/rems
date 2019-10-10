@@ -12,7 +12,7 @@
            [java.util Base64 Date]))
 
 (mount/defstate ^:dynamic ^JwkProvider jwk-provider
-  :start (when-let [jwks-uri (oidc-configuration :jwks_uri)]
+  :start (when-let [jwks-uri (:jwks_uri oidc-configuration)]
            (-> (JwkProviderBuilder. (URL. ^String jwks-uri))
               (.build))))
 

@@ -49,4 +49,4 @@
       (json/parse-string)))
 
 (defstate oidc-configuration :start (when-let [oidc-domain (env :oidc-domain)]
-                                      (get-oidc-config (env :oidc-domain))))
+                                      (get-oidc-config oidc-domain)))
