@@ -8,6 +8,7 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.json :as json]
             [rems.roles :refer [has-roles?]]
             [rems.text :as text]
@@ -15,8 +16,9 @@
 
 ;; TODO move Entitlement schema here from rems.api?
 
-(defn- entitlement-to-api [{:keys [resid catappid start end mail]}]
+(defn- entitlement-to-api [{:keys [resid catappid start end mail userid]}]
   {:resource resid
+   :user (users/get-user userid)
    :application-id catappid
    :start start
    :end end
@@ -27,7 +29,7 @@
         (db/get-entitlements {:user (if (has-roles? :handler :owner :reporter)
                                       user-or-nil
                                       (getx-user-id))
-                              :resource resource-or-nil
+                              :resource-ext-id resource-or-nil
                               :is-active? (not expired?)})))
 
 (defn get-entitlements-for-export

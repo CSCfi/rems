@@ -235,6 +235,9 @@ WHERE 1=1
 /*~ (when (:resource params) */
   AND res.id = :resource
 /*~ ) ~*/
+/*~ (when (:resource-ext-id params) */
+  AND res.resid = :resource-ext-id
+/*~ ) ~*/
 /*~ (when (:is-active? params) */
   AND entitlement.endt IS NULL
 /*~ ) ~*/

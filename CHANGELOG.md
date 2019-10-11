@@ -73,6 +73,7 @@ Changes since v2.4
 - Documentation about [user permissions by application state](docs/application-permissions.md)
 - Revoking already approved applications (#1661)
   - The applicant and all members will be added to a blacklist
+- Userid field in /api/entitlements response
 
 ### Enhancements
 - Improved version information in footer
