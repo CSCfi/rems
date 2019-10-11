@@ -25,19 +25,22 @@
       (is (= "unauthorized" body))))
   (let [api-key "42"
         check-alice-entitlement (fn [x]
-                                  (is (= {:resource "urn:nbn:fi:lb-201403262"
+                                  (is (= {:userid "alice"
+                                          :resource "urn:nbn:fi:lb-201403262"
                                           :end nil
                                           :mail "alice@example.com"}
                                          (dissoc x :start :application-id)))
                                   (is (valid-date? (:start x))))
         check-alice-expired-entitlement (fn [x]
-                                          (is (= {:resource "urn:nbn:fi:lb-201403262"
+                                          (is (= {:userid "alice"
+                                                  :resource "urn:nbn:fi:lb-201403262"
                                                   :mail "alice@example.com"}
                                                  (dissoc x :start :end :application-id)))
                                           (is (valid-date? (:start x)))
                                           (is (valid-date? (:end x))))
         check-malice-entitlement (fn [x]
-                                   (is (= {:resource "urn:nbn:fi:lb-201403262"
+                                   (is (= {:userid "malice"
+                                           :resource "urn:nbn:fi:lb-201403262"
                                            :end nil
                                            :mail "malice@example.com"}
                                           (dissoc x :start :application-id)))

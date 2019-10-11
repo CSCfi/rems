@@ -5,6 +5,15 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
+(def UserId s/Str)
+
+(s/defschema User {:userid UserId})
+
+(s/defschema UserWithAttributes
+  {:userid UserId
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
               ;; fields are redundant. If we remove them we can reuse
@@ -51,6 +60,7 @@
 
 (s/defschema Entitlement
   {:resource s/Str
+   :userid UserId ;; TODO could have UserWithAttributes here instead of :userid and :mail
    :application-id s/Int
    :start DateTime
    :end (s/maybe DateTime)
@@ -107,15 +117,6 @@
    (s/optional-key :license/attachment-filename) LocalizedString
    :license/enabled s/Bool
    :license/archived s/Bool})
-
-(def UserId s/Str)
-
-(s/defschema User {:userid UserId})
-
-(s/defschema UserWithAttributes
-  {:userid UserId
-   :name (s/maybe s/Str)
-   :email (s/maybe s/Str)})
 
 (s/defschema Workflow
   {:id s/Int
