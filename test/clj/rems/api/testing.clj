@@ -75,3 +75,7 @@
       (json-body body)
       handler
       read-ok-body))
+
+(defn assert-success [body]
+  (assert (:success body) (pr-str body))
+  body)

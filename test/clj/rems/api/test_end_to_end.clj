@@ -5,10 +5,11 @@
 
 (use-fixtures :once api-fixture)
 
-(defn extract-id [{:keys [success id] :as resp}]
-  (assert success (pr-str resp))
-  (assert (number? id) (pr-str resp))
-  id)
+(defn extract-id [resp]
+  (assert-success resp)
+  (let [id (:id resp)]
+    (assert (number? id) (pr-str resp))
+    id))
 
 (deftest test-end-to-end
   (let [api-key "42"
@@ -70,23 +71,75 @@
 
           application-id
           (testing "create application"
-            (:application-id (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
-                                       api-key applicant-id)))]
+            (:application-id
+             (assert-success
+              (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                        api-key applicant-id))))]
 
 
-      (testing "fetch application"
+      (testing "fetch application as applicant"
         (assert (number? application-id))
         (let [application (api-call :get (str "/api/applications/" application-id) nil
                                     api-key applicant-id)]
-          ;; just some basic sanity checks
           (is (= applicant-id (get-in application [:application/applicant :userid])))
           (is (= [resource-ext-id] (mapv :resource/ext-id (:application/resources application))))))
 
+      (testing "check that application is visible"
+        (let [applications (api-call :get "/api/my-applications" nil
+                                     api-key applicant-id)]
+          (is (= [application-id] (mapv :application/id applications)))))
+
+      (testing "fill in application"
+        (assert-success
+         (api-call :post "/api/applications/save-draft" {:application-id application-id
+                                                         :field-values [{:field 1
+                                                                         :value "e2e test contents"}]}
+                   api-key applicant-id)))
+
+      (testing "accept terms of use"
+        (assert-success
+         (api-call :post "/api/applications/accept-licenses" {:application-id application-id
+                                                              :accepted-licenses [license-id]}
+                   api-key applicant-id)))
+
+      (testing "submit application"
+        (assert-success
+         (api-call :post "/api/applications/submit" {:application-id application-id}
+                   api-key applicant-id)))
+
       ;; TODO: check email to handler
       ;; TODO: check lack of entitlement
-      ;; TODO: submit
-      ;; TODO: approve
+
+      (testing "fetch application as handler"
+        (let [applications (api-call :get "/api/applications/todo" nil
+                                     api-key handler-id)
+              todos (set (map (juxt :application/id :application/todo) applications))]
+          (is (contains? todos [application-id "new-application"])))
+        (let [application (api-call :get (str "/api/applications/" application-id) nil
+                                    api-key handler-id)]
+          (is (= "e2e test contents" (get-in application [:application/form :form/fields 0 :field/value])))
+          (is (= [license-id] (get-in application [:application/accepted-licenses (keyword applicant-id)]))
+              application)))
+
+      (testing "approve application"
+        (assert-success
+         (api-call :post "/api/applications/approve" {:application-id application-id
+                                                      :comment "e2e approved"}
+                   api-key handler-id)))
+
       ;; TODO: check email to applicant
       ;; TODO: check entitlement
 
+      (testing "close application"
+        (assert-success
+         (api-call :post "/api/applications/close" {:application-id application-id
+                                                    :comment "e2e closed"}
+                   api-key handler-id)))
+
+      ;; TODO: check entitlement ended
+
+      (testing "fetch application as applicant"
+        (let [application (api-call :get (str "/api/applications/" application-id) nil
+                                    api-key applicant-id)]
+          (is (= "application.state/closed" (:application/state application)))))
       )))
