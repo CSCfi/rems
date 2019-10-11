@@ -22,6 +22,7 @@
     (email-poller/run))
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
                                                 "/remove" {:status 200}})]
+    ;; TODO should test emails with a mock smtp server
     (let [email-atom (atom [])]
       (with-redefs [rems.config/env (assoc rems.config/env
                                            :smtp-host "localhost"
