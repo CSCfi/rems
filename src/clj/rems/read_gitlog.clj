@@ -1,11 +1,11 @@
 (ns rems.read-gitlog
   (:require [clojure.java.io :as io]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [rems.git :as git])
   (:import [java.io IOException]))
 
 (def ^:private version-description-file "git-describe.txt")
 (def ^:private version-revision-file "git-revision.txt")
-(def ^:private repo-url "https://github.com/CSCfi/rems/commits/")
 
 (defn- read-file [name]
   (some-> name
@@ -19,6 +19,5 @@
           revision (read-file version-revision-file)]
       (when (and version revision)
         {:version version
-         :revision revision
-         :repo-url repo-url}))
+         :revision revision}))
     (catch IOException _ nil)))

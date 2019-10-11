@@ -33,6 +33,7 @@
             [rems.config :as config]
             [rems.extra-pages :refer [extra-pages]]
             [rems.flash-message :as flash-message]
+            [rems.git :as git]
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
@@ -219,9 +220,9 @@
    [:div.container
     [:div.navbar
      [:div.navbar-text (text :t/footer)]
-     (when-let [{:keys [version revision repo-url]} (read-current-version)]
+     (when-let [{:keys [version revision]} (read-current-version)]
        [:div#footer-release-number
-        [:a {:href (str repo-url revision)}
+        [:a {:href (str git/+commits-url+ revision)}
          version]])]]])
 
 (defn logo []
