@@ -8,6 +8,7 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.json :as json]
             [rems.roles :refer [has-roles?]]
             [rems.text :as text]
@@ -17,7 +18,7 @@
 
 (defn- entitlement-to-api [{:keys [resid catappid start end mail userid]}]
   {:resource resid
-   :userid userid
+   :user (users/get-user userid)
    :application-id catappid
    :start start
    :end end

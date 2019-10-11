@@ -60,11 +60,13 @@
 
 (s/defschema Entitlement
   {:resource s/Str
-   :userid UserId ;; TODO could have UserWithAttributes here instead of :userid and :mail
+   :user UserWithAttributes
    :application-id s/Int
    :start DateTime
    :end (s/maybe DateTime)
-   :mail s/Str})
+   :mail (rjs/field s/Str
+                    {:deprecate true
+                     :description "DEPRECATED, will disappear"})}) ;; TODO
 
 (s/defschema EnabledCommand
   {:id s/Int
