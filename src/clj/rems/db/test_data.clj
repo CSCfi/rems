@@ -566,16 +566,6 @@
 
     {:dynamic dynamic}))
 
-(defn- create-resource-license! [resid text owner]
-  (let [licid (create-license! {:actor owner
-                                :license/type :link
-                                :license/title {:en (str text " (en)")
-                                                :fi (str text " (fi)")}
-                                :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                               :fi "https://www.apache.org/licenses/LICENSE-2.0"}})]
-    (db/create-resource-license! {:resid resid :licid licid})
-    licid))
-
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
 
@@ -791,15 +781,26 @@
                                 :organization "nbn"
                                 :actor (+fake-users+ :owner)
                                 :license-ids []})
+        license1 (create-license! {:actor (+fake-users+ :owner)
+                                   :license/type :link
+                                   :license/title {:en "Test license"
+                                                   :fi "Testilisenssi"}
+                                   :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
         res2 (create-resource! {:resource-ext-id "Extra Data"
                                 :organization "nbn"
                                 :actor (+fake-users+ :owner)
-                                :license-ids []})
-        _ (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
+                                :license-ids [license1]})
+        extra-license (create-license! {:actor (+fake-users+ :owner)
+                                        :license/type :link
+                                        :license/title {:en "Extra license"
+                                                        :fi "Ylimääräinen lisenssi"}
+                                        :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                       :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
         res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
                                                   :organization "nbn"
-                                                  :actor (+fake-users+ :owner)})
-        _ (create-resource-license! res-with-extra-license "Extra license" (+fake-users+ :owner))
+                                                  :actor (+fake-users+ :owner)
+                                                  :license-ids [extra-license]})
         form (create-all-field-types-example-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
@@ -847,10 +848,16 @@
   (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                 :organization "nbn"
                                 :actor (+demo-users+ :owner)})
+        license1 (create-license! {:actor (+demo-users+ :owner)
+                                   :license/type :link
+                                   :license/title {:en "Demo license"
+                                                   :fi "Demolisenssi"}
+                                   :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
         res2 (create-resource! {:resource-ext-id "Extra Data"
                                 :organization "nbn"
-                                :actor (+demo-users+ :owner)})
-        _ (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
+                                :actor (+demo-users+ :owner)
+                                :license-ids [license1]})
         form (create-all-field-types-example-form! +demo-users+)
         workflows (create-workflows! +demo-users+)]
     (create-disabled-license! (+demo-users+ :owner))
