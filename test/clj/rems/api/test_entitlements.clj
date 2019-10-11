@@ -49,7 +49,7 @@
       (let [data (-> (request :get "/api/entitlements")
                      (authenticate api-key "developer")
                      handler
-                     read-body)]
+                     read-ok-body)]
         (is (= 2 (count data)))
         (check-alice-entitlement (first data))
         (check-malice-entitlement (second data))))
@@ -59,16 +59,25 @@
         (let [data (-> (request :get "/api/entitlements")
                        (authenticate api-key userid)
                        handler
-                       read-body)]
+                       read-ok-body)]
           (is (= 2 (count data)))
           (check-alice-entitlement (first data))
           (check-malice-entitlement (second data)))))
+
+    (testing "for one resource"
+      (let [data (-> (request :get "/api/entitlements?resource=urn:nbn:fi:lb-201403262")
+                     (authenticate api-key "developer")
+                     handler
+                     read-ok-body)]
+        (is (= 2 (count data)))
+        (check-alice-entitlement (first data))
+        (check-malice-entitlement (second data))))
 
     (testing "just for alice as a developer"
       (let [data (-> (request :get "/api/entitlements?user=alice")
                      (authenticate api-key "developer")
                      handler
-                     read-body)]
+                     read-ok-body)]
         (is (= 1 (count data)))
         (check-alice-entitlement (first data))))
 
@@ -76,7 +85,7 @@
       (let [data (-> (request :get "/api/entitlements?user=alice")
                      (authenticate api-key "owner")
                      handler
-                     read-body)]
+                     read-ok-body)]
         (is (= 1 (count data)))
         (check-alice-entitlement (first data))))
 
@@ -84,7 +93,7 @@
       (let [data (-> (request :get "/api/entitlements?expired=true")
                      (authenticate api-key "owner")
                      handler
-                     read-body)]
+                     read-ok-body)]
         (is (= 3 (count data)))
         (check-alice-entitlement (first data))
         (check-alice-expired-entitlement (second data))
@@ -94,7 +103,7 @@
       (let [data (-> (request :get "/api/entitlements?user=alice")
                      (authenticate api-key "reporter")
                      handler
-                     read-body)]
+                     read-ok-body)]
         (is (= 1 (count data)))
         (check-alice-entitlement (first data))))
 
@@ -104,7 +113,7 @@
                        (authenticate api-key "alice")
                        handler
                        assert-response-is-ok
-                       read-body)]
+                       read-ok-body)]
           (is (coll-is-not-empty? body))
           (doseq [x body]
             (check-alice-entitlement x))))
@@ -114,6 +123,5 @@
         (let [body (-> (request :get (str "/api/entitlements"))
                        (authenticate api-key "allison")
                        handler
-                       assert-response-is-ok
-                       read-body)]
+                       read-ok-body)]
           (is (coll-is-empty? body)))))))

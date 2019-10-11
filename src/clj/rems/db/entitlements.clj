@@ -28,7 +28,7 @@
         (db/get-entitlements {:user (if (has-roles? :handler :owner :reporter)
                                       user-or-nil
                                       (getx-user-id))
-                              :resource resource-or-nil
+                              :resource-ext-id resource-or-nil
                               :is-active? (not expired?)})))
 
 (defn get-entitlements-for-export
