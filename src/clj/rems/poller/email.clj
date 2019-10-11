@@ -46,14 +46,6 @@
        (map #(get-in % [:catalogue-item/title context/*lang*]))
        (str/join ", ")))
 
-;; There's a slight inconsistency here: we look at current members, so
-;; a member might get an email for an event that happens before he was
-;; added.
-;; TODO this function occurs in so many places
-(defn- applicant-and-members [application]
-  (conj (:application/members application)
-        (:application/applicant application)))
-
 (defn- handlers [application]
   (get-in application [:application/workflow :workflow.dynamic/handlers]))
 
@@ -90,7 +82,7 @@
                  (text :t.email/footer))})))))
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
-  (concat (emails-to-recipients (applicant-and-members application)
+  (concat (emails-to-recipients (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-approved/subject-to-applicant
                                 :t.email.application-approved/message-to-applicant)
@@ -100,7 +92,7 @@
                                 :t.email.application-approved/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
-  (concat (emails-to-recipients (applicant-and-members application)
+  (concat (emails-to-recipients (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-rejected/subject-to-applicant
                                 :t.email.application-rejected/message-to-applicant)
@@ -110,7 +102,7 @@
                                 :t.email.application-rejected/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/revoked [event application]
-  (concat (emails-to-recipients (applicant-and-members application)
+  (concat (emails-to-recipients (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-revoked/subject-to-applicant
                                 :t.email.application-revoked/message-to-applicant)
@@ -120,7 +112,7 @@
                                 :t.email.application-revoked/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
-  (concat (emails-to-recipients (applicant-and-members application)
+  (concat (emails-to-recipients (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-closed/subject-to-applicant
                                 :t.email.application-closed/message-to-applicant)
@@ -140,7 +132,7 @@
                                 :t.email.application-returned/message-to-handler)))
 
 (defmethod event-to-emails-impl :application.event/licenses-added [event application]
-  (emails-to-recipients (applicant-and-members application)
+  (emails-to-recipients (application-util/applicant-and-members application)
                         event application
                         :t.email.application-licenses-added/subject
                         :t.email.application-licenses-added/message))

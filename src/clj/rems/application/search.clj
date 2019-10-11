@@ -33,19 +33,19 @@
           (.close ^SearcherManager (::searcher-manager @search-index))
           (.close ^Directory (::directory @search-index))))
 
+(defn- indexed-member-attributes [member]
+  [(:userid member)
+   (application-util/get-member-name member)
+   (:email member)])
+
 (defn- index-terms-for-application [app]
   {:id (->> [(:application/id app)
              (:application/external-id app)]
             (str/join " "))
-   :applicant (->> [(:userid (:application/applicant app))
-                    (application-util/get-applicant-name app)
-                    (:email (:application/applicant app))]
+   :applicant (->> (indexed-member-attributes (:application/applicant app))
                    (str/join " "))
    :member (->> (:application/members app)
-                (mapcat (fn [member]
-                          [(:userid member)
-                           (application-util/get-member-name member)
-                           (:email member)]))
+                (mapcat indexed-member-attributes)
                 (str/join " "))
    :title (:application/description app)
    :resource (->> (:application/resources app)

@@ -17,3 +17,7 @@
 
 (defn get-applicant-name [application]
   (get-member-name (:application/applicant application)))
+
+(defn applicant-and-members [application]
+  (cons (:application/applicant application)
+        (:application/members application)))
