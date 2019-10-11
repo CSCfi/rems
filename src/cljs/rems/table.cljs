@@ -23,7 +23,7 @@
             [rems.search :as search]
             [rems.text :refer [text-format]]
             [schema.core :as s])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+  (:require-macros [rems.guide-macros :refer [component-info example namespace-info]]))
 
 (s/defschema ColumnKey
   s/Keyword)
@@ -224,7 +224,7 @@
 (defn search
   "Search field component for filtering a `rems.table/table` instance
   which takes the same `table` parameter as this component.
-  
+
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
@@ -264,7 +264,7 @@
 (defn table
   "A filterable and sortable table component.
   Meant to be used together with the `rems.table/search` component.
-  
+
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
@@ -297,9 +297,12 @@
 
 (defn guide []
   [:div
+   (namespace-info rems.table)
    (component-info table)
    ;; slight abuse of example macro, but it works since reg-sub returns a fn which reagent doesn't render
    (example "data for examples"
+            [:p "Data is provided to the table component as a subscription"]
+            (rf/reg-sub ::empty-table-rows (fn [_ _] []))
             (rf/reg-sub
              ::example-table-rows
              (fn [_ _]
@@ -315,7 +318,19 @@
                  :first-name {:value "Henry"}
                  :last-name {:value "Herring"}
                  :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}])))
-   (example "static table"
+   (example "empty table"
+            [table {:id ::example0
+                    :columns [{:key :first-name
+                               :title "First name"
+                               :sortable? false
+                               :filterable? false}
+                              {:key :last-name
+                               :title "Last name"
+                               :sortable? false
+                               :filterable? false}]
+                    :rows [::empty-table-rows]
+                    :default-sort-column :first-name}])
+   (example "static table with three rows"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
                                        :title "First name"
@@ -329,6 +344,7 @@
                             :default-sort-column :first-name}]
               [table example1]))
    (example "sortable and filterable table"
+            [:p "Filtering and search can be added by using the " [:code "rems.table/search"] " component"]
             (let [example2 {:id ::example2
                             :columns [{:key :first-name
                                        :title "First name"}
@@ -343,33 +359,33 @@
                [search example2]
                [table example2]]))
    (example "richer example data"
-            (do
-              (comment "Hawks have a special sort-value so they are always listed first (or last if order is flipped)."
-                       "Also, filtering ignores the word \"Team\"."
-                       "Also, the score has special styling."
-                       "Eagles have special styling. :value is used for sorting & filtering but :td for rendering.")
-              (rf/reg-sub
-               ::example-rich-table-rows
-               (fn [_ _]
-                 [{:key 1
-                   :team {:display-value "Team Hawks"
-                          :filter-value "hawks"
-                          :sort-value "0000hawks"}
-                   :points {:value 3
-                            :display-value "-> 3 <-"}}
-                  {:key 2
-                   :team {:value "Eagles"
-                          :td [:td.eagles-are-best [:em "Eagles"]]}
-                   :points {:value 4}}
-                  {:key 3
-                   :team {:value "Ravens"}
-                   :points {:value 0}}]))
-              (let [example3 {:id ::example3
-                              :columns [{:key :team
-                                         :title "Team"}
-                                        {:key :points
-                                         :title "Points"}]
-                              :rows [::example-rich-table-rows]}]
-                [:div
-                 [search example3]
-                 [table example3]])))])
+            [:p "Hawks have a special sort-value so they are always listed first (or last if order is flipped)."
+             "Also, filtering ignores the word \"Team\"."
+             "Also, the score has special styling."
+             "Eagles have special styling. :value is used for sorting & filtering but :td for rendering."]
+            (rf/reg-sub
+             ::example-rich-table-rows
+             (fn [_ _]
+               [{:key 1
+                 :team {:display-value "Team Hawks"
+                        :filter-value "hawks"
+                        :sort-value "0000hawks"}
+                 :points {:value 3
+                          :display-value "-> 3 <-"}}
+                {:key 2
+                 :team {:value "Eagles"
+                        :td [:td.eagles-are-best [:em "Eagles"]]}
+                 :points {:value 4}}
+                {:key 3
+                 :team {:value "Ravens"}
+                 :points {:value 0}}]))
+            [:p "Now the data can be used like so"]
+            (let [example3 {:id ::example3
+                            :columns [{:key :team
+                                       :title "Team"}
+                                      {:key :points
+                                       :title "Points"}]
+                            :rows [::example-rich-table-rows]}]
+              [:div
+               [search example3]
+               [table example3]]))])

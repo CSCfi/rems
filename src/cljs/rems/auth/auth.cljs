@@ -20,7 +20,10 @@
 
 (defn guide []
   [:div
+   (component-info shibboleth/login-component)
    (example "shibboleth login" [shibboleth/login-component nil])
    (example "shibboleth login with alternatives" [shibboleth/login-component "/alternative"])
+   (component-info ldap/login-component)
    (example "ldap login" [ldap/login-component])
+   (component-info oidc/login-component)
    (example "oidc login" [oidc/login-component])])
