@@ -10,7 +10,7 @@
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
-   :type s/Keyword
+   :type s/Keyword ;; TODO document!
    (s/optional-key :handlers) [UserId]})
 
 (s/defschema EditWorkflowCommand
