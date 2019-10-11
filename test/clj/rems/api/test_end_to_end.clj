@@ -128,7 +128,12 @@
               (is (.contains (:subject mail) "new application"))
               (is (.startsWith (:body mail) "Dear E2E Handler,")))
             (reset! email-atom []))
-          ;; TODO: check lack of entitlement
+
+          (testing "no entitlement yet"
+            (let [entitlements (api-call :get "/api/entitlements" nil
+                                         api-key owner-id)
+                  applications (set (map :application-id entitlements))]
+              (is (not (contains? applications application-id)))))
 
           (testing "fetch application as handler"
             (let [applications (api-call :get "/api/applications/todo" nil
@@ -157,7 +162,12 @@
               (is (.startsWith (:body mail) "Dear E2E Applicant,")))
             (reset! email-atom []))
 
-          ;; TODO: check entitlement
+          (testing "entitlement granted"
+            (let [[entitlement & others] (api-call :get (str "/api/entitlements?user=" applicant-id) nil
+                                                   api-key owner-id)]
+              (is (empty? others))
+              (is (= resource-ext-id (:resource entitlement)))
+              (is (not (:end entitlement)))))
 
           (testing "close application"
             (assert-success
@@ -165,10 +175,17 @@
                                                         :comment "e2e closed"}
                        api-key handler-id)))
 
-          ;; TODO: check entitlement ended
+          (email-poller/run)
+          (entitlements-poller/run)
+
+          (testing "entitlement ended"
+            (let [[entitlement & others] (api-call :get (str "/api/entitlements?expired=true&user=" applicant-id) nil
+                                                   api-key owner-id)]
+              (is (empty? others))
+              (is (= resource-ext-id (:resource entitlement)))
+              (is (:end entitlement) entitlement)))
 
           (testing "fetch application as applicant"
             (let [application (api-call :get (str "/api/applications/" application-id) nil
                                         api-key applicant-id)]
-              (is (= "application.state/closed" (:application/state application)))))
-          )))))
+              (is (= "application.state/closed" (:application/state application))))))))))
