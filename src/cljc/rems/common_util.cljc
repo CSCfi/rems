@@ -68,7 +68,10 @@
       (is (= "2/" (andstr (:foo x) "/")))
       (is (= "(2)" (andstr "(" (:foo x) ")"))))))
 
-(defn deep-merge [a b]
+(defn deep-merge
+  "Recursively merges maps and sequentials so that the values in `b`
+  will replace the values at the same key or index in `a`."
+  [a b]
   (cond (and (sequential? a) (sequential? b))
         (let [max-length (max (count a) (count b))
               a (take max-length (concat a (repeat nil)))
