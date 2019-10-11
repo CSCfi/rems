@@ -5,7 +5,7 @@
 
 (defn- remove-indentation [docstring]
   (str/join "\n" (for [line (str/split (str "  " docstring) #"\n")]
-                 (apply str (drop 2 line)))))
+                   (apply str (drop 2 line)))))
 
 (defn render-namespace-info [title meta]
   (let [source (str (:file meta) ":" (:line meta) ":" (:column meta))
