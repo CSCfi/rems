@@ -94,15 +94,31 @@
       (roles/add-role! user role))))
 
 (defn create-license! [{:keys [actor]
-                        :license/keys [type title link text]
+                        :license/keys [type title link text attachment-id]
                         :as command}]
   (let [result (licenses/create-license! {:licensetype (name (or type :text))
                                           :localizations
                                           (transpose-localizations {:title title
-                                                                    :textcontent (merge link text)})}
+                                                                    :textcontent (merge link text)
+                                                                    :attachment-id attachment-id})}
                                          (or actor "owner"))]
     (assert (:success result) {:command command :result result})
     (:id result)))
+
+(defn create-attachment-license! [{:keys [actor]}]
+  (let [fi-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
+                                                           :filename "fi.txt"
+                                                           :type "text/plain"
+                                                           :data (.getBytes "Suomenkielinen lisenssi.")}))
+        en-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
+                                                           :filename "en.txt"
+                                                           :type "text/plain"
+                                                           :data (.getBytes "License in English.")}))]
+    (create-license! {:actor actor
+                      :license/type :attachment
+                      :license/title {:fi "Liitelisenssi" :en "Attachment license"}
+                      :license/text {:fi "fi" :en "en"}
+                      :license/attachment-id {:fi fi-attachment :en en-attachment}})))
 
 (defn create-form! [{:keys [actor]
                      :form/keys [organization title fields]
@@ -788,6 +804,7 @@
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
     (create-disabled-license! (+fake-users+ :owner))
+    (create-attachment-license! {:actor (+fake-users+ :owner)})
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :infourl {:en "http://www.google.com"
@@ -837,6 +854,7 @@
         form (create-all-field-types-example-form! +demo-users+)
         workflows (create-workflows! +demo-users+)]
     (create-disabled-license! (+demo-users+ :owner))
+    (create-attachment-license! {:actor (+demo-users+ :owner)})
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :resource-id res1
