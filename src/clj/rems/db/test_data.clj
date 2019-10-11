@@ -797,15 +797,15 @@
                                                         :fi "Ylimääräinen lisenssi"}
                                         :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                        :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+        attachment-license (create-attachment-license! {:actor (+fake-users+ :owner)})
         res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
                                                   :organization "nbn"
                                                   :actor (+fake-users+ :owner)
-                                                  :license-ids [extra-license]})
+                                                  :license-ids [extra-license attachment-license]})
         form (create-all-field-types-example-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
     (create-disabled-license! (+fake-users+ :owner))
-    (create-attachment-license! {:actor (+fake-users+ :owner)})
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :infourl {:en "http://www.google.com"
@@ -854,14 +854,14 @@
                                                    :fi "Demolisenssi"}
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                   :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+        attachment-license (create-attachment-license! {:actor (+demo-users+ :owner)})
         res2 (create-resource! {:resource-ext-id "Extra Data"
                                 :organization "nbn"
                                 :actor (+demo-users+ :owner)
-                                :license-ids [license1]})
+                                :license-ids [license1 attachment-license]})
         form (create-all-field-types-example-form! +demo-users+)
         workflows (create-workflows! +demo-users+)]
     (create-disabled-license! (+demo-users+ :owner))
-    (create-attachment-license! {:actor (+demo-users+ :owner)})
     (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                    :fi "Dynaaminen työvuo"}
                                            :resource-id res1
