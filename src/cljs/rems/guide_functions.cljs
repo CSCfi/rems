@@ -15,21 +15,21 @@
                (str git/+master-url+ path))]
     [:a {:href href} link-text]))
 
+(defn- docstring [meta]
+  [:pre.docstring
+   (if-let [doc (:doc meta)]
+     (remove-indentation doc)
+     "No documentation available.")])
+
 (defn render-namespace-info [title meta]
   [:div.namespace-info
    [:h3 title [:small " (" (link-to-source meta) ")"]]
-   [:pre.example-source
-    (if-let [doc (:doc meta)]
-      (remove-indentation doc)
-      "No documentation available.")]])
+   [docstring meta]])
 
 (defn render-component-info [title ns meta]
   [:div.component-info
    [:h3 ns "/" title [:small " (" (link-to-source meta) ")"]]
-   [:pre.example-source
-    (if-let [doc (:doc meta)]
-      (remove-indentation doc)
-      "No documentation available.")]])
+   [docstring meta]])
 
 (defn render-example [title src content]
   [:div.example
