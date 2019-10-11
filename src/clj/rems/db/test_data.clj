@@ -1,6 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [medley.core :refer [map-vals]]
             [rems.api.services.catalogue :as catalogue]
@@ -77,6 +78,14 @@
        (reduce (fn [m [k1 k2 v]]
                  (assoc-in m [k2 k1] v))
                {})))
+
+(deftest test-transpose-localizations
+  (is (= {:en {:title "en", :url "www.com"}
+          :fi {:title "fi", :url "www.fi"}
+          :sv {:url "www.se"}}
+         (transpose-localizations {:title {:en "en" :fi "fi"}
+                                   :url {:en "www.com" :fi "www.fi" :sv "www.se"}
+                                   :empty {}}))))
 
 (defn create-user! [user-attributes & roles]
   (let [user (:eppn user-attributes)]
