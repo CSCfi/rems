@@ -61,7 +61,7 @@
 (defn- emails-to-recipients [recipients event application subject-text body-text]
   (vec
    (for [recipient recipients]
-     (with-language (:language (user-settings/get-user-settings recipient))
+     (with-language (:language (user-settings/get-user-settings (:userid recipient)))
        (fn []
          {:to-user (:userid recipient)
           :subject (text-format subject-text

@@ -110,7 +110,9 @@
                                                         :get-users-with-role get-nothing
                                                         :get-attachments-for-application get-nothing}))]
      (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
-                   user-settings/get-user-settings (constantly {:language lang})]
+                   user-settings/get-user-settings (fn [userid]
+                                                     (assert (string? userid))
+                                                     {:language lang})]
        (sort-emails (#'rems.poller.email/event-to-emails-impl
                      (model/enrich-event event get-user #{})
                      application)))))
