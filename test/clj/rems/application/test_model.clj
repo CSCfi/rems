@@ -217,6 +217,14 @@
 (defn ^:private get-attachments-for-application [id]
   [])
 
+(def injections {:get-form-template get-form-template
+                 :get-catalogue-item get-catalogue-item
+                 :get-license get-license
+                 :get-user get-user
+                 :get-users-with-role get-users-with-role
+                 :get-workflow get-workflow
+                 :get-attachments-for-application get-attachments-for-application})
+
 (deftest test-dummies-schema
   (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
                                         ["catalogue item" schema/CatalogueItem get-catalogue-item]
@@ -227,14 +235,7 @@
         (is (s/validate schema dummy))))))
 
 (deftest test-application-view
-  (let [injections {:get-form-template get-form-template
-                    :get-catalogue-item get-catalogue-item
-                    :get-license get-license
-                    :get-user get-user
-                    :get-users-with-role get-users-with-role
-                    :get-workflow get-workflow
-                    :get-attachments-for-application get-attachments-for-application}
-        sample-applications (atom [])
+  (let [sample-applications (atom [])
         save-sample-application (fn [app]
                                   (swap! sample-applications conj app)
                                   app)
