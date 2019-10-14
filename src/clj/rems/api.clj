@@ -51,6 +51,11 @@
   (-> (internal-server-error (with-out-str (print-cause-trace exception)))
       (plain-text)))
 
+(defn not-found-handler
+  [request]
+  (-> (not-found "not found")
+      (plain-text)))
+
 (defn with-logging
   ;; Like in compojure.api.exception, but logs some of the data (with pprint)
   "Wrap compojure-api exception-handler a function which will log the
@@ -126,4 +131,7 @@
       resources-api
       user-settings-api
       users-api
-      workflows-api)))
+      workflows-api
+
+      ;; keep this last
+      not-found-handler)))
