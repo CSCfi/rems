@@ -1,13 +1,13 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [clojure.core.cache :as cache]
-            [clj-time.core :as time]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
+            [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
@@ -66,6 +66,21 @@
    :add-to-blacklist! blacklist/add-to-blacklist!})
 
 (declare get-unrestricted-application)
+
+(defn run-process-managers [new-events]
+  ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids
+  (let [app-ids (->> new-events
+                     (filter (fn [event]
+                               ;; performance optimization: run only when an interesting event happens
+                               ;; (reading the app from DB is slowish; consider an in-memory event-based solution instead)
+                               (= :application.event/submitted (:event/type event))))
+                     (map :application/id)
+                     distinct)]
+    (->> app-ids
+         (map get-unrestricted-application)
+         (mapcat approver-bot/generate-commands)
+         doall)))
+
 (defn command! [cmd]
   ;; Use locks to prevent multiple commands being executed in parallel.
   ;; Serializable isolation level will already avoid anomalies, but produces
@@ -75,9 +90,11 @@
   (let [app (when-let [app-id (:application-id cmd)]
               (get-unrestricted-application app-id))
         result (commands/handle-command cmd app command-injections)]
-    (if (not (:errors result))
+    (when-not (:errors result)
       (doseq [event (:events result)]
-        (events/add-event! event)))
+        (events/add-event! event))
+      (doseq [cmd (run-process-managers (:events result))]
+        (command! cmd)))
     result))
 
 (defn get-application-by-invitation-token [invitation-token]

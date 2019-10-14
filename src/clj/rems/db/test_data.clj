@@ -28,7 +28,8 @@
    :reporter "reporter"
    :reviewer "carl"
    :roleless1 "elsa"
-   :roleless2 "frank"})
+   :roleless2 "frank"
+   :approver-bot "approver-bot"})
 
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
@@ -39,7 +40,8 @@
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
-   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
+   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
+   "approver-bot" {:eppn "approver-bot" :mail "approver-bot" :commonName "Approver Bot"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -48,7 +50,8 @@
    :approver2 "RDapprover2@funet.fi"
    :reviewer "RDreview@funet.fi"
    :owner "RDowner@funet.fi"
-   :reporter "RDdomainreporter@funet.fi"})
+   :reporter "RDdomainreporter@funet.fi"
+   :approver-bot "approver-bot"})
 
 (def +demo-user-data+
   {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
@@ -57,7 +60,8 @@
    "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
-   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
+   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}
+   "approver-bot" {:eppn "approver-bot" :mail "approver-bot" :commonName "Approver Bot"}})
 
 ;;; helpers for generating test data
 
@@ -218,7 +222,8 @@
     (create-user! (users :roleless1))
     (create-user! (users :roleless2))
     (create-user! (users :owner) :owner)
-    (create-user! (users :reporter) :reporter))
+    (create-user! (users :reporter) :reporter)
+    (create-user! (users :approver-bot)))
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
 
@@ -231,7 +236,8 @@
     (create-user! (users :approver2))
     (create-user! (users :reviewer))
     (create-user! (users :owner) :owner)
-    (create-user! (users :reporter) :reporter)))
+    (create-user! (users :reporter) :reporter)
+    (create-user! (users :approver-bot))))
 
 (defn- create-archived-form! []
   (let [id (create-form! {:actor (+fake-users+ :owner)
