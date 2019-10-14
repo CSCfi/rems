@@ -8,6 +8,7 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
+            [rems.application.approver-bot :as approver-bot]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -29,7 +30,7 @@
    :reviewer "carl"
    :roleless1 "elsa"
    :roleless2 "frank"
-   :approver-bot "approver-bot"})
+   :approver-bot approver-bot/bot-userid})
 
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
@@ -42,7 +43,7 @@
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
    ;; TODO: make email optional for bots
-   "approver-bot" {:eppn "approver-bot" :mail "approver-bot" :commonName "Approver Bot"}})
+   approver-bot/bot-userid {:eppn approver-bot/bot-userid :mail approver-bot/bot-userid :commonName "Approver Bot"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -52,7 +53,7 @@
    :reviewer "RDreview@funet.fi"
    :owner "RDowner@funet.fi"
    :reporter "RDdomainreporter@funet.fi"
-   :approver-bot "approver-bot"})
+   :approver-bot approver-bot/bot-userid})
 
 (def +demo-user-data+
   {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
@@ -63,7 +64,7 @@
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
    "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}
    ;; TODO: make email optional for bots
-   "approver-bot" {:eppn "approver-bot" :mail "approver-bot" :commonName "Approver Bot"}})
+   approver-bot/bot-userid {:eppn approver-bot/bot-userid :mail approver-bot/bot-userid :commonName "Approver Bot"}})
 
 ;;; helpers for generating test data
 

@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
+            [rems.application.approver-bot :as approver-bot]
             [rems.db.applications]
             [rems.db.form :as form]
             [rems.db.test-data :as test-data]
@@ -483,6 +484,17 @@
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
+
+(deftest test-application-auto-approve
+  (let [applicant "alice"
+        wfid (test-data/create-dynamic-workflow! {:handlers [approver-bot/bot-userid]})
+        cat-item (test-data/create-catalogue-item! {:workflow-id wfid})
+        app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [cat-item]})]
+    (is (= {:success true}
+           (send-command applicant {:type :application.command/submit
+                                    :application-id app-id})))
+    (is (= "application.state/approved"
+           (:application/state (get-application app-id applicant))))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
