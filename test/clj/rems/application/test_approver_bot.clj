@@ -16,8 +16,12 @@
     (f)
     (DateTimeUtils/setCurrentMillisSystem)))
 
+(defn dummy-blacklisted? [_user _resource]
+  false)
+
 (def injections
   (-> test-model/injections
+      (assoc :blacklisted? dummy-blacklisted?)
       (update-in [:get-workflow 50 :workflow :handlers]
                  conj {:userid "approver-bot"
                        :name "Approver Bot"
@@ -34,7 +38,10 @@
                        :event/actor "applicant"
                        :application/id 1
                        :application/external-id "2019/1"
-                       :application/resources []
+                       :application/resources [{:catalogue-item/id 10
+                                                :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20
+                                                :resource/ext-id "urn:21"}]
                        :application/licenses []
                        :form/id 40
                        :workflow/id 50
@@ -56,14 +63,38 @@
                :application-id 1
                :comment ""}]
              (approver-bot/generate-commands
-              (apply-events [created-event submitted-event] injections)))))
+              (apply-events [created-event submitted-event] injections)
+              injections))))
+
+    (testing "does not approve if the applicant is blacklisted for one of the resources"
+      (let [injections (assoc injections :blacklisted? (fn [user resource]
+                                                         (= ["applicant" "urn:21"] [user resource])))]
+        (is (empty? (approver-bot/generate-commands
+                     (apply-events [created-event submitted-event] injections)
+                     injections)))))
+
+    (testing "does not approve if a member is blacklisted for one of the resources"
+      (let [member-added-event {:event/type :application.event/member-added
+                                :event/time (DateTime. 2000)
+                                :event/actor "handler"
+                                :application/id 1
+                                :application/member {:userid "member"}}
+            injections (assoc injections :blacklisted? (fn [user resource]
+                                                         (= ["member" "urn:11"] [user resource])))]
+        (is (empty? (approver-bot/generate-commands
+                     (apply-events [created-event member-added-event submitted-event] injections)
+                     injections)))))
 
     (testing "ignores applications in other states"
       (is (empty? (approver-bot/generate-commands
-                   (apply-events [created-event] injections))))
+                   (apply-events [created-event] injections)
+                   injections)))
       (is (empty? (approver-bot/generate-commands
-                   (apply-events [created-event submitted-event approved-event] injections)))))
+                   (apply-events [created-event submitted-event approved-event] injections)
+                   injections))))
 
     (testing "ignores applications where the bot is not a handler"
-      (is (empty? (approver-bot/generate-commands
-                   (apply-events [created-event submitted-event] test-model/injections)))))))
+      (let [injections (update-in injections [:get-workflow 50 :workflow :handlers] empty)]
+        (is (empty? (approver-bot/generate-commands
+                     (apply-events [created-event submitted-event] injections)
+                     injections)))))))
