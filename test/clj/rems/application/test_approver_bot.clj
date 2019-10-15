@@ -32,6 +32,11 @@
       events/validate-events
       (model/build-application-view injections)))
 
+(defn generate-commands [events injections]
+  (-> events
+      (apply-events injections)
+      (approver-bot/generate-commands injections)))
+
 (deftest test-approver-bot
   (let [created-event {:event/type :application.event/created
                        :event/time (DateTime. 1000)
@@ -62,16 +67,12 @@
                :time (time/now)
                :application-id 1
                :comment ""}]
-             (approver-bot/generate-commands
-              (apply-events [created-event submitted-event] injections)
-              injections))))
+             (generate-commands [created-event submitted-event] injections))))
 
     (testing "does not approve if the applicant is blacklisted for one of the resources"
       (let [injections (assoc injections :blacklisted? (fn [user resource]
                                                          (= ["applicant" "urn:21"] [user resource])))]
-        (is (empty? (approver-bot/generate-commands
-                     (apply-events [created-event submitted-event] injections)
-                     injections)))))
+        (is (empty? (generate-commands [created-event submitted-event] injections)))))
 
     (testing "does not approve if a member is blacklisted for one of the resources"
       (let [member-added-event {:event/type :application.event/member-added
@@ -81,20 +82,12 @@
                                 :application/member {:userid "member"}}
             injections (assoc injections :blacklisted? (fn [user resource]
                                                          (= ["member" "urn:11"] [user resource])))]
-        (is (empty? (approver-bot/generate-commands
-                     (apply-events [created-event member-added-event submitted-event] injections)
-                     injections)))))
+        (is (empty? (generate-commands [created-event member-added-event submitted-event] injections)))))
 
     (testing "ignores applications in other states"
-      (is (empty? (approver-bot/generate-commands
-                   (apply-events [created-event] injections)
-                   injections)))
-      (is (empty? (approver-bot/generate-commands
-                   (apply-events [created-event submitted-event approved-event] injections)
-                   injections))))
+      (is (empty? (generate-commands [created-event] injections)))
+      (is (empty? (generate-commands [created-event submitted-event approved-event] injections))))
 
     (testing "ignores applications where the bot is not a handler"
       (let [injections (update-in injections [:get-workflow 50 :workflow :handlers] empty)]
-        (is (empty? (approver-bot/generate-commands
-                     (apply-events [created-event submitted-event] injections)
-                     injections)))))))
+        (is (empty? (generate-commands [created-event submitted-event] injections)))))))
