@@ -255,19 +255,20 @@
                               (users/get-user
                                (:to-user email-spec)))))
         to-error (validate-address (:to email))]
-    (log/info "sending email:" (pr-str email))
-    (cond
-      to-error
-      (log/warn "failed address validation, skipping message: " to-error)
+    (when (:to email)
+      (log/info "sending email:" (pr-str email))
+      (cond
+        to-error
+        (log/warn "failed address validation, skipping message: " to-error)
 
-      (not (and host port))
-      (log/info "no smtp server configured, only pretending to send email")
+        (not (and host port))
+        (log/info "no smtp server configured, only pretending to send email")
 
-      :else
-      (try
-        (postal/send-message {:host host :port port} email)
-        (catch com.sun.mail.smtp.SMTPAddressFailedException e ; email address does not exist
-          (log/warn e "failed sending email, skipping:" (pr-str email)))))))
+        :else
+        (try
+          (postal/send-message {:host host :port port} email)
+          (catch com.sun.mail.smtp.SMTPAddressFailedException e ; email address does not exist
+            (log/warn e "failed sending email, skipping:" (pr-str email))))))))
 
 (defn run []
   (common/run-event-poller ::poller (fn [event]
