@@ -237,7 +237,7 @@
       (str "Invalid address "
            (pr-str email)
            ": "
-           (.getMessage t)))))
+           t))))
 
 (deftest test-validate-address
   (is (nil? (validate-address "valid@example.com")))
