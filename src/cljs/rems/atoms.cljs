@@ -92,7 +92,8 @@
    title " " [external-link]])
 
 (defn enrich-user [user]
-  (assoc user :display (str (:name user)
+  (assoc user :display (str (or (:name user)
+                                (:userid user))
                             (when (:email user)
                               (str " (" (:email user) ")")))))
 
