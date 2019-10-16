@@ -42,8 +42,7 @@
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
-   ;; TODO: make email optional for bots
-   approver-bot/bot-userid {:eppn approver-bot/bot-userid :mail approver-bot/bot-userid :commonName "Approver Bot"}})
+   approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -63,8 +62,7 @@
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
    "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}
-   ;; TODO: make email optional for bots
-   approver-bot/bot-userid {:eppn approver-bot/bot-userid :mail approver-bot/bot-userid :commonName "Approver Bot"}})
+   approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}})
 
 ;;; helpers for generating test data
 
