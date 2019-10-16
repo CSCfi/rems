@@ -62,7 +62,7 @@
 (defn readonly-checkbox
   "Displays a checkbox."
   [checked?]
-   (if checked?
+  (if checked?
     [:i.far.fa-lg.fa-check-square {:aria-label (text :t.form/checkbox-checked)}]
     [:i.far.fa-lg.fa-square {:aria-label (text :t.form/checkbox-unchecked)}]))
 
@@ -92,7 +92,9 @@
    title " " [external-link]])
 
 (defn enrich-user [user]
-  (assoc user :display (str (:name user) " (" (:email user) ")")))
+  (assoc user :display (str (:name user)
+                            (when (:email user)
+                              (str " (" (:email user) ")")))))
 
 (defn set-document-title! [title]
   (set! (.-title js/document)
