@@ -11,8 +11,7 @@
 
 (defn- invalid-user? [u]
   (or (str/blank? (:eppn u))
-      (str/blank? (:commonName u))
-      (str/blank? (:mail u))))
+      (str/blank? (:commonName u))))
 
 (defn add-user! [user userattrs]
   (assert (and userattrs user) "User or user attributes missing!")
