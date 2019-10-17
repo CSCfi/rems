@@ -611,6 +611,8 @@
     [:legend {:font-size "inherit"}]]
    [:#application-fields
     [:.application-field-label {:font-weight "bold"}]]
+   ;; custom checkbox
+   [:.readonly-checkbox {:background-color "#ccc"}]
 
    ;; workflow editor
    [:.workflow-round dashed-form-group

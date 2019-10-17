@@ -59,12 +59,27 @@
                                :id id}
      contents]))
 
-(defn readonly-checkbox
+(defn checkbox
   "Displays a checkbox."
+  [checked? on-change]
+  (let [wrapped-on-change (fn [e]
+                            (.preventDefault e)
+                            (.stopPropagation e)
+                            (when on-change
+                              (on-change checked?)))]
+    [:i.far.fa-lg {:class [(if checked? :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
+                   :tabIndex 0
+                   :role :checkbox
+                   :aria-checked checked?
+                   :aria-label (if checked? (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
+                   :on-click wrapped-on-change
+                   :on-key-press #(when (= (.-key %) " ")
+                                    (wrapped-on-change %))}]))
+
+(defn readonly-checkbox
+  "Displays a readonly checkbox."
   [checked?]
-  (if checked?
-    [:i.far.fa-lg.fa-check-square {:aria-label (text :t.form/checkbox-checked)}]
-    [:i.far.fa-lg.fa-square {:aria-label (text :t.form/checkbox-unchecked)}]))
+  [checkbox checked? nil])
 
 (defn info-field
   "A component that shows a readonly field with title and value.
@@ -116,27 +131,32 @@
                         [:h1 title])})))
 
 (defn guide []
-  [:div
-   (component-info flash-message)
-   (example "flash-message with info"
-            [flash-message {:status :info
-                            :contents "Hello world"}])
+  (let [state (reagent/atom false)
+        on-change #(swap! state not)]
+    (fn []
+      [:div
+       (component-info flash-message)
+       (example "flash-message with info"
+                [flash-message {:status :info
+                                :contents "Hello world"}])
 
-   (example "flash-message with error"
-            [flash-message {:status :danger
-                            :contents "You fail"}])
-   (component-info readonly-checkbox)
-   (example "readonly-checkbox unchecked"
-            [readonly-checkbox false])
-   (example "readonly-checkbox checked"
-            [readonly-checkbox true])
-   (component-info info-field)
-   (example "info-field with data"
-            [info-field "Name" "Bob Tester"])
-   (example "info-field without box around value"
-            [info-field "Name" "Bob Tester" {:box? false}])
-   (example "info-field inline"
-            [info-field "Name" "Bob Tester" {:inline? true}])
-   (component-info attachment-link)
-   (example "attachment-link"
-            [attachment-link 1 "my-attachment.pdf"])])
+       (example "flash-message with error"
+                [flash-message {:status :danger
+                                :contents "You fail"}])
+       (component-info readonly-checkbox)
+       (example "readonly-checkbox unchecked"
+                [readonly-checkbox false])
+       (example "readonly-checkbox checked"
+                [readonly-checkbox true])
+       (example "checkbox interactive unchecked"
+                [checkbox @state on-change])
+       (component-info info-field)
+       (example "info-field with data"
+                [info-field "Name" "Bob Tester"])
+       (example "info-field without box around value"
+                [info-field "Name" "Bob Tester" {:box? false}])
+       (example "info-field inline"
+                [info-field "Name" "Bob Tester" {:inline? true}])
+       (component-info attachment-link)
+       (example "attachment-link"
+                [attachment-link 1 "my-attachment.pdf"])])))
