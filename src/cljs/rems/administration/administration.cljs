@@ -34,6 +34,9 @@
 (defn- to-licenses [class]
   [atoms/link {:class class} "/administration/licenses" (text :t.administration/licenses)])
 
+(defn- to-blacklist [class]
+  [atoms/link {:class class} "/administration/blacklist" (text :t.administration/blacklist)])
+
 (defn administration-navigator [selected]
   [:div.navbar.mb-4.mr-auto.ml-auto
    [to-administration [:nav-item :nav-link (when (contains? #{:rems.administration/administration}
@@ -63,7 +66,10 @@
                                                         :rems.administration/license
                                                         :rems.administration/create-license}
                                                       selected)
-                                       :active)]]])
+                                       :active)]]
+   [to-blacklist [:nav-item :nav-link (when (contains? #{:rems.administration/blacklist}
+                                                       selected)
+                                        :active)]]])
 
 (defn administration-navigator-container
   "Component for showing a navigator in the administration pages.

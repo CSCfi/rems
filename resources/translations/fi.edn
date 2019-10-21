@@ -46,6 +46,7 @@
   :administration {:active "Aktiivinen"
                    :archive "Arkistoi"
                    :back "Takaisin"
+                   :blacklist "Kieltolista"
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
