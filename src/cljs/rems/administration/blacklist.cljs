@@ -65,7 +65,9 @@
  ::set-resource-filter
  (fn [{:keys [db]} [_ id]]
    {:db (assoc db ::resource-filter id)
-    :dispatch [::fetch {:resource id}]}))
+    :dispatch [::fetch (if id
+                         {:resource id}
+                         {})]}))
 (rf/reg-sub ::resource-filter (fn [db _] (::resource-filter db)))
 
 (defn- blacklist [rows]
@@ -89,6 +91,7 @@
      [:label {:for id} (text :t.create-catalogue-item/resource-selection)] ;; TODO
      [dropdown/dropdown
       {:id id
+       :clearable? true
        :items resources
        :item-key :resid
        :item-label :resid
