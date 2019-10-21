@@ -73,9 +73,9 @@
 (defn- blacklist [rows]
   (let [table-spec {:id ::blacklist
                     :columns [{:key :resource
-                               :title "resource"}
+                               :title (text :t.administration/resource)}
                               {:key :user
-                               :title "user"}]
+                               :title (text :t.administration/user)}]
                     :rows [::blacklist]
                     :default-sort-column :resource}]
     [:div.mt-3
@@ -88,7 +88,7 @@
         item-selected? #(= (:resid %) selected-resource-id)
         id "blacklist-filter-resource"]
     [:div.form-group
-     [:label {:for id} (text :t.create-catalogue-item/resource-selection)] ;; TODO
+     [:label {:for id} (text :t.administration/filter-by-resource)]
      [dropdown/dropdown
       {:id id
        :clearable? true

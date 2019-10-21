@@ -75,6 +75,7 @@
                             :resource-in-use "Resurssi on käytössä:"
                             :workflow-archived "Työvuo on arkistoitu:"
                             :workflow-in-use "Työvuo on käytössä:"}
+                   :filter-by-resource "Suodata resurssilla:"
                    :form "Lomake"
                    :forms "Lomakkeet"
                    :intro [:div.intro [:p "Täällä voit hallinnoida REMSin aineistoja. Valitse alue valikoista yläpuolelta."]]
@@ -92,6 +93,7 @@
                    :title "Nimi"
                    :type "Tyyppi"
                    :unarchive "Palauta arkistosta"
+                   :user "Käyttäjä"
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
