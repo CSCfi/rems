@@ -2,13 +2,14 @@
   "Go from zero to an approved application via the API. Check that all side-effects happen."
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.application.approver-bot :as approver-bot]
             [rems.db.test-entitlements :as test-entitlements]
             [rems.json :as json]
             [rems.poller.entitlements :as entitlements-poller]
             [rems.poller.email :as email-poller]
             [stub-http.core :as stub]))
 
-(use-fixtures :once api-fixture)
+(use-fixtures :each api-fixture)
 
 (defn extract-id [resp]
   (assert-success resp)
@@ -217,3 +218,109 @@
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key applicant-id)]
                 (is (= "application.state/closed" (:application/state application)))))))))))
+
+(deftest test-approver-bot
+  (let [api-key "42"
+        owner-id "owner"
+        handler-id "e2e-handler"
+        handler-attributes {:eppn handler-id
+                            :commonName "E2E Handler"
+                            :mail "handler@example.com"}
+        applicant-id "e2e-applicant"
+        applicant-attributes {:eppn applicant-id
+                              :commonName "E2E Applicant"
+                              :mail "applicant@example.com"}
+        bot-attributes {:eppn approver-bot/bot-userid
+                        :commonName "bot"}]
+    (testing "create users"
+      (api-call :post "/api/users/create" handler-attributes api-key owner-id)
+      (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
+      (api-call :post "/api/users/create" bot-attributes api-key owner-id))
+
+    (let [resource-ext-id "e2e-resource"
+
+          resource-id
+          (testing "create resource"
+            (extract-id
+             (api-call :post "/api/resources/create" {:resid resource-ext-id
+                                                      :organization "e2e"
+                                                      :licenses []}
+                       api-key owner-id)))
+          form-id
+          (testing "create form"
+            (extract-id
+             (api-call :post "/api/forms/create" {:form/organization "e2e"
+                                                  :form/title "e2e"
+                                                  :form/fields [{:field/type :text
+                                                                 :field/title {:en "text field"}
+                                                                 :field/optional true}]}
+                       api-key owner-id)))
+          workflow-id
+          (testing "create workflow"
+            (extract-id
+             (api-call :post "/api/workflows/create" {:organization "e2e"
+                                                      :title "e2e workflow"
+                                                      :type :dynamic
+                                                      :handlers [handler-id approver-bot/bot-userid]}
+                       api-key owner-id)))
+
+          catalogue-item-id
+          (testing "create catalogue item"
+            (extract-id
+             (api-call :post "/api/catalogue-items/create" {:resid resource-id
+                                                            :form form-id
+                                                            :wfid workflow-id
+                                                            :localizations {:en {:title "e2e catalogue item"}}}
+                       api-key owner-id)))]
+      (testing "autoapproved application:"
+        (let [application-id (testing "create application"
+                               (:application-id
+                                (assert-success
+                                 (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                                           api-key applicant-id))))]
+          (testing "submit application"
+            (assert-success
+             (api-call :post "/api/applications/submit" {:application-id application-id}
+                       api-key applicant-id)))
+          (testing "application approved"
+            (let [application (api-call :get (str "/api/applications/" application-id) nil
+                                        api-key applicant-id)]
+              (is (= "application.state/approved" (:application/state application)))))
+          (testing "entitlement visible via API"
+            (entitlements-poller/run)
+            (let [[entitlement & others] (api-call :get (str "/api/entitlements?user=" applicant-id) nil
+                                                   api-key owner-id)]
+              (is (empty? others))
+              (is (= resource-ext-id (:resource entitlement)))
+              (is (not (:end entitlement)))))
+          (testing "revoke"
+            (assert-success
+             (api-call :post "/api/applications/revoke" {:application-id application-id
+                                                         :comment "revoke"}
+                       api-key handler-id)))
+          (testing "entitlement ended"
+            (entitlements-poller/run)
+            (let [[entitlement & others] (api-call :get (str "/api/entitlements?expired=true&user=" applicant-id) nil
+                                                   api-key owner-id)]
+              (is (empty? others))
+              (is (= resource-ext-id (:resource entitlement)))
+              (is (:end entitlement))))
+          (testing "user blacklisted"
+            (let [[entry & _] (api-call :get (str "/api/blacklist?user=" applicant-id "&resource=" resource-ext-id) nil
+                                        api-key handler-id)]
+              (is (= resource-ext-id (:resource entry)))
+              (is (= applicant-id (:userid (:user entry))))))))
+      (testing "second application"
+        (let [application-id (testing "create application"
+                               (:application-id
+                                (assert-success
+                                 (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                                           api-key applicant-id))))]
+          (testing "submit application"
+            (assert-success
+             (api-call :post "/api/applications/submit" {:application-id application-id}
+                       api-key applicant-id)))
+          (testing "application not approved"
+            (let [application (api-call :get (str "/api/applications/" application-id) nil
+                                        api-key applicant-id)]
+              (is (= "application.state/submitted" (:application/state application))))))))))
