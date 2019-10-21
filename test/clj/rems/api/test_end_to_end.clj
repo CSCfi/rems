@@ -1,5 +1,5 @@
 (ns ^:integration rems.api.test-end-to-end
-  "Go from zero to an approved application. Check that all side-effects happen."
+  "Go from zero to an approved application via the API. Check that all side-effects happen."
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.test-entitlements :as test-entitlements]
