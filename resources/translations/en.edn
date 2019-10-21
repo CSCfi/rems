@@ -75,7 +75,6 @@
                             :resource-in-use "Resource in use:"
                             :workflow-archived "Workflow has been archived:"
                             :workflow-in-use "Workflow in use:"}
-                   :filter-by-resource "Filter by resource:"
                    :form "Form"
                    :forms "Forms"
                    :intro [:div.intro [:p "From here you can manage the REMS datasets. See the menu above."]]
