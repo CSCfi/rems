@@ -134,4 +134,4 @@
       workflows-api
 
       ;; keep this last
-      not-found-handler)))
+      (undocumented not-found-handler))))
