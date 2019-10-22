@@ -74,6 +74,7 @@ Changes since v2.4
 - Revoking already approved applications (#1661)
   - The applicant and all members will be added to a blacklist
 - Userid field in /api/entitlements response
+- Administration view for blacklist
 
 ### Enhancements
 - Improved version information in footer

@@ -6,7 +6,7 @@
 
 (defn dropdown
   "Single- or multi-choice, searchable dropdown menu."
-  [{:keys [id items item-key item-label item-selected? item-disabled? multi? on-change]
+  [{:keys [id items item-key item-label item-selected? item-disabled? multi? clearable? on-change]
     :or {item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   (let [options (map (fn [item] {:value item
@@ -20,6 +20,7 @@
                                       (item-key item))
                    :inputId id
                    :isMulti multi?
+                   :isClearable clearable?
                    :maxMenuHeight 200
                    :noOptionsMessage #(text :t.dropdown/no-results)
                    :options (if multi?

@@ -8,6 +8,7 @@
             [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
             [rems.administration.administration :refer [administration-page]]
+            [rems.administration.blacklist :refer [blacklist-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
             [rems.administration.create-catalogue-item :refer [create-catalogue-item-page]]
@@ -196,6 +197,7 @@
    :extra-pages extra-pages
    :rems.actions/accept-invitation accept-invitation-page
    :rems.administration/administration administration-page
+   :rems.administration/blacklist blacklist-page
    :rems.administration/catalogue-item catalogue-item-page
    :rems.administration/catalogue-items catalogue-items-page
    :rems.administration/create-catalogue-item create-catalogue-item-page
@@ -302,6 +304,10 @@
 (secretary/defroute "/administration" []
   (rf/dispatch [:rems.administration.administration/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/administration]))
+
+(secretary/defroute "/administration/blacklist" []
+  (rf/dispatch [:rems.administration.blacklist/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/blacklist]))
 
 (secretary/defroute "/administration/catalogue-items/:catalogue-item-id" [catalogue-item-id]
   (rf/dispatch [:rems.administration.catalogue-item/enter-page catalogue-item-id])
