@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.flash-message :as flash-message]
+            [rems.navbar :as navbar]
             [rems.spinner :as spinner]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -16,57 +17,31 @@
  (fn [db _]
    (::loading? db)))
 
-(defn- nav-classes [active?]
-  (into [:nav-item :nav-link]
-        (when active?
-          [:active])))
-
-(defn- to-administration [active?]
-  [atoms/link {:class (nav-classes active?)} "/administration" (text :t.navigation/administration)])
-
-(defn- to-catalogue-items [active?]
-  [atoms/link {:class (nav-classes active?)} "/administration/catalogue-items" (text :t.administration/catalogue-items)])
-
-(defn- to-resources [active?]
-  [atoms/link {:class (nav-classes active?)} "/administration/resources" (text :t.administration/resources)])
-
-(defn- to-forms [active?]
-  [atoms/link {:class (nav-classes active?)} "/administration/forms" (text :t.administration/forms)])
-
-(defn- to-workflows [active?]
-  [atoms/link {:class (nav-classes active?)} "/administration/workflows" (text :t.administration/workflows)])
-
-(defn- to-licenses [active?]
-  [atoms/link {:class (nav-classes active?)} "/administration/licenses" (text :t.administration/licenses)])
-
-(defn- to-blacklist [active?]
-  [atoms/link {:class (nav-classes active?)} "/administration/blacklist" (text :t.administration/blacklist)])
-
 (defn administration-navigator [selected]
   [:div.navbar.mb-4.mr-auto.ml-auto
-   [to-administration (contains? #{:rems.administration/administration} selected)]
-   [to-catalogue-items (contains? #{:rems.administration/catalogue-items
-                                    :rems.administration/catalogue-item
-                                    :rems.administration/create-catalogue-item}
-                                  selected)]
-   [to-resources (contains? #{:rems.administration/resources
-                              :rems.administration/resource
-                              :rems.administration/create-resource}
-                            selected)]
-   [to-forms (contains? #{:rems.administration/forms
-                          :rems.administration/form
-                          :rems.administration/create-form}
-                        selected)]
-   [to-workflows (contains? #{:rems.administration/workflows
-                              :rems.administration/workflow
-                              :rems.administration/create-workflow}
-                            selected)]
-   [to-licenses (contains? #{:rems.administration/licenses
-                             :rems.administration/license
-                             :rems.administration/create-license}
-                           selected)]
-   [to-blacklist (contains? #{:rems.administration/blacklist}
-                            selected)]])
+   [navbar/nav-link "/administration" (text :t.navigation/administration) (contains? #{:rems.administration/administration} selected)]
+   [navbar/nav-link "/administration/catalogue-items" (text :t.administration/catalogue-items) (contains? #{:rems.administration/catalogue-items
+                                                                                                            :rems.administration/catalogue-item
+                                                                                                            :rems.administration/create-catalogue-item}
+                                                                                                          selected)]
+   [navbar/nav-link "/administration/resources" (text :t.administration/resources) (contains? #{:rems.administration/resources
+                                                                                                :rems.administration/resource
+                                                                                                :rems.administration/create-resource}
+                                                                                              selected)]
+   [navbar/nav-link "/administration/forms" (text :t.administration/forms) (contains? #{:rems.administration/forms
+                                                                                        :rems.administration/form
+                                                                                        :rems.administration/create-form}
+                                                                                      selected)]
+   [navbar/nav-link "/administration/workflows" (text :t.administration/workflows) (contains? #{:rems.administration/workflows
+                                                                                                :rems.administration/workflow
+                                                                                                :rems.administration/create-workflow}
+                                                                                              selected)]
+   [navbar/nav-link "/administration/licenses" (text :t.administration/licenses) (contains? #{:rems.administration/licenses
+                                                                                             :rems.administration/license
+                                                                                             :rems.administration/create-license}
+                                                                                           selected)]
+   [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist) (contains? #{:rems.administration/blacklist}
+                                                                                              selected)]])
 
 (defn administration-navigator-container
   "Component for showing a navigator in the administration pages.
