@@ -47,7 +47,6 @@
             (api-call :post "/api/users/create" applicant-attributes api-key owner-id))
 
           (let [resource-ext-id "e2e-resource"
-
                 resource-id
                 (testing "create resource"
                   (extract-id
@@ -95,7 +94,6 @@
                    (assert-success
                     (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
                               api-key applicant-id))))]
-
 
             (testing "fetch application as applicant"
               (assert (number? application-id))
@@ -238,7 +236,6 @@
       (api-call :post "/api/users/create" bot-attributes api-key owner-id))
 
     (let [resource-ext-id "e2e-resource"
-
           resource-id
           (testing "create resource"
             (extract-id
@@ -263,7 +260,6 @@
                                                       :type :dynamic
                                                       :handlers [handler-id approver-bot/bot-userid]}
                        api-key owner-id)))
-
           catalogue-item-id
           (testing "create catalogue item"
             (extract-id
