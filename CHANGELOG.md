@@ -75,6 +75,7 @@ Changes since v2.4
   - The applicant and all members will be added to a blacklist
 - Userid field in /api/entitlements response
 - Approver bot which approves applications automatically, unless the user+resource is blacklisted (#1660)
+- Administration view for blacklist
 
 ### Enhancements
 - Improved version information in footer

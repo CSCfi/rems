@@ -24,19 +24,31 @@
                                          :mail-from "rems@rems.rems")
                   postal.core/send-message (fn [_host message] (reset! message-atom message))
                   rems.db.users/get-user (constantly {:email "user@example.com"})]
-      (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})
-      (is (= {:to "foo@example.com"
-              :subject "ding"
-              :body "boing"
-              :from "rems@rems.rems"}
-             @message-atom))
-      (send-email! {:to-user "user" :subject "x" :body "y"})
-      (is (= {:to "user@example.com"
-              :to-user "user"
-              :subject "x"
-              :body "y"
-              :from "rems@rems.rems"}
-             @message-atom)))))
+
+      (testing "mail to email address"
+        (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})
+        (is (= {:to "foo@example.com"
+                :subject "ding"
+                :body "boing"
+                :from "rems@rems.rems"}
+               @message-atom))
+        (reset! message-atom nil))
+
+      (testing "mail to user"
+        (send-email! {:to-user "user" :subject "x" :body "y"})
+        (is (= {:to "user@example.com"
+                :to-user "user"
+                :subject "x"
+                :body "y"
+                :from "rems@rems.rems"}
+               @message-atom))
+        (reset! message-atom nil))
+
+      (testing "mail to user without email"
+        (with-redefs [rems.db.users/get-user (constantly {:email nil})]
+          (send-email! {:to-user "user" :subject "x" :body "y"}))
+        (is (nil? @message-atom))
+        (reset! message-atom nil)))))
 
 (def ^:private get-catalogue-item
   {10 {:localizations {:en {:langcode :en

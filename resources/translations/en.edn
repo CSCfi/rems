@@ -46,6 +46,7 @@
   :administration {:active "Active"
                    :archive "Archive"
                    :back "Back"
+                   :blacklist "Blacklist"
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
@@ -91,6 +92,7 @@
                    :title "Title"
                    :type "Type"
                    :unarchive "Unarchive"
+                   :user "User"
                    :view "View"
                    :workflow "Workflow"
                    :workflows "Workflows"}

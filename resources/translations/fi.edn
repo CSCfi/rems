@@ -46,6 +46,7 @@
   :administration {:active "Aktiivinen"
                    :archive "Arkistoi"
                    :back "Takaisin"
+                   :blacklist "Kieltolista"
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
@@ -91,6 +92,7 @@
                    :title "Nimi"
                    :type "Tyyppi"
                    :unarchive "Palauta arkistosta"
+                   :user "Käyttäjä"
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
