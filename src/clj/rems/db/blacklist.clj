@@ -65,6 +65,10 @@
 (defn get-blacklist [params]
   (vec (sort-by (juxt :resource :user) (events->blacklist (get-events params)))))
 
+(defn blacklisted? [user resource]
+  (not (empty? (get-blacklist {:blacklist/user user
+                               :blacklist/resource resource}))))
+
 (defn add-to-blacklist! [{:keys [user resource actor comment]}]
   (add-event! {:event/type :blacklist.event/add
                :event/actor actor

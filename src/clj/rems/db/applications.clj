@@ -63,7 +63,8 @@
    :get-catalogue-item-licenses get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
    :allocate-application-ids! allocate-application-ids!
-   :add-to-blacklist! blacklist/add-to-blacklist!})
+   :add-to-blacklist! blacklist/add-to-blacklist!
+   :blacklisted? blacklist/blacklisted?})
 
 (declare get-unrestricted-application)
 
@@ -78,7 +79,7 @@
                      distinct)]
     (->> app-ids
          (map get-unrestricted-application)
-         (mapcat approver-bot/generate-commands)
+         (mapcat #(approver-bot/generate-commands % command-injections))
          doall)))
 
 (defn command! [cmd]

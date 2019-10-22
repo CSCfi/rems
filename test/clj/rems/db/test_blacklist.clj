@@ -2,8 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.blacklist :as blacklist]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]])
-  (:import org.joda.time.DateTime))
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures
   :once
@@ -51,4 +50,8 @@
            :blacklist/user "goodie"
            :blacklist/resource "urn.fi/124"
            :event/comment nil}]
-         (blacklist/get-events {:blacklist/user "goodie"}))))
+         (blacklist/get-events {:blacklist/user "goodie"})))
+  (is (false? (blacklist/blacklisted? "baddie" "urn.fi/123")))
+  (is (false? (blacklist/blacklisted? "baddie" "urn.fi/124")))
+  (is (false? (blacklist/blacklisted? "goodie" "urn.fi/123")))
+  (is (true? (blacklist/blacklisted? "goodie" "urn.fi/124"))))
