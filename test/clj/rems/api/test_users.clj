@@ -6,9 +6,9 @@
             [ring.mock.request :refer :all]))
 
 (def new-user
-  {:eppn "david"
-   :mail "d@av.id"
-   :commonName "David Newuser"})
+  {:userid "david"
+   :email "d@av.id"
+   :name "David Newuser"})
 
 (use-fixtures
   :once

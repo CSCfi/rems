@@ -9,9 +9,9 @@
 (def user-id "david")
 
 (def new-user
-  {:eppn user-id
-   :mail "d@av.id"
-   :commonName "David Newuser"})
+  {:userid user-id
+   :email "d@av.id"
+   :name "David Newuser"})
 
 (def new-settings
   {:language :fi})

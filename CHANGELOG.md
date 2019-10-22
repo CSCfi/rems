@@ -35,7 +35,8 @@ Changes since v2.4
   /api/forms/[form-id]/edit to /api/forms/edit.
 - The page addresses are no more prefixed with `/#/`, so for example the address
   of the catalogue page was changed from `/#/catalogue` to `/catalogue` (#1258)
-- More consistent user attributes in (application) API
+- More consistent user attributes in APIs (e.g. /api/application/:id,
+  /api/users/create) (#1726)
 
 ### Additions
 - New field types: description, option, multiselect

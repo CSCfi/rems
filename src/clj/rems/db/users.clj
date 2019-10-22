@@ -1,5 +1,6 @@
 (ns rems.db.users
   (:require [clojure.string :as str]
+            [clojure.test :refer :all]
             [rems.db.core :as db]
             [rems.json :as json]))
 
@@ -8,6 +9,20 @@
   {:userid (:eppn u)
    :name (:commonName u)
    :email (:mail u)})
+
+(defn unformat-user
+  "Inverse of format-user: take in API-style attributes and output db-style attributes"
+  [u]
+  {:eppn (:userid u)
+   :commonName (:name u)
+   :mail (:email u)})
+
+(deftest test-format-unformat
+  (let [api-user {:userid "foo" :name "bar" :email "a@b"}
+        db-user {:eppn "foo" :commonName "bar" :mail "a@b"}]
+    (is (= api-user (format-user db-user)))
+    (is (= db-user (unformat-user api-user)))
+    (is (= api-user (format-user (unformat-user api-user))))))
 
 (defn- invalid-user? [u]
   (or (str/blank? (:eppn u))
