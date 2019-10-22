@@ -7,13 +7,10 @@
             [schema.core :as s]))
 
 (s/defschema CreateUserCommand
-  ;; TODO use UserWithAttributes schema here
-  {:eppn s/Str
-   (s/optional-key :mail) s/Str
-   :commonName s/Str})
+  UserWithAttributes)
 
 (defn create-user [user-data]
-  (users/add-user! (:eppn user-data) user-data))
+  (users/add-user! (:userid user-data) (users/unformat-user user-data)))
 
 (def users-api
   (context "/users" []

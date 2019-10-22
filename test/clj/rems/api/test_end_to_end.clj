@@ -35,13 +35,13 @@
         (let [api-key "42"
               owner-id "owner"
               handler-id "e2e-handler"
-              handler-attributes {:eppn handler-id
-                                  :commonName "E2E Handler"
-                                  :mail "handler@example.com"}
+              handler-attributes {:userid handler-id
+                                  :name "E2E Handler"
+                                  :email "handler@example.com"}
               applicant-id "e2e-applicant"
-              applicant-attributes {:eppn applicant-id
-                                    :commonName "E2E Applicant"
-                                    :mail "applicant@example.com"}]
+              applicant-attributes {:userid applicant-id
+                                    :name "E2E Applicant"
+                                    :email "applicant@example.com"}]
           (testing "create users"
             (api-call :post "/api/users/create" handler-attributes api-key owner-id)
             (api-call :post "/api/users/create" applicant-attributes api-key owner-id))
@@ -221,15 +221,16 @@
   (let [api-key "42"
         owner-id "owner"
         handler-id "e2e-handler"
-        handler-attributes {:eppn handler-id
-                            :commonName "E2E Handler"
-                            :mail "handler@example.com"}
+        handler-attributes {:userid handler-id
+                            :name "E2E Handler"
+                            :email "handler@example.com"}
         applicant-id "e2e-applicant"
-        applicant-attributes {:eppn applicant-id
-                              :commonName "E2E Applicant"
-                              :mail "applicant@example.com"}
-        bot-attributes {:eppn approver-bot/bot-userid
-                        :commonName "bot"}]
+        applicant-attributes {:userid applicant-id
+                              :name "E2E Applicant"
+                              :email "applicant@example.com"}
+        bot-attributes {:userid approver-bot/bot-userid
+                        :email nil
+                        :name "bot"}]
     (testing "create users"
       (api-call :post "/api/users/create" handler-attributes api-key owner-id)
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
