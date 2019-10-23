@@ -43,7 +43,7 @@
 
 (defn edit-button [id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/administration/edit-workflow/" id)
+   (str "/administration/workflows/edit/" id)
    (text :t.administration/edit)])
 
 (defn workflow-view [workflow language]

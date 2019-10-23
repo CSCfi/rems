@@ -357,6 +357,14 @@
   (rf/dispatch [:rems.administration.resources/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/resources]))
 
+(secretary/defroute "/administration/workflows/create" []
+  (rf/dispatch [:rems.administration.create-workflow/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
+
+(secretary/defroute "/administration/workflows/edit/:workflow-id" [workflow-id]
+  (rf/dispatch [:rems.administration.create-workflow/enter-page (parse-int workflow-id)])
+  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
+
 (secretary/defroute "/administration/workflows/:workflow-id" [workflow-id]
   (rf/dispatch [:rems.administration.workflow/enter-page workflow-id])
   (rf/dispatch [:set-active-page :rems.administration/workflow]))
@@ -376,14 +384,6 @@
 (secretary/defroute "/administration/licenses" []
   (rf/dispatch [:rems.administration.licenses/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/licenses]))
-
-(secretary/defroute "/administration/create-workflow" []
-  (rf/dispatch [:rems.administration.create-workflow/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
-
-(secretary/defroute "/administration/edit-workflow/:workflow-id" [workflow-id]
-  (rf/dispatch [:rems.administration.create-workflow/enter-page (parse-int workflow-id)])
-  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
 
 (secretary/defroute "/extra-pages/:page-id" [page-id]
   (rf/dispatch [:rems.extra-pages/enter-page page-id])
