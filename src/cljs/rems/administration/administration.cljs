@@ -19,29 +19,13 @@
 
 (defn administration-navigator [selected]
   [:div.navbar.mb-4.mr-auto.ml-auto
-   [navbar/nav-link "/administration" (text :t.navigation/administration) (contains? #{:rems.administration/administration} selected)]
-   [navbar/nav-link "/administration/catalogue-items" (text :t.administration/catalogue-items) (contains? #{:rems.administration/catalogue-items
-                                                                                                            :rems.administration/catalogue-item
-                                                                                                            :rems.administration/create-catalogue-item}
-                                                                                                          selected)]
-   [navbar/nav-link "/administration/resources" (text :t.administration/resources) (contains? #{:rems.administration/resources
-                                                                                                :rems.administration/resource
-                                                                                                :rems.administration/create-resource}
-                                                                                              selected)]
-   [navbar/nav-link "/administration/forms" (text :t.administration/forms) (contains? #{:rems.administration/forms
-                                                                                        :rems.administration/form
-                                                                                        :rems.administration/create-form}
-                                                                                      selected)]
-   [navbar/nav-link "/administration/workflows" (text :t.administration/workflows) (contains? #{:rems.administration/workflows
-                                                                                                :rems.administration/workflow
-                                                                                                :rems.administration/create-workflow}
-                                                                                              selected)]
-   [navbar/nav-link "/administration/licenses" (text :t.administration/licenses) (contains? #{:rems.administration/licenses
-                                                                                             :rems.administration/license
-                                                                                             :rems.administration/create-license}
-                                                                                           selected)]
-   [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist) (contains? #{:rems.administration/blacklist}
-                                                                                              selected)]])
+   [navbar/nav-link+ "/administration" (text :t.navigation/administration) :exact]
+   [navbar/nav-link+ "/administration/catalogue-items" (text :t.administration/catalogue-items)]
+   [navbar/nav-link+ "/administration/resources" (text :t.administration/resources)]
+   [navbar/nav-link+ "/administration/forms" (text :t.administration/forms)]
+   [navbar/nav-link+ "/administration/workflows" (text :t.administration/workflows)]
+   [navbar/nav-link+ "/administration/licenses" (text :t.administration/licenses)]
+   [navbar/nav-link+ "/administration/blacklist" (text :t.administration/blacklist)]])
 
 (defn administration-navigator-container
   "Component for showing a navigator in the administration pages.
