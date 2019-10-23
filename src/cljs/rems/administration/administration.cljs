@@ -19,13 +19,13 @@
 
 (defn administration-navigator [selected]
   [:div.navbar.mb-4.mr-auto.ml-auto
-   [navbar/nav-link+ "/administration" (text :t.navigation/administration) :exact]
-   [navbar/nav-link+ "/administration/catalogue-items" (text :t.administration/catalogue-items)]
-   [navbar/nav-link+ "/administration/resources" (text :t.administration/resources)]
-   [navbar/nav-link+ "/administration/forms" (text :t.administration/forms)]
-   [navbar/nav-link+ "/administration/workflows" (text :t.administration/workflows)]
-   [navbar/nav-link+ "/administration/licenses" (text :t.administration/licenses)]
-   [navbar/nav-link+ "/administration/blacklist" (text :t.administration/blacklist)]])
+   [navbar/nav-link "/administration" (text :t.navigation/administration) :exact]
+   [navbar/nav-link "/administration/catalogue-items" (text :t.administration/catalogue-items)]
+   [navbar/nav-link "/administration/resources" (text :t.administration/resources)]
+   [navbar/nav-link "/administration/forms" (text :t.administration/forms)]
+   [navbar/nav-link "/administration/workflows" (text :t.administration/workflows)]
+   [navbar/nav-link "/administration/licenses" (text :t.administration/licenses)]
+   [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist)]])
 
 (defn administration-navigator-container
   "Component for showing a navigator in the administration pages.
