@@ -309,6 +309,14 @@
   (rf/dispatch [:rems.administration.blacklist/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/blacklist]))
 
+(secretary/defroute "/administration/catalogue-items/create" []
+  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
+
+(secretary/defroute "/administration/catalogue-items/edit/:catalogue-item-id" [catalogue-item-id]
+  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page (parse-int catalogue-item-id)])
+  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
+
 (secretary/defroute "/administration/catalogue-items/:catalogue-item-id" [catalogue-item-id]
   (rf/dispatch [:rems.administration.catalogue-item/enter-page catalogue-item-id])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-item]))
@@ -348,14 +356,6 @@
 (secretary/defroute "/administration/licenses" []
   (rf/dispatch [:rems.administration.licenses/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/licenses]))
-
-(secretary/defroute "/administration/create-catalogue-item" []
-  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
-
-(secretary/defroute "/administration/edit-catalogue-item/:catalogue-item-id" [catalogue-item-id]
-  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page (parse-int catalogue-item-id)])
-  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
 
 (secretary/defroute "/administration/create-form" []
   (rf/dispatch [:rems.administration.create-form/enter-page])
