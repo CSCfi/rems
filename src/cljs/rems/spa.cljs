@@ -54,6 +54,11 @@
    (:page db)))
 
 (rf/reg-sub
+ :path
+ (fn [db _]
+   (or (:path db) "")))
+
+(rf/reg-sub
  :docs
  (fn [db _]
    (:docs db)))
@@ -85,6 +90,11 @@
  :set-active-page
  (fn [db [_ page]]
    (assoc db :page page)))
+
+(rf/reg-event-db
+ :set-path
+ (fn [db [_ path]]
+   (assoc db :path path)))
 
 (rf/reg-event-db
  :set-docs
@@ -423,6 +433,7 @@
                      ;; XXX: workaround for Secretary/Accountant considering URLs with different hash to be different pages
                      (let [url (js/URL. path js/location)
                            path-without-hash (str (.-pathname url) (.-search url))]
+                       (rf/dispatch [:set-path path-without-hash])
                        (when-not (= @previous-path path-without-hash)
                          (reset! previous-path path-without-hash)
                          (secretary/dispatch! path-without-hash)))))

@@ -18,8 +18,7 @@
   [atoms/link {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title])
 
 (defn nav-link+ [path title & [match-mode]]
-  (let [_redraw-when-page-changes @(rf/subscribe [:page]) ;; TODO: hack
-        location (.-pathname (.-location js/window))
+  (let [location @(rf/subscribe [:path])
         active? (case match-mode
                   :exact
                   (= location path)
