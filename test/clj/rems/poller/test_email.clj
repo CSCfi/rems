@@ -7,13 +7,18 @@
             [rems.locales]
             [rems.poller.email :refer :all]))
 
+(defn empty-signature [f]
+  (assoc rems.config/env :t.email/regards "")
+  (f))
+
 (use-fixtures
   :once
   (fn [f]
     (mount/start #'rems.config/env
                  #'rems.locales/translations)
     (f)
-    (mount/stop)))
+    (mount/stop))
+  :each empty-signature)
 
 (deftest test-send-email!
   ;; Just for a bit of coverage in code that doesn't get run in other tests or the dev profile
