@@ -345,6 +345,10 @@
   (rf/dispatch [:rems.administration.forms/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/forms]))
 
+(secretary/defroute "/administration/resources/create" []
+  (rf/dispatch [:rems.administration.create-resource/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-resource]))
+
 (secretary/defroute "/administration/resources/:resource-id" [resource-id]
   (rf/dispatch [:rems.administration.resource/enter-page resource-id])
   (rf/dispatch [:set-active-page :rems.administration/resource]))
@@ -361,6 +365,10 @@
   (rf/dispatch [:rems.administration.workflows/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/workflows]))
 
+(secretary/defroute "/administration/licenses/create" []
+  (rf/dispatch [:rems.administration.create-license/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-license]))
+
 (secretary/defroute "/administration/licenses/:license-id" [license-id]
   (rf/dispatch [:rems.administration.license/enter-page license-id])
   (rf/dispatch [:set-active-page :rems.administration/license]))
@@ -368,14 +376,6 @@
 (secretary/defroute "/administration/licenses" []
   (rf/dispatch [:rems.administration.licenses/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/licenses]))
-
-(secretary/defroute "/administration/create-license" []
-  (rf/dispatch [:rems.administration.create-license/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-license]))
-
-(secretary/defroute "/administration/create-resource" []
-  (rf/dispatch [:rems.administration.create-resource/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-resource]))
 
 (secretary/defroute "/administration/create-workflow" []
   (rf/dispatch [:rems.administration.create-workflow/enter-page])
