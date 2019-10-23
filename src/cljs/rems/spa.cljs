@@ -325,6 +325,18 @@
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-items]))
 
+(secretary/defroute "/administration/forms/create" []
+  (rf/dispatch [:rems.administration.create-form/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
+
+(secretary/defroute "/administration/forms/create/:form-id" [form-id]
+  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id)])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
+
+(secretary/defroute "/administration/forms/edit/:form-id" [form-id]
+  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id) true])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
+
 (secretary/defroute "/administration/forms/:form-id" [form-id]
   (rf/dispatch [:rems.administration.form/enter-page form-id])
   (rf/dispatch [:set-active-page :rems.administration/form]))
@@ -356,18 +368,6 @@
 (secretary/defroute "/administration/licenses" []
   (rf/dispatch [:rems.administration.licenses/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/licenses]))
-
-(secretary/defroute "/administration/create-form" []
-  (rf/dispatch [:rems.administration.create-form/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-form]))
-
-(secretary/defroute "/administration/create-form/:form-id" [form-id]
-  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id)])
-  (rf/dispatch [:set-active-page :rems.administration/create-form]))
-
-(secretary/defroute "/administration/edit-form/:form-id" [form-id]
-  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id) true])
-  (rf/dispatch [:set-active-page :rems.administration/create-form]))
 
 (secretary/defroute "/administration/create-license" []
   (rf/dispatch [:rems.administration.create-license/enter-page])

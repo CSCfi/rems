@@ -61,7 +61,7 @@
 
 (defn- to-create-form []
   [atoms/link {:class "btn btn-primary"}
-   "/administration/create-form"
+   "/administration/forms/create"
    (text :t.administration/create-form)])
 
 (defn- to-view-form [form]
@@ -71,7 +71,7 @@
 
 (defn- copy-as-new-form [form]
   [atoms/link {:class "btn btn-primary"}
-   (str "/administration/create-form/" (:form/id form))
+   (str "/administration/forms/create/" (:form/id form))
    (text :t.administration/copy-as-new)])
 
 (rf/reg-sub
