@@ -338,7 +338,9 @@
            :phase-completed "Vaihe valmis:"
            :phase-pending "Vaihe tulossa:"
            :phase-rejected "Vaihe hylätty:"
-           :rejected "Hylätty"}
+           :phase-revoked "Vaihe peruttu:"
+           :rejected "Hylätty"
+           :revoked "Peruttu"}
   :search {:clear-search "Tyhjennä hakuehdot"
            :example-searches "Esimerkkihakuja"
            :learn-more "Opi lisää"

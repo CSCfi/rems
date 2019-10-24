@@ -340,7 +340,9 @@
            :phase-completed "Phase completed:"
            :phase-pending "Phase pending:"
            :phase-rejected "Phase rejected:"
-           :rejected "Rejected"}
+           :phase-revoked "Phase revoked:"
+           :rejected "Rejected"
+           :revoked "Revoked"}
   :search {:clear-search "Clear search"
            :example-searches "Example searches"
            :learn-more "Learn more"

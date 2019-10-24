@@ -482,8 +482,8 @@
      {:id "header"
       :title (text :t.applications/state)
       :always (into [:div
-                     [:div.mb-3 {:class (str "state-" (name state))}
-                      (phases (get-application-phases state))]
+                     [:div.mb-3
+                      [phases state (get-application-phases state)]]
                      [info-field
                       (text :t.applications/application)
                       [:<>
