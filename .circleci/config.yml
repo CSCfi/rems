@@ -50,7 +50,7 @@ jobs:
           keys:
           - v2-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
-      - run: DATABASE_URL=invalid lein kaocha unit
+      - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
 
   test:
     <<: *defaults
@@ -65,7 +65,7 @@ jobs:
       - run: sudo rm /usr/local/bin/chromedriver
       - run: sudo apt install chromium-chromedriver
       - run: FOR_TESTS=1 ./dev_db.sh
-      - run: lein cljtests
+      - run: lein cljtests-ci
       - store_artifacts:
           path: browsertest-errors
 
