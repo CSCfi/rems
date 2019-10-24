@@ -16,7 +16,7 @@ git clone git@github.com:your-username/rems.git
 
 ## Accepting changes
 
-Before your changes will be merged into the project, it will have go throught the following checks:
+Before your changes will be merged into the project, it will have go through the following checks:
 
 - Changes have to be accepted by at least one of the core team members
 - All status checks have passed 
