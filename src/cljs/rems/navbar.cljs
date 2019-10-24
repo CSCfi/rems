@@ -97,7 +97,9 @@
 (defn guide []
   [:div
    (component-info nav-link)
-   (example "nav-link"
-            [nav-link-impl "example/path" "link text"])
+   [:p "Here are examples of what the inactive and active nav-links look like."
+    "The examples use nav-link-impl because we can't fake the :path subscription."]
+   (example "nav-link inactive"
+            [nav-link-impl "example/path" "Link text" false])
    (example "nav-link active"
-            [nav-link-impl "example/path" "link text" true])])
+            [nav-link-impl "example/path" "Link text" true])])
