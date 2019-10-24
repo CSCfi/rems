@@ -803,31 +803,47 @@
                                        :catalogue-item/title {:en "Catalogue item 3"}}]}])
 
    (example "link license"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :link
-                             :license/title {:en "Link to license"}
-                             :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]])
-   (example "link license with validation error"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :link
-                             :license/title {:en "Link to license"}
-                             :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
-                             :validation {:type :t.form.validation/required}}]])
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :link
+              :license/title {:en "Link to license"}
+              :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}
+             false])
+   (example "link license, not accepted"
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :link
+              :license/title {:en "Link to license"}
+              :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
+              :accepted false}
+             true])
+   (example "link license, accepted"
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :link
+              :license/title {:en "Link to license"}
+              :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
+              :accepted true}
+             true])
    (example "text license"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :text
-                             :license/title {:en "A Text License"}
-                             :license/text {:en lipsum-paragraphs}}]])
-   (example "text license with validation error"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :text
-                             :license/title {:en "A Text License"}
-                             :license/text {:en lipsum-paragraphs}
-                             :validation {:type :t.form.validation/required}}]])
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :text
+              :license/title {:en "A Text License"}
+              :license/text {:en lipsum-paragraphs}}
+             false])
+   (example "attachment license"
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :attachment
+              :license/title {:en "A Text License"}
+              :license/text {:en lipsum-paragraphs}}
+             false])
 
    (component-info render-application)
    (example "application, partially filled"
