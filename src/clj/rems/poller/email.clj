@@ -79,6 +79,7 @@
                               (application-util/get-applicant-name application)
                               (resources-for-email application)
                               (link-to-application (:application/id event)))
+                 (text :t.email/regards)
                  (text :t.email/footer))})))))
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
@@ -201,6 +202,7 @@
                             (application-util/get-applicant-name application)
                             (format-application-for-email application)
                             (invitation-link (:invitation/token event)))
+               (text :t.email/regards)
                (text :t.email/footer))}])))
 
 ;; TODO member-joined?
