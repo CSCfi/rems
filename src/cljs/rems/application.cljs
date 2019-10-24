@@ -45,6 +45,7 @@
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
                     :application.state/rejected
+                    :application.state/revoked
                     :application.state/closed}
                   (:application/state application))))
 
