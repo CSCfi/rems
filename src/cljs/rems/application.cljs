@@ -420,10 +420,15 @@
             [event-view e]))))
 
 (defn- get-application-phases [state]
-  (cond (contains? #{:application.state/rejected :application.state/revoked} state)
+  (cond (contains? #{:application.state/rejected} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+
+        (contains? #{:application.state/revoked} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+         {:phase :result :completed? true :revoked? true :text :t.phases/revoked}]
 
         (contains? #{:application.state/approved} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
