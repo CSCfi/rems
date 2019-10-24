@@ -16,5 +16,4 @@
                      :focus-meta [:focused]}]
             :kaocha/reporter kaocha.report/dots
             :plugins [:kaocha.plugin/print-invocations
-                      :kaocha.plugin/notifier
                       :kaocha.plugin/profiling]}
