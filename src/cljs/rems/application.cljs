@@ -846,9 +846,12 @@
              false])
 
    (component-info render-application)
-   (example "application, partially filled"
+   (example "application, partially filled, as applicant"
             [render-application
              {:application {:application/id 17
+                            :application/applicant {:userid "applicant"}
+                            :application/roles #{:applicant}
+                            :application/permissions #{:application.command/accept-licenses}
                             :application/state :application.state/draft
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
                             :application/form {:form/fields [{:field/id 1
@@ -881,7 +884,8 @@
               :edit-application {:field-values {1 "abc"}
                                  :show-diff {}
                                  :validation-errors nil
-                                 :accepted-licenses #{5}}}])
+                                 :accepted-licenses {"applicant" #{5}}}
+              :userid "applicant"}])
    (example "application, applied"
             [render-application
              {:application {:application/id 17
