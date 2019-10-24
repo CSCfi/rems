@@ -341,7 +341,7 @@
                                     :readonly readonly?
                                     :app-id (:application/id application))]))]}]))
 
-(defn- application-licenses [application edit-application userid]
+(defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
     (let [application-id (:application/id application)
           roles (:application/roles application)
@@ -697,7 +697,7 @@
      [:div.mt-3 [applied-resources application userid]]
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
-     [:div.my-3 [application-licenses application edit-application userid]]
+     [:div.my-3 [application-licenses application userid]]
      [:div.my-3 [application-fields application edit-application attachment-success]]]
     [:div.col-lg-4
      [:div#float-actions.mb-3
