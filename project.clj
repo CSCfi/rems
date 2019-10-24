@@ -153,7 +153,7 @@
                                 [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
                                 [criterium "0.4.5"]
                                 [doo "0.1.11"]
-                                [lambdaisland/kaocha "0.0-529"]
+                                [lambdaisland/kaocha "0.0-554"]
                                 [org.clojars.luontola/etaoin "0.3.5-patch1"] ; patched to fix https://github.com/igrishaev/etaoin/issues/212
                                 [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
                                 [org.clojure/core.rrb-vector "0.0.14"] ;; the version doo pulls in is broken on fresh cljs

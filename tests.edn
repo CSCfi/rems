@@ -14,6 +14,6 @@
                      :ns-patterns ["rems"]
                      :test-paths ["src" "test"]
                      :focus-meta [:focused]}]
-            :kaocha/reporter kaocha.report.progress/progress
+            :kaocha/reporter kaocha.report.progress/report
             :plugins [:kaocha.plugin/print-invocations
                       :kaocha.plugin/profiling]}
