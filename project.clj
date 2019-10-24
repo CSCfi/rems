@@ -117,6 +117,7 @@
   :aliases {"kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
             "browsertests" ["do" ["cljsbuild" "once"] ["kaocha" "browser"]]
             "cljtests" ["do" ["cljsbuild" "once"] ["kaocha"]]
+            "cljtests-ci" ["do" ["cljsbuild" "once"] ["kaocha" "--reporter" "kaocha.report/documentation"]]
             "alltests" ["do" ["cljsbuild" "once"] ["kaocha"] ["doo" "once"]]
             "test-ancient" ["do" ["cljsbuild" "once"] ["kaocha"] ["doo" "once"]]} ; for lein ancient to work and run all tests
 
