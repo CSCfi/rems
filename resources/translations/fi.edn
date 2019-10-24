@@ -264,7 +264,7 @@
                          :message "Hyvä %1,\n\nSinut on lisätty käyttäjän %4 jättämän hakemuksen %3 jäseneksi.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %6"}
           :member-invited {:subject "Kutsu osallistumaan hakemukseen %3"
                            :message "Hyvä %1,\n\nSinut on kutsuttu osallistumaan käyttäjän %2 jättämään käyttöoikeushakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä käyttöehdot osoitteessa %4"}
-          :regards "\n\nKind regards,\n\nREMS\n"
+          :regards "\n\nYstävällisin terveisin,\n\nREMS\n"
           :remarked {:subject "(%3) Hakemusta kommentoitu"
                      :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}}
   :footer "CSC – Tieteen tietotekniikan keskus"
