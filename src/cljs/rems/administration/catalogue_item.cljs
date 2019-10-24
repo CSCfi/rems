@@ -41,7 +41,7 @@
 
 (defn edit-button [id]
   [atoms/link {:class "btn btn-primary"}
-   (str "/administration/edit-catalogue-item/" id)
+   (str "/administration/catalogue-items/edit/" id)
    (text :t.administration/edit)])
 
 (defn catalogue-item-view [catalogue-item language]

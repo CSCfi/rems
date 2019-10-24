@@ -54,6 +54,11 @@
    (:page db)))
 
 (rf/reg-sub
+ :path
+ (fn [db _]
+   (or (:path db) "")))
+
+(rf/reg-sub
  :docs
  (fn [db _]
    (:docs db)))
@@ -85,6 +90,11 @@
  :set-active-page
  (fn [db [_ page]]
    (assoc db :page page)))
+
+(rf/reg-event-db
+ :set-path
+ (fn [db [_ path]]
+   (assoc db :path path)))
 
 (rf/reg-event-db
  :set-docs
@@ -309,6 +319,14 @@
   (rf/dispatch [:rems.administration.blacklist/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/blacklist]))
 
+(secretary/defroute "/administration/catalogue-items/create" []
+  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
+
+(secretary/defroute "/administration/catalogue-items/edit/:catalogue-item-id" [catalogue-item-id]
+  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page (parse-int catalogue-item-id)])
+  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
+
 (secretary/defroute "/administration/catalogue-items/:catalogue-item-id" [catalogue-item-id]
   (rf/dispatch [:rems.administration.catalogue-item/enter-page catalogue-item-id])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-item]))
@@ -316,6 +334,18 @@
 (secretary/defroute "/administration/catalogue-items" []
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-items]))
+
+(secretary/defroute "/administration/forms/create" []
+  (rf/dispatch [:rems.administration.create-form/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
+
+(secretary/defroute "/administration/forms/create/:form-id" [form-id]
+  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id)])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
+
+(secretary/defroute "/administration/forms/edit/:form-id" [form-id]
+  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id) true])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
 
 (secretary/defroute "/administration/forms/:form-id" [form-id]
   (rf/dispatch [:rems.administration.form/enter-page form-id])
@@ -325,6 +355,10 @@
   (rf/dispatch [:rems.administration.forms/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/forms]))
 
+(secretary/defroute "/administration/resources/create" []
+  (rf/dispatch [:rems.administration.create-resource/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-resource]))
+
 (secretary/defroute "/administration/resources/:resource-id" [resource-id]
   (rf/dispatch [:rems.administration.resource/enter-page resource-id])
   (rf/dispatch [:set-active-page :rems.administration/resource]))
@@ -332,6 +366,14 @@
 (secretary/defroute "/administration/resources" []
   (rf/dispatch [:rems.administration.resources/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/resources]))
+
+(secretary/defroute "/administration/workflows/create" []
+  (rf/dispatch [:rems.administration.create-workflow/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
+
+(secretary/defroute "/administration/workflows/edit/:workflow-id" [workflow-id]
+  (rf/dispatch [:rems.administration.create-workflow/enter-page (parse-int workflow-id)])
+  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
 
 (secretary/defroute "/administration/workflows/:workflow-id" [workflow-id]
   (rf/dispatch [:rems.administration.workflow/enter-page workflow-id])
@@ -341,6 +383,10 @@
   (rf/dispatch [:rems.administration.workflows/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/workflows]))
 
+(secretary/defroute "/administration/licenses/create" []
+  (rf/dispatch [:rems.administration.create-license/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-license]))
+
 (secretary/defroute "/administration/licenses/:license-id" [license-id]
   (rf/dispatch [:rems.administration.license/enter-page license-id])
   (rf/dispatch [:set-active-page :rems.administration/license]))
@@ -348,42 +394,6 @@
 (secretary/defroute "/administration/licenses" []
   (rf/dispatch [:rems.administration.licenses/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/licenses]))
-
-(secretary/defroute "/administration/create-catalogue-item" []
-  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
-
-(secretary/defroute "/administration/edit-catalogue-item/:catalogue-item-id" [catalogue-item-id]
-  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page (parse-int catalogue-item-id)])
-  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
-
-(secretary/defroute "/administration/create-form" []
-  (rf/dispatch [:rems.administration.create-form/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-form]))
-
-(secretary/defroute "/administration/create-form/:form-id" [form-id]
-  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id)])
-  (rf/dispatch [:set-active-page :rems.administration/create-form]))
-
-(secretary/defroute "/administration/edit-form/:form-id" [form-id]
-  (rf/dispatch [:rems.administration.create-form/enter-page (parse-int form-id) true])
-  (rf/dispatch [:set-active-page :rems.administration/create-form]))
-
-(secretary/defroute "/administration/create-license" []
-  (rf/dispatch [:rems.administration.create-license/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-license]))
-
-(secretary/defroute "/administration/create-resource" []
-  (rf/dispatch [:rems.administration.create-resource/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-resource]))
-
-(secretary/defroute "/administration/create-workflow" []
-  (rf/dispatch [:rems.administration.create-workflow/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
-
-(secretary/defroute "/administration/edit-workflow/:workflow-id" [workflow-id]
-  (rf/dispatch [:rems.administration.create-workflow/enter-page (parse-int workflow-id)])
-  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
 
 (secretary/defroute "/extra-pages/:page-id" [page-id]
   (rf/dispatch [:rems.extra-pages/enter-page page-id])
@@ -423,6 +433,7 @@
                      ;; XXX: workaround for Secretary/Accountant considering URLs with different hash to be different pages
                      (let [url (js/URL. path js/location)
                            path-without-hash (str (.-pathname url) (.-search url))]
+                       (rf/dispatch [:set-path path-without-hash])
                        (when-not (= @previous-path path-without-hash)
                          (reset! previous-path path-without-hash)
                          (secretary/dispatch! path-without-hash)))))

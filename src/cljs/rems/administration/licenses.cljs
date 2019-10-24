@@ -58,7 +58,7 @@
 
 (defn- to-create-license []
   [atoms/link {:class "btn btn-primary"}
-   "/administration/create-license"
+   "/administration/licenses/create"
    (text :t.administration/create-license)])
 
 (defn- to-view-license [license-id]

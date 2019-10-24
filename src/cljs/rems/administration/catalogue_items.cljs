@@ -61,7 +61,7 @@
 
 (defn- to-create-catalogue-item []
   [atoms/link {:class "btn btn-primary"}
-   "/administration/create-catalogue-item"
+   "/administration/catalogue-items/create"
    (text :t.administration/create-catalogue-item)])
 
 (defn- to-catalogue-item [catalogue-item-id]

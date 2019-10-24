@@ -59,7 +59,7 @@
 
 (defn- to-create-workflow []
   [atoms/link {:class "btn btn-primary"}
-   "/administration/create-workflow"
+   "/administration/workflows/create"
    (text :t.administration/create-workflow)])
 
 (defn- to-view-workflow [workflow-id]

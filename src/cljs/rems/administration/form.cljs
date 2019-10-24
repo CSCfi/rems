@@ -42,7 +42,7 @@
      (fetch (str "/api/forms/" id "/editable")
             {:handler (fn [response]
                         (if (:success response)
-                          (navigate! (str "/administration/edit-form/" id))
+                          (navigate! (str "/administration/forms/edit/" id))
                           (flash-message/show-default-error!
                            :top description [status-flags/format-update-failure response])))
              :error-handler (flash-message/default-error-handler :top description)}))
@@ -63,7 +63,7 @@
 
 (defn- copy-as-new-button [id]
   [atoms/link {:class "btn btn-secondary"}
-   (str "/administration/create-form/" id)
+   (str "/administration/forms/create/" id)
    (text :t.administration/copy-as-new)])
 
 (defn form-view [form]
