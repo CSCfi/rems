@@ -8,8 +8,8 @@
             [rems.poller.email :refer :all]))
 
 (defn empty-signature [f]
-  (assoc rems.config/env :t.email/regards "")
-  (f))
+  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "")]
+    (f)))
 
 (use-fixtures
   :once
@@ -17,8 +17,9 @@
     (mount/start #'rems.config/env
                  #'rems.locales/translations)
     (f)
-    (mount/stop))
-  :each empty-signature)
+    (mount/stop)))
+
+(use-fixtures :each empty-signature)
 
 (deftest test-send-email!
   ;; Just for a bit of coverage in code that doesn't get run in other tests or the dev profile
@@ -320,6 +321,13 @@
             :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 7, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
            (email-to "assistant" (emails created-events submit-event))))))
 
+(deftest test-regards
+  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "\n\nKind regards, REMS")]
+      (is (= {:to-user "assistant"
+              :subject "(2001/3, \"Application title\") A new application has been submitted"
+              :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nKind regards, REMS\n\nPlease do not reply to this automatically generated message."}
+             (email-to "assistant" (emails created-events submit-event))))))
+
 (deftest test-title-optional
   (is (= {:to-user "assistant"
           :subject "(2001/3) A new application has been submitted"
@@ -367,10 +375,11 @@
 
 (deftest test-finnish-emails
   ;; only one test case so far, more of a smoke test
-  (testing "submitted"
-    (let [mails (emails :fi created-events submit-event)]
-      (is (= #{"assistant" "handler"} (email-recipients mails)))
-      (is (= {:to-user "handler"
-              :subject "(2001/3, \"Application title\") Uusi hakemus"
-              :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta osoitteessa http://example.com/application/7\n\nTämä on automaattinen viesti. Älä vastaa."}
-             (email-to "handler" mails))))))
+  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:fi :t :email :regards] "")]
+    (testing "submitted"
+      (let [mails (emails :fi created-events submit-event)]
+        (is (= #{"assistant" "handler"} (email-recipients mails)))
+        (is (= {:to-user "handler"
+                :subject "(2001/3, \"Application title\") Uusi hakemus"
+                :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta osoitteessa http://example.com/application/7\n\nTämä on automaattinen viesti. Älä vastaa."}
+               (email-to "handler" mails)))))))
