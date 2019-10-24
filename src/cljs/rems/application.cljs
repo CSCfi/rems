@@ -341,7 +341,7 @@
                                     :readonly readonly?
                                     :app-id (:application/id application))]))]}]))
 
-(defn- application-licenses [application edit-application userid]
+(defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
     (let [application-id (:application/id application)
           roles (:application/roles application)
@@ -697,7 +697,7 @@
      [:div.mt-3 [applied-resources application userid]]
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
-     [:div.my-3 [application-licenses application edit-application userid]]
+     [:div.my-3 [application-licenses application userid]]
      [:div.my-3 [application-fields application edit-application attachment-success]]]
     [:div.col-lg-4
      [:div#float-actions.mb-3
@@ -803,36 +803,55 @@
                                        :catalogue-item/title {:en "Catalogue item 3"}}]}])
 
    (example "link license"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :link
-                             :license/title {:en "Link to license"}
-                             :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]])
-   (example "link license with validation error"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :link
-                             :license/title {:en "Link to license"}
-                             :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
-                             :validation {:type :t.form.validation/required}}]])
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :link
+              :license/title {:en "Link to license"}
+              :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}
+             false])
+   (example "link license, not accepted"
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :link
+              :license/title {:en "Link to license"}
+              :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
+              :accepted false}
+             true])
+   (example "link license, accepted"
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :link
+              :license/title {:en "Link to license"}
+              :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
+              :accepted true}
+             true])
    (example "text license"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :text
-                             :license/title {:en "A Text License"}
-                             :license/text {:en lipsum-paragraphs}}]])
-   (example "text license with validation error"
-            [:form
-             [license-field {:license/id 1
-                             :license/type :text
-                             :license/title {:en "A Text License"}
-                             :license/text {:en lipsum-paragraphs}
-                             :validation {:type :t.form.validation/required}}]])
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :text
+              :license/title {:en "A Text License"}
+              :license/text {:en lipsum-paragraphs}}
+             false])
+   (example "attachment license"
+            [license-field
+             {:application/id 123}
+             {:license/id 1
+              :license/type :attachment
+              :license/title {:en "A Text License"}
+              :license/text {:en lipsum-paragraphs}}
+             false])
 
    (component-info render-application)
-   (example "application, partially filled"
+   (example "application, partially filled, as applicant"
             [render-application
              {:application {:application/id 17
+                            :application/applicant {:userid "applicant"}
+                            :application/roles #{:applicant}
+                            :application/permissions #{:application.command/accept-licenses}
                             :application/state :application.state/draft
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
                             :application/form {:form/fields [{:field/id 1
@@ -865,7 +884,8 @@
               :edit-application {:field-values {1 "abc"}
                                  :show-diff {}
                                  :validation-errors nil
-                                 :accepted-licenses #{5}}}])
+                                 :accepted-licenses {"applicant" #{5}}}
+              :userid "applicant"}])
    (example "application, applied"
             [render-application
              {:application {:application/id 17

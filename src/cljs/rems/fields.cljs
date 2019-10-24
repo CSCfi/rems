@@ -439,14 +439,18 @@
                      :field/id 6
                      :field/type :attachment
                      :field/title {:en "Title"}
-                     :field/value "test.txt"}]])
+                     :field/value "123"
+                     :field/attachment {:attachment/id 123
+                                        :attachment/filename "test.txt"}}]])
    (example "field of type \"attachment\", file uploaded, success indicator"
             [:form
              [field {:app-id 5
                      :field/id 6
                      :field/type :attachment
                      :field/title {:en "Title"}
-                     :field/value "test.txt"
+                     :field/value "123"
+                     :field/attachment {:attachment/id 123
+                                        :attachment/filename "test.txt"}
                      :success true}]])
    (example "field of type \"attachment\", previous and new file uploaded, diff shown"
             [:form
@@ -454,8 +458,12 @@
                      :field/id 6
                      :field/type :attachment
                      :field/title {:en "Title"}
-                     :field/value "new.txt"
-                     :field/previous-value "old.txt"
+                     :field/value "123"
+                     :field/previous-value "456"
+                     :field/attachment {:attachment/id 123
+                                        :attachment/filename "new.txt"}
+                     :field/previous-attachment {:attachment/id 456
+                                                 :attachment/filename "old.txt"}
                      :diff true}]])
    (example "field of type \"attachment\", previous and new file uploaded, diff hidden"
             [:form
@@ -463,15 +471,21 @@
                      :field/id 6
                      :field/type :attachment
                      :field/title {:en "Title"}
-                     :field/value "new.txt"
-                     :field/previous-value "old.txt"}]])
+                     :field/value "123"
+                     :field/previous-value "456"
+                     :field/attachment {:attachment/id 123
+                                        :attachment/filename "new.txt"}
+                     :field/previous-attachment {:attachment/id 456
+                                                 :attachment/filename "old.txt"}}]])
    (example "field of type \"attachment\", previous file uploaded, new deleted, diff shown"
             [:form
              [field {:app-id 5
                      :field/id 6
                      :field/type :attachment
                      :field/title {:en "Title"}
-                     :field/previous-value "old.txt"
+                     :field/previous-value "456"
+                     :field/previous-attachment {:attachment/id 456
+                                                 :attachment/filename "old.txt"}
                      :diff true}]])
    (example "field of type \"attachment\", previous file uploaded, new deleted, diff hidden"
             [:form
@@ -479,7 +493,9 @@
                      :field/id 6
                      :field/type :attachment
                      :field/title {:en "Title"}
-                     :field/previous-value "old.txt"}]])
+                     :field/previous-value "456"
+                     :field/previous-attachment {:attachment/id 456
+                                                 :attachment/filename "old.txt"}}]])
    (example "non-editable field of type \"attachment\""
             [:form
              [field {:app-id 5
@@ -494,7 +510,9 @@
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :readonly true
-                     :field/value "test.txt"}]])
+                     :field/value "123"
+                     :field/attachment {:attachment/id 123
+                                        :attachment/filename "test.txt"}}]])
    (example "field of type \"date\""
             [:form
              [field {:field/type :date
