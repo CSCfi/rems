@@ -325,6 +325,13 @@
             :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 7, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
            (email-to "assistant" (emails created-events submit-event))))))
 
+(deftest test-footer
+  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "\n\nPlease do not reply to this automatically generated message.")]
+    (is (= {:to-user "assistant"
+            :subject "(2001/3, \"Application title\") A new application has been submitted"
+            :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+           (email-to "assistant" (emails created-events submit-event))))))
+
 (deftest test-regards
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "\n\nKind regards, REMS")]
       (is (= {:to-user "assistant"
