@@ -13,4 +13,4 @@
   (some #{:handler :commenter :decider :past-commenter :past-decider} roles))
 
 (defn show-admin-pages? [roles]
-  (some #{:owner} roles))
+  (some #{:owner :handler} roles))
