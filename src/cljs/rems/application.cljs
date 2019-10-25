@@ -45,6 +45,7 @@
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
                     :application.state/rejected
+                    :application.state/revoked
                     :application.state/closed}
                   (:application/state application))))
 
@@ -419,10 +420,15 @@
             [event-view e]))))
 
 (defn- get-application-phases [state]
-  (cond (contains? #{:application.state/rejected :application.state/revoked} state)
+  (cond (contains? #{:application.state/rejected} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+
+        (contains? #{:application.state/revoked} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+         {:phase :result :completed? true :revoked? true :text :t.phases/revoked}]
 
         (contains? #{:application.state/approved} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
@@ -481,8 +487,8 @@
      {:id "header"
       :title (text :t.applications/state)
       :always (into [:div
-                     [:div.mb-3 {:class (str "state-" (name state))}
-                      (phases (get-application-phases state))]
+                     [:div.mb-3
+                      [phases state (get-application-phases state)]]
                      [info-field
                       (text :t.applications/application)
                       [:<>

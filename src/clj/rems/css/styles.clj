@@ -411,18 +411,24 @@
    [:.alert-secondary {:color (util/get-theme-attribute :alert-secondary-color)
                        :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
                        :border-color (util/get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)}]
-   [:.alert-success (s/descendant :.state-approved :.phases :.phase.completed)
+   [:.alert-success
+    (s/descendant :.state-approved.phases :.phase.completed)
+    (s/descendant :.state-submitted.phases :.phase.completed)
     {:color (util/get-theme-attribute :alert-success-color)
      :background-color (util/get-theme-attribute :alert-success-bgcolor)
      :border-color (util/get-theme-attribute :alert-success-bordercolor :alert-success-color)}]
-   [:.alert-danger :.state-rejected (s/descendant :.state-rejected :.phases :.phase.completed)
+   [:.alert-danger
+    :.state-rejected
+    :.state-revoked
+    (s/descendant :.state-rejected.phases :.phase.completed)
+    (s/descendant :.state-revoked.phases :.phase.completed)
     {:color (util/get-theme-attribute :alert-danger-color)
      :background-color (util/get-theme-attribute :alert-danger-bgcolor)
      :border-color (util/get-theme-attribute :alert-danger-bordercolor :alert-danger-color)}]
    [:.alert-warning {:color (util/get-theme-attribute :alert-warning-color)
                      :background-color (util/get-theme-attribute :alert-warning-bgcolor)
                      :border-color (util/get-theme-attribute :alert-warning-bordercolor :alert-warning-color)}]
-   [:.alert-info (s/descendant :.state-info :.phases :.phase.completed)
+   [:.alert-info
     {:color (util/get-theme-attribute :alert-info-color)
      :background-color (util/get-theme-attribute :alert-info-bgcolor)
      :border-color (util/get-theme-attribute :alert-info-bordercolor :alert-info-color)}]
