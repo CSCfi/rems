@@ -7,6 +7,10 @@
             [rems.locales]
             [rems.poller.email :refer :all]))
 
+(defn empty-footer [f]
+  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "")]
+    (f)))
+
 (defn empty-signature [f]
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "")]
     (f)))
@@ -19,7 +23,7 @@
     (f)
     (mount/stop)))
 
-(use-fixtures :each empty-signature)
+(use-fixtures :each empty-signature empty-footer)
 
 (deftest test-send-email!
   ;; Just for a bit of coverage in code that doesn't get run in other tests or the dev profile
@@ -163,13 +167,13 @@
     (is (= #{"assistant" "handler"} (email-recipients mails)))
     (is (= {:to-user "assistant"
             :subject "(2001/3, \"Application title\") A new application has been submitted"
-            :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+            :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
            (email-to "assistant" mails)))))
 
 (deftest test-member-invited
   (is (= [{:to "somebody@example.com"
            :subject "Invitation to participate in application 2001/3, \"Application title\""
-           :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://example.com/accept-invitation?token=abc\n\nPlease do not reply to this automatically generated message."}]
+           :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://example.com/accept-invitation?token=abc"}]
          (emails base-events
                  {:application/id 7
                   :event/type :application.event/member-invited
@@ -189,7 +193,7 @@
         (is (= #{"commenter1" "commenter2"} (email-recipients mails)))
         (is (= {:to-user "commenter1"
                 :subject "(2001/3, \"Application title\") Review request"
-                :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
                (email-to "commenter1" mails)))))
     (testing "commented"
       (let [mails (emails requested-events {:application/id 7
@@ -200,7 +204,7 @@
         (is (= #{"assistant" "handler"} (email-recipients mails)))
         (is (= {:to-user "assistant"
                 :subject "(2001/3, \"Application title\") Application has been reviewed"
-                :body "Dear Amber Assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear Amber Assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
                (email-to "assistant" mails)))))))
 
 (deftest test-remarked
@@ -211,7 +215,7 @@
     (is (= #{"assistant" "handler"} (email-recipients mails)))
     (is (= {:to-user "assistant"
             :subject "(2001/3, \"Application title\") Application has been commented"
-            :body "Dear Amber Assistant,\n\nremarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+            :body "Dear Amber Assistant,\n\nremarker has commented on the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
            (email-to "assistant" mails)))))
 
 (deftest test-members-licenses-approved-closed
@@ -226,7 +230,7 @@
     (testing "member-added"
       (is (= [{:to-user "member",
                :subject "Added as a member of an application 2001/3, \"Application title\"",
-               :body "Dear member,\n\nYou've been added as a member of application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view application and accept the terms of use at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}]
+               :body "Dear member,\n\nYou've been added as a member of application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view application and accept the terms of use at http://example.com/application/7"}]
              (emails base-events add-member))))
     (testing "licenses-added"
       (let [mails (emails member-events {:application/id 7
@@ -236,7 +240,7 @@
         (is (= #{"applicant" "member" "somebody"} (email-recipients mails)))
         (is (= {:to-user "applicant"
                 :subject "Your application's 2001/3, \"Application title\" terms of use have changed"
-                :body "Dear Alice Applicant,\n\nHannah Handler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can review the application and approve the changed the terms of use at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear Alice Applicant,\n\nHannah Handler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can review the application and approve the changed the terms of use at http://example.com/application/7"}
                (email-to "applicant" mails)))))
     (testing "approved"
       (let [mails (emails member-events {:application/id 7
@@ -245,15 +249,15 @@
         (is (= #{"applicant" "member" "somebody" "assistant"} (email-recipients mails)))
         (is (= {:to-user "applicant"
                 :subject "Your application 2001/3, \"Application title\" has been approved"
-                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision at http://example.com/application/7"}
                (email-to "applicant" mails)))
         (is (= {:to-user "member"
                 :subject "Your application 2001/3, \"Application title\" has been approved"
-                :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear member,\n\nYour application 2001/3, \"Application title\" has been approved.\n\nYou can view the application and the decision at http://example.com/application/7"}
                (email-to "member" mails)))
         (is (= {:to-user "assistant"
                 :subject "(2001/3, \"Application title\") Application has been approved"
-                :body "Dear Amber Assistant,\n\nHannah Handler has approved the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear Amber Assistant,\n\nHannah Handler has approved the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/application/7"}
                (email-to "assistant" mails)))))
     (testing "closed"
       (let [mails (emails member-events {:application/id 7
@@ -262,11 +266,11 @@
         (is (= #{"applicant" "member" "somebody" "handler"} (email-recipients mails)))
         (is (= {:to-user "applicant"
                 :subject "Your application 2001/3, \"Application title\" has been closed"
-                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been closed.\n\nYou can view the application at http://example.com/application/7"}
                (email-to "applicant" mails)))
         (is (= {:to-user "handler"
                 :subject "(2001/3, \"Application title\") Application has been closed"
-                :body "Dear Hannah Handler,\n\nAmber Assistant has closed the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear Hannah Handler,\n\nAmber Assistant has closed the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/application/7"}
                (email-to "handler" mails)))))))
 
 (deftest test-decisions
@@ -279,7 +283,7 @@
     (testing "decision-requested"
       (is (= [{:to-user "decider",
                :subject "(2001/3, \"Application title\") Decision request",
-               :body "Dear decider,\n\nAmber Assistant has requested your decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}]
+               :body "Dear decider,\n\nAmber Assistant has requested your decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review application at http://example.com/application/7"}]
              (emails base-events decision-request))))
     (testing "decided"
       (let [mails (emails requested-events {:application/id 7
@@ -289,16 +293,16 @@
         (is (= #{"assistant" "handler"} (email-recipients mails)))
         (is (= {:to-user "assistant",
                 :subject "(2001/3, \"Application title\") Application decision notification",
-                :body "Dear Amber Assistant,\n\ndecider has filed a decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+                :body "Dear Amber Assistant,\n\ndecider has filed a decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
                (email-to "assistant" mails)))))))
 
 (deftest test-rejected
   (is (= [{:to-user "applicant"
            :subject "Your application 2001/3, \"Application title\" has been rejected",
-           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been rejected.\n\nYou can view the application and the decision at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been rejected.\n\nYou can view the application and the decision at http://example.com/application/7"}
           {:to-user "assistant"
            :subject "(2001/3, \"Application title\") Application has been rejected",
-           :body "Dear Amber Assistant,\n\nHannah Handler has rejected the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}]
+           :body "Dear Amber Assistant,\n\nHannah Handler has rejected the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application and the decision at http://example.com/application/7"}]
          (emails base-events {:application/id 7
                               :event/type :application.event/rejected
                               :event/actor "handler"}))))
@@ -306,10 +310,10 @@
 (deftest test-revoked
   (is (= [{:to-user "applicant"
            :subject "Your application 2001/3, \"Application title\" has been revoked",
-           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been revoked.\n\nYou can view the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been revoked.\n\nYou can view the application at http://example.com/application/7"}
           {:to-user "assistant"
            :subject "(2001/3, \"Application title\") Application has been revoked",
-           :body "Dear Amber Assistant,\n\nHannah Handler has revoked the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}]
+           :body "Dear Amber Assistant,\n\nHannah Handler has revoked the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/application/7"}]
          (emails base-events {:application/id 7
                               :event/type :application.event/revoked
                               :event/actor "handler"}))))
@@ -318,20 +322,20 @@
   (with-redefs [rems.config/env (assoc rems.config/env :application-id-column :id)]
     (is (= {:to-user "assistant"
             :subject "(7, \"Application title\") A new application has been submitted"
-            :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 7, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+            :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 7, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
            (email-to "assistant" (emails created-events submit-event))))))
 
 (deftest test-regards
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "\n\nKind regards, REMS")]
       (is (= {:to-user "assistant"
               :subject "(2001/3, \"Application title\") A new application has been submitted"
-              :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nKind regards, REMS\n\nPlease do not reply to this automatically generated message."}
+              :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nKind regards, REMS"}
              (email-to "assistant" (emails created-events submit-event))))))
 
 (deftest test-title-optional
   (is (= {:to-user "assistant"
           :subject "(2001/3) A new application has been submitted"
-          :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3 to access resource(s) en title 11.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+          :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3 to access resource(s) en title 11.\n\nYou can review the application at http://example.com/application/7"}
          (email-to "assistant"
                    (emails [{:application/id 7
                              :application/external-id "2001/3"
@@ -361,16 +365,16 @@
                   :event/actor "applicant"}]
     (is (= [{:to-user "applicant"
              :subject "Your application 2001/3, \"Application title\" needs to be amended"
-             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can review the application at http://example.com/application/7"}
             {:to-user "assistant"
              :subject "(2001/3, \"Application title\") Application has been returned to applicant"
-             :body "Dear Amber Assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}]
+             :body "Dear Amber Assistant,\n\nHannah Handler has returned the application 2001/3, \"Application title\" to the applicant Alice Applicant for modifications.\n\nYou can view the application at http://example.com/application/7"}]
            (emails added return)))
     (let [mails (emails returned-events resubmit)]
       (is (= #{"assistant" "handler"} (email-recipients mails)))
       (is (= {:to-user "assistant"
               :subject "(2001/3, \"Application title\") Application has been resubmitted"
-              :body "Dear Amber Assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7\n\nPlease do not reply to this automatically generated message."}
+              :body "Dear Amber Assistant,\n\nApplication 2001/3, \"Application title\" has been resubmitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
              (email-to "assistant" mails))))))
 
 (deftest test-finnish-emails
