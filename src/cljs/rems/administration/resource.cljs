@@ -8,6 +8,7 @@
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
@@ -53,8 +54,9 @@
    (let [id (:id resource)]
      [:div.col.commands
       [back-button]
-      [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]])])
+      [roles/when roles/show-admin-edit-buttons?
+       [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
+       [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]]])])
 
 (defn resource-page []
   (let [resource (rf/subscribe [::resource])
