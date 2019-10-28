@@ -77,6 +77,7 @@ Changes since v2.4
 - Userid field in /api/entitlements response
 - Approver bot which approves applications automatically, unless the user+resource is blacklisted (#1660)
 - Administration view for blacklist
+- Read-only access to administration pages for handlers (#1705)
 
 ### Enhancements
 - Improved version information in footer
