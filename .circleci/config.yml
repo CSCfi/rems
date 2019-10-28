@@ -88,6 +88,9 @@ jobs:
       - run: lein uberwar
       - store_artifacts:
           path: target/uberjar/rems.war
+      - run: lein uberjar
+      - store_artifacts:
+          path: target/uberjar/rems.jar
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
