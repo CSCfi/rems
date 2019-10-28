@@ -5,6 +5,7 @@
             [rems.administration.workflow :as workflow]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]
@@ -82,9 +83,10 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]
-                           [workflow/edit-button (:id workflow)]
-                           [status-flags/enabled-toggle workflow #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])]
-                           [status-flags/archived-toggle workflow #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])]]}})
+                           [roles/when roles/show-admin-edit-buttons?
+                            [workflow/edit-button (:id workflow)]
+                            [status-flags/enabled-toggle workflow #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])]
+                            [status-flags/archived-toggle workflow #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])]]]}})
         workflows)))
 
 (defn- workflows-list []
@@ -113,7 +115,8 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[to-create-workflow]
-           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
-           [status-flags/disabled-and-archived-explanation]
+          [[roles/when roles/show-admin-edit-buttons?
+            [to-create-workflow]
+            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-workflows])]
+            [status-flags/disabled-and-archived-explanation]]
            [workflows-list]])))
