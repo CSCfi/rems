@@ -1,4 +1,6 @@
-(ns rems.roles)
+(ns rems.roles
+  (:refer-clojure :exclude [when])
+  (:require [re-frame.core :as rf]))
 
 (defn is-logged-in? [roles]
   (some #{:logged-in} roles))
@@ -14,3 +16,10 @@
 
 (defn show-admin-pages? [roles]
   (some #{:owner :handler} roles))
+
+(defn show-admin-edit-buttons? [roles]
+  (some #{:owner} roles))
+
+(defn when [predicate & body]
+  (clojure.core/when (predicate (:roles @(rf/subscribe [:identity])))
+    (into [:<>] body)))
