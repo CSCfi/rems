@@ -681,7 +681,7 @@
    [:.inline-comment-content {:display :inline-block}]
    [:.license-panel {:display :inline-block
                      :width "inherit"}]
-   [:.card-header.clickable {:cursor "pointer"}]
+   [:.clickable {:cursor :pointer}]
    [:.rems-card-margin-fix {:margin (u/px -1)}] ; make sure header overlaps container border
    [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color "#fff")
                         :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]

@@ -274,13 +274,15 @@
 
 (defn- table-row [row table]
   (into [:tr {:data-row (:key row)
-              :class (when (and (:selectable? table)
-                                @(rf/subscribe [::selected-row table (:key row)]))
-                       :selected)
+              :class (when (:selectable? table)
+                       [:clickable
+                        (when @(rf/subscribe [::selected-row table (:key row)]) :selected)])
               ;; performance optimization: hide DOM nodes instead of destroying them
               :style {:display (if (::display-row? row)
                                  "table-row"
-                                 "none")}}
+                                 "none")}
+              :on-click (when (:selectable? table)
+                          #(rf/dispatch [::toggle-row-selection table (:key row)]))}
          (when (:selectable? table)
            [:td.selection
             [checkbox
@@ -333,21 +335,24 @@
 
 (rf/reg-sub ::empty-table-rows (fn [_ _] []))
 
+(defn- example-commands [text]
+  {:td [:td.commands [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]]})
+
 (rf/reg-sub
  ::example-table-rows
  (fn [_ _]
    [{:key 1
      :first-name {:value "Cody"}
      :last-name {:value "Turner"}
-     :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
+     :commands (example-commands "Cody")}
     {:key 2
      :first-name {:value "Melanie"}
      :last-name {:value "Palmer"}
-     :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
+     :commands (example-commands "Melanie")}
     {:key 3
      :first-name {:value "Henry"}
      :last-name {:value "Herring"}
-     :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}]))
+     :commands (example-commands "Henry")}]))
 
 (rf/reg-sub
  ::example-rich-table-rows
@@ -405,6 +410,9 @@
                                :filterable? false}
                               {:key :last-name
                                :title "Last name"
+                               :sortable? false
+                               :filterable? false}
+                              {:key :commands
                                :sortable? false
                                :filterable? false}]
                     :rows [::example-table-rows]
