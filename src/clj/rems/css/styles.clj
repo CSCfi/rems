@@ -138,8 +138,8 @@
 (defn table-selection-bgcolor []
   (if-let [selection-bgcolor (util/get-theme-attribute :table-selection-bgcolor)]
     selection-bgcolor
-    (let [color (util/get-theme-attribute :table-hover-bgcolor :table-bgcolor :color3)]
-      (c/darken color 15))))
+    (-> (util/get-theme-attribute :table-hover-bgcolor :table-bgcolor :color3)
+        (c/darken 15))))
 
 (defn- generate-rems-table-styles []
   (list
