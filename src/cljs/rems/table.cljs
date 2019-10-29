@@ -333,49 +333,14 @@
 
 (def example-selected-rows (reagent/atom nil))
 
-(rf/reg-sub ::empty-table-rows (fn [_ _] []))
-
-(defn- example-commands [text]
-  {:td [:td.commands [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]]})
-
-(rf/reg-sub
- ::example-table-rows
- (fn [_ _]
-   [{:key 1
-     :first-name {:value "Cody"}
-     :last-name {:value "Turner"}
-     :commands (example-commands "Cody")}
-    {:key 2
-     :first-name {:value "Melanie"}
-     :last-name {:value "Palmer"}
-     :commands (example-commands "Melanie")}
-    {:key 3
-     :first-name {:value "Henry"}
-     :last-name {:value "Herring"}
-     :commands (example-commands "Henry")}]))
-
-(rf/reg-sub
- ::example-rich-table-rows
- (fn [_ _]
-   [{:key 1
-     :team {:display-value "Team Hawks"
-            :filter-value "hawks"
-            :sort-value "0000hawks"}
-     :points {:value 3
-              :display-value "-> 3 <-"}}
-    {:key 2
-     :team {:value "Eagles"
-            :td [:td.eagles-are-best [:em "Eagles"]]}
-     :points {:value 4}}
-    {:key 3
-     :team {:value "Ravens"}
-     :points {:value 0}}]))
-
 (defn guide []
   [:div
    (namespace-info rems.table)
    (component-info table)
+
    (example "empty table"
+            (rf/reg-sub ::empty-table-rows (fn [_ _] []))
+
             [table {:id ::example0
                     :columns [{:key :first-name
                                :title "First name"
@@ -387,6 +352,27 @@
                                :filterable? false}]
                     :rows [::empty-table-rows]
                     :default-sort-column :first-name}])
+
+   (example "setup example data"
+            (defn- example-commands [text]
+              {:td [:td.commands [:button.btn.btn-primary {:on-click #(do (js/alert (str "View " text)) (.stopPropagation %))} "View"]]})
+
+            (def example-data
+              [{:key 1
+                :first-name {:value "Cody"}
+                :last-name {:value "Turner"}
+                :commands (example-commands "Cody")}
+               {:key 2
+                :first-name {:value "Melanie"}
+                :last-name {:value "Palmer"}
+                :commands (example-commands "Melanie")}
+               {:key 3
+                :first-name {:value "Henry"}
+                :last-name {:value "Herring"}
+                :commands (example-commands "Henry")}])
+
+            (rf/reg-sub ::example-table-rows (fn [_ _] example-data)))
+
    (example "static table with three rows"
             (let [example1 {:id ::example1
                             :columns [{:key :first-name
@@ -439,6 +425,22 @@
              "Also, filtering ignores the word \"Team\"."
              "Also, the score has special styling."
              "Eagles have special styling. :value is used for sorting & filtering but :td for rendering."]
+            (def example-data-rich
+              [{:key 1
+                :team {:display-value "Team Hawks"
+                       :filter-value "hawks"
+                       :sort-value "0000hawks"}
+                :points {:value 3
+                         :display-value "-> 3 <-"}}
+               {:key 2
+                :team {:value "Eagles"
+                       :td [:td.eagles-are-best [:em "Eagles"]]}
+                :points {:value 4}}
+               {:key 3
+                :team {:value "Ravens"}
+                :points {:value 0}}])
+
+            (rf/reg-sub ::example-rich-table-rows (fn [_ _] example-data-rich))
             [:p "Now the data can be used like so"]
             (let [example3 {:id ::example3
                             :columns [{:key :team
