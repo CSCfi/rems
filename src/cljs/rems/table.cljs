@@ -295,29 +295,47 @@
                                                                                        " > tbody > tr[data-row='" next-row "'] > td"))))}
                 (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
+;;; guide
+
+(rf/reg-sub ::empty-table-rows (fn [_ _] []))
+
+(rf/reg-sub
+ ::example-table-rows
+ (fn [_ _]
+   [{:key 1
+     :first-name {:value "Cody"}
+     :last-name {:value "Turner"}
+     :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
+    {:key 2
+     :first-name {:value "Melanie"}
+     :last-name {:value "Palmer"}
+     :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
+    {:key 3
+     :first-name {:value "Henry"}
+     :last-name {:value "Herring"}
+     :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}]))
+
+(rf/reg-sub
+ ::example-rich-table-rows
+ (fn [_ _]
+   [{:key 1
+     :team {:display-value "Team Hawks"
+            :filter-value "hawks"
+            :sort-value "0000hawks"}
+     :points {:value 3
+              :display-value "-> 3 <-"}}
+    {:key 2
+     :team {:value "Eagles"
+            :td [:td.eagles-are-best [:em "Eagles"]]}
+     :points {:value 4}}
+    {:key 3
+     :team {:value "Ravens"}
+     :points {:value 0}}]))
+
 (defn guide []
   [:div
    (namespace-info rems.table)
    (component-info table)
-   ;; slight abuse of example macro, but it works since reg-sub returns a fn which reagent doesn't render
-   (example "data for examples"
-            [:p "Data is provided to the table component as a subscription"]
-            (rf/reg-sub ::empty-table-rows (fn [_ _] []))
-            (rf/reg-sub
-             ::example-table-rows
-             (fn [_ _]
-               [{:key 1
-                 :first-name {:value "Cody"}
-                 :last-name {:value "Turner"}
-                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
-                {:key 2
-                 :first-name {:value "Melanie"}
-                 :last-name {:value "Palmer"}
-                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}
-                {:key 3
-                 :first-name {:value "Henry"}
-                 :last-name {:value "Herring"}
-                 :commands {:td [:td.commands [:button.btn.btn-primary "View"]]}}])))
    (example "empty table"
             [table {:id ::example0
                     :columns [{:key :first-name
@@ -363,22 +381,6 @@
              "Also, filtering ignores the word \"Team\"."
              "Also, the score has special styling."
              "Eagles have special styling. :value is used for sorting & filtering but :td for rendering."]
-            (rf/reg-sub
-             ::example-rich-table-rows
-             (fn [_ _]
-               [{:key 1
-                 :team {:display-value "Team Hawks"
-                        :filter-value "hawks"
-                        :sort-value "0000hawks"}
-                 :points {:value 3
-                          :display-value "-> 3 <-"}}
-                {:key 2
-                 :team {:value "Eagles"
-                        :td [:td.eagles-are-best [:em "Eagles"]]}
-                 :points {:value 4}}
-                {:key 3
-                 :team {:value "Ravens"}
-                 :points {:value 0}}]))
             [:p "Now the data can be used like so"]
             (let [example3 {:id ::example3
                             :columns [{:key :team
