@@ -135,6 +135,12 @@
   ;; accessibility.
   (util/get-theme-attribute :button-navbar-font-weight 700))
 
+(defn table-selection-bgcolor []
+  (if-let [selection-bgcolor (util/get-theme-attribute :table-selection-bgcolor)]
+    selection-bgcolor
+    (let [color (util/get-theme-attribute :table-hover-bgcolor :table-bgcolor :color3)]
+      (c/darken color 15))))
+
 (defn- generate-rems-table-styles []
   (list
    [:.rems-table.cart {:background "#fff"
@@ -165,15 +171,19 @@
      :td
      {:text-align "left"
       :padding "0.5em 1em"}]
+    [:.selection {:width (u/rem 0.5)
+                  :padding-right 0}]
     [:td:before
      {:color (util/get-theme-attribute :table-text-color)}]
     [:tr {:margin "0 1rem"}
      [:&:hover {:color (util/get-theme-attribute :table-hover-color :table-text-color "#fff")
                 :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
+     [:&.selected {:background-color (util/get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]
      [(s/& (s/nth-child "2n"))
       [:&:hover {:color (util/get-theme-attribute :table-hover-color :table-text-color "#fff")
                  :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
-      {:background-color (util/get-theme-attribute :table-stripe-color :table-bgcolor :color1)}]]
+      {:background-color (util/get-theme-attribute :table-stripe-color :table-bgcolor :color1)}
+      [:&.selected {:background-color (util/get-theme-attribute :table-selection-bgcolor (table-selection-bgcolor))}]]]
     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]]
    [:.rems-table.cart {:box-shadow :none}]

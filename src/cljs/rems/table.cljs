@@ -17,8 +17,9 @@
   (The users of this component don't need to know about these intermediate
   subscriptions and all other performance optimizations.)"
   (:require [clojure.string :as str]
+            [reagent.core :as reagent]
             [re-frame.core :as rf]
-            [rems.atoms :refer [close-symbol search-symbol sort-symbol]]
+            [rems.atoms :refer [checkbox close-symbol search-symbol sort-symbol]]
             [rems.focus :as focus]
             [rems.search :as search]
             [rems.text :refer [text-format]]
@@ -78,7 +79,11 @@
    ;; data which confirms to the `rems.table/Rows` schema.
    :rows Subscription
    (s/optional-key :default-sort-column) (s/maybe ColumnKey)
-   (s/optional-key :default-sort-order) (s/maybe (s/enum :asc :desc))})
+   (s/optional-key :default-sort-order) (s/maybe (s/enum :asc :desc))
+   ;; does the table have row selection?
+   (s/optional-key :selectable?) s/Bool
+   ;; callback for currently selected row keys
+   (s/optional-key :on-select) (s/=> [ColumnKey])})
 
 
 (rf/reg-event-db
@@ -235,9 +240,28 @@
                           :on-search on-search
                           :searching? false}]))
 
+(defn- set-toggle [set key]
+  (let [set (or set #{})]
+    (if (contains? set key)
+      (disj set key)
+      (conj set key))))
+
+(rf/reg-event-db
+ ::toggle-row-selection
+ (fn [db [_ table key]]
+   (let [new-db (update-in db [::selected-rows (:id table)] set-toggle key)]
+     (when-let [on-select (:on-select table)]
+       (on-select (get-in new-db [::selected-rows (:id table)])))
+     new-db)))
+
+(rf/reg-sub
+ ::selected-row
+ (fn [db [_ table key]]
+   (contains? (get-in db [::selected-rows (:id table)]) key)))
+
 (defn- table-header [table]
-  (let [sorting @(rf/subscribe [::sorting table])]
-    (into [:tr]
+  (let [sorting @(rf/subscribe [::sorting (:id table)])]
+    (into [:tr (when (:selectable? table) [:th.selection])]
           (for [column (:columns table)]
             [:th
              (when (sortable? column)
@@ -250,10 +274,18 @@
 
 (defn- table-row [row table]
   (into [:tr {:data-row (:key row)
+              :class (when (and (:selectable? table)
+                                @(rf/subscribe [::selected-row table (:key row)]))
+                       :selected)
               ;; performance optimization: hide DOM nodes instead of destroying them
               :style {:display (if (::display-row? row)
                                  "table-row"
-                                 "none")}}]
+                                 "none")}}
+         (when (:selectable? table)
+           [:td.selection
+            [checkbox
+             @(rf/subscribe [::selected-row table (:key row)])
+             #(rf/dispatch [::toggle-row-selection table (:key row)])]])]
         (for [column (:columns table)]
           (let [cell (get row (:key column))]
             (assert cell {:error "the row is missing a column"
@@ -296,6 +328,8 @@
                 (text-format :t.table/show-all-n-rows (count rows))]]]])]]))
 
 ;;; guide
+
+(def example-selected-rows (reagent/atom nil))
 
 (rf/reg-sub ::empty-table-rows (fn [_ _] []))
 
@@ -361,6 +395,22 @@
                             :rows [::example-table-rows]
                             :default-sort-column :first-name}]
               [table example1]))
+   (example "table with selectable rows"
+            [:p "The table components supports selection of rows. You can provide a callback for when the set of selected rows changes."]
+            [:div [:p "You have " (count @example-selected-rows) " rows selected."]]
+            [table {:id ::example-selectable
+                    :columns [{:key :first-name
+                               :title "First name"
+                               :sortable? false
+                               :filterable? false}
+                              {:key :last-name
+                               :title "Last name"
+                               :sortable? false
+                               :filterable? false}]
+                    :rows [::example-table-rows]
+                    :default-sort-column :first-name
+                    :selectable? true
+                    :on-select #(reset! example-selected-rows %)}])
    (example "sortable and filterable table"
             [:p "Filtering and search can be added by using the " [:code "rems.table/search"] " component"]
             (let [example2 {:id ::example2
