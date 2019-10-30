@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application.events :as events]
+            [rems.application-util :as application-util]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
@@ -541,6 +542,17 @@
 
              {}))))
 
+(defn- get-blacklisted-users [application blacklisted?]
+  (let [all-members (map :userid (application-util/applicant-and-members application))
+        all-resources (map :resource/ext-id (:application/resources application))]
+    (into {}
+          (for [member all-members
+                :let [resources (->> all-resources
+                                     (filter (partial blacklisted? member))
+                                     (set))]
+                :when (not (empty? resources))]
+            [member resources]))))
+
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
             (->> members
@@ -565,7 +577,8 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn enrich-with-injections [application {:keys [get-form-template get-catalogue-item get-license
+(defn enrich-with-injections [application {:keys [blacklisted?
+                                                  get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
                                                   get-attachments-for-application]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
@@ -591,6 +604,7 @@
         (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
         (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
+        (assoc :application/blacklisted-users (get-blacklisted-users application blacklisted?))
         (enrich-user-attributes get-user)
         (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))
@@ -628,6 +642,7 @@
 (defn- hide-non-public-information [application]
   (-> application
       hide-invitation-tokens
+      (dissoc :application/blacklisted-users) ;; TODO expose this
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))

@@ -217,7 +217,14 @@
 (defn ^:private get-attachments-for-application [id]
   [])
 
-(def injections {:get-form-template get-form-template
+(defn blacklisted? [user resource]
+  (contains? #{["applicant" "urn:11"]
+               ["applicant" "urn:31"]
+               ["member" "urn:11"]}
+             [user resource]))
+
+(def injections {:blacklisted? blacklisted?
+                 :get-form-template get-form-template
                  :get-catalogue-item get-catalogue-item
                  :get-license get-license
                  :get-user get-user
@@ -278,6 +285,7 @@
                                   :application/members #{}
                                   :application/past-members #{}
                                   :application/invitation-tokens {}
+                                  :application/blacklisted-users {"applicant" #{"urn:11"}}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"
@@ -479,7 +487,8 @@
                                                                                        :license/attachment-filename {:en "en filename"
                                                                                                                      :fi "fi filename"}
                                                                                        :license/enabled true
-                                                                                       :license/archived false})})]
+                                                                                       :license/archived false})
+                                                          :application/blacklisted-users {"applicant" #{"urn:11" "urn:31"}}})]
                     (is (= expected-application (apply-events events)))))
 
                 (testing "> submitted"
@@ -624,7 +633,8 @@
                                                                                            :license/attachment-filename {:en "en filename"
                                                                                                                          :fi "fi filename"}
                                                                                            :license/enabled true
-                                                                                           :license/archived false})})]
+                                                                                           :license/archived false})
+                                                              :application/blacklisted-users {"applicant" #{"urn:11" "urn:31"}}})]
                         (is (= expected-application (apply-events events)))))
                     (testing "> licenses added"
                       (let [new-event {:event/type :application.event/licenses-added
@@ -724,7 +734,8 @@
                                                                                                    :license/attachment-filename {:en "en filename"
                                                                                                                                  :fi "fi filename"}
                                                                                                    :license/enabled true
-                                                                                                   :license/archived false})})]
+                                                                                                   :license/archived false})
+                                                                      :application/blacklisted-users {"applicant" #{"urn:11" "urn:31"}}})]
                                 (is (= expected-application (apply-events events)))))
 
                             (testing "> licenses accepted"
@@ -755,7 +766,9 @@
                                         expected-application (merge expected-application
                                                                     {:application/last-activity (DateTime. 4600)
                                                                      :application/events enriched-events
-                                                                     :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}})]
+                                                                     :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
+                                                                     :application/blacklisted-users {"applicant" #{"urn:11"}
+                                                                                                     "member" #{"urn:11"}}})]
                                     (is (= expected-application (apply-events events)))
                                     (testing "> licenses accepted for new member"
                                       (let [new-event {:event/type :application.event/licenses-accepted
@@ -951,7 +964,9 @@
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events enriched-events
                                                                  :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
-                                                                 :application/invitation-tokens {}})]
+                                                                 :application/invitation-tokens {}
+                                                                 :application/blacklisted-users {"applicant" #{"urn:11"}
+                                                                                                 "member" #{"urn:11"}}})]
                                 (is (= expected-application (apply-events events)))))))
 
                         (testing "> member added"
@@ -967,7 +982,9 @@
                                 expected-application (merge expected-application
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events enriched-events
-                                                             :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}})]
+                                                             :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
+                                                             :application/blacklisted-users {"applicant" #{"urn:11"}
+                                                                                             "member" #{"urn:11"}}})]
                             (is (= expected-application (apply-events events)))
 
                             (testing "> member removed"
@@ -985,7 +1002,8 @@
                                                                 {:application/last-activity (DateTime. 5000)
                                                                  :application/events enriched-events
                                                                  :application/members #{}
-                                                                 :application/past-members #{{:userid "member"}}})]
+                                                                 :application/past-members #{{:userid "member"}}
+                                                                 :application/blacklisted-users {"applicant" #{"urn:11"}}})]
                                 (is (= expected-application (apply-events events)))))))))))))))))
 
     (testing "generate report: permissions by role and state"

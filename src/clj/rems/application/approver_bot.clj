@@ -10,6 +10,7 @@
                   set)
              userid))
 
+;; TODO use :application/blacklisted-users instead
 (defn- any-member-blacklisted? [app {:keys [blacklisted?]}]
   (some (fn [[user resource]]
           (blacklisted? user resource))

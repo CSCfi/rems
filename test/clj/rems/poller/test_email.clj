@@ -124,7 +124,8 @@
   ([lang base-events event]
    (let [all-events (concat base-events [event])
          application (-> (reduce model/application-view nil all-events)
-                         (model/enrich-with-injections {:get-workflow get-workflow
+                         (model/enrich-with-injections {:blacklisted? (constantly false)
+                                                        :get-workflow get-workflow
                                                         :get-catalogue-item get-catalogue-item
                                                         :get-form-template get-form-template
                                                         :get-license get-license

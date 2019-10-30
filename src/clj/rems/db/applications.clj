@@ -110,7 +110,8 @@
    :get-license licenses/get-license
    :get-user users/get-user
    :get-users-with-role users/get-users-with-role
-   :get-workflow workflow/get-workflow})
+   :get-workflow workflow/get-workflow
+   :blacklisted? blacklist/blacklisted?})
 
 ;; short-lived cache to speed up pollers which get the application
 ;; repeatedly for each event instead of building their own projection
