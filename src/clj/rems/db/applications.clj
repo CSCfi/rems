@@ -63,8 +63,7 @@
    :get-catalogue-item-licenses get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
    :allocate-application-ids! allocate-application-ids!
-   :add-to-blacklist! blacklist/add-to-blacklist!
-   :blacklisted? blacklist/blacklisted?})
+   :add-to-blacklist! blacklist/add-to-blacklist!})
 
 (declare get-unrestricted-application)
 
