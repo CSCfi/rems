@@ -89,7 +89,7 @@
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
    {:db (-> db
-            (assoc ::application-id id)
+            (assoc ::application-id (parse-int id))
             (dissoc ::application ::edit-application ::attachment-success))
     :dispatch [::fetch-application id]}))
 
@@ -241,6 +241,24 @@
    (update-in db [::edit-application :show-diff field-id] not)))
 
 (search/reg-fetcher ::previous-applications "/api/applications")
+
+(rf/reg-sub
+ ::previous-applications-except-current
+ (fn [& _]
+   [(rf/subscribe [::application-id])
+    (rf/subscribe [::previous-applications])
+    (rf/subscribe [::previous-applications :error])
+    (rf/subscribe [::previous-applications :initialized?])
+    (rf/subscribe [::previous-applications :fetching?])
+    (rf/subscribe [::previous-applications :searching?])])
+ (fn [[application-id data error initialized? fetching? searching?]
+      [_id key]]
+   (case key
+     :error error
+     :initialized? initialized?
+     :fetching? fetching?
+     :searching? searching?
+     nil (filterv #(not= application-id (:application/id %)) data))))
 
 ;;;; UI components
 
@@ -687,7 +705,7 @@
    {:id "previous-applications"
     :title (text :t.form/previous-applications)
     :on-open #(rf/dispatch [::previous-applications (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")])
-    :collapse [application-list/component {:applications ::previous-applications
+    :collapse [application-list/component {:applications ::previous-applications-except-current
                                            :hidden-columns #{:created :todo :last-activity}
                                            :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
