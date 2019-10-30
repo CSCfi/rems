@@ -10,7 +10,7 @@
                   set)
              userid))
 
-(defn generate-commands [app _injections]
+(defn generate-commands [app]
   (when (and (handler? app bot-userid)
              (= :application.state/submitted (:application/state app))
              (empty? (:application/blacklisted-users app)))

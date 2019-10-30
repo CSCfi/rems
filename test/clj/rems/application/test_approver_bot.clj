@@ -35,7 +35,7 @@
 (defn generate-commands [events injections]
   (-> events
       (apply-events injections)
-      (approver-bot/generate-commands injections)))
+      (approver-bot/generate-commands)))
 
 (deftest test-approver-bot
   (let [created-event {:event/type :application.event/created

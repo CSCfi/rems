@@ -78,7 +78,7 @@
                      distinct)]
     (->> app-ids
          (map get-unrestricted-application)
-         (mapcat #(approver-bot/generate-commands % command-injections))
+         (mapcat #(approver-bot/generate-commands %))
          doall)))
 
 (defn command! [cmd]
