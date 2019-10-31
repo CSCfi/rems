@@ -318,6 +318,9 @@
     (is (contains? model/states (:application/state application)))
     application))
 
+(defn recreate [application]
+  (apply-events (:application/events application)))
+
 ;;;; Tests for application-view
 
 ;;; Start by defining some useful states
@@ -363,7 +366,7 @@
                                                  :workflow/id 50}})
 
 (deftest test-application-view-created
-  (is (= created-application (apply-events [created-event]))))
+  (is (= created-application (recreate created-application))))
 
 (def saved-event {:event/type :application.event/draft-saved
                   :event/time (DateTime. 2000)
@@ -380,8 +383,7 @@
                                :rems.application.model/draft-answers {41 "foo", 42 "bar"}}))
 
 (deftest test-application-view-saved
-  (is (= saved-application (apply-events [created-event saved-event]))))
-
+  (is (= saved-application (recreate saved-application))))
 
 
 (def licenses-accepted-event {:event/type :application.event/licenses-accepted
@@ -396,7 +398,7 @@
                                            :application/accepted-licenses {"applicant" #{30 31 32}}}))
 
 (deftest test-application-view-licenses-accepted
-  (is (= licenses-accepted-application (apply-events [created-event saved-event licenses-accepted-event]))))
+  (is (= licenses-accepted-application (recreate licenses-accepted-application))))
 
 (def submitted-event {:event/type :application.event/submitted
                       :event/time (DateTime. 3000)
@@ -414,7 +416,7 @@
                                        ::model/previous-submitted-answers nil})))
 
 (deftest test-application-view-submitted
-  (is (= submitted-application (apply-events [created-event saved-event licenses-accepted-event submitted-event]))))
+  (is (= submitted-application (recreate submitted-application))))
 
 
 (def licenses-added-event {:event/type :application.event/licenses-added
@@ -435,7 +437,7 @@
                                                                {:license/id 32}]}))
 
 (deftest test-application-view-licenses-added
-  (is (= licenses-added-application (apply-events (:application/events licenses-added-application)))))
+  (is (= licenses-added-application (recreate licenses-added-application))))
 
 (def approved-event {:event/type :application.event/approved
                      :event/time (DateTime. 4000)
@@ -451,7 +453,7 @@
                                   :application/todo nil}))
 
 (deftest test-application-view-approved
-  (is (= approved-application (apply-events (:application/events approved-application)))))
+  (is (= approved-application (recreate approved-application))))
 
 ;;; Now use the defined states in tests
 
@@ -470,7 +472,7 @@
                                        :application/copied-from {:application/id 42
                                                                  :application/external-id "2019/42"}
                                        :rems.application.model/submitted-answers {41 "foo", 42 "bar"}})]
-      (is (= expected-application (apply-events events)))))
+      (is (= expected-application (recreate expected-application)))))
 
   (testing "copied to"
     (let [;; two copied-to events in order to test the order in which they are shown
@@ -494,7 +496,7 @@
                                                                 :application/external-id "2020/666"}
                                                                {:application/id 777
                                                                 :application/external-id "2021/777"}]})]
-      (is (= expected-application (apply-events events))))))
+      (is (= expected-application (recreate expected-application))))))
 
 (deftest test-application-view-returned-resubmitted
   (testing "> returned"
@@ -510,7 +512,7 @@
                                        :application/state :application.state/returned
                                        :application/todo nil
                                        ::model/draft-answers {41 "foo" 42 "bar"}})]
-      (is (= expected-application (apply-events events)))
+      (is (= expected-application (recreate expected-application)))
 
       (testing "> draft saved x2"
         (let [new-event-1 {:event/type :application.event/draft-saved
@@ -532,7 +534,7 @@
                                                 :application/last-activity (DateTime. 6000)
                                                 :application/events events
                                                 ::model/draft-answers {41 "new foo" 42 "new bar"}})]
-          (is (= expected-application (apply-events events)))
+          (is (= expected-application (recreate expected-application)))
 
           (testing "> resubmitted"
             (let [new-event {:event/type :application.event/submitted
@@ -548,7 +550,7 @@
                                                    :application/todo :resubmitted-application
                                                    ::model/submitted-answers {41 "new foo" 42 "new bar"}
                                                    ::model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
-              (is (= expected-application (apply-events events)))))))
+              (is (= expected-application (recreate expected-application)))))))
 
       (testing "> resubmitted (no draft saved)"
         (let [new-event {:event/type :application.event/submitted
@@ -566,7 +568,7 @@
                                                ;; previous submitted answers must be the same
                                                ::model/submitted-answers {41 "foo" 42 "bar"}
                                                ::model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
-          (is (= expected-application (apply-events events))))))))
+          (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-resources-changed
   (testing "by applicant"
@@ -591,7 +593,7 @@
                                                                      :resource/ext-id "urn:31"})
                                        :application/licenses (conj (:application/licenses licenses-accepted-application)
                                                                    {:license/id 34})})]
-      (is (= expected-application (apply-events events)))))
+      (is (= expected-application (recreate expected-application)))))
   (testing "by handler"
     (testing "for submitted application"
       (let [new-event {:event/type :application.event/resources-changed
@@ -616,7 +618,7 @@
                                                                        :resource/ext-id "urn:31"})
                                          :application/licenses (conj (:application/licenses submitted-application)
                                                                      {:license/id 34})})]
-        (is (= expected-application (apply-events events)))))
+        (is (= expected-application (recreate expected-application)))))
     (testing "for approved application"
       (let [new-event {:event/type :application.event/resources-changed
                        :event/time (DateTime. 4500)
@@ -645,7 +647,7 @@
                                                                 {:license/id 32}
                                                                 {:license/id 33}
                                                                 {:license/id 34}]})]
-        (is (= expected-application (apply-events events)))))))
+        (is (= expected-application (recreate expected-application)))))))
 
 (deftest test-application-view-misc
   (let [expected-application approved-application
@@ -661,7 +663,7 @@
                                         {:application/last-activity (DateTime. 4500)
                                          :application/events events
                                          :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
-        (is (= expected-application (apply-events events)))
+        (is (= expected-application (recreate expected-application)))
 
         (testing "> member added"
           (let [new-event {:event/type :application.event/member-added
@@ -674,7 +676,7 @@
                                             {:application/last-activity (DateTime. 4600)
                                              :application/events events
                                              :application/members #{{:userid "member"}}})]
-            (is (= expected-application (apply-events events)))
+            (is (= expected-application (recreate expected-application)))
             (testing "> licenses accepted for new member"
               (let [new-event {:event/type :application.event/licenses-accepted
                                :event/time (DateTime. 4700)
@@ -687,7 +689,7 @@
                                                  :application/events events
                                                  :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                  "member" #{30 33}}})]
-                (is (= expected-application (apply-events events)))
+                (is (= expected-application (recreate expected-application)))
                 (testing "> licenses accepted overwrites previous"
                   (let [new-event {:event/type :application.event/licenses-accepted
                                    :event/time (DateTime. 4800)
@@ -700,7 +702,7 @@
                                                      :application/events events
                                                      :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                      "member" #{31 32}}})]
-                    (is (= expected-application (apply-events events)))))))))
+                    (is (= expected-application (recreate expected-application)))))))))
 
 
         (testing "> closed"
@@ -715,7 +717,7 @@
                                              :application/events events
                                              :application/state :application.state/closed
                                              :application/todo nil})]
-            (is (= expected-application (apply-events events)))))
+            (is (= expected-application (recreate expected-application)))))
 
         (testing "> revoked"
           (let [new-event {:event/type :application.event/revoked
@@ -729,7 +731,7 @@
                                              :application/events events
                                              :application/state :application.state/revoked
                                              :application/todo nil})]
-            (is (= expected-application (apply-events events)))))))))
+            (is (= expected-application (recreate expected-application)))))))))
 
 (deftest test-application-view-rejected
   (testing "> rejected"
@@ -744,7 +746,7 @@
                                        :application/events events
                                        :application/state :application.state/rejected
                                        :application/todo nil})]
-      (is (= expected-application (apply-events events))))))
+      (is (= expected-application (recreate expected-application))))))
 
 (deftest test-application-view-commenting
   (testing "> comment requested"
@@ -762,7 +764,7 @@
                                             :application/events events
                                             :application/todo :waiting-for-review
                                             :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
-      (is (= expected-application (apply-events events)))
+      (is (= expected-application (recreate expected-application)))
 
       (testing "> commented"
         (let [new-event {:event/type :application.event/commented
@@ -777,7 +779,7 @@
                                            :application/events events
                                            :application/todo :no-pending-requests
                                            :rems.application.model/latest-comment-request-by-user {}})]
-          (is (= expected-application (apply-events events))))))))
+          (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-deciding
   (testing "> decision requested"
@@ -795,7 +797,7 @@
                                        :application/events events
                                        :application/todo :waiting-for-decision
                                        ::model/latest-decision-request-by-user {"decider" request-id}})]
-      (is (= expected-application (apply-events events)))
+      (is (= expected-application (recreate expected-application)))
 
       (testing "> decided"
         (let [new-event {:event/type :application.event/decided
@@ -811,7 +813,7 @@
                                            :application/events events
                                            :application/todo :no-pending-requests
                                            ::model/latest-decision-request-by-user {}})]
-          (is (= expected-application (apply-events events))))))))
+          (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-adding-and-inviting
   (testing "> member invited"
@@ -829,7 +831,7 @@
                                        :application/events events
                                        :application/invitation-tokens {token {:name "Mr. Member"
                                                                               :email "member@example.com"}}})]
-      (is (= expected-application (apply-events events)))
+      (is (= expected-application (recreate expected-application)))
 
       (testing "> member uninvited"
         (let [new-event {:event/type :application.event/member-uninvited
@@ -844,7 +846,7 @@
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
                                            :application/invitation-tokens {}})]
-          (is (= expected-application (apply-events events)))))
+          (is (= expected-application (recreate expected-application)))))
 
       (testing "> member joined"
         (let [new-event {:event/type :application.event/member-joined
@@ -858,7 +860,7 @@
                                            :application/events events
                                            :application/members #{{:userid "member"}}
                                            :application/invitation-tokens {}})]
-          (is (= expected-application (apply-events events)))))))
+          (is (= expected-application (recreate expected-application)))))))
 
   (testing "> member added"
     (let [new-event {:event/type :application.event/member-added
@@ -871,7 +873,7 @@
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
                                        :application/members #{{:userid "member"}}})]
-      (is (= expected-application (apply-events events)))
+      (is (= expected-application (recreate expected-application)))
 
       (testing "> member removed"
         (let [new-event {:event/type :application.event/member-removed
@@ -886,7 +888,7 @@
                                            :application/events events
                                            :application/members #{}
                                            :application/past-members #{{:userid "member"}}})]
-          (is (= expected-application (apply-events events))))))))
+          (is (= expected-application (recreate expected-application))))))))
 
 ;;;; TODO tests for enriching functions
 
