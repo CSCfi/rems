@@ -148,7 +148,7 @@
                 [readonly-checkbox {:value false}])
        (example "readonly-checkbox checked"
                 [readonly-checkbox {:value true}])
-       (example "checkbox interactive unchecked"
+       (example (str "checkbox interactive " (if @state "checked" "unchecked"))
                 [checkbox {:value @state :on-change on-change}])
        (component-info info-field)
        (example "info-field with data"
