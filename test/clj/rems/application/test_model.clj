@@ -418,36 +418,15 @@
 (deftest test-application-view-submitted
   (is (= submitted-application (recreate submitted-application))))
 
-
-(def licenses-added-event {:event/type :application.event/licenses-added
-                           :event/time (DateTime. 3500)
-                           :event/actor "handler"
-                           :application/id 1
-                           :application/licenses [{:license/id 33}]
-                           :application/comment "Please sign these terms also"})
-
-(def licenses-added-application (merge submitted-application
-                                       {:application/last-activity (DateTime. 3500)
-                                        :application/modified (DateTime. 3500)
-                                        :application/events (conj (:application/events submitted-application)
-                                                                  licenses-added-event)
-                                        :application/licenses [{:license/id 33}
-                                                               {:license/id 30}
-                                                               {:license/id 31}
-                                                               {:license/id 32}]}))
-
-(deftest test-application-view-licenses-added
-  (is (= licenses-added-application (recreate licenses-added-application))))
-
 (def approved-event {:event/type :application.event/approved
                      :event/time (DateTime. 4000)
                      :event/actor "handler"
                      :application/id 1
                      :application/comment "looks good"})
 
-(def approved-application (merge licenses-added-application
+(def approved-application (merge submitted-application
                                  {:application/last-activity (DateTime. 4000)
-                                  :application/events (conj (:application/events licenses-added-application)
+                                  :application/events (conj (:application/events submitted-application)
                                                             approved-event)
                                   :application/state :application.state/approved
                                   :application/todo nil}))
@@ -456,6 +435,24 @@
   (is (= approved-application (recreate approved-application))))
 
 ;;; Now use the defined states in tests
+
+(deftest test-application-view-licenses-added
+  (let [licenses-added-event {:event/type :application.event/licenses-added
+                              :event/time (DateTime. 3500)
+                              :event/actor "handler"
+                              :application/id 1
+                              :application/licenses [{:license/id 33}]
+                              :application/comment "Please sign these terms also"}
+        licenses-added-application (merge submitted-application
+                                          {:application/last-activity (DateTime. 3500)
+                                           :application/modified (DateTime. 3500)
+                                           :application/events (conj (:application/events submitted-application)
+                                                                     licenses-added-event)
+                                           :application/licenses [{:license/id 33}
+                                                                  {:license/id 30}
+                                                                  {:license/id 31}
+                                                                  {:license/id 32}]})]
+    (is (= licenses-added-application (recreate licenses-added-application)))))
 
 (deftest test-application-view-copied
   (testing "copied from"
@@ -649,7 +646,7 @@
                                                                 {:license/id 34}]})]
         (is (= expected-application (recreate expected-application)))))))
 
-(deftest test-application-view-misc
+(deftest test-application-view-licenses-accepted
   (let [expected-application approved-application
         events (:application/events approved-application)]
     (testing "> licenses accepted"
@@ -702,36 +699,35 @@
                                                      :application/events events
                                                      :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                      "member" #{31 32}}})]
-                    (is (= expected-application (recreate expected-application)))))))))
+                    (is (= expected-application (recreate expected-application)))))))))))))
 
+(deftest test-application-view-closed
+  (let [new-event {:event/type :application.event/closed
+                   :event/time (DateTime. 5000)
+                   :event/actor "handler"
+                   :application/id 1
+                   :application/comment "the project is finished"}
+        events (conj (:application/events approved-application) new-event)
+        expected-application (merge approved-application
+                                    {:application/last-activity (DateTime. 5000)
+                                     :application/events events
+                                     :application/state :application.state/closed
+                                     :application/todo nil})]
+    (is (= expected-application (recreate expected-application)))))
 
-        (testing "> closed"
-          (let [new-event {:event/type :application.event/closed
-                           :event/time (DateTime. 5000)
-                           :event/actor "handler"
-                           :application/id 1
-                           :application/comment "the project is finished"}
-                events (conj events new-event)
-                expected-application (merge expected-application
-                                            {:application/last-activity (DateTime. 5000)
-                                             :application/events events
-                                             :application/state :application.state/closed
-                                             :application/todo nil})]
-            (is (= expected-application (recreate expected-application)))))
-
-        (testing "> revoked"
-          (let [new-event {:event/type :application.event/revoked
-                           :event/time (DateTime. 5000)
-                           :event/actor "handler"
-                           :application/id 1
-                           :application/comment "license terms were violated"}
-                events (conj events new-event)
-                expected-application (merge expected-application
-                                            {:application/last-activity (DateTime. 5000)
-                                             :application/events events
-                                             :application/state :application.state/revoked
-                                             :application/todo nil})]
-            (is (= expected-application (recreate expected-application)))))))))
+(deftest test-application-view-revoked
+  (let [new-event {:event/type :application.event/revoked
+                   :event/time (DateTime. 5000)
+                   :event/actor "handler"
+                   :application/id 1
+                   :application/comment "license terms were violated"}
+        events (conj (:application/events approved-application) new-event)
+        expected-application (merge approved-application
+                                    {:application/last-activity (DateTime. 5000)
+                                     :application/events events
+                                     :application/state :application.state/revoked
+                                     :application/todo nil})]
+    (is (= expected-application (recreate expected-application)))))
 
 (deftest test-application-view-rejected
   (testing "> rejected"
