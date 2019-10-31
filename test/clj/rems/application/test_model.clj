@@ -236,12 +236,18 @@
 
 ;;;; Collecting sample applications
 
+(def ^:dynamic *sample-applications*)
+
+(defn save-sample-application! [application]
+  (swap! *sample-applications* conj application)
+  application)
+
 (defn state-role-permissions [application]
   (map (fn [[role permissions]]
-         {:state (:application/state app)
+         {:state (:application/state application)
           :role role
           :permissions permissions})
-       (:rems.permissions/role-permissions app)))
+       (:rems.permissions/role-permissions application)))
 
 (defn output-permissions-reference [applications]
   (let [data (mapcat state-role-permissions applications)
@@ -284,6 +290,15 @@
          (bw/beautify-html)
          (spit "docs/application-permissions.md"))))
 
+(defn permissions-reference-fixture [f]
+  (binding [*sample-applications* (atom [])]
+    (f)
+    (output-permissions-reference @*sample-applications*)))
+
+(use-fixtures :once permissions-reference-fixture)
+
+;;;; Tests
+
 (deftest test-dummies-schema
   (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
                                         ["catalogue item" schema/CatalogueItem get-catalogue-item]
@@ -294,15 +309,11 @@
         (is (s/validate schema dummy))))))
 
 (deftest test-application-view
-  (let [sample-applications (atom [])
-        save-sample-application (fn [app]
-                                  (swap! sample-applications conj app)
-                                  app)
-        apply-events (fn [events]
+  (let [apply-events (fn [events]
                        (let [application (-> events
                                              events/validate-events
                                              (model/build-application-view injections)
-                                             save-sample-application
+                                             save-sample-application!
                                              permissions/cleanup)]
                          (is (contains? model/states (:application/state application)))
                          application))]
@@ -1079,10 +1090,7 @@
                                                                  :application/past-members #{{:userid "member"}}
                                                                  :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
                                                                                                   :blacklist/resource {:resource/ext-id "urn:11"}}]})]
-                                (is (= expected-application (apply-events events)))))))))))))))))
-
-    (testing "generate report: permissions by role and state"
-      (output-permissions-reference @sample-applications))))
+                                (is (= expected-application (apply-events events)))))))))))))))))))
 
 (deftest test-calculate-permissions
   (testing "commenter may comment only once"
