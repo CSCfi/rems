@@ -574,9 +574,8 @@
                                             {:license/id 31}
                                             {:license/id 32}
                                             {:license/id 34}]}
-          ;; TODO could use saved-application instead
-          events [created-event saved-event licenses-accepted-event new-event]
-          expected-application (merge licenses-accepted-application
+          events [created-event saved-event new-event]
+          expected-application (merge saved-application
                                       {:application/last-activity (DateTime. 2600)
                                        :application/modified (DateTime. 2600)
                                        :application/events events
