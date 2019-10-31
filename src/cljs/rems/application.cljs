@@ -62,6 +62,16 @@
              (for [resource resources]
                [:li (localized (:catalogue-item/title resource))]))])))
 
+(defn- blacklist-warning [application]
+  (let [blacklist (:application/blacklisted-users application)]
+    (when (not (empty? blacklist))
+      [:div.alert.alert-danger
+       (text :t.form/alert-blacklisted-users)
+       (into [:ul]
+             (for [entry blacklist]
+               [:li (get-member-name (:blacklist/user entry))
+                ": " (get-in entry [:blacklist/resource :resource/ext-id])]))])))
+
 (defn- format-validation-error [type field]
   [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
    (text-format type (localized (:field/title field)))])
@@ -713,6 +723,7 @@
 (defn- render-application [{:keys [application edit-application attachment-success config userid]}]
   [:<>
    [disabled-items-warning application]
+   [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8

@@ -275,6 +275,7 @@
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
          :add-remark "Add remark (shown or hidden to applicant)"
+         :alert-blacklisted-users "These members of the application are blacklisted for some of the applied resources:"
          :alert-disabled-resources "Resources no longer available:"
          :application "Application"
          :attachment-remove "Remove"
