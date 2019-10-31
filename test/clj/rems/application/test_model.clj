@@ -317,6 +317,9 @@
     (is (contains? model/states (:application/state application)))
     application))
 
+(defn enrich-events [events]
+  (mapv #(model/enrich-event % get-user get-catalogue-item) events))
+
 (deftest test-application-view
   (testing "created"
     (let [new-event {:event/type :application.event/created
@@ -335,7 +338,6 @@
                      :workflow/id 50
                      :workflow/type :workflow/dynamic}
           events [new-event]
-          enriched-events [(assoc new-event :event/actor-attributes (get-user "applicant"))]
           expected-application {:application/id 1
                                 :application/external-id "extid"
                                 :application/state :application.state/draft
@@ -402,7 +404,7 @@
                                                         :license/enabled true
                                                         :license/archived false}]
                                 :application/accepted-licenses {}
-                                :application/events enriched-events
+                                :application/events (enrich-events events)
                                 :application/description ""
                                 :application/form {:form/id 40
                                                    :form/title "form title"
@@ -438,11 +440,10 @@
                          :application/field-values {41 "foo"
                                                     42 "bar"}}
               events (conj events new-event)
-              enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
               expected-application (deep-merge expected-application
                                                {:application/modified (DateTime. 2000)
                                                 :application/last-activity (DateTime. 2000)
-                                                :application/events enriched-events
+                                                :application/events (enrich-events events)
                                                 :application/description "foo"
                                                 :application/accepted-licenses {}
                                                 :application/form {:form/fields [{:field/value "foo"}
@@ -457,10 +458,9 @@
                              :application/copied-from {:application/id 42
                                                        :application/external-id "2019/42"}}
                   events (conj events new-event)
-                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                   expected-application (deep-merge expected-application
                                                    {:application/last-activity (DateTime. 3000)
-                                                    :application/events enriched-events
+                                                    :application/events (enrich-events events)
                                                     :application/copied-from {:application/id 42
                                                                               :application/external-id "2019/42"}
                                                     :application/form {:form/fields [{:field/previous-value "foo"}
@@ -482,12 +482,9 @@
                                :application/copied-to {:application/id 777
                                                        :application/external-id "2021/777"}}
                   events (conj events new-event-1 new-event-2)
-                  enriched-events (conj enriched-events
-                                        (assoc new-event-1 :event/actor-attributes (get-user "applicant"))
-                                        (assoc new-event-2 :event/actor-attributes (get-user "applicant")))
                   expected-application (deep-merge expected-application
                                                    {:application/last-activity (DateTime. 3000)
-                                                    :application/events enriched-events
+                                                    :application/events (enrich-events events)
                                                     :application/copied-to [{:application/id 666
                                                                              :application/external-id "2020/666"}
                                                                             {:application/id 777
@@ -501,10 +498,9 @@
                              :application/id 1
                              :application/accepted-licenses #{30 31 32}}
                   events (conj events new-event)
-                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                   expected-application (deep-merge expected-application
                                                    {:application/last-activity (DateTime. 2500)
-                                                    :application/events enriched-events
+                                                    :application/events (enrich-events events)
                                                     :application/accepted-licenses {"applicant" #{30 31 32}}})]
               (is (= expected-application (apply-events events)))
 
@@ -521,17 +517,10 @@
                                                         {:license/id 32}
                                                         {:license/id 34}]}
                       events (conj events new-event)
-                      enriched-events
-                      (conj enriched-events (merge new-event
-                                                   {:event/actor-attributes (get-user "applicant")
-                                                    :application/resources
-                                                    [resource-id-11
-                                                     resource-id-21
-                                                     resource-id-31]}))
                       expected-application (deep-merge expected-application
                                                        {:application/last-activity (DateTime. 2600)
                                                         :application/modified (DateTime. 2600)
-                                                        :application/events enriched-events
+                                                        :application/events (enrich-events events)
                                                         :application/resources (conj (:application/resources expected-application)
                                                                                      {:catalogue-item/id 30
                                                                                       :resource/id 31
@@ -568,10 +557,9 @@
                                  :event/actor "applicant"
                                  :application/id 1}
                       events (conj events new-event)
-                      enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                       expected-application (merge expected-application
                                                   {:application/last-activity (DateTime. 3000)
-                                                   :application/events enriched-events
+                                                   :application/events (enrich-events events)
                                                    :application/first-submitted (DateTime. 3000)
                                                    :application/state :application.state/submitted
                                                    :application/todo :new-application})]
@@ -584,10 +572,9 @@
                                      :application/id 1
                                      :application/comment "fix stuff"}
                           events (conj events new-event)
-                          enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
                           expected-application (deep-merge expected-application
                                                            {:application/last-activity (DateTime. 4000)
-                                                            :application/events enriched-events
+                                                            :application/events (enrich-events events)
                                                             :application/state :application.state/returned
                                                             :application/todo nil
                                                             :application/form {:form/fields [{:field/previous-value "foo"}
@@ -609,13 +596,10 @@
                                            :application/field-values {41 "new foo"
                                                                       42 "new bar"}}
                               events (conj events new-event-1 new-event-2)
-                              enriched-events (conj enriched-events
-                                                    (assoc new-event-1 :event/actor-attributes (get-user "applicant"))
-                                                    (assoc new-event-2 :event/actor-attributes (get-user "applicant")))
                               expected-application (deep-merge expected-application
                                                                {:application/modified (DateTime. 6000)
                                                                 :application/last-activity (DateTime. 6000)
-                                                                :application/events enriched-events
+                                                                :application/events (enrich-events events)
                                                                 :application/description "new foo"
                                                                 :application/form {:form/fields [{:field/value "new foo"
                                                                                                   :field/previous-value "foo"}
@@ -629,10 +613,9 @@
                                              :event/actor "applicant"
                                              :application/id 1}
                                   events (conj events new-event)
-                                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                                   expected-application (merge expected-application
                                                               {:application/last-activity (DateTime. 7000)
-                                                               :application/events enriched-events
+                                                               :application/events (enrich-events events)
                                                                :application/state :application.state/submitted
                                                                :application/todo :resubmitted-application})]
                               (is (= expected-application (apply-events events)))))))
@@ -643,10 +626,9 @@
                                          :event/actor "applicant"
                                          :application/id 1}
                               events (conj events new-event)
-                              enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                               expected-application (deep-merge expected-application
                                                                {:application/last-activity (DateTime. 7000)
-                                                                :application/events enriched-events
+                                                                :application/events (enrich-events events)
                                                                 :application/state :application.state/submitted
                                                                 :application/todo :resubmitted-application
                                                                 ;; when there was no draft-saved event, the current and
@@ -671,17 +653,10 @@
                                                             {:license/id 32}
                                                             {:license/id 34}]}
                           events (conj events new-event)
-                          enriched-events
-                          (conj enriched-events (merge new-event
-                                                       {:event/actor-attributes (get-user "handler")
-                                                        :application/resources
-                                                        [resource-id-11
-                                                         resource-id-21
-                                                         resource-id-31]}))
                           expected-application (deep-merge expected-application
                                                            {:application/last-activity (DateTime. 3400)
                                                             :application/modified (DateTime. 3400)
-                                                            :application/events enriched-events
+                                                            :application/events (enrich-events events)
                                                             :application/resources (conj (:application/resources expected-application)
                                                                                          {:catalogue-item/id 30
                                                                                           :resource/id 31
@@ -719,11 +694,10 @@
                                      :application/licenses [{:license/id 33}]
                                      :application/comment "Please sign these terms also"}
                           events (conj events new-event)
-                          enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
                           expected-application (merge expected-application
                                                       {:application/last-activity (DateTime. 3500)
                                                        :application/modified (DateTime. 3500)
-                                                       :application/events enriched-events
+                                                       :application/events (enrich-events events)
                                                        :application/licenses (conj (:application/licenses expected-application)
                                                                                    {:license/id 33
                                                                                     :license/type :attachment
@@ -744,10 +718,9 @@
                                          :application/id 1
                                          :application/comment "looks good"}
                               events (conj events new-event)
-                              enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
                               expected-application (merge expected-application
                                                           {:application/last-activity (DateTime. 4000)
-                                                           :application/events enriched-events
+                                                           :application/events (enrich-events events)
                                                            :application/state :application.state/approved
                                                            :application/todo nil})]
                           (is (= expected-application (apply-events events)))
@@ -767,16 +740,10 @@
                                                                     {:license/id 33}
                                                                     {:license/id 34}]}
                                   events (conj events new-event)
-                                  enriched-events
-                                  (conj enriched-events (merge new-event
-                                                               {:event/actor-attributes (get-user "handler")
-                                                                :application/resources
-                                                                [resource-id-11
-                                                                 resource-id-31]}))
                                   expected-application (deep-merge expected-application
                                                                    {:application/last-activity (DateTime. 4500)
                                                                     :application/modified (DateTime. 4500)
-                                                                    :application/events enriched-events
+                                                                    :application/events (enrich-events events)
                                                                     :application/resources [{:catalogue-item/id 10
                                                                                              :resource/id 11
                                                                                              :resource/ext-id "urn:11"
@@ -824,10 +791,9 @@
                                              :application/id 1
                                              :application/accepted-licenses #{30 31 32 33}}
                                   events (conj events new-event)
-                                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                                   expected-application (merge expected-application
                                                               {:application/last-activity (DateTime. 4500)
-                                                               :application/events enriched-events
+                                                               :application/events (enrich-events events)
                                                                :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
                               (is (= expected-application (apply-events events)))
 
@@ -838,13 +804,9 @@
                                                  :application/id 1
                                                  :application/member {:userid "member"}}
                                       events (conj events new-event)
-                                      enriched-events
-                                      (conj enriched-events (merge new-event
-                                                                   {:event/actor-attributes (get-user "handler")
-                                                                    :application/member (get-user "member")}))
                                       expected-application (merge expected-application
                                                                   {:application/last-activity (DateTime. 4600)
-                                                                   :application/events enriched-events
+                                                                   :application/events (enrich-events events)
                                                                    :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
 
                                                                    :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
@@ -859,10 +821,9 @@
                                                      :application/id 1
                                                      :application/accepted-licenses #{30 33}}
                                           events (conj events new-event)
-                                          enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "member")))
                                           expected-application (merge expected-application
                                                                       {:application/last-activity (DateTime. 4700)
-                                                                       :application/events enriched-events
+                                                                       :application/events (enrich-events events)
                                                                        :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                        "member" #{30 33}}})]
                                       (is (= expected-application (apply-events events)))
@@ -873,10 +834,9 @@
                                                          :application/id 1
                                                          :application/accepted-licenses #{31 32}}
                                               events (conj events new-event)
-                                              enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "member")))
                                               expected-application (merge expected-application
                                                                           {:application/last-activity (DateTime. 4800)
-                                                                           :application/events enriched-events
+                                                                           :application/events (enrich-events events)
                                                                            :application/accepted-licenses {"applicant" #{30 31 32 33}
                                                                                                            "member" #{31 32}}})]
                                           (is (= expected-application (apply-events events)))))))))
@@ -889,10 +849,9 @@
                                                  :application/id 1
                                                  :application/comment "the project is finished"}
                                       events (conj events new-event)
-                                      enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
                                       expected-application (merge expected-application
                                                                   {:application/last-activity (DateTime. 5000)
-                                                                   :application/events enriched-events
+                                                                   :application/events (enrich-events events)
                                                                    :application/state :application.state/closed
                                                                    :application/todo nil})]
                                   (is (= expected-application (apply-events events)))))
@@ -904,10 +863,9 @@
                                                  :application/id 1
                                                  :application/comment "license terms were violated"}
                                       events (conj events new-event)
-                                      enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
                                       expected-application (merge expected-application
                                                                   {:application/last-activity (DateTime. 5000)
-                                                                   :application/events enriched-events
+                                                                   :application/events (enrich-events events)
                                                                    :application/state :application.state/revoked
                                                                    :application/todo nil})]
                                   (is (= expected-application (apply-events events)))))))))
@@ -919,10 +877,9 @@
                                          :application/id 1
                                          :application/comment "never gonna happen"}
                               events (conj events new-event)
-                              enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
                               expected-application (merge expected-application
                                                           {:application/last-activity (DateTime. 4000)
-                                                           :application/events enriched-events
+                                                           :application/events (enrich-events events)
                                                            :application/state :application.state/rejected
                                                            :application/todo nil})]
                           (is (= expected-application (apply-events events)))))
@@ -937,12 +894,9 @@
                                          :application/commenters ["commenter"]
                                          :application/comment "please comment"}
                               events (conj events new-event)
-                              enriched-events (conj enriched-events (merge new-event
-                                                                           {:event/actor-attributes (get-user "handler")
-                                                                            :application/commenters [(get-user "commenter")]}))
                               expected-application (deep-merge expected-application
                                                                {:application/last-activity (DateTime. 4000)
-                                                                :application/events enriched-events
+                                                                :application/events (enrich-events events)
                                                                 :application/todo :waiting-for-review
                                                                 :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
                           (is (= expected-application (apply-events events)))
@@ -955,10 +909,9 @@
                                              :application/request-id request-id
                                              :application/comment "looks good"}
                                   events (conj events new-event)
-                                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "commenter")))
                                   expected-application (merge expected-application
                                                               {:application/last-activity (DateTime. 5000)
-                                                               :application/events enriched-events
+                                                               :application/events (enrich-events events)
                                                                :application/todo :no-pending-requests
                                                                :rems.application.model/latest-comment-request-by-user {}})]
                               (is (= expected-application (apply-events events)))))))
@@ -973,12 +926,9 @@
                                          :application/deciders ["decider"]
                                          :application/comment "please decide"}
                               events (conj events new-event)
-                              enriched-events (conj enriched-events (merge new-event
-                                                                           {:event/actor-attributes (get-user "handler")
-                                                                            :application/deciders [(get-user "decider")]}))
                               expected-application (merge expected-application
                                                           {:application/last-activity (DateTime. 4000)
-                                                           :application/events enriched-events
+                                                           :application/events (enrich-events events)
                                                            :application/todo :waiting-for-decision
                                                            :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
                           (is (= expected-application (apply-events events)))
@@ -992,10 +942,9 @@
                                              :application/decision :approved
                                              :application/comment "I approve this"}
                                   events (conj events new-event)
-                                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "decider")))
                                   expected-application (merge expected-application
                                                               {:application/last-activity (DateTime. 5000)
-                                                               :application/events enriched-events
+                                                               :application/events (enrich-events events)
                                                                :application/todo :no-pending-requests
                                                                :rems.application.model/latest-decision-request-by-user {}})]
                               (is (= expected-application (apply-events events)))))))
@@ -1010,10 +959,9 @@
                                                               :email "member@example.com"}
                                          :invitation/token token}
                               events (conj events new-event)
-                              enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                               expected-application (deep-merge expected-application
                                                                {:application/last-activity (DateTime. 4000)
-                                                                :application/events enriched-events
+                                                                :application/events (enrich-events events)
                                                                 :application/invitation-tokens {token {:name "Mr. Member"
                                                                                                        :email "member@example.com"}}})]
                           (is (= expected-application (apply-events events)))
@@ -1027,10 +975,9 @@
                                                                   :email "member@example.com"}
                                              :application/comment "he left the project"}
                                   events (conj events new-event)
-                                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                                   expected-application (merge expected-application
                                                               {:application/last-activity (DateTime. 5000)
-                                                               :application/events enriched-events
+                                                               :application/events (enrich-events events)
                                                                :application/invitation-tokens {}})]
                               (is (= expected-application (apply-events events)))))
 
@@ -1041,10 +988,9 @@
                                              :application/id 1
                                              :invitation/token token}
                                   events (conj events new-event)
-                                  enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "member")))
                                   expected-application (merge expected-application
                                                               {:application/last-activity (DateTime. 5000)
-                                                               :application/events enriched-events
+                                                               :application/events (enrich-events events)
                                                                :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
                                                                :application/invitation-tokens {}
                                                                :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
@@ -1060,12 +1006,9 @@
                                          :application/id 1
                                          :application/member {:userid "member"}}
                               events (conj events new-event)
-                              enriched-events (conj enriched-events (merge new-event
-                                                                           {:event/actor-attributes (get-user "handler")
-                                                                            :application/member (get-user "member")}))
                               expected-application (merge expected-application
                                                           {:application/last-activity (DateTime. 4000)
-                                                           :application/events enriched-events
+                                                           :application/events (enrich-events events)
                                                            :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
                                                            :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
                                                                                             :blacklist/resource {:resource/ext-id "urn:11"}}
@@ -1081,12 +1024,9 @@
                                              :application/member {:userid "member"}
                                              :application/comment "he left the project"}
                                   events (conj events new-event)
-                                  enriched-events (conj enriched-events (merge new-event
-                                                                               {:event/actor-attributes (get-user "applicant")
-                                                                                :application/member (get-user "member")}))
                                   expected-application (merge expected-application
                                                               {:application/last-activity (DateTime. 5000)
-                                                               :application/events enriched-events
+                                                               :application/events (enrich-events events)
                                                                :application/members #{}
                                                                :application/past-members #{{:userid "member"}}
                                                                :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
