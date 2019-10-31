@@ -61,20 +61,22 @@
 
 (defn checkbox
   "Displays a checkbox."
-  [{:keys [value on-change]}]
+  [{:keys [id class value on-change]}]
   (let [wrapped-on-change (fn [e]
                             (.preventDefault e)
                             (.stopPropagation e)
                             (when on-change
                               (on-change value)))]
-    [:i.far.fa-lg {:class [(if value :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
-                   :tabIndex 0
-                   :role :checkbox
-                   :aria-checked value
-                   :aria-label (if value (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
-                   :on-click wrapped-on-change
-                   :on-key-press #(when (= (.-key %) " ")
-                                    (wrapped-on-change %))}]))
+    [:i.far.fa-lg
+     {:id id
+      :class [class (if value :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
+      :tabIndex 0
+      :role :checkbox
+      :aria-checked value
+      :aria-label (if value (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
+      :on-click wrapped-on-change
+      :on-key-press #(when (= (.-key %) " ")
+                       (wrapped-on-change %))}]))
 
 (defn readonly-checkbox
   "Displays a readonly checkbox."
@@ -150,6 +152,8 @@
                 [readonly-checkbox {:value true}])
        (example (str "checkbox interactive " (if @state "checked" "unchecked"))
                 [checkbox {:value @state :on-change on-change}])
+       (example "checkbox with id and class"
+                [checkbox {:id :special :class :text-danger :value @state :on-change on-change}])
        (component-info info-field)
        (example "info-field with data"
                 [info-field "Name" "Bob Tester"])
