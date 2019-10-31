@@ -595,131 +595,135 @@
 (deftest test-application-view-licenses-added
   (is (= licenses-added-application (apply-events (:application/events licenses-added-application)))))
 
-(deftest test-application-view-approved-etc
-  (testing "> approved"
-    (let [new-event {:event/type :application.event/approved
+(def approved-event {:event/type :application.event/approved
                      :event/time (DateTime. 4000)
                      :event/actor "handler"
                      :application/id 1
-                     :application/comment "looks good"}
-          events (conj (:application/events licenses-added-application) new-event)
-          expected-application (merge licenses-added-application
+                     :application/comment "looks good"})
+
+(def approved-application (merge licenses-added-application
                                       {:application/last-activity (DateTime. 4000)
-                                       :application/events events
+                                       :application/events (conj (:application/events licenses-added-application)
+                                                                 approved-event)
                                        :application/state :application.state/approved
-                                       :application/todo nil})]
-      (is (= expected-application (apply-events events)))
+                                       :application/todo nil}))
 
-      (testing "> resources changed by handler"
-        (let [new-event {:event/type :application.event/resources-changed
-                         :event/time (DateTime. 4500)
-                         :event/actor "handler"
-                         :application/id 1
-                         :application/comment "I changed the resources"
-                         :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
-                                                 {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
-                         :application/licenses [{:license/id 30}
-                                                {:license/id 31}
-                                                {:license/id 32}
-                                                ;; Include also the previously added license #33 in the new licenses.
-                                                {:license/id 33}
-                                                {:license/id 34}]}
-              events (conj events new-event)
-              expected-application (merge expected-application
-                                          {:application/last-activity (DateTime. 4500)
-                                           :application/modified (DateTime. 4500)
-                                           :application/events events
-                                           :application/resources [{:catalogue-item/id 10
-                                                                    :resource/ext-id "urn:11"}
-                                                                   {:catalogue-item/id 30
-                                                                    :resource/ext-id "urn:31"}]
-                                           :application/licenses [{:license/id 30}
-                                                                  {:license/id 31}
-                                                                  {:license/id 32}
-                                                                  {:license/id 33}
-                                                                  {:license/id 34}]})]
-          (is (= expected-application (apply-events events)))))
+(deftest test-application-view-approved
+  (is (= approved-application (apply-events (:application/events approved-application)))))
 
-      (testing "> licenses accepted"
-        (let [new-event {:event/type :application.event/licenses-accepted
-                         :event/time (DateTime. 4500)
-                         :event/actor "applicant"
-                         :application/id 1
-                         :application/accepted-licenses #{30 31 32 33}}
-              events (conj events new-event)
-              expected-application (merge expected-application
-                                          {:application/last-activity (DateTime. 4500)
-                                           :application/events events
-                                           :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
-          (is (= expected-application (apply-events events)))
+(deftest test-application-view-misc
+  (let [expected-application approved-application
+        events (:application/events approved-application)]
+    (testing "> resources changed by handler"
+      (let [new-event {:event/type :application.event/resources-changed
+                       :event/time (DateTime. 4500)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/comment "I changed the resources"
+                       :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}
+                                              {:license/id 32}
+                                              ;; Include also the previously added license #33 in the new licenses.
+                                              {:license/id 33}
+                                              {:license/id 34}]}
+            events (conj events new-event)
+            expected-application (merge expected-application
+                                        {:application/last-activity (DateTime. 4500)
+                                         :application/modified (DateTime. 4500)
+                                         :application/events events
+                                         :application/resources [{:catalogue-item/id 10
+                                                                  :resource/ext-id "urn:11"}
+                                                                 {:catalogue-item/id 30
+                                                                  :resource/ext-id "urn:31"}]
+                                         :application/licenses [{:license/id 30}
+                                                                {:license/id 31}
+                                                                {:license/id 32}
+                                                                {:license/id 33}
+                                                                {:license/id 34}]})]
+        (is (= expected-application (apply-events events)))))
 
-          (testing "> member added"
-            (let [new-event {:event/type :application.event/member-added
-                             :event/time (DateTime. 4600)
-                             :event/actor "handler"
-                             :application/id 1
-                             :application/member {:userid "member"}}
-                  events (conj events new-event)
-                  expected-application (merge expected-application
-                                              {:application/last-activity (DateTime. 4600)
-                                               :application/events events
-                                               :application/members #{{:userid "member"}}})]
-              (is (= expected-application (apply-events events)))
-              (testing "> licenses accepted for new member"
-                (let [new-event {:event/type :application.event/licenses-accepted
-                                 :event/time (DateTime. 4700)
-                                 :event/actor "member"
-                                 :application/id 1
-                                 :application/accepted-licenses #{30 33}}
-                      events (conj events new-event)
-                      expected-application (merge expected-application
-                                                  {:application/last-activity (DateTime. 4700)
-                                                   :application/events events
-                                                   :application/accepted-licenses {"applicant" #{30 31 32 33}
-                                                                                   "member" #{30 33}}})]
-                  (is (= expected-application (apply-events events)))
-                  (testing "> licenses accepted overwrites previous"
-                    (let [new-event {:event/type :application.event/licenses-accepted
-                                     :event/time (DateTime. 4800)
-                                     :event/actor "member"
-                                     :application/id 1
-                                     :application/accepted-licenses #{31 32}}
-                          events (conj events new-event)
-                          expected-application (merge expected-application
-                                                      {:application/last-activity (DateTime. 4800)
-                                                       :application/events events
-                                                       :application/accepted-licenses {"applicant" #{30 31 32 33}
-                                                                                       "member" #{31 32}}})]
-                      (is (= expected-application (apply-events events)))))))))
+    (testing "> licenses accepted"
+      (let [new-event {:event/type :application.event/licenses-accepted
+                       :event/time (DateTime. 4500)
+                       :event/actor "applicant"
+                       :application/id 1
+                       :application/accepted-licenses #{30 31 32 33}}
+            events (conj events new-event)
+            expected-application (merge expected-application
+                                        {:application/last-activity (DateTime. 4500)
+                                         :application/events events
+                                         :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
+        (is (= expected-application (apply-events events)))
+
+        (testing "> member added"
+          (let [new-event {:event/type :application.event/member-added
+                           :event/time (DateTime. 4600)
+                           :event/actor "handler"
+                           :application/id 1
+                           :application/member {:userid "member"}}
+                events (conj events new-event)
+                expected-application (merge expected-application
+                                            {:application/last-activity (DateTime. 4600)
+                                             :application/events events
+                                             :application/members #{{:userid "member"}}})]
+            (is (= expected-application (apply-events events)))
+            (testing "> licenses accepted for new member"
+              (let [new-event {:event/type :application.event/licenses-accepted
+                               :event/time (DateTime. 4700)
+                               :event/actor "member"
+                               :application/id 1
+                               :application/accepted-licenses #{30 33}}
+                    events (conj events new-event)
+                    expected-application (merge expected-application
+                                                {:application/last-activity (DateTime. 4700)
+                                                 :application/events events
+                                                 :application/accepted-licenses {"applicant" #{30 31 32 33}
+                                                                                 "member" #{30 33}}})]
+                (is (= expected-application (apply-events events)))
+                (testing "> licenses accepted overwrites previous"
+                  (let [new-event {:event/type :application.event/licenses-accepted
+                                   :event/time (DateTime. 4800)
+                                   :event/actor "member"
+                                   :application/id 1
+                                   :application/accepted-licenses #{31 32}}
+                        events (conj events new-event)
+                        expected-application (merge expected-application
+                                                    {:application/last-activity (DateTime. 4800)
+                                                     :application/events events
+                                                     :application/accepted-licenses {"applicant" #{30 31 32 33}
+                                                                                     "member" #{31 32}}})]
+                    (is (= expected-application (apply-events events)))))))))
 
 
-          (testing "> closed"
-            (let [new-event {:event/type :application.event/closed
-                             :event/time (DateTime. 5000)
-                             :event/actor "handler"
-                             :application/id 1
-                             :application/comment "the project is finished"}
-                  events (conj events new-event)
-                  expected-application (merge expected-application
-                                              {:application/last-activity (DateTime. 5000)
-                                               :application/events events
-                                               :application/state :application.state/closed
-                                               :application/todo nil})]
-              (is (= expected-application (apply-events events)))))
+        (testing "> closed"
+          (let [new-event {:event/type :application.event/closed
+                           :event/time (DateTime. 5000)
+                           :event/actor "handler"
+                           :application/id 1
+                           :application/comment "the project is finished"}
+                events (conj events new-event)
+                expected-application (merge expected-application
+                                            {:application/last-activity (DateTime. 5000)
+                                             :application/events events
+                                             :application/state :application.state/closed
+                                             :application/todo nil})]
+            (is (= expected-application (apply-events events)))))
 
-          (testing "> revoked"
-            (let [new-event {:event/type :application.event/revoked
-                             :event/time (DateTime. 5000)
-                             :event/actor "handler"
-                             :application/id 1
-                             :application/comment "license terms were violated"}
-                  events (conj events new-event)
-                  expected-application (merge expected-application
-                                              {:application/last-activity (DateTime. 5000)
-                                               :application/events events
-                                               :application/state :application.state/revoked
-                                               :application/todo nil})]
-              (is (= expected-application (apply-events events))))))))))
+        (testing "> revoked"
+          (let [new-event {:event/type :application.event/revoked
+                           :event/time (DateTime. 5000)
+                           :event/actor "handler"
+                           :application/id 1
+                           :application/comment "license terms were violated"}
+                events (conj events new-event)
+                expected-application (merge expected-application
+                                            {:application/last-activity (DateTime. 5000)
+                                             :application/events events
+                                             :application/state :application.state/revoked
+                                             :application/todo nil})]
+            (is (= expected-application (apply-events events)))))))))
 
 (deftest test-application-view-rejected
   (testing "> rejected"
