@@ -435,31 +435,6 @@
 (deftest test-application-view-licenses-accepted
   (is (= licenses-accepted-application (apply-events [created-event saved-event licenses-accepted-event]))))
 
-(deftest test-application-view-resources-changed-by-applicant
-  (let [new-event {:event/type :application.event/resources-changed
-                   :event/time (DateTime. 2600)
-                   :event/actor "applicant"
-                   :application/id 1
-                   :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
-                                           {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                           {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
-                   :application/licenses [{:license/id 30}
-                                          {:license/id 31}
-                                          {:license/id 32}
-                                          {:license/id 34}]}
-        ;; TODO could use saved-application instead
-        events [created-event saved-event licenses-accepted-event new-event]
-        expected-application (merge licenses-accepted-application
-                                    {:application/last-activity (DateTime. 2600)
-                                     :application/modified (DateTime. 2600)
-                                     :application/events events
-                                     :application/resources (conj (:application/resources licenses-accepted-application)
-                                                                  {:catalogue-item/id 30
-                                                                   :resource/ext-id "urn:31"})
-                                     :application/licenses (conj (:application/licenses licenses-accepted-application)
-                                                                 {:license/id 34})})]
-    (is (= expected-application (apply-events events)))))
-
 (def submitted-event {:event/type :application.event/submitted
                       :event/time (DateTime. 3000)
                       :event/actor "applicant"
@@ -550,31 +525,6 @@
                                                ::model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
           (is (= expected-application (apply-events events))))))))
 
-(deftest test-application-view-resources-changed-by-handler
-  (let [new-event {:event/type :application.event/resources-changed
-                   :event/time (DateTime. 3400)
-                   :event/actor "handler"
-                   :application/id 1
-                   :application/comment "You should include this resource."
-                   :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
-                                           {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                           {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
-                   :application/licenses [{:license/id 30}
-                                          {:license/id 31}
-                                          {:license/id 32}
-                                          {:license/id 34}]}
-        events (conj (:application/events submitted-application) new-event)
-        expected-application (merge submitted-application
-                                    {:application/last-activity (DateTime. 3400)
-                                     :application/modified (DateTime. 3400)
-                                     :application/events events
-                                     :application/resources (conj (:application/resources submitted-application)
-                                                                  {:catalogue-item/id 30
-                                                                   :resource/ext-id "urn:31"})
-                                     :application/licenses (conj (:application/licenses submitted-application)
-                                                                 {:license/id 34})})]
-    (is (= expected-application (apply-events events)))))
-
 (def licenses-added-event {:event/type :application.event/licenses-added
                            :event/time (DateTime. 3500)
                            :event/actor "handler"
@@ -611,10 +561,57 @@
 (deftest test-application-view-approved
   (is (= approved-application (apply-events (:application/events approved-application)))))
 
-(deftest test-application-view-misc
-  (let [expected-application approved-application
-        events (:application/events approved-application)]
-    (testing "> resources changed by handler"
+(deftest test-application-view-resources-changed
+  (testing "by applicant"
+    (let [new-event {:event/type :application.event/resources-changed
+                     :event/time (DateTime. 2600)
+                     :event/actor "applicant"
+                     :application/id 1
+                     :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                             {:catalogue-item/id 20 :resource/ext-id "urn:21"}
+                                             {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                     :application/licenses [{:license/id 30}
+                                            {:license/id 31}
+                                            {:license/id 32}
+                                            {:license/id 34}]}
+          ;; TODO could use saved-application instead
+          events [created-event saved-event licenses-accepted-event new-event]
+          expected-application (merge licenses-accepted-application
+                                      {:application/last-activity (DateTime. 2600)
+                                       :application/modified (DateTime. 2600)
+                                       :application/events events
+                                       :application/resources (conj (:application/resources licenses-accepted-application)
+                                                                    {:catalogue-item/id 30
+                                                                     :resource/ext-id "urn:31"})
+                                       :application/licenses (conj (:application/licenses licenses-accepted-application)
+                                                                   {:license/id 34})})]
+      (is (= expected-application (apply-events events)))))
+  (testing "by handler"
+    (testing "for submitted application"
+      (let [new-event {:event/type :application.event/resources-changed
+                       :event/time (DateTime. 3400)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/comment "You should include this resource."
+                       :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20 :resource/ext-id "urn:21"}
+                                               {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}
+                                              {:license/id 32}
+                                              {:license/id 34}]}
+            events (conj (:application/events submitted-application) new-event)
+            expected-application (merge submitted-application
+                                        {:application/last-activity (DateTime. 3400)
+                                         :application/modified (DateTime. 3400)
+                                         :application/events events
+                                         :application/resources (conj (:application/resources submitted-application)
+                                                                      {:catalogue-item/id 30
+                                                                       :resource/ext-id "urn:31"})
+                                         :application/licenses (conj (:application/licenses submitted-application)
+                                                                     {:license/id 34})})]
+        (is (= expected-application (apply-events events)))))
+    (testing "for approved application"
       (let [new-event {:event/type :application.event/resources-changed
                        :event/time (DateTime. 4500)
                        :event/actor "handler"
@@ -628,8 +625,8 @@
                                               ;; Include also the previously added license #33 in the new licenses.
                                               {:license/id 33}
                                               {:license/id 34}]}
-            events (conj events new-event)
-            expected-application (merge expected-application
+            events (conj (:application/events approved-application) new-event)
+            expected-application (merge approved-application
                                         {:application/last-activity (DateTime. 4500)
                                          :application/modified (DateTime. 4500)
                                          :application/events events
@@ -642,8 +639,11 @@
                                                                 {:license/id 32}
                                                                 {:license/id 33}
                                                                 {:license/id 34}]})]
-        (is (= expected-application (apply-events events)))))
+        (is (= expected-application (apply-events events)))))))
 
+(deftest test-application-view-misc
+  (let [expected-application approved-application
+        events (:application/events approved-application)]
     (testing "> licenses accepted"
       (let [new-event {:event/type :application.event/licenses-accepted
                        :event/time (DateTime. 4500)
