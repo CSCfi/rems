@@ -629,6 +629,7 @@
 
 (defn- hide-sensitive-information [application]
   (-> application
+      (dissoc :application/blacklisted-users)
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
@@ -642,7 +643,6 @@
 (defn- hide-non-public-information [application]
   (-> application
       hide-invitation-tokens
-      (dissoc :application/blacklisted-users) ;; TODO expose this
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
