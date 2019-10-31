@@ -7,6 +7,7 @@
             [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time text text-format]]
             [rems.util :refer [navigate! fetch]]))
@@ -76,8 +77,9 @@
    (let [id (:id license)]
      [:div.col.commands
       [back-button]
-      [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]])])
+      [roles/when roles/show-admin-edit-buttons?
+       [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
+       [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]]])])
 
 ;; XXX: Duplicates much of license-view. One notable difference is that
 ;;      here the license text is only shown in the current language.

@@ -42,7 +42,7 @@
 
     (GET "/" []
       :summary "Get licenses"
-      :roles #{:handler :owner}
+      :roles #{:owner :handler}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled licenses") false}
                      {archived :- (describe s/Bool "whether to include archived licenses") false}]
       :return Licenses
@@ -51,7 +51,7 @@
 
     (GET "/:license-id" []
       :summary "Get license"
-      :roles #{:owner}
+      :roles #{:owner :handler}
       :path-params [license-id :- (describe s/Int "license id")]
       :return License
       (ok (licenses/get-license license-id)))

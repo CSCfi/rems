@@ -5,6 +5,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]
@@ -89,10 +90,11 @@
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-form form]
-                           [form/edit-button (:form/id form)]
-                           [copy-as-new-form form]
-                           [status-flags/enabled-toggle form #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])]
-                           [status-flags/archived-toggle form #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])]]}})
+                           [roles/when roles/show-admin-edit-buttons?
+                            [form/edit-button (:form/id form)]
+                            [copy-as-new-form form]
+                            [status-flags/enabled-toggle form #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])]
+                            [status-flags/archived-toggle form #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])]]]}})
         forms)))
 
 (defn- forms-list []
@@ -120,7 +122,8 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[to-create-form]
-           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
-           [status-flags/disabled-and-archived-explanation]
+          [[roles/when roles/show-admin-edit-buttons?
+            [to-create-form]
+            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-forms])]
+            [status-flags/disabled-and-archived-explanation]]
            [forms-list]])))
