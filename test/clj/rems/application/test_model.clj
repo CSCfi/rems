@@ -318,7 +318,9 @@
     (is (contains? model/states (:application/state application)))
     application))
 
-(defn recreate [application]
+(defn recreate
+  "Use (is (= app (recreate app))) instead of (is (= app (apply-events (:application/events app))))"
+  [application]
   (apply-events (:application/events application)))
 
 ;;;; Tests for application-view
