@@ -251,7 +251,7 @@
 
 (defn output-permissions-reference [applications]
   (let [data (mapcat state-role-permissions applications)
-        states (->> data (map :state) distinct) ; keep states in the order they appear in the tests
+        states (->> data (map :state) distinct sort)
         roles (->> data (map :role) distinct sort)
         nowrap (fn [s]
                  ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
