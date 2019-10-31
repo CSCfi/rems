@@ -13,6 +13,8 @@
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
+;;;; Mock injections
+
 (def ^:private get-form-template
   {40 {:form/id 40
        :form/organization "org"
@@ -231,6 +233,56 @@
                  :get-users-with-role get-users-with-role
                  :get-workflow get-workflow
                  :get-attachments-for-application get-attachments-for-application})
+
+;;;; Collecting sample applications
+
+(defn state-role-permissions [application]
+  (map (fn [[role permissions]]
+         {:state (:application/state app)
+          :role role
+          :permissions permissions})
+       (:rems.permissions/role-permissions app)))
+
+(defn output-permissions-reference [applications]
+  (let [data (mapcat state-role-permissions applications)
+        states (->> data (map :state) distinct) ; keep states in the order they appear in the tests
+        roles (->> data (map :role) distinct sort)
+        nowrap (fn [s]
+                 ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
+                 (-> s
+                     (str/replace " " "\u00A0") ;  non-breaking space
+                     (str/replace "-" "\u2011")))] ; non-breaking hyphen
+    (->> (hiccup/html
+          "# Application Permissions Reference\n\n"
+          [:table {:border 1}
+           [:tr
+            [:th (nowrap "State \\ Role")]
+            (for [role roles]
+              [:th (nowrap (name role))])]
+           (for [state states]
+             [:tr
+              [:th {:valign :top}
+               (nowrap (name state))]
+              (for [role roles]
+                (let [perm-sets (->> data
+                                     (filter #(= state (:state %)))
+                                     (filter #(= role (:role %)))
+                                     (map :permissions))
+                      all-perms (apply set/union perm-sets)
+                      ;; the states and permissions are not guaranteed to have a 1:1 mapping,
+                      ;; so we separate conditional permissions from those that are always there
+                      always-perms (if (empty? perm-sets)
+                                     #{}
+                                     (apply set/intersection perm-sets))
+                      sometimes-perms (set/difference all-perms always-perms)]
+                  [:td {:valign :top}
+                   "<!-- role: " (name role) " -->"
+                   (for [perm (sort always-perms)]
+                     [:div (nowrap (name perm))])
+                   (for [perm (sort sometimes-perms)]
+                     [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
+         (bw/beautify-html)
+         (spit "docs/application-permissions.md"))))
 
 (deftest test-dummies-schema
   (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
@@ -1030,52 +1082,7 @@
                                 (is (= expected-application (apply-events events)))))))))))))))))
 
     (testing "generate report: permissions by role and state"
-      (let [apps @sample-applications
-            state-role-permissions (fn [app]
-                                     (map (fn [[role permissions]]
-                                            {:state (:application/state app)
-                                             :role role
-                                             :permissions permissions})
-                                          (:rems.permissions/role-permissions app)))
-            data (mapcat state-role-permissions apps)
-            states (->> data (map :state) distinct) ; keep states in the order they appear in the tests
-            roles (->> data (map :role) distinct sort)
-            nowrap (fn [s]
-                     ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
-                     (-> s
-                         (str/replace " " "\u00A0") ;  non-breaking space
-                         (str/replace "-" "\u2011")))] ; non-breaking hyphen
-        (->> (hiccup/html
-              "# Application Permissions Reference\n\n"
-              [:table {:border 1}
-               [:tr
-                [:th (nowrap "State \\ Role")]
-                (for [role roles]
-                  [:th (nowrap (name role))])]
-               (for [state states]
-                 [:tr
-                  [:th {:valign :top}
-                   (nowrap (name state))]
-                  (for [role roles]
-                    (let [perm-sets (->> data
-                                         (filter #(= state (:state %)))
-                                         (filter #(= role (:role %)))
-                                         (map :permissions))
-                          all-perms (apply set/union perm-sets)
-                          ;; the states and permissions are not guaranteed to have a 1:1 mapping,
-                          ;; so we separate conditional permissions from those that are always there
-                          always-perms (if (empty? perm-sets)
-                                         #{}
-                                         (apply set/intersection perm-sets))
-                          sometimes-perms (set/difference all-perms always-perms)]
-                      [:td {:valign :top}
-                       "<!-- role: " (name role) " -->"
-                       (for [perm (sort always-perms)]
-                         [:div (nowrap (name perm))])
-                       (for [perm (sort sometimes-perms)]
-                         [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
-             (bw/beautify-html)
-             (spit "docs/application-permissions.md"))))))
+      (output-permissions-reference @sample-applications))))
 
 (deftest test-calculate-permissions
   (testing "commenter may comment only once"
