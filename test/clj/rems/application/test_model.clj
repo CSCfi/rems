@@ -552,11 +552,11 @@
                      :application/comment "looks good"})
 
 (def approved-application (merge licenses-added-application
-                                      {:application/last-activity (DateTime. 4000)
-                                       :application/events (conj (:application/events licenses-added-application)
-                                                                 approved-event)
-                                       :application/state :application.state/approved
-                                       :application/todo nil}))
+                                 {:application/last-activity (DateTime. 4000)
+                                  :application/events (conj (:application/events licenses-added-application)
+                                                            approved-event)
+                                  :application/state :application.state/approved
+                                  :application/todo nil}))
 
 (deftest test-application-view-approved
   (is (= approved-application (apply-events (:application/events approved-application)))))
