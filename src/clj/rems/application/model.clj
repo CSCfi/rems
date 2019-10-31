@@ -543,15 +543,16 @@
              {}))))
 
 (defn- get-blacklisted-users [application blacklisted?]
-  (let [all-members (map :userid (application-util/applicant-and-members application))
+  (let [all-members (application-util/applicant-and-members application)
         all-resources (map :resource/ext-id (:application/resources application))]
-    (into {}
-          (for [member all-members
-                :let [resources (->> all-resources
-                                     (filter (partial blacklisted? member))
-                                     (set))]
-                :when (not (empty? resources))]
-            [member resources]))))
+    (vec
+     (for [member all-members
+           resource all-resources
+           :when (blacklisted? (:userid member) resource)]
+       {:blacklist/user member :blacklist/resource {:resource/ext-id resource}}))))
+
+(defn- enrich-blacklisted-users [application blacklisted?]
+  (assoc application :application/blacklisted-users (get-blacklisted-users application blacklisted?)))
 
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
@@ -604,8 +605,8 @@
         (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
         (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
-        (assoc :application/blacklisted-users (get-blacklisted-users application blacklisted?))
         (enrich-user-attributes get-user)
+        (enrich-blacklisted-users blacklisted?) ;; uses enriched users
         (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))
 

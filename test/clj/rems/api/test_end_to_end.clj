@@ -324,4 +324,6 @@
           (testing "blacklist visible to handler in application"
             (let [application (api-call :get (str "/api/applications/" application-id) nil
                                         api-key handler-id)]
-              (is (= {(keyword applicant-id) [resource-ext-id]} (:application/blacklisted-users application))))))))))
+              (is (= [{:blacklist/user applicant-attributes
+                       :blacklist/resource {:resource/ext-id resource-ext-id}}]
+                     (:application/blacklisted-users application))))))))))

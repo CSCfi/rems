@@ -196,10 +196,11 @@
    :application/members #{UserWithAttributes}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
-   (s/optional-key :application/blacklisted-users) {UserId #{s/Str}} ;; TODO how about #{{:resource/ext-id s/Str}}?
+   (s/optional-key :application/blacklisted-users) [{:blacklist/user UserWithAttributes
+                                                     :blacklist/resource {:resource/ext-id s/Str}}]
    :application/resources [V2Resource]
    :application/licenses [V2License]
-   :application/accepted-licenses (s/maybe {s/Str #{s/Int}})
+   :application/accepted-licenses (s/maybe {UserId #{s/Int}})
    :application/events [Event]
    :application/description s/Str
    :application/form Form
