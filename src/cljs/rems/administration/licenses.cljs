@@ -79,7 +79,7 @@
            :type {:value (:licensetype license)}
            :active (let [checked? (status-flags/active? license)]
                      {:td [:td.active
-                           [readonly-checkbox checked?]]
+                           [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-license (:id license)]

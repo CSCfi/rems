@@ -102,7 +102,7 @@
                        :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? item)]
                      {:td [:td.active
-                           [readonly-checkbox checked?]]
+                           [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-catalogue-item (:id item)]

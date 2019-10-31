@@ -79,7 +79,7 @@
            :title {:value (:title workflow)}
            :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active
-                           [readonly-checkbox checked?]]
+                           [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-workflow (:id workflow)]

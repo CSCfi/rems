@@ -64,7 +64,7 @@
                                                                          (map enrich-user)
                                                                          (map :display)
                                                                          (str/join ", "))]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? workflow)]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]]}]
    [licenses-view (:licenses workflow) language]
    (let [id (:id workflow)]
      [:div.col.commands

@@ -556,7 +556,7 @@
                (when-let [name (get-member-name attributes)]
                  [info-field (text :t.applicant-info/name) name {:inline? true}])
                (when-not (nil? accepted-licenses?)
-                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox accepted-licenses?] {:inline? true}])]
+                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
       :collapse (into [:div
                        (when user-id
                          [info-field (text :t.applicant-info/username) user-id {:inline? true}])

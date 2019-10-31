@@ -73,7 +73,7 @@
                                 " (" (str/upper-case (name langcode)) ")")
                            [attachment-link (:attachment-id localization) (:title localization)]
                            {:box? false}])))
-                    [[inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? license)]]]))}]
+                    [[inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? license)}]]]))}]
    (let [id (:id license)]
      [:div.col.commands
       [back-button]
