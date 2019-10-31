@@ -823,7 +823,6 @@
                               :application/accepted-licenses {"developer" #{1}}
                               :application/permissions #{:application.command/add-member
                                                          :application.command/invite-member}}])
-
    (component-info disabled-items-warning)
    (example "no disabled items"
             [disabled-items-warning {}])
@@ -836,7 +835,18 @@
                                        :catalogue-item/title {:en "Catalogue item 2"}}
                                       {:catalogue-item/enabled true :catalogue-item/archived false
                                        :catalogue-item/title {:en "Catalogue item 3"}}]}])
+   (component-info blacklist-warning)
+   (example "no blacklist"
+            [blacklist-warning {}])
+   (example "three entries"
+            [blacklist-warning {:application/blacklisted-users [{:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}
+                                                                {:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                                 :blacklist/resource {:resource/ext-id "urn:12"}}
+                                                                {:blacklist/user {:userid "user2" :name "Second User" :email "second@example.com"}
+                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}]}])
 
+   (component-info license-field)
    (example "link license"
             [license-field
              {:application/id 123}
