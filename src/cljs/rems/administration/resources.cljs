@@ -77,7 +77,7 @@
            :title {:value (:resid resource)}
            :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active
-                           [readonly-checkbox checked?]]
+                           [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-resource (:id resource)]

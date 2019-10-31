@@ -85,7 +85,7 @@
            :title {:value (:form/title form)}
            :active (let [checked? (status-flags/active? form)]
                      {:td [:td.active
-                           [readonly-checkbox checked?]]
+                           [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-view-form form]

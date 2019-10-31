@@ -74,7 +74,7 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:form/organization form)]
               [inline-info-field (text :t.administration/title) (:form/title form)]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? form)]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? form)}]]]}]
    (let [id (:form/id form)]
      [:div.col.commands
       [back-button]

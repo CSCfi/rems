@@ -48,7 +48,7 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:organization resource)]
               [inline-info-field (text :t.administration/resource) (:resid resource)]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? resource)]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? resource)}]]]}]
    [licenses-view (:licenses resource) language]
    (let [id (:id resource)]
      [:div.col.commands
