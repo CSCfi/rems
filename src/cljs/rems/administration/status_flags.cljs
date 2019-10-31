@@ -51,16 +51,15 @@
 
 (defn display-archived-toggle [on-change]
   (let [display-archived? @(rf/subscribe [::display-archived?])
-        on-change (fn [value]
-                    (rf/dispatch [::set-display-archived? value])
-                    (when on-change
-                      (on-change)))]
+        on-change (fn []
+                    (rf/dispatch [::set-display-archived? (not display-archived?)])
+                    (when on-change (on-change)))]
     [:div.form-check.form-check-inline {:style {:float "right"}}
      [checkbox {:id :display-archived
                 :class :form-check-input
                 :value display-archived?
-                :on-change #(on-change (not display-archived?))}]
-     [:label.form-check-label {:for :display-archived :on-click #(on-change (not display-archived?))}
+                :on-change on-change}]
+     [:label.form-check-label {:for :display-archived :on-click on-change}
       (text :t.administration/display-archived)]]))
 
 (defn disabled-and-archived-explanation []
