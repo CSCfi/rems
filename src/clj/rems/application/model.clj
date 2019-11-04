@@ -544,7 +544,7 @@
 
 (defn- get-blacklist [application blacklisted?]
   (let [all-members (application-util/applicant-and-members application)
-        all-resources (map :resource/ext-id (:application/resources application))]
+        all-resources (distinct (map :resource/ext-id (:application/resources application)))]
     (vec
      (for [member all-members
            resource all-resources
