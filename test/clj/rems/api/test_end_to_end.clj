@@ -320,4 +320,10 @@
           (testing "application not approved"
             (let [application (api-call :get (str "/api/applications/" application-id) nil
                                         api-key applicant-id)]
-              (is (= "application.state/submitted" (:application/state application))))))))))
+              (is (= "application.state/submitted" (:application/state application)))))
+          (testing "blacklist visible to handler in application"
+            (let [application (api-call :get (str "/api/applications/" application-id) nil
+                                        api-key handler-id)]
+              (is (= [{:blacklist/user applicant-attributes
+                       :blacklist/resource {:resource/ext-id resource-ext-id}}]
+                     (:application/blacklist application))))))))))

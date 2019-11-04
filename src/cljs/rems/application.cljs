@@ -62,6 +62,18 @@
              (for [resource resources]
                [:li (localized (:catalogue-item/title resource))]))])))
 
+(defn- blacklist-warning [application]
+  (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
+        blacklist (:application/blacklist application)]
+    (when (not (empty? blacklist))
+      [:div.alert.alert-danger
+       (text :t.form/alert-blacklisted-users)
+       (into [:ul]
+             (for [entry blacklist
+                   resource (get resources-by-id (get-in entry [:blacklist/resource :resource/ext-id]))]
+               [:li (get-member-name (:blacklist/user entry))
+                ": " (localized (:catalogue-item/title resource))]))])))
+
 (defn- format-validation-error [type field]
   [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
    (text-format type (localized (:field/title field)))])
@@ -713,6 +725,7 @@
 (defn- render-application [{:keys [application edit-application attachment-success config userid]}]
   [:<>
    [disabled-items-warning application]
+   [blacklist-warning application]
    (text :t.applications/intro)
    [:div.row
     [:div.col-lg-8
@@ -812,7 +825,6 @@
                               :application/accepted-licenses {"developer" #{1}}
                               :application/permissions #{:application.command/add-member
                                                          :application.command/invite-member}}])
-
    (component-info disabled-items-warning)
    (example "no disabled items"
             [disabled-items-warning {}])
@@ -825,7 +837,18 @@
                                        :catalogue-item/title {:en "Catalogue item 2"}}
                                       {:catalogue-item/enabled true :catalogue-item/archived false
                                        :catalogue-item/title {:en "Catalogue item 3"}}]}])
+   (component-info blacklist-warning)
+   (example "no blacklist"
+            [blacklist-warning {}])
+   (example "three entries"
+            [blacklist-warning {:application/blacklisted-users [{:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}
+                                                                {:blacklist/user {:userid "user1" :name "First User" :email "first@example.com"}
+                                                                 :blacklist/resource {:resource/ext-id "urn:12"}}
+                                                                {:blacklist/user {:userid "user2" :name "Second User" :email "second@example.com"}
+                                                                 :blacklist/resource {:resource/ext-id "urn:11"}}]}])
 
+   (component-info license-field)
    (example "link license"
             [license-field
              {:application/id 123}

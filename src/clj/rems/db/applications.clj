@@ -63,8 +63,7 @@
    :get-catalogue-item-licenses get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
    :allocate-application-ids! allocate-application-ids!
-   :add-to-blacklist! blacklist/add-to-blacklist!
-   :blacklisted? blacklist/blacklisted?})
+   :add-to-blacklist! blacklist/add-to-blacklist!})
 
 (declare get-unrestricted-application)
 
@@ -79,7 +78,7 @@
                      distinct)]
     (->> app-ids
          (map get-unrestricted-application)
-         (mapcat #(approver-bot/generate-commands % command-injections))
+         (mapcat #(approver-bot/generate-commands %))
          doall)))
 
 (defn command! [cmd]
@@ -110,7 +109,8 @@
    :get-license licenses/get-license
    :get-user users/get-user
    :get-users-with-role users/get-users-with-role
-   :get-workflow workflow/get-workflow})
+   :get-workflow workflow/get-workflow
+   :blacklisted? blacklist/blacklisted?})
 
 ;; short-lived cache to speed up pollers which get the application
 ;; repeatedly for each event instead of building their own projection

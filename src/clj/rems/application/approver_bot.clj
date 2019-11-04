@@ -10,17 +10,10 @@
                   set)
              userid))
 
-(defn- any-member-blacklisted? [app {:keys [blacklisted?]}]
-  (some (fn [[user resource]]
-          (blacklisted? user resource))
-        (for [member (application-util/applicant-and-members app)
-              resource (:application/resources app)]
-          [(:userid member) (:resource/ext-id resource)])))
-
-(defn generate-commands [app injections]
+(defn generate-commands [app]
   (when (and (handler? app bot-userid)
              (= :application.state/submitted (:application/state app))
-             (not (any-member-blacklisted? app injections)))
+             (empty? (:application/blacklist app)))
     [{:type :application.command/approve
       :actor bot-userid
       :time (time/now)

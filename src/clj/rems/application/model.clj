@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application.events :as events]
+            [rems.application-util :as application-util]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
@@ -541,6 +542,18 @@
 
              {}))))
 
+(defn- get-blacklist [application blacklisted?]
+  (let [all-members (application-util/applicant-and-members application)
+        all-resources (distinct (map :resource/ext-id (:application/resources application)))]
+    (vec
+     (for [member all-members
+           resource all-resources
+           :when (blacklisted? (:userid member) resource)]
+       {:blacklist/user member :blacklist/resource {:resource/ext-id resource}}))))
+
+(defn- enrich-blacklist [application blacklisted?]
+  (assoc application :application/blacklist (get-blacklist application blacklisted?)))
+
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
             (->> members
@@ -565,7 +578,8 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn enrich-with-injections [application {:keys [get-form-template get-catalogue-item get-license
+(defn enrich-with-injections [application {:keys [blacklisted?
+                                                  get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
                                                   get-attachments-for-application]}]
   (let [answer-versions (remove nil? [(::draft-answers application)
@@ -592,6 +606,7 @@
         (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)
+        (enrich-blacklist blacklisted?) ;; uses enriched users
         (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))
 
@@ -615,6 +630,7 @@
 
 (defn- hide-sensitive-information [application]
   (-> application
+      (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 

@@ -41,7 +41,8 @@
    :id id :wfid 1 :formid 1})
 
 (def ^:private injections
-  {:get-workflow dummy-workflows
+  {:blacklisted? (constantly false)
+   :get-workflow dummy-workflows
    :get-form-template dummy-forms
    :get-catalogue-item dummy-get-catalogue-item
    :get-license dummy-licenses
