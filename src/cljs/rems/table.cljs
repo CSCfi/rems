@@ -285,9 +285,8 @@
                           #(rf/dispatch [::toggle-row-selection table (:key row)]))}
          (when (:selectable? table)
            [:td.selection
-            [checkbox
-             @(rf/subscribe [::selected-row table (:key row)])
-             #(rf/dispatch [::toggle-row-selection table (:key row)])]])]
+            [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])
+                       :on-change #(rf/dispatch [::toggle-row-selection table (:key row)])}]])]
         (for [column (:columns table)]
           (let [cell (get row (:key column))]
             (assert cell {:error "the row is missing a column"
