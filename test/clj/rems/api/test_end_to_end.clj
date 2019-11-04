@@ -326,4 +326,4 @@
                                         api-key handler-id)]
               (is (= [{:blacklist/user applicant-attributes
                        :blacklist/resource {:resource/ext-id resource-ext-id}}]
-                     (:application/blacklisted-users application))))))))))
+                     (:application/blacklist application))))))))))

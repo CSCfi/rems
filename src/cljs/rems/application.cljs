@@ -63,7 +63,7 @@
                [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
-  (let [blacklist (:application/blacklisted-users application)]
+  (let [blacklist (:application/blacklist application)]
     (when (not (empty? blacklist))
       [:div.alert.alert-danger
        (text :t.form/alert-blacklisted-users)

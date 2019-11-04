@@ -285,10 +285,10 @@
                                   :application/members #{}
                                   :application/past-members #{}
                                   :application/invitation-tokens {}
-                                  :application/blacklisted-users [{:blacklist/user {:userid "applicant"
-                                                                                    :email "applicant@example.com"
-                                                                                    :name "Applicant"}
-                                                                   :blacklist/resource {:resource/ext-id "urn:11"}}]
+                                  :application/blacklist [{:blacklist/user {:userid "applicant"
+                                                                            :email "applicant@example.com"
+                                                                            :name "Applicant"}
+                                                           :blacklist/resource {:resource/ext-id "urn:11"}}]
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"
@@ -491,11 +491,11 @@
                                                                                                                      :fi "fi filename"}
                                                                                        :license/enabled true
                                                                                        :license/archived false})
-                                                          :application/blacklisted-users [{}
-                                                                                          {:blacklist/user {:userid "applicant"
-                                                                                                            :email "applicant@example.com"
-                                                                                                            :name "Applicant"}
-                                                                                           :blacklist/resource {:resource/ext-id "urn:31"}}]})]
+                                                          :application/blacklist [{}
+                                                                                  {:blacklist/user {:userid "applicant"
+                                                                                                    :email "applicant@example.com"
+                                                                                                    :name "Applicant"}
+                                                                                   :blacklist/resource {:resource/ext-id "urn:31"}}]})]
                     (is (= expected-application (apply-events events)))))
 
                 (testing "> submitted"
@@ -641,11 +641,11 @@
                                                                                                                          :fi "fi filename"}
                                                                                            :license/enabled true
                                                                                            :license/archived false})
-                                                              :application/blacklisted-users [{}
-                                                                                              {:blacklist/user {:userid "applicant"
-                                                                                                                :email "applicant@example.com"
-                                                                                                                :name "Applicant"}
-                                                                                               :blacklist/resource {:resource/ext-id "urn:31"}}]})]
+                                                              :application/blacklist [{}
+                                                                                      {:blacklist/user {:userid "applicant"
+                                                                                                        :email "applicant@example.com"
+                                                                                                        :name "Applicant"}
+                                                                                       :blacklist/resource {:resource/ext-id "urn:31"}}]})]
                         (is (= expected-application (apply-events events)))))
                     (testing "> licenses added"
                       (let [new-event {:event/type :application.event/licenses-added
@@ -746,11 +746,11 @@
                                                                                                                                  :fi "fi filename"}
                                                                                                    :license/enabled true
                                                                                                    :license/archived false})
-                                                                      :application/blacklisted-users [{}
-                                                                                                      {:blacklist/user {:userid "applicant"
-                                                                                                                        :email "applicant@example.com"
-                                                                                                                        :name "Applicant"}
-                                                                                                       :blacklist/resource {:resource/ext-id "urn:31"}}]})]
+                                                                      :application/blacklist [{}
+                                                                                              {:blacklist/user {:userid "applicant"
+                                                                                                                :email "applicant@example.com"
+                                                                                                                :name "Applicant"}
+                                                                                               :blacklist/resource {:resource/ext-id "urn:31"}}]})]
                                 (is (= expected-application (apply-events events)))))
 
                             (testing "> licenses accepted"
@@ -783,10 +783,10 @@
                                                                      :application/events enriched-events
                                                                      :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
 
-                                                                     :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                                      :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                                                     {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
-                                                                                                      :blacklist/resource {:resource/ext-id "urn:11"}}]})]
+                                                                     :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                                                                                              :blacklist/resource {:resource/ext-id "urn:11"}}
+                                                                                             {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
+                                                                                              :blacklist/resource {:resource/ext-id "urn:11"}}]})]
                                     (is (= expected-application (apply-events events)))
                                     (testing "> licenses accepted for new member"
                                       (let [new-event {:event/type :application.event/licenses-accepted
@@ -983,10 +983,10 @@
                                                                  :application/events enriched-events
                                                                  :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
                                                                  :application/invitation-tokens {}
-                                                                 :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                                  :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                                                 {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
-                                                                                                  :blacklist/resource {:resource/ext-id "urn:11"}}]})]
+                                                                 :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                                                                                          :blacklist/resource {:resource/ext-id "urn:11"}}
+                                                                                         {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
+                                                                                          :blacklist/resource {:resource/ext-id "urn:11"}}]})]
                                 (is (= expected-application (apply-events events)))))))
 
                         (testing "> member added"
@@ -1003,10 +1003,10 @@
                                                             {:application/last-activity (DateTime. 4000)
                                                              :application/events enriched-events
                                                              :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
-                                                             :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                              :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                                             {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
-                                                                                              :blacklist/resource {:resource/ext-id "urn:11"}}]})]
+                                                             :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                                                                                      :blacklist/resource {:resource/ext-id "urn:11"}}
+                                                                                     {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
+                                                                                      :blacklist/resource {:resource/ext-id "urn:11"}}]})]
                             (is (= expected-application (apply-events events)))
 
                             (testing "> member removed"
@@ -1025,8 +1025,8 @@
                                                                  :application/events enriched-events
                                                                  :application/members #{}
                                                                  :application/past-members #{{:userid "member"}}
-                                                                 :application/blacklisted-users [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                                  :blacklist/resource {:resource/ext-id "urn:11"}}]})]
+                                                                 :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                                                                                          :blacklist/resource {:resource/ext-id "urn:11"}}]})]
                                 (is (= expected-application (apply-events events)))))))))))))))))
 
     (testing "generate report: permissions by role and state"

@@ -542,7 +542,7 @@
 
              {}))))
 
-(defn- get-blacklisted-users [application blacklisted?]
+(defn- get-blacklist [application blacklisted?]
   (let [all-members (application-util/applicant-and-members application)
         all-resources (map :resource/ext-id (:application/resources application))]
     (vec
@@ -551,8 +551,8 @@
            :when (blacklisted? (:userid member) resource)]
        {:blacklist/user member :blacklist/resource {:resource/ext-id resource}}))))
 
-(defn- enrich-blacklisted-users [application blacklisted?]
-  (assoc application :application/blacklisted-users (get-blacklisted-users application blacklisted?)))
+(defn- enrich-blacklist [application blacklisted?]
+  (assoc application :application/blacklist (get-blacklist application blacklisted?)))
 
 (defn- enrich-user-attributes [application get-user]
   (letfn [(enrich-members [members]
@@ -606,7 +606,7 @@
         (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
         (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
         (enrich-user-attributes get-user)
-        (enrich-blacklisted-users blacklisted?) ;; uses enriched users
+        (enrich-blacklist blacklisted?) ;; uses enriched users
         (enrich-workflow-handlers get-workflow)
         (enrich-super-users get-users-with-role))))
 
@@ -630,7 +630,7 @@
 
 (defn- hide-sensitive-information [application]
   (-> application
-      (dissoc :application/blacklisted-users)
+      (dissoc :application/blacklist)
       (update :application/events hide-sensitive-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
