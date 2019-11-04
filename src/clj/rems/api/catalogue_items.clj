@@ -43,6 +43,13 @@
   {:success s/Bool
    :id s/Int})
 
+(s/defschema ChangeFormCommand
+  {:form (describe s/Int "new form id")})
+
+(s/defschema ChangeFormResponse
+  {:success s/Bool
+   :new-catalogue-item-id s/Int})
+
 ;; TODO use declarative roles everywhere
 (def catalogue-items-api
   (context "/catalogue-items" []
@@ -64,6 +71,17 @@
            (catalogue/get-localized-catalogue-items {:resource resource
                                                      :expand-names? (str/includes? (or expand "") "names")
                                                      :archived archived}))))
+
+    (POST "/:item-id/change-form" []
+      :summary "Change catalogue item form. Creates a copy and ends the old."
+      :roles #{:owner}
+      :path-params [item-id :- (describe s/Int "catalogue item")]
+      :body [command ChangeFormCommand]
+      :responses {200 {:schema ChangeFormResponse}
+                  404 {:schema s/Any :description "Not found"}}
+      (if-let [it (catalogue/get-localized-catalogue-item item-id)]
+        (ok (catalogue/change-form! it (:form command)))
+        (not-found-json-response)))
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"

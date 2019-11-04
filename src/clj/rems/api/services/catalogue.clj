@@ -67,3 +67,32 @@
 
 (def get-localized-catalogue-items catalogue/get-localized-catalogue-items)
 (def get-localized-catalogue-item catalogue/get-localized-catalogue-item)
+
+(defn change-form!
+  "Changes the form of a catalogue item.
+
+  Since we don't want to modify the old item we must create
+  a new item that is the copy of the old item except for the changed form."
+  [item form-id]
+  ;; create a new item with the new form
+  (let [new-item (db/create-catalogue-item! {:enabled true
+                                             :archived false
+                                             :form form-id
+                                             :resid (:resource-id item)
+                                             :wfid (:wfid item)})]
+
+    ;; copy localizations
+    (doseq [[langcode localization] (:localizations item)]
+      (db/upsert-catalogue-item-localization! {:id (:id new-item)
+                                               :langcode (name langcode)
+                                               :title (:title localization)
+                                               :infourl (:infourl localization)}))
+    ;; Reset cache so that next call to get localizations will get these ones.
+    (catalogue/reset-cache!)
+
+    ;; end the old catalogue item
+    (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
+    (db/set-catalogue-item-archived! {:id (:id item) :archived true})
+    (db/set-catalogue-item-endt! {:id (:id item) :end (:start new-item)})
+
+    {:success true :new-catalogue-item-id (:id new-item)}))
