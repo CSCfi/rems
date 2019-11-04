@@ -44,6 +44,11 @@
   [url]
   (accountant/navigate! url))
 
+(defn set-location!
+  "Sets the browser URL. We use this to force a reload when e.g. the identity changes."
+  [location]
+  (set! (.-location js/window) location))
+
 (defn unauthorized! []
   (rf/dispatch [:unauthorized! (.. js/window -location -href)]))
 

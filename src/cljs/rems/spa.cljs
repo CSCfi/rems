@@ -41,7 +41,7 @@
             [rems.roles :as roles]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
-            [rems.util :refer [navigate! fetch parse-int]]
+            [rems.util :refer [navigate! fetch parse-int set-location!]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.history.Html5History))
@@ -116,7 +116,7 @@
  (fn [_ [_ current-url]]
    (println "Received unauthorized from" current-url)
    (.setItem js/sessionStorage "rems-redirect-url" current-url)
-   (navigate! "/")
+   (set-location! "/") ;; we want to refresh identity
    {}))
 
 (rf/reg-event-fx
