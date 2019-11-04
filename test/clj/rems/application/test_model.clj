@@ -1023,6 +1023,97 @@
                                                               :email "handler@example.com"}]}}
          (model/enrich-with-injections approved-application injections))))
 
+(deftest test-enrich-event
+  (testing "resources-changed"
+    (is (= {:event/type :application.event/resources-changed
+            :event/time (DateTime. 1)
+            :event/actor "applicant"
+            :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+            :application/id 1
+            :application/resources [{:catalogue-item/id 10
+                                     :resource/id 11
+                                     :resource/ext-id "urn:11"
+                                     :catalogue-item/title {:en "en title"
+                                                            :fi "fi title"}
+                                     :catalogue-item/infourl {:en "http://info.com"}
+                                     :catalogue-item/start (DateTime. 100)
+                                     :catalogue-item/end nil
+                                     :catalogue-item/enabled true
+                                     :catalogue-item/expired false
+                                     :catalogue-item/archived false}
+                                    {:catalogue-item/id 20
+                                     :resource/id 21
+                                     :resource/ext-id "urn:21"
+                                     :catalogue-item/title {:en "en title"
+                                                            :fi "fi title"}
+                                     :catalogue-item/infourl {:en "http://info.com"}
+                                     :catalogue-item/start (DateTime. 100)
+                                     :catalogue-item/end nil
+                                     :catalogue-item/enabled true
+                                     :catalogue-item/expired false
+                                     :catalogue-item/archived false}]}
+           (model/enrich-event {:event/type :application.event/resources-changed
+                                :event/time (DateTime. 1)
+                                :event/actor "applicant"
+                                :application/id 1
+                                :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                                        {:catalogue-item/id 20 :resource/ext-id "urn:21"}]}
+                               get-user get-catalogue-item))))
+  (testing "decision-requested"
+    (is (= {:event/type :application.event/decision-requested
+            :event/time (DateTime. 1)
+            :event/actor "handler"
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :application/id 1
+            :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider"}
+                                   {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
+           (model/enrich-event {:event/type :application.event/decision-requested
+                                :event/time (DateTime. 1)
+                                :event/actor "handler"
+                                :application/id 1
+                                :application/deciders ["decider" "commenter"]}
+                               get-user get-catalogue-item))))
+  (testing "comment-requested"
+    (is (= {:event/type :application.event/comment-requested
+            :event/time (DateTime. 1)
+            :event/actor "handler"
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :application/id 1
+            :application/commenters [{:userid "decider" :email "decider@example.com" :name "Decider"}
+                                     {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
+           (model/enrich-event {:event/type :application.event/comment-requested
+                                :event/time (DateTime. 1)
+                                :event/actor "handler"
+                                :application/id 1
+                                :application/commenters ["decider" "commenter"]}
+                               get-user get-catalogue-item))))
+  (testing "member-added"
+    (is (= {:event/type :application.event/member-added
+            :event/time (DateTime. 1)
+            :event/actor "handler"
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :application/id 1
+            :application/member {:userid "member" :email "member@example.com" :name "Member"}}
+           (model/enrich-event {:event/type :application.event/member-added
+                                :event/time (DateTime. 1)
+                                :event/actor "handler"
+                                :application/id 1
+                                :application/member {:userid "member"}}
+                               get-user get-catalogue-item))))
+  (testing "member-removed"
+    (is (= {:event/type :application.event/member-removed
+            :event/time (DateTime. 1)
+            :event/actor "handler"
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :application/id 1
+            :application/member {:userid "member" :email "member@example.com" :name "Member"}}
+           (model/enrich-event {:event/type :application.event/member-removed
+                                :event/time (DateTime. 1)
+                                :event/actor "handler"
+                                :application/id 1
+                                :application/member {:userid "member"}}
+                               get-user get-catalogue-item)))))
+
 ;;;; Tests for permissions
 
 (deftest test-calculate-permissions
