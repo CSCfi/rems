@@ -63,14 +63,18 @@
                [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
-  (let [blacklist (:application/blacklist application)]
+  (let [resources-by-id (index-by [:resource/ext-id] (:application/resources application))
+        blacklist (:application/blacklist application)]
     (when (not (empty? blacklist))
       [:div.alert.alert-danger
        (text :t.form/alert-blacklisted-users)
        (into [:ul]
              (for [entry blacklist]
                [:li (get-member-name (:blacklist/user entry))
-                ": " (get-in entry [:blacklist/resource :resource/ext-id])]))])))
+                ": " (->> (get-in entry [:blacklist/resource :resource/ext-id])
+                          (get resources-by-id)
+                          :catalogue-item/title
+                          localized)]))])))
 
 (defn- format-validation-error [type field]
   [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
