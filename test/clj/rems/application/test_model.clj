@@ -13,6 +13,8 @@
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
+;;;; Mock injections
+
 (def ^:private get-form-template
   {40 {:form/id 40
        :form/organization "org"
@@ -241,841 +243,654 @@
       (testing (str description " " id)
         (is (s/validate schema dummy))))))
 
-(deftest test-application-view
-  (let [sample-applications (atom [])
-        save-sample-application (fn [app]
-                                  (swap! sample-applications conj app)
-                                  app)
-        apply-events (fn [events]
-                       (let [application (-> events
-                                             events/validate-events
-                                             (model/build-application-view injections)
-                                             save-sample-application
-                                             permissions/cleanup)]
-                         (is (contains? model/states (:application/state application)))
-                         application))]
-    (testing "created"
-      (let [new-event {:event/type :application.event/created
-                       :event/time (DateTime. 1000)
+;;;; Collecting sample applications
+
+(def ^:dynamic *sample-applications*)
+
+(defn save-sample-application! [application]
+  (swap! *sample-applications* conj application)
+  application)
+
+(defn state-role-permissions [application]
+  (map (fn [[role permissions]]
+         {:state (:application/state application)
+          :role role
+          :permissions permissions})
+       (:rems.permissions/role-permissions application)))
+
+(defn output-permissions-reference [applications]
+  (let [data (mapcat state-role-permissions applications)
+        states (->> data (map :state) distinct sort)
+        roles (->> data (map :role) distinct sort)
+        nowrap (fn [s]
+                 ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
+                 (-> s
+                     (str/replace " " "\u00A0") ;  non-breaking space
+                     (str/replace "-" "\u2011")))] ; non-breaking hyphen
+    (->> (hiccup/html
+          "# Application Permissions Reference\n\n"
+          [:table {:border 1}
+           [:tr
+            [:th (nowrap "State \\ Role")]
+            (for [role roles]
+              [:th (nowrap (name role))])]
+           (for [state states]
+             [:tr
+              [:th {:valign :top}
+               (nowrap (name state))]
+              (for [role roles]
+                (let [perm-sets (->> data
+                                     (filter #(= state (:state %)))
+                                     (filter #(= role (:role %)))
+                                     (map :permissions))
+                      all-perms (apply set/union perm-sets)
+                      ;; the states and permissions are not guaranteed to have a 1:1 mapping,
+                      ;; so we separate conditional permissions from those that are always there
+                      always-perms (if (empty? perm-sets)
+                                     #{}
+                                     (apply set/intersection perm-sets))
+                      sometimes-perms (set/difference all-perms always-perms)]
+                  [:td {:valign :top}
+                   "<!-- role: " (name role) " -->"
+                   (for [perm (sort always-perms)]
+                     [:div (nowrap (name perm))])
+                   (for [perm (sort sometimes-perms)]
+                     [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
+         (bw/beautify-html)
+         (spit "docs/application-permissions.md"))))
+
+(defn permissions-reference-fixture [f]
+  (binding [*sample-applications* (atom [])]
+    (f)
+    (output-permissions-reference @*sample-applications*)))
+
+(use-fixtures :once permissions-reference-fixture)
+
+;;;; Utilities
+
+(defn apply-events [events]
+  (let [application (->> events
+                         events/validate-events
+                         (reduce model/application-view nil)
+                         save-sample-application!
+                         ;; permissions are tested separately
+                         permissions/cleanup)]
+    (is (contains? model/states (:application/state application)))
+    application))
+
+(defn recreate
+  "Use (is (= app (recreate app))) instead of (is (= app (apply-events (:application/events app))))"
+  [application]
+  (apply-events (:application/events application)))
+
+;;;; Tests for application-view
+
+;;; Start by defining some useful states
+
+(def created-event {:event/type :application.event/created
+                    :event/time (DateTime. 1000)
+                    :event/actor "applicant"
+                    :application/id 1
+                    :application/external-id "extid"
+                    :application/resources [{:catalogue-item/id 10
+                                             :resource/ext-id "urn:11"}
+                                            {:catalogue-item/id 20
+                                             :resource/ext-id "urn:21"}]
+                    :application/licenses [{:license/id 30}
+                                           {:license/id 31}
+                                           {:license/id 32}]
+                    :form/id 40
+                    :workflow/id 50
+                    :workflow/type :workflow/dynamic})
+
+(def created-application {:application/id 1
+                          :application/external-id "extid"
+                          :application/state :application.state/draft
+                          :application/todo nil
+                          :application/created (DateTime. 1000)
+                          :application/modified (DateTime. 1000)
+                          :application/last-activity (DateTime. 1000)
+                          :application/applicant {:userid "applicant"}
+                          :application/members #{}
+                          :application/past-members #{}
+                          :application/invitation-tokens {}
+                          :application/resources [{:catalogue-item/id 10
+                                                   :resource/ext-id "urn:11"}
+                                                  {:catalogue-item/id 20
+                                                   :resource/ext-id "urn:21"}]
+                          :application/licenses [{:license/id 30}
+                                                 {:license/id 31}
+                                                 {:license/id 32}]
+                          :application/accepted-licenses {}
+                          :application/events [created-event]
+                          :application/form {:form/id 40}
+                          :application/workflow {:workflow/type :workflow/dynamic
+                                                 :workflow/id 50}})
+
+(deftest test-application-view-created
+  (is (= created-application (recreate created-application))))
+
+(def saved-event {:event/type :application.event/draft-saved
+                  :event/time (DateTime. 2000)
+                  :event/actor "applicant"
+                  :application/id 1
+                  :application/field-values {41 "foo"
+                                             42 "bar"}})
+
+(def saved-application (merge created-application
+                              {:application/modified (DateTime. 2000)
+                               :application/last-activity (DateTime. 2000)
+                               :application/events [created-event saved-event]
+                               :application/accepted-licenses {}
+                               :rems.application.model/draft-answers {41 "foo", 42 "bar"}}))
+
+(deftest test-application-view-saved
+  (is (= saved-application (recreate saved-application))))
+
+
+(def licenses-accepted-event {:event/type :application.event/licenses-accepted
+                              :event/time (DateTime. 2500)
+                              :event/actor "applicant"
+                              :application/id 1
+                              :application/accepted-licenses #{30 31 32}})
+
+(def licenses-accepted-application (merge saved-application
+                                          {:application/last-activity (DateTime. 2500)
+                                           :application/events [created-event saved-event licenses-accepted-event]
+                                           :application/accepted-licenses {"applicant" #{30 31 32}}}))
+
+(deftest test-application-view-licenses-accepted
+  (is (= licenses-accepted-application (recreate licenses-accepted-application))))
+
+(def submitted-event {:event/type :application.event/submitted
+                      :event/time (DateTime. 3000)
+                      :event/actor "applicant"
+                      :application/id 1})
+
+(def submitted-application (-> licenses-accepted-application
+                               (dissoc :rems.application.model/draft-answers)
+                               (merge {:application/last-activity (DateTime. 3000)
+                                       :application/events [created-event saved-event licenses-accepted-event submitted-event]
+                                       :application/first-submitted (DateTime. 3000)
+                                       :application/state :application.state/submitted
+                                       :application/todo :new-application
+                                       ::model/submitted-answers {41 "foo" 42 "bar"}
+                                       ::model/previous-submitted-answers nil})))
+
+(deftest test-application-view-submitted
+  (is (= submitted-application (recreate submitted-application))))
+
+(def approved-event {:event/type :application.event/approved
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/comment "looks good"})
+
+(def approved-application (merge submitted-application
+                                 {:application/last-activity (DateTime. 4000)
+                                  :application/events (conj (:application/events submitted-application)
+                                                            approved-event)
+                                  :application/state :application.state/approved
+                                  :application/todo nil}))
+
+(deftest test-application-view-approved
+  (is (= approved-application (recreate approved-application))))
+
+;;; Now use the defined states in tests
+
+(deftest test-application-view-licenses-added
+  (let [licenses-added-event {:event/type :application.event/licenses-added
+                              :event/time (DateTime. 3500)
+                              :event/actor "handler"
+                              :application/id 1
+                              :application/licenses [{:license/id 33}]
+                              :application/comment "Please sign these terms also"}
+        licenses-added-application (merge submitted-application
+                                          {:application/last-activity (DateTime. 3500)
+                                           :application/modified (DateTime. 3500)
+                                           :application/events (conj (:application/events submitted-application)
+                                                                     licenses-added-event)
+                                           :application/licenses [{:license/id 33}
+                                                                  {:license/id 30}
+                                                                  {:license/id 31}
+                                                                  {:license/id 32}]})]
+    (is (= licenses-added-application (recreate licenses-added-application)))))
+
+(deftest test-application-view-copied
+  (testing "copied from"
+    (let [new-event {:event/type :application.event/copied-from
+                     :event/time (DateTime. 3000)
+                     :event/actor "applicant"
+                     :application/id 1
+                     :application/copied-from {:application/id 42
+                                               :application/external-id "2019/42"}}
+          events [created-event saved-event new-event]
+          expected-application (merge saved-application
+                                      {:application/last-activity (DateTime. 3000)
+                                       :application/events events
+                                       :application/copied-from {:application/id 42
+                                                                 :application/external-id "2019/42"}
+                                       :rems.application.model/submitted-answers {41 "foo", 42 "bar"}})]
+      (is (= expected-application (recreate expected-application)))))
+
+  (testing "copied to"
+    (let [;; two copied-to events in order to test the order in which they are shown
+          new-event-1 {:event/type :application.event/copied-to
+                       :event/time (DateTime. 3000)
                        :event/actor "applicant"
                        :application/id 1
-                       :application/external-id "extid"
-                       :application/resources [{:catalogue-item/id 10
-                                                :resource/ext-id "urn:11"}
-                                               {:catalogue-item/id 20
-                                                :resource/ext-id "urn:21"}]
-                       :application/licenses [{:license/id 30}
-                                              {:license/id 31}
-                                              {:license/id 32}]
-                       :form/id 40
-                       :workflow/id 50
-                       :workflow/type :workflow/dynamic}
-            events [new-event]
-            enriched-events [(assoc new-event :event/actor-attributes (get-user "applicant"))]
-            expected-application {:application/id 1
-                                  :application/external-id "extid"
-                                  :application/state :application.state/draft
-                                  :application/todo nil
-                                  :application/created (DateTime. 1000)
-                                  :application/modified (DateTime. 1000)
-                                  :application/last-activity (DateTime. 1000)
-                                  :application/applicant {:userid "applicant"
-                                                          :email "applicant@example.com"
-                                                          :name "Applicant"}
-                                  :application/members #{}
-                                  :application/past-members #{}
-                                  :application/invitation-tokens {}
-                                  :application/blacklist [{:blacklist/user {:userid "applicant"
-                                                                            :email "applicant@example.com"
-                                                                            :name "Applicant"}
-                                                           :blacklist/resource {:resource/ext-id "urn:11"}}]
-                                  :application/resources [{:catalogue-item/id 10
-                                                           :resource/id 11
-                                                           :resource/ext-id "urn:11"
-                                                           :catalogue-item/title {:en "en title"
-                                                                                  :fi "fi title"}
-                                                           :catalogue-item/infourl {:en "http://info.com"}
-                                                           :catalogue-item/start (DateTime. 100)
-                                                           :catalogue-item/end nil
-                                                           :catalogue-item/enabled true
-                                                           :catalogue-item/expired false
-                                                           :catalogue-item/archived false}
-                                                          {:catalogue-item/id 20
-                                                           :resource/id 21
-                                                           :resource/ext-id "urn:21"
-                                                           :catalogue-item/title {:en "en title"
-                                                                                  :fi "fi title"}
-                                                           :catalogue-item/infourl {:en "http://info.com"}
-                                                           :catalogue-item/start (DateTime. 100)
-                                                           :catalogue-item/end nil
-                                                           :catalogue-item/enabled true
-                                                           :catalogue-item/expired false
-                                                           :catalogue-item/archived false}]
-                                  :application/licenses [{:license/id 30
-                                                          :license/type :link
-                                                          :license/title {:en "en title"
-                                                                          :fi "fi title"}
-                                                          :license/link {:en "http://en-license-link"
-                                                                         :fi "http://fi-license-link"}
-                                                          :license/enabled true
-                                                          :license/archived false}
-                                                         {:license/id 31
-                                                          :license/type :text
-                                                          :license/title {:en "en title"
-                                                                          :fi "fi title"}
-                                                          :license/text {:en "en license text"
-                                                                         :fi "fi license text"}
-                                                          :license/enabled true
-                                                          :license/archived false}
-                                                         {:license/id 32
-                                                          :license/type :attachment
-                                                          :license/title {:en "en title"
-                                                                          :fi "fi title"}
-                                                          :license/attachment-id {:en 3201
-                                                                                  :fi 3202}
-                                                          :license/attachment-filename {:en "en filename"
-                                                                                        :fi "fi filename"}
-                                                          :license/enabled true
-                                                          :license/archived false}]
-                                  :application/accepted-licenses {}
-                                  :application/events enriched-events
-                                  :application/description ""
-                                  :application/form {:form/id 40
-                                                     :form/title "form title"
-                                                     :form/fields [{:field/id 41
-                                                                    :field/value ""
-                                                                    :field/type :description
-                                                                    :field/title {:en "en title" :fi "fi title"}
-                                                                    :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                                                    :field/optional false
-                                                                    :field/options []
-                                                                    :field/max-length 100}
-                                                                   {:field/id 42
-                                                                    :field/value ""
-                                                                    :field/type :text
-                                                                    :field/title {:en "en title" :fi "fi title"}
-                                                                    :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                                                    :field/optional false
-                                                                    :field/options []
-                                                                    :field/max-length 100}]}
-                                  :application/attachments []
-                                  :application/workflow {:workflow/id 50
-                                                         :workflow/type :workflow/dynamic
-                                                         :workflow.dynamic/handlers [{:userid "handler"
-                                                                                      :name "Handler"
-                                                                                      :email "handler@example.com"}]}}]
-        (is (= expected-application (apply-events events)))
+                       :application/copied-to {:application/id 666
+                                               :application/external-id "2020/666"}}
+          new-event-2 {:event/type :application.event/copied-to
+                       :event/time (DateTime. 3000)
+                       :event/actor "applicant"
+                       :application/id 1
+                       :application/copied-to {:application/id 777
+                                               :application/external-id "2021/777"}}
+          events [created-event saved-event new-event-1 new-event-2]
+          expected-application (merge saved-application
+                                      {:application/last-activity (DateTime. 3000)
+                                       :application/events events
+                                       :application/copied-to [{:application/id 666
+                                                                :application/external-id "2020/666"}
+                                                               {:application/id 777
+                                                                :application/external-id "2021/777"}]})]
+      (is (= expected-application (recreate expected-application))))))
 
-        (testing "> draft saved"
-          (let [new-event {:event/type :application.event/draft-saved
-                           :event/time (DateTime. 2000)
+(deftest test-application-view-returned-resubmitted
+  (testing "> returned"
+    (let [new-event {:event/type :application.event/returned
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/comment "fix stuff"}
+          events [created-event saved-event licenses-accepted-event submitted-event new-event]
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/state :application.state/returned
+                                       :application/todo nil
+                                       ::model/draft-answers {41 "foo" 42 "bar"}})]
+      (is (= expected-application (recreate expected-application)))
+
+      (testing "> draft saved x2"
+        (let [new-event-1 {:event/type :application.event/draft-saved
+                           :event/time (DateTime. 5000)
                            :event/actor "applicant"
                            :application/id 1
-                           :application/field-values {41 "foo"
-                                                      42 "bar"}}
+                           ;; non-submitted versions should not show up as the previous value
+                           :application/field-values {41 "intermediate draft"
+                                                      42 "intermediate draft"}}
+              new-event-2 {:event/type :application.event/draft-saved
+                           :event/time (DateTime. 6000)
+                           :event/actor "applicant"
+                           :application/id 1
+                           :application/field-values {41 "new foo"
+                                                      42 "new bar"}}
+              events (conj events new-event-1 new-event-2)
+              expected-application (deep-merge expected-application
+                                               {:application/modified (DateTime. 6000)
+                                                :application/last-activity (DateTime. 6000)
+                                                :application/events events
+                                                ::model/draft-answers {41 "new foo" 42 "new bar"}})]
+          (is (= expected-application (recreate expected-application)))
+
+          (testing "> resubmitted"
+            (let [new-event {:event/type :application.event/submitted
+                             :event/time (DateTime. 7000)
+                             :event/actor "applicant"
+                             :application/id 1}
+                  events (conj events new-event)
+                  expected-application (-> expected-application
+                                           (dissoc :rems.application.model/draft-answers)
+                                           (merge {:application/last-activity (DateTime. 7000)
+                                                   :application/events events
+                                                   :application/state :application.state/submitted
+                                                   :application/todo :resubmitted-application
+                                                   ::model/submitted-answers {41 "new foo" 42 "new bar"}
+                                                   ::model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
+              (is (= expected-application (recreate expected-application)))))))
+
+      (testing "> resubmitted (no draft saved)"
+        (let [new-event {:event/type :application.event/submitted
+                         :event/time (DateTime. 7000)
+                         :event/actor "applicant"
+                         :application/id 1}
+              events (conj events new-event)
+              expected-application (-> expected-application
+                                       (dissoc ::model/draft-answers)
+                                       (merge {:application/last-activity (DateTime. 7000)
+                                               :application/events events
+                                               :application/state :application.state/submitted
+                                               :application/todo :resubmitted-application
+                                               ;; when there was no draft-saved event, the current and
+                                               ;; previous submitted answers must be the same
+                                               ::model/submitted-answers {41 "foo" 42 "bar"}
+                                               ::model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
+          (is (= expected-application (recreate expected-application))))))))
+
+(deftest test-application-view-resources-changed
+  (testing "by applicant"
+    (let [new-event {:event/type :application.event/resources-changed
+                     :event/time (DateTime. 2600)
+                     :event/actor "applicant"
+                     :application/id 1
+                     :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                             {:catalogue-item/id 20 :resource/ext-id "urn:21"}
+                                             {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                     :application/licenses [{:license/id 30}
+                                            {:license/id 31}
+                                            {:license/id 32}
+                                            {:license/id 34}]}
+          events [created-event saved-event new-event]
+          expected-application (merge saved-application
+                                      {:application/last-activity (DateTime. 2600)
+                                       :application/modified (DateTime. 2600)
+                                       :application/events events
+                                       :application/resources (conj (:application/resources licenses-accepted-application)
+                                                                    {:catalogue-item/id 30
+                                                                     :resource/ext-id "urn:31"})
+                                       :application/licenses (conj (:application/licenses licenses-accepted-application)
+                                                                   {:license/id 34})})]
+      (is (= expected-application (recreate expected-application)))))
+  (testing "by handler"
+    (testing "for submitted application"
+      (let [new-event {:event/type :application.event/resources-changed
+                       :event/time (DateTime. 3400)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/comment "You should include this resource."
+                       :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20 :resource/ext-id "urn:21"}
+                                               {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}
+                                              {:license/id 32}
+                                              {:license/id 34}]}
+            events (conj (:application/events submitted-application) new-event)
+            expected-application (merge submitted-application
+                                        {:application/last-activity (DateTime. 3400)
+                                         :application/modified (DateTime. 3400)
+                                         :application/events events
+                                         :application/resources (conj (:application/resources submitted-application)
+                                                                      {:catalogue-item/id 30
+                                                                       :resource/ext-id "urn:31"})
+                                         :application/licenses (conj (:application/licenses submitted-application)
+                                                                     {:license/id 34})})]
+        (is (= expected-application (recreate expected-application)))))
+    (testing "for approved application"
+      (let [new-event {:event/type :application.event/resources-changed
+                       :event/time (DateTime. 4500)
+                       :event/actor "handler"
+                       :application/id 1
+                       :application/comment "I changed the resources"
+                       :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}
+                                              {:license/id 32}
+                                              ;; Include also the previously added license #33 in the new licenses.
+                                              {:license/id 33}
+                                              {:license/id 34}]}
+            events (conj (:application/events approved-application) new-event)
+            expected-application (merge approved-application
+                                        {:application/last-activity (DateTime. 4500)
+                                         :application/modified (DateTime. 4500)
+                                         :application/events events
+                                         :application/resources [{:catalogue-item/id 10
+                                                                  :resource/ext-id "urn:11"}
+                                                                 {:catalogue-item/id 30
+                                                                  :resource/ext-id "urn:31"}]
+                                         :application/licenses [{:license/id 30}
+                                                                {:license/id 31}
+                                                                {:license/id 32}
+                                                                {:license/id 33}
+                                                                {:license/id 34}]})]
+        (is (= expected-application (recreate expected-application)))))))
+
+(deftest test-application-view-licenses-accepted
+  (let [expected-application approved-application
+        events (:application/events approved-application)]
+    (testing "> licenses accepted"
+      (let [new-event {:event/type :application.event/licenses-accepted
+                       :event/time (DateTime. 4500)
+                       :event/actor "applicant"
+                       :application/id 1
+                       :application/accepted-licenses #{30 31 32 33}}
+            events (conj events new-event)
+            expected-application (merge expected-application
+                                        {:application/last-activity (DateTime. 4500)
+                                         :application/events events
+                                         :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
+        (is (= expected-application (recreate expected-application)))
+
+        (testing "> member added"
+          (let [new-event {:event/type :application.event/member-added
+                           :event/time (DateTime. 4600)
+                           :event/actor "handler"
+                           :application/id 1
+                           :application/member {:userid "member"}}
                 events (conj events new-event)
-                enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                expected-application (deep-merge expected-application
-                                                 {:application/modified (DateTime. 2000)
-                                                  :application/last-activity (DateTime. 2000)
-                                                  :application/events enriched-events
-                                                  :application/description "foo"
-                                                  :application/accepted-licenses {}
-                                                  :application/form {:form/fields [{:field/value "foo"}
-                                                                                   {:field/value "bar"}]}})]
-            (is (= expected-application (apply-events events)))
-
-            (testing "> copied from"
-              (let [new-event {:event/type :application.event/copied-from
-                               :event/time (DateTime. 3000)
-                               :event/actor "applicant"
-                               :application/id 1
-                               :application/copied-from {:application/id 42
-                                                         :application/external-id "2019/42"}}
-                    events (conj events new-event)
-                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                    expected-application (deep-merge expected-application
-                                                     {:application/last-activity (DateTime. 3000)
-                                                      :application/events enriched-events
-                                                      :application/copied-from {:application/id 42
-                                                                                :application/external-id "2019/42"}
-                                                      :application/form {:form/fields [{:field/previous-value "foo"}
-                                                                                       {:field/previous-value "bar"}]}})]
-                (is (= expected-application (apply-events events)))))
-
-            (testing "> copied to"
-              (let [;; two copied-to events in order to test the order in which they are shown
-                    new-event-1 {:event/type :application.event/copied-to
-                                 :event/time (DateTime. 3000)
-                                 :event/actor "applicant"
-                                 :application/id 1
-                                 :application/copied-to {:application/id 666
-                                                         :application/external-id "2020/666"}}
-                    new-event-2 {:event/type :application.event/copied-to
-                                 :event/time (DateTime. 3000)
-                                 :event/actor "applicant"
-                                 :application/id 1
-                                 :application/copied-to {:application/id 777
-                                                         :application/external-id "2021/777"}}
-                    events (conj events new-event-1 new-event-2)
-                    enriched-events (conj enriched-events
-                                          (assoc new-event-1 :event/actor-attributes (get-user "applicant"))
-                                          (assoc new-event-2 :event/actor-attributes (get-user "applicant")))
-                    expected-application (deep-merge expected-application
-                                                     {:application/last-activity (DateTime. 3000)
-                                                      :application/events enriched-events
-                                                      :application/copied-to [{:application/id 666
-                                                                               :application/external-id "2020/666"}
-                                                                              {:application/id 777
-                                                                               :application/external-id "2021/777"}]})]
-                (is (= expected-application (apply-events events)))))
-
-            (testing "> accepted licenses"
+                expected-application (merge expected-application
+                                            {:application/last-activity (DateTime. 4600)
+                                             :application/events events
+                                             :application/members #{{:userid "member"}}})]
+            (is (= expected-application (recreate expected-application)))
+            (testing "> licenses accepted for new member"
               (let [new-event {:event/type :application.event/licenses-accepted
-                               :event/time (DateTime. 2500)
-                               :event/actor "applicant"
+                               :event/time (DateTime. 4700)
+                               :event/actor "member"
                                :application/id 1
-                               :application/accepted-licenses #{30 31 32}}
+                               :application/accepted-licenses #{30 33}}
                     events (conj events new-event)
-                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                    expected-application (deep-merge expected-application
-                                                     {:application/last-activity (DateTime. 2500)
-                                                      :application/events enriched-events
-                                                      :application/accepted-licenses {"applicant" #{30 31 32}}})]
-                (is (= expected-application (apply-events events)))
-
-                (testing "> resources changed by applicant"
-                  (let [new-event {:event/type :application.event/resources-changed
-                                   :event/time (DateTime. 2600)
-                                   :event/actor "applicant"
+                    expected-application (merge expected-application
+                                                {:application/last-activity (DateTime. 4700)
+                                                 :application/events events
+                                                 :application/accepted-licenses {"applicant" #{30 31 32 33}
+                                                                                 "member" #{30 33}}})]
+                (is (= expected-application (recreate expected-application)))
+                (testing "> licenses accepted overwrites previous"
+                  (let [new-event {:event/type :application.event/licenses-accepted
+                                   :event/time (DateTime. 4800)
+                                   :event/actor "member"
                                    :application/id 1
-                                   :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
-                                                           {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                                           {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
-                                   :application/licenses [{:license/id 30}
-                                                          {:license/id 31}
-                                                          {:license/id 32}
-                                                          {:license/id 34}]}
+                                   :application/accepted-licenses #{31 32}}
                         events (conj events new-event)
-                        enriched-events
-                        (conj enriched-events (merge new-event
-                                                     {:event/actor-attributes (get-user "applicant")
-                                                      :application/resources
-                                                      [resource-id-11
-                                                       resource-id-21
-                                                       resource-id-31]}))
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 2600)
-                                                          :application/modified (DateTime. 2600)
-                                                          :application/events enriched-events
-                                                          :application/resources (conj (:application/resources expected-application)
-                                                                                       {:catalogue-item/id 30
-                                                                                        :resource/id 31
-                                                                                        :resource/ext-id "urn:31"
-                                                                                        :catalogue-item/title {:en "en title"
-                                                                                                               :fi "fi title"}
-                                                                                        :catalogue-item/infourl {:en "http://info.com"}
-                                                                                        :catalogue-item/start (DateTime. 100)
-                                                                                        :catalogue-item/end nil
-                                                                                        :catalogue-item/enabled true
-                                                                                        :catalogue-item/expired false
-                                                                                        :catalogue-item/archived false})
-                                                          :application/licenses (conj (:application/licenses expected-application)
-                                                                                      {:license/id 34
-                                                                                       :license/type :attachment
-                                                                                       :license/title {:en "en title"
-                                                                                                       :fi "fi title"}
-                                                                                       :license/attachment-id {:en 3401
-                                                                                                               :fi 3402}
-                                                                                       :license/attachment-filename {:en "en filename"
-                                                                                                                     :fi "fi filename"}
-                                                                                       :license/enabled true
-                                                                                       :license/archived false})
-                                                          :application/blacklist [{}
-                                                                                  {:blacklist/user {:userid "applicant"
-                                                                                                    :email "applicant@example.com"
-                                                                                                    :name "Applicant"}
-                                                                                   :blacklist/resource {:resource/ext-id "urn:31"}}]})]
-                    (is (= expected-application (apply-events events)))))
-
-                (testing "> submitted"
-                  (let [new-event {:event/type :application.event/submitted
-                                   :event/time (DateTime. 3000)
-                                   :event/actor "applicant"
-                                   :application/id 1}
-                        events (conj events new-event)
-                        enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
                         expected-application (merge expected-application
-                                                    {:application/last-activity (DateTime. 3000)
-                                                     :application/events enriched-events
-                                                     :application/first-submitted (DateTime. 3000)
-                                                     :application/state :application.state/submitted
-                                                     :application/todo :new-application})]
-                    (is (= expected-application (apply-events events)))
+                                                    {:application/last-activity (DateTime. 4800)
+                                                     :application/events events
+                                                     :application/accepted-licenses {"applicant" #{30 31 32 33}
+                                                                                     "member" #{31 32}}})]
+                    (is (= expected-application (recreate expected-application)))))))))))))
 
-                    (testing "> returned"
-                      (let [new-event {:event/type :application.event/returned
-                                       :event/time (DateTime. 4000)
-                                       :event/actor "handler"
-                                       :application/id 1
-                                       :application/comment "fix stuff"}
-                            events (conj events new-event)
-                            enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
-                            expected-application (deep-merge expected-application
-                                                             {:application/last-activity (DateTime. 4000)
-                                                              :application/events enriched-events
-                                                              :application/state :application.state/returned
-                                                              :application/todo nil
-                                                              :application/form {:form/fields [{:field/previous-value "foo"}
-                                                                                               {:field/previous-value "bar"}]}})]
-                        (is (= expected-application (apply-events events)))
+(deftest test-application-view-closed
+  (let [new-event {:event/type :application.event/closed
+                   :event/time (DateTime. 5000)
+                   :event/actor "handler"
+                   :application/id 1
+                   :application/comment "the project is finished"}
+        events (conj (:application/events approved-application) new-event)
+        expected-application (merge approved-application
+                                    {:application/last-activity (DateTime. 5000)
+                                     :application/events events
+                                     :application/state :application.state/closed
+                                     :application/todo nil})]
+    (is (= expected-application (recreate expected-application)))))
 
-                        (testing "> draft saved x2"
-                          (let [new-event-1 {:event/type :application.event/draft-saved
-                                             :event/time (DateTime. 5000)
-                                             :event/actor "applicant"
-                                             :application/id 1
-                                             ;; non-submitted versions should not show up as the previous value
-                                             :application/field-values {41 "intermediate draft"
-                                                                        42 "intermediate draft"}}
-                                new-event-2 {:event/type :application.event/draft-saved
-                                             :event/time (DateTime. 6000)
-                                             :event/actor "applicant"
-                                             :application/id 1
-                                             :application/field-values {41 "new foo"
-                                                                        42 "new bar"}}
-                                events (conj events new-event-1 new-event-2)
-                                enriched-events (conj enriched-events
-                                                      (assoc new-event-1 :event/actor-attributes (get-user "applicant"))
-                                                      (assoc new-event-2 :event/actor-attributes (get-user "applicant")))
-                                expected-application (deep-merge expected-application
-                                                                 {:application/modified (DateTime. 6000)
-                                                                  :application/last-activity (DateTime. 6000)
-                                                                  :application/events enriched-events
-                                                                  :application/description "new foo"
-                                                                  :application/form {:form/fields [{:field/value "new foo"
-                                                                                                    :field/previous-value "foo"}
-                                                                                                   {:field/value "new bar"
-                                                                                                    :field/previous-value "bar"}]}})]
-                            (is (= expected-application (apply-events events)))
+(deftest test-application-view-revoked
+  (let [new-event {:event/type :application.event/revoked
+                   :event/time (DateTime. 5000)
+                   :event/actor "handler"
+                   :application/id 1
+                   :application/comment "license terms were violated"}
+        events (conj (:application/events approved-application) new-event)
+        expected-application (merge approved-application
+                                    {:application/last-activity (DateTime. 5000)
+                                     :application/events events
+                                     :application/state :application.state/revoked
+                                     :application/todo nil})]
+    (is (= expected-application (recreate expected-application)))))
 
-                            (testing "> submitted"
-                              (let [new-event {:event/type :application.event/submitted
-                                               :event/time (DateTime. 7000)
-                                               :event/actor "applicant"
-                                               :application/id 1}
-                                    events (conj events new-event)
-                                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                                    expected-application (merge expected-application
-                                                                {:application/last-activity (DateTime. 7000)
-                                                                 :application/events enriched-events
-                                                                 :application/state :application.state/submitted
-                                                                 :application/todo :resubmitted-application})]
-                                (is (= expected-application (apply-events events)))))))
+(deftest test-application-view-rejected
+  (testing "> rejected"
+    (let [new-event {:event/type :application.event/rejected
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/comment "never gonna happen"}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/state :application.state/rejected
+                                       :application/todo nil})]
+      (is (= expected-application (recreate expected-application))))))
 
-                        (testing "> submitted (no draft saved)"
-                          (let [new-event {:event/type :application.event/submitted
-                                           :event/time (DateTime. 7000)
-                                           :event/actor "applicant"
-                                           :application/id 1}
-                                events (conj events new-event)
-                                enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                                expected-application (deep-merge expected-application
-                                                                 {:application/last-activity (DateTime. 7000)
-                                                                  :application/events enriched-events
-                                                                  :application/state :application.state/submitted
-                                                                  :application/todo :resubmitted-application
-                                                                  ;; when there was no draft-saved event, the current and
-                                                                  ;; previous submitted answers must be the same
-                                                                  :application/form {:form/fields [{:field/value "foo"
-                                                                                                    :field/previous-value "foo"}
-                                                                                                   {:field/value "bar"
-                                                                                                    :field/previous-value "bar"}]}})]
-                            (is (= expected-application (apply-events events)))))))
+(deftest test-application-view-commenting
+  (testing "> comment requested"
+    (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
+          new-event {:event/type :application.event/comment-requested
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/request-id request-id
+                     :application/commenters ["commenter"]
+                     :application/comment "please comment"}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (deep-merge submitted-application
+                                           {:application/last-activity (DateTime. 4000)
+                                            :application/events events
+                                            :application/todo :waiting-for-review
+                                            :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
+      (is (= expected-application (recreate expected-application)))
 
-                    (testing "> resources changed by handler"
-                      (let [new-event {:event/type :application.event/resources-changed
-                                       :event/time (DateTime. 3400)
-                                       :event/actor "handler"
-                                       :application/id 1
-                                       :application/comment "You should include this resource."
-                                       :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
-                                                               {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                                               {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
-                                       :application/licenses [{:license/id 30}
-                                                              {:license/id 31}
-                                                              {:license/id 32}
-                                                              {:license/id 34}]}
-                            events (conj events new-event)
-                            enriched-events
-                            (conj enriched-events (merge new-event
-                                                         {:event/actor-attributes (get-user "handler")
-                                                          :application/resources
-                                                          [resource-id-11
-                                                           resource-id-21
-                                                           resource-id-31]}))
-                            expected-application (deep-merge expected-application
-                                                             {:application/last-activity (DateTime. 3400)
-                                                              :application/modified (DateTime. 3400)
-                                                              :application/events enriched-events
-                                                              :application/resources (conj (:application/resources expected-application)
-                                                                                           {:catalogue-item/id 30
-                                                                                            :resource/id 31
-                                                                                            :resource/ext-id "urn:31"
-                                                                                            :catalogue-item/title {:en "en title"
-                                                                                                                   :fi "fi title"}
-                                                                                            :catalogue-item/infourl {:en "http://info.com"}
-                                                                                            :catalogue-item/start (DateTime. 100)
-                                                                                            :catalogue-item/end nil
-                                                                                            :catalogue-item/enabled true
-                                                                                            :catalogue-item/expired false
-                                                                                            :catalogue-item/archived false})
-                                                              :application/licenses (conj (:application/licenses expected-application)
-                                                                                          {:license/id 34
-                                                                                           :license/type :attachment
-                                                                                           :license/title {:en "en title"
-                                                                                                           :fi "fi title"}
-                                                                                           :license/attachment-id {:en 3401
-                                                                                                                   :fi 3402}
-                                                                                           :license/attachment-filename {:en "en filename"
-                                                                                                                         :fi "fi filename"}
-                                                                                           :license/enabled true
-                                                                                           :license/archived false})
-                                                              :application/blacklist [{}
-                                                                                      {:blacklist/user {:userid "applicant"
-                                                                                                        :email "applicant@example.com"
-                                                                                                        :name "Applicant"}
-                                                                                       :blacklist/resource {:resource/ext-id "urn:31"}}]})]
-                        (is (= expected-application (apply-events events)))))
-                    (testing "> licenses added"
-                      (let [new-event {:event/type :application.event/licenses-added
-                                       :event/time (DateTime. 3500)
-                                       :event/actor "handler"
-                                       :application/id 1
-                                       :application/licenses [{:license/id 33}]
-                                       :application/comment "Please sign these terms also"}
-                            events (conj events new-event)
-                            enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
-                            expected-application (merge expected-application
-                                                        {:application/last-activity (DateTime. 3500)
-                                                         :application/modified (DateTime. 3500)
-                                                         :application/events enriched-events
-                                                         :application/licenses (conj (:application/licenses expected-application)
-                                                                                     {:license/id 33
-                                                                                      :license/type :attachment
-                                                                                      :license/title {:en "en title"
-                                                                                                      :fi "fi title"}
-                                                                                      :license/attachment-id {:en 3301
-                                                                                                              :fi 3302}
-                                                                                      :license/attachment-filename {:en "en filename"
-                                                                                                                    :fi "fi filename"}
-                                                                                      :license/enabled true
-                                                                                      :license/archived false})})]
-                        (is (= expected-application (apply-events events)))
+      (testing "> commented"
+        (let [new-event {:event/type :application.event/commented
+                         :event/time (DateTime. 5000)
+                         :event/actor "commenter"
+                         :application/id 1
+                         :application/request-id request-id
+                         :application/comment "looks good"}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/todo :no-pending-requests
+                                           :rems.application.model/latest-comment-request-by-user {}})]
+          (is (= expected-application (recreate expected-application))))))))
 
-                        (testing "> approved"
-                          (let [new-event {:event/type :application.event/approved
-                                           :event/time (DateTime. 4000)
-                                           :event/actor "handler"
-                                           :application/id 1
-                                           :application/comment "looks good"}
-                                events (conj events new-event)
-                                enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
-                                expected-application (merge expected-application
-                                                            {:application/last-activity (DateTime. 4000)
-                                                             :application/events enriched-events
-                                                             :application/state :application.state/approved
-                                                             :application/todo nil})]
-                            (is (= expected-application (apply-events events)))
+(deftest test-application-view-deciding
+  (testing "> decision requested"
+    (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
+          new-event {:event/type :application.event/decision-requested
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/request-id request-id
+                     :application/deciders ["decider"]
+                     :application/comment "please decide"}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/todo :waiting-for-decision
+                                       ::model/latest-decision-request-by-user {"decider" request-id}})]
+      (is (= expected-application (recreate expected-application)))
 
-                            (testing "> resources changed by handler"
-                              (let [new-event {:event/type :application.event/resources-changed
-                                               :event/time (DateTime. 4500)
-                                               :event/actor "handler"
-                                               :application/id 1
-                                               :application/comment "I changed the resources"
-                                               :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
-                                                                       {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
-                                               :application/licenses [{:license/id 30}
-                                                                      {:license/id 31}
-                                                                      {:license/id 32}
-                                                                      ;; Include also the previously added license #33 in the new licenses.
-                                                                      {:license/id 33}
-                                                                      {:license/id 34}]}
-                                    events (conj events new-event)
-                                    enriched-events
-                                    (conj enriched-events (merge new-event
-                                                                 {:event/actor-attributes (get-user "handler")
-                                                                  :application/resources
-                                                                  [resource-id-11
-                                                                   resource-id-31]}))
-                                    expected-application (deep-merge expected-application
-                                                                     {:application/last-activity (DateTime. 4500)
-                                                                      :application/modified (DateTime. 4500)
-                                                                      :application/events enriched-events
-                                                                      :application/resources [{:catalogue-item/id 10
-                                                                                               :resource/id 11
-                                                                                               :resource/ext-id "urn:11"
-                                                                                               :catalogue-item/title {:en "en title"
-                                                                                                                      :fi "fi title"}
-                                                                                               :catalogue-item/infourl {}
-                                                                                               :catalogue-item/start (DateTime. 100)
-                                                                                               :catalogue-item/end nil
-                                                                                               :catalogue-item/enabled true
-                                                                                               :catalogue-item/expired false
-                                                                                               :catalogue-item/archived false}
-                                                                                              {:catalogue-item/id 30
-                                                                                               :resource/id 31
-                                                                                               :resource/ext-id "urn:31"
-                                                                                               :catalogue-item/title {:en "en title"
-                                                                                                                      :fi "fi title"}
-                                                                                               :catalogue-item/infourl {}
-                                                                                               :catalogue-item/start (DateTime. 100)
-                                                                                               :catalogue-item/end nil
-                                                                                               :catalogue-item/enabled true
-                                                                                               :catalogue-item/expired false
-                                                                                               :catalogue-item/archived false}]
-                                                                      :application/licenses (conj (:application/licenses expected-application)
-                                                                                                  {:license/id 34
-                                                                                                   :license/type :attachment
-                                                                                                   :license/title {:en "en title"
-                                                                                                                   :fi "fi title"}
-                                                                                                   :license/attachment-id {:en 3401
-                                                                                                                           :fi 3402}
-                                                                                                   :license/attachment-filename {:en "en filename"
-                                                                                                                                 :fi "fi filename"}
-                                                                                                   :license/enabled true
-                                                                                                   :license/archived false})
-                                                                      :application/blacklist [{}
-                                                                                              {:blacklist/user {:userid "applicant"
-                                                                                                                :email "applicant@example.com"
-                                                                                                                :name "Applicant"}
-                                                                                               :blacklist/resource {:resource/ext-id "urn:31"}}]})]
-                                (is (= expected-application (apply-events events)))))
+      (testing "> decided"
+        (let [new-event {:event/type :application.event/decided
+                         :event/time (DateTime. 5000)
+                         :event/actor "decider"
+                         :application/id 1
+                         :application/request-id request-id
+                         :application/decision :approved
+                         :application/comment "I approve this"}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/todo :no-pending-requests
+                                           ::model/latest-decision-request-by-user {}})]
+          (is (= expected-application (recreate expected-application))))))))
 
-                            (testing "> licenses accepted"
-                              (let [new-event {:event/type :application.event/licenses-accepted
-                                               :event/time (DateTime. 4500)
-                                               :event/actor "applicant"
-                                               :application/id 1
-                                               :application/accepted-licenses #{30 31 32 33}}
-                                    events (conj events new-event)
-                                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                                    expected-application (merge expected-application
-                                                                {:application/last-activity (DateTime. 4500)
-                                                                 :application/events enriched-events
-                                                                 :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
-                                (is (= expected-application (apply-events events)))
+(deftest test-application-view-adding-and-inviting
+  (testing "> member invited"
+    (let [token "b187bda7b9da9053a5d8b815b029e4ba"
+          new-event {:event/type :application.event/member-invited
+                     :event/time (DateTime. 4000)
+                     :event/actor "applicant"
+                     :application/id 1
+                     :application/member {:name "Mr. Member"
+                                          :email "member@example.com"}
+                     :invitation/token token}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/invitation-tokens {token {:name "Mr. Member"
+                                                                              :email "member@example.com"}}})]
+      (is (= expected-application (recreate expected-application)))
 
-                                (testing "> member added"
-                                  (let [new-event {:event/type :application.event/member-added
-                                                   :event/time (DateTime. 4600)
-                                                   :event/actor "handler"
-                                                   :application/id 1
-                                                   :application/member {:userid "member"}}
-                                        events (conj events new-event)
-                                        enriched-events
-                                        (conj enriched-events (merge new-event
-                                                                     {:event/actor-attributes (get-user "handler")
-                                                                      :application/member (get-user "member")}))
-                                        expected-application (merge expected-application
-                                                                    {:application/last-activity (DateTime. 4600)
-                                                                     :application/events enriched-events
-                                                                     :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
+      (testing "> member uninvited"
+        (let [new-event {:event/type :application.event/member-uninvited
+                         :event/time (DateTime. 5000)
+                         :event/actor "applicant"
+                         :application/id 1
+                         :application/member {:name "Mr. Member"
+                                              :email "member@example.com"}
+                         :application/comment "he left the project"}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/invitation-tokens {}})]
+          (is (= expected-application (recreate expected-application)))))
 
-                                                                     :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                              :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                                             {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
-                                                                                              :blacklist/resource {:resource/ext-id "urn:11"}}]})]
-                                    (is (= expected-application (apply-events events)))
-                                    (testing "> licenses accepted for new member"
-                                      (let [new-event {:event/type :application.event/licenses-accepted
-                                                       :event/time (DateTime. 4700)
-                                                       :event/actor "member"
-                                                       :application/id 1
-                                                       :application/accepted-licenses #{30 33}}
-                                            events (conj events new-event)
-                                            enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "member")))
-                                            expected-application (merge expected-application
-                                                                        {:application/last-activity (DateTime. 4700)
-                                                                         :application/events enriched-events
-                                                                         :application/accepted-licenses {"applicant" #{30 31 32 33}
-                                                                                                         "member" #{30 33}}})]
-                                        (is (= expected-application (apply-events events)))
-                                        (testing "> licenses accepted overwrites previous"
-                                          (let [new-event {:event/type :application.event/licenses-accepted
-                                                           :event/time (DateTime. 4800)
-                                                           :event/actor "member"
-                                                           :application/id 1
-                                                           :application/accepted-licenses #{31 32}}
-                                                events (conj events new-event)
-                                                enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "member")))
-                                                expected-application (merge expected-application
-                                                                            {:application/last-activity (DateTime. 4800)
-                                                                             :application/events enriched-events
-                                                                             :application/accepted-licenses {"applicant" #{30 31 32 33}
-                                                                                                             "member" #{31 32}}})]
-                                            (is (= expected-application (apply-events events)))))))))
+      (testing "> member joined"
+        (let [new-event {:event/type :application.event/member-joined
+                         :event/time (DateTime. 5000)
+                         :event/actor "member"
+                         :application/id 1
+                         :invitation/token token}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/members #{{:userid "member"}}
+                                           :application/invitation-tokens {}})]
+          (is (= expected-application (recreate expected-application)))))))
 
+  (testing "> member added"
+    (let [new-event {:event/type :application.event/member-added
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/member {:userid "member"}}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/members #{{:userid "member"}}})]
+      (is (= expected-application (recreate expected-application)))
 
-                                (testing "> closed"
-                                  (let [new-event {:event/type :application.event/closed
-                                                   :event/time (DateTime. 5000)
-                                                   :event/actor "handler"
-                                                   :application/id 1
-                                                   :application/comment "the project is finished"}
-                                        events (conj events new-event)
-                                        enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
-                                        expected-application (merge expected-application
-                                                                    {:application/last-activity (DateTime. 5000)
-                                                                     :application/events enriched-events
-                                                                     :application/state :application.state/closed
-                                                                     :application/todo nil})]
-                                    (is (= expected-application (apply-events events)))))
+      (testing "> member removed"
+        (let [new-event {:event/type :application.event/member-removed
+                         :event/time (DateTime. 5000)
+                         :event/actor "applicant"
+                         :application/id 1
+                         :application/member {:userid "member"}
+                         :application/comment "he left the project"}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/members #{}
+                                           :application/past-members #{{:userid "member"}}})]
+          (is (= expected-application (recreate expected-application))))))))
 
-                                (testing "> revoked"
-                                  (let [new-event {:event/type :application.event/revoked
-                                                   :event/time (DateTime. 5000)
-                                                   :event/actor "handler"
-                                                   :application/id 1
-                                                   :application/comment "license terms were violated"}
-                                        events (conj events new-event)
-                                        enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
-                                        expected-application (merge expected-application
-                                                                    {:application/last-activity (DateTime. 5000)
-                                                                     :application/events enriched-events
-                                                                     :application/state :application.state/revoked
-                                                                     :application/todo nil})]
-                                    (is (= expected-application (apply-events events)))))))))
+;;;; TODO tests for enriching functions
 
-                        (testing "> rejected"
-                          (let [new-event {:event/type :application.event/rejected
-                                           :event/time (DateTime. 4000)
-                                           :event/actor "handler"
-                                           :application/id 1
-                                           :application/comment "never gonna happen"}
-                                events (conj events new-event)
-                                enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "handler")))
-                                expected-application (merge expected-application
-                                                            {:application/last-activity (DateTime. 4000)
-                                                             :application/events enriched-events
-                                                             :application/state :application.state/rejected
-                                                             :application/todo nil})]
-                            (is (= expected-application (apply-events events)))))
-
-                        (testing "> comment requested"
-                          (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
-                                new-event {:event/type :application.event/comment-requested
-                                           :event/time (DateTime. 4000)
-                                           :event/actor "handler"
-                                           :application/id 1
-                                           :application/request-id request-id
-                                           :application/commenters ["commenter"]
-                                           :application/comment "please comment"}
-                                events (conj events new-event)
-                                enriched-events (conj enriched-events (merge new-event
-                                                                             {:event/actor-attributes (get-user "handler")
-                                                                              :application/commenters [(get-user "commenter")]}))
-                                expected-application (deep-merge expected-application
-                                                                 {:application/last-activity (DateTime. 4000)
-                                                                  :application/events enriched-events
-                                                                  :application/todo :waiting-for-review
-                                                                  :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
-                            (is (= expected-application (apply-events events)))
-
-                            (testing "> commented"
-                              (let [new-event {:event/type :application.event/commented
-                                               :event/time (DateTime. 5000)
-                                               :event/actor "commenter"
-                                               :application/id 1
-                                               :application/request-id request-id
-                                               :application/comment "looks good"}
-                                    events (conj events new-event)
-                                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "commenter")))
-                                    expected-application (merge expected-application
-                                                                {:application/last-activity (DateTime. 5000)
-                                                                 :application/events enriched-events
-                                                                 :application/todo :no-pending-requests
-                                                                 :rems.application.model/latest-comment-request-by-user {}})]
-                                (is (= expected-application (apply-events events)))))))
-
-                        (testing "> decision requested"
-                          (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
-                                new-event {:event/type :application.event/decision-requested
-                                           :event/time (DateTime. 4000)
-                                           :event/actor "handler"
-                                           :application/id 1
-                                           :application/request-id request-id
-                                           :application/deciders ["decider"]
-                                           :application/comment "please decide"}
-                                events (conj events new-event)
-                                enriched-events (conj enriched-events (merge new-event
-                                                                             {:event/actor-attributes (get-user "handler")
-                                                                              :application/deciders [(get-user "decider")]}))
-                                expected-application (merge expected-application
-                                                            {:application/last-activity (DateTime. 4000)
-                                                             :application/events enriched-events
-                                                             :application/todo :waiting-for-decision
-                                                             :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
-                            (is (= expected-application (apply-events events)))
-
-                            (testing "> decided"
-                              (let [new-event {:event/type :application.event/decided
-                                               :event/time (DateTime. 5000)
-                                               :event/actor "decider"
-                                               :application/id 1
-                                               :application/request-id request-id
-                                               :application/decision :approved
-                                               :application/comment "I approve this"}
-                                    events (conj events new-event)
-                                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "decider")))
-                                    expected-application (merge expected-application
-                                                                {:application/last-activity (DateTime. 5000)
-                                                                 :application/events enriched-events
-                                                                 :application/todo :no-pending-requests
-                                                                 :rems.application.model/latest-decision-request-by-user {}})]
-                                (is (= expected-application (apply-events events)))))))
-
-                        (testing "> member invited"
-                          (let [token "b187bda7b9da9053a5d8b815b029e4ba"
-                                new-event {:event/type :application.event/member-invited
-                                           :event/time (DateTime. 4000)
-                                           :event/actor "applicant"
-                                           :application/id 1
-                                           :application/member {:name "Mr. Member"
-                                                                :email "member@example.com"}
-                                           :invitation/token token}
-                                events (conj events new-event)
-                                enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                                expected-application (deep-merge expected-application
-                                                                 {:application/last-activity (DateTime. 4000)
-                                                                  :application/events enriched-events
-                                                                  :application/invitation-tokens {token {:name "Mr. Member"
-                                                                                                         :email "member@example.com"}}})]
-                            (is (= expected-application (apply-events events)))
-
-                            (testing "> member uninvited"
-                              (let [new-event {:event/type :application.event/member-uninvited
-                                               :event/time (DateTime. 5000)
-                                               :event/actor "applicant"
-                                               :application/id 1
-                                               :application/member {:name "Mr. Member"
-                                                                    :email "member@example.com"}
-                                               :application/comment "he left the project"}
-                                    events (conj events new-event)
-                                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "applicant")))
-                                    expected-application (merge expected-application
-                                                                {:application/last-activity (DateTime. 5000)
-                                                                 :application/events enriched-events
-                                                                 :application/invitation-tokens {}})]
-                                (is (= expected-application (apply-events events)))))
-
-                            (testing "> member joined"
-                              (let [new-event {:event/type :application.event/member-joined
-                                               :event/time (DateTime. 5000)
-                                               :event/actor "member"
-                                               :application/id 1
-                                               :invitation/token token}
-                                    events (conj events new-event)
-                                    enriched-events (conj enriched-events (assoc new-event :event/actor-attributes (get-user "member")))
-                                    expected-application (merge expected-application
-                                                                {:application/last-activity (DateTime. 5000)
-                                                                 :application/events enriched-events
-                                                                 :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
-                                                                 :application/invitation-tokens {}
-                                                                 :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                          :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                                         {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
-                                                                                          :blacklist/resource {:resource/ext-id "urn:11"}}]})]
-                                (is (= expected-application (apply-events events)))))))
-
-                        (testing "> member added"
-                          (let [new-event {:event/type :application.event/member-added
-                                           :event/time (DateTime. 4000)
-                                           :event/actor "handler"
-                                           :application/id 1
-                                           :application/member {:userid "member"}}
-                                events (conj events new-event)
-                                enriched-events (conj enriched-events (merge new-event
-                                                                             {:event/actor-attributes (get-user "handler")
-                                                                              :application/member (get-user "member")}))
-                                expected-application (merge expected-application
-                                                            {:application/last-activity (DateTime. 4000)
-                                                             :application/events enriched-events
-                                                             :application/members #{{:userid "member", :email "member@example.com", :name "Member"}}
-                                                             :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                      :blacklist/resource {:resource/ext-id "urn:11"}}
-                                                                                     {:blacklist/user {:userid "member" :email "member@example.com" :name "Member"}
-                                                                                      :blacklist/resource {:resource/ext-id "urn:11"}}]})]
-                            (is (= expected-application (apply-events events)))
-
-                            (testing "> member removed"
-                              (let [new-event {:event/type :application.event/member-removed
-                                               :event/time (DateTime. 5000)
-                                               :event/actor "applicant"
-                                               :application/id 1
-                                               :application/member {:userid "member"}
-                                               :application/comment "he left the project"}
-                                    events (conj events new-event)
-                                    enriched-events (conj enriched-events (merge new-event
-                                                                                 {:event/actor-attributes (get-user "applicant")
-                                                                                  :application/member (get-user "member")}))
-                                    expected-application (merge expected-application
-                                                                {:application/last-activity (DateTime. 5000)
-                                                                 :application/events enriched-events
-                                                                 :application/members #{}
-                                                                 :application/past-members #{{:userid "member"}}
-                                                                 :application/blacklist [{:blacklist/user {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
-                                                                                          :blacklist/resource {:resource/ext-id "urn:11"}}]})]
-                                (is (= expected-application (apply-events events)))))))))))))))))
-
-    (testing "generate report: permissions by role and state"
-      (let [apps @sample-applications
-            state-role-permissions (fn [app]
-                                     (map (fn [[role permissions]]
-                                            {:state (:application/state app)
-                                             :role role
-                                             :permissions permissions})
-                                          (:rems.permissions/role-permissions app)))
-            data (mapcat state-role-permissions apps)
-            states (->> data (map :state) distinct) ; keep states in the order they appear in the tests
-            roles (->> data (map :role) distinct sort)
-            nowrap (fn [s]
-                     ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
-                     (-> s
-                         (str/replace " " "\u00A0") ;  non-breaking space
-                         (str/replace "-" "\u2011")))] ; non-breaking hyphen
-        (->> (hiccup/html
-              "# Application Permissions Reference\n\n"
-              [:table {:border 1}
-               [:tr
-                [:th (nowrap "State \\ Role")]
-                (for [role roles]
-                  [:th (nowrap (name role))])]
-               (for [state states]
-                 [:tr
-                  [:th {:valign :top}
-                   (nowrap (name state))]
-                  (for [role roles]
-                    (let [perm-sets (->> data
-                                         (filter #(= state (:state %)))
-                                         (filter #(= role (:role %)))
-                                         (map :permissions))
-                          all-perms (apply set/union perm-sets)
-                          ;; the states and permissions are not guaranteed to have a 1:1 mapping,
-                          ;; so we separate conditional permissions from those that are always there
-                          always-perms (if (empty? perm-sets)
-                                         #{}
-                                         (apply set/intersection perm-sets))
-                          sometimes-perms (set/difference all-perms always-perms)]
-                      [:td {:valign :top}
-                       "<!-- role: " (name role) " -->"
-                       (for [perm (sort always-perms)]
-                         [:div (nowrap (name perm))])
-                       (for [perm (sort sometimes-perms)]
-                         [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
-             (bw/beautify-html)
-             (spit "docs/application-permissions.md"))))))
+;;;; Tests for permissions
 
 (deftest test-calculate-permissions
   (testing "commenter may comment only once"
