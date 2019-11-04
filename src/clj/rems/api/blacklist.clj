@@ -13,10 +13,6 @@
    :blacklist/user {:userid blacklist/UserId}
    :comment s/Str})
 
-(s/defschema BlacklistResponse
-  [{:blacklist/resource {:resource/ext-id blacklist/ResourceId}
-    :blacklist/user schema/UserWithAttributes}])
-
 (defn- command->event [command]
   {:event/actor (getx-user-id)
    :event/time (time/now)
@@ -35,7 +31,7 @@
       :roles #{:handler :owner :reporter}
       :query-params [{user :- blacklist/UserId nil}
                      {resource :- blacklist/ResourceId nil}]
-      :return BlacklistResponse
+      :return schema/Blacklist
       (->> (blacklist/get-blacklist {:blacklist/user user
                                      :blacklist/resource resource})
            (mapv format-blacklist-entry)
