@@ -888,7 +888,140 @@
                                            :application/past-members #{{:userid "member"}}})]
           (is (= expected-application (recreate expected-application))))))))
 
-;;;; TODO tests for enriching functions
+;;;; Tests for enriching
+
+;;; A regression/gold master test for the entire enriching pipe
+
+(deftest test-enrich-with-injections
+  (is (= {:application/id 1
+          :application/external-id "extid"
+          :application/state :application.state/approved
+          :application/todo nil
+          :application/created (DateTime. 1000)
+          :application/modified (DateTime. 2000)
+          :application/first-submitted (DateTime. 3000)
+          :application/last-activity (DateTime. 4000)
+          :application/applicant {:userid "applicant"
+                                  :email "applicant@example.com"
+                                  :name "Applicant"}
+          :application/members #{}
+          :application/past-members #{}
+          :application/invitation-tokens {}
+          :application/blacklist [{:blacklist/user {:userid "applicant"
+                                                    :email "applicant@example.com"
+                                                    :name "Applicant"}
+                                   :blacklist/resource {:resource/ext-id "urn:11"}}]
+          :application/resources [{:catalogue-item/id 10
+                                   :resource/id 11
+                                   :resource/ext-id "urn:11"
+                                   :catalogue-item/title {:en "en title"
+                                                          :fi "fi title"}
+                                   :catalogue-item/infourl {:en "http://info.com"}
+                                   :catalogue-item/start (DateTime. 100)
+                                   :catalogue-item/end nil
+                                   :catalogue-item/enabled true
+                                   :catalogue-item/expired false
+                                   :catalogue-item/archived false}
+                                  {:catalogue-item/id 20
+                                   :resource/id 21
+                                   :resource/ext-id "urn:21"
+                                   :catalogue-item/title {:en "en title"
+                                                          :fi "fi title"}
+                                   :catalogue-item/infourl {:en "http://info.com"}
+                                   :catalogue-item/start (DateTime. 100)
+                                   :catalogue-item/end nil
+                                   :catalogue-item/enabled true
+                                   :catalogue-item/expired false
+                                   :catalogue-item/archived false}]
+          :application/licenses [{:license/id 30
+                                  :license/type :link
+                                  :license/title {:en "en title"
+                                                  :fi "fi title"}
+                                  :license/link {:en "http://en-license-link"
+                                                 :fi "http://fi-license-link"}
+                                  :license/enabled true
+                                  :license/archived false}
+                                 {:license/id 31
+                                  :license/type :text
+                                  :license/title {:en "en title"
+                                                  :fi "fi title"}
+                                  :license/text {:en "en license text"
+                                                 :fi "fi license text"}
+                                  :license/enabled true
+                                  :license/archived false}
+                                 {:license/id 32
+                                  :license/type :attachment
+                                  :license/title {:en "en title"
+                                                  :fi "fi title"}
+                                  :license/attachment-id {:en 3201
+                                                          :fi 3202}
+                                  :license/attachment-filename {:en "en filename"
+                                                                :fi "fi filename"}
+                                  :license/enabled true
+                                  :license/archived false}]
+          :application/accepted-licenses {"applicant" #{30 31 32}}
+          :application/events [{:event/type :application.event/created
+                                :application/id 1
+                                :event/actor "applicant"
+                                :application/external-id "extid"
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}
+                                :event/time (DateTime. 1000)
+                                :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
+                                                        {:catalogue-item/id 20 :resource/ext-id "urn:21"}]
+                                :form/id 40
+                                :workflow/id 50
+                                :workflow/type :workflow/dynamic
+                                :application/licenses [{:license/id 30} {:license/id 31} {:license/id 32}]}
+                               {:event/type :application.event/draft-saved
+                                :application/id 1
+                                :event/time (DateTime. 2000)
+                                :event/actor "applicant"
+                                :application/field-values {41 "foo" 42 "bar"}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                               {:event/type :application.event/licenses-accepted
+                                :application/id 1
+                                :event/time (DateTime. 2500)
+                                :event/actor "applicant"
+                                :application/accepted-licenses #{30 31 32}
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                               {:event/type :application.event/submitted
+                                :application/id 1
+                                :event/time (DateTime. 3000)
+                                :event/actor "applicant"
+                                :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
+                               {:event/type :application.event/approved
+                                :application/id 1
+                                :event/time (DateTime. 4000)
+                                :event/actor "handler"
+                                :application/comment "looks good"
+                                :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}}]
+          :rems.permissions/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
+          :application/description "foo"
+          :application/form {:form/id 40
+                             :form/title "form title"
+                             :form/fields [{:field/id 41
+                                            :field/value "foo"
+                                            :field/type :description
+                                            :field/title {:en "en title" :fi "fi title"}
+                                            :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                            :field/optional false
+                                            :field/options []
+                                            :field/max-length 100}
+                                           {:field/id 42
+                                            :field/value "bar"
+                                            :field/type :text
+                                            :field/title {:en "en title" :fi "fi title"}
+                                            :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                            :field/optional false
+                                            :field/options []
+                                            :field/max-length 100}]}
+          :application/attachments []
+          :application/workflow {:workflow/id 50
+                                 :workflow/type :workflow/dynamic
+                                 :workflow.dynamic/handlers [{:userid "handler"
+                                                              :name "Handler"
+                                                              :email "handler@example.com"}]}}
+         (model/enrich-with-injections approved-application injections))))
 
 ;;;; Tests for permissions
 
