@@ -153,3 +153,51 @@
                            :localizations {:en {:title "malicious localization"}}})
                handler
                (read-body))))))
+
+(deftest change-form-test
+  (let [api-key "42"
+        resource-id (test-data/create-resource!
+                     {:resid "change-form-test-resource"
+                      :organization "change-form-test"
+                      :licenses []})
+        old-form-id (test-data/create-form! {:form/title "old form"})
+        new-form-id (test-data/create-form! {:form/title "new form"})
+        old-catalogue-item-id (test-data/create-catalogue-item!
+                               {:title {:en "change-form-test catalogue item en"
+                                        :fi "change-form-test catalogue item fi"}
+                                :resource-id resource-id
+                                :form-id old-form-id})]
+    (testing "when the form is changed a new catalogue item is created"
+      (let [new-catalogue-item-id (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                                      (authenticate api-key "owner")
+                                      (json-body {:form new-form-id})
+                                      handler
+                                      read-ok-body
+                                      :new-catalogue-item-id)
+            new-catalogue-item (-> (request :get (str "/api/catalogue-items/" new-catalogue-item-id))
+                                   (authenticate api-key "owner")
+                                   handler
+                                   read-ok-body)
+            old-catalogue-item (-> (request :get (str "/api/catalogue-items/" old-catalogue-item-id))
+                                   (authenticate api-key "owner")
+                                   handler
+                                   read-ok-body)]
+        (testing "the new item"
+          (is (:enabled new-catalogue-item))
+          (is (= new-form-id (:formid new-catalogue-item)) "has the new changed form id"))
+
+        (testing "the old item"
+          (is (:archived old-catalogue-item))
+          (is (:expired old-catalogue-item))
+          (is (not (:enabled old-catalogue-item))))
+
+        (let [same-keys [:wfid :workflow-name :resid :resource-id :resource-name]]
+          (is (= (select-keys old-catalogue-item same-keys)
+                 (select-keys new-catalogue-item same-keys))))
+
+        (doseq [langcode (into (keys (:localizations old-catalogue-item))
+                               (keys (:localizations new-catalogue-item)))]
+          (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
+                 (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))
+
+        (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))))
