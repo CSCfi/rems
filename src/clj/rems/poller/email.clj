@@ -17,8 +17,7 @@
             [rems.scheduler :as scheduler]
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])
-  (:import [com.sun.mail.smtp SMTPAddressFailedException]
-           [javax.mail.internet InternetAddress]
+  (:import [javax.mail.internet InternetAddress]
            [org.joda.time Duration]))
 
 ;;; Mapping events to emails
@@ -269,7 +268,7 @@
         :else
         (try
           (postal/send-message {:host host :port port} email)
-          (catch SMTPAddressFailedException e ; email address does not exist
+          (catch javax.mail.SendFailedException e ; e.g. email address does not exist
             (log/warn e "failed sending email, skipping:" (pr-str email))))))))
 
 (defn run []
