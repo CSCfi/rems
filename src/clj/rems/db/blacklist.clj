@@ -45,8 +45,8 @@
          :event/id (:id event)))
 
 (defn get-events [params]
-  (mapv event-from-db (db/get-blacklist-events {:user (:blacklist/user params)
-                                                :resource (:blacklist/resource params)})))
+  (mapv event-from-db (db/get-blacklist-events {:user (:userid params)
+                                                :resource (:resource/ext-id params)})))
 
 (defn- events->blacklist [events]
   ;; TODO: move computation to db for performance
@@ -65,9 +65,9 @@
 (defn get-blacklist [params]
   (vec (sort-by (juxt :userid :resource/ext-id) (events->blacklist (get-events params)))))
 
-(defn blacklisted? [user resource]
-  (not (empty? (get-blacklist {:blacklist/user user
-                               :blacklist/resource resource}))))
+(defn blacklisted? [userid resource]
+  (not (empty? (get-blacklist {:userid userid
+                               :resource/ext-id resource}))))
 
 (defn add-to-blacklist! [{:keys [user resource actor comment]}]
   (add-event! {:event/type :blacklist.event/add

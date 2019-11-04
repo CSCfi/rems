@@ -33,8 +33,8 @@
       :query-params [{user :- blacklist/UserId nil}
                      {resource :- blacklist/ResourceId nil}]
       :return schema/Blacklist
-      (->> (blacklist/get-blacklist {:blacklist/user user ;; TODO change these keys
-                                     :blacklist/resource resource})
+      (->> (blacklist/get-blacklist {:userid user
+                                     :resource/ext-id resource})
            (mapv format-blacklist-entry)
            (ok)))
     (POST "/add" []

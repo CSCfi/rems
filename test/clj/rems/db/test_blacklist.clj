@@ -42,7 +42,7 @@
            :userid "baddie"
            :resource/ext-id "urn.fi/123"
            :event/comment "it was ok"}]
-         (blacklist/get-events {:blacklist/resource "urn.fi/123"})))
+         (blacklist/get-events {:resource/ext-id "urn.fi/123"})))
   (is (= [{:event/id 3
            :event/type :blacklist.event/add
            :event/time (time/date-time 2019 01 01 01)
@@ -50,7 +50,7 @@
            :userid "goodie"
            :resource/ext-id "urn.fi/124"
            :event/comment nil}]
-         (blacklist/get-events {:blacklist/user "goodie"})))
+         (blacklist/get-events {:userid "goodie"})))
   (is (false? (blacklist/blacklisted? "baddie" "urn.fi/123")))
   (is (false? (blacklist/blacklisted? "baddie" "urn.fi/124")))
   (is (false? (blacklist/blacklisted? "goodie" "urn.fi/123")))
