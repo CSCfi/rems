@@ -17,8 +17,8 @@
    :event/type (s/enum :blacklist.event/add :blacklist.event/remove)
    :event/time DateTime
    :event/actor UserId
-   :blacklist/user UserId
-   :blacklist/resource ResourceId ;; resource/ext-id
+   :userid UserId
+   :resource/ext-id ResourceId
    :event/comment (s/maybe s/Str)})
 
 (def ^:private coerce-event
@@ -51,9 +51,9 @@
 (defn- events->blacklist [events]
   ;; TODO: move computation to db for performance
   ;; should be enough to check latest event per user-resource pair
+  (prn :EVENTS events)
   (reduce (fn [blacklist event]
-            (let [entry {:blacklist/resource {:resource/ext-id (:blacklist/resource event)}
-                         :blacklist/user (:blacklist/user event)}]
+            (let [entry (select-keys event [:userid :resource/ext-id])]
               (case (:event/type event)
                 :blacklist.event/add
                 (conj blacklist entry)
@@ -63,10 +63,7 @@
           events))
 
 (defn get-blacklist [params]
-  (let [key-fn (fn [entry]
-                 [(get entry :blacklist/user)
-                  (get-in entry [:blacklist/resource :resource/ext-id])])]
-    (vec (sort-by key-fn (events->blacklist (get-events params))))))
+  (vec (sort-by (juxt :userid :resource/ext-id) (events->blacklist (get-events params)))))
 
 (defn blacklisted? [user resource]
   (not (empty? (get-blacklist {:blacklist/user user
@@ -76,6 +73,6 @@
   (add-event! {:event/type :blacklist.event/add
                :event/actor actor
                :event/time (time/now)
-               :blacklist/user user
-               :blacklist/resource resource
+               :userid user
+               :resource/ext-id resource
                :event/comment comment}))
