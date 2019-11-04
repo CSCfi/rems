@@ -1114,6 +1114,26 @@
                                 :application/member {:userid "member"}}
                                get-user get-catalogue-item)))))
 
+(deftest test-enrich-answers
+  (testing "draft"
+    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "a"}
+                                             {:field/id 2 :field/value "b"}]}}
+           (model/enrich-answers {::model/draft-answers {1 "a" 2 "b"}}))))
+  (testing "submitted"
+    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "a"}
+                                             {:field/id 2 :field/value "b"}]}}
+           (model/enrich-answers {::model/submitted-answers {1 "a" 2 "b"}}))))
+  (testing "returned"
+    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "aa" :field/previous-value "a"}
+                                             {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
+           (model/enrich-answers {::model/submitted-answers {1 "a" 2 "b"}
+                                  ::model/draft-answers {1 "aa" 2 "bb"}}))))
+  (testing "resubmitted"
+    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "aa" :field/previous-value "a"}
+                                             {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
+           (model/enrich-answers {::model/previous-submitted-answers {1 "a" 2 "b"}
+                                  ::model/submitted-answers {1 "aa" 2 "bb"}})))))
+
 ;;;; Tests for permissions
 
 (deftest test-calculate-permissions

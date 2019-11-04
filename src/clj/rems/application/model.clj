@@ -578,10 +578,7 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
-(defn enrich-with-injections [application {:keys [blacklisted?
-                                                  get-form-template get-catalogue-item get-license
-                                                  get-user get-users-with-role get-workflow
-                                                  get-attachments-for-application]}]
+(defn enrich-answers [application]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
@@ -597,18 +594,25 @@
                                                                    (map (fn [[field-id value]]
                                                                           {:field/id field-id
                                                                            :field/value value})
-                                                                        current-answers)))
-        (update :application/form enrich-form get-form-template)
-        set-application-description
-        (update :application/resources enrich-resources get-catalogue-item)
-        (update :application/licenses enrich-licenses get-license)
-        (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
-        (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
-        (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
-        (enrich-user-attributes get-user)
-        (enrich-blacklist blacklisted?) ;; uses enriched users
-        (enrich-workflow-handlers get-workflow)
-        (enrich-super-users get-users-with-role))))
+                                                                        current-answers))))))
+
+(defn enrich-with-injections [application {:keys [blacklisted?
+                                                  get-form-template get-catalogue-item get-license
+                                                  get-user get-users-with-role get-workflow
+                                                  get-attachments-for-application]}]
+  (-> application
+      enrich-answers
+      (update :application/form enrich-form get-form-template)
+      set-application-description
+      (update :application/resources enrich-resources get-catalogue-item)
+      (update :application/licenses enrich-licenses get-license)
+      (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
+      (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
+      (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
+      (enrich-user-attributes get-user)
+      (enrich-blacklist blacklisted?) ;; uses enriched users
+      (enrich-workflow-handlers get-workflow)
+      (enrich-super-users get-users-with-role)))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
