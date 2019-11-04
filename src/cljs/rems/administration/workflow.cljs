@@ -9,6 +9,7 @@
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title text text-format]]
             [rems.util :refer [navigate! fetch]]))
@@ -63,14 +64,15 @@
                                                                          (map enrich-user)
                                                                          (map :display)
                                                                          (str/join ", "))]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? workflow)]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]]}]
    [licenses-view (:licenses workflow) language]
    (let [id (:id workflow)]
      [:div.col.commands
       [back-button]
-      [edit-button id]
-      [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]])])
+      [roles/when roles/show-admin-edit-buttons?
+       [edit-button id]
+       [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
+       [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]]])])
 
 (defn workflow-page []
   (let [workflow (rf/subscribe [::workflow])

@@ -13,7 +13,7 @@
 (defn generate-commands [app]
   (when (and (handler? app bot-userid)
              (= :application.state/submitted (:application/state app))
-             (empty? (:application/blacklisted-users app)))
+             (empty? (:application/blacklist app)))
     [{:type :application.command/approve
       :actor bot-userid
       :time (time/now)

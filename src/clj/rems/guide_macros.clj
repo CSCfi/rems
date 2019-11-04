@@ -65,4 +65,4 @@
                     (if (static-hiccup? block)
                       block
                       [:pre (with-out-str (write block :dispatch code-dispatch))])))]
-    `(rems.guide-functions/render-example ~title ~src (do ~@content))))
+    `[rems.guide-functions/render-example ~title ~src (do ~@content)]))

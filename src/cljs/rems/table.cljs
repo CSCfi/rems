@@ -142,7 +142,7 @@
    (or (get-in db [::max-rows (:id table)])
        50)))
 
-(defn- default-if-missing [m k make-default]
+(defn- assoc-if-missing [m k make-default]
   (if (contains? m k)
     m
     (assoc m k (make-default m))))
@@ -154,19 +154,19 @@
                (if (= :key column) ; not a column, but the row key
                  opts
                  (-> opts
-                     (default-if-missing :sort-value (fn [opts]
-                                                       (let [val (:value opts)]
-                                                         (if (string? val)
-                                                           (str/lower-case val)
-                                                           val))))
-                     (default-if-missing :display-value (comp str :value))
-                     (default-if-missing :filter-value (fn [opts]
-                                                         (if (string? (:display-value opts))
-                                                           (str/lower-case (:display-value opts))
-                                                           "")))
-                     (default-if-missing :td (fn [opts]
-                                               [:td {:class (name column)}
-                                                (:display-value opts)]))))]))
+                     (assoc-if-missing :sort-value (fn [opts]
+                                                     (let [val (:value opts)]
+                                                       (if (string? val)
+                                                         (str/lower-case val)
+                                                         val))))
+                     (assoc-if-missing :display-value (comp str :value))
+                     (assoc-if-missing :filter-value (fn [opts]
+                                                       (if (string? (:display-value opts))
+                                                         (str/lower-case (:display-value opts))
+                                                         "")))
+                     (assoc-if-missing :td (fn [opts]
+                                             [:td {:class (name column)}
+                                              (:display-value opts)]))))]))
        (into {})))
 
 (rf/reg-sub

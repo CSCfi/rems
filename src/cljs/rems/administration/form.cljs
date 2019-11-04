@@ -8,6 +8,7 @@
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! fetch]]))
@@ -74,14 +75,15 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:form/organization form)]
               [inline-info-field (text :t.administration/title) (:form/title form)]
-              [inline-info-field (text :t.administration/active) [readonly-checkbox (status-flags/active? form)]]]}]
+              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? form)}]]]}]
    (let [id (:form/id form)]
      [:div.col.commands
       [back-button]
-      [edit-button id]
-      [copy-as-new-button id]
-      [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
-      [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]])
+      [roles/when roles/show-admin-edit-buttons?
+       [edit-button id]
+       [copy-as-new-button id]
+       [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
+       [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]]])
    [form-preview form]])
 ;; TODO Do we support form licenses?
 

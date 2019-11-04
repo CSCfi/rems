@@ -5,6 +5,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
@@ -101,13 +102,14 @@
                        :display-value (localize-time value)})
            :active (let [checked? (status-flags/active? item)]
                      {:td [:td.active
-                           [readonly-checkbox checked?]]
+                           [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands
                            [to-catalogue-item (:id item)]
-                           [catalogue-item/edit-button (:id item)]
-                           [status-flags/enabled-toggle item #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])]
-                           [status-flags/archived-toggle item #(rf/dispatch [::set-catalogue-item-archived %1 %2 [::fetch-catalogue]])]]}})
+                           [roles/when roles/show-admin-edit-buttons?
+                            [catalogue-item/edit-button (:id item)]
+                            [status-flags/enabled-toggle item #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])]
+                            [status-flags/archived-toggle item #(rf/dispatch [::set-catalogue-item-archived %1 %2 [::fetch-catalogue]])]]]}})
         catalogue)))
 
 (defn- catalogue-list []
@@ -141,7 +143,8 @@
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
-          [[to-create-catalogue-item]
-           [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
-           [status-flags/disabled-and-archived-explanation]
+          [[roles/when roles/show-admin-edit-buttons?
+            [to-create-catalogue-item]
+            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
+            [status-flags/disabled-and-archived-explanation]]
            [catalogue-list]])))

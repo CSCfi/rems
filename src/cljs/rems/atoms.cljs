@@ -61,25 +61,27 @@
 
 (defn checkbox
   "Displays a checkbox."
-  [checked? on-change]
+  [{:keys [id class value on-change]}]
   (let [wrapped-on-change (fn [e]
                             (.preventDefault e)
                             (.stopPropagation e)
                             (when on-change
-                              (on-change checked?)))]
-    [:i.far.fa-lg {:class [(if checked? :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
-                   :tabIndex 0
-                   :role :checkbox
-                   :aria-checked checked?
-                   :aria-label (if checked? (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
-                   :on-click wrapped-on-change
-                   :on-key-press #(when (= (.-key %) " ")
-                                    (wrapped-on-change %))}]))
+                              (on-change value)))]
+    [:i.far.fa-lg
+     {:id id
+      :class [class (if value :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
+      :tabIndex 0
+      :role :checkbox
+      :aria-checked value
+      :aria-label (if value (text :t.form/checkbox-checked) (text :t.form/checkbox-unchecked))
+      :on-click wrapped-on-change
+      :on-key-press #(when (= (.-key %) " ")
+                       (wrapped-on-change %))}]))
 
 (defn readonly-checkbox
   "Displays a readonly checkbox."
-  [checked?]
-  [checkbox checked? nil])
+  [{:keys [value]}]
+  [checkbox {:value value}])
 
 (defn info-field
   "A component that shows a readonly field with title and value.
@@ -145,11 +147,13 @@
                                 :contents "You fail"}])
        (component-info readonly-checkbox)
        (example "readonly-checkbox unchecked"
-                [readonly-checkbox false])
+                [readonly-checkbox {:value false}])
        (example "readonly-checkbox checked"
-                [readonly-checkbox true])
-       (example "checkbox interactive unchecked"
-                [checkbox @state on-change])
+                [readonly-checkbox {:value true}])
+       (example (str "checkbox interactive " (if @state "checked" "unchecked"))
+                [checkbox {:value @state :on-change on-change}])
+       (example "checkbox with id and class"
+                [checkbox {:id :special :class :text-danger :value @state :on-change on-change}])
        (component-info info-field)
        (example "info-field with data"
                 [info-field "Name" "Bob Tester"])

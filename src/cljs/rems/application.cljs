@@ -63,14 +63,16 @@
                [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn- blacklist-warning [application]
-  (let [blacklist (:application/blacklisted-users application)]
+  (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
+        blacklist (:application/blacklist application)]
     (when (not (empty? blacklist))
       [:div.alert.alert-danger
        (text :t.form/alert-blacklisted-users)
        (into [:ul]
-             (for [entry blacklist]
+             (for [entry blacklist
+                   resource (get resources-by-id (get-in entry [:blacklist/resource :resource/ext-id]))]
                [:li (get-member-name (:blacklist/user entry))
-                ": " (get-in entry [:blacklist/resource :resource/ext-id])]))])))
+                ": " (localized (:catalogue-item/title resource))]))])))
 
 (defn- format-validation-error [type field]
   [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
@@ -566,7 +568,7 @@
                (when-let [name (get-member-name attributes)]
                  [info-field (text :t.applicant-info/name) name {:inline? true}])
                (when-not (nil? accepted-licenses?)
-                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox accepted-licenses?] {:inline? true}])]
+                 [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted-licenses?}] {:inline? true}])]
       :collapse (into [:div
                        (when user-id
                          [info-field (text :t.applicant-info/username) user-id {:inline? true}])

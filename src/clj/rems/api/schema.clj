@@ -196,8 +196,10 @@
    :application/members #{UserWithAttributes}
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
-   (s/optional-key :application/blacklisted-users) [{:blacklist/user UserWithAttributes
-                                                     :blacklist/resource {:resource/ext-id s/Str}}]
+   (s/optional-key :application/blacklist) (rjs/field
+                                            [{:blacklist/user UserWithAttributes
+                                              :blacklist/resource {:resource/ext-id s/Str}}]
+                                            {:description "Which members of this application are blacklisted for which resources"})
    :application/resources [V2Resource]
    :application/licenses [V2License]
    :application/accepted-licenses (s/maybe {UserId #{s/Int}})
