@@ -9,23 +9,23 @@
             [schema.core :as s]))
 
 (s/defschema BlacklistCommand
-  {:resource blacklist/ResourceId
-   :user blacklist/UserId
+  {:blacklist/resource {:resource/ext-id blacklist/ResourceId}
+   :blacklist/user {:userid blacklist/UserId}
    :comment s/Str})
 
 (s/defschema BlacklistResponse
-  [{:resource blacklist/ResourceId
-    :user schema/UserWithAttributes}])
+  [{:blacklist/resource {:resource/ext-id blacklist/ResourceId}
+    :blacklist/user schema/UserWithAttributes}])
 
 (defn- command->event [command]
   {:event/actor (getx-user-id)
    :event/time (time/now)
-   :blacklist/user (:user command)
-   :blacklist/resource (:resource command)
+   :blacklist/user (get-in command [:blacklist/user :userid])
+   :blacklist/resource (get-in command [:blacklist/resource :resource/ext-id])
    :event/comment (:comment command)})
 
 (defn- format-blacklist-entry [entry]
-  (update entry :user users/get-user))
+  (update entry :blacklist/user users/get-user))
 
 (def blacklist-api
   (context "/blacklist" []

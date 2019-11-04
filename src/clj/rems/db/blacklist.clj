@@ -52,8 +52,8 @@
   ;; TODO: move computation to db for performance
   ;; should be enough to check latest event per user-resource pair
   (reduce (fn [blacklist event]
-            (let [entry {:resource (:blacklist/resource event)
-                         :user (:blacklist/user event)}]
+            (let [entry {:blacklist/resource {:resource/ext-id (:blacklist/resource event)}
+                         :blacklist/user (:blacklist/user event)}]
               (case (:event/type event)
                 :blacklist.event/add
                 (conj blacklist entry)
@@ -63,7 +63,10 @@
           events))
 
 (defn get-blacklist [params]
-  (vec (sort-by (juxt :resource :user) (events->blacklist (get-events params)))))
+  (let [key-fn (fn [entry]
+                 [(get entry :blacklist/user)
+                  (get-in entry [:blacklist/resource :resource/ext-id])])]
+    (vec (sort-by key-fn (events->blacklist (get-events params))))))
 
 (defn blacklisted? [user resource]
   (not (empty? (get-blacklist {:blacklist/user user

@@ -27,9 +27,9 @@
 
 (defn- format-rows [rows]
   (doall
-   (for [{:keys [resource user]} rows]
+   (for [{:keys [blacklist/resource blacklist/user]} rows]
      {:key (str "blacklist-" resource (:userid user))
-      :resource {:value resource}
+      :resource {:value (:resource/ext-id resource)}
       :user {:value (rems.application-util/get-member-name user)}
       :email {:value (:email user)}})))
 
