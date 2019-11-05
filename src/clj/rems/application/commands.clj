@@ -378,7 +378,7 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-decider-error [application cmd]
-  (when-not (contains? (get application ::model/latest-decision-request-by-user)
+  (when-not (contains? (get application :rems.application.model/latest-decision-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
@@ -387,7 +387,7 @@
   (or (actor-is-not-decider-error application cmd)
       (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
-      (let [last-request-for-actor (get-in application [::model/latest-decision-request-by-user (:actor cmd)])]
+      (let [last-request-for-actor (get-in application [:rems.application.model/latest-decision-request-by-user (:actor cmd)])]
         (ok {:event/type :application.event/decided
              :application/request-id last-request-for-actor
              :application/decision (:decision cmd)
@@ -403,14 +403,14 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (get application ::model/latest-comment-request-by-user)
+  (when-not (contains? (get application :rems.application.model/latest-comment-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
 (defmethod command-handler :application.command/comment
   [cmd application _injections]
   (or (actor-is-not-commenter-error application cmd)
-      (let [last-request-for-actor (get-in application [::model/latest-comment-request-by-user (:actor cmd)])]
+      (let [last-request-for-actor (get-in application [:rems.application.model/latest-comment-request-by-user (:actor cmd)])]
         (ok {:event/type :application.event/commented
              ;; Currently we want to tie all comments to the latest request.
              ;; In the future this might change so that commenters can freely continue to comment
