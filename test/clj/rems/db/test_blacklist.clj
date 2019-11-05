@@ -51,7 +51,11 @@
            :resource/ext-id "urn.fi/124"
            :event/comment nil}]
          (blacklist/get-events {:userid "user2"})))
-  (is (not (blacklist/blacklisted? "user1" "urn.fi/123"))) ;; added and removed to blacklist
-  (is (not (blacklist/blacklisted? "user1" "urn.fi/124"))) ;; never added
-  (is (not (blacklist/blacklisted? "user2" "urn.fi/123"))) ;; never added
-  (is (blacklist/blacklisted? "user2" "urn.fi/124"))) ;; added but not removed
+  (is (not (blacklist/blacklisted? "user1" "urn.fi/123"))
+      "user was added to blacklist, then removed")
+  (is (not (blacklist/blacklisted? "user1" "urn.fi/124"))
+      "user was never added to blacklist")
+  (is (not (blacklist/blacklisted? "user2" "urn.fi/123"))
+      "user was never added to blacklist")
+  (is (blacklist/blacklisted? "user2" "urn.fi/124")
+      "user was added to blacklist but not removed"))
