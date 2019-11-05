@@ -629,8 +629,6 @@
                        :application/licenses [{:license/id 30}
                                               {:license/id 31}
                                               {:license/id 32}
-                                              ;; Include also the previously added license #33 in the new licenses.
-                                              {:license/id 33}
                                               {:license/id 34}]}
             events (conj (:application/events approved-application) new-event)
             expected-application (merge approved-application
@@ -644,7 +642,6 @@
                                          :application/licenses [{:license/id 30}
                                                                 {:license/id 31}
                                                                 {:license/id 32}
-                                                                {:license/id 33}
                                                                 {:license/id 34}]})]
         (is (= expected-application (recreate expected-application)))))))
 
