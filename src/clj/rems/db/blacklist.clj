@@ -51,7 +51,6 @@
 (defn- events->blacklist [events]
   ;; TODO: move computation to db for performance
   ;; should be enough to check latest event per user-resource pair
-  (prn :EVENTS events)
   (reduce (fn [blacklist event]
             (let [entry (select-keys event [:userid :resource/ext-id])]
               (case (:event/type event)
