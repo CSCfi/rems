@@ -180,7 +180,7 @@
 (defn- group-apps-by-user [apps]
   (->> apps
        (mapcat (fn [app]
-                 (for [user (keys (::permissions/user-roles app))]
+                 (for [user (keys (:rems.permissions/user-roles app))]
                    (when-let [app (model/apply-user-permissions app user)]
                      [user app]))))
        (reduce (fn [apps-by-user [user app]]
@@ -202,7 +202,7 @@
 
 (defn- group-roles-by-user [apps]
   (->> apps
-       (mapcat (fn [app] (::permissions/user-roles app)))
+       (mapcat (fn [app] (:rems.permissions/user-roles app)))
        (reduce (fn [roles-by-user [user roles]]
                  (update roles-by-user user set/union roles))
                {})))

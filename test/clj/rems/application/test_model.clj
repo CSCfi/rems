@@ -414,8 +414,8 @@
                                        :application/first-submitted (DateTime. 3000)
                                        :application/state :application.state/submitted
                                        :application/todo :new-application
-                                       ::model/submitted-answers {41 "foo" 42 "bar"}
-                                       ::model/previous-submitted-answers nil})))
+                                       :rems.application.model/submitted-answers {41 "foo" 42 "bar"}
+                                       :rems.application.model/previous-submitted-answers nil})))
 
 (deftest test-application-view-submitted
   (is (= submitted-application (recreate submitted-application))))
@@ -510,7 +510,7 @@
                                        :application/events events
                                        :application/state :application.state/returned
                                        :application/todo nil
-                                       ::model/draft-answers {41 "foo" 42 "bar"}})]
+                                       :rems.application.model/draft-answers {41 "foo" 42 "bar"}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> draft saved x2"
@@ -532,7 +532,7 @@
                                                {:application/modified (DateTime. 6000)
                                                 :application/last-activity (DateTime. 6000)
                                                 :application/events events
-                                                ::model/draft-answers {41 "new foo" 42 "new bar"}})]
+                                                :rems.application.model/draft-answers {41 "new foo" 42 "new bar"}})]
           (is (= expected-application (recreate expected-application)))
 
           (testing "> resubmitted"
@@ -547,8 +547,8 @@
                                                    :application/events events
                                                    :application/state :application.state/submitted
                                                    :application/todo :resubmitted-application
-                                                   ::model/submitted-answers {41 "new foo" 42 "new bar"}
-                                                   ::model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
+                                                   :rems.application.model/submitted-answers {41 "new foo" 42 "new bar"}
+                                                   :rems.application.model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
               (is (= expected-application (recreate expected-application)))))))
 
       (testing "> resubmitted (no draft saved)"
@@ -558,15 +558,15 @@
                          :application/id 1}
               events (conj events new-event)
               expected-application (-> expected-application
-                                       (dissoc ::model/draft-answers)
+                                       (dissoc :rems.application.model/draft-answers)
                                        (merge {:application/last-activity (DateTime. 7000)
                                                :application/events events
                                                :application/state :application.state/submitted
                                                :application/todo :resubmitted-application
                                                ;; when there was no draft-saved event, the current and
                                                ;; previous submitted answers must be the same
-                                               ::model/submitted-answers {41 "foo" 42 "bar"}
-                                               ::model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
+                                               :rems.application.model/submitted-answers {41 "foo" 42 "bar"}
+                                               :rems.application.model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-resources-changed
@@ -794,7 +794,7 @@
                                       {:application/last-activity (DateTime. 4000)
                                        :application/events events
                                        :application/todo :waiting-for-decision
-                                       ::model/latest-decision-request-by-user {"decider" request-id}})]
+                                       :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> decided"
@@ -810,7 +810,7 @@
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
                                            :application/todo :no-pending-requests
-                                           ::model/latest-decision-request-by-user {}})]
+                                           :rems.application.model/latest-decision-request-by-user {}})]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-adding-and-inviting
@@ -1118,21 +1118,21 @@
   (testing "draft"
     (is (= {:application/form {:form/fields [{:field/id 1 :field/value "a"}
                                              {:field/id 2 :field/value "b"}]}}
-           (model/enrich-answers {::model/draft-answers {1 "a" 2 "b"}}))))
+           (model/enrich-answers {:rems.application.model/draft-answers {1 "a" 2 "b"}}))))
   (testing "submitted"
     (is (= {:application/form {:form/fields [{:field/id 1 :field/value "a"}
                                              {:field/id 2 :field/value "b"}]}}
-           (model/enrich-answers {::model/submitted-answers {1 "a" 2 "b"}}))))
+           (model/enrich-answers {:rems.application.model/submitted-answers {1 "a" 2 "b"}}))))
   (testing "returned"
     (is (= {:application/form {:form/fields [{:field/id 1 :field/value "aa" :field/previous-value "a"}
                                              {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
-           (model/enrich-answers {::model/submitted-answers {1 "a" 2 "b"}
-                                  ::model/draft-answers {1 "aa" 2 "bb"}}))))
+           (model/enrich-answers {:rems.application.model/submitted-answers {1 "a" 2 "b"}
+                                  :rems.application.model/draft-answers {1 "aa" 2 "bb"}}))))
   (testing "resubmitted"
     (is (= {:application/form {:form/fields [{:field/id 1 :field/value "aa" :field/previous-value "a"}
                                              {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
-           (model/enrich-answers {::model/previous-submitted-answers {1 "a" 2 "b"}
-                                  ::model/submitted-answers {1 "aa" 2 "bb"}})))))
+           (model/enrich-answers {:rems.application.model/previous-submitted-answers {1 "a" 2 "b"}
+                                  :rems.application.model/submitted-answers {1 "aa" 2 "bb"}})))))
 
 ;;;; Tests for permissions
 
