@@ -51,7 +51,7 @@
            :resource/ext-id "urn.fi/124"
            :event/comment nil}]
          (blacklist/get-events {:userid "goodie"})))
-  (is (false? (blacklist/blacklisted? "baddie" "urn.fi/123")))
-  (is (false? (blacklist/blacklisted? "baddie" "urn.fi/124")))
-  (is (false? (blacklist/blacklisted? "goodie" "urn.fi/123")))
-  (is (true? (blacklist/blacklisted? "goodie" "urn.fi/124"))))
+  (is (not (blacklist/blacklisted? "baddie" "urn.fi/123")))
+  (is (not (blacklist/blacklisted? "baddie" "urn.fi/124")))
+  (is (not (blacklist/blacklisted? "goodie" "urn.fi/123")))
+  (is (blacklist/blacklisted? "goodie" "urn.fi/124")))
