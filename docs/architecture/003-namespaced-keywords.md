@@ -41,6 +41,9 @@ and namespaced destructuring:
 
 (let [{:event/keys [time id]} event]
   ...)
+
+(let [{:keys [event/time event/id]} event]
+  ...)
 ```
 
 Pros of namespaced keys:
@@ -53,3 +56,43 @@ Pros of namespaced keys:
 Cons:
 
 - verbose (mitigated by using short namespaces)
+
+# Amendment: Same data for same key
+
+Date: 2019-11-05
+Authors: @opqdonut @Macroz
+
+When using namespaced keys, it's useful to keep the structure of the
+corresponding values fixed. That is, don't mix forms like this:
+
+```clojure
+{:blacklist/user "bob"
+ :blacklist/resource "123"}
+{:blacklist/user {:userid "bob" :name "Bob"}
+ :blacklist/resource {:resource/ext-id "urn:123" :resource/id 3}}
+```
+
+Instead use partial maps like this:
+
+```clojure
+{:blacklist/user {:userid "bob"}
+ :blacklist/resource {:resource/ext-id "urn:123"}}
+```
+
+You can also avoid the intermediate maps and use inner keys directly,
+especially if they are already established:
+
+```clojure
+{:userid "bob"
+ :resource/ext-id "urn:123"}
+```
+
+# Amendment: Private data
+
+Date: 2019-11-05
+Authors: @opqdonut @Macroz
+
+It's ok to use `::private-keywords` for data that's internal to your
+namespace. However if you need to refer to these keys outside of the
+namespace (e.g. from tests), use the fully qualified form
+`:name.space/keyword`.
