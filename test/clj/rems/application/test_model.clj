@@ -175,46 +175,6 @@
        :enabled true
        :archived false}})
 
-(def ^:private resource-id-11
-  {:resource/id 11
-   :resource/ext-id "urn:11"
-   :catalogue-item/id 10
-   :catalogue-item/title {:en "en title"
-                          :fi "fi title"}
-   :catalogue-item/infourl {:en "http://info.com"}
-   :catalogue-item/start (DateTime. 100)
-   :catalogue-item/end nil
-   :catalogue-item/enabled true
-   :catalogue-item/expired false
-   :catalogue-item/archived false})
-
-(def ^:private resource-id-21
-  {:resource/id 21
-   :resource/ext-id "urn:21"
-   :catalogue-item/id 20
-   :catalogue-item/title {:en "en title"
-                          :fi "fi title"}
-   :catalogue-item/infourl {:en "http://info.com"}
-   :catalogue-item/start (DateTime. 100)
-   :catalogue-item/end nil
-   :catalogue-item/enabled true
-   :catalogue-item/expired false
-   :catalogue-item/archived false})
-
-(def ^:private resource-id-31
-  {:catalogue-item/end nil
-   :catalogue-item/expired false
-   :catalogue-item/enabled true
-   :resource/id 31
-   :catalogue-item/title
-   {:en "en title", :fi "fi title"}
-   :catalogue-item/infourl
-   {:en "http://info.com"}
-   :resource/ext-id "urn:31"
-   :catalogue-item/start (DateTime. 100)
-   :catalogue-item/archived false
-   :catalogue-item/id 30})
-
 ;; no attachments here for now
 (defn ^:private get-attachments-for-application [id]
   [])
