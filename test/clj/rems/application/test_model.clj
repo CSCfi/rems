@@ -629,12 +629,12 @@
                        :event/time (DateTime. 4500)
                        :event/actor "applicant"
                        :application/id 1
-                       :application/accepted-licenses #{30 31 32 33}}
+                       :application/accepted-licenses #{30 31 32}}
             events (conj events new-event)
             expected-application (merge expected-application
                                         {:application/last-activity (DateTime. 4500)
                                          :application/events events
-                                         :application/accepted-licenses {"applicant" #{30 31 32 33}}})]
+                                         :application/accepted-licenses {"applicant" #{30 31 32}}})]
         (is (= expected-application (recreate expected-application)))
 
         (testing "> member added"
@@ -654,13 +654,13 @@
                                :event/time (DateTime. 4700)
                                :event/actor "member"
                                :application/id 1
-                               :application/accepted-licenses #{30 33}}
+                               :application/accepted-licenses #{30}}
                     events (conj events new-event)
                     expected-application (merge expected-application
                                                 {:application/last-activity (DateTime. 4700)
                                                  :application/events events
-                                                 :application/accepted-licenses {"applicant" #{30 31 32 33}
-                                                                                 "member" #{30 33}}})]
+                                                 :application/accepted-licenses {"applicant" #{30 31 32}
+                                                                                 "member" #{30}}})]
                 (is (= expected-application (recreate expected-application)))
                 (testing "> licenses accepted overwrites previous"
                   (let [new-event {:event/type :application.event/licenses-accepted
@@ -672,7 +672,7 @@
                         expected-application (merge expected-application
                                                     {:application/last-activity (DateTime. 4800)
                                                      :application/events events
-                                                     :application/accepted-licenses {"applicant" #{30 31 32 33}
+                                                     :application/accepted-licenses {"applicant" #{30 31 32}
                                                                                      "member" #{31 32}}})]
                     (is (= expected-application (recreate expected-application)))))))))))))
 
