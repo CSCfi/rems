@@ -11,6 +11,7 @@ The input consists of the event vector with the event name and parameters, and a
 **This is how re-frame suggests you should to do things:**
 
 ```clojure
+;; AVOID
 (rf/reg-event-fx
  ::send-request-decision
  (fn [{{::keys [deciders application-id comment]} :db} _]
@@ -61,6 +62,7 @@ Furthermore we haven't used a time travelling debugger or anything else that ben
 In particular we do not want to mix side-effects and effect handlers in the same flow! **Please avoid doing this mixed model** because it's even more confusing than either solution!
 
 ```clojure
+;; AVOID
 (rf/reg-event-fx
  ::send-request-decision
  (fn [{{::keys [deciders application-id comment]} :db} _]
@@ -82,6 +84,7 @@ such as sorting options and moving between pages.
 So instead of
 
 ```clojure
+;; AVOID
 [action-button {:id action-form-id
                 :text (text :t.actions/request-decision)
                 :on-click #(do-a-fetch!)}])
