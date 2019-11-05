@@ -173,6 +173,13 @@
    :attachment/filename s/Str
    :attachment/type s/Str})
 
+(s/defschema BlacklistEntry
+  {:blacklist/user UserWithAttributes
+   :blacklist/resource {:resource/ext-id s/Str}})
+
+(s/defschema Blacklist
+  [BlacklistEntry])
+
 (s/defschema Application
   {:application/id s/Int
    :application/external-id s/Str
@@ -197,8 +204,7 @@
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    (s/optional-key :application/blacklist) (rjs/field
-                                            [{:blacklist/user UserWithAttributes
-                                              :blacklist/resource {:resource/ext-id s/Str}}]
+                                            Blacklist
                                             {:description "Which members of this application are blacklisted for which resources"})
    :application/resources [V2Resource]
    :application/licenses [V2License]

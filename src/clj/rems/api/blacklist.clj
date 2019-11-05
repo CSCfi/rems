@@ -9,23 +9,20 @@
             [schema.core :as s]))
 
 (s/defschema BlacklistCommand
-  {:resource blacklist/ResourceId
-   :user blacklist/UserId
+  {:blacklist/resource {:resource/ext-id blacklist/ResourceId}
+   :blacklist/user {:userid blacklist/UserId}
    :comment s/Str})
-
-(s/defschema BlacklistResponse
-  [{:resource blacklist/ResourceId
-    :user schema/UserWithAttributes}])
 
 (defn- command->event [command]
   {:event/actor (getx-user-id)
    :event/time (time/now)
-   :blacklist/user (:user command)
-   :blacklist/resource (:resource command)
+   :userid (get-in command [:blacklist/user :userid])
+   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
    :event/comment (:comment command)})
 
 (defn- format-blacklist-entry [entry]
-  (update entry :user users/get-user))
+  {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}
+   :blacklist/user (users/get-user (:userid entry))})
 
 (def blacklist-api
   (context "/blacklist" []
@@ -35,9 +32,9 @@
       :roles #{:handler :owner :reporter}
       :query-params [{user :- blacklist/UserId nil}
                      {resource :- blacklist/ResourceId nil}]
-      :return BlacklistResponse
-      (->> (blacklist/get-blacklist {:blacklist/user user
-                                     :blacklist/resource resource})
+      :return schema/Blacklist
+      (->> (blacklist/get-blacklist {:userid user
+                                     :resource/ext-id resource})
            (mapv format-blacklist-entry)
            (ok)))
     (POST "/add" []

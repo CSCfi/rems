@@ -36,45 +36,45 @@
   (testing "initially no blacklist"
     (is (= #{} (fetch {}))))
   (testing "add three entries"
-    (add! {:user "user1"
-           :resource "A"
+    (add! {:blacklist/user {:userid "user1"}
+           :blacklist/resource {:resource/ext-id "A"}
            :comment "bad"})
-    (add! {:user "user1"
-           :resource "B"
+    (add! {:blacklist/user {:userid "user1"}
+           :blacklist/resource {:resource/ext-id "B"}
            :comment "quite bad"})
-    (add! {:user "user2"
-           :resource "B"
+    (add! {:blacklist/user {:userid "user2"}
+           :blacklist/resource {:resource/ext-id "B"}
            :comment "very bad"})
-    (is (= #{{:resource "A" :user {:userid "user1" :name nil :email nil}}
-             {:resource "B" :user {:userid "user1" :name nil :email nil}}
-             {:resource "B" :user {:userid "user2" :name nil :email nil}}}
+    (is (= #{{:blacklist/resource {:resource/ext-id "A"} :blacklist/user {:userid "user1" :name nil :email nil}}
+             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}
+             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
            (fetch {}))))
   (testing "query parameters"
-    (is (= #{{:resource "A" :user {:userid "user1" :name nil :email nil}}
-             {:resource "B" :user {:userid "user1" :name nil :email nil}}}
+    (is (= #{{:blacklist/resource {:resource/ext-id "A"} :blacklist/user {:userid "user1" :name nil :email nil}}
+             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}}
            (fetch {:user "user1"})))
-    (is (= #{{:resource "B" :user {:userid "user1" :name nil :email nil}}
-             {:resource "B" :user {:userid "user2" :name nil :email nil}}}
+    (is (= #{{:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}
+             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
            (fetch {:resource "B"})))
-    (is (= #{{:resource "B" :user {:userid "user2" :name nil :email nil}}}
+    (is (= #{{:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
            (fetch {:resource "B" :user "user2"}))))
   (testing "remove entry"
-    (remove! {:user "user2"
-              :resource "B"
+    (remove! {:blacklist/user {:userid "user2"}
+              :blacklist/resource {:resource/ext-id "B"}
               :comment "oops"})
     (is (= #{}
            (fetch {:resource "B" :user "user2"}))))
   (testing "add entry again"
-    (add! {:user "user2"
-           :resource "B"
+    (add! {:blacklist/user {:userid "user2"}
+           :blacklist/resource {:resource/ext-id "B"}
            :comment "again"})
-    (is (= #{{:resource "B" :user {:userid "user2" :name nil :email nil}}}
+    (is (= #{{:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
            (fetch {:resource "B" :user "user2"}))))
   (testing "remove nonexistent entry"
-    (remove! {:user "user3"
-              :resource "C"
+    (remove! {:blacklist/user {:userid "user3"}
+              :blacklist/resource {:resource/ext-id "C"}
               :comment "undo"})
-    (is (= #{{:resource "A" :user {:userid "user1" :name nil :email nil}}
-             {:resource "B" :user {:userid "user1" :name nil :email nil}}
-             {:resource "B" :user {:userid "user2" :name nil :email nil}}}
+    (is (= #{{:blacklist/resource {:resource/ext-id "A"} :blacklist/user {:userid "user1" :name nil :email nil}}
+             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}
+             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
            (fetch {})))))

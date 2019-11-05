@@ -522,10 +522,10 @@ VALUES (:eventdata::jsonb);
 SELECT id, eventdata::text FROM blacklist_event
 WHERE 1=1
 /*~ (when (:resource params) */
-  AND eventdata->>'blacklist/resource' = :resource
+  AND eventdata->>'resource/ext-id' = :resource
 /*~ ) ~*/
 /*~ (when (:user params) */
-  AND eventdata->>'blacklist/user' = :user
+  AND eventdata->>'userid' = :user
 /*~ ) ~*/
 ORDER BY id ASC
 ;

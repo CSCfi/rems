@@ -305,8 +305,8 @@
           (testing "user blacklisted"
             (let [[entry & _] (api-call :get (str "/api/blacklist?user=" applicant-id "&resource=" resource-ext-id) nil
                                         api-key handler-id)]
-              (is (= resource-ext-id (:resource entry)))
-              (is (= applicant-id (:userid (:user entry))))))))
+              (is (= {:resource/ext-id resource-ext-id} (:blacklist/resource entry)))
+              (is (= applicant-id (:userid (:blacklist/user entry))))))))
       (testing "second application"
         (let [application-id (testing "create application"
                                (:application-id
