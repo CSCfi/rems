@@ -14,6 +14,7 @@
                      [taoensso.tempura :refer [tr]])))
 
 (defn with-language [lang f]
+  (assert (keyword? lang) {:lang lang})
   #?(:clj (binding [context/*lang* lang
                     context/*tempura* (partial tr (locales/tempura-config) [lang])]
             (f))))
