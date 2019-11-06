@@ -7,7 +7,6 @@
             [reagent.core :as r]
             [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
-            [rems.administration.administration :refer [administration-page]]
             [rems.administration.blacklist :refer [blacklist-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
@@ -41,7 +40,7 @@
             [rems.roles :as roles]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
-            [rems.util :refer [navigate! fetch parse-int set-location!]]
+            [rems.util :refer [navigate! fetch parse-int replace-url! set-location!]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.history.Html5History))
@@ -206,7 +205,6 @@
    :applications applications-page
    :extra-pages extra-pages
    :rems.actions/accept-invitation accept-invitation-page
-   :rems.administration/administration administration-page
    :rems.administration/blacklist blacklist-page
    :rems.administration/catalogue-item catalogue-item-page
    :rems.administration/catalogue-items catalogue-items-page
@@ -312,8 +310,7 @@
   (rf/dispatch [:set-active-page :applications]))
 
 (secretary/defroute "/administration" []
-  (rf/dispatch [:rems.administration.administration/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/administration]))
+  (replace-url! "/administration/catalogue-items"))
 
 (secretary/defroute "/administration/blacklist" []
   (rf/dispatch [:rems.administration.blacklist/enter-page])
