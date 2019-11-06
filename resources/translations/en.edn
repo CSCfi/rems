@@ -170,11 +170,11 @@
          :apply "Apply"
          :apply-for-bundle "Apply for %1 resources as a bundle "
          :header "%1 resources in the cart"
-         :intro [:div.intro [:p "Apply for access by adding resources to the cart. When applying for multiple rights at the same time, resources using the same application process are bundled together as one application."]]
+         :intro [:div.intro [:p "Apply for access rights by adding resources to the cart. When applying for access to multiple resources at the same time, resources using the same application are bundled together."]]
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
-              :intro [:p "Access can be applied for the following resources."]
+              :intro [:p "Access to the following resources can be applied for."]
               :more-info "More info"
               :continue-existing-application "Continue application"
               :continue-existing-application-intro [:div.intro [:p "You have unfinished applications that you can continue from here:"]]

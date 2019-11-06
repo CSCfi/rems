@@ -137,7 +137,7 @@
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"}
                  :id "Tunniste"
-                 :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, ja jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
+                 :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
                  :last-activity "Muokattu"
                  :latest-activity "Viimeisin toimenpide"
                  :my-applications "Omat hakemukset"
@@ -168,7 +168,7 @@
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
          :header "%1 aineistoa korissa"
-         :intro [:div.intro [:p "Hae käyttöoikeuksia lisäämällä resursseja koriin. Useampaa oikeutta kerralla haettaessa keskenään samaa hakemusmenettelyä noudattavat resurssit yhdistyvät yhdeksi hakemukseksi."]]
+         :intro [:div.intro [:p "Hae käyttöoikeuksia lisäämällä resursseja koriin. Samalla hakemuksella haettavat, keskenään samankaltaiset resurssit ryhmitellään automaattisesti yhteen."]]
          :remove "Poista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
