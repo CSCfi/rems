@@ -2,8 +2,9 @@
   (:require [rems.db.core :as db]
             [rems.json :as json]))
 
-(defn put! [email]
-  (:id (db/put-to-email-outbox! {:email (json/generate-string email)})))
+(defn put! [{:keys [email attempts]}]
+  (:id (db/put-to-email-outbox! {:email (json/generate-string email)
+                                 :attempts attempts})))
 
 (defn- fix-row-from-db [row]
   {:email-outbox/id (:id row)

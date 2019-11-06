@@ -531,8 +531,8 @@ ORDER BY id ASC
 ;
 
 -- :name put-to-email-outbox! :insert
-INSERT INTO email_outbox (email)
-VALUES (:email::jsonb)
+INSERT INTO email_outbox (email, remaining_attempts)
+VALUES (:email::jsonb, :attempts)
 RETURNING id;
 
 -- :name get-email-outbox :? :*

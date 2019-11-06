@@ -10,12 +10,14 @@
   rollback-db-fixture)
 
 (deftest test-email-outbox
-  (let [id1 (email-outbox/put! {:to-user "user 1"
-                                :subject "subject 1"
-                                :body "body 1"})
-        id2 (email-outbox/put! {:to "user2@example.com"
-                                :subject "subject 2"
-                                :body "body 2"})]
+  (let [id1 (email-outbox/put! {:email {:to-user "user 1"
+                                        :subject "subject 1"
+                                        :body "body 1"}
+                                :attempts 5})
+        id2 (email-outbox/put! {:email {:to "user2@example.com"
+                                        :subject "subject 2"
+                                        :body "body 2"}
+                                :attempts 5})]
     (testing "put"
       (is (number? id1))
       (is (number? id2)))
@@ -30,7 +32,7 @@
                                      :body "body 1"}
                 :email-outbox/latest-attempt nil
                 :email-outbox/latest-error ""
-                :email-outbox/remaining-attempts 1}
+                :email-outbox/remaining-attempts 5}
                (dissoc email :email-outbox/created)))
         (is (instance? DateTime (:email-outbox/created email)))))
 
