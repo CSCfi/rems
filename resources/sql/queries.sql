@@ -529,3 +529,17 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY id ASC
 ;
+
+-- :name put-to-email-outbox! :insert
+INSERT INTO email_outbox (email)
+VALUES (:email::jsonb)
+RETURNING id;
+
+-- :name get-email-outbox :? :*
+SELECT id, email::text, created, latest_attempt, latest_error, remaining_attempts
+FROM email_outbox
+WHERE 1 = 1
+/*~ (when (:ids params) */
+  AND id IN (:v*:ids)
+/*~ ) ~*/
+;
