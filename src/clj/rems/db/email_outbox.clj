@@ -25,3 +25,6 @@
 (defn attempt-failed! [id error]
   (db/email-outbox-attempt-failed! {:id id
                                     :error error}))
+
+(defn attempt-succeeded! [id]
+  (db/email-outbox-attempt-succeeded! {:id id}))

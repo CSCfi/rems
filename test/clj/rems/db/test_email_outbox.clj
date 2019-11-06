@@ -20,7 +20,8 @@
                                 :attempts 5})]
     (testing "put"
       (is (number? id1))
-      (is (number? id2)))
+      (is (number? id2))
+      (is (not= id1 id2)))
 
     (testing "get by id"
       (let [emails (email-outbox/get-emails {:ids [id1]})
@@ -63,7 +64,7 @@
         (is (nil? (:email-outbox/latest-attempt unrelated)))))
 
     (testing "all attempts failed"
-      (dotimes [_ 10]
+      (dotimes [_ 10] ; greater than the remaining attempts
         (email-outbox/attempt-failed! id1 "the error message"))
       (let [email (first (email-outbox/get-emails {:ids [id1]}))]
         (is (= 0 (:email-outbox/remaining-attempts email))
@@ -77,4 +78,12 @@
              (->> (email-outbox/get-emails {:remaining-attempts? true})
                   (map :email-outbox/id)
                   sort))
-          "get emails with remaining attempts"))))
+          "get emails with remaining attempts"))
+
+    (testing "attempt succeeded"
+      (email-outbox/attempt-succeeded! id1)
+      (is (= [id2]
+             (->> (email-outbox/get-emails {})
+                  (map :email-outbox/id)
+                  sort))
+          "successfully sent emails should be removed from the outbox"))))

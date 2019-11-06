@@ -553,3 +553,8 @@ SET latest_attempt     = now(),
     latest_error       = :error,
     remaining_attempts = greatest(0, remaining_attempts - 1)
 WHERE id = :id;
+
+-- :name email-outbox-attempt-succeeded! :!
+DELETE
+FROM email_outbox
+WHERE id = :id;
