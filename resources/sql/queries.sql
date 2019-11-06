@@ -542,4 +542,14 @@ WHERE 1 = 1
 /*~ (when (:ids params) */
   AND id IN (:v*:ids)
 /*~ ) ~*/
+/*~ (when (:remaining-attempts? params) */
+  AND remaining_attempts > 0
+/*~ ) ~*/
 ;
+
+-- :name email-outbox-attempt-failed! :!
+UPDATE email_outbox
+SET latest_attempt     = now(),
+    latest_error       = :error,
+    remaining_attempts = greatest(0, remaining_attempts - 1)
+WHERE id = :id;

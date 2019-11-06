@@ -47,4 +47,34 @@
                                     :body "body 2"}}]
              (->> (email-outbox/get-emails)
                   (map #(select-keys % [:email-outbox/id :email-outbox/email]))
-                  (sort-by :email-outbox/id)))))))
+                  (sort-by :email-outbox/id)))))
+
+    (testing "attempt failed"
+      (email-outbox/attempt-failed! id1 "the error message")
+      (let [email (first (email-outbox/get-emails {:ids [id1]}))
+            unrelated (first (email-outbox/get-emails {:ids [id2]}))]
+        (is (= {:email-outbox/id id1
+                :email-outbox/latest-error "the error message"
+                :email-outbox/remaining-attempts 4}
+               (select-keys email [:email-outbox/id
+                                   :email-outbox/latest-error
+                                   :email-outbox/remaining-attempts])))
+        (is (instance? DateTime (:email-outbox/latest-attempt email)))
+        (is (nil? (:email-outbox/latest-attempt unrelated)))))
+
+    (testing "all attempts failed"
+      (dotimes [_ 10]
+        (email-outbox/attempt-failed! id1 "the error message"))
+      (let [email (first (email-outbox/get-emails {:ids [id1]}))]
+        (is (= 0 (:email-outbox/remaining-attempts email))
+            "remaining attempts should never become negative"))
+      (is (= [id1 id2]
+             (->> (email-outbox/get-emails {})
+                  (map :email-outbox/id)
+                  sort))
+          "get all emails")
+      (is (= [id2]
+             (->> (email-outbox/get-emails {:remaining-attempts? true})
+                  (map :email-outbox/id)
+                  sort))
+          "get emails with remaining attempts"))))

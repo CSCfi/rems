@@ -17,6 +17,11 @@
 (defn get-emails
   ([]
    (get-emails nil))
-  ([{:keys [ids]}]
-   (->> (db/get-email-outbox {:ids ids})
+  ([{:keys [ids remaining-attempts?]}]
+   (->> (db/get-email-outbox {:ids ids
+                              :remaining-attempts? remaining-attempts?})
         (map fix-row-from-db))))
+
+(defn attempt-failed! [id error]
+  (db/email-outbox-attempt-failed! {:id id
+                                    :error error}))
