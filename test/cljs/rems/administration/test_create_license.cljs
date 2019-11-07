@@ -14,7 +14,13 @@
   (testing "missing license type"
     (is (nil? (parse-textcontent {:link "the link"
                                   :text "the text"}
-                                 nil)))))
+                                 nil))))
+  (testing "trim license link"
+    (is (= "the link" (parse-textcontent {:link "  the link\t"}
+                                         "link"))))
+  (testing "do not trim license text"
+    (is (= "  the text\t" (parse-textcontent {:text "  the text\t"}
+                                             "text")))))
 
 (deftest build-request-test
   (let [form {:licensetype "link"

@@ -9,7 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [navigate! fetch post! put!]]))
+            [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -63,8 +63,8 @@
        (not (str/blank? (:title request)))))
 
 (defn build-create-request [form]
-  (let [request {:organization (:organization form)
-                 :title (:title form)
+  (let [request {:organization (trim-when-string (:organization form))
+                 :title (trim-when-string (:title form))
                  :type (:type form)}
         request (case (:type form)
                   :auto-approve request

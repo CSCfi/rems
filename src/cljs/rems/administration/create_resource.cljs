@@ -9,7 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
-            [rems.util :refer [navigate! fetch post!]]))
+            [rems.util :refer [navigate! fetch post! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -36,8 +36,8 @@
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
-  (let [request {:organization (:organization form)
-                 :resid (:resid form)
+  (let [request {:organization (trim-when-string (:organization form))
+                 :resid (trim-when-string (:resid form))
                  :licenses (map :id (:licenses form))}]
     (when (valid-request? request)
       request)))
