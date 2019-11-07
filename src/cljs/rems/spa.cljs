@@ -275,11 +275,15 @@
       :component-did-update on-update
       :display-name "main-content"
       :reagent-render (fn [page-id _grab-focus?]
-                        (let [content (pages page-id)]
-                          [:main.container-fluid
-                           {:class (str "page-" (name page-id))
-                            :id "main-content"}
-                           [content]]))})))
+                        [:main.container-fluid
+                         {:class (str "page-" (name page-id))
+                          :id "main-content"}
+                         (if-let [content (pages page-id)]
+                           [content]
+                           (do ; implementation error
+                             (println "Unknown page-id" page-id)
+                             (rf/dispatch [:set-active-page :not-found])
+                             nil))])})))
 
 (defn page []
   (let [page-id @(rf/subscribe [:page])
