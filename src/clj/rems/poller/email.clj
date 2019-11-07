@@ -16,8 +16,7 @@
             [rems.scheduler :as scheduler]
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])
-  (:import [javax.mail SendFailedException]
-           [javax.mail.internet InternetAddress]
+  (:import [javax.mail.internet InternetAddress]
            [org.joda.time Duration]))
 
 ;;; Mapping events to emails
@@ -255,26 +254,28 @@
       (log/info "sending email:" (pr-str email))
       (cond
         to-error
-        (log/warn "failed address validation, skipping message: " to-error)
+        (do
+          (log/warn "failed address validation:" to-error)
+          (str "failed address validation: " to-error))
 
         (not (and host port))
         (do
           (log/info "no smtp server configured, only pretending to send email")
-          true)
+          nil)
 
         :else
         (try
           (postal/send-message {:host host :port port} email)
-          true
-          (catch SendFailedException e ; e.g. email address does not exist
-            (log/warn e "failed sending email, skipping:" (pr-str email))))))))
+          nil
+          (catch Throwable e ; e.g. email address does not exist
+            (log/warn e "failed sending email:" (pr-str email))
+            (str "failed sending email: " e)))))))
 
 (defn run []
   (doseq [email (email-outbox/get-emails {:remaining-attempts? true})]
-    (if (send-email! (:email-outbox/email email))
-      (email-outbox/attempt-succeeded! (:email-outbox/id email))
-      ;; TODO: return error message from send
-      (email-outbox/attempt-failed! (:email-outbox/id email) "error"))))
+    (if-let [error (send-email! (:email-outbox/email email))]
+      (email-outbox/attempt-failed! (:email-outbox/id email) error)
+      (email-outbox/attempt-succeeded! (:email-outbox/id email)))))
 
 (mount/defstate email-poller
   :start (scheduler/start! run (Duration/standardSeconds 10))

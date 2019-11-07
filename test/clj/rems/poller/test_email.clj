@@ -36,7 +36,7 @@
                   rems.db.users/get-user (constantly {:email "user@example.com"})]
 
       (testing "mail to email address"
-        (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})
+        (is (nil? (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})))
         (is (= {:to "foo@example.com"
                 :subject "ding"
                 :body "boing"
@@ -45,7 +45,7 @@
         (reset! message-atom nil))
 
       (testing "mail to user"
-        (send-email! {:to-user "user" :subject "x" :body "y"})
+        (is (nil? (send-email! {:to-user "user" :subject "x" :body "y"})))
         (is (= {:to "user@example.com"
                 :to-user "user"
                 :subject "x"
@@ -56,7 +56,26 @@
 
       (testing "mail to user without email"
         (with-redefs [rems.db.users/get-user (constantly {:email nil})]
-          (send-email! {:to-user "user" :subject "x" :body "y"}))
+          (is (nil? (send-email! {:to-user "user" :subject "x" :body "y"}))))
+        (is (nil? @message-atom))
+        (reset! message-atom nil))
+
+      (testing "invalid email address"
+        (is (= "failed address validation: Invalid address \"fake email\": javax.mail.internet.AddressException: Local address contains control or whitespace in string ``fake email''"
+               (send-email! {:to "fake email" :subject "x" :body "y"})))
+        (is (nil? @message-atom))
+        (reset! message-atom nil))
+
+      (testing "failed send"
+        (with-redefs [postal.core/send-message (fn [_host _message]
+                                                 (throw (Throwable. "dummy exception")))]
+          (is (= "failed sending email: java.lang.Throwable: dummy exception"
+                 (send-email! {:to-user "user" :subject "x" :body "y"})))))
+
+      (testing "SMTP not configured"
+        (with-redefs [rems.config/env (assoc rems.config/env :smtp-host nil)]
+          (is (nil? (send-email! {:to-user "user" :subject "x" :body "y"}))
+              "should skip the message quietly"))
         (is (nil? @message-atom))
         (reset! message-atom nil)))))
 
@@ -335,10 +354,10 @@
 
 (deftest test-regards
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "\n\nKind regards, REMS")]
-      (is (= {:to-user "assistant"
-              :subject "(2001/3, \"Application title\") A new application has been submitted"
-              :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nKind regards, REMS"}
-             (email-to "assistant" (emails created-events submit-event))))))
+    (is (= {:to-user "assistant"
+            :subject "(2001/3, \"Application title\") A new application has been submitted"
+            :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7\n\nKind regards, REMS"}
+           (email-to "assistant" (emails created-events submit-event))))))
 
 (deftest test-title-optional
   (is (= {:to-user "assistant"
