@@ -9,11 +9,7 @@
                     {:id :integration
                      :ns-patterns ["rems"]
                      :test-paths ["src" "test"]
-                     :focus-meta [:integration]}
-                    {:id :focused
-                     :ns-patterns ["rems"]
-                     :test-paths ["src" "test"]
-                     :focus-meta [:focused]}]
+                     :focus-meta [:integration]}]
             :kaocha/reporter kaocha.report.progress/report
             :plugins [:kaocha.plugin/print-invocations
                       :kaocha.plugin/profiling]}
