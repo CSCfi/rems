@@ -1,4 +1,4 @@
-(ns rems.api.services.application
+(ns rems.api.services.command
   (:require [clojure.java.jdbc :as jdbc]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]

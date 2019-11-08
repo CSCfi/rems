@@ -4,8 +4,8 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [medley.core :refer [map-vals]]
-            [rems.api.services.application :as application]
             [rems.api.services.catalogue :as catalogue]
+            [rems.api.services.command :as command]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
@@ -70,7 +70,7 @@
 (defn command! [command]
   (let [command (merge {:time (time/now)}
                        command)
-        result (application/command! command)]
+        result (command/command! command)]
     (assert (not (:errors result))
             {:command command :result result})
     result))
