@@ -181,6 +181,18 @@
                                                  :fi "fi placeholder"}}]}
              (build-request form languages))))
 
+    (testing "trim strings"
+      (is (= {:form/organization "abc"
+              :form/title "the title"
+              :form/fields [{:field/title {:en "en title"
+                                           :fi "fi title"}
+                             :field/optional true
+                             :field/type :text
+                             :field/max-length 12
+                             :field/placeholder {:en "en placeholder"
+                                                 :fi "fi placeholder"}}]}
+             (build-request (assoc form :form/organization " abc\t\n") languages))))
+
     (testing "zero fields"
       (is (= {:form/organization "abc"
               :form/title "the title"

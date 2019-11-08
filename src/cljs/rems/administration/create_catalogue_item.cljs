@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [navigate! fetch post! put!]]))
+            [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
 
 (defn- update-loading [db]
   (let [progress (::loading-progress db)]
@@ -69,9 +69,10 @@
                  :form (:form-id form)
                  :localizations (into {}
                                       (for [lang languages]
-                                        [lang {:title (get-in form [:title lang])
-                                               :infourl (empty-string-to-nil
-                                                         (get-in form [:infourl lang]))}]))}]
+                                        [lang {:title (trim-when-string (get-in form [:title lang]))
+                                               :infourl (-> (get-in form [:infourl lang])
+                                                            empty-string-to-nil
+                                                            trim-when-string)}]))}]
     (when (valid-request? request languages)
       request)))
 

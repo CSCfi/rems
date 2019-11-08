@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys visibility-ratio focus-input-field]]))
+            [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys trim-when-string visibility-ratio focus-input-field]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -91,7 +91,7 @@
 
 (defn build-localized-string [lstr languages]
   (into {} (for [language languages]
-             [language (get lstr language "")])))
+             [language (trim-when-string (get lstr language ""))])))
 
 (defn- build-request-field [field languages]
   (merge {:field/title (build-localized-string (:field/title field) languages)
@@ -109,8 +109,8 @@
                               :label (build-localized-string label languages)})})))
 
 (defn build-request [form languages]
-  {:form/organization (:form/organization form)
-   :form/title (:form/title form)
+  {:form/organization (trim-when-string (:form/organization form))
+   :form/title (trim-when-string (:form/title form))
    :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
 ;;;; form validation

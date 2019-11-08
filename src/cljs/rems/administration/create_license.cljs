@@ -7,7 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [navigate! post!]]))
+            [rems.util :refer [navigate! post! trim-when-string]]))
 
 (rf/reg-event-db
  ::enter-page
@@ -29,13 +29,13 @@
 
 (defn parse-textcontent [form license-type]
   (condp = license-type
-    license-type-link (:link form)
+    license-type-link (trim-when-string (:link form))
     license-type-text (:text form)
     license-type-attachment (:attachment-filename form)
     nil))
 
 (defn- build-localization [data license-type]
-  {:title (:title data)
+  {:title (trim-when-string (:title data))
    :textcontent (parse-textcontent data license-type)
    :attachment-id (:attachment-id data)})
 

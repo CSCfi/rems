@@ -135,6 +135,9 @@
 
 ;; String manipulation
 
+(defn trim-when-string [s]
+  (when (string? s) (str/trim s)))
+
 (defn normalize-option-key
   "Strips disallowed characters from an option key"
   [key]
