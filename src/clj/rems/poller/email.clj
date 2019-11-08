@@ -274,7 +274,10 @@
 (defn run []
   (doseq [email (email-outbox/get-emails {:remaining-attempts? true})]
     (if-let [error (send-email! (:email-outbox/email email))]
-      (email-outbox/attempt-failed! (:email-outbox/id email) error)
+      (do
+        (when (= 1 (:email-outbox/remaining-attempts email))
+          (log/warn "all attempts to send email" (:email-outbox/id email) "failed"))
+        (email-outbox/attempt-failed! (:email-outbox/id email) error))
       (email-outbox/attempt-succeeded! (:email-outbox/id email)))))
 
 (mount/defstate email-poller
