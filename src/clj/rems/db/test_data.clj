@@ -64,6 +64,24 @@
    "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}
    approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}})
 
+(def +oidc-users+
+  {:applicant1 "WHFS36UEZD6TNURJ76WYLSVDCUUENOOF"
+   :applicant2 "C567LI5QAACWKC7YYA74BJ2X7DH7EEYI"
+   :approver1 "EKGFNAAGCHIQ5ERUUFS2RCZ44IHYZPEA"
+   :approver2 "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ"
+   :reviewer "F3OJL757ACT4QXVXZZ4F7VG6HQGBEC4M"
+   :reporter "JOBDHBMX4EFXQC5IPQVXPP4FFWJ6XQYL"
+   :owner "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4"})
+
+(def +oidc-user-data+
+  {"WHFS36UEZD6TNURJ76WYLSVDCUUENOOF" {:eppn "WHFS36UEZD6TNURJ76WYLSVDCUUENOOF" :mail "RDapplicant1@mailinator.com" :commonName  "RDapplicant1 REMSDEMO1"}
+   "C567LI5QAACWKC7YYA74BJ2X7DH7EEYI" {:eppn "C567LI5QAACWKC7YYA74BJ2X7DH7EEYI" :mail "RDapplicant2@mailinator.com" :commonName "RDapplicant2 REMSDEMO"}
+   "EKGFNAAGCHIQ5ERUUFS2RCZ44IHYZPEA" {:eppn "EKGFNAAGCHIQ5ERUUFS2RCZ44IHYZPEA" :mail "RDapprover1@mailinator.com" :commonName "RDapprover1 REMSDEMO"}
+   "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ" {:eppn "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ" :mail "RDapprover2@mailinator.com" :commonName "RDapprover2 REMSDEMO"}
+   "F3OJL757ACT4QXVXZZ4F7VG6HQGBEC4M" {:eppn "F3OJL757ACT4QXVXZZ4F7VG6HQGBEC4M" :mail "RDreview@mailinator.com" :commonName "RDreview REMSDEMO"}
+   "JOBDHBMX4EFXQC5IPQVXPP4FFWJ6XQYL" {:eppn "JOBDHBMX4EFXQC5IPQVXPP4FFWJ6XQYL" :mail "RDdomainreporter@mailinator.com" :commonName "RDdomainreporter REMSDEMO"}
+   "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4" {:eppn "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4" :mail "RDowner@mailinator.com" :commonName "RDowner REMSDEMO"}})
+
 ;;; helpers for generating test data
 
 (defn command! [command]
@@ -212,33 +230,17 @@
 
 ;;; generate test data
 
-(defn create-users-and-roles! []
+(defn- create-users-and-roles! [users attrs]
+  (doseq [attr (vals attrs)]
+    (create-user! attr))
+  (roles/add-role! (users :owner) :owner)
+  (roles/add-role! (users :reporter) :reporter))
+
+(defn create-test-users-and-roles! []
   ;; users provided by the fake login
-  (let [users (comp +fake-user-data+ +fake-users+)]
-    (create-user! (users :applicant1))
-    (create-user! (users :applicant2))
-    (create-user! (users :approver1))
-    (create-user! (users :approver2))
-    (create-user! (users :reviewer))
-    (create-user! (users :roleless1))
-    (create-user! (users :roleless2))
-    (create-user! (users :owner) :owner)
-    (create-user! (users :reporter) :reporter)
-    (create-user! (users :approver-bot)))
+  (create-users-and-roles! +fake-users+ +fake-user-data+)
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
-
-(defn- create-demo-users-and-roles! []
-  ;; users used on remsdemo
-  (let [users (comp +demo-user-data+ +demo-users+)]
-    (create-user! (users :applicant1))
-    (create-user! (users :applicant2))
-    (create-user! (users :approver1))
-    (create-user! (users :approver2))
-    (create-user! (users :reviewer))
-    (create-user! (users :owner) :owner)
-    (create-user! (users :reporter) :reporter)
-    (create-user! (users :approver-bot))))
 
 (defn- create-archived-form! []
   (let [id (create-form! {:actor (+fake-users+ :owner)
@@ -783,7 +785,7 @@
 
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
-  (create-users-and-roles!)
+  (create-test-users-and-roles!)
   (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                 :organization "nbn"
                                 :actor (+fake-users+ :owner)
@@ -850,44 +852,47 @@
       (db/set-catalogue-item-endt! {:id dynamic-expired :end (time/now)}))))
 
 (defn create-demo-data! []
-  (db/add-api-key! {:apikey 55 :comment "Finna"})
-  (create-demo-users-and-roles!)
-  (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                :organization "nbn"
-                                :actor (+demo-users+ :owner)})
-        license1 (create-license! {:actor (+demo-users+ :owner)
-                                   :license/type :link
-                                   :license/title {:en "Demo license"
-                                                   :fi "Demolisenssi"}
-                                   :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
-        attachment-license (create-attachment-license! {:actor (+demo-users+ :owner)})
-        res2 (create-resource! {:resource-ext-id "Extra Data"
-                                :organization "nbn"
-                                :actor (+demo-users+ :owner)
-                                :license-ids [license1 attachment-license]})
-        form (create-all-field-types-example-form! +demo-users+)
-        workflows (create-workflows! +demo-users+)]
-    (create-disabled-license! (+demo-users+ :owner))
-    (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
-                                                   :fi "Dynaaminen työvuo"}
-                                           :resource-id res1
-                                           :form-id form
-                                           :workflow-id (:dynamic workflows)})]
-      (create-applications! dynamic +demo-users+))
-    (let [thlform (create-thl-demo-form! +demo-users+)
-          thl-catid (create-catalogue-item! {:title {:en "THL catalogue item"
-                                                     :fi "THL katalogi-itemi"}
+  (let [[users user-data] (case (:authentication rems.config/env)
+                            :oidc [+oidc-users+ +oidc-user-data+]
+                            [+demo-users+ +demo-user-data+])]
+    (db/add-api-key! {:apikey 55 :comment "Finna"})
+    (create-users-and-roles! users user-data)
+    (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
+                                  :organization "nbn"
+                                  :actor (users :owner)})
+          license1 (create-license! {:actor (users :owner)
+                                     :license/type :link
+                                     :license/title {:en "Demo license"
+                                                     :fi "Demolisenssi"}
+                                     :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+          attachment-license (create-attachment-license! {:actor (users :owner)})
+          res2 (create-resource! {:resource-ext-id "Extra Data"
+                                  :organization "nbn"
+                                  :actor (users :owner)
+                                  :license-ids [license1 attachment-license]})
+          form (create-all-field-types-example-form! users)
+          workflows (create-workflows! users)]
+      (create-disabled-license! (users :owner))
+      (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
+                                                     :fi "Dynaaminen työvuo"}
                                              :resource-id res1
-                                             :form-id thlform
+                                             :form-id form
                                              :workflow-id (:dynamic workflows)})]
-      (create-member-applications! thl-catid (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))
-    (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
-                                                            :fi "Dynaaminen työvuo (pois käytöstä)"}
-                                                    :resource-id res1
-                                                    :form-id form
-                                                    :workflow-id (:dynamic workflows)})]
-      (create-disabled-applications! dynamic-disabled
-                                     (+demo-users+ :applicant2)
-                                     (+demo-users+ :approver1))
-      (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false}))))
+        (create-applications! dynamic users))
+      (let [thlform (create-thl-demo-form! users)
+            thl-catid (create-catalogue-item! {:title {:en "THL catalogue item"
+                                                       :fi "THL katalogi-itemi"}
+                                               :resource-id res1
+                                               :form-id thlform
+                                               :workflow-id (:dynamic workflows)})]
+        (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
+      (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
+                                                              :fi "Dynaaminen työvuo (pois käytöstä)"}
+                                                      :resource-id res1
+                                                      :form-id form
+                                                      :workflow-id (:dynamic workflows)})]
+        (create-disabled-applications! dynamic-disabled
+                                       (users :applicant2)
+                                       (users :approver1))
+        (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false})))))
