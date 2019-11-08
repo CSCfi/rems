@@ -6,12 +6,19 @@
             [rems.db.users :as users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [org.joda.time DateTime]))
 
 (s/defschema BlacklistCommand
   {:blacklist/resource {:resource/ext-id blacklist/ResourceId}
    :blacklist/user {:userid blacklist/UserId}
    :comment s/Str})
+
+(s/defschema BlacklistEntryWithDetails
+  (assoc schema/BlacklistEntry
+         :blacklist/comment s/Str
+         :blacklist/added-by schema/UserWithAttributes
+         :blacklist/added-at DateTime))
 
 (defn- command->event [command]
   {:event/actor (getx-user-id)
@@ -22,7 +29,10 @@
 
 (defn- format-blacklist-entry [entry]
   {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}
-   :blacklist/user (users/get-user (:userid entry))})
+   :blacklist/user (users/get-user (:userid entry))
+   :blacklist/added-at (:event/time entry)
+   :blacklist/comment (:event/comment entry)
+   :blacklist/added-by (users/get-user (:event/actor entry))})
 
 (def blacklist-api
   (context "/blacklist" []
@@ -32,7 +42,7 @@
       :roles #{:handler :owner :reporter}
       :query-params [{user :- blacklist/UserId nil}
                      {resource :- blacklist/ResourceId nil}]
-      :return schema/Blacklist
+      :return [BlacklistEntryWithDetails]
       (->> (blacklist/get-blacklist {:userid user
                                      :resource/ext-id resource})
            (mapv format-blacklist-entry)
