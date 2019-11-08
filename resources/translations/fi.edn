@@ -58,7 +58,7 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :disable "Poista käytöstä"
-                   :disabled-and-archived-explanation "Poistaminen käytöstä on asioille, joita ei vielä haluta näyttää käyttäjille, esim. juuri luodut asiat. Arkistointi on vanhoille asioille, joita ei haluta muistella."
+                   :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa kielivaran käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
                    :display-archived "Näytä arkistoidut"
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
@@ -136,7 +136,7 @@
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"}
                  :id "Tunniste"
-                 :intro [:div.intro [:p "Täyttämällä ja lähettämällä tämän hakemuksen kaikki hakijat voivat saada oikeuden haettuihin resursseihin. Kunkin hakijan on lisäksi hyväksyttävä käyttöehdot viimeistään hakemuksen käsittelyn jälkeen."]]
+                 :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
                  :last-activity "Muokattu"
                  :latest-activity "Viimeisin toimenpide"
                  :my-applications "Omat hakemukset"
@@ -167,15 +167,15 @@
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "
          :header "%1 aineistoa korissa"
-         :intro [:div.intro [:p "Lisää resursseja koriin hakeaksesi niitä. Samalla hakemuksella haettavat resurssit ryhmitellään automaattisesti yhteen."]]
+         :intro [:div.intro [:p "Hae käyttöoikeuksia lisäämällä resursseja koriin. Samaa hakemusta käyttävät resurssit yhdistyvät korissa yhdeksi hakemukseksi."]]
          :remove "Poista"}
   :catalogue {:catalogue "Aineistoluettelo"
               :header "Aineistoluettelo"
-              :intro [:p "Aineistoluettelossa on listattuna kaikki resurssit joita voit tästä järjestelmästä hakea."]
+              :intro [:p "Allaolevien resurssien käyttöoikeudet ovat haettavissa."]
               :more-info "Lisätietoja"
               :continue-existing-application "Jatka hakemusta"
-              :continue-existing-application-intro [:div.intro [:p "Sinulla on keskeneräisiä hakemuksia, joita voit jatkaa tästä:"]]
-              :apply-resources "Hae uusia resursseja"}
+              :continue-existing-application-intro [:div.intro [:p "Keskeneräiset hakemukset:"]]
+              :apply-resources "Hae uusia käyttöoikeuksia"}
   :collapse {:hide "Piilota"
              :show "Näytä"
              :show-less "Näytä vähemmän"
@@ -278,7 +278,7 @@
          :attachment-remove "Poista"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
-         :copy-as-new "Kopioi uutena hakemuksena"
+         :copy-as-new "Kopioi uudeksi hakemukseksi"
          :current-value "Nykyinen"
          :diff-hide "Piilota muutokset"
          :diff-show "Näytä muutokset"

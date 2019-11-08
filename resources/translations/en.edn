@@ -2,7 +2,7 @@
  {:actions {:accept-invitation "Accept invitation"
             :accept-invitation-already-member "You are already a member."
             :accept-invitation-success "Successfully joined the application."
-            :accept-licenses "Accept terms of use"
+            :accept-licenses "Accept the terms of use"
             :add-licenses "Add terms of use"
             :add-member "Add member"
             :approve "Approve"
@@ -58,7 +58,7 @@
                    :create-workflow "Create workflow"
                    :created "Created"
                    :disable "Disable"
-                   :disabled-and-archived-explanation "Disabling is for items which should not yet be shown to users, for example newly created items. Archiving is for old items which should forgotten."
+                   :disabled-and-archived-explanation "Disabling hides an item from applicants. Archiving also hides it in the administration view."
                    :display-archived "Display archived"
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
@@ -138,7 +138,7 @@
                           :submitted "%1 submitted the application for review."
                           :unknown "Unknown"}
                  :id "Id"
-                 :intro [:div.intro [:p "By filling and sending in this application, the applicants may be granted the applied resources. All the applicable terms of use must also be accepted by each applicant."]]
+                 :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
                  :last-activity "Last activity"
                  :latest-activity "Latest activity"
                  :my-applications "My Applications"
@@ -169,15 +169,15 @@
          :apply "Apply"
          :apply-for-bundle "Apply for %1 resources as a bundle "
          :header "%1 resources in the cart"
-         :intro [:div.intro [:p "Add resources to the cart to apply for them. If several resources can be applied to with the same application, they will be automatically grouped into a bundle."]]
+         :intro [:div.intro [:p "Apply for access rights by adding resources to the cart. Resources using the same application are bundled together in the cart."]]
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
-              :intro [:p "The catalogue contains all the resources that you can apply for in this system."]
+              :intro [:p "Access to the following resources can be applied for."]
               :more-info "More info"
               :continue-existing-application "Continue application"
               :continue-existing-application-intro [:div.intro [:p "You have unfinished applications that you can continue from here:"]]
-              :apply-resources "Apply for resources"}
+              :apply-resources "Apply for access"}
   :collapse {:hide "Hide"
              :show "Show"
              :show-less "Show less"
@@ -280,7 +280,7 @@
          :attachment-remove "Remove"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
-         :copy-as-new "Copy as new application"
+         :copy-as-new "Copy as a new application"
          :current-value "Current"
          :diff-hide "Hide changes"
          :diff-show "Show changes"
