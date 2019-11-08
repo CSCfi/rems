@@ -95,6 +95,7 @@
                    :type "Type"
                    :unarchive "Unarchive"
                    :user "User"
+                   :userid "User id"
                    :view "View"
                    :workflow "Workflow"
                    :workflows "Workflows"}

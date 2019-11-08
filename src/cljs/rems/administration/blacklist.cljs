@@ -35,6 +35,7 @@
      {:key (str "blacklist-" resource (:userid user))
       :resource {:value (:resource/ext-id resource)}
       :user {:value (rems.application-util/get-member-name user)}
+      :userid {:value (:userid user)}
       :email {:value (:email user)}
       :added-by {:value (rems.application-util/get-member-name added-by)}
       :added-at {:value added-at :display-value (localize-time added-at)}
@@ -56,6 +57,8 @@
                                :title (text :t.administration/resource)}
                               {:key :user
                                :title (text :t.administration/user)}
+                              {:key :userid
+                               :title (text :t.administration/userid)}
                               {:key :email
                                :title (text :t.applicant-info/email)}
                               {:key :added-at

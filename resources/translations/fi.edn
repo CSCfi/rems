@@ -95,6 +95,7 @@
                    :type "Tyyppi"
                    :unarchive "Palauta arkistosta"
                    :user "Käyttäjä"
+                   :userid "Käyttäjätunnus"
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
