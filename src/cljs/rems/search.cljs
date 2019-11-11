@@ -103,11 +103,12 @@
                           (on-search "")
                           (.focus @input-element))}
              [close-symbol]]])]
-        [:a.application-search-tips.collapsed {:data-toggle "collapse"
-                                               :href (str "#" collapse-id)
-                                               :aria-label (text :t.search/example-searches)
-                                               :aria-expanded "false"
-                                               :aria-controls collapse-id}
+        [:a.application-search-tips.btn.btn-link.collapsed
+         {:data-toggle "collapse"
+          :href (str "#" collapse-id)
+          :aria-label (text :t.search/example-searches)
+          :aria-expanded "false"
+          :aria-controls collapse-id}
          [:i.fa.fa-question-circle]]
         (when searching?
           [spinner/small])]
