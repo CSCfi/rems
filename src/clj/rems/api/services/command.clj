@@ -8,11 +8,11 @@
             [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.db.email-outbox :as email-outbox]
             [rems.db.events :as events]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.email.core :as email]
+            [rems.email.outbox :as email-outbox]
             [rems.form-validation :as form-validation]
             [rems.util :refer [secure-token]])
   (:import [org.joda.time Period]))

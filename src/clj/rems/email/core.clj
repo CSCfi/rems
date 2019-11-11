@@ -10,9 +10,9 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.email-outbox :as email-outbox]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
+            [rems.email.outbox :as email-outbox]
             [rems.scheduler :as scheduler]
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])

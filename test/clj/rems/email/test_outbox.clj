@@ -1,8 +1,8 @@
-(ns ^:integration rems.db.test-email-outbox
+(ns ^:integration rems.email.test-outbox
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.db.email-outbox :as email-outbox]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]])
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
+            [rems.email.outbox :as email-outbox])
   (:import [org.joda.time DateTime Duration DateTimeUtils]))
 
 (use-fixtures
