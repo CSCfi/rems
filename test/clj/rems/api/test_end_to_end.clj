@@ -3,10 +3,9 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.application.approver-bot :as approver-bot]
-            [rems.db.test-entitlements :as test-entitlements]
+            [rems.email.core :as email-poller]
             [rems.json :as json]
             [rems.poller.entitlements :as entitlements-poller]
-            [rems.poller.email :as email-poller]
             [stub-http.core :as stub]))
 
 (use-fixtures :each api-fixture)

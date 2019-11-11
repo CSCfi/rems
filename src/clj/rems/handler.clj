@@ -6,11 +6,11 @@
             [rems.api :refer [api-routes]]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
+            [rems.email.core] ;; to enable email polling
             [rems.entitlements :as entitlements]
             [rems.home :as home]
             [rems.layout :as layout]
             [rems.middleware :as middleware]
-            [rems.poller.email] ;; to enable email polling
             [rems.poller.entitlements] ;; to enable entitlement polling
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [file-response]]))

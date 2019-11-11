@@ -12,8 +12,8 @@
             [rems.db.events :as events]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
+            [rems.email.core :as email]
             [rems.form-validation :as form-validation]
-            [rems.poller.email :as email]
             [rems.util :refer [secure-token]])
   (:import [org.joda.time Period]))
 

@@ -1,4 +1,4 @@
-(ns rems.poller.email
+(ns rems.email.core
   "Sending emails based on application events."
   (:require [clojure.string :as str]
             [clojure.test :refer :all]

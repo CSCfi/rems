@@ -1,11 +1,11 @@
-(ns rems.poller.test-email
+(ns rems.email.test-core
   (:require [clojure.test :refer :all]
             [mount.core :as mount]
             [rems.application.model :as model]
             [rems.config]
             [rems.db.user-settings :as user-settings]
-            [rems.locales]
-            [rems.poller.email :refer :all]))
+            [rems.email.core :refer :all]
+            [rems.locales]))
 
 (defn empty-footer [f]
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "")]
@@ -155,7 +155,7 @@
                    user-settings/get-user-settings (fn [userid]
                                                      (assert (string? userid))
                                                      {:language lang})]
-       (sort-emails (#'rems.poller.email/event-to-emails-impl
+       (sort-emails (#'rems.email.core/event-to-emails-impl
                      (model/enrich-event event get-user #{})
                      application)))))
   ([base-events event]
