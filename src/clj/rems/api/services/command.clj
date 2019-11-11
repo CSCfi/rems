@@ -21,7 +21,7 @@
   (doseq [event new-events
           email (email/event-to-emails event)]
     (email-outbox/put! {:email email
-                        :deadline (-> (time/now) (.plus ^Period (:email-retry-deadline env)))})))
+                        :deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
 
 (defn run-process-managers [new-events]
   ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids

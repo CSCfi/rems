@@ -27,7 +27,7 @@
     config))
 
 (defn- parse-config [config]
-  (update config :email-retry-deadline #(Period/parse %)))
+  (update config :email-retry-period #(Period/parse %)))
 
 ;; if we start doing more thorough validation, could use a schema instead
 (defn- validate-config [config]
