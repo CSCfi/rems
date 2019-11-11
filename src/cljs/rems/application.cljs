@@ -34,7 +34,7 @@
             [rems.search :as search]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
-            [rems.util :refer [navigate! fetch parse-int post! focus-input-field]])
+            [rems.util :refer [navigate! fetch parse-int post! focus-input-field focus-when-collapse-opened]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -294,11 +294,7 @@
                                     :aria-controls collapse-id}
        title]]
      [:div.collapse {:id collapse-id
-                     :ref (fn [elem]
-                            (when elem
-                              (.on (js/$ elem)
-                                   "shown.bs.collapse"
-                                   #(.focus elem))))
+                     :ref focus-when-collapse-opened
                      :tab-index "-1"}
       [:div.license-block (str/trim (str text))]]]))
 

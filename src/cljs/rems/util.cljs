@@ -184,3 +184,9 @@
           1
           :else
           (/ (.-bottom bounds) (.-height bounds)))))
+
+(defn focus-when-collapse-opened [elem]
+  (when elem
+    (.on (js/$ elem)
+         "shown.bs.collapse"
+         #(.focus elem))))

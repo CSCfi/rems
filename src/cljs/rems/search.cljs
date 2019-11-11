@@ -5,7 +5,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch]]))
+            [rems.util :refer [fetch focus-when-collapse-opened]]))
 
 (defn reg-fetcher
   "Registers a set of event handlers and subscriptions for fetching data, with
@@ -114,7 +114,9 @@
         (when searching?
           [spinner/small])]
        (when info
-         [:div.search-tips.collapse {:id collapse-id}
+         [:div.search-tips.collapse {:id collapse-id
+                                     :ref focus-when-collapse-opened
+                                     :tab-index "-1"}
           info])])))
 
 (defn- application-search-info []
