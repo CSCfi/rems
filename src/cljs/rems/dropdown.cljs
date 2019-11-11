@@ -45,12 +45,12 @@
      (component-info dropdown)
      (example "dropdown menu, single-choice, empty"
               [dropdown {:items items
-                         :item-key :userid
+                         :item-key :id
                          :item-label :userid
                          :on-change on-change}])
      (example "dropdown menu, multi-choice, several values selected"
               [dropdown {:items items
-                         :item-key :userid
+                         :item-key :id
                          :item-label :userid
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
