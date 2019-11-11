@@ -10,7 +10,7 @@
 
 (deftest test-application-search
   ;; generate users with full names and emails
-  (test-data/create-users-and-roles!)
+  (test-data/create-test-users-and-roles!)
   ;; unrelated application - it's an error if any of the tests finds this
   (test-data/create-application! {:actor "developer"})
 
