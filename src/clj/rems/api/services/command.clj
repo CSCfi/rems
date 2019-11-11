@@ -1,5 +1,6 @@
 (ns rems.api.services.command
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clj-time.core :as time]
+            [clojure.java.jdbc :as jdbc]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
             [rems.db.applications :as applications]
@@ -12,14 +13,15 @@
             [rems.db.workflow :as workflow]
             [rems.form-validation :as form-validation]
             [rems.poller.email :as email]
-            [rems.util :refer [secure-token]]))
+            [rems.util :refer [secure-token]])
+  (:import [org.joda.time Duration]))
 
 (defn generate-emails! [new-events]
   (doseq [event new-events
           email (email/event-to-emails event)]
     (email-outbox/put! {:email email
                         ;; TODO: make configurable
-                        :attempts 5})))
+                        :deadline (-> (time/now) (.plus (Duration/standardDays 3)))})))
 
 (defn run-process-managers [new-events]
   ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids

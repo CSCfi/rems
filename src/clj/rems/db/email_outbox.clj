@@ -1,30 +1,100 @@
 (ns rems.db.email-outbox
-  (:require [rems.db.core :as db]
-            [rems.json :as json]))
+  (:require [clj-time.core :as time]
+            [clojure.test :refer [deftest is testing]]
+            [rems.db.core :as db]
+            [rems.db.pg-util :refer [pg-interval->joda-duration joda-duration->pg-interval]]
+            [rems.json :as json])
+  (:import [org.joda.time Period Duration DateTime]))
 
-(defn put! [{:keys [email attempts]}]
+;; TODO: make configurable
+(def ^Duration max-backoff (-> (Period.) (.withHours 12) (.toStandardDuration)))
+
+(defn put! [{:keys [email deadline]}]
   (:id (db/put-to-email-outbox! {:email (json/generate-string email)
-                                 :attempts attempts})))
+                                 :deadline deadline})))
 
 (defn- fix-row-from-db [row]
   {:email-outbox/id (:id row)
    :email-outbox/email (json/parse-string (:email row))
    :email-outbox/created (:created row)
+   :email-outbox/next-attempt (:next_attempt row)
    :email-outbox/latest-attempt (:latest_attempt row)
    :email-outbox/latest-error (:latest_error row)
-   :email-outbox/remaining-attempts (:remaining_attempts row)})
+   :email-outbox/backoff (pg-interval->joda-duration (:backoff row))
+   :email-outbox/deadline (:deadline row)})
 
 (defn get-emails
   ([]
    (get-emails nil))
-  ([{:keys [ids remaining-attempts?]}]
+  ([{:keys [ids due-now?]}]
    (->> (db/get-email-outbox {:ids ids
-                              :remaining-attempts? remaining-attempts?})
+                              :due-now? due-now?})
         (map fix-row-from-db))))
 
-(defn attempt-failed! [id error]
-  (db/email-outbox-attempt-failed! {:id id
-                                    :error error}))
+(defn get-email-by-id [id]
+  (first (get-emails {:ids [id]})))
+
+(defn- next-attempt [email now error]
+  (let [^DateTime next-attempt (-> now (.plus (:email-outbox/backoff email)))
+        ^DateTime deadline (:email-outbox/deadline email)
+        ^Duration backoff (-> (:email-outbox/backoff email) (.multipliedBy 2))]
+    (assoc email
+           :email-outbox/latest-attempt now
+           :email-outbox/latest-error error
+           :email-outbox/next-attempt (if (-> next-attempt (.isAfter deadline))
+                                        nil
+                                        next-attempt)
+           :email-outbox/backoff (if (-> backoff (.isLongerThan max-backoff))
+                                   max-backoff
+                                   backoff))))
+
+(deftest test-next-attempt
+  (let [now (DateTime. 1000)]
+    (testing "basic case"
+      (is (= {:email-outbox/latest-attempt now
+              :email-outbox/latest-error "the error"
+              :email-outbox/next-attempt (DateTime. 3000) ; now + backoff
+              :email-outbox/backoff (Duration. 4000) ; 2 * backoff
+              :email-outbox/deadline (DateTime. 60000000)
+              :unrelated-keys "should be kept"}
+             (next-attempt {:email-outbox/backoff (Duration. 2000)
+                            :email-outbox/deadline (DateTime. 60000000)
+                            :unrelated-keys "should be kept"}
+                           now "the error"))))
+
+    (testing "max backoff reached"
+      (is (= {:email-outbox/latest-attempt now
+              :email-outbox/latest-error "the error"
+              :email-outbox/next-attempt (.plus now max-backoff)
+              :email-outbox/backoff max-backoff
+              :email-outbox/deadline (DateTime. 60000000)
+              :unrelated-keys "should be kept"}
+             (next-attempt {:email-outbox/backoff max-backoff
+                            :email-outbox/deadline (DateTime. 60000000)
+                            :unrelated-keys "should be kept"}
+                           now "the error"))))
+
+    (testing "deadline reached"
+      (is (= {:email-outbox/latest-attempt now
+              :email-outbox/latest-error "the error"
+              :email-outbox/next-attempt nil ; would have been 3000
+              :email-outbox/backoff (Duration. 4000)
+              :email-outbox/deadline (DateTime. 2999)
+              :unrelated-keys "should be kept"}
+             (next-attempt {:email-outbox/backoff (Duration. 2000)
+                            :email-outbox/deadline (DateTime. 2999)
+                            :unrelated-keys "should be kept"}
+                           now "the error"))))))
+
+(defn attempt-failed! [email error]
+  (let [email (next-attempt email (time/now) error)]
+    (db/email-outbox-attempt-failed! {:id (:email-outbox/id email)
+                                      :latest_attempt (:email-outbox/latest-attempt email)
+                                      :latest_error (:email-outbox/latest-error email)
+                                      :next_attempt (:email-outbox/next-attempt email)
+                                      :backoff (joda-duration->pg-interval (:email-outbox/backoff email))
+                                      :deadline (:email-outbox/deadline email)})
+    email))
 
 (defn attempt-succeeded! [id]
   (db/email-outbox-attempt-succeeded! {:id id}))
