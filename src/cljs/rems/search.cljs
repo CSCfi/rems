@@ -78,7 +78,7 @@
         [:label.mr-1 {:for id}
          (text :t.search/search)]
 
-        [:div.input-group.mr-2
+        [:div.input-group.mr-2.w-50
          [:input.form-control
           {:id id
            :type :text
