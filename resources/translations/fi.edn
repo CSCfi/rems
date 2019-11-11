@@ -14,7 +14,6 @@
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
             :comment "Kommentti"
             :decide "Päätä"
-            :empty "Ei käsiteltäviä hakemuksia."
             :errors {:disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
@@ -28,7 +27,6 @@
             :member-email "Sähköposti"
             :member-name "Nimi"
             :name-and-email-required "Nimi ja sähköposti ovat pakollisia."
-            :no-handled-yet "Ei käsiteltyjä hakemuksia."
             :reject "Hylkää"
             :remark "Kirjaa huomio"
             :remark-public "Näytä huomio hakijalle"

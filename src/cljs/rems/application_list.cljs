@@ -142,7 +142,7 @@
 (defn component
   "An application list which shows a spinner on initial page load (meant to be
   used with rems.search/reg-fetcher) and a message if there are no applications."
-  [{:keys [applications empty-message hidden-columns] :as opts}]
+  [{:keys [applications hidden-columns] :as opts}]
   (cond
     (not @(rf/subscribe [applications :initialized?]))
     [spinner/big]
@@ -151,7 +151,7 @@
     [:div.applications.alert.alert-danger @(rf/subscribe [applications :error])]
 
     (empty? @(rf/subscribe [applications]))
-    [:div.applications.alert.alert-success (text (or empty-message :t.applications/empty))]
+    [:div.applications.alert.alert-secondary (text :t.applications/empty)]
 
     :else
     [list (-> (application-list-defaults)
