@@ -64,6 +64,17 @@
     (testing "max backoff reached"
       (is (= {:email-outbox/latest-attempt now
               :email-outbox/latest-error "the error"
+              :email-outbox/next-attempt (.plus now (.minus max-backoff 1))
+              :email-outbox/backoff max-backoff
+              :email-outbox/deadline (DateTime. 60000000)
+              :unrelated-keys "should be kept"}
+             (next-attempt {:email-outbox/backoff (.minus max-backoff 1)
+                            :email-outbox/deadline (DateTime. 60000000)
+                            :unrelated-keys "should be kept"}
+                           now "the error"))
+          "max -1")
+      (is (= {:email-outbox/latest-attempt now
+              :email-outbox/latest-error "the error"
               :email-outbox/next-attempt (.plus now max-backoff)
               :email-outbox/backoff max-backoff
               :email-outbox/deadline (DateTime. 60000000)
@@ -71,7 +82,8 @@
              (next-attempt {:email-outbox/backoff max-backoff
                             :email-outbox/deadline (DateTime. 60000000)
                             :unrelated-keys "should be kept"}
-                           now "the error"))))
+                           now "the error"))
+          "exactly max"))
 
     (testing "deadline reached"
       (is (= {:email-outbox/latest-attempt now
