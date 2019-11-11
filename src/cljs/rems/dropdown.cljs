@@ -48,6 +48,12 @@
                          :item-key :id
                          :item-label :userid
                          :on-change on-change}])
+     (example "dropdown menu, single-choice, selected item Bob"
+              [dropdown {:items items
+                         :item-key :id
+                         :item-label :userid
+                         :item-selected? #(= "Bob" (:userid %))
+                         :on-change on-change}])
      (example "dropdown menu, multi-choice, several values selected"
               [dropdown {:items items
                          :item-key :id
