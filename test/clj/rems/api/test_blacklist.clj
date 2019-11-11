@@ -2,11 +2,16 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.handler :refer [handler]]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all])
+  (:import [org.joda.time DateTime DateTimeUtils]))
 
 (use-fixtures
   :once
-  api-fixture)
+  api-fixture
+  (fn [f]
+    (DateTimeUtils/setCurrentMillisFixed 10000)
+    (f)
+    (DateTimeUtils/setCurrentMillisSystem)))
 
 (def ^:private +fetch-user+ "handler")
 (def ^:private +command-user+ "owner")
@@ -15,8 +20,13 @@
   (-> (request :get "/api/blacklist" params)
       (authenticate "42" +fetch-user+)
       handler
-      read-ok-body
-      set))
+      read-ok-body))
+
+(defn- simplify [blacklist]
+  (vec
+   (for [entry blacklist]
+     {:userid (get-in entry [:blacklist/user :userid])
+      :resource/ext-id (get-in entry [:blacklist/resource :resource/ext-id])})))
 
 (defn- add! [command]
   (-> (request :post "/api/blacklist/add")
@@ -32,10 +42,13 @@
       handler
       assert-response-is-ok))
 
+
+
 (deftest test-blacklist
   (testing "initially no blacklist"
-    (is (= #{} (fetch {}))))
+    (is (= [] (fetch {}))))
   (testing "add three entries"
+
     (add! {:blacklist/user {:userid "user1"}
            :blacklist/resource {:resource/ext-id "A"}
            :comment "bad"})
@@ -45,36 +58,48 @@
     (add! {:blacklist/user {:userid "user2"}
            :blacklist/resource {:resource/ext-id "B"}
            :comment "very bad"})
-    (is (= #{{:blacklist/resource {:resource/ext-id "A"} :blacklist/user {:userid "user1" :name nil :email nil}}
-             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}
-             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
+    (is (= [{:blacklist/resource {:resource/ext-id "A"}
+             :blacklist/user {:userid "user1" :name nil :email nil}
+             :blacklist/added-by {:userid "owner" :name "Owner" :email "owner@example.com"}
+             :blacklist/added-at "1970-01-01T00:00:10.000Z"
+             :blacklist/comment "bad"}
+            {:blacklist/resource {:resource/ext-id "B"}
+             :blacklist/user {:userid "user1" :name nil :email nil}
+             :blacklist/added-by {:userid "owner" :name "Owner" :email "owner@example.com"}
+             :blacklist/added-at "1970-01-01T00:00:10.000Z"
+             :blacklist/comment "quite bad"}
+            {:blacklist/resource {:resource/ext-id "B"}
+             :blacklist/user {:userid "user2" :name nil :email nil}
+             :blacklist/added-by {:userid "owner" :name "Owner" :email "owner@example.com"}
+             :blacklist/added-at "1970-01-01T00:00:10.000Z"
+             :blacklist/comment "very bad"}]
            (fetch {}))))
   (testing "query parameters"
-    (is (= #{{:blacklist/resource {:resource/ext-id "A"} :blacklist/user {:userid "user1" :name nil :email nil}}
-             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}}
-           (fetch {:user "user1"})))
-    (is (= #{{:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}
-             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
-           (fetch {:resource "B"})))
-    (is (= #{{:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
-           (fetch {:resource "B" :user "user2"}))))
+    (is (= [{:resource/ext-id "A" :userid "user1"}
+            {:resource/ext-id "B" :userid "user1"}]
+           (simplify (fetch {:user "user1"}))))
+    (is (= [{:resource/ext-id "B" :userid "user1"}
+            {:resource/ext-id "B" :userid "user2"}]
+           (simplify (fetch {:resource "B"}))))
+    (is (= [{:resource/ext-id "B" :userid "user2"}]
+           (simplify (fetch {:resource "B" :user "user2"})))))
   (testing "remove entry"
     (remove! {:blacklist/user {:userid "user2"}
               :blacklist/resource {:resource/ext-id "B"}
               :comment "oops"})
-    (is (= #{}
+    (is (= []
            (fetch {:resource "B" :user "user2"}))))
   (testing "add entry again"
     (add! {:blacklist/user {:userid "user2"}
            :blacklist/resource {:resource/ext-id "B"}
            :comment "again"})
-    (is (= #{{:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
-           (fetch {:resource "B" :user "user2"}))))
+    (is (= [{:resource/ext-id "B" :userid "user2"}]
+           (simplify (fetch {:resource "B" :user "user2"})))))
   (testing "remove nonexistent entry"
     (remove! {:blacklist/user {:userid "user3"}
               :blacklist/resource {:resource/ext-id "C"}
               :comment "undo"})
-    (is (= #{{:blacklist/resource {:resource/ext-id "A"} :blacklist/user {:userid "user1" :name nil :email nil}}
-             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user1" :name nil :email nil}}
-             {:blacklist/resource {:resource/ext-id "B"} :blacklist/user {:userid "user2" :name nil :email nil}}}
-           (fetch {})))))
+    (is (= [{:resource/ext-id "A" :userid "user1"}
+            {:resource/ext-id "B" :userid "user1"}
+            {:resource/ext-id "B" :userid "user2"}]
+           (simplify (fetch {}))))))
