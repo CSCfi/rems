@@ -45,6 +45,16 @@
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.history.Html5History))
 
+(defn fetch-translations! []
+  (fetch "/api/translations"
+         {:handler #(rf/dispatch-sync [:loaded-translations %])
+          :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
+
+(defn fetch-theme! []
+  (fetch "/api/theme"
+         {:handler #(rf/dispatch-sync [:loaded-theme %])
+          :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
+
 ;;; subscriptions
 
 (rf/reg-sub
@@ -225,11 +235,25 @@
    :forbidden forbidden-page
    :not-found not-found-page})
 
+(defn- dev-reload-button
+  "Loads the initial translations, theme and config again.
+
+  Useful while developing and changing e.g. translations."
+  []
+  [:button.btn.btn-secondary.btn-sm
+   {:on-click #(do (fetch-translations!)
+                   (fetch-theme!)
+                   (config/fetch-config!))}
+   [:i.fas.fa-redo]])
+
 (defn footer []
   [:footer.footer
    [:div.container
     [:div.navbar
      [:div.navbar-text (text :t/footer)]
+     (when (config/dev-environment?)
+       [:div.dev-only
+        [dev-reload-button]])
      (when-let [{:keys [version revision]} (read-current-version)]
        [:div#footer-release-number
         [:a {:href (str git/+commits-url+ revision)}
@@ -251,11 +275,15 @@
       :component-did-update on-update
       :display-name "main-content"
       :reagent-render (fn [page-id _grab-focus?]
-                        (let [content (pages page-id)]
-                          [:main.container-fluid
-                           {:class (str "page-" (name page-id))
-                            :id "main-content"}
-                           [content]]))})))
+                        [:main.container-fluid
+                         {:class (str "page-" (name page-id))
+                          :id "main-content"}
+                         (if-let [content (pages page-id)]
+                           [content]
+                           (do ; implementation error
+                             (println "Unknown page-id" page-id)
+                             (rf/dispatch [:set-active-page :not-found])
+                             nil))])})))
 
 (defn page []
   (let [page-id @(rf/subscribe [:page])
@@ -452,16 +480,6 @@
 
 ;; -------------------------
 ;; Initialize app
-
-(defn fetch-translations! []
-  (fetch "/api/translations"
-         {:handler #(rf/dispatch-sync [:loaded-translations %])
-          :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
-
-(defn fetch-theme! []
-  (fetch "/api/theme"
-         {:handler #(rf/dispatch-sync [:loaded-theme %])
-          :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
 (defn mount-components []
   (rf/clear-subscription-cache!)
