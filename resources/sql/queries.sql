@@ -531,8 +531,8 @@ ORDER BY id ASC
 ;
 
 -- :name put-to-email-outbox! :insert
-INSERT INTO email_outbox (email, deadline)
-VALUES (:email::jsonb, :deadline)
+INSERT INTO email_outbox (email, backoff, deadline)
+VALUES (:email::jsonb, :backoff, :deadline)
 RETURNING id;
 
 -- :name get-email-outbox :? :*

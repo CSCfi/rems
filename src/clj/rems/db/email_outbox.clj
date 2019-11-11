@@ -4,12 +4,14 @@
             [rems.db.core :as db]
             [rems.db.pg-util :refer [pg-interval->joda-duration joda-duration->pg-interval]]
             [rems.json :as json])
-  (:import [org.joda.time Period Duration DateTime]))
+  (:import [org.joda.time Duration DateTime]))
 
-(def ^Duration max-backoff (-> (Period.) (.withHours 12) (.toStandardDuration)))
+(def ^Duration initial-backoff (Duration/standardSeconds 10))
+(def ^Duration max-backoff (Duration/standardHours 12))
 
 (defn put! [{:keys [email deadline]}]
   (:id (db/put-to-email-outbox! {:email (json/generate-string email)
+                                 :backoff (joda-duration->pg-interval initial-backoff)
                                  :deadline deadline})))
 
 (defn- fix-row-from-db [row]
