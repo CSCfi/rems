@@ -80,8 +80,8 @@
 
 (defn readonly-checkbox
   "Displays a readonly checkbox."
-  [{:keys [value]}]
-  [checkbox {:value value}])
+  [opts]
+  [checkbox opts])
 
 (defn info-field
   "A component that shows a readonly field with title and value.
