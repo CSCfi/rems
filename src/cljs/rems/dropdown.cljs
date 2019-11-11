@@ -29,28 +29,28 @@
 (defn guide
   []
   (let [on-change (fn [items] (println "items" items))
-        items [{:id 1 :userid "Alice"}
-               {:id 2 :userid "Bob"}
-               {:id 3 :userid "Carl"}
-               {:id 4 :userid "Own"}
-               {:id 5 :userid "Deve"}]]
+        items [{:id 1 :name "Alice"}
+               {:id 2 :name "Bob"}
+               {:id 3 :name "Carl"}
+               {:id 4 :name "Own"}
+               {:id 5 :name "Deve"}]]
     [:div
      (component-info dropdown)
      (example "dropdown menu, single-choice, empty"
               [dropdown {:items items
                          :item-key :id
-                         :item-label :userid
+                         :item-label :name
                          :on-change on-change}])
      (example "dropdown menu, single-choice, selected item Bob"
               [dropdown {:items items
                          :item-key :id
-                         :item-label :userid
-                         :item-selected? #(= "Bob" (:userid %))
+                         :item-label :name
+                         :item-selected? #(= "Bob" (:name %))
                          :on-change on-change}])
      (example "dropdown menu, multi-choice, several values selected"
               [dropdown {:items items
                          :item-key :id
-                         :item-label :userid
+                         :item-label :name
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
                          :on-change on-change}])]))
