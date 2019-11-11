@@ -37,7 +37,6 @@
         [search/search-field {:id "my-applications-search"
                               :on-search #(rf/dispatch [::my-applications %])
                               :searching? @(rf/subscribe [::my-applications :searching?])}]
-        [search/application-search-tips]
         [application-list/component {:applications ::my-applications
                                      :hidden-columns #{:applicant :todo}
                                      :default-sort-column :created
@@ -48,7 +47,6 @@
            [search/search-field {:id "all-applications-search"
                                  :on-search #(rf/dispatch [::all-applications %])
                                  :searching? @(rf/subscribe [::all-applications :searching?])}]
-           [search/application-search-tips]
            [application-list/component {:applications ::all-applications
                                         :hidden-columns #{:todo :created :submitted}
                                         :default-sort-column :last-activity
