@@ -6,6 +6,7 @@ CREATE TABLE email_outbox
     latest_attempt timestamptz NULL     DEFAULT NULL,
     latest_error   text        NOT NULL DEFAULT '',
     next_attempt   timestamptz NULL     DEFAULT now(),
-    backoff        interval    NOT NULL DEFAULT interval '10 seconds',
+    backoff        interval    NOT NULL DEFAULT interval '10 seconds'
+        CONSTRAINT minimum_backoff CHECK ( backoff >= interval '1 second' ),
     deadline       timestamptz NOT NULL DEFAULT now()
 );
