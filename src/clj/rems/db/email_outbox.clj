@@ -6,7 +6,6 @@
             [rems.json :as json])
   (:import [org.joda.time Period Duration DateTime]))
 
-;; TODO: make configurable
 (def ^Duration max-backoff (-> (Period.) (.withHours 12) (.toStandardDuration)))
 
 (defn put! [{:keys [email deadline]}]

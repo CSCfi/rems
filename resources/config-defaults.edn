@@ -29,6 +29,7 @@
  :smtp-port 25
  :mail-from nil
  :public-url nil ;; Url for this REMS installation, for generating links in emails. Should end with a /.
+ :email-retry-deadline "P3D" ;; in ISO 8601 duration format https://en.wikipedia.org/wiki/ISO_8601#Durations
 
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
