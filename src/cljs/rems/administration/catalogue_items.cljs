@@ -9,12 +9,13 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [fetch put!]]))
+            [rems.util :refer [navigate! fetch put!]] ))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:dispatch-n [[::fetch-catalogue]
+   {:db (assoc db ::selected-items (or (::selected-items db) #{}))
+    :dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
@@ -60,10 +61,28 @@
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
+(rf/reg-event-db
+ ::set-selected-items!
+ (fn [db [_ items]]
+   (assoc db ::selected-items items)))
+
+(rf/reg-sub
+ ::selected-items
+ (fn [db _]
+   (::selected-items db)))
+
 (defn- to-create-catalogue-item []
   [atoms/link {:class "btn btn-primary"}
    "/administration/catalogue-items/create"
    (text :t.administration/create-catalogue-item)])
+
+(defn- to-change-form [items]
+  [:button.btn.btn-primary
+   {:disabled (when (empty? items) :disabled)
+    :on-click (fn []
+                (rf/dispatch [:rems.administration.change-catalogue-item-form/enter-page items])
+                (navigate! "/administration/catalogue-items/change-form") )}
+   (text :t.administration/change-form)])
 
 (defn- to-catalogue-item [catalogue-item-id]
   [atoms/link {:class "btn btn-primary"}
@@ -104,7 +123,7 @@
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td.commands
+           :commands {:td [:td.commands {:on-click #(.stopPropagation %)}
                            [to-catalogue-item (:id item)]
                            [roles/when roles/show-admin-edit-buttons?
                             [catalogue-item/edit-button (:id item)]
@@ -131,10 +150,15 @@
                                     :sortable? false
                                     :filterable? false}]
                          :rows [::catalogue-table-rows]
-                         :default-sort-column :name}]
+                         :default-sort-column :name
+                         :selectable? true
+                         :on-select #(rf/dispatch [::set-selected-items! %])}]
     [:div.mt-3
      [table/search catalogue-table]
      [table/table catalogue-table]]))
+
+(defn- items-by-id [items ids]
+  (filter (comp ids :id) items))
 
 (defn catalogue-items-page []
   (into [:div
@@ -144,7 +168,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[roles/when roles/show-admin-edit-buttons?
-            [to-create-catalogue-item]
+            [:div.commands.text-left.pl-0
+             [to-create-catalogue-item]
+             [to-change-form (items-by-id @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
             [status-flags/disabled-and-archived-explanation]]
            [catalogue-list]])))
