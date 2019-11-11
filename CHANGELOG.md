@@ -92,6 +92,7 @@ Changes since v2.4
 - A change of language persists now after login thanks to a new language setting cookie.
 - A returning user will see the login screen in the correct language if he or she has the cookie.
 - Event descriptions on application page now use full name and are more thorough (#1634)
+- Application search tips hidden behind question mark icon (#1767)
 
 ### Fixes
 - Entitlement API
