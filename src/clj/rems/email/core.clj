@@ -1,6 +1,7 @@
 (ns rems.email.core
   "Sending emails based on application events."
-  (:require [clojure.string :as str]
+  (:require [clj-time.core :as time]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
@@ -17,7 +18,7 @@
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])
   (:import [javax.mail.internet InternetAddress]
-           [org.joda.time Duration]))
+           [org.joda.time Duration Period]))
 
 ;;; Mapping events to emails
 
@@ -209,6 +210,12 @@
   (when-let [app-id (:application/id event)]
     (event-to-emails-impl (rems.application.model/enrich-event event users/get-user (constantly nil))
                           (applications/get-unrestricted-application app-id))))
+
+(defn generate-emails! [new-events]
+  (doseq [event new-events
+          email (event-to-emails event)]
+    (email-outbox/put! {:email email
+                        :deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
 
 ;;; Generic poller infrastructure
 
