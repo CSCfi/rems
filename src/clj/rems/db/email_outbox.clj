@@ -40,24 +40,26 @@
     (assoc email
            :email-outbox/latest-attempt now
            :email-outbox/latest-error error
-           :email-outbox/next-attempt (if (-> next-attempt (.isAfter deadline))
-                                        nil
-                                        next-attempt)
+           :email-outbox/next-attempt (when (-> now (.isBefore deadline))
+                                        (if (-> next-attempt (.isAfter deadline))
+                                          deadline
+                                          next-attempt))
            :email-outbox/backoff (if (-> backoff (.isLongerThan max-backoff))
                                    max-backoff
                                    backoff))))
 
 (deftest test-next-attempt
-  (let [now (DateTime. 1000)]
+  (let [now (DateTime. 1000)
+        deadline (DateTime. 666000000)]
     (testing "basic case"
       (is (= {:email-outbox/latest-attempt now
               :email-outbox/latest-error "the error"
               :email-outbox/next-attempt (DateTime. 3000) ; now + backoff
               :email-outbox/backoff (Duration. 4000) ; 2 * backoff
-              :email-outbox/deadline (DateTime. 60000000)
+              :email-outbox/deadline deadline
               :unrelated-keys "should be kept"}
              (next-attempt {:email-outbox/backoff (Duration. 2000)
-                            :email-outbox/deadline (DateTime. 60000000)
+                            :email-outbox/deadline deadline
                             :unrelated-keys "should be kept"}
                            now "the error"))))
 
@@ -66,36 +68,56 @@
               :email-outbox/latest-error "the error"
               :email-outbox/next-attempt (.plus now (.minus max-backoff 1))
               :email-outbox/backoff max-backoff
-              :email-outbox/deadline (DateTime. 60000000)
-              :unrelated-keys "should be kept"}
+              :email-outbox/deadline deadline}
              (next-attempt {:email-outbox/backoff (.minus max-backoff 1)
-                            :email-outbox/deadline (DateTime. 60000000)
-                            :unrelated-keys "should be kept"}
+                            :email-outbox/deadline deadline}
                            now "the error"))
           "max -1")
       (is (= {:email-outbox/latest-attempt now
               :email-outbox/latest-error "the error"
               :email-outbox/next-attempt (.plus now max-backoff)
               :email-outbox/backoff max-backoff
-              :email-outbox/deadline (DateTime. 60000000)
-              :unrelated-keys "should be kept"}
+              :email-outbox/deadline deadline}
              (next-attempt {:email-outbox/backoff max-backoff
-                            :email-outbox/deadline (DateTime. 60000000)
-                            :unrelated-keys "should be kept"}
+                            :email-outbox/deadline deadline}
                            now "the error"))
-          "exactly max"))
+          "exactly max")))
 
-    (testing "deadline reached"
+  (testing "final attempt at deadline"
+    (let [now (DateTime. 9500)
+          deadline (DateTime. 10000)]
       (is (= {:email-outbox/latest-attempt now
               :email-outbox/latest-error "the error"
-              :email-outbox/next-attempt nil ; would have been 3000
+              :email-outbox/next-attempt deadline
               :email-outbox/backoff (Duration. 4000)
-              :email-outbox/deadline (DateTime. 2999)
-              :unrelated-keys "should be kept"}
+              :email-outbox/deadline deadline}
              (next-attempt {:email-outbox/backoff (Duration. 2000)
-                            :email-outbox/deadline (DateTime. 2999)
-                            :unrelated-keys "should be kept"}
-                           now "the error"))))))
+                            :email-outbox/deadline deadline}
+                           now "the error")))))
+
+  (testing "deadline reached"
+    (let [now (DateTime. 10000)
+          deadline (DateTime. 10000)]
+      (is (= {:email-outbox/latest-attempt now
+              :email-outbox/latest-error "the error"
+              :email-outbox/next-attempt nil
+              :email-outbox/backoff (Duration. 4000)
+              :email-outbox/deadline deadline}
+             (next-attempt {:email-outbox/backoff (Duration. 2000)
+                            :email-outbox/deadline deadline}
+                           now "the error"))
+          "exactly deadline"))
+    (let [now (DateTime. 10500)
+          deadline (DateTime. 10000)]
+      (is (= {:email-outbox/latest-attempt now
+              :email-outbox/latest-error "the error"
+              :email-outbox/next-attempt nil
+              :email-outbox/backoff (Duration. 4000)
+              :email-outbox/deadline deadline}
+             (next-attempt {:email-outbox/backoff (Duration. 2000)
+                            :email-outbox/deadline deadline}
+                           now "the error"))
+          "after deadline"))))
 
 (defn attempt-failed! [email error]
   (let [email (next-attempt email (time/now) error)]

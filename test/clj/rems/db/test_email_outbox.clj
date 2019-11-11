@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [rems.db.email-outbox :as email-outbox]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]])
-  (:import [org.joda.time DateTime Duration]))
+  (:import [org.joda.time DateTime Duration DateTimeUtils]))
 
 (use-fixtures
   :once
@@ -83,9 +83,13 @@
                   sort))))
 
     (testing "all attempts failed"
-      (dotimes [_ 10] ; enough failures to increase the backoff beyond the deadline
-        (let [email (email-outbox/get-email-by-id id1)]
-          (email-outbox/attempt-failed! email "the error message")))
+      (let [email (email-outbox/get-email-by-id id1)]
+        (try
+          (DateTimeUtils/setCurrentMillisFixed (.getMillis (:email-outbox/deadline email)))
+          ;; failed attempt after the deadline
+          (email-outbox/attempt-failed! email "the error message")
+          (finally
+            (DateTimeUtils/setCurrentMillisSystem))))
       (let [email (email-outbox/get-email-by-id id1)]
         (is email)
         (is (nil? (:email-outbox/next-attempt email)))))
