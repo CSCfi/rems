@@ -176,7 +176,7 @@
               :intro [:p "Access to the following resources can be applied for."]
               :more-info "More info"
               :continue-existing-application "Continue application"
-              :continue-existing-application-intro [:div.intro [:p "You have unfinished applications that you can continue from here:"]]
+              :continue-existing-application-intro [:div.intro [:p "Unfinished applications:"]]
               :apply-resources "Apply for access"}
   :collapse {:hide "Hide"
              :show "Show"
