@@ -65,7 +65,6 @@
                                        :searching? @(rf/subscribe [::todo-applications :searching?])}]
                  [search/application-search-tips]
                  [application-list/component {:applications ::todo-applications
-                                              :empty-message :t.actions/empty
                                               :hidden-columns #{:state :created}
                                               :default-sort-column :last-activity
                                               :default-sort-order :desc}]]}]
@@ -79,7 +78,6 @@
                                        :searching? @(rf/subscribe [::handled-applications :searching?])}]
                  [search/application-search-tips]
                  [application-list/component {:applications ::handled-applications
-                                              :empty-message :t.actions/no-handled-yet
                                               :hidden-columns #{:todo :created :submitted}
                                               :default-sort-column :last-activity
                                               :default-sort-order :desc}]]}]]])
