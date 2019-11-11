@@ -68,11 +68,11 @@
                           (get-in db [id :initialized?]))
          (get-in db [id (or k :data)]))))))
 
-(defn search-field [{:keys [id on-search searching?]}]
+(defn search-field [{:keys [id on-search searching? info]}]
   (let [input-value (r/atom "")
         input-element (atom nil)
         collapse-id "application-search-tips-collapse"]
-    (fn [{:keys [id on-search searching?]}]
+    (fn [{:keys [id on-search searching? info]}]
       [:<>
        [:div.search-field
         [:label.mr-1 {:for id}
@@ -103,22 +103,31 @@
                           (on-search "")
                           (.focus @input-element))}
              [close-symbol]]])]
-        [:a.application-search-tips.btn.btn-link.collapsed
-         {:data-toggle "collapse"
-          :href (str "#" collapse-id)
-          :aria-label (text :t.search/example-searches)
-          :aria-expanded "false"
-          :aria-controls collapse-id}
-         [:i.fa.fa-question-circle]]
+        (when info
+          [:a.application-search-tips.btn.btn-link.collapsed
+           {:data-toggle "collapse"
+            :href (str "#" collapse-id)
+            :aria-label (text :t.search/example-searches)
+            :aria-expanded "false"
+            :aria-controls collapse-id}
+           [:i.fa.fa-question-circle]])
         (when searching?
           [spinner/small])]
-       [:div.search-tips.collapse {:id collapse-id}
-        (text :t.search/example-searches)
-        ": "
-        (->> ["supercalifra*" "+egg +bacon -spam" "id:\"2019/12\"" "applicant:\"alice@example.com\""]
-             (map (fn [example] [:tt.example-search example]))
-             (interpose ", ")
-             (into [:<>]))
-        " "
-        [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/search.md"}
-         (text :t.search/learn-more)]]])))
+       (when info
+         [:div.search-tips.collapse {:id collapse-id}
+          info])])))
+
+(defn- application-search-info []
+  [:span
+   (text :t.search/example-searches)
+   ": "
+   (->> ["supercalifra*" "+egg +bacon -spam" "id:\"2019/12\"" "applicant:\"alice@example.com\""]
+        (map (fn [example] [:tt.example-search example]))
+        (interpose ", ")
+        (into [:<>]))
+   " "
+   [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/search.md"}
+    (text :t.search/learn-more)]])
+
+(defn application-search-field [opts]
+  [search-field (assoc opts :info [application-search-info])])
