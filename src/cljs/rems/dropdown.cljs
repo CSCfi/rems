@@ -35,7 +35,7 @@
                  :hideSelectedOptions hide-selected?
                  :options (into-array items)
                  :value (into-array (filter item-selected? items))
-                 :onChange #(on-change %)
+                 :onChange #(on-change (if (array? %) (array-seq %) %))
                  :placeholder (text :t.dropdown/placeholder)}])
 
 (defn guide
