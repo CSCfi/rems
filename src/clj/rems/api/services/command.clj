@@ -1,27 +1,18 @@
 (ns rems.api.services.command
-  (:require [clj-time.core :as time]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :as log]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
-            [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.db.email-outbox :as email-outbox]
             [rems.db.events :as events]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
+            [rems.email.core :as email]
             [rems.form-validation :as form-validation]
-            [rems.poller.email :as email]
-            [rems.util :refer [secure-token]])
-  (:import [org.joda.time Period]))
-
-(defn generate-emails! [new-events]
-  (doseq [event new-events
-          email (email/event-to-emails event)]
-    (email-outbox/put! {:email email
-                        :deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
+            [rems.util :refer [secure-token]]))
 
 (defn run-process-managers [new-events]
   ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids
@@ -59,7 +50,10 @@
     (when-not (:errors result)
       (doseq [event (:events result)]
         (events/add-event! event))
-      (generate-emails! (:events result))
-      (doseq [cmd (run-process-managers (:events result))]
-        (command! cmd)))
+      (email/generate-emails! (:events result))
+      (doseq [cmd2 (run-process-managers (:events result))]
+        (let [result (command! cmd2)]
+          (when (:errors result)
+            (log/error "process manager command failed"
+                       (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))
     result))
