@@ -10,10 +10,9 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.events :as events]
+            [rems.db.email-outbox :as email-outbox]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
-            [rems.poller.common :as common]
             [rems.scheduler :as scheduler]
             [rems.text :refer [text text-format with-language]]
             [rems.util :as util])
@@ -223,11 +222,6 @@
 ;;    - you can reset the email poller state with (common/set-poller-state! :rems.poller.email/poller nil)
 ;; 4. open http://localhost:8025 in your browser to view the emails
 
-(defn mark-all-emails-as-sent! []
-  (let [events (events/get-all-events-since 0)
-        last-id (:event/id (last events))]
-    (common/set-poller-state! ::poller {:last-processed-event-id last-id})))
-
 (defn- validate-address
   "Returns nil for a valid email address, string message for an invalid one."
   [email]
@@ -260,21 +254,30 @@
       (log/info "sending email:" (pr-str email))
       (cond
         to-error
-        (log/warn "failed address validation, skipping message: " to-error)
+        (do
+          (log/warn "failed address validation:" to-error)
+          (str "failed address validation: " to-error))
 
         (not (and host port))
-        (log/info "no smtp server configured, only pretending to send email")
+        (do
+          (log/info "no smtp server configured, only pretending to send email")
+          nil)
 
         :else
         (try
           (postal/send-message {:host host :port port} email)
-          (catch javax.mail.SendFailedException e ; e.g. email address does not exist
-            (log/warn e "failed sending email, skipping:" (pr-str email))))))))
+          nil
+          (catch Throwable e ; e.g. email address does not exist
+            (log/warn e "failed sending email:" (pr-str email))
+            (str "failed sending email: " e)))))))
 
 (defn run []
-  (common/run-event-poller ::poller (fn [event]
-                                      (doseq [mail (event-to-emails event)]
-                                        (send-email! mail)))))
+  (doseq [email (email-outbox/get-emails {:due-now? true})]
+    (if-let [error (send-email! (:email-outbox/email email))]
+      (let [email (email-outbox/attempt-failed! email error)]
+        (when (not (:email-outbox/next-attempt email))
+          (log/warn "all attempts to send email" (:email-outbox/id email) "failed")))
+      (email-outbox/attempt-succeeded! (:email-outbox/id email)))))
 
 (mount/defstate email-poller
   :start (scheduler/start! run (Duration/standardSeconds 10))

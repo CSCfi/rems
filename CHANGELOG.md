@@ -100,6 +100,7 @@ Changes since v2.4
 - Hide flash message when changing language so mixed language content is not shown
 - Printing application pages now works (except for drafts) (#1643)
 - Applicant and administrator can now view attachment licenses (#1676)
+- More robust email resending (#1750) 
 
 ## v2.5 "Maarintie" 2019-07-18
 

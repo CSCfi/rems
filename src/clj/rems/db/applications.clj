@@ -1,14 +1,11 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [clojure.core.cache :as cache]
-            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
-            [rems.application.approver-bot :as approver-bot]
-            [rems.application.commands :as commands]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
@@ -21,10 +18,9 @@
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [atom? getx secure-token]])
+            [rems.util :refer [atom? getx]])
   (:import [org.joda.time Duration]))
 
 ;;; Creating applications
@@ -44,7 +40,7 @@
   (let [id-prefix (str (.getYear time))]
     (format-external-id (allocate-external-id! id-prefix))))
 
-(defn- allocate-application-ids! [time]
+(defn allocate-application-ids! [time]
   {:application/id (:id (db/create-application!))
    :application/external-id (application-external-id! time)})
 
@@ -54,48 +50,6 @@
   (db/get-licenses
    {:wfid (:wfid (catalogue/get-localized-catalogue-item catalogue-item-id))
     :items [catalogue-item-id]}))
-
-(def ^:private command-injections
-  {:valid-user? users/user-exists?
-   :validate-fields form-validation/validate-fields
-   :secure-token secure-token
-   :get-catalogue-item catalogue/get-localized-catalogue-item
-   :get-catalogue-item-licenses get-catalogue-item-licenses
-   :get-workflow workflow/get-workflow
-   :allocate-application-ids! allocate-application-ids!
-   :add-to-blacklist! blacklist/add-to-blacklist!})
-
-(declare get-unrestricted-application)
-
-(defn run-process-managers [new-events]
-  ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids
-  (let [app-ids (->> new-events
-                     (filter (fn [event]
-                               ;; performance optimization: run only when an interesting event happens
-                               ;; (reading the app from DB is slowish; consider an in-memory event-based solution instead)
-                               (= :application.event/submitted (:event/type event))))
-                     (map :application/id)
-                     distinct)]
-    (->> app-ids
-         (map get-unrestricted-application)
-         (mapcat #(approver-bot/generate-commands %))
-         doall)))
-
-(defn command! [cmd]
-  ;; Use locks to prevent multiple commands being executed in parallel.
-  ;; Serializable isolation level will already avoid anomalies, but produces
-  ;; lots of transaction conflicts when there is contention. This lock
-  ;; roughly doubles the throughput for rems.db.test-transactions tests.
-  (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
-  (let [app (when-let [app-id (:application-id cmd)]
-              (get-unrestricted-application app-id))
-        result (commands/handle-command cmd app command-injections)]
-    (when-not (:errors result)
-      (doseq [event (:events result)]
-        (events/add-event! event))
-      (doseq [cmd (run-process-managers (:events result))]
-        (command! cmd)))
-    result))
 
 (defn get-application-by-invitation-token [invitation-token]
   (:id (db/get-application-by-invitation-token {:token invitation-token})))

@@ -31,8 +31,8 @@
    Return sequence of data received by mock server."
   [endpoint-spec callback]
   (with-open [server (stub/start! {"/entitlements" endpoint-spec})]
-    (with-redefs [rems.config/env {:entitlements-target
-                                   {:add (str (:uri server) "/entitlements")}}]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :entitlements-target {:add (str (:uri server) "/entitlements")})]
       (callback)
       (for [r (stub/recorded-requests server)]
         (cheshire/parse-string (get-in r [:body "postData"]))))))
@@ -62,7 +62,8 @@
           (is (= "exception" status))
           (is (= +expected-payload+ (cheshire/parse-string payload)))))
       (testing "no server"
-        (with-redefs [rems.config/env {:entitlements-target "http://invalid/entitlements"}]
+        (with-redefs [rems.config/env (assoc rems.config/env
+                                             :entitlements-target "http://invalid/entitlements")]
           (#'entitlements/post-entitlements :add +entitlements+)
           (let [[{payload :payload status :status}] @log]
             (is (= "exception" status))
@@ -71,9 +72,9 @@
 (defmacro with-stub-server [sym & body]
   `(let [~sym (stub/start! {"/add" {:status 200}
                             "/remove" {:status 200}})]
-     (with-redefs [rems.config/env {:entitlements-target
-                                    {:add (str (:uri ~sym) "/add")
-                                     :remove (str (:uri ~sym) "/remove")}}]
+     (with-redefs [rems.config/env (assoc rems.config/env
+                                          :entitlements-target {:add (str (:uri ~sym) "/add")
+                                                                :remove (str (:uri ~sym) "/remove")})]
        ~@body)))
 
 (deftest test-entitlement-granting

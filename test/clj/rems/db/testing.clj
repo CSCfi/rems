@@ -17,6 +17,7 @@
   (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down
   (mount/start-with-args {:test true}
                          #'rems.config/env
+                         #'rems.locales/translations
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
@@ -25,8 +26,7 @@
 
 (defn search-index-fixture [f]
   ;; no specific teardown. relies on the teardown of test-db-fixture.
-  (mount/start #'rems.application.search/search-index
-               #'rems.locales/translations)
+  (mount/start #'rems.application.search/search-index)
   (f))
 
 (defn caches-fixture [f]

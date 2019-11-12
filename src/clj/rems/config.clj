@@ -6,7 +6,8 @@
             [cprop.tools :refer [merge-maps]]
             [mount.core :refer [defstate]]
             [rems.json :as json])
-  (:import (java.io FileNotFoundException)))
+  (:import [java.io FileNotFoundException]
+           [org.joda.time Period]))
 
 (defn- file-sibling [file sibling-name]
   (.getPath (io/file (.getParentFile (io/file file))
@@ -25,8 +26,11 @@
                  :theme-static-resources (file-sibling file "public")})
     config))
 
+(defn- parse-config [config]
+  (update config :email-retry-period #(Period/parse %)))
+
 ;; if we start doing more thorough validation, could use a schema instead
-(defn validate-config [config]
+(defn- validate-config [config]
   (when-let [url (:public-url config)]
     (assert (.endsWith url "/")
             (str ":public-url should end with /:" (pr-str url))))
@@ -38,13 +42,14 @@
                                       ;; If neither system property is defined, the :file parameter is silently ignored.
                                       :file (System/getProperty "rems.config"))
                          (load-external-theme)
+                         (parse-config)
                          (validate-config)))
 
 (defn get-oidc-config [oidc-domain]
   (-> (http/get
-        (str "https://"
-             oidc-domain
-             "/.well-known/openid-configuration"))
+       (str "https://"
+            oidc-domain
+            "/.well-known/openid-configuration"))
       (:body)
       (json/parse-string)))
 

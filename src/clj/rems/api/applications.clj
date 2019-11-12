@@ -3,12 +3,12 @@
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
+            [rems.api.services.command :as command]
             [rems.api.util :as api-util] ; required for route :roles
             [rems.application-util :as application-util]
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]
@@ -108,7 +108,7 @@
 (defn api-command [command-type request]
   (let [response (-> request
                      (parse-command command-type)
-                     (applications/command!))]
+                     (command/command!))]
     (-> response
         (assoc :success (not (:errors response)))
         ;; hide possibly sensitive events, but allow other explicitly returned data

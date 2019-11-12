@@ -529,3 +529,35 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY id ASC
 ;
+
+-- :name put-to-email-outbox! :insert
+INSERT INTO email_outbox (email, backoff, deadline)
+VALUES (:email::jsonb, :backoff, :deadline)
+RETURNING id;
+
+-- :name get-email-outbox :? :*
+SELECT id, email::text, created, latest_attempt, latest_error, next_attempt, backoff, deadline
+FROM email_outbox
+WHERE 1 = 1
+/*~ (when (:ids params) */
+  AND id IN (:v*:ids)
+/*~ ) ~*/
+/*~ (when (:due-now? params) */
+  AND next_attempt IS NOT NULL
+  AND next_attempt <= now()
+/*~ ) ~*/
+;
+
+-- :name email-outbox-attempt-failed! :!
+UPDATE email_outbox
+SET latest_attempt = :latest_attempt,
+    latest_error   = :latest_error,
+    next_attempt   = :next_attempt,
+    backoff        = :backoff,
+    deadline       = :deadline
+WHERE id = :id;
+
+-- :name email-outbox-attempt-succeeded! :!
+DELETE
+FROM email_outbox
+WHERE id = :id;
