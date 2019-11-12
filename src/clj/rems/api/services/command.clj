@@ -1,5 +1,6 @@
 (ns rems.api.services.command
   (:require [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :as log]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
             [rems.db.applications :as applications]
@@ -53,6 +54,6 @@
       (doseq [cmd2 (run-process-managers (:events result))]
         (let [result (command! cmd2)]
           (when (:errors result)
-            (throw (ex-info "process manager command failed"
-                            {:cmd cmd2 :result result :parent-cmd cmd}))))))
+            (log/error "process manager command failed"
+                       (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))
     result))
