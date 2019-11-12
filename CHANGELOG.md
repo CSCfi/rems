@@ -6,7 +6,15 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.4
+Changes since v2.6
+
+### Enhancements
+- Application search tips hidden behind question mark icon (#1767)
+
+### Fixes
+- More robust email resending (#1750)
+
+## v2.6 "Kalevalantie" 2018-11-12
 
 ### Breaking changes
 - `:application/external-id` has been made a non-optional field in the
@@ -92,7 +100,6 @@ Changes since v2.4
 - A change of language persists now after login thanks to a new language setting cookie.
 - A returning user will see the login screen in the correct language if he or she has the cookie.
 - Event descriptions on application page now use full name and are more thorough (#1634)
-- Application search tips hidden behind question mark icon (#1767)
 
 ### Fixes
 - Entitlement API
@@ -100,7 +107,6 @@ Changes since v2.4
 - Hide flash message when changing language so mixed language content is not shown
 - Printing application pages now works (except for drafts) (#1643)
 - Applicant and administrator can now view attachment licenses (#1676)
-- More robust email resending (#1750) 
 
 ## v2.5 "Maarintie" 2019-07-18
 
