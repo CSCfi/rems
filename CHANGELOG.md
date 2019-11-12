@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 Pull requests should add lines under the Unreleased heading if they
 have notable changes.
 
-## Unreleased
-
-Changes since v2.4
+## v2.6 "Kalevalantie" 2018-11-12
 
 ### Breaking changes
 - `:application/external-id` has been made a non-optional field in the
