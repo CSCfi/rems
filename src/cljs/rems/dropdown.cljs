@@ -5,9 +5,21 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn dropdown
-  "Single- or multi-choice, searchable dropdown menu."
-  [{:keys [id items item-key item-label item-selected? item-disabled? multi? clearable? on-change]
-    :or {item-selected? (constantly false)
+  "Single- or multi-choice, searchable dropdown menu.
+
+  `:id` unique id for the input
+  `:items` items shown in dropdown
+  `:item-key` getter for the key of an option, used as the id of an item
+  `:item-label` getter for the label of an option shown in the dropdown
+  `:item-selected?` is this item currently selected?
+  `:hide-selected?` should the items that are selected be shown in the dropdown, defaults: false for single value, true for a multiple choice
+  `:item-disabled?` is this item currently disabled?
+  `:multi?` is this a multiple choice dropdown?
+  `:clearable?` should there be a clear selection button?
+  `:on-change` called each time the value changes, one or seq"
+  [{:keys [id items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change]
+    :or {hide-selected? multi?
+         item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
   [:> js/Select {:className "dropdown-container"
@@ -18,12 +30,12 @@
                  :isMulti multi?
                  :isClearable clearable?
                  :isOptionDisabled #(item-disabled? %)
-                 :isOptionSelected #(item-selected? %)
                  :maxMenuHeight 200
                  :noOptionsMessage #(text :t.dropdown/no-results)
+                 :hideSelectedOptions hide-selected?
                  :options (into-array items)
                  :value (into-array (filter item-selected? items))
-                 :onChange #(on-change %)
+                 :onChange #(on-change (if (array? %) (array-seq %) %))
                  :placeholder (text :t.dropdown/placeholder)}])
 
 (defn guide
@@ -53,4 +65,12 @@
                          :item-label :name
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
+                         :on-change on-change}])
+     (example "dropdown menu, multi-choice, several values selected"
+              [dropdown {:items items
+                         :item-key :id
+                         :item-label :name
+                         :item-selected? #(contains? #{1 3 5} (% :id))
+                         :multi? true
+                         :hide-selected? false
                          :on-change on-change}])]))

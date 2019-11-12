@@ -256,10 +256,10 @@
        [dropdown/dropdown
         {:id form-dropdown-id
          :items forms
-         :item-key :id
+         :item-key :form/id
          :item-label :form/title
          :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-form-id (:id %)])}])]))
+         :on-change #(rf/dispatch [::set-selected-form-id (:form/id %)])}])]))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
