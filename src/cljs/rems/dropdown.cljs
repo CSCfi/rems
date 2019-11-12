@@ -18,7 +18,6 @@
                  :isMulti multi?
                  :isClearable clearable?
                  :isOptionDisabled #(item-disabled? %)
-                 :isOptionSelected #(item-selected? %)
                  :maxMenuHeight 200
                  :noOptionsMessage #(text :t.dropdown/no-results)
                  :options (into-array items)
