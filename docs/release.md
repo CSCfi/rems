@@ -24,7 +24,7 @@ CSC updates all supported environments such as https://rems2demo.csc.fi which is
 
 1. Checkout the most recent master, e.g.,
 
-   git pull; git checkout origin/master
+   `git fetch; git checkout origin/master`
 
 2. Edit CHANGELOG.md:
 
@@ -33,44 +33,44 @@ CSC updates all supported environments such as https://rems2demo.csc.fi which is
      a release name.
 
    - Add a line for the new release, e.g.,
-     ## v2.6 "Kalevalantie" 2018-11-12
+     `## v2.6 "Kalevalantie" 2018-11-12`
 
-   - Move all changes from under "## Unreleased" to under the new release
+   - Move all changes from under `## Unreleased` to under the new release
 
-   - Leave changes under "## Unreleased" empty
+   - Leave changes under `## Unreleased` empty
 
-2. Create a pull request for those changes
+3. Create a pull request for those changes
 
-3. After the branch is merged to master, fetch and checkout the new master
+4. After the branch is merged to master, fetch and checkout the new master
 
-4. Create a new branch with a name indicating the version number of the
+5. Create a new branch with a name indicating the version number of the
    new release, e.g.,
 
-   git checkout -b release-v2.6
+   `git checkout -b release-v2.6`
 
-5. Tag the branch, e.g.,
+6. Tag the branch, e.g.,
 
-   git tag -a v2.6 -m "Release v2.6, \"Kalevalantie\""
+   `git tag -a v2.6 -m "Release v2.6, \"Kalevalantie\""`
 
-6. Push the tag,
+7. Push the tag,
 
-   git push origin v2.6
+   `git push origin v2.6`
 
-7. Create jar and war packages for the release,
+8. Create jar and war packages for the release,
 
-   lein clean; lein uberjar; lein uberwar
+   `lein clean; lein uberjar; lein uberwar`
 
-8. Go to the github page for the release, e.g.,
+9. Go to the github page for the release, e.g.,
 
    https://github.com/CSCfi/rems/releases/tag/v2.6
 
-9. From "Edit tag", change the name of the tag to the release name,
-   e.g., "Kalevalantie".
+10. From "Edit tag", change the name of the tag to the release name,
+    e.g., "Kalevalantie".
 
-10. Copy changes from CHANGELOG.md to "Description" field:
+11. Copy changes from CHANGELOG.md to "Description" field:
 
-    - Change lines starting with ### to ## for better formatting
+    - Change lines starting with `###` to `##` for better formatting
 
-11. Upload rems.jar and rems.war from the directory target/uberjar/
+12. Upload rems.jar and rems.war from the directory target/uberjar/
 
-12. Save changes
+13. Save changes
