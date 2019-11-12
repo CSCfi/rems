@@ -43,34 +43,29 @@ CSC updates all supported environments such as https://rems2demo.csc.fi which is
 
 4. After the branch is merged to master, fetch and checkout the new master
 
-5. Create a new branch with a name indicating the version number of the
-   new release, e.g.,
-
-   `git checkout -b release-v2.6`
-
-6. Tag the branch, e.g.,
+5. Tag the branch, e.g.,
 
    `git tag -a v2.6 -m "Release v2.6, \"Kalevalantie\""`
 
-7. Push the tag,
+6. Push the tag,
 
    `git push origin v2.6`
 
-8. Create jar and war packages for the release,
+7. Create jar and war packages for the release,
 
    `lein clean; lein uberjar; lein uberwar`
 
-9. Go to the github page for the release, e.g.,
+8. Go to the github page for the release, e.g.,
 
    https://github.com/CSCfi/rems/releases/tag/v2.6
 
-10. From "Edit tag", change the name of the tag to the release name,
-    e.g., "Kalevalantie".
+9. From "Edit tag", change the name of the tag to the release name,
+   e.g., "Kalevalantie".
 
-11. Copy changes from CHANGELOG.md to "Description" field:
+10. Copy changes from CHANGELOG.md to "Description" field:
 
     - Change lines starting with `###` to `##` for better formatting
 
-12. Upload rems.jar and rems.war from the directory target/uberjar/
+11. Upload rems.jar and rems.war from the directory target/uberjar/
 
-13. Save changes
+12. Save changes
