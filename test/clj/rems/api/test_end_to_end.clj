@@ -3,7 +3,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.application.approver-bot :as approver-bot]
-            [rems.email.core :as email-poller]
+            [rems.email.core :as email]
             [rems.json :as json]
             [rems.poller.entitlements :as entitlements-poller]
             [stub-http.core :as stub]))
@@ -19,7 +19,7 @@
 (deftest test-end-to-end
   (testing "clear poller backlog"
     (entitlements-poller/run)
-    (email-poller/run))
+    (email/try-send-emails!))
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
                                                 "/remove" {:status 200}})]
     ;; TODO should test emails with a mock smtp server
@@ -125,7 +125,7 @@
                          api-key applicant-id)))
 
             ;; we could start the pollers normally and wait for them to process the events here for better coverage
-            (email-poller/run)
+            (email/try-send-emails!)
             (entitlements-poller/run)
 
             (testing "email for new application"
@@ -158,7 +158,7 @@
                                                             :comment "e2e approved"}
                          api-key handler-id)))
 
-            (email-poller/run)
+            (email/try-send-emails!)
             (entitlements-poller/run)
 
             (testing "email for approved application"
@@ -191,7 +191,7 @@
                                                           :comment "e2e closed"}
                          api-key handler-id)))
 
-            (email-poller/run)
+            (email/try-send-emails!)
             (entitlements-poller/run)
 
             (testing "ended entitlement"

@@ -85,7 +85,7 @@
             (log/warn e "failed sending email:" (pr-str email))
             (str "failed sending email: " e)))))))
 
-(defn run []
+(defn try-send-emails! []
   (doseq [email (email-outbox/get-emails {:due-now? true})]
     (if-let [error (send-email! (:email-outbox/email email))]
       (let [email (email-outbox/attempt-failed! email error)]
@@ -94,7 +94,7 @@
       (email-outbox/attempt-succeeded! (:email-outbox/id email)))))
 
 (mount/defstate email-poller
-  :start (scheduler/start! run (Duration/standardSeconds 10))
+  :start (scheduler/start! try-send-emails! (Duration/standardSeconds 10))
   :stop (scheduler/stop! email-poller))
 
 (comment
