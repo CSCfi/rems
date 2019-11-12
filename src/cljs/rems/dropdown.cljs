@@ -6,8 +6,9 @@
 
 (defn dropdown
   "Single- or multi-choice, searchable dropdown menu."
-  [{:keys [id items item-key item-label item-selected? item-disabled? multi? clearable? on-change]
-    :or {item-selected? (constantly false)
+  [{:keys [id items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change]
+    :or {hide-selected? multi?
+         item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
   [:> js/Select {:className "dropdown-container"
@@ -20,6 +21,7 @@
                  :isOptionDisabled #(item-disabled? %)
                  :maxMenuHeight 200
                  :noOptionsMessage #(text :t.dropdown/no-results)
+                 :hideSelectedOptions hide-selected?
                  :options (into-array items)
                  :value (into-array (filter item-selected? items))
                  :onChange #(on-change %)
@@ -52,4 +54,12 @@
                          :item-label :name
                          :item-selected? #(contains? #{1 3 5} (% :id))
                          :multi? true
+                         :on-change on-change}])
+     (example "dropdown menu, multi-choice, several values selected"
+              [dropdown {:items items
+                         :item-key :id
+                         :item-label :name
+                         :item-selected? #(contains? #{1 3 5} (% :id))
+                         :multi? true
+                         :hide-selected? false
                          :on-change on-change}])]))
