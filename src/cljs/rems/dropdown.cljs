@@ -5,7 +5,18 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn dropdown
-  "Single- or multi-choice, searchable dropdown menu."
+  "Single- or multi-choice, searchable dropdown menu.
+
+  `:id` unique id for the input
+  `:items` items shown in dropdown
+  `:item-key` getter for the key of an option, used as the id of an item
+  `:item-label` getter for the label of an option shown in the dropdown
+  `:item-selected?` is this item currently selected?
+  `:hide-selected?` should the items that are selected be shown in the dropdown, defaults: false for single value, true for a multiple choice
+  `:item-disabled?` is this item currently disabled?
+  `:multi?` is this a multiple choice dropdown?
+  `:clearable?` should there be a clear selection button?
+  `:on-change` called each time the value changes, one or seq"
   [{:keys [id items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change]
     :or {hide-selected? multi?
          item-selected? (constantly false)
