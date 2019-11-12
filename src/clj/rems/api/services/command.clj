@@ -50,6 +50,9 @@
       (doseq [event (:events result)]
         (events/add-event! event))
       (email/generate-emails! (:events result))
-      (doseq [cmd (run-process-managers (:events result))]
-        (command! cmd)))
+      (doseq [cmd2 (run-process-managers (:events result))]
+        (let [result (command! cmd2)]
+          (when (:errors result)
+            (throw (ex-info "process manager command failed"
+                            {:cmd cmd2 :result result :parent-cmd cmd}))))))
     result))
