@@ -51,7 +51,7 @@
 (rf/reg-sub ::blacklist (fn [db _] (::blacklist db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- blacklist [rows]
+(defn- blacklist []
   (let [table-spec {:id ::blacklist
                     :columns [{:key :resource
                                :title (text :t.administration/resource)}
@@ -80,4 +80,4 @@
    [flash-message/component :top]
    (if @(rf/subscribe [::loading?])
      [spinner/big]
-     [blacklist @(rf/subscribe [::blacklist])])])
+     [blacklist [::blacklist]])])
