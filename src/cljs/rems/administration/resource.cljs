@@ -47,9 +47,7 @@
   [collapsible/component
    {:id "blacklist"
     :title (text :t.administration/blacklist)
-    :always (if @(rf/subscribe [:rems.administration.blacklist/loading?])
-              [spinner/big]
-              [blacklist/blacklist])}])
+    :always [blacklist/blacklist]}])
 
 (defn resource-view [resource language]
   [:div.spaced-vertically-3
