@@ -136,7 +136,7 @@
                           :remarked "%1 added a remark."
                           :resources-changed "%1 changed the resources. New resources: %2."
                           :returned "%1 requested changes to the application."
-                          :revoked "%1 revoked the application."
+                          :revoked "%1 revoked the entitlement."
                           :submitted "%1 submitted the application for review."
                           :unknown "Unknown"}
                  :id "Id"
