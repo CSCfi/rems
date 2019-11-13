@@ -85,7 +85,9 @@
 
     "test-data"
     (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
+      (mount/start #'rems.config/env
+                   #'rems.db.core/*db*
+                   #'rems.locales/translations)
       (log/info "Creating test data")
       (test-data/create-test-data!)
       (test-data/create-performance-test-data!)
@@ -93,7 +95,9 @@
 
     "demo-data"
     (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
+      (mount/start #'rems.config/env
+                   #'rems.db.core/*db*
+                   #'rems.locales/translations)
       (test-data/create-demo-data!))
 
     "add-api-key"
