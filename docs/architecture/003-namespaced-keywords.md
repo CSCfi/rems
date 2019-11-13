@@ -37,6 +37,8 @@ need to contain any code.
 Let's avoid structures that hinder greppability, like namespaced maps
 and namespaced destructuring:
 ```clojure
+;; AVOID
+
 #:event{:time 1 :id 2}
 
 (let [{:event/keys [time id]} event]
@@ -66,10 +68,11 @@ When using namespaced keys, it's useful to keep the structure of the
 corresponding values fixed. That is, don't mix forms like this:
 
 ```clojure
-{:blacklist/user "bob"
- :blacklist/resource "123"}
-{:blacklist/user {:userid "bob" :name "Bob"}
- :blacklist/resource {:resource/ext-id "urn:123" :resource/id 3}}
+;; AVOID
+{:blacklist/user "bob"                                             ; user is string
+ :blacklist/resource "123"}                                        ; resource is string
+{:blacklist/user {:userid "bob" :name "Bob"}                       ; user is map
+ :blacklist/resource {:resource/ext-id "urn:123" :resource/id 3}}  ; resource is map
 ```
 
 Instead use partial maps like this:
