@@ -69,10 +69,10 @@ corresponding values fixed. That is, don't mix forms like this:
 
 ```clojure
 ;; AVOID
-{:blacklist/user "bob"
- :blacklist/resource "123"}
-{:blacklist/user {:userid "bob" :name "Bob"}
- :blacklist/resource {:resource/ext-id "urn:123" :resource/id 3}}
+{:blacklist/user "bob"                                             ; user is string
+ :blacklist/resource "123"}                                        ; resource is string
+{:blacklist/user {:userid "bob" :name "Bob"}                       ; user is map
+ :blacklist/resource {:resource/ext-id "urn:123" :resource/id 3}}  ; resource is map
 ```
 
 Instead use partial maps like this:

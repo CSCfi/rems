@@ -12,6 +12,7 @@ The input consists of the event vector with the event name and parameters, and a
 
 ```clojure
 ;; AVOID
+
 (rf/reg-event-fx
  ::send-request-decision
  (fn [{{::keys [deciders application-id comment]} :db} _]
@@ -20,7 +21,7 @@ The input consists of the event vector with the event name and parameters, and a
 (rf/reg-fx
  :request-decision-effect
  (fn [[deciders application-id comment]]
-   (fetch "/api/applications/request-decision"                                ; the actual code
+   (fetch "/api/applications/request-decision"                                ; the side-effect
           {:params {:deciders deciders
                     :application-id application-id
                     :comment comment}
@@ -28,7 +29,7 @@ The input consists of the event vector with the event name and parameters, and a
 
 [action-button {:id action-form-id
                 :text (text :t.actions/request-decision)
-                :on-click #(rf/dispatch [::send-request-decision])}])         ; first indirection
+                :on-click #(rf/dispatch [::send-request-decision])}]          ; first indirection
 ```
 
 [The listed reasons are](https://github.com/Day8/re-frame/blob/master/docs/EffectfulHandlers.md#bad-why)
@@ -51,11 +52,11 @@ Furthermore we haven't used a time travelling debugger or anything else that ben
 (rf/reg-event-fx
  ::send-request-decision
  (fn [{{::keys [deciders application-id comment]} :db} _]
-   (fetch "/api/applications/request-decision"
+   (fetch "/api/applications/request-decision"           ; side-effect without the second indirection
           {:params {:deciders deciders
                     :application-id application-id
                     :comment comment}
-           :handler #(rf/dispatch [::decision-results %]})})
+           :handler #(rf/dispatch [::decision-results %])})
    {}))
 ```
 
@@ -66,8 +67,8 @@ In particular we do not want to mix side-effects and effect handlers in the same
 (rf/reg-event-fx
  ::send-request-decision
  (fn [{{::keys [deciders application-id comment]} :db} _]
-   (do-another-kind-of-side-effect!)
-   {:request-decision-effect [deciders application-id comment]}))
+   (do-another-kind-of-side-effect!)                                 ; side-effect without indirection
+   {:request-decision-effect [deciders application-id comment]}))    ; side-effect with indirection
 ```
 
 ## Handling user interaction in components
@@ -87,7 +88,7 @@ So instead of
 ;; AVOID
 [action-button {:id action-form-id
                 :text (text :t.actions/request-decision)
-                :on-click #(do-a-fetch!)}])
+                :on-click #(do-a-fetch!)}]                           ; side-effect
 ```
 
 we will write
@@ -95,5 +96,5 @@ we will write
 ```clojure
 [action-button {:id action-form-id
                 :text (text :t.actions/request-decision)
-                :on-click #(rf/dispatch [::send-request-decision])}])
+                :on-click #(rf/dispatch [::send-request-decision])}] ; indirection
 ```
