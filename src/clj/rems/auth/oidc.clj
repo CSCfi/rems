@@ -1,12 +1,11 @@
 (ns rems.auth.oidc
   (:require [clj-http.client :as http]
-            [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
             [rems.config :refer [env oidc-configuration]]
             [rems.json :as json]
             [rems.jwt :as jwt]
             [rems.util :refer [getx]]
-            [ring.util.response :refer [content-type redirect response]])
+            [ring.util.response :refer [redirect]])
   (:import [java.time Instant]))
 
 (defn login-url []
@@ -14,8 +13,8 @@
        "?response_type=code"
        "&client_id=" (getx env :oidc-client-id)
        "&redirect_uri=" (getx env :public-url) "oidc-callback"
-       "&scope=openid profile email"))
-       ; "&state=STATE")) ; FIXME We could use the state for intelligent redirect. Also check if we need it for CSRF protection as Auth0 docs say.
+       "&scope=openid profile email"
+       #_"&state=STATE")) ; FIXME We could use the state for intelligent redirect. Also check if we need it for CSRF protection as Auth0 docs say.
 
 (defn logout-url []
   "/oidc-logout")
@@ -55,8 +54,8 @@
 ; TODO Silent login when we have a new session, but user has logged in to auth provider
 
 (defroutes routes
-  (GET "/oidc-login" req (redirect (login-url)))
+  (GET "/oidc-login" _req (redirect (login-url)))
   (GET "/oidc-logout" req
     (let [session (get req :session)]
-      (assoc (redirect "/#/redirect") :session (dissoc session :identity))))
+      (assoc (redirect "/") :session (dissoc session :identity))))
   (GET "/oidc-callback" req (oidc-callback req)))
