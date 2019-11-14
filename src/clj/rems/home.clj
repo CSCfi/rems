@@ -1,10 +1,13 @@
 (ns rems.home
   (:require [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes routes]]
+            [rems.api.services.attachment :as attachment]
+            [rems.api.util :as api-util]
             [rems.context :as context]
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
+            [rems.util :refer [get-user-id]]
             [ring.util.response :refer [content-type not-found redirect response]]))
 
 (defn- apply-for-resource [resource]
@@ -32,6 +35,14 @@
   (GET "/" [] (layout/home-page))
   (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/application/accept-invitation/" token)))
   (GET "/apply-for" {{:keys [resource]} :params} (apply-for-resource resource))
+  (GET "/applications/attachment/:attachment-id" [attachment-id]
+    (let [attachment-id (Long/parseLong attachment-id)]
+      (if-let [user-id (get-user-id)]
+        (if-let [attachment (attachment/get-application-attachment user-id attachment-id)]
+          (attachment/download attachment)
+          (api-util/not-found-text-response))
+        ;; TODO: this redirect could be generic middleware
+        (redirect (str "/?redirect=/applications/attachment/" attachment-id)))))
   (GET "/landing_page" req (redirect "/redirect")) ; DEPRECATED: legacy url redirect
   (GET "/favicon.ico" [] (redirect "/img/favicon.ico")))
 

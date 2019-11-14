@@ -1,5 +1,6 @@
 (ns ^:integration rems.test-redirects
   (:require [clojure.test :refer :all]
+            [rems.api.services.attachment :as attachment]
             [rems.api.testing :refer :all]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
@@ -13,7 +14,7 @@
 (defn disable-catalogue-item [catid]
   (db/set-catalogue-item-enabled! {:id catid :enabled false}))
 
-(deftest redirect-to-new-application-test
+(deftest test-redirect-to-new-application
   (testing "redirects to new application page for catalogue item matching the resource ID"
     (let [resid (test-data/create-resource! {:resource-ext-id "urn:one-matching-resource"})
           catid (test-data/create-catalogue-item! {:resource-id resid})
@@ -46,3 +47,33 @@
                        handler)]
       (is (= 302 (:status response)))
       (is (= (str "http://localhost/application?items=" new-catid) (get-in response [:headers "Location"]))))))
+
+(def dummy-attachment {:application/id 123
+                       :attachment/filename "file.txt"
+                       :attachment/data (.getBytes "file content")
+                       :attachment/type "text/plain"})
+
+(deftest test-attachment-download
+  (testing "download attachment when logged in"
+    (with-redefs [attachment/get-application-attachment (constantly dummy-attachment)]
+      (let [response (-> (request :get "/applications/attachment/123")
+                         (authenticate "42" "alice")
+                         handler)]
+        (is (= 200 (:status response)))
+        (is (= "file content" (slurp (:body response)))))))
+
+  (testing "redirect to login when logged out"
+    (with-redefs [attachment/get-application-attachment (constantly dummy-attachment)]
+      (let [response (-> (request :get "/applications/attachment/123")
+                         handler)]
+        (is (= 302 (:status response)))
+        (is (= "http://localhost/?redirect=/applications/attachment/123"
+               (get-in response [:headers "Location"]))))))
+
+  (testing "attachment not found"
+    (with-redefs [attachment/get-application-attachment (constantly nil)]
+      (let [response (-> (request :get "/applications/attachment/123")
+                         (authenticate "42" "alice")
+                         handler)]
+        (is (= 404 (:status response)))
+        (is (= "not found" (:body response)))))))

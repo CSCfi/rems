@@ -259,7 +259,7 @@
                (when-not (empty? attachment-id)
                  [:div.field
                   [:a.btn.btn-outline-secondary.mr-2
-                   {:href (str "/api/applications/attachment/" attachment-id)
+                   {:href (str "/applications/attachment/" attachment-id)
                     :target :_blank}
                    filename " " [file-download]]]))
         upload-field [:div.upload-file.mr-2
