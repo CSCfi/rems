@@ -15,6 +15,7 @@
     :on-click #(on-change (assoc item :enabled true) [text :t.administration/enable])}
    (text :t.administration/enable)])
 
+; TODO consider naming enabled-toggle-button
 (defn enabled-toggle [item on-change]
   (if (:enabled item)
     [disable-button item on-change]
@@ -33,6 +34,7 @@
     :on-click #(on-change (assoc item :archived false) [text :t.administration/unarchive])}
    (text :t.administration/unarchive)])
 
+;; TODO consider naming archived-toggle-button
 (defn archived-toggle [item on-change]
   (if (:archived item)
     [unarchive-button item on-change]

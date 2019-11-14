@@ -71,12 +71,12 @@
  (fn [db _]
    (::selected-items db)))
 
-(defn- to-create-catalogue-item []
+(defn- create-catalogue-item-button []
   [atoms/link {:class "btn btn-primary"}
    "/administration/catalogue-items/create"
    (text :t.administration/create-catalogue-item)])
 
-(defn- to-change-form [items]
+(defn- change-form-button [items]
   [:button.btn.btn-primary
    {:disabled (when (empty? items) :disabled)
     :on-click (fn []
@@ -84,7 +84,7 @@
                 (navigate! "/administration/catalogue-items/change-form") )}
    (text :t.administration/change-form)])
 
-(defn- to-catalogue-item [catalogue-item-id]
+(defn- view-button [catalogue-item-id]
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/catalogue-items/" catalogue-item-id)
    (text :t.administration/view)])
@@ -124,7 +124,7 @@
                            [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
            :commands {:td [:td.commands {:on-click #(.stopPropagation %)}
-                           [to-catalogue-item (:id item)]
+                           [view-button (:id item)]
                            [roles/when roles/show-admin-edit-buttons?
                             [catalogue-item/edit-button (:id item)]
                             [status-flags/enabled-toggle item #(rf/dispatch [::set-catalogue-item-enabled %1 %2 [::fetch-catalogue]])]
@@ -169,8 +169,8 @@
           [[spinner/big]]
           [[roles/when roles/show-admin-edit-buttons?
             [:div.commands.text-left.pl-0
-             [to-create-catalogue-item]
-             [to-change-form (items-by-id @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
+             [ create-catalogue-item-button]
+             [change-form-button (items-by-id @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
             [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
             [status-flags/disabled-and-archived-explanation]]
            [catalogue-list]])))
