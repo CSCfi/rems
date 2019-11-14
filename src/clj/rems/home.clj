@@ -32,9 +32,15 @@
 (def memoized-render-css (memoize render-css))
 
 (defroutes normal-routes
-  (GET "/" [] (layout/home-page))
-  (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/application/accept-invitation/" token)))
-  (GET "/apply-for" {{:keys [resource]} :params} (apply-for-resource resource))
+  (GET "/" []
+    (layout/home-page))
+
+  (GET "/accept-invitation" [token]
+    (redirect (str "/application/accept-invitation/" token)))
+
+  (GET "/apply-for" [resource]
+    (apply-for-resource resource))
+
   (GET "/applications/attachment/:attachment-id" [attachment-id]
     (let [attachment-id (Long/parseLong attachment-id)]
       (if-let [user-id (get-user-id)]
@@ -43,8 +49,12 @@
           (api-util/not-found-text-response))
         ;; TODO: this redirect could be generic middleware
         (redirect (str "/?redirect=/applications/attachment/" attachment-id)))))
-  (GET "/landing_page" req (redirect "/redirect")) ; DEPRECATED: legacy url redirect
-  (GET "/favicon.ico" [] (redirect "/img/favicon.ico")))
+
+  (GET "/landing_page" [] ; DEPRECATED: legacy url redirect
+    (redirect "/redirect"))
+
+  (GET "/favicon.ico" []
+    (redirect "/img/favicon.ico")))
 
 (defroutes css-routes
   (GET "/css/:language/screen.css" [language]
