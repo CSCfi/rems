@@ -8,8 +8,9 @@
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
-            [rems.util :refer [get-user-id]]
-            [ring.util.response :refer [content-type not-found redirect response]]))
+            [rems.util :refer [getx-user-id]]
+            [ring.util.response :refer [content-type not-found redirect response]])
+  (:import [rems.auth UnauthorizedException]))
 
 (defn- apply-for-resource [resource]
   (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
@@ -44,23 +45,19 @@
 
   (GET "/applications/attachment/:attachment-id" [attachment-id]
     (let [attachment-id (Long/parseLong attachment-id)]
-      (if-let [user-id (get-user-id)]
-        (if-let [attachment (attachment/get-application-attachment user-id attachment-id)]
-          (attachment/download attachment)
-          (api-util/not-found-text-response))
-        ;; TODO: this redirect could be generic middleware
-        (redirect (str "/?redirect=/applications/attachment/" attachment-id)))))
+      (api-util/check-user)
+      (if-let [attachment (attachment/get-application-attachment (getx-user-id) attachment-id)]
+        (attachment/download attachment)
+        (api-util/not-found-text-response))))
 
   (GET "/applications/:application-id/license-attachment/:license-id/:language" [application-id license-id language]
     (let [application-id (Long/parseLong application-id)
           license-id (Long/parseLong license-id)
           language (keyword language)]
-      (if-let [user-id (get-user-id)]
-        (if-let [attachment (licenses/get-application-license-attachment user-id application-id license-id language)]
-          (attachment/download attachment)
-          (api-util/not-found-text-response))
-        ;; TODO: this redirect could be generic middleware
-        (redirect (str "/?redirect=/applications/" application-id "/license-attachment/" license-id "/" (name language))))))
+      (api-util/check-user)
+      (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
+        (attachment/download attachment)
+        (api-util/not-found-text-response))))
 
   (GET "/landing_page" [] ; DEPRECATED: legacy url redirect
     (redirect "/redirect"))
@@ -73,6 +70,14 @@
     (binding [context/*lang* (keyword language)]
       (memoized-render-css context/*lang*))))
 
+(defn wrap-login-redirect [handler]
+  (fn [req]
+    (try
+      (handler req)
+      (catch UnauthorizedException _
+        (redirect (str "/?redirect=" (:uri req)))))))
+
 (defn home-routes []
-  (routes normal-routes
+  (routes (-> normal-routes
+              wrap-login-redirect)
           css-routes))
