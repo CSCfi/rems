@@ -1,10 +1,9 @@
 (ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :as api-util] ; required for route :roles
-            [rems.db.attachments :as attachments]
-            [rems.db.core :as db]
+            [rems.api.services.attachment :as attachment]
             [rems.api.services.licenses :as licenses]
+            [rems.api.util :as api-util] ; required for route :roles
             [rems.util :refer [getx-user-id]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.json-schema :as rjs]
@@ -83,7 +82,6 @@
       :multipart-params [file :- upload/TempFileUpload]
       :middleware [multipart/wrap-multipart-params]
       :return AttachmentMetadata
-      (attachments/check-attachment-content-type (:content-type file))
       (ok (licenses/create-license-attachment! file (getx-user-id))))
 
     (POST "/remove_attachment" []
@@ -91,18 +89,12 @@
       :roles #{:owner}
       :query-params [attachment-id :- (describe s/Int "attachment id")]
       :return SuccessResponse
-      (if (some? (licenses/remove-license-attachment! attachment-id))
-        (ok {:success true})
-        (ok {:success false})))
+      (ok {:success (some? (licenses/remove-license-attachment! attachment-id))}))
 
     (GET "/attachments/:attachment-id" []
       :summary "Get a license's attachment"
       :roles #{:owner}
       :path-params [attachment-id :- (describe s/Int "attachment id")]
-      (if-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
-        (do (attachments/check-attachment-content-type (:type attachment))
-            (-> (:data attachment)
-                (java.io.ByteArrayInputStream.)
-                (ok)
-                (content-type (:type attachment))))
+      (if-let [attachment (licenses/get-license-attachment attachment-id)]
+        (attachment/download attachment)
         (api-util/not-found-json-response)))))

@@ -5,6 +5,7 @@
             [rems.api.schema :refer :all]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.command :as command]
+            [rems.api.services.licenses :as licenses]
             [rems.api.util :as api-util] ; required for route :roles
             [rems.application.commands :as commands]
             [rems.application.search :as search]
@@ -266,17 +267,6 @@
       :path-params [application-id :- (describe s/Int "application id")
                     license-id :- (describe s/Int "license id")
                     language :- (describe s/Keyword "language code")]
-      (if-let [app (applications/get-application (getx-user-id) application-id)]
-        (if-let [license (some #(when (= license-id (:license/id %)) %)
-                               (:application/licenses app))]
-          (if-let [attachment-id (get-in license [:license/attachment-id language])]
-            (if-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
-              (do (attachments/check-attachment-content-type (:type attachment))
-                  (-> (:data attachment)
-                      (java.io.ByteArrayInputStream.)
-                      (ok)
-                      (content-type (:type attachment))))
-              (api-util/not-found-json-response))
-            (api-util/not-found-json-response))
-          (api-util/not-found-json-response))
+      (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
+        (attachment/download attachment)
         (api-util/not-found-json-response)))))

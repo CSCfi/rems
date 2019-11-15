@@ -1,11 +1,13 @@
 (ns rems.api.services.licenses
   "Serving licenses for API."
   (:require [rems.common-util :refer [distinct-by]]
+            [rems.db.applications :as applications]
+            [rems.db.attachments :as attachments]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow])
-  (:import (java.io FileInputStream ByteArrayOutputStream)))
+  (:import [java.io FileInputStream ByteArrayOutputStream]))
 
 (defn create-license! [{:keys [licensetype localizations]} user-id]
   (let [license (db/create-license! {:owneruserid user-id
@@ -22,6 +24,7 @@
      :id licid}))
 
 (defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
+  (attachments/check-attachment-content-type content-type)
   (let [byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
@@ -33,9 +36,23 @@
                                      :data byte-array})
      [:id])))
 
-(defn remove-license-attachment!
-  [attachment-id]
+(defn remove-license-attachment! [attachment-id]
   (db/remove-license-attachment! {:id attachment-id}))
+
+(defn get-license-attachment [attachment-id]
+  (when-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
+    (attachments/check-attachment-content-type (:type attachment))
+    {:attachment/filename (:filename attachment)
+     :attachment/data (:data attachment)
+     :attachment/type (:type attachment)}))
+
+(defn get-application-license-attachment [user-id application-id license-id language]
+  (when-let [app (applications/get-application user-id application-id)]
+    (when-let [license (some #(when (= license-id (:license/id %)) %)
+                             (:application/licenses app))]
+      (when-let [attachment-id (get-in license [:license/attachment-id language])]
+        (when-let [attachment (get-license-attachment attachment-id)]
+          attachment)))))
 
 (defn- get-license-usage [id]
   ;; these could be db joins
