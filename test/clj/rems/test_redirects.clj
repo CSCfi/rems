@@ -1,6 +1,7 @@
 (ns ^:integration rems.test-redirects
   (:require [clojure.test :refer :all]
             [rems.api.services.attachment :as attachment]
+            [rems.api.services.licenses :as licenses]
             [rems.api.testing :refer :all]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
@@ -54,16 +55,17 @@
                        :attachment/type "text/plain"})
 
 (deftest test-attachment-download
-  (testing "download attachment when logged in"
-    (with-redefs [attachment/get-application-attachment (constantly dummy-attachment)]
+  (with-redefs [attachment/get-application-attachment (fn [& args]
+                                                        (is (= ["alice" 123] args))
+                                                        dummy-attachment)]
+    (testing "download attachment when logged in"
       (let [response (-> (request :get "/applications/attachment/123")
                          (authenticate "42" "alice")
                          handler)]
         (is (= 200 (:status response)))
-        (is (= "file content" (slurp (:body response)))))))
+        (is (= "file content" (slurp (:body response))))))
 
-  (testing "redirect to login when logged out"
-    (with-redefs [attachment/get-application-attachment (constantly dummy-attachment)]
+    (testing "redirect to login when logged out"
       (let [response (-> (request :get "/applications/attachment/123")
                          handler)]
         (is (= 302 (:status response)))
@@ -73,6 +75,32 @@
   (testing "attachment not found"
     (with-redefs [attachment/get-application-attachment (constantly nil)]
       (let [response (-> (request :get "/applications/attachment/123")
+                         (authenticate "42" "alice")
+                         handler)]
+        (is (= 404 (:status response)))
+        (is (= "not found" (:body response)))))))
+
+(deftest test-license-attachment-download
+  (with-redefs [licenses/get-application-license-attachment (fn [& args]
+                                                              (is (= ["alice" 1023 3 :en] args))
+                                                              dummy-attachment)]
+    (testing "download attachment when logged in"
+      (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
+                         (authenticate "42" "alice")
+                         handler)]
+        (is (= 200 (:status response)))
+        (is (= "file content" (slurp (:body response))))))
+
+    (testing "redirect to login when logged out"
+      (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
+                         handler)]
+        (is (= 302 (:status response)))
+        (is (= "http://localhost/?redirect=/applications/1023/license-attachment/3/en"
+               (get-in response [:headers "Location"]))))))
+
+  (testing "attachment not found"
+    (with-redefs [licenses/get-application-license-attachment (constantly nil)]
+      (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
                          (authenticate "42" "alice")
                          handler)]
         (is (= 404 (:status response)))

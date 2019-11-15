@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes routes]]
             [rems.api.services.attachment :as attachment]
+            [rems.api.services.licenses :as licenses]
             [rems.api.util :as api-util]
             [rems.context :as context]
             [rems.css.styles :as styles]
@@ -49,6 +50,17 @@
           (api-util/not-found-text-response))
         ;; TODO: this redirect could be generic middleware
         (redirect (str "/?redirect=/applications/attachment/" attachment-id)))))
+
+  (GET "/applications/:application-id/license-attachment/:license-id/:language" [application-id license-id language]
+    (let [application-id (Long/parseLong application-id)
+          license-id (Long/parseLong license-id)
+          language (keyword language)]
+      (if-let [user-id (get-user-id)]
+        (if-let [attachment (licenses/get-application-license-attachment user-id application-id license-id language)]
+          (attachment/download attachment)
+          (api-util/not-found-text-response))
+        ;; TODO: this redirect could be generic middleware
+        (redirect (str "/?redirect=/applications/" application-id "/license-attachment/" license-id "/" (name language))))))
 
   (GET "/landing_page" [] ; DEPRECATED: legacy url redirect
     (redirect "/redirect"))
