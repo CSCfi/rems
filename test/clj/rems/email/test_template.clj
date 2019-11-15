@@ -275,11 +275,11 @@
 
 (deftest test-revoked
   (is (= [{:to-user "applicant"
-           :subject "Your application 2001/3, \"Application title\" has been revoked",
-           :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been revoked.\n\nYou can view the application at http://example.com/application/7"}
+           :subject "Entitlements related to your application 2001/3, \"Application title\" have been revoked"
+           :body "Dear Alice Applicant,\n\nEntitlements related to your application 2001/3, \"Application title\" have been revoked.\n\nYou can view the application at http://example.com/application/7"}
           {:to-user "assistant"
-           :subject "(2001/3, \"Application title\") Application has been revoked",
-           :body "Dear Amber Assistant,\n\nHannah Handler has revoked the application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/application/7"}]
+           :subject "(2001/3, \"Application title\") Entitlements have been revoked"
+           :body "Dear Amber Assistant,\n\nHannah Handler has revoked the entitlements related to application 2001/3, \"Application title\" from Alice Applicant.\n\nYou can view the application at http://example.com/application/7"}]
          (emails base-events {:application/id 7
                               :event/type :application.event/revoked
                               :event/actor "handler"}))))

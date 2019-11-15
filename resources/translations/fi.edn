@@ -134,7 +134,7 @@
                           :remarked "%1 kirjasi huomion."
                           :resources-changed "%1 muutti haettavia resursseja. Uudet resurssit: %2."
                           :returned "%1 palautti hakemuksen muokattavaksi."
-                          :revoked "%1 perui hakemuksen."
+                          :revoked "%1 perui käyttöoikeuden."
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"}
                  :id "Tunniste"
@@ -242,10 +242,10 @@
                                  :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on palautettu muokattavaksesi. Ole hyvä ja täydennä hakemusta kommenttien mukaan.\n\nVoit tarkastella hakemusta osoitteessa %6"
                                  :subject-to-handler "(%3) Hakemus on palautettu"
                                  :message-to-handler "Hyvä %1,\n\n%2 on palauttanut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
-          :application-revoked {:subject-to-applicant "Hakemuksesi %3 on peruttu"
-                                :message-to-applicant "Hyvä %1,\n\nHakemuksesi %3 on peruttu.\n\nVoit tarkastella hakemusta: %6"
-                                :subject-to-handler "(%3) Hakemus on peruttu"
-                                :message-to-handler "Hyvä %1,\n\n%2 on perunut käyttäjän %4 hakemuksen %3.\n\nVoit tarkastella hakemusta: %6"}
+          :application-revoked {:subject-to-applicant "Hakemukseesi %3 liittyvät käyttöoikeudet on peruttu"
+                                :message-to-applicant "Hyvä %1,\n\nHakemukseesi %3 liittyvät käyttöoikeudet on peruttu.\n\nVoit tarkastella hakemusta: %6"
+                                :subject-to-handler "(%3) Käyttöoikeudet on peruttu"
+                                :message-to-handler "Hyvä %1,\n\n%2 on perunut käyttäjän %4 hakemukseen %3 liittyvät käyttöoikeudet.\n\nVoit tarkastella hakemusta: %6"}
           :application-licenses-added {:subject "Hakemuksen %3 käyttöehdot ovat muuttuneet"
                                        :message "Hyvä %1,\n\n%2 pyytää hyväksyntääsi muuttuneille käyttöehdoille hakemukseen %3.\n\nVoit tarkastella hakemusta ja hyväksyä muuttuneet käyttöehdot osoitteessa %6"}
           :application-resubmitted {:subject "(%3) Hakemus lähetetty uudelleen"
