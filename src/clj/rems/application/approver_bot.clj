@@ -1,6 +1,5 @@
 (ns rems.application.approver-bot
-  (:require [clj-time.core :as time]
-            [rems.application-util :as application-util]))
+  (:require [clj-time.core :as time]))
 
 (def bot-userid "approver-bot")
 

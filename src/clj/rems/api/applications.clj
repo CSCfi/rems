@@ -11,8 +11,6 @@
             [rems.application.search :as search]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
-            [rems.db.attachments :as attachments]
-            [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
