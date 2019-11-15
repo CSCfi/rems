@@ -9,6 +9,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
             [rems.util :refer [getx-user-id]]
+            [ring.util.codec :refer [url-encode]]
             [ring.util.response :refer [content-type not-found redirect response]])
   (:import [rems.auth UnauthorizedException]))
 
@@ -75,7 +76,7 @@
     (try
       (handler req)
       (catch UnauthorizedException _
-        (redirect (str "/?redirect=" (:uri req)))))))
+        (redirect (str "/?redirect=" (url-encode (:uri req))))))))
 
 (defn home-routes []
   (routes (-> normal-routes

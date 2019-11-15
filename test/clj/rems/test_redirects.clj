@@ -69,7 +69,7 @@
       (let [response (-> (request :get "/applications/attachment/123")
                          handler)]
         (is (= 302 (:status response)))
-        (is (= "http://localhost/?redirect=/applications/attachment/123"
+        (is (= "http://localhost/?redirect=%2Fapplications%2Fattachment%2F123"
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
@@ -95,7 +95,7 @@
       (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
                          handler)]
         (is (= 302 (:status response)))
-        (is (= "http://localhost/?redirect=/applications/1023/license-attachment/3/en"
+        (is (= "http://localhost/?redirect=%2Fapplications%2F1023%2Flicense-attachment%2F3%2Fen"
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
