@@ -705,6 +705,11 @@
                  :deciders [reviewer]
                  :comment ""}))))
 
+(defn- range-1
+  "Like `clojure.core/range`, but starts from 1 and `end` is inclusive."
+  [end]
+  (range 1 (inc end)))
+
 (defn- in-parallel [fs]
   (let [executor (Executors/newFixedThreadPool 10)]
     (try
@@ -752,17 +757,17 @@
                                      :license/text {:en "Be fast."
                                                     :fi "Ole nopea."}})
         cat-item-ids (vec (in-parallel
-                           (for [index (range resource-count)]
+                           (for [n (range-1 resource-count)]
                              (fn []
                                (let [resource-id (create-resource! {:organization "perf"
                                                                     :license-ids [license-id]})]
-                                 (create-catalogue-item! {:title {:en (str "Performance test resource " (inc index))
-                                                                  :fi (str "Suorituskykytestiresurssi " (inc index))}
+                                 (create-catalogue-item! {:title {:en (str "Performance test resource " n)
+                                                                  :fi (str "Suorituskykytestiresurssi " n)}
                                                           :resource-id resource-id
                                                           :form-id form-id
                                                           :workflow-id workflow-id}))))))
         user-ids (vec (in-parallel
-                       (for [n (range 1 (inc user-count))]
+                       (for [n (range-1 user-count)]
                          (fn []
                            (let [user-id (str "perftester" n)]
                              (users/add-user! user-id {:eppn user-id
@@ -770,9 +775,9 @@
                                                        :commonName (str "Performance Tester " n)})
                              user-id)))))]
     (in-parallel
-     (for [i (range application-count)]
+     (for [n (range-1 application-count)]
        (fn []
-         (log/info "Creating performance test application" (inc i) "/" application-count)
+         (log/info "Creating performance test application" n "/" application-count)
          (let [cat-item-id (rand-nth cat-item-ids)
                user-id (rand-nth user-ids)
                handler (rand-nth handlers)
