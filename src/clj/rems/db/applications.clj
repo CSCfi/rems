@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [clojure.core.cache :as cache]
+            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
@@ -27,6 +28,8 @@
 
 (defn- allocate-external-id! [prefix]
   (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+    ;; avoid conflicts due to serializable isolation; otherwise this transaction would need retry logic
+    (jdbc/execute! db/*db* ["LOCK TABLE external_application_id IN SHARE ROW EXCLUSIVE MODE"])
     (let [all (db/get-external-ids {:prefix prefix})
           last (apply max (cons 0 (map (comp read-string :suffix) all)))
           new (str (inc last))]
