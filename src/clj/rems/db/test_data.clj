@@ -17,7 +17,8 @@
             [rems.db.users :as users]
             [rems.poller.entitlements :as entitlements-poller]
             [ring.util.http-response :refer [bad-request!]])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [java.util.concurrent Executors Future]))
 
 ;;; test data definitions
 
@@ -75,7 +76,7 @@
    :owner "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4"})
 
 (def +oidc-user-data+
-  {"WHFS36UEZD6TNURJ76WYLSVDCUUENOOF" {:eppn "WHFS36UEZD6TNURJ76WYLSVDCUUENOOF" :mail "RDapplicant1@mailinator.com" :commonName  "RDapplicant1 REMSDEMO1"}
+  {"WHFS36UEZD6TNURJ76WYLSVDCUUENOOF" {:eppn "WHFS36UEZD6TNURJ76WYLSVDCUUENOOF" :mail "RDapplicant1@mailinator.com" :commonName "RDapplicant1 REMSDEMO1"}
    "C567LI5QAACWKC7YYA74BJ2X7DH7EEYI" {:eppn "C567LI5QAACWKC7YYA74BJ2X7DH7EEYI" :mail "RDapplicant2@mailinator.com" :commonName "RDapplicant2 REMSDEMO"}
    "EKGFNAAGCHIQ5ERUUFS2RCZ44IHYZPEA" {:eppn "EKGFNAAGCHIQ5ERUUFS2RCZ44IHYZPEA" :mail "RDapprover1@mailinator.com" :commonName "RDapprover1 REMSDEMO"}
    "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ" {:eppn "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ" :mail "RDapprover2@mailinator.com" :commonName "RDapprover2 REMSDEMO"}
@@ -704,6 +705,16 @@
                  :deciders [reviewer]
                  :comment ""}))))
 
+(defn- in-parallel [fs]
+  (let [executor (Executors/newFixedThreadPool 10)]
+    (try
+      (->> fs
+           (.invokeAll executor)
+           (map #(.get ^Future %))
+           doall)
+      (finally
+        (.shutdownNow executor)))))
+
 (defn create-performance-test-data! []
   (log/info "Creating performance test data")
   (let [resource-count 1000
@@ -740,49 +751,56 @@
                                                      :fi "Suorituskykylisenssi"}
                                      :license/text {:en "Be fast."
                                                     :fi "Ole nopea."}})
-        cat-item-ids (vec (for [index (range resource-count)]
-                            (let [resource-id (create-resource! {:organization "perf"
-                                                                 :license-ids [license-id]})]
-                              (create-catalogue-item! {:title {:en (str "Performance test resource " (inc index))
-                                                               :fi (str "Suorituskykytestiresurssi " (inc index))}
-                                                       :resource-id resource-id
-                                                       :form-id form-id
-                                                       :workflow-id workflow-id}))))
-        user-ids (vec (for [n (range 1 (inc user-count))]
-                        (let [user-id (str "perftester" n)]
-                          (users/add-user! user-id {:eppn user-id
-                                                    :mail (str user-id "@example.com")
-                                                    :commonName (str "Performance Tester " n)})
-                          user-id)))]
-    (dotimes [i application-count]
-      (log/info "Creating performance test application" (inc i) "/" application-count)
-      (let [cat-item-id (rand-nth cat-item-ids)
-            user-id (rand-nth user-ids)
-            handler (rand-nth handlers)
-            app-id (create-application! {:catalogue-item-ids [cat-item-id]
-                                         :actor user-id})]
-        (command! {:type :application.command/save-draft
-                   :application-id app-id
-                   :actor user-id
-                   :field-values [{:field (:field/id (first (:form/fields form)))
-                                   :value (str "Performance test application " (UUID/randomUUID))}
-                                  {:field (:field/id (second (:form/fields form)))
-                                   ;; 5000 characters (10 KB) of lorem ipsum generated with www.lipsum.com
-                                   ;; to increase the memory requirements of an application
-                                   :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
-                                               ;; prevent string interning, just to be sure
-                                               (UUID/randomUUID))}]})
-        (command! {:type :application.command/accept-licenses
-                   :application-id app-id
-                   :actor user-id
-                   :accepted-licenses [license-id]})
-        (command! {:type :application.command/submit
-                   :application-id app-id
-                   :actor user-id})
-        (command! {:type :application.command/approve
-                   :application-id app-id
-                   :actor handler
-                   :comment ""})))))
+        cat-item-ids (vec (in-parallel
+                           (for [index (range resource-count)]
+                             (fn []
+                               (let [resource-id (create-resource! {:organization "perf"
+                                                                    :license-ids [license-id]})]
+                                 (create-catalogue-item! {:title {:en (str "Performance test resource " (inc index))
+                                                                  :fi (str "Suorituskykytestiresurssi " (inc index))}
+                                                          :resource-id resource-id
+                                                          :form-id form-id
+                                                          :workflow-id workflow-id}))))))
+        user-ids (vec (in-parallel
+                       (for [n (range 1 (inc user-count))]
+                         (fn []
+                           (let [user-id (str "perftester" n)]
+                             (users/add-user! user-id {:eppn user-id
+                                                       :mail (str user-id "@example.com")
+                                                       :commonName (str "Performance Tester " n)})
+                             user-id)))))]
+    (in-parallel
+     (for [i (range application-count)]
+       (fn []
+         (log/info "Creating performance test application" (inc i) "/" application-count)
+         (let [cat-item-id (rand-nth cat-item-ids)
+               user-id (rand-nth user-ids)
+               handler (rand-nth handlers)
+               app-id (create-application! {:catalogue-item-ids [cat-item-id]
+                                            :actor user-id})]
+           (command! {:type :application.command/save-draft
+                      :application-id app-id
+                      :actor user-id
+                      :field-values [{:field (:field/id (first (:form/fields form)))
+                                      :value (str "Performance test application " (UUID/randomUUID))}
+                                     {:field (:field/id (second (:form/fields form)))
+                                      ;; 5000 characters (10 KB) of lorem ipsum generated with www.lipsum.com
+                                      ;; to increase the memory requirements of an application
+                                      :value (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut non diam vel erat dapibus facilisis vel vitae nunc. Curabitur at fermentum lorem. Cras et bibendum ante. Etiam convallis erat justo. Phasellus cursus molestie vehicula. Etiam molestie tellus vitae consectetur dignissim. Pellentesque euismod hendrerit mi sed tincidunt. Integer quis lorem ut ipsum egestas hendrerit. Aenean est nunc, mattis euismod erat in, sodales rutrum mauris. Praesent sit amet risus quis felis congue ultricies. Nulla facilisi. Sed mollis justo id tristique volutpat.\n\nPhasellus augue mi, facilisis ac velit et, pharetra tristique nunc. Pellentesque eget arcu quam. Curabitur dictum nulla varius hendrerit varius. Proin vulputate, ex lacinia commodo varius, ipsum velit viverra est, eget molestie dui nisi non eros. Nulla lobortis odio a magna mollis placerat. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur libero ut gravida ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec aliquam feugiat mollis. Quisque massa lacus, efficitur vel justo vel, elementum mollis magna. Maecenas at sem sem. Praesent sed ex mattis, egestas dui non, volutpat lorem. Nulla tempor, nisi rutrum accumsan varius, tellus elit faucibus nulla, vel mattis lacus justo at ante. Sed ut mollis ex, sed tincidunt ex.\n\nMauris laoreet nibh eget erat tincidunt pharetra. Aenean sagittis maximus consectetur. Curabitur interdum nibh sed tincidunt finibus. Sed blandit nec lorem at iaculis. Morbi non augue nec tortor hendrerit mollis ut non arcu. Suspendisse maximus nec ligula a efficitur. Etiam ultrices rhoncus leo quis dapibus. Integer vel rhoncus est. Integer blandit varius auctor. Vestibulum suscipit suscipit risus, sit amet venenatis lacus iaculis a. Duis eu turpis sit amet nibh sagittis convallis at quis ligula. Sed eget justo quis risus iaculis lacinia vitae a justo. In hac habitasse platea dictumst. Maecenas euismod et lorem vel viverra.\n\nDonec bibendum nec ipsum in volutpat. Vivamus in elit venenatis, venenatis libero ac, ultrices dolor. Morbi quis odio in neque consequat rutrum. Suspendisse quis sapien id sapien fermentum dignissim. Nam eu est vel risus volutpat mollis sed quis eros. Proin leo nulla, dictum id hendrerit vitae, scelerisque in elit. Proin consectetur sodales arcu ac tristique. Suspendisse ut elementum ligula, at rhoncus mauris. Aliquam lacinia at diam eget mattis. Phasellus quam leo, hendrerit sit amet mi eget, porttitor aliquet velit. Proin turpis ante, consequat in enim nec, tempus consequat magna. Vestibulum fringilla ac turpis nec malesuada. Proin id lectus iaculis, suscipit erat at, volutpat turpis. In quis faucibus elit, ut maximus nibh. Sed egestas egestas dolor.\n\nNulla varius orci quam, id auctor enim ultrices nec. Morbi et tellus ac metus sodales convallis sed vehicula neque. Pellentesque rhoncus mattis massa a bibendum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce tincidunt nulla non aliquet facilisis. Praesent nisl nisi, finibus id odio sed, consectetur feugiat mauris. Suspendisse sed lacinia ligula. Duis vitae nisl leo. Donec erat arcu, feugiat sit amet sagittis ac, scelerisque nec est. Pellentesque finibus mauris nulla, in maximus sapien pharetra vitae. Sed leo elit, consequat eu aliquam vitae, feugiat ut eros. Pellentesque dictum feugiat odio sed commodo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin neque quam, varius vel libero sit amet, rhoncus sollicitudin ex. In a dui non neque malesuada pellentesque.\n\nProin tincidunt nisl non commodo faucibus. Sed porttitor arcu neque, vitae bibendum sapien placerat nec. Integer eget tristique orci. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec eu molestie eros. Nunc iaculis rhoncus enim, vel mattis felis fringilla condimentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean ac augue nulla. Phasellus vitae nulla lobortis, mattis magna ac, gravida ipsum. Aenean ornare non nunc non luctus. Aenean lacinia lectus nec velit finibus egestas vel ut ipsum. Cras hendrerit rhoncus erat, vel maximus nunc.\n\nPraesent quis imperdiet quam. Praesent ligula tellus, consectetur sed lacus eu, malesuada condimentum tellus. Donec et diam hendrerit, dictum diam quis, aliquet purus. Suspendisse pulvinar neque at efficitur iaculis. Nulla erat orci, euismod id velit sed, dictum hendrerit arcu. Nulla aliquam molestie aliquam. Duis et semper nisi, eget commodo arcu. Praesent rhoncus, nulla id sodales eleifend, ante ipsum pellentesque augue, id iaculis sem est vitae est. Phasellus cursus diam a lorem vestibulum sodales. Nullam lacinia tortor vel tellus commodo, sit amet sodales quam malesuada.\n\nNulla tempor lectus vel arcu feugiat, vel dapibus ex dapibus. Maecenas purus justo, aliquet et sem sit amet, tincidunt venenatis dui. Nulla eget purus id sapien elementum rutrum eu vel libero. Cras non accumsan justo posuere.\n\n"
+                                                  ;; prevent string interning, just to be sure
+                                                  (UUID/randomUUID))}]})
+           (command! {:type :application.command/accept-licenses
+                      :application-id app-id
+                      :actor user-id
+                      :accepted-licenses [license-id]})
+           (command! {:type :application.command/submit
+                      :application-id app-id
+                      :actor user-id})
+           (command! {:type :application.command/approve
+                      :application-id app-id
+                      :actor handler
+                      :comment ""})))))
+    (log/info "Performance test applications created")))
 
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
