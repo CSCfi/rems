@@ -1,6 +1,6 @@
 (ns rems.user-settings
   (:require [clojure.string :as str]
-            [goog.net.cookies :as cookies]
+            [goog.net.cookies]
             [re-frame.core :as rf]
             [rems.flash-message :as flash-message]
             [rems.util :refer [fetch put!]]))

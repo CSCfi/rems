@@ -34,3 +34,7 @@
 (defn not-found-json-response []
   (-> (http-response/not-found "{\"error\": \"not found\"}")
       (http-response/content-type "application/json")))
+
+(defn not-found-text-response []
+  (-> (http-response/not-found "not found")
+      (http-response/content-type "text/plain")))

@@ -1,12 +1,10 @@
 (ns rems.db.events
-  (:require [clj-time.format :as time-format]
-            [rems.application.events :as events]
+  (:require [rems.application.events :as events]
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.utils]
-            [schema-tools.core :as st])
-  (:import [org.joda.time DateTime]))
+            [schema-tools.core :as st]))
 
 (def ^:private coerce-event-commons
   (coerce/coercer (st/open-schema events/EventBase) json/coercion-matcher))

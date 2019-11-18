@@ -1,9 +1,7 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
-            [rems.atoms :as atoms :refer [document-title]]
-            [rems.flash-message :as flash-message]
+            [rems.atoms :refer [document-title]]
             [rems.navbar :as navbar]
-            [rems.spinner :as spinner]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

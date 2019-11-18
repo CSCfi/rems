@@ -301,7 +301,7 @@
 (defn- attachment-license [application license]
   (let [title (localized (:license/title license))
         language @(rf/subscribe [:language])
-        link (str "/api/applications/" (:application/id application)
+        link (str "/applications/" (:application/id application)
                   "/license-attachment/" (:license/id license)
                   "/" (name language))]
     [:a.license-title {:href link :target :_blank}

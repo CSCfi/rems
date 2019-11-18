@@ -1,7 +1,7 @@
 (ns rems.administration.test-create-form
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
-            [rems.administration.create-form :as f :refer [build-request build-localized-string validate-form]]
+            [rems.administration.create-form :refer [build-request build-localized-string validate-form]]
             [rems.testing :refer [isolate-re-frame-state stub-re-frame-effect]]
             [rems.util :refer [getx-in]]))
 

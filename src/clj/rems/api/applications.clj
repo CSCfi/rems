@@ -3,23 +3,20 @@
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
+            [rems.api.services.attachment :as attachment]
             [rems.api.services.command :as command]
+            [rems.api.services.licenses :as licenses]
             [rems.api.util :as api-util] ; required for route :roles
-            [rems.application-util :as application-util]
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
-            [rems.db.attachments :as attachments]
-            [rems.db.core :as db]
             [rems.db.users :as users]
-            [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
-  (:import [java.io ByteArrayInputStream]))
+            [schema.core :as s]))
 
 ;; Response models
 
@@ -207,14 +204,9 @@
       :summary "Get an attachment"
       :roles #{:logged-in}
       :path-params [attachment-id :- (describe s/Int "attachment id")]
-      (let [attachment (attachments/get-attachment attachment-id)
-            application-id (:application/id attachment)]
-        (when application-id
-          (applications/get-application (getx-user-id) application-id)) ;; check that user is allowed to read application
-        (if attachment
-          (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
-              (content-type (:attachment/type attachment)))
-          (api-util/not-found-json-response))))
+      (if-let [attachment (attachment/get-application-attachment (getx-user-id) attachment-id)]
+        (attachment/download attachment)
+        (api-util/not-found-json-response)))
 
     ;; TODO: think about size limit
     (POST "/add-attachment" []
@@ -224,10 +216,7 @@
       :query-params [application-id :- (describe s/Int "application id")]
       :middleware [multipart/wrap-multipart-params]
       :return SaveAttachmentResponse
-      (let [application (applications/get-application (getx-user-id) application-id)]
-        (when-not (application-util/form-fields-editable? application)
-          (throw-forbidden))
-        (ok (attachments/save-attachment! file (getx-user-id) application-id))))
+      (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
@@ -276,17 +265,6 @@
       :path-params [application-id :- (describe s/Int "application id")
                     license-id :- (describe s/Int "license id")
                     language :- (describe s/Keyword "language code")]
-      (if-let [app (applications/get-application (getx-user-id) application-id)]
-        (if-let [license (some #(when (= license-id (:license/id %)) %)
-                               (:application/licenses app))]
-          (if-let [attachment-id (get-in license [:license/attachment-id language])]
-            (if-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
-              (do (attachments/check-attachment-content-type (:type attachment))
-                  (-> (:data attachment)
-                      (java.io.ByteArrayInputStream.)
-                      (ok)
-                      (content-type (:type attachment))))
-              (api-util/not-found-json-response))
-            (api-util/not-found-json-response))
-          (api-util/not-found-json-response))
+      (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
+        (attachment/download attachment)
         (api-util/not-found-json-response)))))

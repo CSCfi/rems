@@ -175,17 +175,21 @@
 (defn home-page []
   (if @(rf/subscribe [:user])
     (do
-      ;; TODO: separate :init default page that does the navigation/redirect logic, instead of using :home as the default
+      ;; TODO: have a separate :init default page that does the navigation/redirect logic, instead of using :home as the default
       (when (= "/" js/window.location.pathname)
         (navigate! "/catalogue"))
       nil)
-    [:div
-     [:div.row.justify-content-center
-      [:div.col-md-6.row.justify-content-center
-       (text :t.login/intro)]]
-     [:div.row.justify-content-center
-      [:div.col-md-6.row.justify-content-center
-       [auth/login-component]]]]))
+    (do
+      (when-let [redirect-url (-> (js/URLSearchParams. js/window.location.search)
+                                  (.get "redirect"))]
+        (.setItem js/sessionStorage "rems-redirect-url" redirect-url))
+      [:div
+       [:div.row.justify-content-center
+        [:div.col-md-6.row.justify-content-center
+         (text :t.login/intro)]]
+       [:div.row.justify-content-center
+        [:div.col-md-6.row.justify-content-center
+         [auth/login-component]]]])))
 
 (defn unauthorized-page []
   [:div
@@ -436,7 +440,8 @@
     (do
       (println "Redirecting to" url "after authorization")
       (.removeItem js/sessionStorage "rems-redirect-url")
-      (navigate! url))
+      ;; not using `navigate!` because e.g. attachment download link requires a full page load
+      (set-location! url))
     (rf/dispatch [:landing-page-redirect!])))
 
 (secretary/defroute "*" []
