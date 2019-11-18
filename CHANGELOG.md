@@ -14,6 +14,9 @@ Changes since v2.6
 ### Fixes
 - More robust email resending (#1750)
 
+### Additions
+- More columns for blacklist table, blacklist visible on resource administration page (#1724)
+
 ## v2.6 "Kalevalantie" 2018-11-12
 
 ### Breaking changes

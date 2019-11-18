@@ -1,4 +1,5 @@
 (ns rems.administration.blacklist
+  "Implements both a blacklist component and the blacklist-page"
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.application-util]
@@ -51,7 +52,7 @@
 (rf/reg-sub ::blacklist (fn [db _] (::blacklist db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- blacklist [rows]
+(defn- blacklist-table []
   (let [table-spec {:id ::blacklist
                     :columns [{:key :resource
                                :title (text :t.administration/resource)}
@@ -73,11 +74,14 @@
      [table/search table-spec]
      [table/table table-spec]]))
 
+(defn blacklist []
+  (if @(rf/subscribe [::loading?])
+     [spinner/big]
+     [blacklist-table]))
+
 (defn blacklist-page []
   [:div
    [administration-navigator-container]
    [atoms/document-title (text :t.administration/blacklist)]
    [flash-message/component :top]
-   (if @(rf/subscribe [::loading?])
-     [spinner/big]
-     [blacklist @(rf/subscribe [::blacklist])])])
+   [blacklist]])

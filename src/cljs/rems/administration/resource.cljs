@@ -1,6 +1,7 @@
 (ns rems.administration.resource
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.blacklist :as blacklist]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
             [rems.administration.status-flags :as status-flags]
@@ -17,21 +18,22 @@
  ::enter-page
  (fn [{:keys [db]} [_ resource-id]]
    {:db (assoc db ::loading? true)
-    ::fetch-resource [resource-id]}))
+    :dispatch [::fetch-resource resource-id]}))
 
-(defn- fetch-resource [resource-id]
-  (fetch (str "/api/resources/" resource-id)
-         {:handler #(rf/dispatch [::fetch-resource-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch resource")}))
+(rf/reg-event-fx
+ ::fetch-resource
+ (fn [_ [_ resource-id]]
+   (fetch (str "/api/resources/" resource-id)
+          {:handler #(rf/dispatch [::fetch-resource-result %])
+           :error-handler (flash-message/default-error-handler :top "Fetch resource")})))
 
-(rf/reg-fx ::fetch-resource (fn [[resource-id]] (fetch-resource resource-id)))
-
-(rf/reg-event-db
+(rf/reg-event-fx
  ::fetch-resource-result
- (fn [db [_ resource]]
-   (-> db
-       (assoc ::resource resource)
-       (dissoc ::loading?))))
+ (fn [{:keys [db]} [_ resource]]
+   {:db (-> db
+            (assoc ::resource resource)
+            (dissoc ::loading?))
+    :dispatch [:rems.administration.blacklist/fetch {:resource (:resid resource)}]}))
 
 (rf/reg-sub ::resource (fn [db _] (::resource db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
@@ -40,6 +42,12 @@
   [atoms/link {:class "btn btn-secondary"}
    "/administration/resources"
    (text :t.administration/back)])
+
+(defn resource-blacklist []
+  [collapsible/component
+   {:id "blacklist"
+    :title (text :t.administration/blacklist)
+    :always [blacklist/blacklist]}])
 
 (defn resource-view [resource language]
   [:div.spaced-vertically-3
@@ -51,6 +59,7 @@
               [inline-info-field (text :t.administration/resource) (:resid resource)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? resource)}]]]}]
    [licenses-view (:licenses resource) language]
+   [resource-blacklist]
    (let [id (:id resource)]
      [:div.col.commands
       [back-button]
@@ -62,11 +71,10 @@
   (let [resource (rf/subscribe [::resource])
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
-    (fn []
-      [:div
-       [administration-navigator-container]
-       [document-title (text :t.administration/resource)]
-       [flash-message/component :top]
-       (if @loading?
-         [spinner/big]
-         [resource-view @resource @language])])))
+    [:div
+     [administration-navigator-container]
+     [document-title (text :t.administration/resource)]
+     [flash-message/component :top]
+     (if @loading?
+       [spinner/big]
+       [resource-view @resource @language])]))
