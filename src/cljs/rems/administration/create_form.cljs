@@ -50,11 +50,11 @@
 
 ;;;; form state
 
-(defn- field-editor-id [id index]
-  (str "field-editor-" id "-pos-" index))
+(defn- field-editor-id [id]
+  (str "field-editor-" id))
 
 (defn- field-editor-selector [id index]
-  (str "#" (field-editor-id id index)))
+  (str "#" (field-editor-id id) "[data-field-index='" index "']"))
 
 (defn- focus-field-editor! [id index]
   (focus/on-element-appear (field-editor-selector id index)
@@ -183,13 +183,13 @@
 
 (defn- validate-field [field index languages]
   {index (merge (validate-text-field field :field/type)
-             (validate-localized-text-field field :field/title languages)
-             (when (supports-placeholder? field)
-               (validate-optional-localized-field field :field/placeholder languages))
-             (when (supports-max-length? field)
-               (validate-max-length (:field/max-length field)))
-             (when (supports-options? field)
-               (validate-options (:field/options field) languages)))})
+                (validate-localized-text-field field :field/title languages)
+                (when (supports-placeholder? field)
+                  (validate-optional-localized-field field :field/placeholder languages))
+                (when (supports-max-length? field)
+                  (validate-max-length (:field/max-length field)))
+                (when (supports-options? field)
+                  (validate-options (:field/options field) languages)))})
 
 (defn- nil-if-empty [m]
   (when-not (empty? m)
@@ -436,7 +436,7 @@
 (defn- form-fields [fields]
   (into [:div]
         (for [{index :field/id :as field} fields]
-          [:div.form-field {:id (field-editor-id (:field/stable-id field) index)
+          [:div.form-field {:id (field-editor-id (:field/stable-id field))
                             :key index
                             :data-field-index index}
            [:div.form-field-header
