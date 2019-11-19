@@ -2,6 +2,14 @@
   "Focuses an HTML element as soon as it exists."
   (:require [rems.util :refer [visibility-ratio]]))
 
+(defn focus [element]
+  (.setAttribute element "tabindex" "-1")
+  (.focus element))
+
+(defn focus-without-scroll [element]
+  (.setAttribute element "tabindex" "-1")
+  (.focus element (js-obj "preventScroll" true)))
+
 (defn on-element-appear
   "Do something when an element appears."
   ([selector f]
@@ -23,10 +31,9 @@
         (.scrollBy js/window 0 (- element-top navbar-bottom))))))
 
 (defn focus-and-ensure-visible [element]
-  (.setAttribute element "tabindex" "-1")
   ;; Focusing the element scrolls it into the viewport, but
   ;; it can still be hidden behind the navigation menu.
-  (.focus element)
+  (focus element)
   (scroll-below-navigation-menu element))
 
 (defn focus-element-async
@@ -34,7 +41,7 @@
   [selector]
   (on-element-appear selector focus-and-ensure-visible))
 
-(defn- scroll-to-top
+(defn scroll-to-top
   "Scrolls an element to the top of the window (but below the navigation menu)"
   [element]
   (let [navbar (.querySelector js/document ".fixed-top")
@@ -43,9 +50,12 @@
         element-top (.-top (.getBoundingClientRect element))]
     (.scrollBy js/window 0 (- element-top navbar-bottom))))
 
-(defn focus-and-scroll-to-top
-  "Focuses and scrolls an element to the top of the window (but below the navigation menu)"
-  [element]
-  (.setAttribute element "tabindex" "-1")
-  (.focus element)
-  (scroll-to-top element))
+(defn scroll-offset
+  "Scrolls the window so that an element stays in the same screen position
+  before and after the page was re-rendered. The parameters of this function
+  are the result of `getBoundingClientRect()` on the element before and after
+  the re-rendering."
+  [rect-before rect-after]
+  (let [offset-before (.-top rect-before)
+        offset-after (.-top rect-after)]
+    (.scrollBy js/window 0 (- offset-after offset-before))))

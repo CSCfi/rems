@@ -57,8 +57,12 @@
   (str "#" (field-editor-id id) "[data-field-index='" index "']"))
 
 (defn- focus-field-editor! [id index]
-  (focus/on-element-appear (field-editor-selector id index)
-                           focus/focus-and-scroll-to-top))
+  (let [before (.getBoundingClientRect (js/document.getElementById (field-editor-id id)))]
+    (focus/on-element-appear (field-editor-selector id index)
+                             (fn [element]
+                               (let [after (.getBoundingClientRect element)]
+                                 (focus/scroll-offset before after)
+                                 (focus/focus-without-scroll element))))))
 
 ;; TODO rename item->field
 (rf/reg-sub ::form (fn [db _]
