@@ -5,7 +5,15 @@
             [rems.testing :refer [isolate-re-frame-state stub-re-frame-effect]]
             [rems.util :refer [getx-in]]))
 
-(use-fixtures :each isolate-re-frame-state)
+(defn- stable-id-fixture [f]
+  (let [id-atom (atom 0)]
+    (with-redefs [rems.administration.create-form/generate-stable-id (fn [] (str "stable" (swap! id-atom inc)))]
+      (f))))
+
+(use-fixtures
+  :each
+  isolate-re-frame-state
+  stable-id-fixture)
 
 (defn reset-form []
   (rf/dispatch-sync [:rems.administration.create-form/enter-page]))
@@ -20,7 +28,7 @@
 
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
 
-      (is (= {:form/fields [{:field/id 0 :field/type :text}]}
+      (is (= {:form/fields [{:field/stable-id "stable1" :field/id 0 :field/type :text}]}
              @form)
           "after"))
 
@@ -28,14 +36,14 @@
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 0 :foo] "old field"])
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "old field"}]}
+      (is (= {:form/fields [{:field/stable-id "stable2" :field/id 0 :field/type :text :foo "old field"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
 
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "old field"}
-                            {:field/id 1 :field/type :text}]}
+      (is (= {:form/fields [{:field/stable-id "stable2" :field/id 0 :field/type :text :foo "old field"}
+                            {:field/stable-id "stable3" :field/id 1 :field/type :text}]}
              @form)
           "after"))))
 
@@ -44,7 +52,7 @@
     (testing "removes fields"
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
-      (is (= {:form/fields [{:field/id 0 :field/type :text}]}
+      (is (= {:form/fields [{:field/stable-id "stable1" :field/id 0 :field/type :text}]}
              @form)
           "before")
 
@@ -62,16 +70,16 @@
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 0 :foo] "field 0"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 1 :foo] "field 1"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 2 :foo] "field 2"])
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
-                            {:field/id 1 :field/type :text :foo "field 1"}
-                            {:field/id 2 :field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/stable-id "stable2" :field/id 0 :field/type :text :foo "field 0"}
+                            {:field/stable-id "stable3" :field/id 1 :field/type :text :foo "field 1"}
+                            {:field/stable-id "stable4" :field/id 2 :field/type :text :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [:rems.administration.create-form/remove-form-field 1])
 
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
-                            {:field/id 1 :field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/stable-id "stable2" :field/id 0 :field/type :text :foo "field 0"}
+                            {:field/stable-id "stable4" :field/id 1 :field/type :text :foo "field 2"}]}
              @form)
           "after"))))
 
@@ -85,34 +93,34 @@
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 0 :foo] "field 0"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 1 :foo] "field 1"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 2 :foo] "field X"])
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
-                            {:field/id 1 :field/type :text :foo "field 1"}
-                            {:field/id 2 :field/type :text :foo "field X"}]}
+      (is (= {:form/fields [{:field/stable-id "stable1" :field/id 0 :field/type :text :foo "field 0"}
+                            {:field/stable-id "stable2" :field/id 1 :field/type :text :foo "field 1"}
+                            {:field/stable-id "stable3" :field/id 2 :field/type :text :foo "field X"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [:rems.administration.create-form/move-form-field-up 2])
 
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 0"}
-                            {:field/id 1 :field/type :text :foo "field X"}
-                            {:field/id 2 :field/type :text :foo "field 1"}]}
+      (is (= {:form/fields [{:field/stable-id "stable1" :field/id 0 :field/type :text :foo "field 0"}
+                            {:field/stable-id "stable3" :field/id 1 :field/type :text :foo "field X"}
+                            {:field/stable-id "stable2" :field/id 2 :field/type :text :foo "field 1"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [:rems.administration.create-form/move-form-field-up 1])
 
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field X"}
-                            {:field/id 1 :field/type :text :foo "field 0"}
-                            {:field/id 2 :field/type :text :foo "field 1"}]}
+      (is (= {:form/fields [{:field/stable-id "stable3" :field/id 0 :field/type :text :foo "field X"}
+                            {:field/stable-id "stable1" :field/id 1 :field/type :text :foo "field 0"}
+                            {:field/stable-id "stable2" :field/id 2 :field/type :text :foo "field 1"}]}
              @form)
           "after move 2")
 
       (testing "unless already first"
         (rf/dispatch-sync [:rems.administration.create-form/move-form-field-up 0])
 
-        (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field X"}
-                              {:field/id 1 :field/type :text :foo "field 0"}
-                              {:field/id 2 :field/type :text :foo "field 1"}]}
+        (is (= {:form/fields [{:field/stable-id "stable3" :field/id 0 :field/type :text :foo "field X"}
+                              {:field/stable-id "stable1" :field/id 1 :field/type :text :foo "field 0"}
+                              {:field/stable-id "stable2" :field/id 2 :field/type :text :foo "field 1"}]}
                @form)
             "after move 3")))))
 
@@ -126,41 +134,42 @@
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 0 :foo] "field X"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 1 :foo] "field 1"])
       (rf/dispatch-sync [:rems.administration.create-form/set-form-field [:form/fields 2 :foo] "field 2"])
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field X"}
-                            {:field/id 1 :field/type :text :foo "field 1"}
-                            {:field/id 2 :field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/stable-id "stable1" :field/id 0 :field/type :text :foo "field X"}
+                            {:field/stable-id "stable2" :field/id 1 :field/type :text :foo "field 1"}
+                            {:field/stable-id "stable3" :field/id 2 :field/type :text :foo "field 2"}]}
              @form)
           "before")
 
       (rf/dispatch-sync [:rems.administration.create-form/move-form-field-down 0])
 
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 1"}
-                            {:field/id 1 :field/type :text :foo "field X"}
-                            {:field/id 2 :field/type :text :foo "field 2"}]}
+      (is (= {:form/fields [{:field/stable-id "stable2" :field/id 0 :field/type :text :foo "field 1"}
+                            {:field/stable-id "stable1" :field/id 1 :field/type :text :foo "field X"}
+                            {:field/stable-id "stable3" :field/id 2 :field/type :text :foo "field 2"}]}
              @form)
           "after move 1")
 
       (rf/dispatch-sync [:rems.administration.create-form/move-form-field-down 1])
 
-      (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 1"}
-                            {:field/id 1 :field/type :text :foo "field 2"}
-                            {:field/id 2 :field/type :text :foo "field X"}]}
+      (is (= {:form/fields [{:field/stable-id "stable2" :field/id 0 :field/type :text :foo "field 1"}
+                            {:field/stable-id "stable3" :field/id 1 :field/type :text :foo "field 2"}
+                            {:field/stable-id "stable1" :field/id 2 :field/type :text :foo "field X"}]}
              @form)
           "after move 2")
 
       (testing "unless already last"
         (rf/dispatch-sync [:rems.administration.create-form/move-form-field-down 2])
 
-        (is (= {:form/fields [{:field/id 0 :field/type :text :foo "field 1"}
-                              {:field/id 1 :field/type :text :foo "field 2"}
-                              {:field/id 2 :field/type :text :foo "field X"}]}
+        (is (= {:form/fields [{:field/stable-id "stable2" :field/id 0 :field/type :text :foo "field 1"}
+                              {:field/stable-id "stable3" :field/id 1 :field/type :text :foo "field 2"}
+                              {:field/stable-id "stable1" :field/id 2 :field/type :text :foo "field X"}]}
                @form)
             "after move 3")))))
 
 (deftest build-request-test
   (let [form {:form/organization "abc"
               :form/title "the title"
-              :form/fields [{:field/title {:en "en title"
+              :form/fields [{:field/stable-id "stable999"
+                             :field/title {:en "en title"
                                            :fi "fi title"}
                              :field/optional true
                              :field/type :text
