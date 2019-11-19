@@ -60,11 +60,16 @@
     (flash-message/show-default-success! :top [text :t.administration/change-form])
     (rf/dispatch [::change-catalogue-item-form! (:id (first items)) form (partial form-change-loop (rest items) form)])))
 
+(defn- all-items-have-the-form-already? [items form]
+  (every? (comp #{(:form/id form)} :formid) items))
+
 (defn- change-catalogue-item-form-button [items form]
   [:button.btn.btn-primary
    {:type :button
     :on-click (fn [] (form-change-loop items form))
-    :disabled (or (nil? (:form/id form)) (empty? items))}
+    :disabled (or (nil? (:form/id form))
+                  (empty? items)
+                  (all-items-have-the-form-already? items form))}
    (text :t.administration/change)])
 
 (defn- to-catalogue-item [catalogue-item-id]
