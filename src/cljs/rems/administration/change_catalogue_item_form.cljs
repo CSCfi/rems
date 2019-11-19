@@ -30,19 +30,20 @@
                                       (assoc item :id new-catalogue-item-id :formid (:form/id new-form) :form-name (:form/title new-form))
                                       item))))))
 
-(defn- change-catalogue-item-form! [{:keys [db]} [_ catalogue-item-id form on-success]]
-  (let [description [text :t.administration/change-form]]
-    (post! (str  "/api/catalogue-items/" catalogue-item-id "/change-form")
-           {:params {:form (:form/id form)}
-            :handler (fn [result]
-                       (rf/dispatch [::update-catalogue-item catalogue-item-id (:catalogue-item-id result) form])
-                       (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} catalogue-item-id])
-                       (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:catalogue-item-id result)])
-                       (on-success))
-            :error-handler (flash-message/default-error-handler :top description)}))
-  {})
 
-(rf/reg-event-fx ::change-catalogue-item-form! change-catalogue-item-form!)
+(rf/reg-event-fx
+ ::change-catalogue-item-form!
+ (fn [{:keys [db]} [_ catalogue-item-id form on-success]]
+   (let [description [text :t.administration/change-form]]
+     (post! (str  "/api/catalogue-items/" catalogue-item-id "/change-form")
+            {:params {:form (:form/id form)}
+             :handler (fn [result]
+                        (rf/dispatch [::update-catalogue-item catalogue-item-id (:catalogue-item-id result) form])
+                        (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} catalogue-item-id])
+                        (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:catalogue-item-id result)])
+                        (on-success))
+             :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
 
 (defn- fetch-forms []
   (fetch "/api/forms"
