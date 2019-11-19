@@ -112,13 +112,19 @@
                          :on-change on-change}]]))
 
 (defn change-catalogue-item-form-page []
-  [:div
-   [administration-navigator-container]
-   [document-title (text :t.administration/change-form)]
-   [flash-message/component :top]
-   [:div
-    [:p (text :t.administration/change-form-intro)]
-    [catalogue-items-table]
-    [form-select]
-    [:div.col.commands
-     [change-catalogue-item-form-button @(rf/subscribe [::catalogue-items]) @(rf/subscribe [::form])]]]])
+  ;; catalogue items must be setup in the previous page
+  ;; it can be empty when we reload or relogin
+  ;; then we can redirect back to the previous page
+  (let [catalogue-items @(rf/subscribe [::catalogue-items])]
+    (when (empty? catalogue-items)
+      (navigate! "/administration/catalogue-items"))
+    [:div
+     [administration-navigator-container]
+     [document-title (text :t.administration/change-form)]
+     [flash-message/component :top]
+     [:div
+      [:p (text :t.administration/change-form-intro)]
+      [catalogue-items-table]
+      [form-select]
+      [:div.col.commands
+       [change-catalogue-item-form-button catalogue-items @(rf/subscribe [::form])]]]]))
