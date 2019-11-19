@@ -9,6 +9,7 @@
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
+            [rems.focus :as focus]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
             [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys trim-when-string visibility-ratio focus-input-field]]))
@@ -49,6 +50,16 @@
 
 ;;;; form state
 
+(defn- field-editor-id [id index]
+  (str "field-editor-" id "-pos-" index))
+
+(defn- field-editor-selector [id index]
+  (str "#" (field-editor-id id index)))
+
+(defn- focus-field-editor! [id index]
+  (focus/on-element-appear (field-editor-selector id index)
+                           focus/focus-and-scroll-to-top))
+
 ;; TODO rename item->field
 (rf/reg-sub ::form (fn [db _]
                      (-> (::form db)
@@ -72,11 +83,13 @@
 (rf/reg-event-db
  ::move-form-field-up
  (fn [db [_ field-index]]
+   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id]) (dec field-index))
    (update-in db [::form :form/fields] items/move-up field-index)))
 
 (rf/reg-event-db
  ::move-form-field-down
  (fn [db [_ field-index]]
+   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id]) (inc field-index))
    (update-in db [::form :form/fields] items/move-down field-index)))
 
 (rf/reg-event-db
@@ -423,7 +436,8 @@
 (defn- form-fields [fields]
   (into [:div]
         (for [{index :field/id :as field} fields]
-          [:div.form-field {:key index
+          [:div.form-field {:id (field-editor-id (:field/stable-id field) index)
+                            :key index
                             :data-field-index index}
            [:div.form-field-header
             [:h3 (text-format :t.create-form/field-n (inc index))]

@@ -33,3 +33,19 @@
   "Focus an element when it appears."
   [selector]
   (on-element-appear selector focus-and-ensure-visible))
+
+(defn- scroll-to-top
+  "Scrolls an element to the top of the window (but below the navigation menu)"
+  [element]
+  (let [navbar (.querySelector js/document ".fixed-top")
+        _ (assert navbar)
+        navbar-bottom (.-bottom (.getBoundingClientRect navbar))
+        element-top (.-top (.getBoundingClientRect element))]
+    (.scrollBy js/window 0 (- element-top navbar-bottom))))
+
+(defn focus-and-scroll-to-top
+  "Scrolls an element to the top of the window (but below the navigation menu)"
+  [element]
+  (.setAttribute element "tabindex" "-1")
+  (.focus element)
+  (scroll-to-top element))
