@@ -27,7 +27,7 @@
    (update db ::catalogue-items (fn [items]
                                   (for [item items]
                                     (if (= (:id item) catalogue-item-id)
-                                      (assoc item :form-id (:form/id form) :form-name (:form/title form))
+                                      (assoc item :formid (:form/id form) :form-name (:form/title form))
                                       item))))))
 
 (defn- change-catalogue-item-form! [{:keys [db]} [_ catalogue-item-id form on-success]]
