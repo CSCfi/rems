@@ -56,9 +56,14 @@
 (rf/reg-sub ::forms (fn [db _] (::forms db)))
 
 (defn- form-change-loop [items form]
-  (if (empty? items)
-    (flash-message/show-default-success! :top [text :t.administration/change-form])
-    (rf/dispatch [::change-catalogue-item-form! (:id (first items)) form (partial form-change-loop (rest items) form)])))
+  (let [item (first items)]
+    (cond (empty? items)
+          (flash-message/show-default-success! :top [text :t.administration/change-form])
+
+          (not= (:formid item) (:form/id form))
+          (rf/dispatch [::change-catalogue-item-form! (:id item) form (partial form-change-loop (rest items) form)])
+
+          :else (recur (rest items) form))))
 
 (defn- all-items-have-the-form-already? [items form]
   (every? (comp #{(:form/id form)} :formid) items))
