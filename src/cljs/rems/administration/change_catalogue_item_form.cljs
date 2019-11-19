@@ -37,7 +37,7 @@
             :handler (fn [result]
                        (rf/dispatch [::set-catalogue-item-form catalogue-item-id form])
                        (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} catalogue-item-id])
-                       (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:new-catalogue-item-id result)])
+                       (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:catalogue-item-id result)])
                        (on-success))
             :error-handler (flash-message/default-error-handler :top description)}))
   {})
