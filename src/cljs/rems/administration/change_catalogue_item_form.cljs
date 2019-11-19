@@ -34,15 +34,14 @@
 (rf/reg-event-fx
  ::change-catalogue-item-form!
  (fn [{:keys [db]} [_ catalogue-item-id form on-success]]
-   (let [description [text :t.administration/change-form]]
-     (post! (str  "/api/catalogue-items/" catalogue-item-id "/change-form")
-            {:params {:form (:form/id form)}
-             :handler (fn [result]
-                        (rf/dispatch [::update-catalogue-item catalogue-item-id (:catalogue-item-id result) form])
-                        (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} catalogue-item-id])
-                        (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:catalogue-item-id result)])
-                        (on-success))
-             :error-handler (flash-message/default-error-handler :top description)}))
+   (post! (str  "/api/catalogue-items/" catalogue-item-id "/change-form")
+          {:params {:form (:form/id form)}
+           :handler (fn [result]
+                      (rf/dispatch [::update-catalogue-item catalogue-item-id (:catalogue-item-id result) form])
+                      (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} catalogue-item-id])
+                      (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:catalogue-item-id result)])
+                      (on-success))
+           :error-handler (flash-message/default-error-handler :top [text :t.administration/change-form])})
    {}))
 
 (defn- fetch-forms []
