@@ -22,12 +22,12 @@
 (rf/reg-event-db ::set-form (fn [db [_ form]] (assoc-in db [::form] form)))
 
 (rf/reg-event-db
- ::set-catalogue-item-form
- (fn [db [_ catalogue-item-id form]]
+ ::update-catalogue-item
+ (fn [db [_ old-catalogue-item-id new-catalogue-item-id new-form]]
    (update db ::catalogue-items (fn [items]
                                   (for [item items]
-                                    (if (= (:id item) catalogue-item-id)
-                                      (assoc item :formid (:form/id form) :form-name (:form/title form))
+                                    (if (= (:id item) old-catalogue-item-id)
+                                      (assoc item :id new-catalogue-item-id :formid (:form/id new-form) :form-name (:form/title new-form))
                                       item))))))
 
 (defn- change-catalogue-item-form! [{:keys [db]} [_ catalogue-item-id form on-success]]
@@ -35,7 +35,7 @@
     (post! (str  "/api/catalogue-items/" catalogue-item-id "/change-form")
            {:params {:form (:form/id form)}
             :handler (fn [result]
-                       (rf/dispatch [::set-catalogue-item-form catalogue-item-id form])
+                       (rf/dispatch [::update-catalogue-item catalogue-item-id (:catalogue-item-id result) form])
                        (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} catalogue-item-id])
                        (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:catalogue-item-id result)])
                        (on-success))
