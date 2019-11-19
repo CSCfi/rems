@@ -229,6 +229,16 @@
 (defn enable-autoscroll! []
   (set! (.-onscroll js/window) autoscroll))
 
+;;;; scrolling when moving form items
+
+(defn- form-field-editor-id [field-index]
+  (str "field-editor-" field-index))
+
+(defn- form-field-height [field-index]
+  (let [element (.querySelector js/document (str "#" (form-field-editor-id field-index)))]
+    (assert element)
+    (true-height element)))
+
 ;;;; UI
 
 (def ^:private context
@@ -324,10 +334,14 @@
   [items/remove-button #(rf/dispatch [::remove-form-field field-index])])
 
 (defn- move-form-field-up-button [field-index]
-  [items/move-up-button #(rf/dispatch [::move-form-field-up field-index])])
+  [items/move-up-button #(do
+                           (.scrollBy js/window 0 (- (form-field-height (dec field-index))))
+                           (rf/dispatch [::move-form-field-up field-index]))])
 
 (defn- move-form-field-down-button [field-index]
-  [items/move-down-button #(rf/dispatch [::move-form-field-down field-index])])
+  [items/move-down-button #(do
+                             (.scrollBy js/window 0 (form-field-height (inc field-index)))
+                             (rf/dispatch [::move-form-field-down field-index]))])
 
 (defn- save-form-button [on-click]
   [:button.btn.btn-primary
@@ -399,7 +413,8 @@
 (defn- form-fields [fields]
   (into [:div]
         (for [{id :field/id :as field} fields]
-          [:div.form-field {:key id
+          [:div.form-field {:id (form-field-editor-id id)
+                            :key id
                             :data-field-id id}
            [:div.form-field-header
             [:h3 (text-format :t.create-form/field-n (inc id))]
