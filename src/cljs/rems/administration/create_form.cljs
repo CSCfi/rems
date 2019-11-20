@@ -9,6 +9,7 @@
             [rems.collapsible :as collapsible]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
+            [rems.focus :as focus]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
             [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys trim-when-string visibility-ratio focus-input-field]]))
@@ -32,16 +33,38 @@
              :error-handler (flash-message/default-error-handler :top "Fetch form")})
      {:db (assoc db ::loading-form? true)})))
 
+(defn- generate-stable-id []
+  (str (gensym "field")))
+
+;; :field/id is the index of the field (just like in the /api/forms/:form-id schema)
+;; :field/stable-id stays constant when moving the field
+(defn- allocate-stable-ids [form]
+  (update form :form/fields (partial mapv #(assoc % :field/stable-id (generate-stable-id)))))
+
 (rf/reg-event-db
  ::fetch-form-result
  (fn [db [_ form]]
    (-> db
-       (assoc ::form form)
+       (assoc ::form (allocate-stable-ids form))
        (dissoc ::loading-form?))))
 
 ;;;; form state
 
-;; TODO rename item->field
+(defn- field-editor-id [id]
+  (str "field-editor-" id))
+
+(defn- field-editor-selector [id index]
+  (str "#" (field-editor-id id) "[data-field-index='" index "']"))
+
+(defn- focus-field-editor! [id index button-selector]
+  (when-some [element (js/document.getElementById (field-editor-id id))]
+    (let [before (.getBoundingClientRect element)]
+      (focus/on-element-appear (field-editor-selector id index)
+                               (fn [element]
+                                 (let [after (.getBoundingClientRect element)]
+                                   (focus/scroll-offset before after)
+                                   (focus/focus-without-scroll (.querySelector element button-selector))))))))
+
 (rf/reg-sub ::form (fn [db _]
                      (-> (::form db)
                          (update :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/id i)) %))))))
@@ -50,10 +73,32 @@
 (rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db ::add-form-field (fn [db [_]] (update-in db [::form :form/fields] items/add {:field/type :text})))
-(rf/reg-event-db ::remove-form-field (fn [db [_ field-index]] (update-in db [::form :form/fields] items/remove field-index)))
-(rf/reg-event-db ::move-form-field-up (fn [db [_ field-index]] (update-in db [::form :form/fields] items/move-up field-index)))
-(rf/reg-event-db ::move-form-field-down (fn [db [_ field-index]] (update-in db [::form :form/fields] items/move-down field-index)))
+(rf/reg-event-db
+ ::add-form-field
+ (fn [db [_]]
+   (update-in db [::form :form/fields] items/add {:field/stable-id (generate-stable-id)
+                                                  :field/type :text})))
+
+(rf/reg-event-db
+ ::remove-form-field
+ (fn [db [_ field-index]]
+   (update-in db [::form :form/fields] items/remove field-index)))
+
+(rf/reg-event-db
+ ::move-form-field-up
+ (fn [db [_ field-index]]
+   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+                        (dec field-index)
+                        ".move-up")
+   (update-in db [::form :form/fields] items/move-up field-index)))
+
+(rf/reg-event-db
+ ::move-form-field-down
+ (fn [db [_ field-index]]
+   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+                        (inc field-index)
+                        ".move-down")
+   (update-in db [::form :form/fields] items/move-down field-index)))
 
 (rf/reg-event-db
  ::add-form-field-option
@@ -144,15 +189,15 @@
 (defn- validate-options [options languages]
   {:field/options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
 
-(defn- validate-field [field id languages]
-  {id (merge (validate-text-field field :field/type)
-             (validate-localized-text-field field :field/title languages)
-             (when (supports-placeholder? field)
-               (validate-optional-localized-field field :field/placeholder languages))
-             (when (supports-max-length? field)
-               (validate-max-length (:field/max-length field)))
-             (when (supports-options? field)
-               (validate-options (:field/options field) languages)))})
+(defn- validate-field [field index languages]
+  {index (merge (validate-text-field field :field/type)
+                (validate-localized-text-field field :field/title languages)
+                (when (supports-placeholder? field)
+                  (validate-optional-localized-field field :field/placeholder languages))
+                (when (supports-max-length? field)
+                  (validate-max-length (:field/max-length field)))
+                (when (supports-options? field)
+                  (validate-options (:field/options field) languages)))})
 
 (defn- nil-if-empty [m]
   (when-not (empty? m)
@@ -219,10 +264,10 @@
 
 (defn autoscroll []
   (when-let [edit-field (first-partially-visible-edit-field)]
-    (let [id (.getAttribute edit-field "data-field-id")
+    (let [index (.getAttribute edit-field "data-field-index")
           preview-frame (.querySelector js/document "#preview-form .collapse-content")
           preview-field (-> js/document
-                            (.getElementById (str "container-field" id)))
+                            (.getElementById (str "container-field" index)))
           ratio (visibility-ratio edit-field)]
       (set-visibility-ratio preview-frame preview-field ratio))))
 
@@ -347,30 +392,30 @@
         content]])
 
 (defn- format-field-validation [field field-errors]
-  (let [field-id (:field/id field)]
-    [:li (text-format :t.create-form/field-n (inc field-id))
+  (let [field-index (:field/id field)]
+    [:li (text-format :t.create-form/field-n (inc field-index))
      (into [:ul]
            (concat
             (for [[lang error] (:field/title field-errors)]
-              (format-validation-link (str "fields-" field-id "-title-" (name lang))
+              (format-validation-link (str "fields-" field-index "-title-" (name lang))
                                       (text-format error (str (text :t.create-form/field-title)
                                                               " (" (.toUpperCase (name lang)) ")"))))
             (for [[lang error] (:field/placeholder field-errors)]
-              (format-validation-link (str "fields-" field-id "-placeholder-" (name lang))
+              (format-validation-link (str "fields-" field-index "-placeholder-" (name lang))
                                       (text-format error (str (text :t.create-form/placeholder)
                                                               " (" (.toUpperCase (name lang)) ")"))))
             (when (:field/max-length field-errors)
-              [(format-validation-link (str "fields-" field-id "-max-length")
+              [(format-validation-link (str "fields-" field-index "-max-length")
                                        (str (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))))])
             (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
               [:li (text-format :t.create-form/option-n (inc option-id))
                [:ul
                 (when (:key option-errors)
-                  (format-validation-link (str "fields-" field-id "-options-" option-id "-key")
+                  (format-validation-link (str "fields-" field-index "-options-" option-id "-key")
                                           (text-format (:key option-errors) (text :t.create-form/option-key))))
                 (into [:<>]
                       (for [[lang error] (:label option-errors)]
-                        (format-validation-link (str "fields-" field-id "-options-" option-id "-label-" (name lang))
+                        (format-validation-link (str "fields-" field-index "-options-" option-id "-label-" (name lang))
                                                 (text-format error (str (text :t.create-form/option-label)
                                                                         " (" (.toUpperCase (name lang)) ")")))))]])))]))
 
@@ -385,8 +430,8 @@
            [:li [:a {:href "#" :on-click (focus-input-field "title")}
                  (text-format (:form/title form-errors) (text :t.create-form/title))]])]
 
-        (for [[field-id field-errors] (into (sorted-map) (:form/fields form-errors))]
-          (let [field (get-in form [:form/fields field-id])]
+        (for [[field-index field-errors] (into (sorted-map) (:form/fields form-errors))]
+          (let [field (get-in form [:form/fields field-index])]
             [format-field-validation field field-errors]))))
 
 (defn- validation-errors-summary []
@@ -398,26 +443,27 @@
 
 (defn- form-fields [fields]
   (into [:div]
-        (for [{id :field/id :as field} fields]
-          [:div.form-field {:key id
-                            :data-field-id id}
+        (for [{index :field/id :as field} fields]
+          [:div.form-field {:id (field-editor-id (:field/stable-id field))
+                            :key index
+                            :data-field-index index}
            [:div.form-field-header
-            [:h3 (text-format :t.create-form/field-n (inc id))]
+            [:h3 (text-format :t.create-form/field-n (inc index))]
             [:div.form-field-controls
-             [move-form-field-up-button id]
-             [move-form-field-down-button id]
-             [remove-form-field-button id]]]
+             [move-form-field-up-button index]
+             [move-form-field-down-button index]
+             [remove-form-field-button index]]]
 
-           [form-field-title-field id]
-           [form-field-type-radio-group id]
+           [form-field-title-field index]
+           [form-field-type-radio-group index]
            (when (supports-optional? field)
-             [form-field-optional-checkbox id])
+             [form-field-optional-checkbox index])
            (when (supports-placeholder? field)
-             [form-field-placeholder-field id])
+             [form-field-placeholder-field index])
            (when (supports-max-length? field)
-             [form-field-max-length-field id])
+             [form-field-max-length-field index])
            (when (supports-options? field)
-             [form-field-option-fields id])])))
+             [form-field-option-fields index])])))
 
 (defn form-preview [form]
   [collapsible/component

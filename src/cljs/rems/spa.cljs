@@ -33,6 +33,7 @@
             [rems.config :as config]
             [rems.extra-pages :refer [extra-pages]]
             [rems.flash-message :as flash-message]
+            [rems.focus :as focus]
             [rems.git :as git]
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
@@ -271,8 +272,7 @@
                     (let [[_ _page-id grab-focus?] (r/argv this)]
                       (when grab-focus?
                         (when-let [element (.querySelector js/document "#main-content")]
-                          (.setAttribute element "tabindex" "-1")
-                          (.focus element)
+                          (focus/focus element)
                           (rf/dispatch [::focus-grabbed])))))]
     (r/create-class
      {:component-did-mount on-update
