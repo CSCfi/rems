@@ -56,7 +56,7 @@
         on-change (fn []
                     (rf/dispatch [::set-display-archived? (not display-archived?)])
                     (when on-change (on-change)))]
-    [:div.form-check.form-check-inline {:style {:float "right"}}
+    [:div.form-check.form-check-inline.pointer {:style {:float "right"}}
      [checkbox {:id :display-archived
                 :class :form-check-input
                 :value display-archived?

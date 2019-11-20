@@ -301,6 +301,8 @@
     {:cursor :pointer
      :color (util/get-theme-attribute :link-color "#007bff")}
     [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]
+   [:.pointer {:cursor :pointer}
+    [:label.form-check-label {:cursor :pointer}]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]

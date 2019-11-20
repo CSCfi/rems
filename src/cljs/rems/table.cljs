@@ -301,7 +301,7 @@
                     :some #(rf/dispatch [::set-selected-rows table []])
                     :none #(rf/dispatch [::set-selected-rows table visible-rows]))]
     [:th.selection
-     [:i.far.fa-lg
+     [:i.far.fa-lg.pointer
       {:id (str (:id table) "-selection-toggle-all")
        :class (case selection-state
                 :all :fa-check-square
