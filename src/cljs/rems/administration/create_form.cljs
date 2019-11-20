@@ -56,16 +56,15 @@
 (defn- field-editor-selector [id index]
   (str "#" (field-editor-id id) "[data-field-index='" index "']"))
 
-(defn- focus-field-editor! [id index]
+(defn- focus-field-editor! [id index button-selector]
   (when-some [element (js/document.getElementById (field-editor-id id))]
     (let [before (.getBoundingClientRect element)]
       (focus/on-element-appear (field-editor-selector id index)
                                (fn [element]
                                  (let [after (.getBoundingClientRect element)]
                                    (focus/scroll-offset before after)
-                                   (focus/focus-without-scroll element)))))))
+                                   (focus/focus-without-scroll (.querySelector element button-selector))))))))
 
-;; TODO rename item->field
 (rf/reg-sub ::form (fn [db _]
                      (-> (::form db)
                          (update :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/id i)) %))))))
@@ -88,13 +87,17 @@
 (rf/reg-event-db
  ::move-form-field-up
  (fn [db [_ field-index]]
-   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id]) (dec field-index))
+   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+                        (dec field-index)
+                        ".move-up")
    (update-in db [::form :form/fields] items/move-up field-index)))
 
 (rf/reg-event-db
  ::move-form-field-down
  (fn [db [_ field-index]]
-   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id]) (inc field-index))
+   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+                        (inc field-index)
+                        ".move-down")
    (update-in db [::form :form/fields] items/move-down field-index)))
 
 (rf/reg-event-db

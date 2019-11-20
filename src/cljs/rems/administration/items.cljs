@@ -25,7 +25,7 @@
     (swap items index other)))
 
 (defn remove-button [on-click]
-  [:a
+  [:a.remove
    {:href "#"
     :on-click (fn [event]
                 (.preventDefault event)
@@ -36,7 +36,7 @@
     {:aria-hidden true}]])
 
 (defn move-up-button [on-click]
-  [:a
+  [:a.move-up
    {:href "#"
     :on-click (fn [event]
                 (.preventDefault event)
@@ -47,7 +47,7 @@
     {:aria-hidden true}]])
 
 (defn move-down-button [on-click]
-  [:a
+  [:a.move-down
    {:href "#"
     :on-click (fn [event]
                 (.preventDefault event)
