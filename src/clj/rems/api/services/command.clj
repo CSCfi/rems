@@ -8,13 +8,19 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
+            [rems.db.entitlements :as entitlements]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.email.core :as email]
             [rems.form-validation :as form-validation]
             [rems.util :refer [secure-token]]))
 
-(defn run-process-managers [new-events]
+(defn- run-entitlements [new-events]
+  (doseq [event new-events]
+    (entitlements/update-entitlements-for-event event))
+  [])
+
+(defn- run-approver-bot [new-events]
   ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids
   (let [app-ids (->> new-events
                      (filter (fn [event]
@@ -27,6 +33,12 @@
          (map applications/get-unrestricted-application)
          (mapcat #(approver-bot/generate-commands %))
          doall)))
+
+(defn run-process-managers [new-events]
+  (concat
+   (email/generate-emails! new-events)
+   (run-entitlements new-events)
+   (run-approver-bot new-events)))
 
 (def ^:private command-injections
   {:valid-user? users/user-exists?
@@ -50,7 +62,6 @@
     (when-not (:errors result)
       (doseq [event (:events result)]
         (events/add-event! event))
-      (email/generate-emails! (:events result))
       (doseq [cmd2 (run-process-managers (:events result))]
         (let [result (command! cmd2)]
           (when (:errors result)

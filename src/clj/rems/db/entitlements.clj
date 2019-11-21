@@ -7,6 +7,7 @@
             [rems.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
+            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]
@@ -131,3 +132,15 @@
         (grant-entitlements! application-id userid resource-ids))
       (doseq [[userid resource-ids] entitlements-to-remove]
         (revoke-entitlements! application-id userid resource-ids)))))
+
+(defn update-entitlements-for-event [event]
+  ;; performance improvement: filter events which may affect entitlements
+  (when (contains? #{:application.event/approved
+                     :application.event/closed
+                     :application.event/licenses-accepted
+                     :application.event/member-removed
+                     :application.event/resources-changed
+                     :application.event/revoked}
+                   (:event/type event))
+    (let [application (applications/get-unrestricted-application (:application/id event))]
+      (update-entitlements-for application))))

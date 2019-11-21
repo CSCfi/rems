@@ -4,7 +4,6 @@
             [rems.api.testing :refer :all]
             [rems.db.users :as users]
             [rems.handler :refer [handler]]
-            [rems.poller.entitlements :as entitlements-poller]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -17,7 +16,6 @@
 
 (deftest entitlements-test
   ;; TODO: create applications inside the test
-  (entitlements-poller/run)
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/entitlements"))
                        handler)
