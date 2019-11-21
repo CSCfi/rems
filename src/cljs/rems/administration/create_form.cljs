@@ -56,7 +56,7 @@
 (defn- field-editor-selector [id index]
   (str "#" (field-editor-id id) "[data-field-index='" index "']"))
 
-(defn- focus-field-editor! [id index button-selector]
+(defn- track-moved-field-editor! [id index button-selector]
   (when-some [element (js/document.getElementById (field-editor-id id))]
     (let [before (.getBoundingClientRect element)]
       (focus/on-element-appear (field-editor-selector id index)
@@ -64,6 +64,13 @@
                                  (let [after (.getBoundingClientRect element)]
                                    (focus/scroll-offset before after)
                                    (focus/focus-without-scroll (.querySelector element button-selector))))))))
+
+(defn- focus-field-editor! [id]
+  (let [selector "textarea"] ;; focus first title field
+    (focus/on-element-appear (str "#" (field-editor-id id))
+                             (fn [element]
+                               (focus/scroll-to-top element)
+                               (.focus (.querySelector element selector))))))
 
 (rf/reg-sub ::form (fn [db _]
                      (-> (::form db)
@@ -76,8 +83,10 @@
 (rf/reg-event-db
  ::add-form-field
  (fn [db [_]]
-   (update-in db [::form :form/fields] items/add {:field/stable-id (generate-stable-id)
-                                                  :field/type :text})))
+   (let [stable-id (generate-stable-id)]
+     (focus-field-editor! stable-id)
+     (update-in db [::form :form/fields] items/add {:field/stable-id stable-id
+                                                    :field/type :text}))))
 
 (rf/reg-event-db
  ::remove-form-field
@@ -87,17 +96,17 @@
 (rf/reg-event-db
  ::move-form-field-up
  (fn [db [_ field-index]]
-   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
-                        (dec field-index)
-                        ".move-up")
+   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+                              (dec field-index)
+                              ".move-up")
    (update-in db [::form :form/fields] items/move-up field-index)))
 
 (rf/reg-event-db
  ::move-form-field-down
  (fn [db [_ field-index]]
-   (focus-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
-                        (inc field-index)
-                        ".move-down")
+   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+                              (inc field-index)
+                              ".move-down")
    (update-in db [::form :form/fields] items/move-down field-index)))
 
 (rf/reg-event-db
