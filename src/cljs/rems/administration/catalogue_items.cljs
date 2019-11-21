@@ -171,6 +171,7 @@
             [:div.commands.text-left.pl-0
              [ create-catalogue-item-button]
              [change-form-button (items-by-id @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
-            [status-flags/display-archived-toggle #(rf/dispatch [::fetch-catalogue])]
+            [status-flags/display-archived-toggle #(do (rf/dispatch [::fetch-catalogue])
+                                                       (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]
             [status-flags/disabled-and-archived-explanation]]
            [catalogue-list]])))
