@@ -54,7 +54,6 @@
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
                    :change "Change"
-                   :changed "Changed"
                    :comment "Comment"
                    :copy-as-new "Copy as new"
                    :create-catalogue-item "Create catalogue item"

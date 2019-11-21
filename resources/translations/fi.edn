@@ -54,7 +54,6 @@
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
                    :change "Vaihda"
-                   :changed "Vaihdettu"
                    :comment "Kommentti"
                    :copy-as-new "Kopioi uudeksi"
                    :create-catalogue-item "Uusi aineisto"
