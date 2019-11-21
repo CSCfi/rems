@@ -9,20 +9,8 @@
             [rems.scheduler :as scheduler])
   (:import [org.joda.time Duration]))
 
-(defn- entitlements-for-event [event]
-  ;; performance improvement: filter events which may affect entitlements
-  (when (contains? #{:application.event/approved
-                     :application.event/closed
-                     :application.event/licenses-accepted
-                     :application.event/member-removed
-                     :application.event/resources-changed
-                     :application.event/revoked}
-                   (:event/type event))
-    (let [application (applications/get-unrestricted-application (:application/id event))]
-      (entitlements/update-entitlements-for application))))
-
 (defn run []
-  (common/run-event-poller ::poller entitlements-for-event))
+  nil)
 
 (mount/defstate entitlements-poller
   :start (scheduler/start! run (Duration/standardSeconds 10))
