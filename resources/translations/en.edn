@@ -85,6 +85,7 @@
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
                    :preview "Preview"
+                   :remove "Remove"
                    :resource "Resource"
                    :resources "Resources"
                    :save "Save"

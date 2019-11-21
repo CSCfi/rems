@@ -8,7 +8,7 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text localize-time]]
-            [rems.util :refer [fetch]]))
+            [rems.util :refer [fetch post!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -26,6 +26,27 @@
              :error-handler (flash-message/default-error-handler :top description)}))
    {:db (assoc db ::loading? true)}))
 
+(rf/reg-event-fx
+ ::remove-from-blacklist
+ (fn [{:keys [db]} [_ resource user]]
+   (let [description [text :t.administration/remove]]
+     (post! "/api/blacklist/remove"
+            {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
+                      :blacklist/user (select-keys user [:userid])
+                      :comment ""}
+             :handler (flash-message/default-success-handler
+                       :top
+                       description
+                       #(rf/dispatch [::fetch]))
+             :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
+(defn- remove-button [resource user]
+  [:button.btn.btn-secondary.button-min-width
+   {:type :button
+    :on-click #(rf/dispatch [::remove-from-blacklist resource user])}
+   (text :t.administration/remove)])
+
 (defn- format-rows [rows]
   (doall
    (for [{resource :blacklist/resource
@@ -40,7 +61,9 @@
       :email {:value (:email user)}
       :added-by {:value (rems.application-util/get-member-name added-by)}
       :added-at {:value added-at :display-value (localize-time added-at)}
-      :comment {:value comment}})))
+      :comment {:value comment}
+      :commands {:td [:td.commands
+                      [remove-button resource user]]}})))
 
 (rf/reg-event-db
  ::fetch-result
@@ -67,7 +90,10 @@
                               {:key :added-by
                                :title (text :t.administration/added-by)}
                               {:key :comment
-                               :title (text :t.administration/comment)}]
+                               :title (text :t.administration/comment)}
+                              {:key :commands
+                               :sortable? false
+                               :filterable? false}]
                     :rows [::blacklist]
                     :default-sort-column :resource}]
     [:div.mt-3
@@ -76,8 +102,8 @@
 
 (defn blacklist []
   (if @(rf/subscribe [::loading?])
-     [spinner/big]
-     [blacklist-table]))
+    [spinner/big]
+    [blacklist-table]))
 
 (defn blacklist-page []
   [:div
