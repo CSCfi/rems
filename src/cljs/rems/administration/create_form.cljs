@@ -65,6 +65,12 @@
                                    (focus/scroll-offset before after)
                                    (focus/focus-without-scroll (.querySelector element button-selector))))))))
 
+(defn- focus-field-editor! [id]
+  (let [selector "textarea"] ;; focus first title field
+    (focus/on-element-appear (str "#" (field-editor-id id))
+                             (fn [element]
+                               (.focus (.querySelector element selector))))))
+
 (rf/reg-sub ::form (fn [db _]
                      (-> (::form db)
                          (update :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/id i)) %))))))
@@ -76,8 +82,10 @@
 (rf/reg-event-db
  ::add-form-field
  (fn [db [_]]
-   (update-in db [::form :form/fields] items/add {:field/stable-id (generate-stable-id)
-                                                  :field/type :text})))
+   (let [stable-id (generate-stable-id)]
+     (focus-field-editor! stable-id)
+     (update-in db [::form :form/fields] items/add {:field/stable-id stable-id
+                                                    :field/type :text}))))
 
 (rf/reg-event-db
  ::remove-form-field
