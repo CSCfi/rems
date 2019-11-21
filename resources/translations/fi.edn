@@ -203,6 +203,7 @@
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
                 :type-description "Hakemuksen otsikko"
+                :type-header "Otsikko"
                 :type-label "Lisätietokenttä"
                 :type-multiselect "Monivalintalista"
                 :type-option "Valintalista"
