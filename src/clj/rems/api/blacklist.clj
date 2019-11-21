@@ -37,6 +37,7 @@
 (def blacklist-api
   (context "/blacklist" []
     :tags ["blacklist"]
+
     (GET "/" []
       :summary "Get blacklist entries"
       :roles #{:handler :owner :reporter}
@@ -47,11 +48,19 @@
                                      :resource/ext-id resource})
            (mapv format-blacklist-entry)
            (ok)))
+
+    (GET "/users" []
+      :summary "Existing REMS users available for adding to the blacklist"
+      :roles #{:owner :handler}
+      :return [schema/UserWithAttributes]
+      (ok (users/get-users)))
+
     (POST "/add" []
       :summary "Add a blacklist entry"
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
+      ;; TODO: check that user and resource exist
       (blacklist/add-event! (assoc (command->event command)
                                    :event/type :blacklist.event/add))
       (ok {:success true}))
@@ -61,6 +70,7 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
+      ;; TODO: check that user and resource exist
       (blacklist/add-event! (assoc (command->event command)
                                    :event/type :blacklist.event/remove))
       (ok {:success true}))))

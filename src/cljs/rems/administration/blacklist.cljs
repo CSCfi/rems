@@ -4,6 +4,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.application-util]
             [rems.atoms :as atoms]
+            [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.table :as table]
@@ -13,11 +14,11 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:dispatch-n [[::fetch {}]
+   {:dispatch-n [[::fetch-blacklist {}]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
- ::fetch
+ ::fetch-blacklist
  (fn [{:keys [db]} [_ params]]
    (let [description [text :t.administration/blacklist]]
      (fetch "/api/blacklist"
@@ -27,19 +28,90 @@
    {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-fx
+ ::add-to-blacklist
+ (fn [{:keys [db]} [_ resource user]]
+   (let [description [text :t.administration/add]]
+     (post! "/api/blacklist/add"
+            {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
+                      :blacklist/user (select-keys user [:userid])
+                      :comment ""} ; TODO
+             :handler (flash-message/default-success-handler
+                       :top
+                       description
+                       (fn []
+                         (rf/dispatch [::fetch-blacklist])
+                         (rf/dispatch [::set-selected-user nil])))
+             :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
+(rf/reg-event-fx
  ::remove-from-blacklist
  (fn [{:keys [db]} [_ resource user]]
    (let [description [text :t.administration/remove]]
      (post! "/api/blacklist/remove"
             {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
-                      :comment ""}
+                      :comment ""} ; TODO: JS prompt()?
              :handler (flash-message/default-success-handler
                        :top
                        description
-                       #(rf/dispatch [::fetch]))
+                       #(rf/dispatch [::fetch-blacklist]))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
+
+(rf/reg-event-fx
+ ::fetch-users
+ (fn []
+   (fetch "/api/blacklist/users"
+          {:handler #(rf/dispatch [::fetch-users-result %])
+           :error-handler (flash-message/default-error-handler :top "Fetch users")})
+   {}))
+
+(rf/reg-event-db
+ ::fetch-users-result
+ (fn [db [_ users]]
+   (assoc db ::all-users (map atoms/enrich-user users))))
+
+(rf/reg-sub
+ ::all-users
+ (fn [db _]
+   (::all-users db)))
+
+(rf/reg-event-db
+ ::set-selected-user
+ (fn [db [_ user]]
+   (assoc db ::selected-user user)))
+
+(rf/reg-sub
+ ::selected-user
+ (fn [db _]
+   (::selected-user db)))
+
+(defn add-user-form [resource]
+  (let [user-field-id "blacklist-user"
+        all-users @(rf/subscribe [::all-users])
+        selected-users @(rf/subscribe [::selected-user])]
+    [:form.form-inline
+     {:on-submit (fn [event]
+                   (.preventDefault event)
+                   (rf/dispatch [::add-to-blacklist resource selected-users]))}
+
+     [:label.my-1.mr-2
+      {:for user-field-id}
+      (text :t.administration/user)]
+
+     [dropdown/dropdown
+      {:id user-field-id
+       :class "w-50 my-1 mr-2"
+       :items all-users
+       :item-key :userid
+       :item-label :display
+       :item-selected? #(= (:userid selected-users) (:userid %))
+       :on-change #(rf/dispatch [::set-selected-user %])}]
+
+     [:button.btn.btn-primary
+      {:type :submit}
+      (text :t.administration/add)]]))
 
 (defn- remove-button [resource user]
   [:button.btn.btn-secondary.button-min-width

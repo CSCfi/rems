@@ -1,5 +1,6 @@
 (ns rems.dropdown
   (:require [cljsjs.react-select]
+            [clojure.string :as str]
             [rems.guide-functions]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -8,6 +9,7 @@
   "Single- or multi-choice, searchable dropdown menu.
 
   `:id` unique id for the input
+  `:class` additional classes for the input
   `:items` items shown in dropdown
   `:item-key` getter for the key of an option, used as the id of an item
   `:item-label` getter for the label of an option shown in the dropdown
@@ -17,12 +19,12 @@
   `:multi?` is this a multiple choice dropdown?
   `:clearable?` should there be a clear selection button?
   `:on-change` called each time the value changes, one or seq"
-  [{:keys [id items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change]
+  [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change]
     :or {hide-selected? multi?
          item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns
-  [:> js/Select {:className "dropdown-container"
+  [:> js/Select {:className (str/trimr (str "dropdown-container " class))
                  :classNamePrefix "dropdown-select"
                  :getOptionLabel #(item-label %)
                  :getOptionValue #(item-key %)
