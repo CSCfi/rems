@@ -36,6 +36,7 @@
 
 (defn run-process-managers [new-events]
   (concat
+   (email/generate-emails! new-events)
    (run-entitlements new-events)
    (run-approver-bot new-events)))
 
@@ -61,7 +62,6 @@
     (when-not (:errors result)
       (doseq [event (:events result)]
         (events/add-event! event))
-      (email/generate-emails! (:events result))
       (doseq [cmd2 (run-process-managers (:events result))]
         (let [result (command! cmd2)]
           (when (:errors result)
