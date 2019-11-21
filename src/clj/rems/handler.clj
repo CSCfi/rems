@@ -11,7 +11,6 @@
             [rems.home :as home]
             [rems.layout :as layout]
             [rems.middleware :as middleware]
-            [rems.poller.entitlements] ;; to enable entitlement polling
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [file-response]]))
 

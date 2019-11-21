@@ -15,7 +15,6 @@
             [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
-            [rems.poller.entitlements :as entitlements-poller]
             [ring.util.http-response :refer [bad-request!]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
@@ -684,7 +683,6 @@
                  :application-id app-id
                  :actor approver
                  :comment "Thank you! Approved!"})
-      (entitlements-poller/run)
       (command! {:type :application.command/close
                  :application-id app-id
                  :actor approver

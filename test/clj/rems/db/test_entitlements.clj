@@ -7,7 +7,6 @@
             [rems.db.entitlements :as entitlements]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
-            [rems.poller.entitlements :as entitlements-poller]
             [rems.testing-util :refer [suppress-logging]]
             [stub-http.core :as stub]))
 
@@ -78,7 +77,6 @@
        ~@body)))
 
 (deftest test-entitlement-granting
-  (entitlements-poller/run) ; clear previous entitlements
   (let [applicant "bob"
         member "elsa"
         admin "owner"
@@ -119,7 +117,6 @@
                                :application-id app-id
                                :actor admin
                                :member {:userid member}})
-          (entitlements-poller/run)
 
           (is (empty? (db/get-entitlements {:application app-id})))
           (is (empty? (stub/recorded-requests server))))
@@ -138,8 +135,6 @@
                     member #{lic-id1}}
                    (:application/accepted-licenses (applications/get-unrestricted-application app-id))))
 
-            (entitlements-poller/run)
-            (entitlements-poller/run) ;; run twice to check idempotence
             (is (= 2 (count (stub/recorded-requests server))))
             (testing "db"
               (is (= [[applicant "resource1"] [applicant "resource2"]]
@@ -162,7 +157,6 @@
                                :application-id app-id
                                :actor member
                                :accepted-licenses [lic-id1 lic-id2]}) ; now accept all licenses
-          (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
           (testing "db"
@@ -188,7 +182,6 @@
                                :actor admin
                                :member {:userid member}
                                :comment "Left team"})
-          (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
           (testing "db"
@@ -213,7 +206,6 @@
                                :actor admin
                                :catalogue-item-ids [item1 item3]
                                :comment "Removed second resource, added third resource"})
-          (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
           (testing "db"
@@ -232,7 +224,6 @@
                                :application-id app-id
                                :actor admin
                                :comment "Finished"})
-          (entitlements-poller/run)
 
           (is (= 2 (count (stub/recorded-requests server))))
           (testing "db"
@@ -256,7 +247,6 @@
                            :application-id app-id
                            :actor admin
                            :comment ""})
-      (entitlements-poller/run)
 
       (testing "revoked application should end entitlements"
         (with-stub-server server
@@ -264,7 +254,6 @@
                                :application-id app-id
                                :actor admin
                                :comment "Banned"})
-          (entitlements-poller/run)
 
           (is (= 1 (count (stub/recorded-requests server))))
           (testing "db"
