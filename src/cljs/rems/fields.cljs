@@ -304,6 +304,10 @@
       (when success
         [success-symbol])]]))
 
+(defn header-field [field]
+  (let [title (localized (:field/title field))]
+    [:h3 title]))
+
 (defn unsupported-field
   [f]
   [:p.alert.alert-warning "Unsupported field " (pr-str f)])
@@ -317,6 +321,7 @@
       :attachment [attachment-field f]
       :date [date-field f]
       :description [text-field f]
+      :header [header-field f]
       :label [label f]
       :multiselect [multiselect-field f]
       :option [option-field f]

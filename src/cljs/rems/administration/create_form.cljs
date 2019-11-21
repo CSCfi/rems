@@ -123,7 +123,7 @@
 ;;;; form submit
 
 (defn- supports-optional? [field]
-  (not= :label (:field/type field)))
+  (not (contains? #{:label :header} (:field/type field))))
 
 (defn- supports-placeholder? [field]
   (contains? #{:text :texta :description} (:field/type field)))
@@ -344,15 +344,16 @@
   [radio-button-group context {:id (str "radio-group-" field-index)
                                :keys [:form/fields field-index :field/type]
                                :label (text :t.create-form/field-type)
-                               :orientation :vertical
-                               :options [{:value :description, :label (text :t.create-form/type-description)}
-                                         {:value :text, :label (text :t.create-form/type-text)}
-                                         {:value :texta, :label (text :t.create-form/type-texta)}
-                                         {:value :option, :label (text :t.create-form/type-option)}
-                                         {:value :multiselect, :label (text :t.create-form/type-multiselect)}
-                                         {:value :date, :label (text :t.create-form/type-date)}
-                                         {:value :attachment, :label (text :t.create-form/type-attachment)}
-                                         {:value :label, :label (text :t.create-form/type-label)}]}])
+                               :orientation :horizontal
+                               :options [{:value :description :label (text :t.create-form/type-description)}
+                                         {:value :text :label (text :t.create-form/type-text)}
+                                         {:value :texta :label (text :t.create-form/type-texta)}
+                                         {:value :option :label (text :t.create-form/type-option)}
+                                         {:value :multiselect :label (text :t.create-form/type-multiselect)}
+                                         {:value :date :label (text :t.create-form/type-date)}
+                                         {:value :attachment :label (text :t.create-form/type-attachment)}
+                                         {:value :label :label (text :t.create-form/type-label)}
+                                         {:value :header :label (text :t.create-form/type-header)}]}])
 
 (defn- form-field-optional-checkbox [field-index]
   [checkbox context {:keys [:form/fields field-index :field/optional]

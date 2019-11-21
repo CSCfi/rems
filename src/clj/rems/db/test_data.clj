@@ -290,6 +290,11 @@
                    :field/placeholder {:en "Placeholder text"
                                        :fi "Täyteteksti"}}
 
+                  {:field/title {:en "Header"
+                                 :fi "Otsikko"}
+                   :field/type :header
+                   :field/optional false}
+
                   {:field/title {:en "Date field"
                                  :fi "Päivämääräkenttä"}
                    :field/optional true

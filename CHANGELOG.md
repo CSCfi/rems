@@ -17,6 +17,7 @@ Changes since v2.6
 
 ### Additions
 - More columns for blacklist table, blacklist visible on resource administration page (#1724)
+- New "header" form field type (#1805)
 
 ## v2.6 "Kalevalantie" 2018-11-12
 
