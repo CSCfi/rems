@@ -69,6 +69,7 @@
   (let [selector "textarea"] ;; focus first title field
     (focus/on-element-appear (str "#" (field-editor-id id))
                              (fn [element]
+                               (focus/focus-and-ensure-visible element)
                                (.focus (.querySelector element selector))))))
 
 (rf/reg-sub ::form (fn [db _]
