@@ -123,7 +123,7 @@
 ;;;; form submit
 
 (defn- supports-optional? [field]
-  (not= :label (:field/type field)))
+  (not (contains? #{:label :header} (:field/type field))))
 
 (defn- supports-placeholder? [field]
   (contains? #{:text :texta :description} (:field/type field)))
