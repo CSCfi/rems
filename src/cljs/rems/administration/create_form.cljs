@@ -352,7 +352,8 @@
                                          {:value :multiselect :label (text :t.create-form/type-multiselect)}
                                          {:value :date :label (text :t.create-form/type-date)}
                                          {:value :attachment :label (text :t.create-form/type-attachment)}
-                                         {:value :label :label (text :t.create-form/type-label)}]}])
+                                         {:value :label :label (text :t.create-form/type-label)}
+                                         {:value :header :label (text :t.create-form/type-header)}]}])
 
 (defn- form-field-optional-checkbox [field-index]
   [checkbox context {:keys [:form/fields field-index :field/optional]
