@@ -345,14 +345,14 @@
                                :keys [:form/fields field-index :field/type]
                                :label (text :t.create-form/field-type)
                                :orientation :vertical
-                               :options [{:value :description, :label (text :t.create-form/type-description)}
-                                         {:value :text, :label (text :t.create-form/type-text)}
-                                         {:value :texta, :label (text :t.create-form/type-texta)}
-                                         {:value :option, :label (text :t.create-form/type-option)}
-                                         {:value :multiselect, :label (text :t.create-form/type-multiselect)}
-                                         {:value :date, :label (text :t.create-form/type-date)}
-                                         {:value :attachment, :label (text :t.create-form/type-attachment)}
-                                         {:value :label, :label (text :t.create-form/type-label)}]}])
+                               :options [{:value :description :label (text :t.create-form/type-description)}
+                                         {:value :text :label (text :t.create-form/type-text)}
+                                         {:value :texta :label (text :t.create-form/type-texta)}
+                                         {:value :option :label (text :t.create-form/type-option)}
+                                         {:value :multiselect :label (text :t.create-form/type-multiselect)}
+                                         {:value :date :label (text :t.create-form/type-date)}
+                                         {:value :attachment :label (text :t.create-form/type-attachment)}
+                                         {:value :label :label (text :t.create-form/type-label)}]}])
 
 (defn- form-field-optional-checkbox [field-index]
   [checkbox context {:keys [:form/fields field-index :field/optional]
