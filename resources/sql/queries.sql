@@ -489,17 +489,6 @@ FROM catalogue_item_application app
 JOIN application_event evt ON (app.id = evt.appid)
 WHERE evt.eventdata->>'invitation/token' = :token;
 
--- :name get-poller-state :? :1
-SELECT state::TEXT FROM poller_state
-WHERE name = :name;
-
--- :name set-poller-state! :!
-INSERT INTO poller_state (name, state)
-VALUES (:name, :state::jsonb)
-ON CONFLICT (name)
-DO UPDATE
-SET state = :state::jsonb;
-
 -- :name get-external-ids :? :*
 SELECT prefix, suffix FROM external_application_id
 /*~ (when (:prefix params) */
