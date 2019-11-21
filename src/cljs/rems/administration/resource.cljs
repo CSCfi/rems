@@ -17,15 +17,15 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ resource-id]]
-   {:db (assoc db ::loading? true)
-    :dispatch [::fetch-resource resource-id]}))
+   {:dispatch [::fetch-resource resource-id]}))
 
 (rf/reg-event-fx
  ::fetch-resource
- (fn [_ [_ resource-id]]
+ (fn [{:keys [db]} [_ resource-id]]
    (fetch (str "/api/resources/" resource-id)
           {:handler #(rf/dispatch [::fetch-resource-result %])
-           :error-handler (flash-message/default-error-handler :top "Fetch resource")})))
+           :error-handler (flash-message/default-error-handler :top "Fetch resource")})
+   {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-fx
  ::fetch-resource-result
