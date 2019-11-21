@@ -344,7 +344,7 @@
   [radio-button-group context {:id (str "radio-group-" field-index)
                                :keys [:form/fields field-index :field/type]
                                :label (text :t.create-form/field-type)
-                               :orientation :vertical
+                               :orientation :horizontal
                                :options [{:value :description :label (text :t.create-form/type-description)}
                                          {:value :text :label (text :t.create-form/type-text)}
                                          {:value :texta :label (text :t.create-form/type-texta)}
