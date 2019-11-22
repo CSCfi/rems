@@ -98,10 +98,20 @@
  (fn [db _]
    (::comment db)))
 
+(defn user-field [id]
+  (let [all-users @(rf/subscribe [::all-users])
+        selected-users @(rf/subscribe [::selected-user])]
+    [dropdown/dropdown
+     {:id id
+      :items all-users
+      :item-key :userid
+      :item-label :display
+      :item-selected? #(= (:userid selected-users) (:userid %))
+      :on-change #(rf/dispatch [::set-selected-user %])}]))
+
 (defn add-user-form [resource]
   (let [user-field-id "blacklist-user"
         comment-field-id "blacklist-comment"
-        all-users @(rf/subscribe [::all-users])
         selected-users @(rf/subscribe [::selected-user])
         comment @(rf/subscribe [::comment])]
     [:form
@@ -115,13 +125,7 @@
        (text :t.administration/user)]
 
       [:div.col-sm-6
-       [dropdown/dropdown
-        {:id user-field-id
-         :items all-users
-         :item-key :userid
-         :item-label :display
-         :item-selected? #(= (:userid selected-users) (:userid %))
-         :on-change #(rf/dispatch [::set-selected-user %])}]]]
+       [user-field user-field-id]]]
 
      [:div.form-group.row
       [:label.col-sm-1.col-form-label
