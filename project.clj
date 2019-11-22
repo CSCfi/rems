@@ -21,7 +21,7 @@
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.10.0.pr1"]
                  [com.taoensso/tempura "1.2.1"]
                  [compojure "1.6.1"]
-                 [conman "0.8.3"]
+                 [conman "0.8.4"]
                  [cprop "0.1.14"]
                  [funcool/promesa "4.0.0-SNAPSHOT"] ; version 3.0.0 is broken with JavaScript Promises https://github.com/funcool/promesa/issues/71
                  [garden "1.3.9"]
