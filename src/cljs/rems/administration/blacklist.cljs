@@ -34,13 +34,14 @@
      (post! "/api/blacklist/add"
             {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
-                      :comment comment}
+                      :comment (or comment "")}
              :handler (flash-message/default-success-handler
                        :top
                        description
                        (fn []
                          (rf/dispatch [::fetch-blacklist])
-                         (rf/dispatch [::set-selected-user nil])))
+                         (rf/dispatch [::set-selected-user nil])
+                         (rf/dispatch [::set-comment nil])))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -51,7 +52,7 @@
      (post! "/api/blacklist/remove"
             {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
-                      :comment comment}
+                      :comment (or comment "")}
              :handler (flash-message/default-success-handler
                        :top
                        description
@@ -87,33 +88,59 @@
  (fn [db _]
    (::selected-user db)))
 
+(rf/reg-event-db
+ ::set-comment
+ (fn [db [_ user]]
+   (assoc db ::comment user)))
+
+(rf/reg-sub
+ ::comment
+ (fn [db _]
+   (::comment db)))
+
 (defn add-user-form [resource]
   (let [user-field-id "blacklist-user"
+        comment-field-id "blacklist-comment"
         all-users @(rf/subscribe [::all-users])
-        selected-users @(rf/subscribe [::selected-user])]
-    [:form.form-inline
+        selected-users @(rf/subscribe [::selected-user])
+        comment @(rf/subscribe [::comment])]
+    [:form
      {:on-submit (fn [event]
                    (.preventDefault event)
-                   ;; TODO: more fancy input form for the comment?
-                   (when-some [comment (js/prompt (text :t.administration/comment))]
-                     (rf/dispatch [::add-to-blacklist resource selected-users comment])))}
+                   (rf/dispatch [::add-to-blacklist resource selected-users comment]))}
 
-     [:label.my-1.mr-2
-      {:for user-field-id}
-      (text :t.administration/user)]
+     [:div.form-group.row
+      [:label.col-sm-1.col-form-label
+       {:for user-field-id}
+       (text :t.administration/user)]
 
-     [dropdown/dropdown
-      {:id user-field-id
-       :class "w-50 my-1 mr-2"
-       :items all-users
-       :item-key :userid
-       :item-label :display
-       :item-selected? #(= (:userid selected-users) (:userid %))
-       :on-change #(rf/dispatch [::set-selected-user %])}]
+      [:div.col-sm-6
+       [dropdown/dropdown
+        {:id user-field-id
+         :items all-users
+         :item-key :userid
+         :item-label :display
+         :item-selected? #(= (:userid selected-users) (:userid %))
+         :on-change #(rf/dispatch [::set-selected-user %])}]]]
 
-     [:button.btn.btn-primary
-      {:type :submit}
-      (text :t.administration/add)]]))
+     [:div.form-group.row
+      [:label.col-sm-1.col-form-label
+       {:for comment-field-id}
+       (text :t.administration/comment)]
+
+      [:div.col-sm-6
+       [:input.form-control
+        {:id comment-field-id
+         :type :text
+         :value comment
+         :on-change #(rf/dispatch [::set-comment (-> % .-target .-value)])}]]]
+
+     [:div.form-group.row
+      [:div.col-sm-1]
+      [:div.col-sm-6
+       [:button.btn.btn-primary
+        {:type :submit}
+        (text :t.administration/add)]]]]))
 
 (defn- remove-button [resource user]
   [:button.btn.btn-secondary.button-min-width
