@@ -3,21 +3,20 @@
             [rems.administration.items :as items]))
 
 (deftest add-item-test
-  (is (vector? (items/add nil {})))
-  (is (vector? (items/add [] {})))
-  (is (= [{}] (items/add nil {})))
-  (is (= [{}] (items/add [] {})))
-  (is (= [{:foo "A"} {:foo "new"}] (items/add [{:foo "A"}] {:foo "new"})))
-  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"}))))
+  (is (vector? (items/insert nil {} nil)))
+  (is (vector? (items/insert [] {} nil)))
+  (is (= [{}] (items/insert nil {} nil)))
+  (is (= [{}] (items/insert [] {} nil)))
+  (is (= [{:foo "A"} {:foo "new"}] (items/insert [{:foo "A"}] {:foo "new"} nil)))
+  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/insert [{:foo "A"} {:foo "B"}] {:foo "new"} nil)))
 
-(deftest insert-item-test
-  (is (vector? (items/insert nil 0 {})))
-  (is (vector? (items/insert [] 0 {})))
-  (is (= [{}] (items/insert nil 0 {})))
-  (is (= [{}] (items/insert [] 0 {})))
-  (is (= [{:foo "new"} {:foo "A"} {:foo "B"}] (items/insert [{:foo "A"} {:foo "B"}] 0 {:foo "new"})))
-  (is (= [{:foo "A"} {:foo "new"} {:foo "B"}] (items/insert [{:foo "A"} {:foo "B"}] 1 {:foo "new"})))
-  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/insert [{:foo "A"} {:foo "B"}] 2 {:foo "new"}))))
+  (is (vector? (items/insert nil {} 0)))
+  (is (vector? (items/insert [] {} 0)))
+  (is (= [{}] (items/insert nil {} 0)))
+  (is (= [{}] (items/insert [] {} 0)))
+  (is (= [{:foo "new"} {:foo "A"} {:foo "B"}] (items/insert [{:foo "A"} {:foo "B"}] {:foo "new"} 0)))
+  (is (= [{:foo "A"} {:foo "new"} {:foo "B"}] (items/insert [{:foo "A"} {:foo "B"}] {:foo "new"} 1)))
+  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/insert [{:foo "A"} {:foo "B"}] {:foo "new"} 2))))
 
 (deftest remove-item-test
   (is (vector? (items/remove [{}] 0)))

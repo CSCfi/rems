@@ -81,20 +81,13 @@
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db
- ::add-form-field
- (fn [db [_]]
-   (let [stable-id (generate-stable-id)]
-     (focus-field-editor! stable-id)
-     (update-in db [::form :form/fields] items/add {:field/stable-id stable-id
-                                                    :field/type :text}))))
-
-(rf/reg-event-db
-  ::insert-form-field
-  (fn [db [_ index]]
-    (let [stable-id (generate-stable-id)]
+  ::add-form-field
+  (fn [db [_ & [index]]]
+    (let [stable-id (generate-stable-id)
+          new-item {:field/stable-id stable-id
+                    :field/type :text}]
       (focus-field-editor! stable-id)
-      (update-in db [::form :form/fields] items/insert index {:field/stable-id stable-id
-                                                              :field/type :text}))))
+      (update-in db [::form :form/fields] items/insert new-item index))))
 
 (rf/reg-event-db
  ::remove-form-field
@@ -380,7 +373,7 @@
   [:a {:href "#"
        :on-click (fn [event]
                    (.preventDefault event)
-                   (rf/dispatch [::insert-form-field index]))}
+                   (rf/dispatch [::add-form-field index]))}
    (text :t.create-form/add-form-field)])
 
 (defn- remove-form-field-button [field-index]
