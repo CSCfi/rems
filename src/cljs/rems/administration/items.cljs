@@ -5,6 +5,11 @@
 (defn add [items new-item]
   (conj (vec items) new-item))
 
+(defn insert [items index new-item]
+  (vec (concat (take index items)
+               [new-item]
+               (drop index items))))
+
 (defn remove [items index]
   (vec (concat (subvec items 0 index)
                (subvec items (inc index)))))

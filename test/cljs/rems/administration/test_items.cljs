@@ -10,6 +10,15 @@
   (is (= [{:foo "A"} {:foo "new"}] (items/add [{:foo "A"}] {:foo "new"})))
   (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"}))))
 
+(deftest insert-item-test
+  (is (vector? (items/insert nil 0 {})))
+  (is (vector? (items/insert [] 0 {})))
+  (is (= [{}] (items/insert nil 0 {})))
+  (is (= [{}] (items/insert [] 0 {})))
+  (is (= [{:foo "new"} {:foo "A"} {:foo "B"}] (items/insert [{:foo "A"} {:foo "B"}] 0 {:foo "new"})))
+  (is (= [{:foo "A"} {:foo "new"} {:foo "B"}] (items/insert [{:foo "A"} {:foo "B"}] 1 {:foo "new"})))
+  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/insert [{:foo "A"} {:foo "B"}] 2 {:foo "new"}))))
+
 (deftest remove-item-test
   (is (vector? (items/remove [{}] 0)))
   (is (= [] (items/remove [{}] 0)))
