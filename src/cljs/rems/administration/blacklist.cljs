@@ -8,7 +8,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text localize-time]]
+            [rems.text :refer [text text-format localize-time]]
             [rems.util :refer [fetch post!]]))
 
 (rf/reg-event-fx
@@ -40,6 +40,7 @@
                        description
                        (fn []
                          (rf/dispatch [::fetch-blacklist])
+                         (rf/dispatch [::set-validation-errors nil])
                          (rf/dispatch [::set-selected-user nil])
                          (rf/dispatch [::set-comment nil])))
              :error-handler (flash-message/default-error-handler :top description)}))
@@ -98,26 +99,53 @@
  (fn [db _]
    (::comment db)))
 
+(rf/reg-event-db
+ ::set-validation-errors
+ (fn [db [_ user]]
+   (assoc db ::validation-errors user)))
+
+(rf/reg-sub
+ ::validation-errors
+ (fn [db _]
+   (::validation-errors db)))
+
 (defn user-field [id]
   (let [all-users @(rf/subscribe [::all-users])
-        selected-users @(rf/subscribe [::selected-user])]
-    [dropdown/dropdown
-     {:id id
-      :items all-users
-      :item-key :userid
-      :item-label :display
-      :item-selected? #(= (:userid selected-users) (:userid %))
-      :on-change #(rf/dispatch [::set-selected-user %])}]))
+        selected-users @(rf/subscribe [::selected-user])
+        error (:user @(rf/subscribe [::validation-errors]))
+        error-id (str id "-error")]
+    [:<>
+     ;; TODO: add aria-describedby pointing to error-id
+     ;; TODO: highlight an invalid dropdown similar to "form-control is-invalid" for normal input fields
+     [dropdown/dropdown
+      {:id id
+       :items all-users
+       :item-key :userid
+       :item-label :display
+       :item-selected? #(= (:userid selected-users) (:userid %))
+       :on-change #(rf/dispatch [::set-selected-user %])}]
+
+     (when error
+       [:div.invalid-feedback
+        {:id error-id
+         :style {:display :block}} ; XXX: .invalid-feedback is hidden unless it's a sibling of .form-control.is-invalid
+        error])]))
 
 (defn add-user-form [resource]
   (let [user-field-id "blacklist-user"
         comment-field-id "blacklist-comment"
-        selected-users @(rf/subscribe [::selected-user])
+        selected-user @(rf/subscribe [::selected-user])
         comment @(rf/subscribe [::comment])]
     [:form
      {:on-submit (fn [event]
                    (.preventDefault event)
-                   (rf/dispatch [::add-to-blacklist resource selected-users comment]))}
+                   (if-some [errors (cond-> nil
+                                      (nil? selected-user) (assoc :user [#(text-format :t.form.validation/required
+                                                                                       (text :t.administration/user))]))]
+                     (do
+                       (rf/dispatch [::set-validation-errors errors])
+                       (.focus (js/document.getElementById user-field-id)))
+                     (rf/dispatch [::add-to-blacklist resource selected-user comment])))}
 
      [:div.form-group.row
       [:label.col-sm-1.col-form-label
