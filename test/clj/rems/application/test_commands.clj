@@ -663,29 +663,29 @@
                        injections)))
 
     (testing "adds the applicant and all members to blacklist"
-      (is (= (set [[:add-to-blacklist! {:user applicant-user-id
-                                        :resource "urn.fi/1"
+      (is (= (set [[:add-to-blacklist! {:userid applicant-user-id
+                                        :resource/ext-id "urn.fi/1"
                                         :actor handler-user-id
                                         :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member1"
-                                        :resource "urn.fi/1"
+                   [:add-to-blacklist! {:userid "member1"
+                                        :resource/ext-id "urn.fi/1"
                                         :actor handler-user-id
                                         :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member2"
-                                        :resource "urn.fi/1"
+                   [:add-to-blacklist! {:userid "member2"
+                                        :resource/ext-id "urn.fi/1"
                                         :actor handler-user-id
                                         :comment "license violated"}]
 
-                   [:add-to-blacklist! {:user applicant-user-id
-                                        :resource "urn.fi/2"
+                   [:add-to-blacklist! {:userid applicant-user-id
+                                        :resource/ext-id "urn.fi/2"
                                         :actor handler-user-id
                                         :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member1"
-                                        :resource "urn.fi/2"
+                   [:add-to-blacklist! {:userid "member1"
+                                        :resource/ext-id "urn.fi/2"
                                         :actor handler-user-id
                                         :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member2"
-                                        :resource "urn.fi/2"
+                   [:add-to-blacklist! {:userid "member2"
+                                        :resource/ext-id "urn.fi/2"
                                         :actor handler-user-id
                                         :comment "license violated"}]])
              (set @injection-calls))))))

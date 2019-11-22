@@ -68,10 +68,10 @@
   (not (empty? (get-blacklist {:userid userid
                                :resource/ext-id resource}))))
 
-(defn add-to-blacklist! [{:keys [user resource actor comment]}]
+(defn add-to-blacklist! [{:keys [userid actor comment] :as params}]
   (add-event! {:event/type :blacklist.event/add
                :event/actor actor
                :event/time (time/now)
-               :userid user
-               :resource/ext-id resource
+               :userid userid
+               :resource/ext-id (:resource/ext-id params)
                :event/comment comment}))
