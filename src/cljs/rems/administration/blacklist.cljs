@@ -29,12 +29,12 @@
 
 (rf/reg-event-fx
  ::add-to-blacklist
- (fn [{:keys [db]} [_ resource user]]
+ (fn [{:keys [db]} [_ resource user comment]]
    (let [description [text :t.administration/add]]
      (post! "/api/blacklist/add"
             {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
-                      :comment ""} ; TODO
+                      :comment comment}
              :handler (flash-message/default-success-handler
                        :top
                        description
@@ -46,12 +46,12 @@
 
 (rf/reg-event-fx
  ::remove-from-blacklist
- (fn [{:keys [db]} [_ resource user]]
+ (fn [{:keys [db]} [_ resource user comment]]
    (let [description [text :t.administration/remove]]
      (post! "/api/blacklist/remove"
             {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
-                      :comment ""} ; TODO: JS prompt()?
+                      :comment comment}
              :handler (flash-message/default-success-handler
                        :top
                        description
@@ -94,7 +94,9 @@
     [:form.form-inline
      {:on-submit (fn [event]
                    (.preventDefault event)
-                   (rf/dispatch [::add-to-blacklist resource selected-users]))}
+                   ;; TODO: more fancy input form for the comment?
+                   (when-some [comment (js/prompt (text :t.administration/comment))]
+                     (rf/dispatch [::add-to-blacklist resource selected-users comment])))}
 
      [:label.my-1.mr-2
       {:for user-field-id}
@@ -116,7 +118,9 @@
 (defn- remove-button [resource user]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(rf/dispatch [::remove-from-blacklist resource user])}
+    :on-click (fn [_event]
+                (when-some [comment (js/prompt (text :t.administration/comment))]
+                  (rf/dispatch [::remove-from-blacklist resource user comment])))}
    (text :t.administration/remove)])
 
 (defn- format-rows [rows]
