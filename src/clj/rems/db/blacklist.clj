@@ -1,6 +1,8 @@
 (ns rems.db.blacklist
   (:require [clj-time.core :as time]
             [rems.db.core :as db]
+            [rems.db.resource :as resource]
+            [rems.db.users :as users]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s]
@@ -39,6 +41,30 @@
 
 (defn add-event! [event]
   (db/add-blacklist-event! {:eventdata (event->json event)}))
+
+(defn- command->event [command user-id]
+  {:event/actor user-id
+   :event/time (time/now)
+   :userid (get-in command [:blacklist/user :userid])
+   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
+   :event/comment (:comment command)})
+
+(defn- validate-event [event]
+  (when-not (users/user-exists? (:userid event))
+    (throw (IllegalArgumentException. "user doesn't exist")))
+  (when-not (resource/ext-id-exists? (:resource/ext-id event))
+    (throw (IllegalArgumentException. "resource doesn't exist")))
+  event)
+
+(defn add! [user-id command]
+  (add-event! (-> (command->event command user-id)
+                  (assoc :event/type :blacklist.event/add)
+                  validate-event)))
+
+(defn remove! [user-id command]
+  (add-event! (-> (command->event command user-id)
+                  (assoc :event/type :blacklist.event/remove)
+                  validate-event)))
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))

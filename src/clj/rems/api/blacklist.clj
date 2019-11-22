@@ -20,13 +20,6 @@
          :blacklist/added-by schema/UserWithAttributes
          :blacklist/added-at DateTime))
 
-(defn- command->event [command]
-  {:event/actor (getx-user-id)
-   :event/time (time/now)
-   :userid (get-in command [:blacklist/user :userid])
-   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
-   :event/comment (:comment command)})
-
 (defn- format-blacklist-entry [entry]
   {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}
    :blacklist/user (users/get-user (:userid entry))
@@ -60,9 +53,7 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      ;; TODO: check that user and resource exist
-      (blacklist/add-event! (assoc (command->event command)
-                                   :event/type :blacklist.event/add))
+      (blacklist/add! (getx-user-id) command)
       (ok {:success true}))
 
     (POST "/remove" []
@@ -70,7 +61,5 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      ;; TODO: check that user and resource exist
-      (blacklist/add-event! (assoc (command->event command)
-                                   :event/type :blacklist.event/remove))
+      (blacklist/remove! (getx-user-id) command)
       (ok {:success true}))))

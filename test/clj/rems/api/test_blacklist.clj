@@ -1,9 +1,10 @@
 (ns ^:integration rems.api.test-blacklist
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
-  (:import [org.joda.time DateTime DateTimeUtils]))
+  (:import [org.joda.time DateTimeUtils]))
 
 (use-fixtures
   :once
@@ -42,13 +43,17 @@
       handler
       assert-response-is-ok))
 
-
-
 (deftest test-blacklist
+  (test-data/create-user! {:eppn "user1" :email ""})
+  (test-data/create-user! {:eppn "user2" :email ""})
+  (test-data/create-user! {:eppn "user3" :email ""})
+  (test-data/create-resource! {:resource-ext-id "A"})
+  (test-data/create-resource! {:resource-ext-id "B"})
+  (test-data/create-resource! {:resource-ext-id "C"})
+
   (testing "initially no blacklist"
     (is (= [] (fetch {}))))
   (testing "add three entries"
-
     (add! {:blacklist/user {:userid "user1"}
            :blacklist/resource {:resource/ext-id "A"}
            :comment "bad"})

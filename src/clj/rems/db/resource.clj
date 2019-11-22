@@ -23,3 +23,6 @@
        (db/apply-filters filters)
        (map format-resource)
        (map #(assoc % :licenses (licenses/get-resource-licenses (:id %))))))
+
+(defn ext-id-exists? [ext-id]
+  (some? (db/get-resource {:resid ext-id})))

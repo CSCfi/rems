@@ -2,10 +2,11 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.blacklist :as blacklist]
+            [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures
-  :once
+  :each
   test-db-fixture
   rollback-db-fixture)
 
@@ -45,7 +46,7 @@
          (blacklist/get-events {:resource/ext-id "urn.fi/123"})))
   (is (= [{:event/id 3
            :event/type :blacklist.event/add
-           :event/time (time/date-time 2019 01 01 01)
+           :event/time (time/date-time 2019 1 1 1 0 0)
            :event/actor "handler"
            :userid "user2"
            :resource/ext-id "urn.fi/124"
@@ -59,3 +60,46 @@
       "user was never added to blacklist")
   (is (blacklist/blacklisted? "user2" "urn.fi/124")
       "user was added to blacklist but not removed"))
+
+(deftest test-parameter-validation
+  (let [user-id "test-user"
+        resource-ext-id "test-resource"]
+    (test-data/create-user! {:eppn user-id :mail "test-user@test.com" :commonName "Test-user"})
+    (test-data/create-resource! {:resource-ext-id resource-ext-id})
+
+    (testing "can add existing users and resources"
+      (is (not (blacklist/blacklisted? user-id resource-ext-id)))
+      (blacklist/add! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
+                                 :blacklist/user {:userid user-id}
+                                 :comment ""})
+      (is (blacklist/blacklisted? user-id resource-ext-id)))
+
+    (testing "cannot add non-existing users"
+      (is (thrown? IllegalArgumentException
+                   (blacklist/add! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
+                                              :blacklist/user {:userid "non-existing-user"}
+                                              :comment ""}))))
+
+    (testing "cannot add non-existing resources"
+      (is (thrown? IllegalArgumentException
+                   (blacklist/add! "handler" {:blacklist/resource {:resource/ext-id "non-existing-resource"}
+                                              :blacklist/user {:userid user-id}
+                                              :comment ""}))))
+
+    (testing "can remove existing users and resources"
+      (blacklist/remove! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
+                                    :blacklist/user {:userid user-id}
+                                    :comment ""})
+      (is (not (blacklist/blacklisted? user-id resource-ext-id))))
+
+    (testing "cannot remove non-existing users"
+      (is (thrown? IllegalArgumentException
+                   (blacklist/remove! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
+                                                 :blacklist/user {:userid "non-existing-user"}
+                                                 :comment ""}))))
+
+    (testing "cannot remove non-existing resources"
+      (is (thrown? IllegalArgumentException
+                   (blacklist/remove! "handler" {:blacklist/resource {:resource/ext-id "non-existing-resource"}
+                                                 :blacklist/user {:userid user-id}
+                                                 :comment ""}))))))
