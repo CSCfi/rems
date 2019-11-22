@@ -42,11 +42,10 @@
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))
-         :event/id (:id event)))
+         :event/id (:event/id event)))
 
 (defn get-events [params]
-  (mapv event-from-db (db/get-blacklist-events {:user (:userid params)
-                                                :resource (:resource/ext-id params)})))
+  (mapv event-from-db (db/get-blacklist-events (select-keys params [:userid :resource/ext-id]))))
 
 (defn- events->blacklist [events]
   ;; TODO: move computation to db for performance
