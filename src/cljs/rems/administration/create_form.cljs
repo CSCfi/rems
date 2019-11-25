@@ -87,7 +87,7 @@
           new-item {:field/stable-id stable-id
                     :field/type :text}]
       (focus-field-editor! stable-id)
-      (update-in db [::form :form/fields] items/insert new-item index))))
+      (update-in db [::form :form/fields] items/add new-item index))))
 
 (rf/reg-event-db
  ::remove-form-field
@@ -458,30 +458,30 @@
           [add-form-field-button 0]]]
 
         (for [{index :field/id :as field} fields]
-          (:<>
-            [[:div.form-field {:id (field-editor-id (:field/stable-id field))
-                               :key index
-                               :data-field-index index}
-              [:div.form-field-header
-               [:h3 (text-format :t.create-form/field-n (inc index))]
-               [:div.form-field-controls
-                [move-form-field-up-button index]
-                [move-form-field-down-button index]
-                [remove-form-field-button index]]]
+          [:<>
+           [:div.form-field {:id (field-editor-id (:field/stable-id field))
+                             :key index
+                             :data-field-index index}
+            [:div.form-field-header
+             [:h3 (text-format :t.create-form/field-n (inc index))]
+             [:div.form-field-controls
+              [move-form-field-up-button index]
+              [move-form-field-down-button index]
+              [remove-form-field-button index]]]
 
-              [form-field-title-field index]
-              [form-field-type-radio-group index]
-              (when (supports-optional? field)
-                [form-field-optional-checkbox index])
-              (when (supports-placeholder? field)
-                [form-field-placeholder-field index])
-              (when (supports-max-length? field)
-                [form-field-max-length-field index])
-              (when (supports-options? field)
-                [form-field-option-fields index])]
+            [form-field-title-field index]
+            [form-field-type-radio-group index]
+            (when (supports-optional? field)
+              [form-field-optional-checkbox index])
+            (when (supports-placeholder? field)
+              [form-field-placeholder-field index])
+            (when (supports-max-length? field)
+              [form-field-max-length-field index])
+            (when (supports-options? field)
+              [form-field-option-fields index])]
 
-             [:div.form-field.new-form-field
-              [add-form-field-button (inc index)]]]))))
+           [:div.form-field.new-form-field
+            [add-form-field-button (inc index)]]])))
 
 (defn form-preview [form]
   [collapsible/component
