@@ -157,7 +157,7 @@
      [table/search catalogue-table]
      [table/table catalogue-table]]))
 
-(defn- items-by-id [items ids]
+(defn- items-by-ids [items ids]
   (filter (comp ids :id) items))
 
 (defn catalogue-items-page []
@@ -170,7 +170,7 @@
           [[roles/when roles/show-admin-edit-buttons?
             [:div.commands.text-left.pl-0
              [create-catalogue-item-button]
-             [change-form-button (items-by-id @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
+             [change-form-button (items-by-ids @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
             [status-flags/display-archived-toggle #(do (rf/dispatch [::fetch-catalogue])
                                                        (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]
             [status-flags/disabled-and-archived-explanation]]
