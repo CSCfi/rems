@@ -39,8 +39,16 @@
   (s/validate BlacklistEvent event)
   (json/generate-string event))
 
+(defn- check-foreign-keys [event]
+  ;; TODO: These checks could be moved to the database as (1) constraint checks or (2) fields with foreign keys.
+  (when-not (users/user-exists? (:userid event))
+    (throw (IllegalArgumentException. "user doesn't exist")))
+  (when-not (resource/ext-id-exists? (:resource/ext-id event))
+    (throw (IllegalArgumentException. "resource doesn't exist")))
+  event)
+
 (defn add-event! [event]
-  (db/add-blacklist-event! {:eventdata (event->json event)}))
+  (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
 
 (defn- command->event [command user-id]
   {:event/actor user-id
@@ -49,22 +57,15 @@
    :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
    :event/comment (:comment command)})
 
-(defn- validate-event [event]
-  (when-not (users/user-exists? (:userid event))
-    (throw (IllegalArgumentException. "user doesn't exist")))
-  (when-not (resource/ext-id-exists? (:resource/ext-id event))
-    (throw (IllegalArgumentException. "resource doesn't exist")))
-  event)
-
 (defn add! [user-id command]
   (add-event! (-> (command->event command user-id)
                   (assoc :event/type :blacklist.event/add)
-                  validate-event)))
+                  check-foreign-keys)))
 
 (defn remove! [user-id command]
   (add-event! (-> (command->event command user-id)
                   (assoc :event/type :blacklist.event/remove)
-                  validate-event)))
+                  check-foreign-keys)))
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))

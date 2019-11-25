@@ -11,6 +11,12 @@
   rollback-db-fixture)
 
 (deftest test-blacklist-event-storage
+  (test-data/create-user! {:eppn "user1"})
+  (test-data/create-user! {:eppn "user2"})
+  (test-data/create-user! {:eppn "handler"})
+  (test-data/create-resource! {:resource-ext-id "urn.fi/123"})
+  (test-data/create-resource! {:resource-ext-id "urn.fi/124"})
+
   (blacklist/add-event! {:event/type :blacklist.event/add
                          :event/actor "handler"
                          :event/time (time/date-time 2019 1 2 8 0 0)
@@ -64,7 +70,7 @@
 (deftest test-parameter-validation
   (let [user-id "test-user"
         resource-ext-id "test-resource"]
-    (test-data/create-user! {:eppn user-id :mail "test-user@test.com" :commonName "Test-user"})
+    (test-data/create-user! {:eppn user-id})
     (test-data/create-resource! {:resource-ext-id resource-ext-id})
 
     (testing "can add existing users and resources"
