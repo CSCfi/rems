@@ -50,8 +50,15 @@
       coerce-outboxdata
       (assoc :outbox/id (:id row))))
 
-(defn- next-attempt-now? [entry]
-  (. (:outbox/next-attempt entry) isBefore (DateTime/now)))
+(defn- next-attempt-now? [now entry]
+  (when-let [next (:outbox/next-attempt entry)]
+    (not (. next isAfter now))))
+
+(deftest test-next-attempt-now?
+  (is (next-attempt-now? (DateTime. 1234) {:outbox/next-attempt (DateTime. 1234)}))
+  (is (not (next-attempt-now? (DateTime. 1233) {:outbox/next-attempt (DateTime. 1234)})))
+  (is (next-attempt-now? (DateTime. 1235) {:outbox/next-attempt (DateTime. 1234)}))
+  (is (not (next-attempt-now? (DateTime. 1235) {:outbox/next-attempt nil}))))
 
 (defn get-entries
   ([]
@@ -59,7 +66,7 @@
   ([{:keys [type ids due-now?]}]
    (cond->> (db/get-outbox {:ids ids})
      true (map fix-row-from-db)
-     due-now? (filter next-attempt-now?) ;; TODO move to db?
+     due-now? (filter (partial next-attempt-now? (DateTime/now))) ;; TODO move to db?
      type (filter #(= type (:outbox/type %))))))
 
 (defn get-entry-by-id [id]
