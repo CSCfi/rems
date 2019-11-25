@@ -4,20 +4,21 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.application-util]
             [rems.atoms :as atoms]
+            [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text localize-time]]
+            [rems.text :refer [text text-format localize-time]]
             [rems.util :refer [fetch post!]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:dispatch-n [[::fetch {}]
+   {:dispatch-n [[::fetch-blacklist {}]
                  [:rems.table/reset]]}))
 
 (rf/reg-event-fx
- ::fetch
+ ::fetch-blacklist
  (fn [{:keys [db]} [_ params]]
    (let [description [text :t.administration/blacklist]]
      (fetch "/api/blacklist"
@@ -27,24 +28,158 @@
    {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-fx
+ ::add-to-blacklist
+ (fn [{:keys [db]} [_ resource user comment]]
+   (let [description [text :t.administration/add]]
+     (post! "/api/blacklist/add"
+            {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
+                      :blacklist/user (select-keys user [:userid])
+                      :comment (or comment "")}
+             :handler (flash-message/default-success-handler
+                       :top
+                       description
+                       (fn []
+                         (rf/dispatch [::fetch-blacklist])
+                         (rf/dispatch [::set-validation-errors nil])
+                         (rf/dispatch [::set-selected-user nil])
+                         (rf/dispatch [::set-comment nil])))
+             :error-handler (flash-message/default-error-handler :top description)}))
+   {}))
+
+(rf/reg-event-fx
  ::remove-from-blacklist
- (fn [{:keys [db]} [_ resource user]]
+ (fn [{:keys [db]} [_ resource user comment]]
    (let [description [text :t.administration/remove]]
      (post! "/api/blacklist/remove"
             {:params {:blacklist/resource (select-keys resource [:resource/ext-id])
                       :blacklist/user (select-keys user [:userid])
-                      :comment ""}
+                      :comment (or comment "")}
              :handler (flash-message/default-success-handler
                        :top
                        description
-                       #(rf/dispatch [::fetch]))
+                       #(rf/dispatch [::fetch-blacklist]))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
+
+(rf/reg-event-fx
+ ::fetch-users
+ (fn []
+   (fetch "/api/blacklist/users"
+          {:handler #(rf/dispatch [::fetch-users-result %])
+           :error-handler (flash-message/default-error-handler :top "Fetch users")})
+   {}))
+
+(rf/reg-event-db
+ ::fetch-users-result
+ (fn [db [_ users]]
+   (assoc db ::all-users (map atoms/enrich-user users))))
+
+(rf/reg-sub
+ ::all-users
+ (fn [db _]
+   (::all-users db)))
+
+(rf/reg-event-db
+ ::set-selected-user
+ (fn [db [_ user]]
+   (assoc db ::selected-user user)))
+
+(rf/reg-sub
+ ::selected-user
+ (fn [db _]
+   (::selected-user db)))
+
+(rf/reg-event-db
+ ::set-comment
+ (fn [db [_ user]]
+   (assoc db ::comment user)))
+
+(rf/reg-sub
+ ::comment
+ (fn [db _]
+   (::comment db)))
+
+(rf/reg-event-db
+ ::set-validation-errors
+ (fn [db [_ user]]
+   (assoc db ::validation-errors user)))
+
+(rf/reg-sub
+ ::validation-errors
+ (fn [db _]
+   (::validation-errors db)))
+
+(defn user-field [id]
+  (let [all-users @(rf/subscribe [::all-users])
+        selected-users @(rf/subscribe [::selected-user])
+        error (:user @(rf/subscribe [::validation-errors]))
+        error-id (str id "-error")]
+    [:<>
+     ;; TODO: add aria-describedby pointing to error-id
+     ;; TODO: highlight an invalid dropdown similar to "form-control is-invalid" for normal input fields
+     [dropdown/dropdown
+      {:id id
+       :items all-users
+       :item-key :userid
+       :item-label :display
+       :item-selected? #(= (:userid selected-users) (:userid %))
+       :on-change #(rf/dispatch [::set-selected-user %])}]
+
+     (when error
+       [:div.invalid-feedback
+        {:id error-id
+         :style {:display :block}} ; XXX: .invalid-feedback is hidden unless it's a sibling of .form-control.is-invalid
+        error])]))
+
+(defn add-user-form [resource]
+  (let [user-field-id "blacklist-user"
+        comment-field-id "blacklist-comment"
+        selected-user @(rf/subscribe [::selected-user])
+        comment @(rf/subscribe [::comment])]
+    [:form
+     {:on-submit (fn [event]
+                   (.preventDefault event)
+                   (if-some [errors (cond-> nil
+                                      (nil? selected-user) (assoc :user [#(text-format :t.form.validation/required
+                                                                                       (text :t.administration/user))]))]
+                     (do
+                       (rf/dispatch [::set-validation-errors errors])
+                       (.focus (js/document.getElementById user-field-id)))
+                     (rf/dispatch [::add-to-blacklist resource selected-user comment])))}
+
+     [:div.form-group.row
+      [:label.col-sm-1.col-form-label
+       {:for user-field-id}
+       (text :t.administration/user)]
+
+      [:div.col-sm-6
+       [user-field user-field-id]]]
+
+     [:div.form-group.row
+      [:label.col-sm-1.col-form-label
+       {:for comment-field-id}
+       (text :t.administration/comment)]
+
+      [:div.col-sm-6
+       [:input.form-control
+        {:id comment-field-id
+         :type :text
+         :value comment
+         :on-change #(rf/dispatch [::set-comment (-> % .-target .-value)])}]]]
+
+     [:div.form-group.row
+      [:div.col-sm-1]
+      [:div.col-sm-6
+       [:button.btn.btn-primary
+        {:type :submit}
+        (text :t.administration/add)]]]]))
 
 (defn- remove-button [resource user]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(rf/dispatch [::remove-from-blacklist resource user])}
+    :on-click (fn [_event]
+                (when-some [comment (js/prompt (text :t.administration/comment))]
+                  (rf/dispatch [::remove-from-blacklist resource user comment])))}
    (text :t.administration/remove)])
 
 (defn- format-rows [rows]

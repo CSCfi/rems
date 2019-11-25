@@ -1,6 +1,8 @@
 (ns rems.db.blacklist
   (:require [clj-time.core :as time]
             [rems.db.core :as db]
+            [rems.db.resource :as resource]
+            [rems.db.users :as users]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s]
@@ -37,8 +39,24 @@
   (s/validate BlacklistEvent event)
   (json/generate-string event))
 
+(defn- check-foreign-keys [event]
+  ;; TODO: These checks could be moved to the database as (1) constraint checks or (2) fields with foreign keys.
+  (when-not (users/user-exists? (:userid event))
+    (throw (IllegalArgumentException. "user doesn't exist")))
+  (when-not (resource/ext-id-exists? (:resource/ext-id event))
+    (throw (IllegalArgumentException. "resource doesn't exist")))
+  event)
+
 (defn add-event! [event]
-  (db/add-blacklist-event! {:eventdata (event->json event)}))
+  (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
+
+(defn add-to-blacklist! [{:keys [user resource actor comment]}]
+  (add-event! {:event/type :blacklist.event/add
+               :event/actor actor
+               :event/time (time/now)
+               :userid user
+               :resource/ext-id resource
+               :event/comment comment}))
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))
@@ -68,11 +86,3 @@
 (defn blacklisted? [userid resource]
   (not (empty? (get-blacklist {:userid userid
                                :resource/ext-id resource}))))
-
-(defn add-to-blacklist! [{:keys [user resource actor comment]}]
-  (add-event! {:event/type :blacklist.event/add
-               :event/actor actor
-               :event/time (time/now)
-               :userid user
-               :resource/ext-id resource
-               :event/comment comment}))

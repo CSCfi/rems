@@ -42,6 +42,7 @@
             :show-throughput-times "Show throughput times"
             :todo-applications "Open applications"}
   :administration {:active "Active"
+                   :add "Add"
                    :added-at "Added at"
                    :added-by "Added by"
                    :archive "Archive"
