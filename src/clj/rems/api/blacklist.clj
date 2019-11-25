@@ -27,6 +27,21 @@
    :blacklist/comment (:event/comment entry)
    :blacklist/added-by (users/get-user (:event/actor entry))})
 
+(defn- command->event [command user-id]
+  {:event/actor user-id
+   :event/time (time/now)
+   :userid (get-in command [:blacklist/user :userid])
+   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
+   :event/comment (:comment command)})
+
+(defn- add! [user-id command]
+  (blacklist/add-event! (-> (command->event command user-id)
+                            (assoc :event/type :blacklist.event/add))))
+
+(defn- remove! [user-id command]
+  (blacklist/add-event! (-> (command->event command user-id)
+                            (assoc :event/type :blacklist.event/remove))))
+
 (def blacklist-api
   (context "/blacklist" []
     :tags ["blacklist"]
@@ -53,7 +68,7 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (blacklist/add! (getx-user-id) command)
+      (add! (getx-user-id) command)
       (ok {:success true}))
 
     (POST "/remove" []
@@ -61,5 +76,5 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (blacklist/remove! (getx-user-id) command)
+      (remove! (getx-user-id) command)
       (ok {:success true}))))

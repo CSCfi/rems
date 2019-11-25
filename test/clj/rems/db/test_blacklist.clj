@@ -73,39 +73,24 @@
     (test-data/create-user! {:eppn user-id})
     (test-data/create-resource! {:resource-ext-id resource-ext-id})
 
-    (testing "can add existing users and resources"
+    (testing "user and resource both exist"
       (is (not (blacklist/blacklisted? user-id resource-ext-id)))
-      (blacklist/add! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
-                                 :blacklist/user {:userid user-id}
-                                 :comment ""})
+      (blacklist/add-to-blacklist! {:user user-id
+                                    :resource resource-ext-id
+                                    :actor "handler"
+                                    :comment ""})
       (is (blacklist/blacklisted? user-id resource-ext-id)))
 
-    (testing "cannot add non-existing users"
+    (testing "user doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/add! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
-                                              :blacklist/user {:userid "non-existing-user"}
-                                              :comment ""}))))
-
-    (testing "cannot add non-existing resources"
-      (is (thrown? IllegalArgumentException
-                   (blacklist/add! "handler" {:blacklist/resource {:resource/ext-id "non-existing-resource"}
-                                              :blacklist/user {:userid user-id}
-                                              :comment ""}))))
-
-    (testing "can remove existing users and resources"
-      (blacklist/remove! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
-                                    :blacklist/user {:userid user-id}
-                                    :comment ""})
-      (is (not (blacklist/blacklisted? user-id resource-ext-id))))
-
-    (testing "cannot remove non-existing users"
-      (is (thrown? IllegalArgumentException
-                   (blacklist/remove! "handler" {:blacklist/resource {:resource/ext-id resource-ext-id}
-                                                 :blacklist/user {:userid "non-existing-user"}
+                   (blacklist/add-to-blacklist! {:user "non-existing-user"
+                                                 :resource resource-ext-id
+                                                 :actor "handler"
                                                  :comment ""}))))
 
-    (testing "cannot remove non-existing resources"
+    (testing "resource doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/remove! "handler" {:blacklist/resource {:resource/ext-id "non-existing-resource"}
-                                                 :blacklist/user {:userid user-id}
+                   (blacklist/add-to-blacklist! {:user user-id
+                                                 :resource "non-existing-resource"
+                                                 :actor "handler"
                                                  :comment ""}))))))

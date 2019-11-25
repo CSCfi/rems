@@ -50,22 +50,13 @@
 (defn add-event! [event]
   (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
 
-(defn- command->event [command user-id]
-  {:event/actor user-id
-   :event/time (time/now)
-   :userid (get-in command [:blacklist/user :userid])
-   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
-   :event/comment (:comment command)})
-
-(defn add! [user-id command]
-  (add-event! (-> (command->event command user-id)
-                  (assoc :event/type :blacklist.event/add)
-                  check-foreign-keys)))
-
-(defn remove! [user-id command]
-  (add-event! (-> (command->event command user-id)
-                  (assoc :event/type :blacklist.event/remove)
-                  check-foreign-keys)))
+(defn add-to-blacklist! [{:keys [user resource actor comment]}]
+  (add-event! {:event/type :blacklist.event/add
+               :event/actor actor
+               :event/time (time/now)
+               :userid user
+               :resource/ext-id resource
+               :event/comment comment}))
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))
@@ -95,11 +86,3 @@
 (defn blacklisted? [userid resource]
   (not (empty? (get-blacklist {:userid userid
                                :resource/ext-id resource}))))
-
-(defn add-to-blacklist! [{:keys [user resource actor comment]}]
-  (add-event! {:event/type :blacklist.event/add
-               :event/actor actor
-               :event/time (time/now)
-               :userid user
-               :resource/ext-id resource
-               :event/comment comment}))
