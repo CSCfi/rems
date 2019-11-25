@@ -2,8 +2,15 @@
   (:require [rems.text :refer [text]])
   (:refer-clojure :exclude [remove]))
 
-(defn add [items new-item]
-  (conj (vec items) new-item))
+(defn add
+  "Add new-item to the items with optionally an index. Adds to the end if index not given or is nil."
+  ([items new-item]
+   (conj (vec items) new-item))
+  ([items new-item index]
+   (let [index (or index (count items))]
+     (vec (concat (take index items)
+                  [new-item]
+                  (drop index items))))))
 
 (defn remove [items index]
   (vec (concat (subvec items 0 index)

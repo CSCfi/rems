@@ -11,6 +11,7 @@ Changes since v2.6
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
 - Redirect to login page when accessing an attachment link when logged out (#1590)
+- Form editor: add new field between fields (#1812)
 
 ### Fixes
 - More robust email resending (#1750)
