@@ -23,8 +23,8 @@
 (defn generate-emails! [new-events]
   (doseq [event new-events
           email (event-to-emails event)]
-    (email-outbox/put! {:email email
-                        :deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
+    (email-outbox/put! {:outbox/email email
+                        :outbox/deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
 
 ;;; Email poller
 
@@ -86,11 +86,11 @@
 
 (defn try-send-emails! []
   (doseq [email (email-outbox/get-emails {:due-now? true})]
-    (if-let [error (send-email! (:email-outbox/email email))]
+    (if-let [error (send-email! (:outbox/email email))]
       (let [email (email-outbox/attempt-failed! email error)]
-        (when (not (:email-outbox/next-attempt email))
-          (log/warn "all attempts to send email" (:email-outbox/id email) "failed")))
-      (email-outbox/attempt-succeeded! (:email-outbox/id email)))))
+        (when (not (:outbox/next-attempt email))
+          (log/warn "all attempts to send email" (:outbox/id email) "failed")))
+      (email-outbox/attempt-succeeded! (:outbox/id email)))))
 
 (mount/defstate email-poller
   :start (scheduler/start! try-send-emails! (Duration/standardSeconds 10))
