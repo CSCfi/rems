@@ -1,4 +1,4 @@
-(ns rems.email.outbox
+(ns rems.db.outbox
   (:require [clj-time.core :as time]
             [clojure.test :refer [deftest is testing]]
             [rems.db.core :as db]
