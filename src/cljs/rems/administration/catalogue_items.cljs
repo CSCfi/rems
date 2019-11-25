@@ -169,7 +169,7 @@
           [[spinner/big]]
           [[roles/when roles/show-admin-edit-buttons?
             [:div.commands.text-left.pl-0
-             [ create-catalogue-item-button]
+             [create-catalogue-item-button]
              [change-form-button (items-by-id @(rf/subscribe [::catalogue]) @(rf/subscribe [::selected-items]))]]
             [status-flags/display-archived-toggle #(do (rf/dispatch [::fetch-catalogue])
                                                        (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]
