@@ -9,23 +9,6 @@
             [schema.core :as s])
   (:import [org.joda.time Duration DateTime]))
 
-(def ^Duration initial-backoff (Duration/standardSeconds 10))
-(def ^Duration max-backoff (Duration/standardHours 12))
-
-(defn put! [data]
-  (:id (db/put-to-outbox! {:outboxdata (json/generate-string (assoc data
-                                                                    :outbox/type :email
-                                                                    :outbox/created (DateTime/now)
-                                                                    :outbox/next-attempt (DateTime/now)
-                                                                    :outbox/latest-error nil
-                                                                    :outbox/latest-attempt nil
-                                                                    :outbox/backoff initial-backoff))})))
-
-(defn update! [data]
-  (db/update-outbox! {:id (getx data :outbox/id)
-                      :outboxdata (json/generate-string (dissoc data :outbox/id))}))
-
-
 (def OutboxData
   {(s/optional-key :outbox/id) s/Int
    :outbox/type (s/enum :email)
@@ -37,12 +20,29 @@
    :outbox/latest-error (s/maybe s/Str)
    s/Keyword s/Any})
 
+(def ^Duration initial-backoff (Duration/standardSeconds 10))
+(def ^Duration max-backoff (Duration/standardHours 12))
+
+(defn put! [data]
+  (let [amended (assoc data
+                       :outbox/created (DateTime/now)
+                       :outbox/next-attempt (DateTime/now)
+                       :outbox/latest-error nil
+                       :outbox/latest-attempt nil
+                       :outbox/backoff initial-backoff)]
+    (s/validate OutboxData amended)
+    (:id (db/put-to-outbox! {:outboxdata (json/generate-string amended)}))))
+
+(defn update! [data]
+  (db/update-outbox! {:id (getx data :outbox/id)
+                      :outboxdata (json/generate-string (dissoc data :outbox/id))}))
+
+
 (def ^:private coerce-outboxdata
   (coerce/coercer! OutboxData (fn [schema]
                                 (if (= schema Duration)
                                   #(Duration. (long %))
                                   (json/coercion-matcher schema)))))
-
 
 (defn- fix-row-from-db [row]
   (-> (:outboxdata row)
@@ -50,27 +50,26 @@
       coerce-outboxdata
       (assoc :outbox/id (:id row))))
 
-(defn- next-attempt-now? [data]
-  (. (:outbox/next-attempt data) isBefore (DateTime/now)))
+(defn- next-attempt-now? [entry]
+  (. (:outbox/next-attempt entry) isBefore (DateTime/now)))
 
-(defn get-emails
+(defn get-entries
   ([]
-   (get-emails nil))
-  ([{:keys [ids due-now?]}]
-   (let [rows (->> (db/get-outbox {:ids ids})
-                   (map fix-row-from-db))]
-     (if due-now?
-       (filter next-attempt-now? rows) ;; TODO move to db?
-       rows))))
+   (get-entries nil))
+  ([{:keys [type ids due-now?]}]
+   (cond->> (db/get-outbox {:ids ids})
+     true (map fix-row-from-db)
+     due-now? (filter next-attempt-now?) ;; TODO move to db?
+     type (filter #(= type (:outbox/type %))))))
 
-(defn get-email-by-id [id]
-  (first (get-emails {:ids [id]})))
+(defn get-entry-by-id [id]
+  (first (get-entries {:ids [id]})))
 
-(defn- next-attempt [email now error]
-  (let [^DateTime next-attempt (-> now (.plus (:outbox/backoff email)))
-        ^DateTime deadline (:outbox/deadline email)
-        ^Duration backoff (-> (:outbox/backoff email) (.multipliedBy 2))]
-    (assoc email
+(defn- next-attempt [entry now error]
+  (let [^DateTime next-attempt (-> now (.plus (:outbox/backoff entry)))
+        ^DateTime deadline (:outbox/deadline entry)
+        ^Duration backoff (-> (:outbox/backoff entry) (.multipliedBy 2))]
+    (assoc entry
            :outbox/latest-attempt now
            :outbox/latest-error error
            :outbox/next-attempt (when (-> now (.isBefore deadline))
@@ -152,10 +151,10 @@
                            now "the error"))
           "after deadline"))))
 
-(defn attempt-failed! [email error]
-  (let [email (next-attempt email (time/now) error)]
-    (update! email)
-    email))
+(defn attempt-failed! [entry error]
+  (let [entry (next-attempt entry (time/now) error)]
+    (update! entry)
+    entry))
 
 (defn attempt-succeeded! [id]
   (db/delete-outbox! {:id id}))
