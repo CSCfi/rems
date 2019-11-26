@@ -92,7 +92,7 @@
                            :resource resource-id})
     (post-entitlements :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
-(defn update-entitlements-for
+(defn- update-entitlements-for-application
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
   then we end the entitlement and call the REST callback."
@@ -143,4 +143,4 @@
                      :application.event/revoked}
                    (:event/type event))
     (let [application (applications/get-unrestricted-application (:application/id event))]
-      (update-entitlements-for application))))
+      (update-entitlements-for-application application))))
