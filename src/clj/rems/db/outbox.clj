@@ -11,14 +11,15 @@
 
 (def OutboxData
   {(s/optional-key :outbox/id) s/Int
-   :outbox/type (s/enum :email)
+   :outbox/type (s/enum :email :entitlement-post)
    :outbox/backoff Duration
    :outbox/created DateTime
    :outbox/deadline DateTime
    :outbox/next-attempt (s/maybe DateTime)
    :outbox/latest-attempt (s/maybe DateTime)
    :outbox/latest-error (s/maybe s/Str)
-   s/Keyword s/Any})
+   (s/optional-key :outbox/email) s/Any
+   (s/optional-key :outbox/entitlement-post) s/Any})
 
 (def ^Duration initial-backoff (Duration/standardSeconds 10))
 (def ^Duration max-backoff (Duration/standardHours 12))
