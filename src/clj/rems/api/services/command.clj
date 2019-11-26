@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
+            [rems.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
@@ -34,8 +35,21 @@
          (mapcat #(approver-bot/generate-commands %))
          doall)))
 
+(defn- revokes-to-blacklist [new-events]
+  (doseq [event new-events]
+    (when (= :application.event/revoked (:event/type event))
+      (let [application (applications/get-unrestricted-application (:application/id event))]
+        (doseq [resource (:application/resources application)]
+          (doseq [user (application-util/applicant-and-members application)]
+            (blacklist/add-to-blacklist! {:user (:userid user)
+                                          :resource (:resource/ext-id resource)
+                                          :actor (:event/actor event)
+                                          :comment (:application/comment event)}))))))
+  [])
+
 (defn run-process-managers [new-events]
   (concat
+   (revokes-to-blacklist new-events)
    (email/generate-emails! new-events)
    (run-entitlements new-events)
    (run-approver-bot new-events)))
@@ -47,8 +61,7 @@
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses applications/get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
-   :allocate-application-ids! applications/allocate-application-ids!
-   :add-to-blacklist! blacklist/add-to-blacklist!})
+   :allocate-application-ids! applications/allocate-application-ids!})
 
 (defn command! [cmd]
   ;; Use locks to prevent multiple commands being executed in parallel.

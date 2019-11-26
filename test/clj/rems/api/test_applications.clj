@@ -4,6 +4,8 @@
             [rems.api.testing :refer :all]
             [rems.application.approver-bot :as approver-bot]
             [rems.db.applications]
+            [rems.db.blacklist :as blacklist]
+            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
@@ -495,6 +497,56 @@
                                     :application-id app-id})))
     (is (= "application.state/approved"
            (:application/state (get-application app-id applicant))))))
+
+(deftest test-revoke
+  (let [applicant-id "alice"
+        member-id "malice"
+        handler-id "handler"
+        wfid (test-data/create-dynamic-workflow! {:handlers [handler-id]})
+        formid (test-data/create-form! {})
+        ext1 "revoke-test-resource-1"
+        ext2 "revoke-test-resource-2"
+        res1 (test-data/create-resource! {:resource-ext-id ext1})
+        res2 (test-data/create-resource! {:resource-ext-id ext2})
+        cat1 (test-data/create-catalogue-item! {:workflow-id wfid :form-id formid :resource-id res1})
+        cat2 (test-data/create-catalogue-item! {:workflow-id wfid :form-id formid :resource-id res2})
+        app-id (test-data/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
+    (testing "set up application with multiple resources and members"
+      (is (= {:success true}
+             (send-command applicant-id {:type :application.command/submit
+                                         :application-id app-id})))
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/add-member
+                                       :application-id app-id
+                                       :member {:userid member-id}})))
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/approve
+                                       :application-id app-id
+                                       :comment ""}))))
+    (testing "entitlements are present"
+      (is (= #{{:end nil :resid ext1 :userid applicant-id}
+               {:end nil :resid ext2 :userid applicant-id}
+               {:end nil :resid ext1 :userid member-id}
+               {:end nil :resid ext2 :userid member-id}}
+             (set (map #(select-keys % [:end :resid :userid])
+                       (db/get-entitlements {:application app-id}))))))
+    (testing "users are not blacklisted"
+      (is (not (blacklist/blacklisted? applicant-id ext1)))
+      (is (not (blacklist/blacklisted? applicant-id ext2)))
+      (is (not (blacklist/blacklisted? member-id ext1)))
+      (is (not (blacklist/blacklisted? member-id ext2))))
+    (testing "revoke application"
+      (is (= {:success true}
+             (send-command handler-id {:type :application.command/revoke
+                                       :application-id app-id
+                                       :comment "bad"}))))
+    (testing "entitlements end"
+      (is (every? :end (db/get-entitlements {:application app-id}))))
+    (testing "users are blacklisted"
+      (is (blacklist/blacklisted? applicant-id ext1))
+      (is (blacklist/blacklisted? applicant-id ext2))
+      (is (blacklist/blacklisted? member-id ext1))
+      (is (blacklist/blacklisted? member-id ext2)))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
