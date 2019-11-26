@@ -275,9 +275,10 @@
 (rf/reg-event-db
  ::set-selected-rows
  (fn [db [_ table rows]]
-   (let [new-db (assoc-in db [::selected-rows (:id table)] (set (map :key rows)))]
+   (let [selected-rows (set (map :key rows))
+         new-db (assoc-in db [::selected-rows (:id table)] selected-rows)]
      (when-let [on-select (:on-select table)]
-       (on-select (get-in new-db [::selected-rows (:id table)])))
+       (on-select selected-rows))
      new-db)))
 
 (rf/reg-sub
