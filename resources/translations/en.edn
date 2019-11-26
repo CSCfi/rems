@@ -49,7 +49,6 @@
                    :back "Back"
                    :blacklist "Blacklist"
                    :change-form "Change form"
-                   :change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy with the chosen form will be activated."
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
@@ -189,7 +188,8 @@
              :show "Show"
              :show-less "Show less"
              :show-more "Show more"}
-  :change-form {:form-selection "Form"}
+  :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy with the chosen form will be activated."
+                :form-selection "Form"}
   :create-catalogue-item {:form-selection "Form"
                           :infourl "More info URL (optional, defaults to resource URN)"
                           :resource-selection "Resource"

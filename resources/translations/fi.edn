@@ -49,7 +49,6 @@
                    :back "Takaisin"
                    :blacklist "Kieltolista"
                    :change-form "Vaihda lomaketta"
-                   :change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto lopetetaan ja uuteen aktivoitavaan kopioon laitetaan valitsemasi lomake."
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
@@ -187,7 +186,8 @@
              :show "Näytä"
              :show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
-  :change-form {:form-selection "Lomake"}
+  :change-form {:change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto lopetetaan ja uuteen aktivoitavaan kopioon laitetaan valitsemasi lomake."
+                :form-selection "Lomake"}
   :create-catalogue-item {:form-selection "Lomake"
                           :infourl "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
                           :resource-selection "Resurssi"
