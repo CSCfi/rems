@@ -1,17 +1,21 @@
 (ns rems.db.entitlements
   "Creating and fetching entitlements."
   (:require [clj-http.client :as http]
+            [clj-time.core :as time]
             [clojure.set :refer [union]]
             [clojure.string :refer [join]]
             [clojure.tools.logging :as log]
+            [mount.core :as mount]
             [rems.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.outbox :as outbox]
             [rems.db.users :as users]
             [rems.json :as json]
             [rems.roles :refer [has-roles?]]
+            [rems.scheduler :as scheduler]
             [rems.text :as text]
             [rems.util :refer [getx-user-id]]))
 
@@ -45,8 +49,8 @@
       (doseq [e ents]
         (println (join separator [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
 
-(defn- post-entitlements [target-key entitlements]
-  (when-let [target (get-in env [:entitlements-target target-key])]
+(defn- post-entitlements! [{:keys [entitlements action] :as params}]
+  (when-let [target (get-in env [:entitlements-target action])]
     (let [payload (for [e entitlements]
                     {:application (:catappid e)
                      :resource (:resid e)
@@ -66,15 +70,32 @@
                          {:status "exception"}))
             status (:status response)]
         (when-not (= 200 status)
-          (log/warnf "Post failed: %s", response))
-        (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
+          (log/warnf "Entitlement post failed: %s", response)
+          (str "failed: " status))))))
 
-(defn- get-entitlements-by-user [application-id]
-  (->> (db/get-entitlements {:application application-id :is-active? true})
-       (group-by :userid)
-       (map (fn [[userid rows]]
-              [userid (set (map :resourceid rows))]))
-       (into {})))
+;; TODO argh adding these everywhere sucks
+(defn- fix-entry-from-db [entry]
+  (update-in entry [:outbox/entitlement-post :action] keyword))
+
+(defn process-outbox! []
+  (doseq [entry (mapv fix-entry-from-db
+                      (outbox/get-entries {:type :entitlement-post :due-now? true}))]
+    (if-let [error (post-entitlements! (:outbox/entitlement-post entry))]
+      (let [entry (outbox/attempt-failed! entry error)]
+        (when (not (:outbox/next-attempt entry))
+          (log/warn "all attempts to send entitlement post id " (:outbox/id entry) "failed")))
+      (outbox/attempt-succeeded! (:outbox/id entry)))))
+
+(mount/defstate entitlement-poller
+  :start (scheduler/start! process-outbox! (.toStandardDuration (time/seconds 10)))
+  :stop (scheduler/stop! entitlement-poller))
+
+(defn- add-to-outbox! [action entitlements]
+  (outbox/put! {:outbox/type :entitlement-post
+                :outbox/deadline (time/plus (time/now) (time/days 1)) ;; hardcoded for now
+                :outbox/backoff (.toStandardDuration (time/seconds 10)) ;; ditto
+                :outbox/entitlement-post {:action action
+                                          :entitlements entitlements}}))
 
 (defn- grant-entitlements! [application-id user-id resource-ids]
   (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids)
@@ -82,7 +103,7 @@
     (db/add-entitlement! {:application application-id
                           :user user-id
                           :resource resource-id})
-    (post-entitlements :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+    (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
 (defn- revoke-entitlements! [application-id user-id resource-ids]
   (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids)
@@ -90,7 +111,14 @@
     (db/end-entitlements! {:application application-id
                            :user user-id
                            :resource resource-id})
-    (post-entitlements :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+    (add-to-outbox! :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+
+(defn- get-entitlements-by-user [application-id]
+  (->> (db/get-entitlements {:application application-id :is-active? true})
+       (group-by :userid)
+       (map (fn [[userid rows]]
+              [userid (set (map :resourceid rows))]))
+       (into {})))
 
 (defn- update-entitlements-for-application
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
