@@ -80,7 +80,7 @@
 (defn process-outbox! []
   (doseq [entry (mapv fix-entry-from-db
                       (outbox/get-entries {:type :entitlement-post :due-now? true}))]
-    ;; TODO could bundle entitlements when sending
+    ;; TODO could send multiple entitlements at once instead of one outbox entry at a time
     (if-let [error (post-entitlements! (:outbox/entitlement-post entry))]
       (let [entry (outbox/attempt-failed! entry error)]
         (when (not (:outbox/next-attempt entry))
@@ -103,7 +103,7 @@
     (db/add-entitlement! {:application application-id
                           :user user-id
                           :resource resource-id})
-    ;; TODO could bundle entitlements when adding to outbox
+    ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
     (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
 (defn- revoke-entitlements! [application-id user-id resource-ids]
