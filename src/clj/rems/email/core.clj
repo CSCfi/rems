@@ -8,8 +8,8 @@
             [rems.application.model]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
+            [rems.db.outbox :as outbox]
             [rems.db.users :as users]
-            [rems.email.outbox :as email-outbox]
             [rems.email.template :as template]
             [rems.scheduler :as scheduler])
   (:import [javax.mail.internet InternetAddress]
@@ -23,8 +23,9 @@
 (defn generate-emails! [new-events]
   (doseq [event new-events
           email (event-to-emails event)]
-    (email-outbox/put! {:email email
-                        :deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
+    (outbox/put! {:outbox/type :email
+                  :outbox/email email
+                  :outbox/deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
 
 ;;; Email poller
 
@@ -85,12 +86,12 @@
             (str "failed sending email: " e)))))))
 
 (defn try-send-emails! []
-  (doseq [email (email-outbox/get-emails {:due-now? true})]
-    (if-let [error (send-email! (:email-outbox/email email))]
-      (let [email (email-outbox/attempt-failed! email error)]
-        (when (not (:email-outbox/next-attempt email))
-          (log/warn "all attempts to send email" (:email-outbox/id email) "failed")))
-      (email-outbox/attempt-succeeded! (:email-outbox/id email)))))
+  (doseq [email (outbox/get-entries {:type :email :due-now? true})]
+    (if-let [error (send-email! (:outbox/email email))]
+      (let [email (outbox/attempt-failed! email error)]
+        (when (not (:outbox/next-attempt email))
+          (log/warn "all attempts to send email" (:outbox/id email) "failed")))
+      (outbox/attempt-succeeded! (:outbox/id email)))))
 
 (mount/defstate email-poller
   :start (scheduler/start! try-send-emails! (Duration/standardSeconds 10))

@@ -20,13 +20,6 @@
          :blacklist/added-by schema/UserWithAttributes
          :blacklist/added-at DateTime))
 
-(defn- command->event [command]
-  {:event/actor (getx-user-id)
-   :event/time (time/now)
-   :userid (get-in command [:blacklist/user :userid])
-   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
-   :event/comment (:comment command)})
-
 (defn- format-blacklist-entry [entry]
   {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}
    :blacklist/user (users/get-user (:userid entry))
@@ -34,9 +27,25 @@
    :blacklist/comment (:event/comment entry)
    :blacklist/added-by (users/get-user (:event/actor entry))})
 
+(defn- command->event [command user-id]
+  {:event/actor user-id
+   :event/time (time/now)
+   :userid (get-in command [:blacklist/user :userid])
+   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
+   :event/comment (:comment command)})
+
+(defn- add! [user-id command]
+  (blacklist/add-event! (-> (command->event command user-id)
+                            (assoc :event/type :blacklist.event/add))))
+
+(defn- remove! [user-id command]
+  (blacklist/add-event! (-> (command->event command user-id)
+                            (assoc :event/type :blacklist.event/remove))))
+
 (def blacklist-api
   (context "/blacklist" []
     :tags ["blacklist"]
+
     (GET "/" []
       :summary "Get blacklist entries"
       :roles #{:handler :owner :reporter}
@@ -47,13 +56,19 @@
                                      :resource/ext-id resource})
            (mapv format-blacklist-entry)
            (ok)))
+
+    (GET "/users" []
+      :summary "Existing REMS users available for adding to the blacklist"
+      :roles #{:owner :handler}
+      :return [schema/UserWithAttributes]
+      (ok (users/get-users)))
+
     (POST "/add" []
       :summary "Add a blacklist entry"
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (blacklist/add-event! (assoc (command->event command)
-                                   :event/type :blacklist.event/add))
+      (add! (getx-user-id) command)
       (ok {:success true}))
 
     (POST "/remove" []
@@ -61,6 +76,5 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (blacklist/add-event! (assoc (command->event command)
-                                   :event/type :blacklist.event/remove))
+      (remove! (getx-user-id) command)
       (ok {:success true}))))

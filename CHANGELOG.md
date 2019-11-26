@@ -11,6 +11,7 @@ Changes since v2.6
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
 - Redirect to login page when accessing an attachment link when logged out (#1590)
+- Form editor: add new field between fields (#1812)
 
 ### Fixes
 - More robust email resending (#1750)
@@ -19,6 +20,7 @@ Changes since v2.6
 - More columns for blacklist table, blacklist visible on resource administration page (#1724)
 - New "header" form field type (#1805)
 - Scrollbar and focus now track moved and created form fields in form editor (#1802 #1803)
+- Users can be added and removed from the blacklist in the resource admin page (#1706)
 
 ## v2.6 "Kalevalantie" 2018-11-12
 

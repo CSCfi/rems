@@ -42,6 +42,7 @@
             :show-throughput-times "Näytä käsittelyajat"
             :todo-applications "Avoimet hakemukset"}
   :administration {:active "Aktiivinen"
+                   :add "Lisää"
                    :added-at "Lisätty"
                    :added-by "Lisääjä"
                    :archive "Arkistoi"

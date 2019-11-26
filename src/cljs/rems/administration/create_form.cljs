@@ -82,11 +82,12 @@
 
 (rf/reg-event-db
  ::add-form-field
- (fn [db [_]]
-   (let [stable-id (generate-stable-id)]
+ (fn [db [_ & [index]]]
+   (let [stable-id (generate-stable-id)
+         new-item {:field/stable-id stable-id
+                   :field/type :text}]
      (focus-field-editor! stable-id)
-     (update-in db [::form :form/fields] items/add {:field/stable-id stable-id
-                                                    :field/type :text}))))
+     (update-in db [::form :form/fields] items/add new-item index))))
 
 (rf/reg-event-db
  ::remove-form-field
@@ -368,11 +369,11 @@
   [checkbox context {:keys [:form/fields field-index :field/optional]
                      :label (text :t.create-form/optional)}])
 
-(defn- add-form-field-button []
+(defn- add-form-field-button [index]
   [:a {:href "#"
        :on-click (fn [event]
                    (.preventDefault event)
-                   (rf/dispatch [::add-form-field]))}
+                   (rf/dispatch [::add-form-field index]))}
    (text :t.create-form/add-form-field)])
 
 (defn- remove-form-field-button [field-index]
@@ -452,28 +453,35 @@
        [format-validation-errors errors form]])))
 
 (defn- form-fields [fields]
-  (into [:div]
-        (for [{index :field/id :as field} fields]
-          [:div.form-field {:id (field-editor-id (:field/stable-id field))
-                            :key index
-                            :data-field-index index}
-           [:div.form-field-header
-            [:h3 (text-format :t.create-form/field-n (inc index))]
-            [:div.form-field-controls
-             [move-form-field-up-button index]
-             [move-form-field-down-button index]
-             [remove-form-field-button index]]]
+  (into [:div
+         [:div.form-field.new-form-field
+          [add-form-field-button 0]]]
 
-           [form-field-title-field index]
-           [form-field-type-radio-group index]
-           (when (supports-optional? field)
-             [form-field-optional-checkbox index])
-           (when (supports-placeholder? field)
-             [form-field-placeholder-field index])
-           (when (supports-max-length? field)
-             [form-field-max-length-field index])
-           (when (supports-options? field)
-             [form-field-option-fields index])])))
+        (for [{index :field/id :as field} fields]
+          [:<>
+           [:div.form-field {:id (field-editor-id (:field/stable-id field))
+                             :key index
+                             :data-field-index index}
+            [:div.form-field-header
+             [:h3 (text-format :t.create-form/field-n (inc index))]
+             [:div.form-field-controls
+              [move-form-field-up-button index]
+              [move-form-field-down-button index]
+              [remove-form-field-button index]]]
+
+            [form-field-title-field index]
+            [form-field-type-radio-group index]
+            (when (supports-optional? field)
+              [form-field-optional-checkbox index])
+            (when (supports-placeholder? field)
+              [form-field-placeholder-field index])
+            (when (supports-max-length? field)
+              [form-field-max-length-field index])
+            (when (supports-options? field)
+              [form-field-option-fields index])]
+
+           [:div.form-field.new-form-field
+            [add-form-field-button (inc index)]]])))
 
 (defn form-preview [form]
   [collapsible/component
@@ -505,10 +513,6 @@
                      [form-organization-field]
                      [form-title-field]
                      [form-fields (:form/fields form)]
-
-                     [:div.form-field.new-form-field
-                      [add-form-field-button]]
-
                      [:div.col.commands
                       [cancel-button]
                       [save-form-button #(rf/dispatch [::send-form])]]]}]]

@@ -67,3 +67,11 @@ See also:
 - #1750: issue about email poller
 - #1775: PR refactoring email poller into process manager + outbox
 - #1784: issue about refactoring entitlements too
+
+## Amendment: generic outbox
+
+Date: 2019-11-25
+Authors: @opqdonut
+
+Instead of the separate outbox tables mentioned in the previous
+amendment, it was easier to go directly to a generic outbox table.

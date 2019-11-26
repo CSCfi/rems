@@ -4,7 +4,7 @@
 
 (defn- required? [field]
   (and (not (:field/optional field))
-       (not= :label (:field/type field))
+       (not (contains? #{:header :label} (:field/type field)))
        (str/blank? (:field/value field))))
 
 (defn- too-long? [field]

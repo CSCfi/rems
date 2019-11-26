@@ -18,11 +18,17 @@
                                  :field/optional true
                                  :field/value ""}]))))
 
-  (testing "labels are always effectively optional"
+  (testing "labels and headers are always effectively optional"
     (is (nil? (validate-fields [{:field/type :label
                                  :field/optional false
                                  :field/value ""}
                                 {:field/type :label
+                                 :field/optional true
+                                 :field/value ""}
+                                {:field/type :header
+                                 :field/optional false
+                                 :field/value ""}
+                                {:field/type :header
                                  :field/optional true
                                  :field/value ""}]))))
 

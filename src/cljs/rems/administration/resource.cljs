@@ -33,7 +33,8 @@
    {:db (-> db
             (assoc ::resource resource)
             (dissoc ::loading?))
-    :dispatch [:rems.administration.blacklist/fetch {:resource (:resid resource)}]}))
+    :dispatch-n [[::blacklist/fetch-blacklist {:resource (:resid resource)}]
+                 [::blacklist/fetch-users]]}))
 
 (rf/reg-sub ::resource (fn [db _] (::resource db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
@@ -47,7 +48,9 @@
   [collapsible/component
    {:id "blacklist"
     :title (text :t.administration/blacklist)
-    :always [blacklist/blacklist]}])
+    :always [:div
+             [blacklist/blacklist]
+             [blacklist/add-user-form {:resource/ext-id (:resid @(rf/subscribe [::resource]))}]]}])
 
 (defn resource-view [resource language]
   [:div.spaced-vertically-3

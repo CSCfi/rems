@@ -8,7 +8,20 @@
   (is (= [{}] (items/add nil {})))
   (is (= [{}] (items/add [] {})))
   (is (= [{:foo "A"} {:foo "new"}] (items/add [{:foo "A"}] {:foo "new"})))
-  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"}))))
+  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"})))
+
+  (is (vector? (items/add nil {} 0)))
+  (is (vector? (items/add [] {} 0)))
+  (is (= [{}] (items/add nil {} 0)))
+  (is (= [{}] (items/add [] {} 0)))
+  (is (vector? (items/add nil {} nil)))
+  (is (vector? (items/add [] {} nil)))
+  (is (= [{}] (items/add nil {} nil)))
+  (is (= [{}] (items/add [] {} nil)))
+  (is (= [{:foo "new"} {:foo "A"} {:foo "B"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"} 0)))
+  (is (= [{:foo "A"} {:foo "new"} {:foo "B"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"} 1)))
+  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"} 2)))
+  (is (= [{:foo "A"} {:foo "B"} {:foo "new"}] (items/add [{:foo "A"} {:foo "B"}] {:foo "new"} nil))))
 
 (deftest remove-item-test
   (is (vector? (items/remove [{}] 0)))
