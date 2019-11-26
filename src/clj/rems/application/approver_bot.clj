@@ -20,6 +20,9 @@
       :application-id (:application/id app)
       :comment ""}]))
 
+(defn- generate-commands-for-application-id [app-id]
+  (generate-commands (applications/get-unrestricted-application app-id)))
+
 (defn run-approver-bot [new-events]
   ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids
   (let [app-ids (->> new-events
@@ -30,6 +33,5 @@
                      (map :application/id)
                      distinct)]
     (->> app-ids
-         (map applications/get-unrestricted-application)
-         (mapcat #(generate-commands %))
+         (mapcat #(generate-commands-for-application-id %))
          doall)))
