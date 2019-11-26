@@ -810,7 +810,14 @@
                       :comment ""})))))
     (log/info "Performance test applications created")))
 
+(defn assert-no-existing-data! []
+  (assert (empty? (db/get-application-events {}))
+          "You have existing applications, refusing to continue. An empty database is needed.")
+  (assert (empty? (db/get-catalogue-items {}))
+          "You have existing catalogue items, refusing to continue. An empty database is needed."))
+
 (defn create-test-data! []
+  (assert-no-existing-data!)
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-test-users-and-roles!)
   (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
@@ -879,6 +886,7 @@
       (db/set-catalogue-item-endt! {:id dynamic-expired :end (time/now)}))))
 
 (defn create-demo-data! []
+  (assert-no-existing-data!)
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
