@@ -61,7 +61,7 @@
           (flash-message/show-default-success! :top [text :t.administration/change-form])
 
           (not= (:formid item) (:form/id form))
-          (rf/dispatch [::change-catalogue-item-form! (:id item) form (partial form-change-loop (rest items) form)])
+          (rf/dispatch [::change-catalogue-item-form! (:id item) form #(form-change-loop (rest items) form)])
 
           :else (recur (rest items) form))))
 
