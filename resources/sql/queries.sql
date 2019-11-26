@@ -477,7 +477,8 @@ VALUES (:payload::jsonb, :status);
 
 -- :name add-api-key! :insert
 INSERT INTO api_key (apiKey, comment)
-VALUES (:apikey, :comment);
+VALUES (:apikey, :comment)
+ON CONFLICT DO NOTHING;
 
 -- :name get-api-key :? :1
 SELECT apiKey FROM api_key
