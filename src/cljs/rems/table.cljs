@@ -345,7 +345,8 @@
                                  "table-row"
                                  "none")}
               :on-click (when (:selectable? table)
-                          #(rf/dispatch [::toggle-row-selection table (:key row)]))}
+                          #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
+                             (rf/dispatch [::toggle-row-selection table (:key row)])))}
          (when (:selectable? table)
            [:td.selection
             [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])

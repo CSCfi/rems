@@ -123,7 +123,7 @@
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
-           :commands {:td [:td.commands {:on-click #(.stopPropagation %)}
+           :commands {:td [:td.commands
                            [view-button (:id item)]
                            [roles/when roles/show-admin-edit-buttons?
                             [catalogue-item/edit-button (:id item)]
