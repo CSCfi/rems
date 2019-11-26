@@ -66,7 +66,7 @@
           :else (recur (rest items) form))))
 
 (defn- all-items-have-the-form-already? [items form]
-  (every? (comp #{(:form/id form)} :formid) items))
+  (every? #(= (:form/id form) (:formid %)) items))
 
 (defn- change-catalogue-item-form-button [items form]
   [:button.btn.btn-primary
