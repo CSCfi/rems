@@ -94,7 +94,6 @@
 (defn- add-to-outbox! [action entitlements]
   (outbox/put! {:outbox/type :entitlement-post
                 :outbox/deadline (time/plus (time/now) (time/days 1)) ;; hardcoded for now
-                :outbox/backoff (.toStandardDuration (time/seconds 10)) ;; ditto
                 :outbox/entitlement-post {:action action
                                           :entitlements entitlements}}))
 
