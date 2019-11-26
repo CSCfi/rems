@@ -471,10 +471,6 @@ ORDER BY id ASC;
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb);
 
--- :name log-entitlement-post! :insert
-INSERT INTO entitlement_post_log (payload, status)
-VALUES (:payload::jsonb, :status);
-
 -- :name add-api-key! :insert
 INSERT INTO api_key (apiKey, comment)
 VALUES (:apikey, :comment);
