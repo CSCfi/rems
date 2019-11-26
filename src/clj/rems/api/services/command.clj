@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
+            [rems.application.rejecter-bot :as rejecter-bot]
             [rems.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.db.blacklist :as blacklist]
@@ -38,6 +39,7 @@
    (revokes-to-blacklist new-events)
    (email/generate-emails! new-events)
    (run-entitlements new-events)
+   (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)))
 
 (def ^:private command-injections
