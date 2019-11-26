@@ -1,12 +1,12 @@
 (ns ^:integration rems.db.test-entitlements
-  (:require [cheshire.core :as cheshire]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
+            [rems.json :as json]
             [rems.testing-util :refer [suppress-logging]]
             [stub-http.core :as stub]))
 
@@ -22,8 +22,8 @@
    {:resid "res2" :catappid 12 :userid "user2" :start (time/date-time 2002 10 11) :mail "user2@tes.t"}])
 
 (def +expected-payload+
-  [{"resource" "res1" "application" 11 "user" "user1" "mail" "user1@tes.t"}
-   {"resource" "res2" "application" 12 "user" "user2" "mail" "user2@tes.t"}])
+  [{:resource "res1" :application 11 :user "user1" :mail "user1@tes.t"}
+   {:resource "res2" :application 12 :user "user2" :mail "user2@tes.t"}])
 
 (defn run-with-server
   [endpoint-spec callback]
@@ -39,7 +39,7 @@
      (fn [server]
        (is (nil? (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))
        (is (= [+expected-payload+] (for [r (stub/recorded-requests server)]
-                                     (cheshire/parse-string (get-in r [:body "postData"]))))))))
+                                     (json/parse-string (get-in r [:body "postData"]))))))))
   (testing "not-found"
     (run-with-server
      {:status 404}
@@ -64,6 +64,12 @@
                                           :entitlements-target {:add (str (:uri ~sym) "/add")
                                                                 :remove (str (:uri ~sym) "/remove")})]
        ~@body)))
+
+(defn- get-requests [server]
+  (doall
+   (for [req (stub/recorded-requests server)]
+     {:path (:path req)
+      :body (json/parse-string (get-in req [:body "postData"]))})))
 
 (deftest test-entitlement-granting
   (let [applicant "bob"
@@ -134,17 +140,9 @@
               (is (= [[applicant "resource1"] [applicant "resource2"]]
                      (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
             (testing "POST"
-              (is (= 2 (count (stub/recorded-requests server))))
-              (let [data (take 2 (stub/recorded-requests server))
-                    targets (map :path data)
-                    bodies (->> data
-                                (map #(get-in % [:body "postData"]))
-                                (map #(cheshire/parse-string % keyword))
-                                (apply concat))] ;; TODO factor out
-                (is (every? #{"/add"} targets))
-                (is (= [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}
-                        {:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]
-                       bodies)))))))
+              (is (= [{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
+                      {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}]
+                     (get-requests server)))))))
 
       (testing "approved application, more accepted licenses generates more entitlements"
         (with-stub-server server
@@ -160,17 +158,9 @@
                     [member "resource1"] [member "resource2"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
           (testing "POST"
-            (is (= 2 (count (stub/recorded-requests server))))
-            (let [data (stub/recorded-requests server)
-                  targets (map :path data)
-                  bodies (->> data
-                              (map #(get-in % [:body "postData"]))
-                              (map #(cheshire/parse-string % keyword))
-                              (apply concat))]
-              (is (every? #{"/add"} targets))
-              (is (= [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
-                      {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
-                     bodies))))))
+              (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                      {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
+                     (get-requests server))))))
 
       (testing "removing a member ends entitlements"
         (with-stub-server server
@@ -186,17 +176,9 @@
             (is (= [[applicant "resource1"] [applicant "resource2"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
           (testing "POST"
-            (is (= 2 (count (stub/recorded-requests server))))
-            (let [data (stub/recorded-requests server)
-                  targets (map :path data)
-                  bodies (->> data
-                              (map #(get-in % [:body "postData"]))
-                              (map #(cheshire/parse-string % keyword))
-                              (apply concat))]
-              (is (every? #{"/remove"} targets))
-              (is (= [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}
-                      {:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]
-                     bodies))))))
+            (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                    {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
+                   (get-requests server))))))
 
       (testing "changing resources changes entitlements"
         (with-stub-server server
@@ -212,12 +194,9 @@
             (is (= [[applicant "resource1"] [applicant "resource3"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
           (testing "POST"
-            (is (= 2 (count (stub/recorded-requests server))))
-            (let [data (stub/recorded-requests server)
-                  data (map #(assoc % :body (cheshire/parse-string (get-in % [:body "postData"]) keyword)) data)]
-              (is (= [{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}
-                      {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}]
-                     (map #(select-keys % [:path :body]) data)))))))
+            (is (= [{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}
+                    {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}]
+                   (get-requests server))))))
 
       (testing "closed application should end entitlements"
         (with-stub-server server
@@ -231,12 +210,9 @@
           (testing "db"
             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
           (testing "POST"
-            (is (= 2 (count (stub/recorded-requests server))))
-            (let [data (stub/recorded-requests server)
-                  data (map #(assoc % :body (cheshire/parse-string (get-in % [:body "postData"]) keyword)) data)]
-              (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
-                      {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}]
-                     (map #(select-keys % [:path :body]) data))))))))
+            (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
+                    {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}]
+                   (get-requests server)))))))
 
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
       (test-data/command! {:type :application.command/accept-licenses
@@ -265,8 +241,5 @@
           (testing "db"
             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
           (testing "POST"
-            (is (= 1 (count (stub/recorded-requests server))))
-            (let [data (stub/recorded-requests server)
-                  data (map #(assoc % :body (cheshire/parse-string (get-in % [:body "postData"]) keyword)) data)]
-              (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
-                     (map #(select-keys % [:path :body]) data))))))))))
+            (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
+                   (get-requests server)))))))))
