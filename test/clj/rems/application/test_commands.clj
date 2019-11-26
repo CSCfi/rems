@@ -623,34 +623,16 @@
                         :comment "outdated"})))))
 
 (deftest test-revoke
-  (let [application (apply-events nil
-                                  [(assoc dummy-created-event
-                                          :application/resources [{:catalogue-item/id 1
-                                                                   :resource/ext-id "urn.fi/1"}
-                                                                  {:catalogue-item/id 2
-                                                                   :resource/ext-id "urn.fi/2"}])
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "member1"}}
-                                   {:event/type :application.event/member-added
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id
-                                    :application/member {:userid "member2"}}
-                                   {:event/type :application.event/approved
-                                    :event/time test-time
-                                    :event/actor handler-user-id
-                                    :application/id app-id
-                                    :application/comment ""}])
-        injection-calls (atom [])
-        injections {:add-to-blacklist! (fn [& args]
-                                         (swap! injection-calls conj (cons :add-to-blacklist! args)))}]
+  (let [application (apply-events nil [dummy-created-event
+                                       {:event/type :application.event/submitted
+                                        :event/time test-time
+                                        :event/actor applicant-user-id
+                                        :application/id app-id}
+                                       {:event/type :application.event/approved
+                                        :event/time test-time
+                                        :event/actor handler-user-id
+                                        :application/id app-id
+                                        :application/comment ""}])]
     (is (= {:event/type :application.event/revoked
             :event/time test-time
             :event/actor handler-user-id
@@ -660,35 +642,7 @@
                        {:type :application.command/revoke
                         :actor handler-user-id
                         :comment "license violated"}
-                       injections)))
-
-    (testing "adds the applicant and all members to blacklist"
-      (is (= (set [[:add-to-blacklist! {:user applicant-user-id
-                                        :resource "urn.fi/1"
-                                        :actor handler-user-id
-                                        :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member1"
-                                        :resource "urn.fi/1"
-                                        :actor handler-user-id
-                                        :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member2"
-                                        :resource "urn.fi/1"
-                                        :actor handler-user-id
-                                        :comment "license violated"}]
-
-                   [:add-to-blacklist! {:user applicant-user-id
-                                        :resource "urn.fi/2"
-                                        :actor handler-user-id
-                                        :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member1"
-                                        :resource "urn.fi/2"
-                                        :actor handler-user-id
-                                        :comment "license violated"}]
-                   [:add-to-blacklist! {:user "member2"
-                                        :resource "urn.fi/2"
-                                        :actor handler-user-id
-                                        :comment "license violated"}]])
-             (set @injection-calls))))))
+                       injections)))))
 
 (deftest test-decision
   (let [application (apply-events nil
