@@ -21,3 +21,9 @@
 (defn applicant-and-members [application]
   (cons (:application/applicant application)
         (:application/members application)))
+
+(defn workflow-handlers [application]
+  (set (mapv :userid (get-in application [:application/workflow :workflow.dynamic/handlers]))))
+
+(defn is-handler? [application user]
+  (contains? (workflow-handlers application) user))

@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
+            [rems.application.rejecter-bot :as rejecter-bot]
             [rems.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.db.blacklist :as blacklist]
@@ -21,20 +22,6 @@
     (entitlements/update-entitlements-for-event event))
   [])
 
-(defn- run-approver-bot [new-events]
-  ;; the copy-as-new command produces events for multiple applications, so there can be 1 or 2 app-ids
-  (let [app-ids (->> new-events
-                     (filter (fn [event]
-                               ;; performance optimization: run only when an interesting event happens
-                               ;; (reading the app from DB is slowish; consider an in-memory event-based solution instead)
-                               (= :application.event/submitted (:event/type event))))
-                     (map :application/id)
-                     distinct)]
-    (->> app-ids
-         (map applications/get-unrestricted-application)
-         (mapcat #(approver-bot/generate-commands %))
-         doall)))
-
 (defn- revokes-to-blacklist [new-events]
   (doseq [event new-events]
     (when (= :application.event/revoked (:event/type event))
@@ -52,7 +39,8 @@
    (revokes-to-blacklist new-events)
    (email/generate-emails! new-events)
    (run-entitlements new-events)
-   (run-approver-bot new-events)))
+   (rejecter-bot/run-rejecter-bot new-events)
+   (approver-bot/run-approver-bot new-events)))
 
 (def ^:private command-injections
   {:valid-user? users/user-exists?

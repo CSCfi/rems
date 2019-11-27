@@ -3,6 +3,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.application.approver-bot :as approver-bot]
+            [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.entitlements :as entitlements]
             [rems.email.core :as email]
             [rems.json :as json]
@@ -215,7 +216,7 @@
                                           api-key applicant-id)]
                 (is (= "application.state/closed" (:application/state application)))))))))))
 
-(deftest test-approver-bot
+(deftest test-approver-rejecter-bots
   (let [api-key "42"
         owner-id "owner"
         handler-id "e2e-handler"
@@ -226,13 +227,17 @@
         applicant-attributes {:userid applicant-id
                               :name "E2E Applicant"
                               :email "applicant@example.com"}
-        bot-attributes {:userid approver-bot/bot-userid
-                        :email nil
-                        :name "bot"}]
+        approver-attributes {:userid approver-bot/bot-userid
+                             :email nil
+                             :name "approver"}
+        rejecter-attributes {:userid rejecter-bot/bot-userid
+                             :email nil
+                             :name "rejecter"}]
     (testing "create users"
       (api-call :post "/api/users/create" handler-attributes api-key owner-id)
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
-      (api-call :post "/api/users/create" bot-attributes api-key owner-id))
+      (api-call :post "/api/users/create" approver-attributes api-key owner-id)
+      (api-call :post "/api/users/create" rejecter-attributes api-key owner-id))
 
     (let [resource-ext-id "e2e-resource"
           resource-id
@@ -257,7 +262,9 @@
              (api-call :post "/api/workflows/create" {:organization "e2e"
                                                       :title "e2e workflow"
                                                       :type :dynamic
-                                                      :handlers [handler-id approver-bot/bot-userid]}
+                                                      :handlers [handler-id
+                                                                 approver-bot/bot-userid
+                                                                 rejecter-bot/bot-userid]}
                        api-key owner-id)))
           catalogue-item-id
           (testing "create catalogue item"
@@ -313,10 +320,10 @@
             (assert-success
              (api-call :post "/api/applications/submit" {:application-id application-id}
                        api-key applicant-id)))
-          (testing "application not approved"
+          (testing "application rejected"
             (let [application (api-call :get (str "/api/applications/" application-id) nil
                                         api-key applicant-id)]
-              (is (= "application.state/submitted" (:application/state application)))))
+              (is (= "application.state/rejected" (:application/state application)))))
           (testing "blacklist visible to handler in application"
             (let [application (api-call :get (str "/api/applications/" application-id) nil
                                         api-key handler-id)]
