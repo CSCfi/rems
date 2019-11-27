@@ -471,10 +471,6 @@ ORDER BY id ASC;
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb);
 
--- :name log-entitlement-post! :insert
-INSERT INTO entitlement_post_log (payload, status)
-VALUES (:payload::jsonb, :status);
-
 -- :name add-api-key! :insert
 INSERT INTO api_key (apiKey, comment)
 VALUES (:apikey, :comment)
@@ -509,13 +505,13 @@ INSERT INTO blacklist_event (eventdata)
 VALUES (:eventdata::jsonb);
 
 -- :name get-blacklist-events :? :*
-SELECT id, eventdata::text FROM blacklist_event
+SELECT id as "event/id", eventdata::text FROM blacklist_event
 WHERE 1=1
-/*~ (when (:resource params) */
-  AND eventdata->>'resource/ext-id' = :resource
+/*~ (when (:resource/ext-id params) */
+  AND eventdata->>'resource/ext-id' = :resource/ext-id
 /*~ ) ~*/
-/*~ (when (:user params) */
-  AND eventdata->>'userid' = :user
+/*~ (when (:userid params) */
+  AND eventdata->>'userid' = :userid
 /*~ ) ~*/
 ORDER BY id ASC
 ;

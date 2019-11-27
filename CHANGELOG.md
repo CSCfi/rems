@@ -12,6 +12,7 @@ Changes since v2.6
 - Application search tips hidden behind question mark icon (#1767)
 - Redirect to login page when accessing an attachment link when logged out (#1590)
 - Form editor: add new field between fields (#1812)
+- Entitlements appear immediately instead of after a delay (#1784)
 
 ### Fixes
 - More robust email resending (#1750)
@@ -21,6 +22,7 @@ Changes since v2.6
 - New "header" form field type (#1805)
 - Scrollbar and focus now track moved and created form fields in form editor (#1802 #1803)
 - Users can be added and removed from the blacklist in the resource admin page (#1706)
+- POSTing entitlements to entitlement-target is now retried (#1784)
 - [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
 
 ## v2.6 "Kalevalantie" 2018-11-12

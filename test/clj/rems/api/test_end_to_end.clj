@@ -4,6 +4,7 @@
             [rems.api.testing :refer :all]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
+            [rems.db.entitlements :as entitlements]
             [rems.email.core :as email]
             [rems.json :as json]
             [stub-http.core :as stub]))
@@ -18,7 +19,8 @@
 
 (deftest test-end-to-end
   (testing "clear poller backlog"
-    (email/try-send-emails!))
+    (email/try-send-emails!)
+    (entitlements/process-outbox!))
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
                                                 "/remove" {:status 200}})]
     ;; TODO should test emails with a mock smtp server
@@ -123,7 +125,7 @@
                (api-call :post "/api/applications/submit" {:application-id application-id}
                          api-key applicant-id)))
 
-            ;; we could start the poller normally and wait for it to process the events here for better coverage
+            ;; we could start the pollers normally and wait for them to process the events here for better coverage
             (email/try-send-emails!)
 
             (testing "email for new application"
@@ -157,6 +159,7 @@
                          api-key handler-id)))
 
             (email/try-send-emails!)
+            (entitlements/process-outbox!)
 
             (testing "email for approved application"
               (let [mail (last @email-atom)]
@@ -189,6 +192,7 @@
                          api-key handler-id)))
 
             (email/try-send-emails!)
+            (entitlements/process-outbox!)
 
             (testing "ended entitlement"
               (testing "visible via API"

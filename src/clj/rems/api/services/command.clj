@@ -28,8 +28,8 @@
       (let [application (applications/get-unrestricted-application (:application/id event))]
         (doseq [resource (:application/resources application)]
           (doseq [user (application-util/applicant-and-members application)]
-            (blacklist/add-to-blacklist! {:user (:userid user)
-                                          :resource (:resource/ext-id resource)
+            (blacklist/add-to-blacklist! {:userid (:userid user)
+                                          :resource/ext-id (:resource/ext-id resource)
                                           :actor (:event/actor event)
                                           :comment (:application/comment event)}))))))
   [])

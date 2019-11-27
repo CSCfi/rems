@@ -75,22 +75,22 @@
 
     (testing "user and resource both exist"
       (is (not (blacklist/blacklisted? user-id resource-ext-id)))
-      (blacklist/add-to-blacklist! {:user user-id
-                                    :resource resource-ext-id
+      (blacklist/add-to-blacklist! {:userid user-id
+                                    :resource/ext-id resource-ext-id
                                     :actor "handler"
                                     :comment ""})
       (is (blacklist/blacklisted? user-id resource-ext-id)))
 
     (testing "user doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/add-to-blacklist! {:user "non-existing-user"
-                                                 :resource resource-ext-id
+                   (blacklist/add-to-blacklist! {:userid "non-existing-user"
+                                                 :resource/ext-id resource-ext-id
                                                  :actor "handler"
                                                  :comment ""}))))
 
     (testing "resource doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/add-to-blacklist! {:user user-id
-                                                 :resource "non-existing-resource"
+                   (blacklist/add-to-blacklist! {:userid user-id
+                                                 :resource/ext-id "non-existing-resource"
                                                  :actor "handler"
                                                  :comment ""}))))))

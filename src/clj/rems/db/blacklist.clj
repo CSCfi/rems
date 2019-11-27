@@ -50,21 +50,20 @@
 (defn add-event! [event]
   (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
 
-(defn add-to-blacklist! [{:keys [user resource actor comment]}]
+(defn add-to-blacklist! [{:keys [userid actor comment] :as params}]
   (add-event! {:event/type :blacklist.event/add
                :event/actor actor
                :event/time (time/now)
-               :userid user
-               :resource/ext-id resource
+               :userid userid
+               :resource/ext-id (:resource/ext-id params)
                :event/comment comment}))
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))
-         :event/id (:id event)))
+         :event/id (:event/id event)))
 
 (defn get-events [params]
-  (mapv event-from-db (db/get-blacklist-events {:user (:userid params)
-                                                :resource (:resource/ext-id params)})))
+  (mapv event-from-db (db/get-blacklist-events (select-keys params [:userid :resource/ext-id]))))
 
 (defn- events->blacklist [events]
   ;; TODO: move computation to db for performance
