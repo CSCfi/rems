@@ -4,6 +4,7 @@
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.workflow1 :as workflow1]
+            [rems.application.workflow2 :as workflow2]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
