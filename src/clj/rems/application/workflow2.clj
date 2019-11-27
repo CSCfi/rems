@@ -11,7 +11,6 @@
 (def ^:private submittable-application-commands
   #{:application.command/save-draft
     :application.command/submit
-    :application.command/close
     :application.command/remove-member
     :application.command/invite-member
     :application.command/uninvite-member
@@ -37,8 +36,7 @@
     :application.command/request-decision
     :application.command/return
     :application.command/approve
-    :application.command/reject
-    :application.command/close})
+    :application.command/reject})
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
@@ -82,7 +80,6 @@
               :application.command/remove-member
               :application.command/invite-member
               :application.command/uninvite-member
-              :application.command/close
               :application.command/revoke}})
 
 (def ^:private closed-permissions
