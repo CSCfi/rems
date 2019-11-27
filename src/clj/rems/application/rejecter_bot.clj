@@ -8,16 +8,16 @@
 (defn- should-reject? [application]
   (not (empty? (:application/blacklist application))))
 
-(defn- generate-commands [event]
+(defn- generate-commands [event application]
   (when (= :application.event/submitted (:event/type event)) ;; rejecter bot only reacts to fresh applications
-    (let [application (applications/get-unrestricted-application (:application/id event))]
-      (when (application-util/is-handler? application bot-userid)
-        (when (should-reject? application)
-          [{:type :application.command/reject
-            :application-id (:application/id application)
-            :time (time/now)
-            :comment ""
-            :actor bot-userid}])))))
+    (when (application-util/is-handler? application bot-userid)
+      (when (should-reject? application)
+        [{:type :application.command/reject
+          :application-id (:application/id application)
+          :time (time/now)
+          :comment ""
+          :actor bot-userid}]))))
 
 (defn run-rejecter-bot [new-events]
-  (doall (mapcat generate-commands new-events)))
+  (doall (mapcat #(generate-commands % (applications/get-unrestricted-application (:application/id %)))
+                 new-events)))
