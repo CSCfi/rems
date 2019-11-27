@@ -34,15 +34,11 @@
     :application.command/uninvite-member
     :application.command/request-comment
     :application.command/request-decision
-    :application.command/return
-    :application.command/approve
-    :application.command/reject})
+    :application.command/return})
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
         :application.command/return
-        :application.command/approve
-        :application.command/reject
         :application.command/request-decision))
 
 (def ^:private created-permissions
@@ -63,7 +59,8 @@
                      :application.command/remark}
    :decider #{:see-everything
               :application.command/remark
-              :application.command/decide}
+              :application.command/approve
+              :application.command/reject}
    :past-decider #{:see-everything
                    :application.command/remark}})
 
@@ -80,7 +77,9 @@
               :application.command/remove-member
               :application.command/invite-member
               :application.command/uninvite-member
-              :application.command/revoke}})
+              :application.command/revoke}
+   :decider #{:see-everything
+              :application.command/remark}})
 
 (def ^:private closed-permissions
   {:applicant #{:application.command/copy-as-new}

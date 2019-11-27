@@ -22,6 +22,7 @@
              (permissions/user-permissions commented "commenter2")))))
 
   (testing "decider may decide only once"
+    ;; TODO: this test doesn't apply to this workflow
     (let [requested (reduce workflow2/calculate-permissions nil [{:event/type :application.event/created
                                                                   :event/actor "applicant"}
                                                                  {:event/type :application.event/submitted
@@ -31,7 +32,7 @@
                                                                   :application/deciders ["decider"]}])
           decided (reduce workflow2/calculate-permissions requested [{:event/type :application.event/decided
                                                                       :event/actor "decider"}])]
-      (is (= #{:see-everything :application.command/decide :application.command/remark}
+      (is (= #{:see-everything :application.command/approve :application.command/reject :application.command/remark}
              (permissions/user-permissions requested "decider")))
       (is (= #{:see-everything :application.command/remark}
              (permissions/user-permissions decided "decider")))))
