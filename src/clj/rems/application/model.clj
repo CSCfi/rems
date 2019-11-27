@@ -214,7 +214,11 @@
   application)
 
 (defn- calculate-permissions [application event]
-  (workflow1/calculate-permissions application event))
+  ;; TODO: proper workflow selection
+  (let [workflow (if (= "elsa" (get-in application [:application/applicant :userid]))
+                   workflow2/calculate-permissions
+                   workflow1/calculate-permissions)]
+    (workflow application event)))
 
 (defn application-view
   "Projection for the current state of a single application.
