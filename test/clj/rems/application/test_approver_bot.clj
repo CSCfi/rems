@@ -33,9 +33,9 @@
       (model/build-application-view injections)))
 
 (defn generate-commands [events injections]
-  (-> events
-      (apply-events injections)
-      (#'approver-bot/generate-commands)))
+  (let [application (apply-events events injections)]
+    (with-redefs [rems.db.applications/get-unrestricted-application (fn [_id] application)]
+      (#'approver-bot/generate-commands (last events)))))
 
 (deftest test-approver-bot
   (let [created-event {:event/type :application.event/created
