@@ -9,14 +9,14 @@
   (empty? (:application/blacklist application)))
 
 (defn- generate-commands [event application]
-  (when (= :application.event/submitted (:event/type event)) ;; approver bot only reacts to fresh applications
-    (when (application-util/is-handler? application bot-userid)
-      (when (should-approve? application)
-        [{:type :application.command/approve
-          :actor bot-userid
-          :time (time/now)
-          :application-id (:application/id event)
-          :comment ""}]))))
+  (when (and (= :application.event/submitted (:event/type event)) ;; approver bot only reacts to fresh applications
+             (application-util/is-handler? application bot-userid)
+             (should-approve? application))
+    [{:type :application.command/approve
+      :actor bot-userid
+      :time (time/now)
+      :application-id (:application/id event)
+      :comment ""}]))
 
 (defn run-approver-bot [new-events]
   (doall (mapcat #(generate-commands % (applications/get-unrestricted-application (:application/id %)))
