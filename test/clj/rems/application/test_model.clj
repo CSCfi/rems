@@ -206,11 +206,11 @@
 
 ;;;; Collecting sample applications
 
-(def ^:dynamic *sample-applications*)
+(def ^:dynamic *sample-event-seqs*)
 
-(defn save-sample-application! [application]
-  (swap! *sample-applications* conj application)
-  application)
+(defn save-sample-events! [events]
+  (swap! *sample-event-seqs* conj events)
+  events)
 
 (defn state-role-permissions [application]
   (->> (:rems.permissions/role-permissions application)
@@ -333,16 +333,20 @@
                      [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
          (bw/beautify-html))))
 
-(defn output-permissions-reference [applications]
-  (spit "docs/application-permissions.md"
-        (permissions-reference-doc
-         (summarize-permissions
-          (mapcat state-role-permissions applications)))))
+(defn output-permissions-reference [event-seqs]
+  ;; TODO: build docs from event-seqs using all workflows (filter impossible events? need to map commands to events?)
+  (let [applications (map (fn [events]
+                            (reduce model/application-view nil events))
+                          event-seqs)]
+    (spit "docs/application-permissions.md"
+          (permissions-reference-doc
+           (summarize-permissions
+            (mapcat state-role-permissions applications))))))
 
 (defn permissions-reference-fixture [f]
-  (binding [*sample-applications* (atom [])]
+  (binding [*sample-event-seqs* (atom [])]
     (f)
-    (output-permissions-reference @*sample-applications*)))
+    (output-permissions-reference @*sample-event-seqs*)))
 
 (use-fixtures :once permissions-reference-fixture)
 
@@ -351,8 +355,8 @@
 (defn apply-events [events]
   (let [application (->> events
                          events/validate-events
+                         save-sample-events!
                          (reduce model/application-view nil)
-                         save-sample-application!
                          ;; permissions are tested separately
                          permissions/cleanup)]
     (is (contains? model/states (:application/state application)))
