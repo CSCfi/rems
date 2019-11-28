@@ -212,11 +212,24 @@
   application)
 
 (defn state-role-permissions [application]
-  (map (fn [[role permissions]]
-         {:state (:application/state application)
-          :role role
-          :permissions permissions})
-       (:rems.permissions/role-permissions application)))
+  (->> (:rems.permissions/role-permissions application)
+       (map (fn [[role permissions]]
+              {:state (:application/state application)
+               :role role
+               :permissions permissions}))
+       (sort-by :role)))
+
+(deftest test-state-role-permissions
+  (is (= [{:state :application.state/submitted
+           :role :role-1
+           :permissions #{:foo}}
+          {:state :application.state/submitted
+           :role :role-2
+           :permissions #{:bar :gazonk}}]
+         (state-role-permissions
+          (-> {:application/state :application.state/submitted}
+              (permissions/update-role-permissions {:role-1 #{:foo}
+                                                    :role-2 #{:bar :gazonk}}))))))
 
 (defn output-permissions-reference [applications]
   (let [data (mapcat state-role-permissions applications)
