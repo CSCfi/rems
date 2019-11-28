@@ -260,7 +260,7 @@
    (contains? (get-in db [::selected-rows (:id table)]) key)))
 
 (defn- table-header [table]
-  (let [sorting @(rf/subscribe [::sorting (:id table)])]
+  (let [sorting @(rf/subscribe [::sorting table])]
     (into [:tr (when (:selectable? table) [:th.selection])]
           (for [column (:columns table)]
             [:th
