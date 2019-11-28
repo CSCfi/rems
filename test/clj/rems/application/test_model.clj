@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [hiccup.core :as hiccup]
+            [medley.core :refer [map-vals]]
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
@@ -231,10 +232,83 @@
               (permissions/update-role-permissions {:role-1 #{:foo}
                                                     :role-2 #{:bar :gazonk}}))))))
 
+(defn summarize-permissions [state-role-permissions]
+  (let [states (->> state-role-permissions (map :state) distinct sort)
+        roles (->> state-role-permissions (map :role) distinct sort)]
+    (for [state states
+          role roles]
+      (let [perm-sets (->> state-role-permissions
+                           (filter #(= state (:state %)))
+                           (filter #(= role (:role %)))
+                           (map :permissions))
+            all-perms (apply set/union perm-sets)
+            ;; the states and permissions are not guaranteed to have a 1:1 mapping,
+            ;; so we separate conditional permissions from those that are always there
+            always-perms (if (empty? perm-sets)
+                           #{}
+                           (apply set/intersection perm-sets))
+            sometimes-perms (set/difference all-perms always-perms)]
+        {:state state
+         :role role
+         :always-perms always-perms
+         :sometimes-perms sometimes-perms}))))
+
+(deftest test-summarize-permissions
+  (testing "always same permissions"
+    (is (= [{:state :application.state/submitted
+             :role :role-1
+             :always-perms #{:foo}
+             :sometimes-perms #{}}]
+           (summarize-permissions
+            [{:state :application.state/submitted
+              :role :role-1
+              :permissions #{:foo}}]))))
+
+  (testing "sometimes different permissions"
+    (is (= [{:state :application.state/submitted
+             :role :role-1
+             :always-perms #{}
+             :sometimes-perms #{:bar :foo}}]
+           (summarize-permissions
+            [{:state :application.state/submitted
+              :role :role-1
+              :permissions #{:foo}}
+             {:state :application.state/submitted
+              :role :role-1
+              :permissions #{:bar}}]))))
+
+  (testing "fills out missing state-role combinations"
+    (is (= [{:state :application.state/draft
+             :role :role-1
+             :always-perms #{}
+             :sometimes-perms #{}}
+            {:state :application.state/draft
+             :role :role-2
+             :always-perms #{:bar :gazonk}
+             :sometimes-perms #{}}
+            {:state :application.state/submitted
+             :role :role-1
+             :always-perms #{:foo}
+             :sometimes-perms #{}}
+            {:state :application.state/submitted
+             :role :role-2
+             :always-perms #{}
+             :sometimes-perms #{}}]
+           (summarize-permissions
+            [{:state :application.state/submitted
+              :role :role-1
+              :permissions #{:foo}}
+             {:state :application.state/draft
+              :role :role-2
+              :permissions #{:bar :gazonk}}])))))
+
 (defn output-permissions-reference [applications]
   (let [data (mapcat state-role-permissions applications)
-        states (->> data (map :state) distinct sort)
-        roles (->> data (map :role) distinct sort)
+        summary (summarize-permissions data)
+        states (->> summary (map :state) distinct sort)
+        roles (->> summary (map :role) distinct sort)
+        perms-by-state-and-role (->> (group-by (juxt :state :role) summary)
+                                     (map-vals first))
         nowrap (fn [s]
                  ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
                  (-> s
@@ -252,17 +326,7 @@
               [:th {:valign :top}
                (nowrap (name state))]
               (for [role roles]
-                (let [perm-sets (->> data
-                                     (filter #(= state (:state %)))
-                                     (filter #(= role (:role %)))
-                                     (map :permissions))
-                      all-perms (apply set/union perm-sets)
-                      ;; the states and permissions are not guaranteed to have a 1:1 mapping,
-                      ;; so we separate conditional permissions from those that are always there
-                      always-perms (if (empty? perm-sets)
-                                     #{}
-                                     (apply set/intersection perm-sets))
-                      sometimes-perms (set/difference all-perms always-perms)]
+                (let [{:keys [always-perms sometimes-perms]} (get perms-by-state-and-role [state role])]
                   [:td {:valign :top}
                    "<!-- role: " (name role) " -->"
                    (for [perm (sort always-perms)]
