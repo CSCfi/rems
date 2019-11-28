@@ -302,10 +302,8 @@
               :role :role-2
               :permissions #{:bar :gazonk}}])))))
 
-(defn output-permissions-reference [applications]
-  (let [data (mapcat state-role-permissions applications)
-        summary (summarize-permissions data)
-        states (->> summary (map :state) distinct sort)
+(defn permissions-reference-doc [summary]
+  (let [states (->> summary (map :state) distinct sort)
         roles (->> summary (map :role) distinct sort)
         perms-by-state-and-role (->> (group-by (juxt :state :role) summary)
                                      (map-vals first))
@@ -333,8 +331,13 @@
                      [:div (nowrap (name perm))])
                    (for [perm (sort sometimes-perms)]
                      [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
-         (bw/beautify-html)
-         (spit "docs/application-permissions.md"))))
+         (bw/beautify-html))))
+
+(defn output-permissions-reference [applications]
+  (spit "docs/application-permissions.md"
+        (permissions-reference-doc
+         (summarize-permissions
+          (mapcat state-role-permissions applications)))))
 
 (defn permissions-reference-fixture [f]
   (binding [*sample-applications* (atom [])]
