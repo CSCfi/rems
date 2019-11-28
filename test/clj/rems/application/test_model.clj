@@ -348,9 +348,11 @@
           (str
            "# Application Permissions Reference\n\n"
            "## Workflow 1\n\n"
+           "The normal workflow where the handler can do anything.\n\n"
            (build-doc workflow1/calculate-permissions)
            "\n\n"
            "## Workflow 2\n\n"
+           "The \"public officer workflow\" where the handler cannot approver or reject the application, but only the decider can.\n\n"
            (build-doc workflow2/calculate-permissions)))))
 
 (defn permissions-reference-fixture [f]

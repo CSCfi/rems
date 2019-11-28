@@ -2,6 +2,8 @@
 
 ## Workflow 1
 
+The normal workflow where the handler can do anything.
+
 <table border="1">
     <tr>
         <th>State \ Role</th>
@@ -360,6 +362,8 @@
 </table>
 
 ## Workflow 2
+
+The "public officer workflow" where the handler cannot approver or reject the application, but only the decider can.
 
 <table border="1">
     <tr>
