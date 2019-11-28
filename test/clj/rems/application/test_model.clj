@@ -8,6 +8,8 @@
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
+            [rems.application.workflow1 :as workflow1]
+            [rems.application.workflow2 :as workflow2]
             [rems.common-util :refer [deep-merge]]
             [rems.permissions :as permissions]
             [schema.core :as s])
@@ -313,7 +315,6 @@
                      (str/replace " " "\u00A0") ;  non-breaking space
                      (str/replace "-" "\u2011")))] ; non-breaking hyphen
     (->> (hiccup/html
-          "# Application Permissions Reference\n\n"
           [:table {:border 1}
            [:tr
             [:th (nowrap "State \\ Role")]
@@ -334,14 +335,23 @@
          (bw/beautify-html))))
 
 (defn output-permissions-reference [event-seqs]
-  ;; TODO: build docs from event-seqs using all workflows (filter impossible events? need to map commands to events?)
-  (let [applications (map (fn [events]
-                            (reduce model/application-view nil events))
-                          event-seqs)]
+  (let [build-doc (fn [workflow]
+                    (with-redefs [rems.application.model/calculate-permissions workflow]
+                      ;; TODO: filter impossible event sequences? need to map commands to events?
+                      (let [applications (map (fn [events]
+                                                (reduce model/application-view nil events))
+                                              event-seqs)]
+                        (permissions-reference-doc
+                         (summarize-permissions
+                          (mapcat state-role-permissions applications))))))]
     (spit "docs/application-permissions.md"
-          (permissions-reference-doc
-           (summarize-permissions
-            (mapcat state-role-permissions applications))))))
+          (str
+           "# Application Permissions Reference\n\n"
+           "## Workflow 1\n\n"
+           (build-doc workflow1/calculate-permissions)
+           "\n\n"
+           "## Workflow 2\n\n"
+           (build-doc workflow2/calculate-permissions)))))
 
 (defn permissions-reference-fixture [f]
   (binding [*sample-event-seqs* (atom [])]
