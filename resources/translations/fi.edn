@@ -186,7 +186,7 @@
              :show "Näytä"
              :show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
-  :change-form {:change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto lopetetaan ja uuteen aktivoitavaan kopioon laitetaan valitsemasi lomake."
+  :change-form {:change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto poistetaan käytöstä ja uusi kopio käyttää valitsemaasi lomaketta."
                 :form-selection "Lomake"}
   :create-catalogue-item {:form-selection "Lomake"
                           :infourl "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"

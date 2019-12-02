@@ -188,7 +188,7 @@
              :show "Show"
              :show-less "Show less"
              :show-more "Show more"}
-  :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy with the chosen form will be activated."
+  :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form." 
                 :form-selection "Form"}
   :create-catalogue-item {:form-selection "Form"
                           :infourl "More info URL (optional, defaults to resource URN)"
