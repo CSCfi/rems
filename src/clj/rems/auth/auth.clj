@@ -10,17 +10,13 @@
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [redirect]]))
 
-(defn- wrap-auth-default
-  "The standard auth middleware to use for non-shibboleth methods."
-  [handler]
-  (let [backend (session-backend)]
-    (-> handler
-        (wrap-authentication backend))))
+(defn- auth-backends []
+  (case (:authentication env)
+    :shibboleth [(shibboleth/backend)]
+    [(session-backend)]))
 
 (defn wrap-auth [handler]
-  (case (:authentication env)
-    :shibboleth (shibboleth/wrap-auth handler)
-    (wrap-auth-default handler)))
+  (apply wrap-authentication handler (auth-backends)))
 
 (defn- login-url []
   (case (:authentication env)

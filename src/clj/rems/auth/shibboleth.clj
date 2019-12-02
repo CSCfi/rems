@@ -3,9 +3,8 @@
                                            wrap-authorization]]
             [haka-buddy.backend :refer [shibbo-backend]]))
 
-(defn wrap-auth [handler]
-  (-> handler
-      (wrap-authentication (shibbo-backend))))
+(defn backend []
+  (shibbo-backend))
 
 (defn login-url []
   "/Shibboleth.sso/Login")
