@@ -371,6 +371,7 @@
   (or (must-not-be-empty cmd :deciders)
       (invalid-users-errors (:deciders cmd) injections)
       (ok {:event/type :application.event/final-decision-requested
+           :application/request-id (UUID/randomUUID)
            :application/deciders (:deciders cmd)
            :application/comment (:comment cmd)})))
 

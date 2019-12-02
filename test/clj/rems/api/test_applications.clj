@@ -827,6 +827,9 @@
 
 (deftest test-todos
   (let [app-id (test-data/create-application! {:actor "alice"})]
+    (test-data/create-user! {:eppn "commenter"})
+    (test-data/create-user! {:eppn "decider"})
+    (test-data/create-user! {:eppn "final-decider"})
 
     (testing "does not list drafts"
       (is (not (contains? (get-ids (get-todos "developer"))
@@ -846,13 +849,39 @@
       (is (empty? (get-ids (get-todos "developer" {:query "applicant:no-such-user"})))))
 
     (testing "commenter sees application in todos"
+      (is (not (contains? (get-ids (get-todos "commenter"))
+                          app-id)))
       (is (= {:success true} (send-command "developer" {:type :application.command/request-comment
                                                         :application-id app-id
-                                                        :commenters ["elsa"]
+                                                        :commenters ["commenter"]
                                                         :comment "x"})))
-      (is (contains? (get-ids (get-todos "elsa"))
+      (is (contains? (get-ids (get-todos "commenter"))
                      app-id))
-      (is (not (contains? (get-ids (get-handled-todos "elsa"))
+      (is (not (contains? (get-ids (get-handled-todos "commenter"))
+                          app-id))))
+
+    (testing "decider sees application in todos"
+      (is (not (contains? (get-ids (get-todos "decider"))
+                          app-id)))
+      (is (= {:success true} (send-command "developer" {:type :application.command/request-decision
+                                                        :application-id app-id
+                                                        :deciders ["decider"]
+                                                        :comment "x"})))
+      (is (contains? (get-ids (get-todos "decider"))
+                     app-id))
+      (is (not (contains? (get-ids (get-handled-todos "decider"))
+                          app-id))))
+
+    (testing "final-decider sees application in todos"
+      (is (not (contains? (get-ids (get-todos "final-decider"))
+                          app-id)))
+      (is (= {:success true} (send-command "developer" {:type :application.command/request-final-decision
+                                                        :application-id app-id
+                                                        :deciders ["final-decider"]
+                                                        :comment "x"})))
+      (is (contains? (get-ids (get-todos "final-decider"))
+                     app-id))
+      (is (not (contains? (get-ids (get-handled-todos "final-decider"))
                           app-id))))
 
     (testing "lists handled in handled"
@@ -869,8 +898,20 @@
                      app-id))
       (is (empty? (get-ids (get-handled-todos "developer" {:query "applicant:no-such-user"})))))
 
-    (testing "commenter doesn't see accepted application in todos"
-      (is (not (contains? (get-ids (get-todos "elsa"))
+    (testing "commenter sees accepted application in handled todos"
+      (is (not (contains? (get-ids (get-todos "commenter"))
                           app-id)))
-      (is (contains? (get-ids (get-handled-todos "elsa"))
+      (is (contains? (get-ids (get-handled-todos "commenter"))
+                     app-id)))
+
+    (testing "decider sees accepted application in handled todos"
+      (is (not (contains? (get-ids (get-todos "decider"))
+                          app-id)))
+      (is (contains? (get-ids (get-handled-todos "decider"))
+                     app-id)))
+
+    (testing "final-decider sees accepted application in handled todos"
+      (is (not (contains? (get-ids (get-todos "final-decider"))
+                          app-id)))
+      (is (contains? (get-ids (get-handled-todos "final-decider"))
                      app-id)))))

@@ -58,7 +58,7 @@
 ;; Api implementation
 
 (def ^:private todo-roles
-  #{:handler :commenter :decider :past-commenter :past-decider})
+  #{:handler :commenter :decider :final-decider :past-commenter :past-decider})
 
 (defn- potential-todo? [application]
   (and (some todo-roles (:application/roles application))

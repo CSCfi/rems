@@ -842,6 +842,56 @@
                                            :rems.application.model/latest-decision-request-by-user {}})]
           (is (= expected-application (recreate expected-application))))))))
 
+(deftest test-application-view-final-decision
+  (testing "> final decision requested"
+    (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
+          new-event {:event/type :application.event/final-decision-requested
+                     :event/time (DateTime. 4000)
+                     :event/actor "handler"
+                     :application/id 1
+                     :application/request-id request-id
+                     :application/deciders ["decider"]
+                     :application/comment "please decide"}
+          events (conj (:application/events submitted-application) new-event)
+          expected-application (merge submitted-application
+                                      {:application/last-activity (DateTime. 4000)
+                                       :application/events events
+                                       :application/todo :waiting-for-decision
+                                       :rems.application.model/latest-decision-request-by-user {"decider" request-id}})]
+      (is (= expected-application (recreate expected-application)))
+
+      (testing "> approved"
+        (let [new-event {:event/type :application.event/approved
+                         :event/time (DateTime. 5000)
+                         :event/actor "decider"
+                         :application/id 1
+                         :application/comment "I approve this"}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/state :application.state/approved
+                                           :application/todo nil
+                                           ;; TODO: should this map be cleared? would need request-id in the approve event, or a new key latest-final-decision-by-user
+                                           #_#_:rems.application.model/latest-decision-request-by-user {}})]
+          (is (= expected-application (recreate expected-application)))))
+
+      (testing "> rejected"
+        (let [new-event {:event/type :application.event/approved
+                         :event/time (DateTime. 5000)
+                         :event/actor "decider"
+                         :application/id 1
+                         :application/comment "I approve this"}
+              events (conj events new-event)
+              expected-application (merge expected-application
+                                          {:application/last-activity (DateTime. 5000)
+                                           :application/events events
+                                           :application/state :application.state/approved
+                                           :application/todo nil
+                                           ;; TODO: should this map be cleared? would need request-id in the approve event, or a new key latest-final-decision-by-user
+                                           #_#_:rems.application.model/latest-decision-request-by-user {}})]
+          (is (= expected-application (recreate expected-application))))))))
+
 (deftest test-application-view-adding-and-inviting
   (testing "> member invited"
     (let [token "b187bda7b9da9053a5d8b815b029e4ba"
@@ -1102,6 +1152,20 @@
                                 :application/id 1
                                 :application/deciders ["decider" "commenter"]}
                                get-user get-catalogue-item))))
+  (testing "final-decision-requested"
+    (is (= {:event/type :application.event/final-decision-requested
+            :event/time (DateTime. 1)
+            :event/actor "handler"
+            :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
+            :application/id 1
+            :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider"}
+                                   {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
+           (model/enrich-event {:event/type :application.event/final-decision-requested
+                                :event/time (DateTime. 1)
+                                :event/actor "handler"
+                                :application/id 1
+                                :application/deciders ["decider" "commenter"]}
+                               get-user get-catalogue-item))))
   (testing "comment-requested"
     (is (= {:event/type :application.event/comment-requested
             :event/time (DateTime. 1)
@@ -1250,6 +1314,17 @@
 
     (testing "personalized waiting for your decision"
       (let [application (model/application-view application {:event/type :application.event/decision-requested
+                                                             :event/actor "handler"
+                                                             :application/deciders ["decider1"]})]
+        (is (= :waiting-for-decision
+               (:application/todo (model/apply-user-permissions application "handler")))
+            "as seen by handler")
+        (is (= :waiting-for-your-decision
+               (:application/todo (model/apply-user-permissions application "decider1")))
+            "as seen by decider")))
+
+    (testing "personalized waiting for your final decision"
+      (let [application (model/application-view application {:event/type :application.event/final-decision-requested
                                                              :event/actor "handler"
                                                              :application/deciders ["decider1"]})]
         (is (= :waiting-for-decision

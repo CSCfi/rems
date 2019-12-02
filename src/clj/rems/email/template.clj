@@ -167,6 +167,12 @@
                         :t.email.decision-requested/subject
                         :t.email.decision-requested/message))
 
+(defmethod event-to-emails :application.event/final-decision-requested [event application]
+  (emails-to-recipients (:application/deciders event)
+                        event application
+                        :t.email.decision-requested/subject
+                        :t.email.decision-requested/message))
+
 (defmethod event-to-emails :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
   (emails-to-recipients [(:application/member event)]

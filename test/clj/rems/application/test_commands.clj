@@ -796,12 +796,15 @@
                              :deciders ["deity"]
                              :comment ""}
                             injections)
+          request-id (:application/request-id event)
           requested (apply-events application [event])]
       (testing "decision requested successfully"
+        (is (instance? UUID request-id))
         (is (= {:event/type :application.event/final-decision-requested
                 :event/time test-time
                 :event/actor handler-user-id
                 :application/id app-id
+                :application/request-id request-id
                 :application/deciders ["deity"]
                 :application/comment ""}
                event)))

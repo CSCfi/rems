@@ -150,7 +150,10 @@
 
 (defmethod event-type-specific-application-view :application.event/final-decision-requested
   [application event]
-  (-> application)) ; TODO
+  (-> application
+      (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
+                                                              (repeat (:application/request-id event))))
+      (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
@@ -371,6 +374,9 @@
              {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
 
              :application.event/decision-requested
+             {:application/deciders (mapv get-user (:application/deciders event))}
+
+             :application.event/final-decision-requested
              {:application/deciders (mapv get-user (:application/deciders event))}
 
              :application.event/comment-requested

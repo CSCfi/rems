@@ -139,6 +139,10 @@
        (str/join ", " (mapv application-util/get-member-name
                             (:application/deciders event)))
 
+       :application.event/final-decision-requested
+       (str/join ", " (mapv application-util/get-member-name
+                            (:application/deciders event)))
+
        (:application.event/member-added
         :application.event/member-invited
         :application.event/member-removed

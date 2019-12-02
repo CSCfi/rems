@@ -73,6 +73,7 @@
 (s/defschema FinalDecisionRequestedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/final-decision-requested)
+         :application/request-id s/Uuid
          :application/deciders [s/Str]
          :application/comment s/Str))
 (s/defschema DraftSavedEvent
