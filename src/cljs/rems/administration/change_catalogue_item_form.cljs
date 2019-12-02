@@ -133,7 +133,7 @@
      [document-title (text :t.administration/change-form)]
      [flash-message/component :top]
      [:div
-      [:p (text :t.administration/change-form-intro)]
+      [:p (text :t.change-form/change-form-intro)]
       [catalogue-items-table]
       [form-select]
       [:div.col.commands
