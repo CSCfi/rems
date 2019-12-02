@@ -1,5 +1,6 @@
 (ns rems.administration.catalogue-items
-  (:require [re-frame.core :as rf]
+  (:require [cljs-time.coerce :as time-coerce]
+            [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.catalogue-item :as catalogue-item]
             [rems.administration.status-flags :as status-flags]
@@ -97,7 +98,9 @@
  (fn [[catalogue language] _]
    (map (fn [item]
           {:key (:id item)
-           :name {:value (get-localized-title item language)}
+           :name {:value (get-localized-title item language)
+                  :sort-value [(get-localized-title item language)
+                               (- (time-coerce/to-long (:start item)))]} ; secondary sort by created, reverse
            :resource (let [value (:resource-name item)]
                        {:value value
                         :td [:td.resource
