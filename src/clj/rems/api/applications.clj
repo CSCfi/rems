@@ -241,6 +241,7 @@
     (command-endpoint :application.command/request-comment commands/RequestCommentCommand
                       "This corresponds to the \"Request review\" operation in the UI.")
     (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
+    (command-endpoint :application.command/request-final-decision commands/RequestDecisionCommand)
     (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
     (command-endpoint :application.command/return commands/ReturnCommand)
     (command-endpoint :application.command/revoke commands/RevokeCommand)

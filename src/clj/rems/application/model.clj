@@ -148,6 +148,10 @@
                                                               (repeat (:application/request-id event))))
       (update-todo-for-requests)))
 
+(defmethod event-type-specific-application-view :application.event/final-decision-requested
+  [application event]
+  (-> application)) ; TODO
+
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
@@ -462,7 +466,8 @@
        (remove (comp #{:application.event/comment-requested
                        :application.event/commented
                        :application.event/decided
-                       :application.event/decision-requested}
+                       :application.event/decision-requested
+                       :application.event/final-decision-requested}
                      :event/type))
        (remove #(and (= :application.event/remarked
                         (:event/type %))

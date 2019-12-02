@@ -101,6 +101,7 @@
    :application.event/decided :t.applications.events/decided
    :application.event/decision-requested :t.applications.events/decision-requested
    :application.event/draft-saved :t.applications.events/draft-saved
+   :application.event/final-decision-requested :t.applications.events/final-decision-requested
    :application.event/licenses-accepted :t.applications.events/licenses-accepted
    :application.event/licenses-added :t.applications.events/licenses-added
    :application.event/member-added :t.applications.events/member-added

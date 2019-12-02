@@ -635,6 +635,7 @@
                               :application.command/request-comment [request-review-action-button]
                               :application.command/comment [review-action-button]
                               :application.command/request-decision [request-decision-action-button]
+                              :application.command/request-final-decision [request-decision-action-button]
                               :application.command/decide [decide-action-button]
                               :application.command/remark [remark-action-button]
                               :application.command/approve [approve-reject-action-button]

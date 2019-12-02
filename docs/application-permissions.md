@@ -11,6 +11,7 @@ The normal workflow where the handler can do anything.
         <th>commenter</th>
         <th>decider</th>
         <th>everyone‑else</th>
+        <th>final‑decider</th>
         <th>handler</th>
         <th>member</th>
         <th>past‑commenter</th>
@@ -41,6 +42,10 @@ The normal workflow where the handler can do anything.
         <td valign="top">
             <!-- role: everyone-else -->
             <div>accept‑invitation</div>
+        </td>
+        <td valign="top">
+            <!-- role: final-decider -->
+            <div>see‑everything</div>
         </td>
         <td valign="top">
             <!-- role: handler -->
@@ -92,6 +97,10 @@ The normal workflow where the handler can do anything.
             <!-- role: everyone-else -->
         </td>
         <td valign="top">
+            <!-- role: final-decider -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
             <div>remark</div>
@@ -138,6 +147,9 @@ The normal workflow where the handler can do anything.
             <div>accept‑invitation</div>
         </td>
         <td valign="top">
+            <!-- role: final-decider -->
+        </td>
+        <td valign="top">
             <!-- role: handler -->
         </td>
         <td valign="top">
@@ -172,6 +184,10 @@ The normal workflow where the handler can do anything.
         </td>
         <td valign="top">
             <!-- role: everyone-else -->
+        </td>
+        <td valign="top">
+            <!-- role: final-decider -->
+            <div>see‑everything</div>
         </td>
         <td valign="top">
             <!-- role: handler -->
@@ -226,6 +242,10 @@ The normal workflow where the handler can do anything.
             <div>accept‑invitation</div>
         </td>
         <td valign="top">
+            <!-- role: final-decider -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
             <div>add‑licenses</div>
@@ -276,6 +296,10 @@ The normal workflow where the handler can do anything.
             <!-- role: everyone-else -->
         </td>
         <td valign="top">
+            <!-- role: final-decider -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
             <div>remark</div>
@@ -323,6 +347,13 @@ The normal workflow where the handler can do anything.
             <div>accept‑invitation</div>
         </td>
         <td valign="top">
+            <!-- role: final-decider -->
+            <div>see‑everything</div>
+            <div>approve</div>
+            <div>reject</div>
+            <div>remark</div>
+        </td>
+        <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
             <div>add‑licenses</div>
@@ -336,6 +367,7 @@ The normal workflow where the handler can do anything.
             <div>remove‑member</div>
             <div>request‑comment</div>
             <div>request‑decision</div>
+            <div>request‑final‑decision</div>
             <div>return</div>
             <div>uninvite‑member</div>
         </td>

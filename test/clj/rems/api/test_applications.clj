@@ -178,6 +178,7 @@
         (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
+                 "application.command/request-final-decision"
                  "application.command/remark"
                  "application.command/reject"
                  "application.command/approve"
@@ -304,6 +305,12 @@
                                               :application-id application-id
                                               :decision :approved
                                               :comment ""}))))
+      (testing "request-final-decision"
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/request-final-decision
+                                              :application-id application-id
+                                              :deciders [decider-id]
+                                              :comment ""}))))
       (testing "hidden remark"
         (is (= {:success true} (send-command handler-id {:type :application.command/remark
                                                          :application-id application-id
@@ -341,6 +348,7 @@
                     "application.event/resources-changed"
                     "application.event/decision-requested"
                     "application.event/decided"
+                    "application.event/final-decision-requested"
                     "application.event/remarked"
                     "application.event/remarked"
                     "application.event/approved"]

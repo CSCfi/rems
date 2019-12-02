@@ -35,6 +35,7 @@
     :application.command/uninvite-member
     :application.command/request-comment
     :application.command/request-decision
+    :application.command/request-final-decision
     :application.command/return
     :application.command/approve
     :application.command/reject
@@ -45,7 +46,8 @@
         :application.command/return
         :application.command/approve
         :application.command/reject
-        :application.command/request-decision))
+        :application.command/request-decision
+        :application.command/request-final-decision))
 
 (def ^:private created-permissions
   {:applicant submittable-application-commands
@@ -66,12 +68,17 @@
    :decider #{:see-everything
               :application.command/remark
               :application.command/decide}
+   :final-decider #{:see-everything
+                    :application.command/remark
+                    :application.command/approve
+                    :application.command/reject}
    :past-decider #{:see-everything
                    :application.command/remark}})
 
 (def ^:private returned-permissions
   {:applicant submittable-application-commands
-   :handler (conj handler-returned-commands :see-everything)})
+   :handler (conj handler-returned-commands :see-everything)
+   :final-decider #{:see-everything}})
 
 (def ^:private approved-permissions
   {:applicant non-submittable-application-commands
@@ -83,7 +90,8 @@
               :application.command/invite-member
               :application.command/uninvite-member
               :application.command/close
-              :application.command/revoke}})
+              :application.command/revoke}
+   :final-decider #{:see-everything}})
 
 (def ^:private closed-permissions
   {:applicant #{:application.command/copy-as-new}
@@ -93,6 +101,7 @@
    :commenter #{:see-everything}
    :past-commenter #{:see-everything}
    :decider #{:see-everything}
+   :final-decider #{:see-everything}
    :past-decider #{:see-everything}
    :everyone-else #{}})
 
@@ -148,6 +157,11 @@
   (-> application
       (permissions/remove-role-from-user :decider (:event/actor event))
       (permissions/give-role-to-users :past-decider [(:event/actor event)]))) ; allow to still view the application
+
+(defmethod calculate-permissions :application.event/final-decision-requested
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :final-decider (:application/deciders event))))
 
 (defmethod calculate-permissions :application.event/approved
   [application _event]
