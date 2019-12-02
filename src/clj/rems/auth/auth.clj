@@ -1,7 +1,6 @@
 (ns rems.auth.auth
   (:require [buddy.auth.backends.session :refer [session-backend]]
-            [buddy.auth.middleware :refer [wrap-authentication
-                                           wrap-authorization]]
+            [buddy.auth.middleware :refer [wrap-authentication]]
             [compojure.core :refer [GET routes]]
             [rems.auth.fake-shibboleth :as fake-shibboleth]
             [rems.auth.ldap :as ldap]
@@ -16,8 +15,7 @@
   [handler]
   (let [backend (session-backend)]
     (-> handler
-        (wrap-authentication backend)
-        (wrap-authorization backend))))
+        (wrap-authentication backend))))
 
 (defn wrap-auth [handler]
   (case (:authentication env)
