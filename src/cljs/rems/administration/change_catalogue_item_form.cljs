@@ -32,7 +32,7 @@
 
 
 (rf/reg-event-fx
- ::change-catalogue-item-form!
+ ::change-catalogue-item-form
  (fn [{:keys [db]} [_ catalogue-item-id form on-success]]
    (post! (str  "/api/catalogue-items/" catalogue-item-id "/change-form")
           {:params {:form (:form/id form)}
@@ -61,7 +61,7 @@
           (flash-message/show-default-success! :top [text :t.administration/change-form])
 
           (not= (:formid item) (:form/id form))
-          (rf/dispatch [::change-catalogue-item-form! (:id item) form #(form-change-loop (rest items) form)])
+          (rf/dispatch [::change-catalogue-item-form (:id item) form #(form-change-loop (rest items) form)])
 
           :else (recur (rest items) form))))
 

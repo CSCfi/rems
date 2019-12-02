@@ -62,7 +62,7 @@
    {}))
 
 (rf/reg-event-db
- ::set-selected-items!
+ ::set-selected-items
  (fn [db [_ items]]
    (assoc db ::selected-items items)))
 
@@ -152,7 +152,7 @@
                          :rows [::catalogue-table-rows]
                          :default-sort-column :name
                          :selectable? true
-                         :on-select #(rf/dispatch [::set-selected-items! %])}]
+                         :on-select #(rf/dispatch [::set-selected-items %])}]
     [:div.mt-3
      [table/search catalogue-table]
      [table/table catalogue-table]]))
