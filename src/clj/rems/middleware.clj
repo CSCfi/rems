@@ -65,18 +65,12 @@
         true (csrf-handler request)))))
 
 (defn- wrap-user
-  "Binds context/*user* to the buddy identity _or_ to x-rems-user-id if a valid api key is supplied."
+  "Binds context/*user* to the buddy identity."
   [handler]
   (fn [request]
-    (let [header-identity (when-let [uid (get-in request [:headers "x-rems-user-id"])]
-                            {:eppn uid})
-          session-identity (keywordize-keys (:identity request))]
-      (binding [context/*user* (if (and header-identity
-                                        (valid-api-key? request))
-                                 header-identity
-                                 session-identity)]
-        (with-mdc {:user (:eppn context/*user*)}
-          (handler request))))))
+    (binding [context/*user* (keywordize-keys (:identity request))]
+      (with-mdc {:user (:eppn context/*user*)}
+        (handler request)))))
 
 (defn wrap-context [handler]
   (fn [request]
