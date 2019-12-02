@@ -13,11 +13,14 @@
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [redirect]]))
 
+(defn- get-api-key [request]
+  (get-in request [:headers "x-rems-api-key"]))
+
 (defn- api-key-backend []
   (reify
     buddy.auth.protocols/IAuthentication
     (-parse [_ request]
-      {:key (get-in request [:headers "x-rems-api-key"])
+      {:key (get-api-key request)
        :user (when-let [uid (get-in request [:headers "x-rems-user-id"])]
                (merge {:eppn uid}
                       ;; we need the raw pre-formatted user attrs here since we emulate other login methods
@@ -32,8 +35,13 @@
                   (session-backend))]
     [(api-key-backend) backend]))
 
+(defn- wrap-uses-api-key [handler]
+  (fn [request]
+    (handler (assoc request :uses-api-key? (some? (get-api-key request))))))
+
 (defn wrap-auth [handler]
-  (apply wrap-authentication handler (auth-backends)))
+  (wrap-uses-api-key
+   (apply wrap-authentication handler (auth-backends))))
 
 (defn- login-url []
   (case (:authentication env)

@@ -42,13 +42,6 @@
     ;; instead
     (:app-context env)))
 
-(defn get-api-key [request]
-  (get-in request [:headers "x-rems-api-key"]))
-
-(defn valid-api-key? [request]
-  (when-let [key (get-api-key request)]
-    (api-key/valid? key)))
-
 (defn- csrf-error-handler
   "CSRF error is typical when the user session is timed out
   and we wish to redirect to login in that case."
@@ -60,10 +53,9 @@
   [handler]
   (let [csrf-handler (wrap-anti-forgery handler {:error-handler csrf-error-handler})]
     (fn [request]
-      (cond
-        (valid-api-key? request) (handler request)
-        (get-api-key request) (unauthorized "invalid api key")
-        true (csrf-handler request)))))
+      (if (:uses-api-key? request)
+        (handler request)
+        (csrf-handler request)))))
 
 (defn- wrap-user
   "Binds context/*user* to the buddy identity."
@@ -170,7 +162,7 @@
       (log/info ">" (:request-method request) uri
                 "lang:" context/*lang*
                 "user:" context/*user*
-                (if (get-api-key request)
+                (if (:uses-api-key? request)
                   "api-key"
                   "")
                 "roles:" context/*roles*)

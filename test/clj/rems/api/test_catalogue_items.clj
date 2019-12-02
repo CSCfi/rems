@@ -128,7 +128,7 @@
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create with wrong API-Key"
-    (is (= "invalid api key"
+    (is (= "unauthorized"
            (-> (request :post (str "/api/catalogue-items/create"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:form 1
@@ -146,8 +146,8 @@
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "edit with wrong API-Key"
-    (is (= "invalid api key"
-           (-> (request :post (str "/api/catalogue-items/edit"))
+    (is (= "unauthorized"
+           (-> (request :put (str "/api/catalogue-items/edit"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:id 1
                            :localizations {:en {:title "malicious localization"}}})
