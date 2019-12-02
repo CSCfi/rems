@@ -286,7 +286,7 @@
  (fn [db [_ table]]
    (let [selected-rows @(rf/subscribe [::selected-rows table])
          all-visible-rows (set (map :key @(rf/subscribe [::displayed-rows table])))
-         all-selected?  (= all-visible-rows selected-rows)
+         all-selected?  (and (= all-visible-rows selected-rows) (seq all-visible-rows))
          some-selected? (seq selected-rows)]
      (cond all-selected? :all
            some-selected? :some
