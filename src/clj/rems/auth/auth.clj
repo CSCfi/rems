@@ -9,6 +9,7 @@
             [rems.auth.shibboleth :as shibboleth]
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
+            [rems.db.users :as users]
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [redirect]]))
 
@@ -18,7 +19,9 @@
     (-parse [_ request]
       {:key (get-in request [:headers "x-rems-api-key"])
        :user (when-let [uid (get-in request [:headers "x-rems-user-id"])]
-               {:eppn uid})})
+               (merge {:eppn uid}
+                      ;; we need the raw pre-formatted user attrs here since we emulate other login methods
+                      (users/get-user-attributes uid)))})
     (-authenticate [_ request {:keys [key user]}]
       (when (api-key/valid? key)
         user))))

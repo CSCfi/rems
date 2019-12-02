@@ -36,7 +36,7 @@
   (when user
     (add-user! user userattrs)))
 
-(defn- get-user-attributes
+(defn get-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
    Returns a structure like this:
    {:eppn \"developer\"
@@ -47,7 +47,8 @@
 
   You should use get-user instead."
   [userid]
-  (json/parse-string (:userattrs (db/get-user-attributes {:user userid}))))
+  (when-let [json (:userattrs (db/get-user-attributes {:user userid}))]
+    (json/parse-string json)))
 
 (defn user-exists? [userid]
   (some? (get-user-attributes userid)))

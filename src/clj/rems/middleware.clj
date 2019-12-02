@@ -14,11 +14,12 @@
             [rems.db.applications :as applications]
             [rems.db.roles :as roles]
             [rems.db.user-settings :as user-settings]
+            [rems.db.users :as users]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tempura-config]]
             [rems.logging :refer [with-mdc]]
-            [rems.util :refer [getx-user-id]]
+            [rems.util :refer [get-user-id getx-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -69,6 +70,7 @@
   [handler]
   (fn [request]
     (binding [context/*user* (keywordize-keys (:identity request))]
+      (users/add-user-if-logged-in! (get-user-id) context/*user*)
       (with-mdc {:user (:eppn context/*user*)}
         (handler request)))))
 
