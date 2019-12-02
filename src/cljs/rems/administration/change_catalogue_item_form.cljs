@@ -77,6 +77,11 @@
                   (all-items-have-the-form-already? items form))}
    (text :t.administration/change)])
 
+(defn- back-button []
+  [atoms/link {:class "btn btn-primary"}
+   (str "/administration/catalogue-items")
+   (text :t.administration/back)])
+
 (defn- to-catalogue-item [catalogue-item-id]
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/catalogue-items/" catalogue-item-id)
@@ -137,4 +142,5 @@
       [catalogue-items-table]
       [form-select]
       [:div.col.commands
+       [back-button]
        [change-catalogue-item-form-button catalogue-items @(rf/subscribe [::form])]]]]))
