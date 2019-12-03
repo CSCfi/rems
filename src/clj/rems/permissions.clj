@@ -114,26 +114,54 @@
                                          :role [:bar]})
                (update-role-permissions {:role [:gazonk]}))))))
 
-(defn remove-permission-from-all [application permission]
+(defn- remove-permission-from-role [application role permission]
+  (assert (keyword? role) {:role role})
+  (update-in application [::role-permissions role] (fn [permissions]
+                                                     (-> (set permissions)
+                                                         (disj permission)))))
+
+(defn- remove-permission-from-all-roles [application permission]
   (let [roles (keys (::role-permissions application))]
     (reduce (fn [application role]
               (update-in application [::role-permissions role] disj permission))
             application
             roles)))
 
-(deftest test-remove-permission-from-all
-  (testing "removes the permission from all roles"
-    (is (= {::role-permissions {:role-1 #{}
-                                :role-2 #{}}}
+(defn- remove-permission [application {:keys [role permission]}]
+  (if (keyword? role)
+    (remove-permission-from-role application role permission)
+    (remove-permission-from-all-roles application permission)))
+
+(defn restrict
+  "Applies rules for restricting the possible permissions.
+  `restrictions` should list the permissions to remove in the format
+  `[{:role keyword :permission keyword}]` where `:role` is optional."
+  [application restrictions]
+  (reduce remove-permission application restrictions))
+
+(deftest test-restrict
+  (testing "restrict a permission for all roles"
+    (is (= {:rems.permissions/role-permissions {:role-1 #{:bar}
+                                                :role-2 #{}}}
            (-> {}
-               (update-role-permissions {:role-1 [:foo]
-                                         :role-2 [:foo]})
-               (remove-permission-from-all :foo)))))
-  (testing "leaves unrelated permissions unchanged"
-    (is (= {::role-permissions {:role #{:bar}}}
+               (update-role-permissions {:role-1 [:foo :bar]})
+               (update-role-permissions {:role-2 [:foo]})
+               (restrict [{:permission :foo}])))))
+  (testing "restrict a permission for a single role"
+    (is (= {:rems.permissions/role-permissions {:role-1 #{:bar}
+                                                :role-2 #{:foo}}}
            (-> {}
-               (update-role-permissions {:role [:foo :bar]})
-               (remove-permission-from-all :foo))))))
+               (update-role-permissions {:role-1 [:foo :bar]})
+               (update-role-permissions {:role-2 [:foo]})
+               (restrict [{:role :role-1 :permission :foo}])))))
+  (testing "multiple restrictions"
+    (is (= {:rems.permissions/role-permissions {:role-1 #{:bar}
+                                                :role-2 #{:foo}}}
+           (-> {}
+               (update-role-permissions {:role-1 [:foo :bar]})
+               (update-role-permissions {:role-2 [:foo :bar]})
+               (restrict [{:role :role-1 :permission :foo}
+                          {:role :role-2 :permission :bar}]))))))
 
 (defn user-permissions
   "Returns a set of the specified user's permissions to this application.

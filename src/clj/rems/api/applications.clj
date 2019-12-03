@@ -71,8 +71,12 @@
 (defn- todo? [application]
   (and (= :application.state/submitted (:application/state application))
        (some #{:application.command/approve
+               :application.command/reject
+               :application.command/return
                :application.command/comment
-               :application.command/decide}
+               :application.command/decide
+               :application.command/request-decision
+               :application.command/request-final-decision}
              (:application/permissions application))))
 
 (defn get-todos [user-id]

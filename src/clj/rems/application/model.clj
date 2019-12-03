@@ -222,10 +222,16 @@
 
 (defn- calculate-permissions [application event]
   ;; TODO: proper workflow selection
-  (let [workflow (if (= "elsa" (get-in application [:application/applicant :userid]))
-                   workflow2/calculate-permissions
-                   workflow1/calculate-permissions)]
-    (workflow application event)))
+  (let [restrictions (case (get-in application [:application/applicant :userid])
+                       "elsa" [{:permission :application.command/close}
+                               {:permission :application.command/request-decision}
+                               {:role :handler :permission :application.command/approve}
+                               {:role :handler :permission :application.command/reject}]
+                       "frank" [{:permission :application.command/request-final-decision}]
+                       nil)]
+    (-> application
+        (workflow1/calculate-permissions event)
+        (permissions/restrict restrictions))))
 
 (defn application-view
   "Projection for the current state of a single application.
