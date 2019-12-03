@@ -1,5 +1,6 @@
 (ns rems.home
   (:require [clojure.tools.logging :as log]
+            [mount.core :as mount]
             [compojure.core :refer [GET defroutes routes]]
             [rems.api.services.attachment :as attachment]
             [rems.api.services.licenses :as licenses]
@@ -32,7 +33,8 @@
       (response)
       (content-type "text/css")))
 
-(def memoized-render-css (memoize render-css))
+(mount/defstate memoized-render-css
+  :start (memoize render-css))
 
 (defroutes normal-routes
   (GET "/" []
