@@ -10,15 +10,24 @@
 (deftest test-users
   ;; TODO: enforce that userid and eppn must be same?
   (users/add-user! "user1" {:eppn "whatever"
+                            :commonName "What Ever"
                             :some-attr "some value"})
 
-  (testing "get-user-attributes"
+  (testing "get-raw-user-attributes"
     (is (= {:eppn "whatever"
+            :commonName "What Ever"
             :some-attr "some value"}
-           (#'users/get-user-attributes "user1"))))
+           (#'users/get-raw-user-attributes "user1"))))
+
+  (testing "get-user"
+    (is (= {:userid "user1"
+            :name "What Ever"
+            :email nil}
+           (users/get-user "user1"))))
 
   (testing "get-all-users"
     (is (= [{:eppn "whatever"
+             :commonName "What Ever"
              :some-attr "some value"}]
            (#'users/get-all-users))))
 

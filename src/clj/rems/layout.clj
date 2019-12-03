@@ -5,7 +5,6 @@
             [rems.db.users :as users]
             [rems.json :as json]
             [rems.text :refer [text with-language]]
-            [rems.util :refer [get-user-id]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
 
@@ -72,11 +71,11 @@ window.rems = {
      content-type)))
 
 (defn home-page []
-  (users/add-user-if-logged-in! (get-user-id) context/*user*)
   (render
    (list
     [:script {:type "text/javascript"}
-     (format "var csrfToken = '%s';" *anti-forgery-token*)]
+     (format "var csrfToken = '%s';" (when (bound? #'*anti-forgery-token*)
+                                       *anti-forgery-token*))]
     (include-js "/js/app.js")
     [:script {:type "text/javascript"}
      (format "rems.app.setIdentity(%s);"

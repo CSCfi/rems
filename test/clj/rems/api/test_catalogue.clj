@@ -27,7 +27,7 @@
       (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
   (testing "listing with wrong API-Key"
-    (is (= "invalid api key"
+    (is (= "unauthorized"
            (-> (request :get (str "/api/catalogue"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                handler

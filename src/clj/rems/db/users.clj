@@ -36,26 +36,21 @@
   (when user
     (add-user! user userattrs)))
 
-(defn- get-user-attributes
+(defn get-raw-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
-   Returns a structure like this:
-   {:eppn \"developer\"
-    :email \"developer@e.mail\"
-    :displayName \"deve\"
-    :surname \"loper\"
-    ...etc}
 
-  You should use get-user instead."
+   You should use get-user for most uses instead. It normalizes keys in the json blob."
   [userid]
-  (json/parse-string (:userattrs (db/get-user-attributes {:user userid}))))
+  (when-let [json (:userattrs (db/get-user-attributes {:user userid}))]
+    (json/parse-string json)))
 
 (defn user-exists? [userid]
-  (some? (get-user-attributes userid)))
+  (some? (get-raw-user-attributes userid)))
 
 (defn- get-all-users []
   (->> (db/get-users)
        (map :userid)
-       (map get-user-attributes)
+       (map get-raw-user-attributes)
        (doall)))
 
 ;; TODO Filter applicant, requesting user
@@ -91,7 +86,7 @@
   "Given a userid, returns a map with keys :userid, :email and :name."
   [userid]
   (-> userid
-      get-user-attributes
+      get-raw-user-attributes
       format-user
       ;; in case user attributes were not found, return at least the userid
       (assoc :userid userid)))
