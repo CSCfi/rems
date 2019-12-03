@@ -32,6 +32,7 @@
             :remark-public "Näytä huomio hakijalle"
             :remove-member "Poista jäsen"
             :request-decision "Pyydä päätöstä"
+            :request-final-decision "Pyydä lopullista päätöstä"
             :request-review "Pyydä katselmointia"
             :request-selection "Lähetä pyyntöjä"
             :resources-selection "Hakemukseen liitettävät resurssit:"

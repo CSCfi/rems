@@ -32,6 +32,7 @@
             :remark-public "Show to applicant"
             :remove-member "Remove member"
             :request-decision "Request decision"
+            :request-final-decision "Request final decision"
             :request-review "Request review"
             :request-selection "Send requests"
             :resources-selection "Resources included in the application:"
