@@ -23,8 +23,8 @@
       {:key (get-api-key request)
        :user (when-let [uid (get-in request [:headers "x-rems-user-id"])]
                (merge {:eppn uid}
-                      ;; we need the raw pre-formatted user attrs here since we emulate other login methods
-                      (users/get-user-attributes uid)))})
+                      ;; we need the raw user attrs here to emulate other login methods
+                      (users/get-raw-user-attributes uid)))})
     (-authenticate [_ request {:keys [key user]}]
       (when (api-key/valid? key)
         user))))
