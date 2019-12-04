@@ -2,7 +2,14 @@
   "The master workflow is a superset of all possible commands and who is
   allowed to execute them. Workflows for production use can be derived from
   the master workflow by restricting the possible commands (permissions)."
-  (:require [rems.permissions :as permissions]))
+  (:require [rems.application.commands :as commands]
+            [rems.permissions :as permissions]))
+
+(def whitelist
+  (into [{:permission :see-everything}]
+        (map (fn [command]
+               {:permission command})
+             (sort (keys commands/command-schemas)))))
 
 (defmulti calculate-permissions
   (fn [_application event] (:event/type event)))

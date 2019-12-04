@@ -219,66 +219,64 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   application)
 
+(def dynamic-workflow
+  [{:permission :see-everything}
+   {:permission :application.command/accept-invitation}
+   {:permission :application.command/accept-licenses}
+   {:permission :application.command/add-licenses}
+   {:permission :application.command/add-member}
+   {:permission :application.command/approve}
+   {:permission :application.command/change-resources}
+   {:permission :application.command/close}
+   {:permission :application.command/comment}
+   {:permission :application.command/copy-as-new}
+   {:permission :application.command/create}
+   {:permission :application.command/decide}
+   {:permission :application.command/invite-member}
+   {:permission :application.command/reject}
+   {:permission :application.command/remark}
+   {:permission :application.command/remove-member}
+   {:permission :application.command/request-comment}
+   {:permission :application.command/request-decision}
+   {:permission :application.command/return}
+   {:permission :application.command/revoke}
+   {:permission :application.command/save-draft}
+   {:permission :application.command/submit}
+   {:permission :application.command/uninvite-member}])
+
+(def bureaucratic-workflow
+  [{:permission :see-everything}
+   {:permission :application.command/accept-invitation}
+   {:permission :application.command/accept-licenses}
+   {:permission :application.command/add-licenses}
+   {:permission :application.command/add-member}
+   {:permission :application.command/change-resources}
+   {:permission :application.command/comment}
+   {:permission :application.command/copy-as-new}
+   {:permission :application.command/create}
+   {:permission :application.command/decide}
+   {:permission :application.command/invite-member}
+   {:permission :application.command/remark}
+   {:permission :application.command/remove-member}
+   {:permission :application.command/request-comment}
+   {:permission :application.command/request-final-decision} ; TODO: replace with request-decision
+   {:permission :application.command/return}
+   {:permission :application.command/revoke}
+   {:permission :application.command/save-draft}
+   {:permission :application.command/submit}
+   {:permission :application.command/uninvite-member}
+   {:role :final-decider :permission :application.command/approve}
+   {:role :final-decider :permission :application.command/reject}])
+
 (defn- calculate-permissions [application event]
   ;; TODO: proper workflow selection
-  (let [restrictions (case (get-in application [:application/applicant :userid])
-                       "elsa" [{:permission :application.command/close}
-                               {:permission :application.command/request-decision}
-                               {:role :handler :permission :application.command/approve}
-                               {:role :handler :permission :application.command/reject}]
-                       (comment ;; alternatively, the same as a whitelist
-                         [{:permission :see-everything}
-                          {:permission :application.command/accept-invitation}
-                          {:permission :application.command/accept-licenses}
-                          {:permission :application.command/add-licenses}
-                          {:permission :application.command/add-member}
-                          {:permission :application.command/change-resources}
-                          {:permission :application.command/comment}
-                          {:permission :application.command/copy-as-new}
-                          {:permission :application.command/create}
-                          {:permission :application.command/decide}
-                          {:permission :application.command/invite-member}
-                          {:permission :application.command/remark}
-                          {:permission :application.command/remove-member}
-                          {:permission :application.command/request-comment}
-                          {:permission :application.command/request-final-decision}
-                          {:permission :application.command/return}
-                          {:permission :application.command/revoke}
-                          {:permission :application.command/save-draft}
-                          {:permission :application.command/submit}
-                          {:permission :application.command/uninvite-member}
-                          {:role :final-decider :permission :application.command/approve}
-                          {:role :final-decider :permission :application.command/reject}])
-
-                       "frank" [{:permission :application.command/request-final-decision}]
-                       (comment ;; alternatively, the same as a whitelist
-                         [{:permission :see-everything}
-                          {:permission :application.command/accept-invitation}
-                          {:permission :application.command/accept-licenses}
-                          {:permission :application.command/add-licenses}
-                          {:permission :application.command/add-member}
-                          {:permission :application.command/approve}
-                          {:permission :application.command/change-resources}
-                          {:permission :application.command/close}
-                          {:permission :application.command/comment}
-                          {:permission :application.command/copy-as-new}
-                          {:permission :application.command/create}
-                          {:permission :application.command/decide}
-                          {:permission :application.command/invite-member}
-                          {:permission :application.command/reject}
-                          {:permission :application.command/remark}
-                          {:permission :application.command/remove-member}
-                          {:permission :application.command/request-comment}
-                          {:permission :application.command/request-decision}
-                          {:permission :application.command/return}
-                          {:permission :application.command/revoke}
-                          {:permission :application.command/save-draft}
-                          {:permission :application.command/submit}
-                          {:permission :application.command/uninvite-member}])
-                       nil)]
+  (let [whitelist (case (get-in application [:application/applicant :userid])
+                    "elsa" bureaucratic-workflow
+                    "frank" dynamic-workflow
+                    master-workflow/whitelist)]
     (-> application
         (master-workflow/calculate-permissions event)
-        (permissions/blacklist restrictions))))
+        (permissions/whitelist whitelist))))
 
 (defn application-view
   "Projection for the current state of a single application.
