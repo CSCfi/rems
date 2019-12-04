@@ -135,19 +135,24 @@
        (map-vals (fn [rules]
                    (set (map :permission rules))))))
 
+(defn- map-permissions [application f]
+  (update application ::role-permissions
+          (fn [role-permissions]
+            (->> role-permissions
+                 (map (fn [[role permissions]]
+                        [role (f role permissions)]))
+                 (into {})))))
+
+(defn- permissions-for-role [rules role]
+  (set/union (get rules role #{})
+             (get rules nil #{})))
+
 (defn blacklist
   "Applies rules for restricting the possible permissions.
   `rules` is what `compile-rules` returns."
   [application rules]
-  (let [disallowed-for-role (fn [role]
-                              (set/union (get rules role #{})
-                                         (get rules nil #{})))]
-    (update application ::role-permissions
-            (fn [role-permissions]
-              (->> role-permissions
-                   (map (fn [[role permissions]]
-                          [role (set/difference permissions (disallowed-for-role role))]))
-                   (into {}))))))
+  (map-permissions application (fn [role permissions]
+                                 (set/difference permissions (permissions-for-role rules role)))))
 
 (deftest test-blacklist
   (let [app (-> {}
@@ -171,15 +176,8 @@
   "Applies rules for restricting the possible permissions.
   `rules` is what `compile-rules` returns."
   [application rules]
-  (let [allowed-for-role (fn [role]
-                           (set/union (get rules role #{})
-                                      (get rules nil #{})))]
-    (update application ::role-permissions
-            (fn [role-permissions]
-              (->> role-permissions
-                   (map (fn [[role permissions]]
-                          [role (set/intersection permissions (allowed-for-role role))]))
-                   (into {}))))))
+  (map-permissions application (fn [role permissions]
+                                 (set/intersection permissions (permissions-for-role rules role)))))
 
 (deftest test-whitelist
   (let [app (-> {}
