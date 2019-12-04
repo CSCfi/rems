@@ -382,7 +382,8 @@
          ^{:key (:key row)} [table-row row table])]
       (when (< max-rows (count rows))
         [:tfoot
-         [:tr [:td {:col-span (count (:columns table))
+         [:tr [:td {:col-span (+ (count (:columns table))
+                                 (if (:selectable? table) 1 0))
                     :style {:text-align :center}}
                [:button.btn.btn-primary {:type :button
                                          :on-click (fn []
