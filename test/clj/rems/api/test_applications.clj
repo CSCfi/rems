@@ -105,15 +105,15 @@
                          handler)]
         (is (response-is-unauthorized? response))))
     (testing "save with session and csrf and wrong api-key"
-      (let [response (-> (request :post "/api/applications/create")
-                         (header "Cookie" cookie)
-                         (header "x-csrf-token" csrf)
-                         (header "x-rems-api-key" "WRONG")
-                         (json-body {:catalogue-item-ids [cat-id]})
-                         handler)
-            body (read-body response)]
-        (is (response-is-unauthorized? response))
-        (is (= "invalid api key" body))))))
+      (let [body (-> (request :post "/api/applications/create")
+                     (header "Cookie" cookie)
+                     (header "x-csrf-token" csrf)
+                     (header "x-rems-api-key" "WRONG")
+                     (json-body {:catalogue-item-ids [cat-id]})
+                     handler
+                     assert-response-is-ok
+                     read-body)]
+        (is (:success body))))))
 
 (deftest test-application-commands
   (let [user-id "alice"

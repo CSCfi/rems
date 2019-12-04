@@ -14,11 +14,12 @@
             [rems.db.applications :as applications]
             [rems.db.roles :as roles]
             [rems.db.user-settings :as user-settings]
+            [rems.db.users :as users]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tempura-config]]
             [rems.logging :refer [with-mdc]]
-            [rems.util :refer [getx-user-id]]
+            [rems.util :refer [get-user-id getx-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -41,13 +42,6 @@
     ;; instead
     (:app-context env)))
 
-(defn get-api-key [request]
-  (get-in request [:headers "x-rems-api-key"]))
-
-(defn valid-api-key? [request]
-  (when-let [key (get-api-key request)]
-    (api-key/valid? key)))
-
 (defn- csrf-error-handler
   "CSRF error is typical when the user session is timed out
   and we wish to redirect to login in that case."
@@ -59,24 +53,18 @@
   [handler]
   (let [csrf-handler (wrap-anti-forgery handler {:error-handler csrf-error-handler})]
     (fn [request]
-      (cond
-        (valid-api-key? request) (handler request)
-        (get-api-key request) (unauthorized "invalid api key")
-        true (csrf-handler request)))))
+      (if (:uses-api-key? request)
+        (handler request)
+        (csrf-handler request)))))
 
 (defn- wrap-user
-  "Binds context/*user* to the buddy identity _or_ to x-rems-user-id if a valid api key is supplied."
+  "Binds context/*user* to the buddy identity."
   [handler]
   (fn [request]
-    (let [header-identity (when-let [uid (get-in request [:headers "x-rems-user-id"])]
-                            {:eppn uid})
-          session-identity (keywordize-keys (:identity request))]
-      (binding [context/*user* (if (and header-identity
-                                        (valid-api-key? request))
-                                 header-identity
-                                 session-identity)]
-        (with-mdc {:user (:eppn context/*user*)}
-          (handler request))))))
+    (binding [context/*user* (keywordize-keys (:identity request))]
+      (users/add-user-if-logged-in! (get-user-id) context/*user*)
+      (with-mdc {:user (:eppn context/*user*)}
+        (handler request)))))
 
 (defn wrap-context [handler]
   (fn [request]
@@ -174,7 +162,7 @@
       (log/info ">" (:request-method request) uri
                 "lang:" context/*lang*
                 "user:" context/*user*
-                (if (get-api-key request)
+                (if (:uses-api-key? request)
                   "api-key"
                   "")
                 "roles:" context/*roles*)

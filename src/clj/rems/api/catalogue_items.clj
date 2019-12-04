@@ -48,7 +48,7 @@
 
 (s/defschema ChangeFormResponse
   {:success s/Bool
-   :new-catalogue-item-id s/Int})
+   :catalogue-item-id s/Int})
 
 ;; TODO use declarative roles everywhere
 (def catalogue-items-api

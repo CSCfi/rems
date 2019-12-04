@@ -180,7 +180,7 @@
                            (authenticate api-key user-id)
                            handler)]
           (is (response-is-unauthorized? response))
-          (is (= "invalid api key" (read-body response)))))
+          (is (= "unauthorized" (read-body response)))))
       (testing "create"
         (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
@@ -189,7 +189,7 @@
                                        :licenses []})
                            handler)]
           (is (response-is-unauthorized? response))
-          (is (= "invalid api key" (read-body response)))))))
+          (is (= "unauthorized" (read-body response)))))))
 
   (testing "without owner role"
     (let [api-key "42"

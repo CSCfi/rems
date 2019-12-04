@@ -49,9 +49,11 @@
                    :archive "Archive"
                    :back "Back"
                    :blacklist "Blacklist"
+                   :change-form "Change form"
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
+                   :change "Change"
                    :comment "Comment"
                    :copy-as-new "Copy as new"
                    :create-catalogue-item "Create catalogue item"
@@ -188,6 +190,8 @@
              :show "Show"
              :show-less "Show less"
              :show-more "Show more"}
+  :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form." 
+                :form-selection "Form"}
   :create-catalogue-item {:form-selection "Form"
                           :infourl "More info URL (optional, defaults to resource URN)"
                           :resource-selection "Resource"
@@ -356,6 +360,9 @@
            :search "Search"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
+          :all-rows-selected "All rows selected"
+          :no-rows-selected "No rows selected"
+          :some-rows-selected "Some rows selected"
           :show-all-n-rows "Show all %1 rows"}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You're unauthorized to access this page."}

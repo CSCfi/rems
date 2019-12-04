@@ -8,6 +8,12 @@ have notable changes.
 
 Changes since v2.6
 
+### Additions
+- Catalogue item form can be changed for one or more items at a time. 
+  New items will be created that use the new form while the old items
+  are disabled and archived. The name of the new item will be exactly
+  the same as before. See #837
+
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
 - Redirect to login page when accessing an attachment link when logged out (#1590)

@@ -49,9 +49,11 @@
                    :archive "Arkistoi"
                    :back "Takaisin"
                    :blacklist "Kieltolista"
+                   :change-form "Vaihda lomaketta"
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
                    :catalogue-items "Aineistot"
+                   :change "Vaihda"
                    :comment "Kommentti"
                    :copy-as-new "Kopioi uudeksi"
                    :create-catalogue-item "Uusi aineisto"
@@ -186,6 +188,8 @@
              :show "Näytä"
              :show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
+  :change-form {:change-form-intro "Olet muuttamassa seuraavien aineistojen lomaketta. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto poistetaan käytöstä ja uusi kopio käyttää valitsemaasi lomaketta."
+                :form-selection "Lomake"}
   :create-catalogue-item {:form-selection "Lomake"
                           :infourl "Lisätietoja-URL (vapaaehtoinen, puuttuessa käytetään resurssin URN:ää)"
                           :resource-selection "Resurssi"
@@ -354,6 +358,9 @@
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"
+          :all-rows-selected "Kaikki rivit valittuna"
+          :no-rows-selected "Ei yhtään riviä valittuna"
+          :some-rows-selected "Joitain rivejä valittuna"
           :show-all-n-rows "Näytä kaikki %1 riviä"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}

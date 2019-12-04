@@ -69,7 +69,7 @@
                               (on-change value)))]
     [:i.far.fa-lg
      {:id id
-      :class [class (if value :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
+      :class [:checkbox class (if value :fa-check-square :fa-square) (when-not on-change :readonly-checkbox)]
       :tabIndex 0
       :role :checkbox
       :aria-checked value
