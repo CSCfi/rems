@@ -301,6 +301,8 @@
     {:cursor :pointer
      :color (util/get-theme-attribute :link-color "#007bff")}
     [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]
+   [:.pointer {:cursor :pointer}
+    [:label.form-check-label {:cursor :pointer}]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
@@ -597,7 +599,8 @@
      :form)
     {:margin-left (u/rem 0.5)}]
    [:.commands {:text-align "right"
-                :padding "0 1rem"}]
+                :padding "0 1rem"
+                :cursor :auto}]
    [".spaced-horizontally > *:not(:first-child)" {:margin-left (u/rem 0.5)}]
    [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]

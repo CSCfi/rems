@@ -173,7 +173,7 @@
                                       (json-body {:form new-form-id})
                                       handler
                                       read-ok-body
-                                      :new-catalogue-item-id)
+                                      :catalogue-item-id)
             new-catalogue-item (-> (request :get (str "/api/catalogue-items/" new-catalogue-item-id))
                                    (authenticate api-key "owner")
                                    handler

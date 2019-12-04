@@ -9,7 +9,7 @@
   - The `table` parameter is passed as a parameter to dynamic subscriptions,
     so that we can have multiple table components on the same page.
   - The rows are processed in stages by chaining subscriptions:
-      (:rows table) -> [::rows table] -> [::sorted-rows table] -> [::sorted-and-filtered-rows table]
+      (:rows table) -> [::rows table] -> [::sorted-rows table] -> [::sorted-and-filtered-rows table] -> [::displayed-rows table]
     This way only the last subscription, which does the filtering,
     needs to be recalculated when the user types the search parameters.
     Likewise, changing sorting only recalculates the last two subscriptions.
@@ -22,7 +22,7 @@
             [rems.atoms :refer [checkbox close-symbol search-symbol sort-symbol]]
             [rems.focus :as focus]
             [rems.search :as search]
-            [rems.text :refer [text-format]]
+            [rems.text :refer [text text-format]]
             [schema.core :as s])
   (:require-macros [rems.guide-macros :refer [component-info example namespace-info]]))
 
@@ -226,6 +226,14 @@
                  ;; performance optimization: hide DOM nodes instead of destroying them
                  (assoc row ::display-row? (display-row? row columns search-terms))))))))
 
+(rf/reg-sub
+ ::displayed-rows
+ (fn [db [_ table]]
+   (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
+         max-rows @(rf/subscribe [::max-rows table])
+         rows (filter ::display-row? rows)]
+     (take max-rows rows))))
+
 (defn search
   "Search field component for filtering a `rems.table/table` instance
   which takes the same `table` parameter as this component.
@@ -259,9 +267,64 @@
  (fn [db [_ table key]]
    (contains? (get-in db [::selected-rows (:id table)]) key)))
 
+(rf/reg-sub
+ ::selected-rows
+ (fn [db [_ table]]
+   (get-in db [::selected-rows (:id table)])))
+
+(rf/reg-event-db
+ ::set-selected-rows
+ (fn [db [_ table rows]]
+   (let [selected-rows (set (map :key rows))
+         new-db (assoc-in db [::selected-rows (:id table)] selected-rows)]
+     (when-let [on-select (:on-select table)]
+       (on-select selected-rows))
+     new-db)))
+
+(rf/reg-sub
+ ::row-selection-state
+ (fn [db [_ table]]
+   (let [selected-rows @(rf/subscribe [::selected-rows table])
+         all-visible-rows (set (map :key @(rf/subscribe [::displayed-rows table])))
+         all-selected?  (and (= all-visible-rows selected-rows) (seq all-visible-rows))
+         some-selected? (seq selected-rows)]
+     (cond all-selected? :all
+           some-selected? :some
+           :else :none))))
+
+(defn- selection-toggle-all
+  "A checkbox-like component useful for a selection toggle in the table header."
+  [table]
+  (let [selection-state @(rf/subscribe [::row-selection-state table])
+        visible-rows @(rf/subscribe [::displayed-rows table])
+        on-change (case selection-state
+                    :all #(rf/dispatch [::set-selected-rows table []])
+                    :some #(rf/dispatch [::set-selected-rows table []])
+                    :none #(rf/dispatch [::set-selected-rows table visible-rows]))]
+    [:th.selection
+     [:i.far.fa-lg.pointer
+      {:id (str (:id table) "-selection-toggle-all")
+       :class (case selection-state
+                :all :fa-check-square
+                :some :fa-minus-square
+                :none :fa-square)
+       :tabIndex 0
+       :role :checkbox
+       :aria-checked (case selection-state
+                       :all true
+                       :some :mixed
+                       :none false)
+       :aria-label (case selection-state
+                     :all (text :t.table/all-rows-selected)
+                     :some (text :t.table/some-rows-selected)
+                     :none (text :t.table/no-rows-selected))
+       :on-click on-change
+       :on-key-press #(when (= (.-key %) " ")
+                        (on-change))}]]))
+
 (defn- table-header [table]
-  (let [sorting @(rf/subscribe [::sorting table])]
-    (into [:tr (when (:selectable? table) [:th.selection])]
+  (let [sorting @(rf/subscribe [::sorting (:id table)])]
+    (into [:tr (when (:selectable? table) [selection-toggle-all table])]
           (for [column (:columns table)]
             [:th
              (when (sortable? column)
@@ -282,7 +345,8 @@
                                  "table-row"
                                  "none")}
               :on-click (when (:selectable? table)
-                          #(rf/dispatch [::toggle-row-selection table (:key row)]))}
+                          #(when (contains? #{"TR" "TD" "TH"} (.. % -target -tagName)) ; selection is the default action
+                             (rf/dispatch [::toggle-row-selection table (:key row)])))}
          (when (:selectable? table)
            [:td.selection
             [checkbox {:value @(rf/subscribe [::selected-row table (:key row)])
@@ -301,7 +365,7 @@
   See `rems.table/Table` for the `table` parameter schema."
   [table]
   (s/validate Table table)
-  (let [rows @(rf/subscribe [::sorted-and-filtered-rows table])
+  (let [rows @(rf/subscribe [::sorted-and-filtered-rows table]) ; TODO refactor to use ::displayed-rows
         language @(rf/subscribe [:language])
         max-rows @(rf/subscribe [::max-rows table])
         ;; When showing all rows, table-row is responsible for filtering displayed rows,
@@ -318,7 +382,8 @@
          ^{:key (:key row)} [table-row row table])]
       (when (< max-rows (count rows))
         [:tfoot
-         [:tr [:td {:col-span (count (:columns table))
+         [:tr [:td {:col-span (+ (count (:columns table))
+                                 (if (:selectable? table) 1 0))
                     :style {:text-align :center}}
                [:button.btn.btn-primary {:type :button
                                          :on-click (fn []
