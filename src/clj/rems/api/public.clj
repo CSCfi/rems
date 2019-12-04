@@ -61,4 +61,5 @@
       (ok (assoc env
                  :authentication "HIDDEN"
                  :database-url "HIDDEN"
-                 :test-database-url "HIDDEN")))))
+                 :test-database-url "HIDDEN"
+                 :oidc-client-secret "HIDDEN")))))
