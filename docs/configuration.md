@@ -8,24 +8,14 @@ The full list of available configuration options can be seen in [config-defaults
 
 ## Authentication options
 
-Currently supported authentication methods are SAML2 and LDAP. Login method to be used can be defined with the key `:authentication` and the following values are recognized:
+Currently supported authentication methods are SAML2 and OpenId Connect (e.g. Auth0). Login method to be used can be defined with the key `:authentication` and the following values are recognized:
 
 * `:shibboleth` for SAML2
-* `:ldap`
 * `:fake-shibboleth` for development login
 
 ### SAML2 (`:shibboleth`)
 
 When using this option, login requests are directed to `/Shibboleth.sso/Login`.
-
-### LDAP (`:ldap`)
-
-Using LDAP as the authentication method requires that additional configuration with the following structure is provided:
-```
-:ldap {:connection {:host "your-host-name"
-                    :ssl? true}
-       :search-root "dc=some,dc=thing"}
-```
 
 ### Development login (`:fake-shibboleth`)
 
