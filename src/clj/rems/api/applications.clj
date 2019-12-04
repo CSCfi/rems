@@ -10,6 +10,7 @@
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.config :as config]
             [rems.db.applications :as applications]
             [rems.db.users :as users]
             [rems.util :refer [getx-user-id update-present]]
@@ -258,6 +259,14 @@
       (if-let [app (applications/get-application (getx-user-id) application-id)]
         (ok app)
         (api-util/not-found-json-response)))
+
+    (GET "/:application-id/pdf" []
+      :summary "PDF export of application (EXPERIMENTAL)"
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")]
+      (if-not (:enable-pdf-api config/env)
+        (not-implemented "pdf api not enabled")
+        (ok "enabled")))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []
       :summary "Get file associated with licence of type attachment associated with application."

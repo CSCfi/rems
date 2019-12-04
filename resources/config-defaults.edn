@@ -84,4 +84,7 @@
  :extra-pages-path nil
 
  ;; The character used as the separator in csv files.
- :csv-separator ","}
+ :csv-separator ","
+
+ ;; Experimental features
+ :enable-pdf-api false}
