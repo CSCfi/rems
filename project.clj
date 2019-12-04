@@ -96,6 +96,7 @@
   :clean-targets ["target"]
 
   :figwheel {:http-server-root "public"
+             :server-logfile "log/figwheel_server.log"
              :nrepl-port 7002
              :css-dirs ["target/resources/public/css"]
              :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
