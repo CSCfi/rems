@@ -8,8 +8,6 @@
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.application.workflow1 :as workflow1]
-            [rems.application.workflow2 :as workflow2]
             [rems.common-util :refer [deep-merge]]
             [rems.permissions :as permissions]
             [schema.core :as s])
@@ -335,25 +333,15 @@
          (bw/beautify-html))))
 
 (defn output-permissions-reference [event-seqs]
-  (let [build-doc (fn [workflow]
-                    (with-redefs [rems.application.model/calculate-permissions workflow]
-                      ;; TODO: filter impossible event sequences? need to map commands to events?
-                      (let [applications (map (fn [events]
-                                                (reduce model/application-view nil events))
-                                              event-seqs)]
-                        (permissions-reference-doc
-                         (summarize-permissions
-                          (mapcat state-role-permissions applications))))))]
+  (let [applications (map (fn [events]
+                            (reduce model/application-view nil events))
+                          event-seqs)]
     (spit "docs/application-permissions.md"
           (str
            "# Application Permissions Reference\n\n"
-           "## Workflow 1\n\n"
-           "The normal workflow where the handler can do anything.\n\n"
-           (build-doc workflow1/calculate-permissions)
-           "\n\n"
-           "## Workflow 2\n\n"
-           "The \"public officer workflow\" where the handler cannot approver or reject the application, but only the decider can.\n\n"
-           (build-doc workflow2/calculate-permissions)))))
+           (permissions-reference-doc
+            (summarize-permissions
+             (mapcat state-role-permissions applications)))))))
 
 (defn permissions-reference-fixture [f]
   (binding [*sample-event-seqs* (atom [])]
