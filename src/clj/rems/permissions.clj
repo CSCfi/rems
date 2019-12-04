@@ -1,5 +1,7 @@
 (ns rems.permissions
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
+            [medley.core :refer [map-vals]]
             [rems.util :refer [conj-set]]))
 
 (defn- give-role-to-user [application role user]
@@ -132,36 +134,66 @@
     (remove-permission-from-role application role permission)
     (remove-permission-from-all-roles application permission)))
 
-(defn restrict
+(defn blacklist
   "Applies rules for restricting the possible permissions.
-  `restrictions` should list the permissions to remove in the format
+  `blacklist` should list the permissions to remove in the format
   `[{:role keyword :permission keyword}]` where `:role` is optional."
-  [application restrictions]
-  (reduce remove-permission application restrictions))
+  [application blacklist]
+  (reduce remove-permission application blacklist))
 
-(deftest test-restrict
-  (testing "restrict a permission for all roles"
-    (is (= {:rems.permissions/role-permissions {:role-1 #{:bar}
-                                                :role-2 #{}}}
-           (-> {}
-               (update-role-permissions {:role-1 [:foo :bar]})
-               (update-role-permissions {:role-2 [:foo]})
-               (restrict [{:permission :foo}])))))
-  (testing "restrict a permission for a single role"
-    (is (= {:rems.permissions/role-permissions {:role-1 #{:bar}
-                                                :role-2 #{:foo}}}
-           (-> {}
-               (update-role-permissions {:role-1 [:foo :bar]})
-               (update-role-permissions {:role-2 [:foo]})
-               (restrict [{:role :role-1 :permission :foo}])))))
-  (testing "multiple restrictions"
-    (is (= {:rems.permissions/role-permissions {:role-1 #{:bar}
-                                                :role-2 #{:foo}}}
-           (-> {}
-               (update-role-permissions {:role-1 [:foo :bar]})
-               (update-role-permissions {:role-2 [:foo :bar]})
-               (restrict [{:role :role-1 :permission :foo}
-                          {:role :role-2 :permission :bar}]))))))
+(deftest test-blacklist
+  (let [app (-> {}
+                (update-role-permissions {:role-1 [:foo :bar]})
+                (update-role-permissions {:role-2 [:foo :bar]}))]
+    (testing "disallow a permission for all roles"
+      (is (= {::role-permissions {:role-1 #{:bar}
+                                  :role-2 #{:bar}}}
+             (blacklist app [{:permission :foo}]))))
+    (testing "disallow a permission for a single role"
+      (is (= {::role-permissions {:role-1 #{:bar}
+                                  :role-2 #{:foo :bar}}}
+             (blacklist app [{:role :role-1 :permission :foo}]))))
+    (testing "multiple rules"
+      (is (= {::role-permissions {:role-1 #{:bar}
+                                  :role-2 #{:foo}}}
+             (blacklist app [{:role :role-1 :permission :foo}
+                             {:role :role-2 :permission :bar}]))))))
+
+(defn whitelist
+  "Applies rules for restricting the possible permissions.
+  `whitelist` should list the permissions to keep in the format
+  `[{:role keyword :permission keyword}]` where `:role` is optional."
+  [application whitelist]
+  (let [allowed-by-role (->> whitelist
+                             (group-by :role)
+                             (map-vals (fn [whitelist]
+                                         (set (map :permission whitelist)))))
+        allowed-for-all (get allowed-by-role nil #{})]
+    (update application ::role-permissions
+            (fn [role-permissions]
+              (->> role-permissions
+                   (map (fn [[role permissions]]
+                          (let [allowed-permissions (set/union allowed-for-all (get allowed-by-role role #{}))]
+                            [role (set/intersection permissions allowed-permissions)])))
+                   (into {}))))))
+
+(deftest test-whitelist
+  (let [app (-> {}
+                (update-role-permissions {:role-1 [:foo :bar]})
+                (update-role-permissions {:role-2 [:foo :bar]}))]
+    (testing "allow a permission for all roles"
+      (is (= {::role-permissions {:role-1 #{:foo}
+                                  :role-2 #{:foo}}}
+             (whitelist app [{:permission :foo}]))))
+    (testing "allow a permission for a single role"
+      (is (= {::role-permissions {:role-1 #{:foo}
+                                  :role-2 #{}}}
+             (whitelist app [{:role :role-1 :permission :foo}]))))
+    (testing "multiple rules"
+      (is (= {::role-permissions {:role-1 #{:foo}
+                                  :role-2 #{:bar}}}
+             (whitelist app [{:role :role-1 :permission :foo}
+                             {:role :role-2 :permission :bar}]))))))
 
 (defn user-permissions
   "Returns a set of the specified user's permissions to this application.

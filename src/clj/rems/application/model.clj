@@ -278,7 +278,7 @@
                        nil)]
     (-> application
         (master-workflow/calculate-permissions event)
-        (permissions/restrict restrictions))))
+        (permissions/blacklist restrictions))))
 
 (defn application-view
   "Projection for the current state of a single application.
