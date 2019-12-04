@@ -1,13 +1,11 @@
 (ns rems.application.commands
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.application-util :as application-util]
-            [rems.application.model :as model]
             [rems.permissions :as permissions]
             [rems.util :refer [getx getx-in assert-ex try-catch-ex]]
             [schema-refined.core :as r]
             [schema.core :as s])
-  (:import [clojure.lang ExceptionInfo]
-           [java.util UUID]
+  (:import [java.util UUID]
            [org.joda.time DateTime]))
 
 ;;; Schemas
@@ -540,23 +538,3 @@
           (postprocess-command-result-for-tests cmd application))
       {:errors (or (:errors (command-handler cmd application injections)) ; prefer more specific error
                    [{:type :forbidden}])})))
-
-(deftest test-handle-command
-  (let [application (model/application-view nil {:event/type :application.event/created
-                                                 :event/actor "applicant"
-                                                 :workflow/type :workflow/dynamic})
-        command {:application-id 123 :time (DateTime. 1000)
-                 :type :application.command/save-draft
-                 :field-values []
-                 :actor "applicant"}]
-    (testing "executes command when user is authorized"
-      (is (not (:errors (handle-command command application {})))))
-    (testing "fails when command fails validation"
-      (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
-                            (handle-command (assoc command :time 3) application {}))))
-    (testing "fails when user is not authorized"
-      ;; the permission checks should happen before executing the command handler
-      ;; and only depend on the roles and permissions
-      (let [application (permissions/remove-role-from-user application :applicant "applicant")
-            result (handle-command command application {})]
-        (is (= {:errors [{:type :forbidden}]} result))))))

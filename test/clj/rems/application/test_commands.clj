@@ -5,8 +5,10 @@
             [rems.application.model :as model]
             [rems.common-util :refer [distinct-by]]
             [rems.form-validation :as form-validation]
+            [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx]])
-  (:import [java.util UUID]
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]
            [org.joda.time DateTime]))
 
 (def ^:private test-time (DateTime. 1000))
@@ -1452,3 +1454,23 @@
                          {:type :application.command/copy-as-new
                           :actor applicant-user-id}
                          injections))))))
+
+(deftest test-handle-command
+  (let [application (model/application-view nil {:event/type :application.event/created
+                                                 :event/actor "applicant"
+                                                 :workflow/type :workflow/dynamic})
+        command {:application-id 123 :time (DateTime. 1000)
+                 :type :application.command/save-draft
+                 :field-values []
+                 :actor "applicant"}]
+    (testing "executes command when user is authorized"
+      (is (not (:errors (commands/handle-command command application {})))))
+    (testing "fails when command fails validation"
+      (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
+                            (commands/handle-command (assoc command :time 3) application {}))))
+    (testing "fails when user is not authorized"
+      ;; the permission checks should happen before executing the command handler
+      ;; and only depend on the roles and permissions
+      (let [application (permissions/remove-role-from-user application :applicant "applicant")
+            result (commands/handle-command command application {})]
+        (is (= {:errors [{:type :forbidden}]} result))))))
