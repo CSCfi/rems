@@ -3,7 +3,7 @@
             [medley.core :refer [map-vals]]
             [rems.application-util :as application-util]
             [rems.application.events :as events]
-            [rems.application.workflow1 :as workflow1]
+            [rems.application.master-workflow :as master-workflow]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
@@ -277,7 +277,7 @@
                           {:permission :application.command/uninvite-member}])
                        nil)]
     (-> application
-        (workflow1/calculate-permissions event)
+        (master-workflow/calculate-permissions event)
         (permissions/restrict restrictions))))
 
 (defn application-view

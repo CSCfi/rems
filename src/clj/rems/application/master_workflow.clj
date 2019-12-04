@@ -1,4 +1,7 @@
-(ns rems.application.workflow1
+(ns rems.application.master-workflow
+  "The master workflow is a superset of all possible commands and who is
+  allowed to execute them. Workflows for production use can be derived from
+  the master workflow by restricting the possible commands (permissions)."
   (:require [rems.permissions :as permissions]))
 
 (defmulti calculate-permissions
