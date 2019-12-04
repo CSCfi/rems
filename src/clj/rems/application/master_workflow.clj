@@ -6,10 +6,11 @@
             [rems.permissions :as permissions]))
 
 (def whitelist
-  (into [{:permission :see-everything}]
-        (map (fn [command]
-               {:permission command})
-             (sort (keys commands/command-schemas)))))
+  (permissions/compile-rules
+   (into [{:permission :see-everything}]
+         (map (fn [command]
+                {:permission command})
+              (sort (keys commands/command-schemas))))))
 
 (defmulti calculate-permissions
   (fn [_application event] (:event/type event)))

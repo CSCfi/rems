@@ -220,53 +220,55 @@
   application)
 
 (def dynamic-workflow
-  [{:permission :see-everything}
-   {:permission :application.command/accept-invitation}
-   {:permission :application.command/accept-licenses}
-   {:permission :application.command/add-licenses}
-   {:permission :application.command/add-member}
-   {:permission :application.command/approve}
-   {:permission :application.command/change-resources}
-   {:permission :application.command/close}
-   {:permission :application.command/comment}
-   {:permission :application.command/copy-as-new}
-   {:permission :application.command/create}
-   {:permission :application.command/decide}
-   {:permission :application.command/invite-member}
-   {:permission :application.command/reject}
-   {:permission :application.command/remark}
-   {:permission :application.command/remove-member}
-   {:permission :application.command/request-comment}
-   {:permission :application.command/request-decision}
-   {:permission :application.command/return}
-   {:permission :application.command/revoke}
-   {:permission :application.command/save-draft}
-   {:permission :application.command/submit}
-   {:permission :application.command/uninvite-member}])
+  (permissions/compile-rules
+   [{:permission :see-everything}
+    {:permission :application.command/accept-invitation}
+    {:permission :application.command/accept-licenses}
+    {:permission :application.command/add-licenses}
+    {:permission :application.command/add-member}
+    {:permission :application.command/approve}
+    {:permission :application.command/change-resources}
+    {:permission :application.command/close}
+    {:permission :application.command/comment}
+    {:permission :application.command/copy-as-new}
+    {:permission :application.command/create}
+    {:permission :application.command/decide}
+    {:permission :application.command/invite-member}
+    {:permission :application.command/reject}
+    {:permission :application.command/remark}
+    {:permission :application.command/remove-member}
+    {:permission :application.command/request-comment}
+    {:permission :application.command/request-decision}
+    {:permission :application.command/return}
+    {:permission :application.command/revoke}
+    {:permission :application.command/save-draft}
+    {:permission :application.command/submit}
+    {:permission :application.command/uninvite-member}]))
 
 (def bureaucratic-workflow
-  [{:permission :see-everything}
-   {:permission :application.command/accept-invitation}
-   {:permission :application.command/accept-licenses}
-   {:permission :application.command/add-licenses}
-   {:permission :application.command/add-member}
-   {:permission :application.command/change-resources}
-   {:permission :application.command/comment}
-   {:permission :application.command/copy-as-new}
-   {:permission :application.command/create}
-   {:permission :application.command/decide}
-   {:permission :application.command/invite-member}
-   {:permission :application.command/remark}
-   {:permission :application.command/remove-member}
-   {:permission :application.command/request-comment}
-   {:permission :application.command/request-final-decision} ; TODO: replace with request-decision
-   {:permission :application.command/return}
-   {:permission :application.command/revoke}
-   {:permission :application.command/save-draft}
-   {:permission :application.command/submit}
-   {:permission :application.command/uninvite-member}
-   {:role :final-decider :permission :application.command/approve}
-   {:role :final-decider :permission :application.command/reject}])
+  (permissions/compile-rules
+   [{:permission :see-everything}
+    {:permission :application.command/accept-invitation}
+    {:permission :application.command/accept-licenses}
+    {:permission :application.command/add-licenses}
+    {:permission :application.command/add-member}
+    {:permission :application.command/change-resources}
+    {:permission :application.command/comment}
+    {:permission :application.command/copy-as-new}
+    {:permission :application.command/create}
+    {:permission :application.command/decide}
+    {:permission :application.command/invite-member}
+    {:permission :application.command/remark}
+    {:permission :application.command/remove-member}
+    {:permission :application.command/request-comment}
+    {:permission :application.command/request-final-decision} ; TODO: replace with request-decision
+    {:permission :application.command/return}
+    {:permission :application.command/revoke}
+    {:permission :application.command/save-draft}
+    {:permission :application.command/submit}
+    {:permission :application.command/uninvite-member}
+    {:role :final-decider :permission :application.command/approve}
+    {:role :final-decider :permission :application.command/reject}]))
 
 (defn- calculate-permissions [application event]
   ;; TODO: proper workflow selection
