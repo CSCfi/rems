@@ -14,12 +14,12 @@
                                                         :application/commenters ["commenter1" "commenter2"]}])
           commented (reduce calculate-permissions requested [{:event/type :application.event/commented
                                                               :event/actor "commenter1"}])]
-      (is (= #{:see-everything :application.command/comment :application.command/remark}
-             (permissions/user-permissions requested "commenter1")))
-      (is (= #{:see-everything :application.command/remark}
-             (permissions/user-permissions commented "commenter1")))
-      (is (= #{:see-everything :application.command/comment :application.command/remark}
-             (permissions/user-permissions commented "commenter2")))))
+      (is (contains? (permissions/user-permissions requested "commenter1")
+                     :application.command/comment))
+      (is (not (contains? (permissions/user-permissions commented "commenter1")
+                          :application.command/comment)))
+      (is (contains? (permissions/user-permissions commented "commenter2")
+                     :application.command/comment))))
 
   (testing "decider may decide only once"
     (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created
@@ -31,10 +31,10 @@
                                                         :application/deciders ["decider"]}])
           decided (reduce calculate-permissions requested [{:event/type :application.event/decided
                                                             :event/actor "decider"}])]
-      (is (= #{:see-everything :application.command/decide :application.command/remark}
-             (permissions/user-permissions requested "decider")))
-      (is (= #{:see-everything :application.command/remark}
-             (permissions/user-permissions decided "decider")))))
+      (is (contains? (permissions/user-permissions requested "decider")
+                     :application.command/decide))
+      (is (not (contains? (permissions/user-permissions decided "decider")
+                          :application.command/decide)))))
 
   (testing "everyone can accept invitation"
     (let [created (reduce calculate-permissions nil [{:event/type :application.event/created
