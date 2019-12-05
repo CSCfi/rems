@@ -260,16 +260,7 @@
         (is (= {:to-user "assistant",
                 :subject "(2001/3, \"Application title\") Application decision notification",
                 :body "Dear Amber Assistant,\n\ndecider has filed a decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
-               (email-to "assistant" mails))))))
-  (testing "final-decision-requested"
-    (is (= [{:to-user "decider",
-             :subject "(2001/3, \"Application title\") Decision request",
-             :body "Dear decider,\n\nAmber Assistant has requested your decision on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review application at http://example.com/application/7"}]
-           (emails base-events {:application/id 7
-                                :event/type :application.event/final-decision-requested
-                                :event/actor "assistant"
-                                :application/request-id "r2"
-                                :application/deciders ["decider"]})))))
+               (email-to "assistant" mails)))))))
 
 (deftest test-rejected
   (is (= [{:to-user "applicant"

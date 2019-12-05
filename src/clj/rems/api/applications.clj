@@ -60,7 +60,7 @@
 ;; Api implementation
 
 (def ^:private todo-roles
-  #{:handler :commenter :decider :final-decider :past-commenter :past-decider})
+  #{:handler :commenter :decider :past-commenter :past-decider})
 
 (defn- potential-todo? [application]
   (and (some todo-roles (:application/roles application))
@@ -79,8 +79,7 @@
     :application.command/request-comment
     :application.command/comment
     :application.command/request-decision
-    :application.command/decide
-    :application.command/request-final-decision})
+    :application.command/decide})
 
 (defn- todo? [application]
   (and (= :application.state/submitted (:application/state application))
@@ -281,7 +280,6 @@
     (command-endpoint :application.command/request-comment commands/RequestCommentCommand
                       "This corresponds to the \"Request review\" operation in the UI.")
     (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
-    (command-endpoint :application.command/request-final-decision commands/RequestDecisionCommand)
     (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
     (command-endpoint :application.command/return commands/ReturnCommand)
     (command-endpoint :application.command/revoke commands/RevokeCommand)

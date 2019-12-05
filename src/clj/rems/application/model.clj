@@ -147,13 +147,6 @@
                                                               (repeat (:application/request-id event))))
       (update-todo-for-requests)))
 
-(defmethod event-type-specific-application-view :application.event/final-decision-requested
-  [application event]
-  (-> application
-      (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
-                                                              (repeat (:application/request-id event))))
-      (update-todo-for-requests)))
-
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
   (-> application
@@ -226,7 +219,6 @@
     {:permission :application.command/accept-licenses}
     {:permission :application.command/add-licenses}
     {:permission :application.command/add-member}
-    {:permission :application.command/approve}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/comment}
@@ -234,7 +226,6 @@
     {:permission :application.command/create}
     {:permission :application.command/decide}
     {:permission :application.command/invite-member}
-    {:permission :application.command/reject}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-comment}
@@ -243,7 +234,9 @@
     {:permission :application.command/revoke}
     {:permission :application.command/save-draft}
     {:permission :application.command/submit}
-    {:permission :application.command/uninvite-member}]))
+    {:permission :application.command/uninvite-member}
+    {:role :handler :permission :application.command/approve}
+    {:role :handler :permission :application.command/reject}]))
 
 (def bureaucratic-workflow
   (permissions/compile-rules
@@ -256,19 +249,18 @@
     {:permission :application.command/comment}
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
-    {:permission :application.command/decide}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
     {:permission :application.command/request-comment}
-    {:permission :application.command/request-final-decision} ; TODO: replace with request-decision
+    {:permission :application.command/request-decision}
     {:permission :application.command/return}
     {:permission :application.command/revoke}
     {:permission :application.command/save-draft}
     {:permission :application.command/submit}
     {:permission :application.command/uninvite-member}
-    {:role :final-decider :permission :application.command/approve}
-    {:role :final-decider :permission :application.command/reject}]))
+    {:role :decider :permission :application.command/approve}
+    {:role :decider :permission :application.command/reject}]))
 
 (defn- calculate-permissions [application event]
   ;; TODO: proper workflow selection
@@ -429,9 +421,6 @@
              :application.event/decision-requested
              {:application/deciders (mapv get-user (:application/deciders event))}
 
-             :application.event/final-decision-requested
-             {:application/deciders (mapv get-user (:application/deciders event))}
-
              :application.event/comment-requested
              {:application/commenters (mapv get-user (:application/commenters event))}
 
@@ -525,8 +514,7 @@
        (remove (comp #{:application.event/comment-requested
                        :application.event/commented
                        :application.event/decided
-                       :application.event/decision-requested
-                       :application.event/final-decision-requested}
+                       :application.event/decision-requested}
                      :event/type))
        (remove #(and (= :application.event/remarked
                         (:event/type %))

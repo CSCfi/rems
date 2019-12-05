@@ -16,7 +16,6 @@
             [rems.actions.remark :refer [remark-action-button remark-form]]
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
-            [rems.actions.request-final-decision :refer [request-final-decision-action-button request-final-decision-form]]
             [rems.actions.request-review :refer [request-review-action-button request-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
@@ -636,7 +635,6 @@
                               :application.command/request-comment [request-review-action-button]
                               :application.command/comment [review-action-button]
                               :application.command/request-decision [request-decision-action-button]
-                              :application.command/request-final-decision [request-final-decision-action-button]
                               :application.command/decide [decide-action-button]
                               :application.command/remark [remark-action-button]
                               :application.command/approve [approve-reject-action-button]
@@ -659,7 +657,6 @@
         forms [[:div#actions-forms.mt-3
                 [request-review-form app-id reload]
                 [request-decision-form app-id reload]
-                [request-final-decision-form app-id reload]
                 [review-form app-id reload]
                 [remark-form app-id reload]
                 [close-form app-id show-comment-field? reload]

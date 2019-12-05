@@ -70,12 +70,6 @@
          :application/request-id s/Uuid
          :application/deciders [s/Str]
          :application/comment s/Str))
-(s/defschema FinalDecisionRequestedEvent
-  (assoc EventBase
-         :event/type (s/enum :application.event/final-decision-requested)
-         :application/request-id s/Uuid
-         :application/deciders [s/Str]
-         :application/comment s/Str))
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
@@ -153,7 +147,6 @@
    :application.event/decided DecidedEvent
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
-   :application.event/final-decision-requested FinalDecisionRequestedEvent
    :application.event/licenses-accepted LicensesAcceptedEvent
    :application.event/licenses-added LicensesAddedEvent
    :application.event/member-added MemberAddedEvent

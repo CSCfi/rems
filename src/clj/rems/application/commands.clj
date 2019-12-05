@@ -116,7 +116,6 @@
    :application.command/remove-member RemoveMemberCommand
    :application.command/request-comment RequestCommentCommand
    :application.command/request-decision RequestDecisionCommand
-   :application.command/request-final-decision RequestDecisionCommand
    :application.command/return ReturnCommand
    :application.command/revoke RevokeCommand
    :application.command/save-draft SaveDraftCommand
@@ -360,15 +359,6 @@
   (or (must-not-be-empty cmd :deciders)
       (invalid-users-errors (:deciders cmd) injections)
       (ok {:event/type :application.event/decision-requested
-           :application/request-id (UUID/randomUUID)
-           :application/deciders (:deciders cmd)
-           :application/comment (:comment cmd)})))
-
-(defmethod command-handler :application.command/request-final-decision
-  [cmd _application injections]
-  (or (must-not-be-empty cmd :deciders)
-      (invalid-users-errors (:deciders cmd) injections)
-      (ok {:event/type :application.event/final-decision-requested
            :application/request-id (UUID/randomUUID)
            :application/deciders (:deciders cmd)
            :application/comment (:comment cmd)})))

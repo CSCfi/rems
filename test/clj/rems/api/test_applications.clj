@@ -178,7 +178,6 @@
         (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
-                 "application.command/request-final-decision"
                  "application.command/remark"
                  "application.command/reject"
                  "application.command/approve"
@@ -305,12 +304,6 @@
                                               :application-id application-id
                                               :decision :approved
                                               :comment ""}))))
-      (testing "request-final-decision"
-        (is (= {:success true} (send-command handler-id
-                                             {:type :application.command/request-final-decision
-                                              :application-id application-id
-                                              :deciders [decider-id]
-                                              :comment ""}))))
       (testing "hidden remark"
         (is (= {:success true} (send-command handler-id {:type :application.command/remark
                                                          :application-id application-id
@@ -348,7 +341,6 @@
                     "application.event/resources-changed"
                     "application.event/decision-requested"
                     "application.event/decided"
-                    "application.event/final-decision-requested"
                     "application.event/remarked"
                     "application.event/remarked"
                     "application.event/approved"]
@@ -829,7 +821,6 @@
   (let [app-id (test-data/create-application! {:actor "alice"})]
     (test-data/create-user! {:eppn "commenter"})
     (test-data/create-user! {:eppn "decider"})
-    (test-data/create-user! {:eppn "final-decider"})
 
     (testing "does not list drafts"
       (is (not (contains? (get-ids (get-todos "developer"))
@@ -872,18 +863,6 @@
       (is (not (contains? (get-ids (get-handled-todos "decider"))
                           app-id))))
 
-    (testing "final-decider sees application in todos"
-      (is (not (contains? (get-ids (get-todos "final-decider"))
-                          app-id)))
-      (is (= {:success true} (send-command "developer" {:type :application.command/request-final-decision
-                                                        :application-id app-id
-                                                        :deciders ["final-decider"]
-                                                        :comment "x"})))
-      (is (contains? (get-ids (get-todos "final-decider"))
-                     app-id))
-      (is (not (contains? (get-ids (get-handled-todos "final-decider"))
-                          app-id))))
-
     (testing "lists handled in handled"
       (is (= {:success true} (send-command "developer" {:type :application.command/approve
                                                         :application-id app-id
@@ -908,10 +887,4 @@
       (is (not (contains? (get-ids (get-todos "decider"))
                           app-id)))
       (is (contains? (get-ids (get-handled-todos "decider"))
-                     app-id)))
-
-    (testing "final-decider sees accepted application in handled todos"
-      (is (not (contains? (get-ids (get-todos "final-decider"))
-                          app-id)))
-      (is (contains? (get-ids (get-handled-todos "final-decider"))
                      app-id)))))

@@ -7,7 +7,6 @@
         <th>commenter</th>
         <th>decider</th>
         <th>everyone‑else</th>
-        <th>final‑decider</th>
         <th>handler</th>
         <th>member</th>
         <th>past‑commenter</th>
@@ -38,10 +37,6 @@
         <td valign="top">
             <!-- role: everyone-else -->
             <div>accept‑invitation</div>
-        </td>
-        <td valign="top">
-            <!-- role: final-decider -->
-            <div>see‑everything</div>
         </td>
         <td valign="top">
             <!-- role: handler -->
@@ -93,10 +88,6 @@
             <!-- role: everyone-else -->
         </td>
         <td valign="top">
-            <!-- role: final-decider -->
-            <div>see‑everything</div>
-        </td>
-        <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
             <div>remark</div>
@@ -143,9 +134,6 @@
             <div>accept‑invitation</div>
         </td>
         <td valign="top">
-            <!-- role: final-decider -->
-        </td>
-        <td valign="top">
             <!-- role: handler -->
         </td>
         <td valign="top">
@@ -180,10 +168,6 @@
         </td>
         <td valign="top">
             <!-- role: everyone-else -->
-        </td>
-        <td valign="top">
-            <!-- role: final-decider -->
-            <div>see‑everything</div>
         </td>
         <td valign="top">
             <!-- role: handler -->
@@ -238,10 +222,6 @@
             <div>accept‑invitation</div>
         </td>
         <td valign="top">
-            <!-- role: final-decider -->
-            <div>see‑everything</div>
-        </td>
-        <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
             <div>add‑licenses</div>
@@ -292,10 +272,6 @@
             <!-- role: everyone-else -->
         </td>
         <td valign="top">
-            <!-- role: final-decider -->
-            <div>see‑everything</div>
-        </td>
-        <td valign="top">
             <!-- role: handler -->
             <div>see‑everything</div>
             <div>remark</div>
@@ -335,19 +311,14 @@
         <td valign="top">
             <!-- role: decider -->
             <div>see‑everything</div>
+            <div>approve</div>
             <div>decide</div>
+            <div>reject</div>
             <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: everyone-else -->
             <div>accept‑invitation</div>
-        </td>
-        <td valign="top">
-            <!-- role: final-decider -->
-            <div>see‑everything</div>
-            <div>approve</div>
-            <div>reject</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: handler -->
@@ -363,7 +334,6 @@
             <div>remove‑member</div>
             <div>request‑comment</div>
             <div>request‑decision</div>
-            <div>request‑final‑decision</div>
             <div>return</div>
             <div>uninvite‑member</div>
         </td>
