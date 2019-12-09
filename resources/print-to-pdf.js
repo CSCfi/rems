@@ -28,4 +28,4 @@ const puppeteer = require("puppeteer");
     });
     console.log("generated pdf");
     await browser.close();
-})()
+})().catch(err => {console.log(err); process.exit(2);});
