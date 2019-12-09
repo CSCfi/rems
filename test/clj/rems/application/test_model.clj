@@ -385,7 +385,7 @@
                                            {:license/id 32}]
                     :form/id 40
                     :workflow/id 50
-                    :workflow/type :workflow/dynamic})
+                    :workflow/type :workflow/master})
 
 (def created-application {:application/id 1
                           :application/external-id "extid"
@@ -408,7 +408,7 @@
                           :application/accepted-licenses {}
                           :application/events [created-event]
                           :application/form {:form/id 40}
-                          :application/workflow {:workflow/type :workflow/dynamic
+                          :application/workflow {:workflow/type :workflow/master
                                                  :workflow/id 50}})
 
 (deftest test-application-view-created
@@ -987,7 +987,7 @@
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]
                                 :form/id 40
                                 :workflow/id 50
-                                :workflow/type :workflow/dynamic
+                                :workflow/type :workflow/master
                                 :application/licenses [{:license/id 30} {:license/id 31} {:license/id 32}]}
                                {:event/type :application.event/draft-saved
                                 :application/id 1
@@ -1034,7 +1034,7 @@
                                             :field/max-length 100}]}
           :application/attachments []
           :application/workflow {:workflow/id 50
-                                 :workflow/type :workflow/dynamic
+                                 :workflow/type :workflow/master
                                  :workflow.dynamic/handlers [{:userid "handler"
                                                               :name "Handler"
                                                               :email "handler@example.com"}]}}
@@ -1153,7 +1153,8 @@
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
-                                                     :event/actor "applicant"})
+                                                     :event/actor "applicant"
+                                                     :workflow/type :workflow/dynamic})
                         (assoc-in [:application/workflow :workflow.dynamic/handlers] [{:userid "handler"}])
                         (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])

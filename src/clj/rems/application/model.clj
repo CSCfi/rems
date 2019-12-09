@@ -263,11 +263,10 @@
     {:role :decider :permission :application.command/reject}]))
 
 (defn- calculate-permissions [application event]
-  ;; TODO: proper workflow selection
-  (let [whitelist (case (get-in application [:application/applicant :userid])
-                    "elsa" bureaucratic-workflow
-                    "frank" dynamic-workflow
-                    master-workflow/whitelist)]
+  (let [whitelist (case (get-in application [:application/workflow :workflow/type])
+                    :workflow/dynamic dynamic-workflow
+                    :workflow/bureaucratic bureaucratic-workflow
+                    :workflow/master master-workflow/whitelist)]
     (-> application
         (master-workflow/calculate-permissions event)
         (permissions/whitelist whitelist))))
@@ -454,13 +453,13 @@
             enrich-members)))
 
 (defn enrich-workflow-handlers [application get-workflow]
-  (if (= :workflow/dynamic (get-in application [:application/workflow :workflow/type]))
-    (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
-          handlers (get-in workflow [:workflow :handlers])]
+  (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
+        handlers (get-in workflow [:workflow :handlers])]
+    (if handlers
       (-> application
           (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
-          (permissions/give-role-to-users :handler (mapv :userid handlers))))
-    application))
+          (permissions/give-role-to-users :handler (mapv :userid handlers)))
+      application)))
 
 (defn- enrich-super-users [application get-users-with-role]
   (-> application
