@@ -142,6 +142,12 @@
    (println "Received not-found from" current-url)
    {:dispatch [:set-active-page :not-found]}))
 
+(defn version-info []
+  (if-let [{:keys [version revision]} (read-current-version)]
+    (do (println "Version: " version)
+        (println (str git/+commits-url+ revision)))
+    (println "Version information not available")))
+
 (rf/reg-event-fx
  :landing-page-redirect!
  (fn [{:keys [db]}]
@@ -260,11 +266,7 @@
      [:div.navbar-text (text :t/footer)]
      (when (config/dev-environment?)
        [:div.dev-only
-        [dev-reload-button]])
-     (when-let [{:keys [version revision]} (read-current-version)]
-       [:div#footer-release-number
-        [:a {:href (str git/+commits-url+ revision)}
-         version]])]]])
+        [dev-reload-button]])]]])
 
 (defn logo []
   [:div.logo [:div.container.img]])
@@ -496,6 +498,7 @@
   (r/render [page] (.getElementById js/document "app")))
 
 (defn init! []
+  (version-info)
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (-> (p/all [(fetch-translations!)
