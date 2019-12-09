@@ -32,12 +32,12 @@
   (testing "dynamic workflow"
     (let [form {:organization "abc"
                 :title "workflow title"
-                :type :dynamic
+                :type :workflow/dynamic
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
-                :type :dynamic
+                :type :workflow/dynamic
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"

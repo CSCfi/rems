@@ -27,7 +27,7 @@
 (defn create-workflow! [command]
   (let [result (case (:type command)
                  :auto-approve (create-auto-approve-workflow! command)
-                 :dynamic (create-dynamic-workflow! command))]
+                 :workflow/dynamic (create-dynamic-workflow! command))]
     (merge
      result
      {:success (not (nil? (:id result)))})))

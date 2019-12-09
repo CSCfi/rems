@@ -169,7 +169,7 @@
                 {:user-id (or actor "owner")
                  :organization (or organization "abc")
                  :title (or title "")
-                 :type :dynamic
+                 :type :workflow/dynamic
                  :handlers
                  (or handlers
                      (do (create-user! (get +fake-user-data+ "developer"))

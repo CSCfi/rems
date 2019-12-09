@@ -75,7 +75,7 @@
                   (extract-id
                    (api-call :post "/api/workflows/create" {:organization "e2e"
                                                             :title "e2e workflow"
-                                                            :type :dynamic
+                                                            :type :workflow/dynamic
                                                             :handlers [handler-id]}
                              api-key owner-id)))
 
@@ -261,7 +261,7 @@
             (extract-id
              (api-call :post "/api/workflows/create" {:organization "e2e"
                                                       :title "e2e workflow"
-                                                      :type :dynamic
+                                                      :type :workflow/dynamic
                                                       :handlers [handler-id
                                                                  approver-bot/bot-userid
                                                                  rejecter-bot/bot-userid]}

@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.6
 
+### Breaking changes
+- `/api/workflows/create` API: the `type` parameter's allowed value was changed from `dynamic` to `workflow/dynamic`
+
 ### Additions
 - Catalogue item form can be changed for one or more items at a time. 
   New items will be created that use the new form while the old items

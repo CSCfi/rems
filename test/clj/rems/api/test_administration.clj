@@ -24,7 +24,7 @@
                                api-key user-id))
         workflow-id (:id (api-call :post "/api/workflows/create"
                                    {:organization "abc" :title "dynamic workflow"
-                                    :type :dynamic :handlers [user-id]}
+                                    :type :workflow/dynamic :handlers [user-id]}
                                    api-key user-id))
         catalogue-id (:id (api-call :post "/api/catalogue-items/create"
                                     {:form form-id

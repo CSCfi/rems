@@ -71,7 +71,7 @@
     (let [body (-> (request :post "/api/workflows/create")
                    (json-body {:organization "abc"
                                :title "dynamic workflow"
-                               :type :dynamic
+                               :type :workflow/dynamic
                                :handlers ["handler" "carl"]})
                    (authenticate "42" "owner")
                    handler

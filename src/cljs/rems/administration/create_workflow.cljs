@@ -18,7 +18,7 @@
                ::workflow-id workflow-id
                ::loading-workflow? (not (nil? workflow-id))
                ::actors nil
-               ::form {:type :dynamic})
+               ::form {:type :workflow/dynamic})
     ::fetch-actors nil
     ::fetch-workflow workflow-id}))
 
@@ -57,7 +57,7 @@
 (defn- valid-create-request? [request]
   (and (case (:type request)
          :auto-approve true
-         :dynamic (seq (:handlers request))
+         :workflow/dynamic (seq (:handlers request))
          nil false)
        (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))))
@@ -68,7 +68,7 @@
                  :type (:type form)}
         request (case (:type form)
                   :auto-approve request
-                  :dynamic (assoc request :handlers (map :userid (:handlers form))))]
+                  :workflow/dynamic (assoc request :handlers (map :userid (:handlers form))))]
     (when (valid-create-request? request)
       request)))
 
@@ -151,7 +151,7 @@
                                :options [;; TODO: create a new auto-approve workflow in the style of dynamic workflows
                                          #_{:value :auto-approve
                                             :label (text :t.create-workflow/auto-approve-workflow)}
-                                         {:value :dynamic
+                                         {:value :workflow/dynamic
                                           :label (text :t.create-workflow/dynamic-workflow)}]}])
 
 (defn- save-workflow-button []
@@ -226,7 +226,7 @@
 
                   (case workflow-type
                     :auto-approve [auto-approve-workflow-form]
-                    :dynamic [dynamic-workflow-form])
+                    :workflow/dynamic [dynamic-workflow-form])
 
                   [:div.col.commands
                    [cancel-button]
