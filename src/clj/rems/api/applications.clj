@@ -13,11 +13,13 @@
             [rems.config :as config]
             [rems.db.applications :as applications]
             [rems.db.users :as users]
+            [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import java.io.ByteArrayInputStream))
 
 ;; Response models
 
@@ -260,13 +262,23 @@
         (ok app)
         (api-util/not-found-json-response)))
 
-    (GET "/:application-id/pdf" []
+    (GET "/:application-id/pdf" request
       :summary "PDF export of application (EXPERIMENTAL)"
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
-      (if-not (:enable-pdf-api config/env)
-        (not-implemented "pdf api not enabled")
-        (ok "enabled")))
+      :responses {200 {}
+                  501 {:schema s/Str}
+                  401 {:schema s/Str}}
+      (let [api-key (get-in request [:headers "x-rems-api-key"])]
+        (cond
+          (not (:enable-pdf-api config/env))
+          (not-implemented "pdf api not enabled")
+          (not api-key)
+          (unauthorized "this api only works with an explicit x-rems-api-key header")
+          :else
+          (let [bytes (pdf/application-to-pdf (getx-user-id) api-key application-id)]
+            (-> (ok (ByteArrayInputStream. bytes))
+                (content-type "application/pdf"))))))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []
       :summary "Get file associated with licence of type attachment associated with application."
