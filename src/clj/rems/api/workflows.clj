@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer [SuccessResponse ArchivedCommand EnabledCommand UserId UserWithAttributes Workflow]]
             [rems.api.services.workflow :as workflow]
+            [rems.api.util :as api-util]
             [rems.api.util] ; required for route :roles
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -80,4 +81,6 @@
       :roles #{:owner :handler}
       :path-params [workflow-id :- (describe s/Int "workflow-id")]
       :return Workflow
-      (ok (workflow/get-workflow workflow-id)))))
+      (if-some [wf (workflow/get-workflow workflow-id)]
+        (ok wf)
+        (api-util/not-found-json-response)))))

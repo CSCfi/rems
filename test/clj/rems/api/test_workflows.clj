@@ -24,16 +24,12 @@
    :enabled true
    :archived false})
 
-;; TODO: get by id
-;; TODO: handle not found
 (defn- fetch [api-key user-id wfid]
-  (let [wfs (-> (request :get "/api/workflows" {:archived true :disabled true})
-                (authenticate api-key user-id)
-                handler
-                read-ok-body)]
-    (select-keys
-     (first (filter #(= wfid (:id %)) wfs))
-     (keys expected))))
+  (-> (request :get (str "/api/workflows/" wfid))
+      (authenticate api-key user-id)
+      handler
+      read-ok-body
+      (select-keys (keys expected))))
 
 (deftest workflows-api-test
   (testing "list"
@@ -43,6 +39,21 @@
                    assert-response-is-ok
                    read-body)]
       (is (coll-is-not-empty? data))))
+
+  (let [id (test-data/create-dynamic-workflow! {})]
+    (testing "get by id"
+      (let [data (-> (request :get (str "/api/workflows/" id))
+                     (authenticate "42" "owner")
+                     handler
+                     assert-response-is-ok
+                     read-body)]
+        (is (= id (:id data)))))
+
+    (testing "id not found"
+      (let [response (-> (request :get (str "/api/workflows/" 666))
+                         (authenticate "42" "owner")
+                         handler)]
+        (is (response-is-not-found? response)))))
 
   (testing "create dynamic workflow"
     (let [body (-> (request :post "/api/workflows/create")
