@@ -17,13 +17,15 @@
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
   {:organization "abc"
-   :title "dynamic workflow"
+   :title "workflow title"
    :workflow {:type "workflow/dynamic"
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
                          {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
    :enabled true
    :archived false})
 
+;; TODO: get by id
+;; TODO: handle not found
 (defn- fetch [api-key user-id wfid]
   (let [wfs (-> (request :get "/api/workflows" {:archived true :disabled true})
                 (authenticate api-key user-id)
@@ -70,7 +72,7 @@
   (testing "create dynamic workflow"
     (let [body (-> (request :post "/api/workflows/create")
                    (json-body {:organization "abc"
-                               :title "dynamic workflow"
+                               :title "workflow title"
                                :type :workflow/dynamic
                                :handlers ["handler" "carl"]})
                    (authenticate "42" "owner")
@@ -82,13 +84,30 @@
       (sync-with-database-time)
       (testing "and fetch"
         (is (= expected
+               (fetch "42" "owner" id))))))
+
+  (testing "create bureaucratic workflow"
+    (let [body (-> (request :post "/api/workflows/create")
+                   (json-body {:organization "abc"
+                               :title "workflow title"
+                               :type :workflow/bureaucratic
+                               :handlers ["handler" "carl"]})
+                   (authenticate "42" "owner")
+                   handler
+                   assert-response-is-ok
+                   read-body)
+          id (:id body)]
+      (is (< 0 id))
+      (sync-with-database-time)
+      (testing "and fetch"
+        (is (= (assoc-in expected [:workflow :type] "workflow/bureaucratic")
                (fetch "42" "owner" id)))))))
 
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
         wfid (test-data/create-dynamic-workflow! {:organization "abc"
-                                                  :title "dynamic workflow"
+                                                  :title "workflow title"
                                                   :handlers ["handler" "carl"]})
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
@@ -138,7 +157,7 @@
   (let [api-key "42"
         user-id "owner"
         wfid (test-data/create-dynamic-workflow! {:organization "abc"
-                                                  :title "dynamic workflow"
+                                                  :title "workflow title"
                                                   :handlers ["handler" "carl"]})
         fetch #(fetch api-key user-id wfid)
         edit! #(-> (request :put "/api/workflows/edit")

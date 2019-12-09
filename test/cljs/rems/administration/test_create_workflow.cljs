@@ -41,6 +41,20 @@
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"
+        (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
+
+  (testing "bureaucratic workflow"
+    (let [form {:organization "abc"
+                :title "workflow title"
+                :type :workflow/bureaucratic
+                :handlers [{:userid "bob"} {:userid "carl"}]}]
+      (testing "valid form"
+        (is (= {:organization "abc"
+                :title "workflow title"
+                :type :workflow/bureaucratic
+                :handlers ["bob" "carl"]}
+               (build-create-request form))))
+      (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] []))))))))
 
 (deftest build-edit-request-test

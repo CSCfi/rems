@@ -6,8 +6,7 @@
             [rems.util :refer [getx]]))
 
 (defn- get-workflow-licenses [id]
-  (->> {:wfid id}
-       db/get-workflow-licenses
+  (->> (db/get-workflow-licenses {:wfid id})
        (mapv #(licenses/get-license (getx % :licid)))))
 
 (defn- enrich-and-format-workflow [wf]
@@ -18,9 +17,8 @@
       (update-in [:workflow :handlers] #(mapv users/get-user %))))
 
 (defn get-workflow [id]
-  (-> {:wfid id}
-      db/get-workflow
-      enrich-and-format-workflow))
+  (when-let [wf (db/get-workflow {:wfid id})]
+    (enrich-and-format-workflow wf)))
 
 (defn get-workflows [filters]
   (->> (db/get-workflows)

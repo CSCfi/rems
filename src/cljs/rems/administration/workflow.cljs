@@ -56,10 +56,11 @@
               [inline-info-field (text :t.administration/organization) (:organization workflow)]
               [inline-info-field (text :t.administration/title) (:title workflow)]
               [inline-info-field (text :t.administration/type)
-               (if (:workflow workflow)
-                 (text :t.create-workflow/dynamic-workflow)
-                 ;; TODO: Not implemented.
-                 (text :t.create-workflow/auto-approve-workflow))]
+               (case (get-in workflow [:workflow :type])
+                 :workflow/dynamic (text :t.create-workflow/dynamic-workflow)
+                 :workflow/bureaucratic (text :t.create-workflow/bureaucratic-workflow)
+                 ; TODO: master workflow
+                 (text :t/missing))]
               [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
                                                                          (map enrich-user)
                                                                          (map :display)

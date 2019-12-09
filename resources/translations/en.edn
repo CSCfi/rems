@@ -188,7 +188,7 @@
              :show "Show"
              :show-less "Show less"
              :show-more "Show more"}
-  :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form." 
+  :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form."
                 :form-selection "Form"}
   :create-catalogue-item {:form-selection "Form"
                           :infourl "More info URL (optional, defaults to resource URN)"
@@ -229,8 +229,10 @@
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:auto-approve-workflow "Auto-approve"
                     :auto-approve-workflow-description "The application is approved immediately without human intervention."
+                    :bureaucratic-workflow "Bureaucratic workflow"
+                    :bureaucratic-workflow-description "The handler does not have the authority to approve or reject, but a separate decider has."
                     :dynamic-workflow "Dynamic workflow"
-                    :dynamic-workflow-description "The handler decides on a case-by-case basis who needs to review or approve the application."
+                    :dynamic-workflow-description "The handler is in full control of the application process, only asking others for comments."
                     :handlers "Handlers"
                     :title "Title"}
   :dropdown {:no-results "No results"

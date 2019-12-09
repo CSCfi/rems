@@ -6,12 +6,12 @@
             [rems.json :as json])
   (:import [org.apache.commons.lang3 NotImplementedException]))
 
-(defn- create-auto-approve-workflow! [{:keys [user-id organization title]}]
+(defn- create-auto-approve-workflow! [{:keys [user-id organization title]}] ; TODO: remove
   (assert user-id)
   ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
   (throw (NotImplementedException. "auto-approve workflows are not yet implemented")))
 
-(defn- create-dynamic-workflow! [{:keys [user-id organization title handlers]}]
+(defn- create-dynamic-workflow! [{:keys [user-id organization type title handlers]}] ; TODO: inline
   (assert user-id)
   (assert organization)
   (assert title)
@@ -20,24 +20,32 @@
                                         :owneruserid user-id,
                                         :modifieruserid user-id,
                                         :title title,
-                                        :workflow (json/generate-string {:type :workflow/dynamic
+                                        :workflow (json/generate-string {:type type
                                                                          :handlers handlers})}))]
     {:id wfid}))
 
 (defn create-workflow! [command]
   (let [result (case (:type command)
                  :auto-approve (create-auto-approve-workflow! command)
-                 :workflow/dynamic (create-dynamic-workflow! command))]
+                 :workflow/dynamic (create-dynamic-workflow! command)
+                 :workflow/bureaucratic (create-dynamic-workflow! command))]
     (merge
      result
      {:success (not (nil? (:id result)))})))
 
-(defn edit-workflow! [command]
-  (db/edit-workflow!
-   (merge (select-keys command [:id :title])
-          (when-let [handlers (:handlers command)]
-            {:workflow (json/generate-string {:type :workflow/dynamic
-                                              :handlers handlers})})))
+(defn- unrich-workflow [workflow]
+  ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)
+  (if (get-in workflow [:workflow :handlers])
+    (update-in workflow [:workflow :handlers] #(map :userid %))
+    workflow))
+
+(defn edit-workflow! [{:keys [id title handlers]}]
+  (let [workflow (unrich-workflow (workflow/get-workflow id))
+        workflow-body (cond-> (:workflow workflow)
+                        handlers (assoc :handlers handlers))]
+    (db/edit-workflow! {:id id
+                        :title title
+                        :workflow (json/generate-string workflow-body)}))
   {:success true})
 
 (defn set-workflow-enabled! [command]

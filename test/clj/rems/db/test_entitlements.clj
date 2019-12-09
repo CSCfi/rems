@@ -158,9 +158,9 @@
                     [member "resource1"] [member "resource2"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
           (testing "POST"
-              (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                      {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
-                     (get-requests server))))))
+            (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                    {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
+                   (get-requests server))))))
 
       (testing "removing a member ends entitlements"
         (with-stub-server server

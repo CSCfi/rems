@@ -47,6 +47,7 @@
  (fn [db [_ workflow]]
    (let [new-stuff {:title (:title workflow)
                     :organization (:organization workflow)
+                    :type (:type (:workflow workflow))
                     :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}]
      (-> db
          (update ::form merge new-stuff)
@@ -58,6 +59,7 @@
   (and (case (:type request)
          :auto-approve true
          :workflow/dynamic (seq (:handlers request))
+         :workflow/bureaucratic (seq (:handlers request))
          nil false)
        (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))))
@@ -68,7 +70,8 @@
                  :type (:type form)}
         request (case (:type form)
                   :auto-approve request
-                  :workflow/dynamic (assoc request :handlers (map :userid (:handlers form))))]
+                  :workflow/dynamic (assoc request :handlers (map :userid (:handlers form)))
+                  :workflow/bureaucratic (assoc request :handlers (map :userid (:handlers form))))]
     (when (valid-create-request? request)
       request)))
 
@@ -149,10 +152,12 @@
                                :readonly @(rf/subscribe [::editing?])
                                :orientation :horizontal
                                :options [;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-                                         #_{:value :auto-approve
+                                         #_{:value :auto-approve ; TODO: remove
                                             :label (text :t.create-workflow/auto-approve-workflow)}
                                          {:value :workflow/dynamic
-                                          :label (text :t.create-workflow/dynamic-workflow)}]}])
+                                          :label (text :t.create-workflow/dynamic-workflow)}
+                                         {:value :workflow/bureaucratic
+                                          :label (text :t.create-workflow/bureaucratic-workflow)}]}])
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])
@@ -198,7 +203,12 @@
    [workflow-type-description (text :t.create-workflow/dynamic-workflow-description)]
    [workflow-handlers-field]])
 
-(defn auto-approve-workflow-form []
+(defn bureaucratic-workflow-form []
+  [:div
+   [workflow-type-description (text :t.create-workflow/bureaucratic-workflow-description)]
+   [workflow-handlers-field]])
+
+(defn auto-approve-workflow-form [] ; TODO: remove
   [:div
    [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
 
@@ -226,7 +236,8 @@
 
                   (case workflow-type
                     :auto-approve [auto-approve-workflow-form]
-                    :workflow/dynamic [dynamic-workflow-form])
+                    :workflow/dynamic [dynamic-workflow-form]
+                    :workflow/bureaucratic [bureaucratic-workflow-form]) ; TODO: master workflow
 
                   [:div.col.commands
                    [cancel-button]
