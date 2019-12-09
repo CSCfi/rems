@@ -3,6 +3,7 @@
             [compojure.core :refer [GET defroutes]]
             [hiccup.page :refer [html5]]
             [hiccup.util :refer [url]]
+            [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]
@@ -45,7 +46,7 @@ a:visited { color: #fff; }
 ")
 
 (defn- fake-login [session username]
-  (assoc (redirect "/redirect")
+  (assoc (redirect (str (:public-url env) "redirect"))
          :session (assoc session :identity (users/get-raw-user-attributes username))))
 
 (defn- user-selection [username]
