@@ -107,10 +107,14 @@
             :web-xml "web.xml"
             :name "rems.war"}
 
-  ;; cljs testing
-  :npm {:devDependencies [[karma "3.1.1"]
+
+  :npm {:devDependencies [;; cljs testing
+                          [karma "3.1.1"]
                           [karma-cljs-test "0.1.0"]
-                          [karma-chrome-launcher "2.2.0"]]}
+                          [karma-chrome-launcher "2.2.0"]
+                          ;; printing to pdf
+                          [puppeteer "2.0.0"]]}
+
   :doo {:build "test"
         :paths {:karma "node_modules/karma/bin/karma"}
         :alias {:default [:chrome-headless]}}
