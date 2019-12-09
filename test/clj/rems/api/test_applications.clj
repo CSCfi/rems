@@ -487,17 +487,6 @@
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
 
-(deftest test-application-auto-approve
-  (let [applicant "alice"
-        wfid (test-data/create-dynamic-workflow! {:handlers [approver-bot/bot-userid]})
-        cat-item (test-data/create-catalogue-item! {:workflow-id wfid})
-        app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [cat-item]})]
-    (is (= {:success true}
-           (send-command applicant {:type :application.command/submit
-                                    :application-id app-id})))
-    (is (= "application.state/approved"
-           (:application/state (get-application app-id applicant))))))
-
 (deftest test-revoke
   (let [applicant-id "alice"
         member-id "malice"

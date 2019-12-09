@@ -57,7 +57,6 @@
 
 (defn- valid-create-request? [request]
   (and (case (:type request)
-         :auto-approve true
          :workflow/dynamic (seq (:handlers request))
          :workflow/bureaucratic (seq (:handlers request))
          nil false)
@@ -69,7 +68,6 @@
                  :title (trim-when-string (:title form))
                  :type (:type form)}
         request (case (:type form)
-                  :auto-approve request
                   :workflow/dynamic (assoc request :handlers (map :userid (:handlers form)))
                   :workflow/bureaucratic (assoc request :handlers (map :userid (:handlers form))))]
     (when (valid-create-request? request)
@@ -151,10 +149,7 @@
                                :keys [:type]
                                :readonly @(rf/subscribe [::editing?])
                                :orientation :horizontal
-                               :options [;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-                                         #_{:value :auto-approve ; TODO: remove
-                                            :label (text :t.create-workflow/auto-approve-workflow)}
-                                         {:value :workflow/dynamic
+                               :options [{:value :workflow/dynamic
                                           :label (text :t.create-workflow/dynamic-workflow)}
                                          {:value :workflow/bureaucratic
                                           :label (text :t.create-workflow/bureaucratic-workflow)}]}])
@@ -208,10 +203,6 @@
    [workflow-type-description (text :t.create-workflow/bureaucratic-workflow-description)]
    [workflow-handlers-field]])
 
-(defn auto-approve-workflow-form [] ; TODO: remove
-  [:div
-   [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
-
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
@@ -235,7 +226,6 @@
                   [workflow-type-field]
 
                   (case workflow-type
-                    :auto-approve [auto-approve-workflow-form]
                     :workflow/dynamic [dynamic-workflow-form]
                     :workflow/bureaucratic [bureaucratic-workflow-form]) ; TODO: master workflow
 

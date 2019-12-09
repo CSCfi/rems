@@ -1,37 +1,23 @@
 (ns rems.api.services.workflow
   (:require [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.db.workflow :as workflow]
             [rems.db.users :as users]
-            [rems.json :as json])
-  (:import [org.apache.commons.lang3 NotImplementedException]))
+            [rems.db.workflow :as workflow]
+            [rems.json :as json]))
 
-(defn- create-auto-approve-workflow! [{:keys [user-id organization title]}] ; TODO: remove
-  (assert user-id)
-  ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-  (throw (NotImplementedException. "auto-approve workflows are not yet implemented")))
-
-(defn- create-dynamic-workflow! [{:keys [user-id organization type title handlers]}] ; TODO: inline
+(defn create-workflow! [{:keys [user-id organization type title handlers]}]
   (assert user-id)
   (assert organization)
   (assert title)
   (assert (every? string? handlers) {:handlers handlers})
-  (let [wfid (:id (db/create-workflow! {:organization organization,
-                                        :owneruserid user-id,
-                                        :modifieruserid user-id,
-                                        :title title,
-                                        :workflow (json/generate-string {:type type
-                                                                         :handlers handlers})}))]
-    {:id wfid}))
-
-(defn create-workflow! [command]
-  (let [result (case (:type command)
-                 :auto-approve (create-auto-approve-workflow! command)
-                 :workflow/dynamic (create-dynamic-workflow! command)
-                 :workflow/bureaucratic (create-dynamic-workflow! command))]
-    (merge
-     result
-     {:success (not (nil? (:id result)))})))
+  (let [id (:id (db/create-workflow! {:organization organization,
+                                      :owneruserid user-id,
+                                      :modifieruserid user-id,
+                                      :title title,
+                                      :workflow (json/generate-string {:type type
+                                                                       :handlers handlers})}))]
+    {:id id
+     :success (not (nil? id))}))
 
 (defn- unrich-workflow [workflow]
   ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)

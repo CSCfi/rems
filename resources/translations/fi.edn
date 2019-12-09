@@ -225,9 +225,7 @@
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:auto-approve-workflow "Automaattinen hyväksyntä"
-                    :auto-approve-workflow-description "Hakemus hyväksytään välittömästi, keneltäkään erikseen kysymättä."
-                    :bureaucratic-workflow "Virkamiestyövuo"
+  :create-workflow {:bureaucratic-workflow "Virkamiestyövuo"
                     :bureaucratic-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan erillisellä hyväksyjällä on."
                     :dynamic-workflow "Dynaaminen työvuo"
                     :dynamic-workflow-description "Hakemus on täysin käsittelijän hallinnassa ja hän vain pyytää toisilta kommentteja."

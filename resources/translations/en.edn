@@ -227,9 +227,7 @@
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:auto-approve-workflow "Auto-approve"
-                    :auto-approve-workflow-description "The application is approved immediately without human intervention."
-                    :bureaucratic-workflow "Bureaucratic workflow"
+  :create-workflow {:bureaucratic-workflow "Bureaucratic workflow"
                     :bureaucratic-workflow-description "The handler does not have the authority to approve or reject, but a separate decider has."
                     :dynamic-workflow "Dynamic workflow"
                     :dynamic-workflow-description "The handler is in full control of the application process, only asking others for comments."
