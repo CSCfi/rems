@@ -125,7 +125,8 @@
         license-id3 (test-data/create-license! {})
         license-id4 (test-data/create-license! {})
         form-id (test-data/create-form! {})
-        workflow-id (test-data/create-workflow! {:handlers [handler-id]})
+        workflow-id (test-data/create-workflow! {:type :workflow/master
+                                                 :handlers [handler-id]})
         cat-item-id1 (test-data/create-catalogue-item! {:resource-id (test-data/create-resource!
                                                                       {:license-ids [license-id1 license-id2]})
                                                         :form-id form-id
@@ -159,9 +160,9 @@
                                            {:type :application.command/submit
                                             :application-id application-id}))))
 
-    (testing "getting dynamic application as applicant"
+    (testing "getting application as applicant"
       (let [application (get-application application-id user-id)]
-        (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
+        (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
         (is (= ["application.event/created"
                 "application.event/licenses-accepted"
                 "application.event/draft-saved"
@@ -173,9 +174,9 @@
                  "application.command/copy-as-new"}
                (set (get application :application/permissions))))))
 
-    (testing "getting dynamic application as handler"
+    (testing "getting application as handler"
       (let [application (get-application application-id handler-id)]
-        (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
+        (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
                  "application.command/remark"

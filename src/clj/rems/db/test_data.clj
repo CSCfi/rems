@@ -169,7 +169,7 @@
                 {:user-id (or actor "owner")
                  :organization (or organization "abc")
                  :title (or title "")
-                 :type (or type :workflow/dynamic) ;; TODO: default to master?
+                 :type (or type :workflow/master)
                  :handlers
                  (or handlers
                      (do (create-user! (get +fake-user-data+ "developer"))

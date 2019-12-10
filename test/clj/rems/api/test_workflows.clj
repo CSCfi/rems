@@ -94,6 +94,7 @@
         user-id "owner"
         wfid (test-data/create-workflow! {:organization "abc"
                                           :title "workflow title"
+                                          :type :workflow/dynamic
                                           :handlers ["handler" "carl"]})
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
@@ -144,6 +145,7 @@
         user-id "owner"
         wfid (test-data/create-workflow! {:organization "abc"
                                           :title "workflow title"
+                                          :type :workflow/dynamic
                                           :handlers ["handler" "carl"]})
         fetch #(fetch api-key user-id wfid)
         edit! #(-> (request :put "/api/workflows/edit")
