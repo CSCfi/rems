@@ -19,6 +19,7 @@ Changes since v2.6
 - Redirect to login page when accessing an attachment link when logged out (#1590)
 - Form editor: add new field between fields (#1812)
 - Entitlements appear immediately instead of after a delay (#1784)
+- Show version information in console instead of the page footer (#1785)
 
 ### Fixes
 - More robust email resending (#1750)
