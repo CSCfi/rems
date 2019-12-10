@@ -1,10 +1,12 @@
 (ns rems.util
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.java.io :as io]
+            [clojure.test :refer [deftest is]]
             [buddy.core.nonce :as buddy-nonce]
             [buddy.core.codecs :as buddy-codecs]
             [rems.config :refer [env]]
             [rems.context :as context])
-  (:import [clojure.lang Atom]))
+  (:import [clojure.lang Atom]
+           [java.io ByteArrayOutputStream FileInputStream]))
 
 (defn errorf
   "Throw a RuntimeException, args passed to `clojure.core/format`."
@@ -89,3 +91,11 @@
      ~@body
      (catch clojure.lang.ExceptionInfo e#
        (ex-data e#))))
+
+(defn file-to-bytes
+  "Returns contents of file (String or File) as byte array."
+  [file]
+  (with-open [input (FileInputStream. (io/file file))
+              buffer (ByteArrayOutputStream.)]
+    (io/copy input buffer)
+    (.toByteArray buffer)))

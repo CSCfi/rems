@@ -31,6 +31,12 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v2-dependencies-
 
+      # upgrade node
+      # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
+      - run: sudo rm /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
+      - run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
+      - run: sudo apt install nodejs
+
       - run: lein deps
 
       - save_cache:
@@ -61,9 +67,15 @@ jobs:
           - v2-dependencies-{{ checksum "project.clj" }}
       # killall is a workaround for apt failing with: Could not get lock /var/lib/apt/lists/lock
       - run: sudo killall -9 apt-get || true; sudo apt update
+
+      # upgrade chromedriver and node
       - run: sudo apt remove google-chrome-stable
-      - run: sudo rm /usr/local/bin/chromedriver
-      - run: sudo apt install chromium-chromedriver
+      # remove conflicting versions installed by circle
+      # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
+      - run: sudo rm /usr/local/bin/chromedriver /opt/circleci/.nvm/versions/node/v6.1.0/bin/node
+      - run: curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
+      - run: sudo apt install chromium-chromedriver nodejs
+
       - run: FOR_TESTS=1 ./dev_db.sh
       - run: lein cljtests-ci
       - store_artifacts:

@@ -20,4 +20,5 @@
                                     :filename "about-fi.md"}
                                :en {:title "About"
                                     :filename "about-en.md"}}}]
- :extra-pages-path "./test-data/extra-pages"}
+ :extra-pages-path "./test-data/extra-pages"
+ :enable-pdf-api true}

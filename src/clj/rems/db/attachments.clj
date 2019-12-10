@@ -1,9 +1,9 @@
 (ns rems.db.attachments
   (:require [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.db.core :as db])
-  (:import [java.io ByteArrayOutputStream FileInputStream File]
-           [rems InvalidRequestException]))
+            [rems.db.core :as db]
+            [rems.util :refer [file-to-bytes]])
+  (:import [rems InvalidRequestException]))
 
 (defn check-attachment-content-type
   "Checks that content-type matches the allowed ones listed on the UI side:
@@ -22,10 +22,7 @@
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id]
   (check-attachment-content-type content-type)
-  (let [byte-array (with-open [input (FileInputStream. ^File tempfile)
-                               buffer (ByteArrayOutputStream.)]
-                     (clojure.java.io/copy input buffer)
-                     (.toByteArray buffer))
+  (let [byte-array (file-to-bytes tempfile)
         id (:id (db/save-attachment! {:application application-id
                                       :user user-id
                                       :filename filename

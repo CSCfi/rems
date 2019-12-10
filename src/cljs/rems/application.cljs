@@ -709,10 +709,12 @@
                 [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
 
 (defn- previous-applications [applicant]
+  ;; print mode forces the collapsible open, so fetch the content proactively
+  ;; TODO figure out a better solution
+  (rf/dispatch [::previous-applications (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")])
   [collapsible/component
    {:id "previous-applications"
     :title (text :t.form/previous-applications)
-    :on-open #(rf/dispatch [::previous-applications (str "(applicant:\"" applicant "\" OR member:\"" applicant "\") AND -state:draft")])
     :collapse [application-list/component {:applications ::previous-applications-except-current
                                            :hidden-columns #{:created :todo :last-activity}
                                            :default-sort-column :submitted
