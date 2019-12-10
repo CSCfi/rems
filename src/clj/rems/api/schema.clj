@@ -1,7 +1,6 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
-  (:require [rems.application.events :as events]
-            [ring.swagger.json-schema :as rjs]
+  (:require [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
@@ -54,8 +53,14 @@
 
 (s/defschema ResourceLicense License)
 
+(s/defschema EventBase
+  {(s/optional-key :event/id) s/Int
+   :event/type s/Keyword
+   :event/time DateTime
+   :event/actor UserId})
+
 (s/defschema Event
-  (assoc events/EventBase
+  (assoc EventBase
          s/Keyword s/Any))
 
 (s/defschema Entitlement

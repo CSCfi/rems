@@ -1,7 +1,8 @@
-(ns ^:integration rems.db.test-blacklist
+(ns ^:integration rems.api.services.test-blacklist
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.db.blacklist :as blacklist]
+            [rems.api.services.blacklist :as blacklist]
+            rems.db.blacklist
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
@@ -49,7 +50,7 @@
            :userid "user1"
            :resource/ext-id "urn.fi/123"
            :event/comment "it was ok"}]
-         (blacklist/get-events {:resource/ext-id "urn.fi/123"})))
+         (rems.db.blacklist/get-events {:resource/ext-id "urn.fi/123"})))
   (is (= [{:event/id 3
            :event/type :blacklist.event/add
            :event/time (time/date-time 2019 1 1 1 0 0)
@@ -57,14 +58,14 @@
            :userid "user2"
            :resource/ext-id "urn.fi/124"
            :event/comment nil}]
-         (blacklist/get-events {:userid "user2"})))
-  (is (not (blacklist/blacklisted? "user1" "urn.fi/123"))
+         (rems.db.blacklist/get-events {:userid "user2"})))
+  (is (not (rems.db.blacklist/blacklisted? "user1" "urn.fi/123"))
       "user was added to blacklist, then removed")
-  (is (not (blacklist/blacklisted? "user1" "urn.fi/124"))
+  (is (not (rems.db.blacklist/blacklisted? "user1" "urn.fi/124"))
       "user was never added to blacklist")
-  (is (not (blacklist/blacklisted? "user2" "urn.fi/123"))
+  (is (not (rems.db.blacklist/blacklisted? "user2" "urn.fi/123"))
       "user was never added to blacklist")
-  (is (blacklist/blacklisted? "user2" "urn.fi/124")
+  (is (rems.db.blacklist/blacklisted? "user2" "urn.fi/124")
       "user was added to blacklist but not removed"))
 
 (deftest test-parameter-validation
@@ -74,23 +75,23 @@
     (test-data/create-resource! {:resource-ext-id resource-ext-id})
 
     (testing "user and resource both exist"
-      (is (not (blacklist/blacklisted? user-id resource-ext-id)))
-      (blacklist/add-to-blacklist! {:userid user-id
-                                    :resource/ext-id resource-ext-id
-                                    :actor "handler"
-                                    :comment ""})
-      (is (blacklist/blacklisted? user-id resource-ext-id)))
+      (is (not (rems.db.blacklist/blacklisted? user-id resource-ext-id)))
+      (blacklist/add-users-to-blacklist! {:users [{:userid user-id}]
+                                          :resource/ext-id resource-ext-id
+                                          :actor "handler"
+                                          :comment ""})
+      (is (rems.db.blacklist/blacklisted? user-id resource-ext-id)))
 
     (testing "user doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/add-to-blacklist! {:userid "non-existing-user"
-                                                 :resource/ext-id resource-ext-id
-                                                 :actor "handler"
-                                                 :comment ""}))))
+                   (blacklist/add-users-to-blacklist! {:users [{:userid "non-existing-user"}]
+                                                       :resource/ext-id resource-ext-id
+                                                       :actor "handler"
+                                                       :comment ""}))))
 
     (testing "resource doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/add-to-blacklist! {:userid user-id
-                                                 :resource/ext-id "non-existing-resource"
-                                                 :actor "handler"
-                                                 :comment ""}))))))
+                   (blacklist/add-users-to-blacklist! {:users [{:userid user-id}]
+                                                       :resource/ext-id "non-existing-resource"
+                                                       :actor "handler"
+                                                       :comment ""}))))))

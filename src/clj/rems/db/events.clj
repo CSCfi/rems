@@ -1,5 +1,6 @@
 (ns rems.db.events
-  (:require [rems.application.events :as events]
+  (:require [rems.api.schema :refer [EventBase]]
+            [rems.application.events :as events]
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
@@ -7,7 +8,7 @@
             [schema-tools.core :as st]))
 
 (def ^:private coerce-event-commons
-  (coerce/coercer (st/open-schema events/EventBase) json/coercion-matcher))
+  (coerce/coercer (st/open-schema EventBase) json/coercion-matcher))
 
 (def ^:private coerce-event-specifics
   (coerce/coercer events/Event json/coercion-matcher))

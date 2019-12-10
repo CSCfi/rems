@@ -2,7 +2,7 @@
   (:require [clj-time.core :as time]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.db.blacklist :as blacklist]
+            [rems.api.services.blacklist :as blacklist]
             [rems.db.users :as users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
@@ -10,8 +10,8 @@
   (:import [org.joda.time DateTime]))
 
 (s/defschema BlacklistCommand
-  {:blacklist/resource {:resource/ext-id blacklist/ResourceId}
-   :blacklist/user {:userid blacklist/UserId}
+  {:blacklist/resource {:resource/ext-id s/Str}
+   :blacklist/user {:userid schema/UserId}
    :comment s/Str})
 
 (s/defschema BlacklistEntryWithDetails
@@ -27,21 +27,6 @@
    :blacklist/comment (:event/comment entry)
    :blacklist/added-by (users/get-user (:event/actor entry))})
 
-(defn- command->event [command user-id]
-  {:event/actor user-id
-   :event/time (time/now)
-   :userid (get-in command [:blacklist/user :userid])
-   :resource/ext-id (get-in command [:blacklist/resource :resource/ext-id])
-   :event/comment (:comment command)})
-
-(defn- add! [user-id command]
-  (blacklist/add-event! (-> (command->event command user-id)
-                            (assoc :event/type :blacklist.event/add))))
-
-(defn- remove! [user-id command]
-  (blacklist/add-event! (-> (command->event command user-id)
-                            (assoc :event/type :blacklist.event/remove))))
-
 (def blacklist-api
   (context "/blacklist" []
     :tags ["blacklist"]
@@ -49,8 +34,8 @@
     (GET "/" []
       :summary "Get blacklist entries"
       :roles #{:handler :owner :reporter}
-      :query-params [{user :- blacklist/UserId nil}
-                     {resource :- blacklist/ResourceId nil}]
+      :query-params [{user :- schema/UserId nil}
+                     {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
       (->> (blacklist/get-blacklist {:userid user
                                      :resource/ext-id resource})
@@ -68,7 +53,7 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (add! (getx-user-id) command)
+      (blacklist/add-user-to-blacklist! (getx-user-id) command)
       (ok {:success true}))
 
     (POST "/remove" []
@@ -76,5 +61,5 @@
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
-      (remove! (getx-user-id) command)
+      (blacklist/remove-user-from-blacklist! (getx-user-id) command)
       (ok {:success true}))))

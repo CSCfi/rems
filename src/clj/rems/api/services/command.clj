@@ -1,12 +1,12 @@
 (ns rems.api.services.command
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.tools.logging :as log]
+            [rems.api.services.blacklist :as blacklist]
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.application-util :as application-util]
             [rems.db.applications :as applications]
-            [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
@@ -27,11 +27,10 @@
     (when (= :application.event/revoked (:event/type event))
       (let [application (applications/get-unrestricted-application (:application/id event))]
         (doseq [resource (:application/resources application)]
-          (doseq [user (application-util/applicant-and-members application)]
-            (blacklist/add-to-blacklist! {:userid (:userid user)
-                                          :resource/ext-id (:resource/ext-id resource)
-                                          :actor (:event/actor event)
-                                          :comment (:application/comment event)}))))))
+          (blacklist/add-users-to-blacklist! {:users (application-util/applicant-and-members application)
+                                              :resource/ext-id (:resource/ext-id resource)
+                                              :actor (:event/actor event)
+                                              :comment (:application/comment event)})))))
   [])
 
 (defn run-process-managers [new-events]
