@@ -185,6 +185,12 @@
     (str (:public-url env) (.substring url 1))
     url))
 
+(deftest test-unrelativize-url
+  (with-redefs [env {:public-url "http://public.url/"}]
+    (is (= "http://public.url/" (unrelativize-url "/")))
+    (is (= "http://public.url/foo/bar" (unrelativize-url "/foo/bar")))
+    (is (= "http://example.com/foo/bar" (unrelativize-url "http://example.com/foo/bar")))))
+
 (defn- wrap-fix-location-header
   "When we try to redirect to a relative url, prefix the url with (:public-url env).
    If we don't do this, Jetty does it for us but uses the request url instead of :public-url."
