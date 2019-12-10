@@ -3,7 +3,6 @@
             [compojure.core :refer [GET defroutes]]
             [hiccup.page :refer [html5]]
             [hiccup.util :refer [url]]
-            [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.json :as json]
