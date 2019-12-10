@@ -61,5 +61,4 @@
       (ok (assoc env
                  :authentication "HIDDEN"
                  :database-url "HIDDEN"
-                 :ldap "HIDDEN"
                  :test-database-url "HIDDEN")))))
