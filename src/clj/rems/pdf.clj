@@ -13,9 +13,9 @@
 (defn- print-to-pdf! [user api-key url output-file]
   (let [result (shell/sh "node" "-" user api-key url output-file
                          :in +print-to-pdf-script+)]
-    (assert (= 0 (:exit result)))
     (log/info "OUTPUT:" (:out result))
-    (log/info "ERRORS:" (:err result))))
+    (log/info "ERRORS:" (:err result))
+    (assert (= 0 (:exit result)))))
 
 (defn- with-temporary-file [base ext f]
   (let [temp (File/createTempFile base ext)]
