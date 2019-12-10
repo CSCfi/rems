@@ -53,6 +53,10 @@
                              :src "url('/font/Lato-Bold.eot')"}
                             {:src "url('/font/Lato-Bold.eot') format('embedded-opentype'), url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff'), url('/font/Lato-Bold.ttf') format('truetype')"
                              :font-weight 700
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Roboto Slab'"
+                             :src "url('/font/Roboto.woff2') format('woff2')"
+                             :font-weight 400
                              :font-style "normal"})))
 
 (defn- generate-form-placeholder-styles []
