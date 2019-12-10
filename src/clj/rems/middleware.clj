@@ -19,7 +19,7 @@
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tempura-config]]
             [rems.logging :refer [with-mdc]]
-            [rems.util :refer [get-user-id getx-user-id]]
+            [rems.util :refer [get-user-id getx-user-id update-present]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -180,6 +180,20 @@
                :request-uri (:uri request)}
       (handler request))))
 
+(defn- unrelativize-url [url]
+  (if (.startsWith url "/")
+    (str (:public-url env) (.substring url 1))
+    url))
+
+(defn- wrap-fix-location-header
+  "When we try to redirect to a relative url, prefix the url with (:public-url env).
+   If we don't do this, Jetty does it for us but uses the request url instead of :public-url."
+  [handler]
+  (fn [request]
+    (-> request
+        handler
+        (update :headers update-present "Location" unrelativize-url))))
+
 (def +wrap-defaults-settings+
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
@@ -191,6 +205,7 @@
 
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
+      wrap-fix-location-header
       wrap-unauthorized-and-forbidden
       wrap-logging
       wrap-i18n
