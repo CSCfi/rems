@@ -10,7 +10,11 @@
 
 (use-fixtures
   :once
-  api-fixture)
+  api-fixture
+  (fn [f]
+    ;; need to set an explicit public-url since dev and test configs use different ports
+    (with-redefs [rems.config/env (assoc rems.config/env :public-url "https://public.url/")]
+      (f))))
 
 (defn disable-catalogue-item [catid]
   (db/set-catalogue-item-enabled! {:id catid :enabled false}))
@@ -22,7 +26,7 @@
           response (-> (request :get "/apply-for?resource=urn:one-matching-resource")
                        handler)]
       (is (= 302 (:status response)))
-      (is (= (str "http://localhost/application?items=" catid) (get-in response [:headers "Location"])))))
+      (is (= (str "https://public.url/application?items=" catid) (get-in response [:headers "Location"])))))
 
   (testing "fails if no catalogue item is found"
     (let [response (-> (request :get "/apply-for?resource=urn:no-such-resource")
@@ -47,7 +51,7 @@
           response (-> (request :get "/apply-for?resource=urn:enabled-and-disabled-items")
                        handler)]
       (is (= 302 (:status response)))
-      (is (= (str "http://localhost/application?items=" new-catid) (get-in response [:headers "Location"]))))))
+      (is (= (str "https://public.url/application?items=" new-catid) (get-in response [:headers "Location"]))))))
 
 (def dummy-attachment {:application/id 123
                        :attachment/filename "file.txt"
@@ -69,7 +73,7 @@
       (let [response (-> (request :get "/applications/attachment/123")
                          handler)]
         (is (= 302 (:status response)))
-        (is (= "http://localhost/?redirect=%2Fapplications%2Fattachment%2F123"
+        (is (= "https://public.url/?redirect=%2Fapplications%2Fattachment%2F123"
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
@@ -95,7 +99,7 @@
       (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
                          handler)]
         (is (= 302 (:status response)))
-        (is (= "http://localhost/?redirect=%2Fapplications%2F1023%2Flicense-attachment%2F3%2Fen"
+        (is (= "https://public.url/?redirect=%2Fapplications%2F1023%2Flicense-attachment%2F3%2Fen"
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
