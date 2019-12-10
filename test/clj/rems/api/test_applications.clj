@@ -125,7 +125,7 @@
         license-id3 (test-data/create-license! {})
         license-id4 (test-data/create-license! {})
         form-id (test-data/create-form! {})
-        workflow-id (test-data/create-dynamic-workflow! {:handlers [handler-id]})
+        workflow-id (test-data/create-workflow! {:handlers [handler-id]})
         cat-item-id1 (test-data/create-catalogue-item! {:resource-id (test-data/create-resource!
                                                                       {:license-ids [license-id1 license-id2]})
                                                         :form-id form-id
@@ -491,7 +491,7 @@
   (let [applicant-id "alice"
         member-id "malice"
         handler-id "handler"
-        wfid (test-data/create-dynamic-workflow! {:handlers [handler-id]})
+        wfid (test-data/create-workflow! {:handlers [handler-id]})
         formid (test-data/create-form! {})
         ext1 "revoke-test-resource-1"
         ext2 "revoke-test-resource-2"

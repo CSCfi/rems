@@ -39,7 +39,7 @@
   (test-data/create-user! {:eppn "test-user" :mail "test-user@test.com" :commonName "Test-user"})
   (test-data/create-user! {:eppn "handler" :mail "handler@test.com" :commonName "Handler"})
   (let [applicant "test-user"
-        wfid (test-data/create-dynamic-workflow! {:handlers ["handler"]})
+        wfid (test-data/create-workflow! {:handlers ["handler"]})
         res1 (test-data/create-resource! {:resource-ext-id "resid111"})
         res2 (test-data/create-resource! {:resource-ext-id "resid222"})
         form-id (test-data/create-form! {})
@@ -73,7 +73,7 @@
   (test-data/create-user! {:eppn "handler" :mail "handler@test.com" :commonName "Handler"})
   (test-data/create-user! {:eppn "jack" :mail "jack@test.com" :commonName "Jack"})
   (test-data/create-user! {:eppn "jill" :mail "jill@test.com" :commonName "Jill"})
-  (let [wf (test-data/create-dynamic-workflow! {:handlers ["handler"]})
+  (let [wf (test-data/create-workflow! {:handlers ["handler"]})
         form-id (test-data/create-form! {})
         res1 (test-data/create-resource! {:resource-ext-id "resource1"})
         res2 (test-data/create-resource! {:resource-ext-id "resource2"})

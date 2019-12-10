@@ -163,13 +163,13 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-dynamic-workflow! [{:keys [actor organization title handlers]
-                                 :as command}]
+(defn create-workflow! [{:keys [actor organization title type handlers]
+                         :as command}]
   (let [result (workflow/create-workflow!
                 {:user-id (or actor "owner")
                  :organization (or organization "abc")
                  :title (or title "")
-                 :type :workflow/dynamic
+                 :type (or type :workflow/dynamic) ;; TODO: default to master?
                  :handlers
                  (or handlers
                      (do (create-user! (get +fake-user-data+ "developer"))
@@ -186,7 +186,7 @@
         result (catalogue/create-catalogue-item!
                 {:resid (or resource-id (create-resource! {}))
                  :form (or form-id (create-form! {}))
-                 :wfid (or workflow-id (create-dynamic-workflow! {}))
+                 :wfid (or workflow-id (create-workflow! {}))
                  :localizations (or localizations {})})]
     (assert (:success result) {:command command :result result})
     (:id result)))
@@ -557,10 +557,21 @@
   (let [approver1 (users :approver1)
         approver2 (users :approver2)
         owner (users :owner)
-        dynamic (create-dynamic-workflow! {:actor owner
-                                           :organization "nbn"
-                                           :title "dynamic workflow"
-                                           :handlers [approver1 approver2]})]
+        dynamic (create-workflow! {:actor owner
+                                   :organization "nbn"
+                                   :title "Dynamic workflow"
+                                   :type :workflow/dynamic
+                                   :handlers [approver1 approver2]})
+        bureaucratic (create-workflow! {:actor owner
+                                        :organization "nbn"
+                                        :title "Bureaucratic workflow"
+                                        :type :workflow/bureaucratic
+                                        :handlers [approver1 approver2]})
+        master (create-workflow! {:actor owner
+                                  :organization "nbn"
+                                  :title "Master workflow"
+                                  :type :workflow/master
+                                  :handlers [approver1 approver2]})]
 
     ;; attach both kinds of licenses to all workflows
     (let [link (create-license! {:actor owner
@@ -576,10 +587,12 @@
                                  :license/text {:en (apply str (repeat 10 "License text in English. "))
                                                 :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))}})]
       (doseq [licid [link text]]
-        (doseq [wfid [dynamic]]
+        (doseq [wfid [dynamic bureaucratic master]]
           (db/create-workflow-license! {:wfid wfid :licid licid}))))
 
-    {:dynamic dynamic}))
+    {:dynamic dynamic
+     :bureaucratic bureaucratic
+     :master master}))
 
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
@@ -731,10 +744,10 @@
         handlers [(+fake-users+ :approver1)
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
-        workflow-id (create-dynamic-workflow! {:actor owner
-                                               :organization "perf"
-                                               :title "Performance tests"
-                                               :handlers handlers})
+        workflow-id (create-workflow! {:actor owner
+                                       :organization "perf"
+                                       :title "Performance tests"
+                                       :handlers handlers})
         form-id (create-form!
                  {:actor owner
                   :form/organization "perf"
@@ -849,14 +862,28 @@
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
     (create-disabled-license! (+fake-users+ :owner))
-    (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
-                                                   :fi "Dynaaminen työvuo"}
-                                           :infourl {:en "http://www.google.com"
-                                                     :fi "http://www.google.fi"}
-                                           :resource-id res1
-                                           :form-id form
-                                           :workflow-id (:dynamic workflows)})]
-      (create-applications! dynamic +fake-users+))
+    (create-catalogue-item! {:title {:en "Master workflow"
+                                     :fi "Master-työvuo"}
+                             :infourl {:en "http://www.google.com"
+                                       :fi "http://www.google.fi"}
+                             :resource-id res1
+                             :form-id form
+                             :workflow-id (:master workflows)})
+    (create-catalogue-item! {:title {:en "Bureaucratic workflow"
+                                     :fi "Virkamiestyövuo"}
+                             :infourl {:en "http://www.google.com"
+                                       :fi "http://www.google.fi"}
+                             :resource-id res1
+                             :form-id form
+                             :workflow-id (:bureaucratic workflows)})
+    (let [catid (create-catalogue-item! {:title {:en "Dynamic workflow"
+                                                 :fi "Dynaaminen työvuo"}
+                                         :infourl {:en "http://www.google.com"
+                                                   :fi "http://www.google.fi"}
+                                         :resource-id res1
+                                         :form-id form
+                                         :workflow-id (:dynamic workflows)})]
+      (create-applications! catid +fake-users+))
     (create-catalogue-item! {:title {:en "Dynamic workflow with extra license"
                                      :fi "Dynaaminen työvuo ylimääräisellä lisenssillä"}
                              :resource-id res-with-extra-license

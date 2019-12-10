@@ -47,7 +47,7 @@
   (let [form-id (test-data/create-form! {})]
     (testing "resource licenses"
       (let [lic-id (test-data/create-license! {})
-            wf-id (test-data/create-dynamic-workflow! {})
+            wf-id (test-data/create-workflow! {})
             res-id (test-data/create-resource! {:resource-ext-id (str (UUID/randomUUID))
                                                 :license-ids [lic-id]})
             cat-id (test-data/create-catalogue-item! {:resource-id res-id
@@ -58,7 +58,7 @@
 
     (testing "workflow licenses"
       (let [lic-id (test-data/create-license! {})
-            wf-id (test-data/create-dynamic-workflow! {})
+            wf-id (test-data/create-workflow! {})
             _ (db/create-workflow-license! {:wfid wf-id :licid lic-id})
             res-id (test-data/create-resource! {:resource-ext-id (str (UUID/randomUUID))})
             cat-id (test-data/create-catalogue-item! {:resource-id res-id

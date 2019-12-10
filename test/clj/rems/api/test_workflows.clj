@@ -40,7 +40,7 @@
                    read-body)]
       (is (coll-is-not-empty? data))))
 
-  (let [id (test-data/create-dynamic-workflow! {})]
+  (let [id (test-data/create-workflow! {})]
     (testing "get by id"
       (let [data (-> (request :get (str "/api/workflows/" id))
                      (authenticate "42" "owner")
@@ -92,9 +92,9 @@
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-dynamic-workflow! {:organization "abc"
-                                                  :title "workflow title"
-                                                  :handlers ["handler" "carl"]})
+        wfid (test-data/create-workflow! {:organization "abc"
+                                          :title "workflow title"
+                                          :handlers ["handler" "carl"]})
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
 
@@ -142,9 +142,9 @@
 (deftest workflows-edit-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-dynamic-workflow! {:organization "abc"
-                                                  :title "workflow title"
-                                                  :handlers ["handler" "carl"]})
+        wfid (test-data/create-workflow! {:organization "abc"
+                                          :title "workflow title"
+                                          :handlers ["handler" "carl"]})
         fetch #(fetch api-key user-id wfid)
         edit! #(-> (request :put "/api/workflows/edit")
                    (json-body (merge {:id wfid} %))
@@ -171,8 +171,8 @@
              (fetch))))))
 
 (deftest workflows-api-filtering-test
-  (let [enabled-wf (test-data/create-dynamic-workflow! {})
-        disabled-wf (test-data/create-dynamic-workflow! {})
+  (let [enabled-wf (test-data/create-workflow! {})
+        disabled-wf (test-data/create-workflow! {})
         _ (workflow/set-workflow-enabled! {:id disabled-wf
                                            :enabled false})
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})

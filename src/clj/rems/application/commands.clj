@@ -283,7 +283,6 @@
             form-id (:formid (first items))
             workflow-id (:wfid (first items))
             workflow-type (:type (:workflow (get-workflow workflow-id)))
-            _ (assert (= :workflow/dynamic workflow-type) {:workflow-type workflow-type}) ; TODO: support other workflows
             ids (allocate-application-ids! time)]
         {:event {:event/type :application.event/created
                  :event/time time
