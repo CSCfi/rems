@@ -230,6 +230,8 @@
                     :dynamic-workflow "Dynaaminen työvuo"
                     :dynamic-workflow-description "Hakemus on täysin käsittelijän hallinnassa ja hän vain pyytää toisilta kommentteja."
                     :handlers "Käsittelijät"
+                    :master-workflow "Master-työvuo"
+                    :master-workflow-description "VAIN TESTAUKSEEN. Unioni kaikista mahdollista työvoista."
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}

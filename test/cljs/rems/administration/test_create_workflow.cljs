@@ -14,11 +14,9 @@
       (testing "missing title"
         (is (nil? (build-create-request (assoc form :title "")))))
       (testing "missing workflow type"
-        (is (thrown-with-msg? js/Error #"No matching clause"
-                              (build-create-request (assoc form :type nil)))))
+        (is (nil? (build-create-request (assoc form :type nil)))))
       (testing "invalid workflow type"
-        (is (thrown-with-msg? js/Error #"No matching clause"
-                              (build-create-request (assoc form :type :no-such-type)))))))
+        (is (nil? (build-create-request (assoc form :type :no-such-type)))))))
 
   (testing "dynamic workflow"
     (let [form {:organization "abc"
@@ -43,6 +41,20 @@
         (is (= {:organization "abc"
                 :title "workflow title"
                 :type :workflow/bureaucratic
+                :handlers ["bob" "carl"]}
+               (build-create-request form))))
+      (testing "missing handlers"
+        (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
+
+  (testing "master workflow"
+    (let [form {:organization "abc"
+                :title "workflow title"
+                :type :workflow/master
+                :handlers [{:userid "bob"} {:userid "carl"}]}]
+      (testing "valid form"
+        (is (= {:organization "abc"
+                :title "workflow title"
+                :type :workflow/master
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"

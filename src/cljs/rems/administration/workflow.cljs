@@ -47,6 +47,11 @@
    (str "/administration/workflows/edit/" id)
    (text :t.administration/edit)])
 
+(def workflow-types
+  {:workflow/dynamic :t.create-workflow/dynamic-workflow
+   :workflow/bureaucratic :t.create-workflow/bureaucratic-workflow
+   :workflow/master :t.create-workflow/master-workflow})
+
 (defn workflow-view [workflow language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -55,12 +60,9 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:organization workflow)]
               [inline-info-field (text :t.administration/title) (:title workflow)]
-              [inline-info-field (text :t.administration/type)
-               (case (get-in workflow [:workflow :type])
-                 :workflow/dynamic (text :t.create-workflow/dynamic-workflow)
-                 :workflow/bureaucratic (text :t.create-workflow/bureaucratic-workflow)
-                 ; TODO: master workflow
-                 (text :t/missing))]
+              [inline-info-field (text :t.administration/type) (text (get workflow-types
+                                                                          (get-in workflow [:workflow :type])
+                                                                          :t/missing))]
               [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
                                                                          (map enrich-user)
                                                                          (map :display)

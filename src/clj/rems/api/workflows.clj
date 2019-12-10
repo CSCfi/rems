@@ -12,7 +12,8 @@
   {:organization s/Str
    :title s/Str
    :type (s/enum :workflow/dynamic
-                 :workflow/bureaucratic) ; TODO: master workflow
+                 :workflow/bureaucratic
+                 :workflow/master)
    (s/optional-key :handlers) [UserId]})
 
 (s/defschema EditWorkflowCommand

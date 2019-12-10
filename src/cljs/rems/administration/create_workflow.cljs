@@ -5,6 +5,7 @@
             [rems.administration.components :refer [radio-button-group text-field]]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
+            [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
@@ -55,21 +56,27 @@
 
 ;;; form submit
 
+(def workflow-types #{:workflow/dynamic :workflow/bureaucratic :workflow/master})
+
+(defn needs-handlers? [type]
+  (contains? #{:workflow/dynamic :workflow/bureaucratic :workflow/master} type))
+
 (defn- valid-create-request? [request]
-  (and (case (:type request)
-         :workflow/dynamic (seq (:handlers request))
-         :workflow/bureaucratic (seq (:handlers request))
-         nil false)
-       (not (str/blank? (:organization request)))
-       (not (str/blank? (:title request)))))
+  (and
+   (contains? workflow-types (:type request))
+   (if (needs-handlers? (:type request))
+     (seq (:handlers request))
+     true)
+   (not (str/blank? (:organization request)))
+   (not (str/blank? (:title request)))))
 
 (defn build-create-request [form]
-  (let [request {:organization (trim-when-string (:organization form))
-                 :title (trim-when-string (:title form))
-                 :type (:type form)}
-        request (case (:type form)
-                  :workflow/dynamic (assoc request :handlers (map :userid (:handlers form)))
-                  :workflow/bureaucratic (assoc request :handlers (map :userid (:handlers form))))]
+  (let [request (merge
+                 {:organization (trim-when-string (:organization form))
+                  :title (trim-when-string (:title form))
+                  :type (:type form)}
+                 (when (needs-handlers? (:type form))
+                   {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
       request)))
 
@@ -149,10 +156,14 @@
                                :keys [:type]
                                :readonly @(rf/subscribe [::editing?])
                                :orientation :horizontal
-                               :options [{:value :workflow/dynamic
-                                          :label (text :t.create-workflow/dynamic-workflow)}
-                                         {:value :workflow/bureaucratic
-                                          :label (text :t.create-workflow/bureaucratic-workflow)}]}])
+                               :options (concat
+                                         [{:value :workflow/dynamic
+                                           :label (text :t.create-workflow/dynamic-workflow)}
+                                          {:value :workflow/bureaucratic
+                                           :label (text :t.create-workflow/bureaucratic-workflow)}]
+                                         (when (config/dev-environment?)
+                                           [{:value :workflow/master
+                                             :label (text :t.create-workflow/master-workflow)}]))}])
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])
@@ -203,6 +214,11 @@
    [workflow-type-description (text :t.create-workflow/bureaucratic-workflow-description)]
    [workflow-handlers-field]])
 
+(defn master-workflow-form []
+  [:div
+   [workflow-type-description (text :t.create-workflow/master-workflow-description)]
+   [workflow-handlers-field]])
+
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
@@ -227,7 +243,8 @@
 
                   (case workflow-type
                     :workflow/dynamic [dynamic-workflow-form]
-                    :workflow/bureaucratic [bureaucratic-workflow-form]) ; TODO: master workflow
+                    :workflow/bureaucratic [bureaucratic-workflow-form]
+                    :workflow/master [master-workflow-form])
 
                   [:div.col.commands
                    [cancel-button]

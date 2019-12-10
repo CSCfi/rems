@@ -232,6 +232,8 @@
                     :dynamic-workflow "Dynamic workflow"
                     :dynamic-workflow-description "The handler is in full control of the application process, only asking others for comments."
                     :handlers "Handlers"
+                    :master-workflow "Master workflow"
+                    :master-workflow-description "ONLY FOR TESTING. Union of all possible workflows."
                     :title "Title"}
   :dropdown {:no-results "No results"
              :placeholder "Select..."}
