@@ -108,6 +108,7 @@ Changes since v2.6
 - Approver bot which approves applications automatically, unless the user+resource is blacklisted (#1660)
 - Administration view for blacklist
 - Read-only access to administration pages for handlers (#1705)
+- New "bureaucratic workflow" where the handler cannot approve/reject the application, but the decider can (#1830)
 
 ### Enhancements
 - Improved version information in footer
