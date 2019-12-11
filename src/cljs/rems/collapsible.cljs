@@ -35,25 +35,25 @@
                     (.focus (js/$ (str "#" id "more-link"))))}
     label]])
 
-(defn- block [id expanded callback content-always content-hideable content-footer top-less-button? bottom-less-button?]
+(defn- block [id open? on-open content-always content-hideable content-footer top-less-button? bottom-less-button?]
   (let [always? (not-empty content-always)
         show-more [show-more-button
                    (if always?
                      (text :t.collapse/show-more)
                      (text :t.collapse/show))
-                   id expanded callback]
+                   id open? on-open]
         show-less [show-less-button
                    (if always?
                      (text :t.collapse/show-less)
                      (text :t.collapse/hide))
-                   id expanded]]
+                   id open?]]
     [:div.collapse-content
      content-always
      (when (seq content-hideable)
        [:div
         (when top-less-button? show-less)
         [:div.collapse {:id (str id "collapse")
-                        :class (when expanded "show")
+                        :class (when open? "show")
                         :tab-index "-1"}
          content-hideable]
         show-more

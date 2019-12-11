@@ -319,11 +319,6 @@
   :item-lists {:move-down "Move down"
                :move-up "Move up"
                :remove "Remove"}
-  :ldap {:failed "Login failed"
-         :login "Login"
-         :password "Password"
-         :title "LDAP Login"
-         :username "Username"}
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
   :login {:alternative "Other login options"

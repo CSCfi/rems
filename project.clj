@@ -45,7 +45,6 @@
                  [ns-tracker "0.4.0"]
                  [org.apache.lucene/lucene-core "8.2.0"]
                  [org.apache.lucene/lucene-queryparser "8.2.0"]
-                 [org.clojars.pntblnk/clj-ldap "0.0.16"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/clojurescript "1.10.520" :exclusions [com.fasterxml.jackson.core/jackson-core]]
                  [org.clojure/core.cache "0.7.2"]
@@ -107,10 +106,14 @@
             :web-xml "web.xml"
             :name "rems.war"}
 
-  ;; cljs testing
-  :npm {:devDependencies [[karma "3.1.1"]
+
+  :npm {:devDependencies [;; cljs testing
+                          [karma "3.1.1"]
                           [karma-cljs-test "0.1.0"]
-                          [karma-chrome-launcher "2.2.0"]]}
+                          [karma-chrome-launcher "2.2.0"]
+                          ;; printing to pdf
+                          [puppeteer "2.0.0"]]}
+
   :doo {:build "test"
         :paths {:karma "node_modules/karma/bin/karma"}
         :alias {:default [:chrome-headless]}}
