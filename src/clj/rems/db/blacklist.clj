@@ -1,18 +1,24 @@
 (ns rems.db.blacklist
-  (:require [rems.api.schema :refer [EventBase UserId]]
+  (:require [rems.api.schema :refer [UserId]]
             [rems.db.core :as db]
+            [rems.db.resource :as resource]
+            [rems.db.users :as users]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s]
             [schema.utils])
   (:import (org.joda.time DateTime)))
 
+(def ResourceId s/Str)
+
 (s/defschema BlacklistEvent
-  (assoc EventBase
-         :event/type (s/enum :blacklist.event/add :blacklist.event/remove)
-         :userid UserId
-         :resource/ext-id s/Str
-         :event/comment (s/maybe s/Str)))
+  {(s/optional-key :event/id) s/Int
+   :event/type (s/enum :blacklist.event/add :blacklist.event/remove)
+   :event/time DateTime
+   :event/actor UserId
+   :userid UserId
+   :resource/ext-id ResourceId
+   :event/comment (s/maybe s/Str)})
 
 (def ^:private coerce-event
   (coerce/coercer BlacklistEvent json/coercion-matcher))
@@ -26,9 +32,24 @@
                       {:value json :error result})))
     result))
 
+(defn- event->json [event]
+  (s/validate BlacklistEvent event)
+  (json/generate-string event))
+
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))
          :event/id (:event/id event)))
+
+(defn- check-foreign-keys [event]
+  ;; TODO: These checks could be moved to the database as (1) constraint checks or (2) fields with foreign keys.
+  (when-not (users/user-exists? (:userid event))
+    (throw (IllegalArgumentException. "user doesn't exist")))
+  (when-not (resource/ext-id-exists? (:resource/ext-id event))
+    (throw (IllegalArgumentException. "resource doesn't exist")))
+  event)
+
+(defn add-event! [event]
+  (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
 
 (defn get-events [params]
   (mapv event-from-db (db/get-blacklist-events (select-keys params [:userid :resource/ext-id]))))

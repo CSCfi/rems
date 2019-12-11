@@ -2,59 +2,54 @@
   (:require [clojure.test :refer :all]
             [schema-refined.core :as r]
             [schema.core :as s]
-            [rems.api.schema :refer [EventBase]]
             [rems.util :refer [assert-ex try-catch-ex]])
   (:import (org.joda.time DateTime)))
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
 
-(s/defschema ApplicationEventBase
-  (assoc EventBase
-         :application/id s/Int))
+(s/defschema EventBase
+  {(s/optional-key :event/id) s/Int
+   :event/type s/Keyword
+   :event/time DateTime
+   :event/actor UserId
+   :application/id s/Int})
 
 (s/defschema ApprovedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          ;; single-value enums are supported by swagger, unlike s/eq.
          ;; we don't yet generate swagger for events but we might in
          ;; the future
          :event/type (s/enum :application.event/approved)
          :application/comment s/Str))
-(s/defschema BlacklistEvent
-  ;; Not an application event, so it won't use application id.
-  (assoc (dissoc ApplicationEventBase :application/id)
-         :event/type (s/enum :blacklist.event/add :blacklist.event/remove)
-         :userid UserId
-         :resource/ext-id s/Str
-         :event/comment (s/maybe s/Str)))
 (s/defschema ClosedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/closed)
          :application/comment s/Str))
 ;; TODO Commented/CommentRequested could be renamed to Reviewed/ReviewRequested to be in line with the UI
 (s/defschema CommentedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/commented)
          :application/request-id s/Uuid
          :application/comment s/Str))
 (s/defschema CommentRequestedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/comment-requested)
          :application/request-id s/Uuid
          :application/commenters [s/Str]
          :application/comment s/Str))
 (s/defschema CopiedFromEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/copied-from)
          :application/copied-from {:application/id s/Int
                                    :application/external-id s/Str}))
 (s/defschema CopiedToEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/copied-to)
          :application/copied-to {:application/id s/Int
                                  :application/external-id s/Str}))
 (s/defschema CreatedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/created)
          :application/external-id s/Str
          :application/resources [{:catalogue-item/id s/Int
@@ -64,81 +59,81 @@
          :workflow/id s/Int
          :workflow/type s/Keyword))
 (s/defschema DecidedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/decided)
          :application/request-id s/Uuid
          :application/decision (s/enum :approved :rejected)
          :application/comment s/Str))
 (s/defschema DecisionRequestedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/decision-requested)
          :application/request-id s/Uuid
          :application/deciders [s/Str]
          :application/comment s/Str))
 (s/defschema DraftSavedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
          :application/field-values {s/Int s/Str}))
 (s/defschema LicensesAcceptedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/licenses-accepted)
          :application/accepted-licenses #{s/Int}))
 (s/defschema LicensesAddedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/licenses-added)
          :application/comment s/Str
          :application/licenses [{:license/id s/Int}]))
 (s/defschema MemberAddedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/member-added)
          :application/member {:userid UserId}))
 (s/defschema MemberInvitedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/member-invited)
          :application/member {:name s/Str
                               :email s/Str}
          :invitation/token s/Str))
 (s/defschema MemberJoinedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/member-joined)
          :invitation/token s/Str))
 (s/defschema MemberRemovedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/member-removed)
          :application/member {:userid UserId}
          :application/comment s/Str))
 (s/defschema MemberUninvitedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/member-uninvited)
          :application/member {:name s/Str
                               :email s/Str}
          :application/comment s/Str))
 (s/defschema RejectedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/rejected)
          :application/comment s/Str))
 (s/defschema RemarkedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/remarked)
          :application/comment s/Str
          :application/public s/Bool))
 (s/defschema ResourcesChangedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/resources-changed)
          (s/optional-key :application/comment) s/Str
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]))
 (s/defschema ReturnedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/returned)
          :application/comment s/Str))
 (s/defschema RevokedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/revoked)
          :application/comment s/Str))
 (s/defschema SubmittedEvent
-  (assoc ApplicationEventBase
+  (assoc EventBase
          :event/type (s/enum :application.event/submitted)))
 
 (def event-schemas
