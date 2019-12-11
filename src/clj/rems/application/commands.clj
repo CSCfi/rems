@@ -352,7 +352,7 @@
        :application/comment (:comment cmd)}))
 
 (defmethod command-handler :application.command/revoke
-  [cmd application {:keys [add-to-blacklist!]}]
+  [cmd application _injections]
   (ok {:event/type :application.event/revoked
        :application/comment (:comment cmd)}))
 

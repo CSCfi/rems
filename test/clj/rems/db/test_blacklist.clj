@@ -69,28 +69,25 @@
 
 (deftest test-parameter-validation
   (let [user-id "test-user"
-        resource-ext-id "test-resource"]
+        resource-ext-id "test-resource"
+        command {:event/type :blacklist.event/add
+                 :event/actor "handler"
+                 :event/comment ""
+                 :event/time (time/now)
+                 :resource/ext-id resource-ext-id
+                 :userid user-id}]
     (test-data/create-user! {:eppn user-id})
     (test-data/create-resource! {:resource-ext-id resource-ext-id})
 
     (testing "user and resource both exist"
       (is (not (blacklist/blacklisted? user-id resource-ext-id)))
-      (blacklist/add-to-blacklist! {:userid user-id
-                                    :resource/ext-id resource-ext-id
-                                    :actor "handler"
-                                    :comment ""})
+      (blacklist/add-event! command)
       (is (blacklist/blacklisted? user-id resource-ext-id)))
 
     (testing "user doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/add-to-blacklist! {:userid "non-existing-user"
-                                                 :resource/ext-id resource-ext-id
-                                                 :actor "handler"
-                                                 :comment ""}))))
+                   (blacklist/add-event! (assoc command :userid "non-existing-user")))))
 
     (testing "resource doesn't exist"
       (is (thrown? IllegalArgumentException
-                   (blacklist/add-to-blacklist! {:userid user-id
-                                                 :resource/ext-id "non-existing-resource"
-                                                 :actor "handler"
-                                                 :comment ""}))))))
+                   (blacklist/add-event! (assoc command :resource/ext-id "non-existing-resource")))))))
