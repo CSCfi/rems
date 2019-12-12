@@ -5,7 +5,7 @@
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture test-data-fixture]]
+            [rems.db.testing :refer [caches-fixture test-db-fixture rollback-db-fixture test-data-fixture]]
             [rems.json :as json]
             [rems.testing-util :refer [suppress-logging]]
             [stub-http.core :as stub]))
@@ -15,7 +15,8 @@
   (suppress-logging "rems.db.entitlements")
   test-db-fixture
   rollback-db-fixture
-  test-data-fixture)
+  test-data-fixture
+  caches-fixture)
 
 (def +entitlements+
   [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11) :mail "user1@tes.t"}
