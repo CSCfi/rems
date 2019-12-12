@@ -1,5 +1,6 @@
 (ns rems.api.services.workflow
-  (:require [rems.db.catalogue :as catalogue]
+  (:require [rems.db.applications :as applications]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
             [rems.db.users :as users]
@@ -38,6 +39,7 @@
           (when-let [handlers (:handlers command)]
             {:workflow (json/generate-string {:type :workflow/dynamic
                                               :handlers handlers})})))
+  (applications/reload-cache!)
   {:success true})
 
 (defn set-workflow-enabled! [command]

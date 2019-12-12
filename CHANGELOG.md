@@ -26,6 +26,7 @@ Changes since v2.6
 
 ### Fixes
 - More robust email resending (#1750)
+- Changes in workflow, catalogue item and blacklist now take effect without a delay (#1851)
 
 ### Additions
 - More columns for blacklist table, blacklist visible on resource administration page (#1724)

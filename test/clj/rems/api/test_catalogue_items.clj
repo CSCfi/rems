@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.applications :as applications]
             [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -67,45 +68,55 @@
                        read-ok-body)
             id (:id create)]
         (is (:success create))
-        (testing "... and fetch"
-          (let [data (-> (request :get (str "/api/catalogue-items/" id))
-                         (authenticate api-key user)
-                         handler
-                         read-ok-body)]
-            (is (= id (:id data)))
-            (is (= {:title "En title"
-                    :infourl nil}
-                   (dissoc (get-in data [:localizations :en]) :id :langcode)))
-            (is (= {:title "Sv title"
-                    :infourl "http://info.se"}
-                   (dissoc (get-in data [:localizations :sv]) :id :langcode)))))
-        (testing "... and edit"
-          (let [response (-> (request :put "/api/catalogue-items/edit")
-                             (authenticate api-key owner)
-                             (json-body {:id id
-                                         :localizations {:sv {:title "Sv title 2"
-                                                              :infourl nil}
-                                                         :fi {:title "Fi title"
-                                                              :infourl "http://info.fi"}}})
-                             handler
-                             read-ok-body)]
-            (is (:success response) (pr-str response))
-            (testing "... and fetch"
-              (let [data (-> (request :get (str "/api/catalogue-items/" id))
-                             (authenticate api-key user)
-                             handler
-                             read-ok-body)]
-                (prn data)
-                (is (= id (:id data)))
-                (is (= {:title "En title"
-                        :infourl nil}
-                       (dissoc (get-in data [:localizations :en]) :id :langcode)))
-                (is (= {:title "Sv title 2"
-                        :infourl nil}
-                       (dissoc (get-in data [:localizations :sv]) :id :langcode)))
-                (is (= {:title "Fi title"
-                        :infourl "http://info.fi"}
-                       (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))))))
+        (let [app-id (test-data/create-application! {:catalogue-item-ids [id]
+                                                     :actor "alice"})
+              get-app #(applications/get-unrestricted-application app-id)]
+          (is (= {:sv "http://info.se"}
+                 (:catalogue-item/infourl
+                  (first (:application/resources (get-app))))))
+          (testing "... and fetch"
+            (let [data (-> (request :get (str "/api/catalogue-items/" id))
+                           (authenticate api-key user)
+                           handler
+                           read-ok-body)]
+              (is (= id (:id data)))
+              (is (= {:title "En title"
+                      :infourl nil}
+                     (dissoc (get-in data [:localizations :en]) :id :langcode)))
+              (is (= {:title "Sv title"
+                      :infourl "http://info.se"}
+                     (dissoc (get-in data [:localizations :sv]) :id :langcode)))))
+          (testing "... and edit"
+            (let [response (-> (request :put "/api/catalogue-items/edit")
+                               (authenticate api-key owner)
+                               (json-body {:id id
+                                           :localizations {:sv {:title "Sv title 2"
+                                                                :infourl nil}
+                                                           :fi {:title "Fi title"
+                                                                :infourl "http://info.fi"}}})
+                               handler
+                               read-ok-body)]
+              (is (:success response) (pr-str response))
+              (testing "application is updated when catalogue item is edited"
+                (is (= {:fi "http://info.fi"}
+                       (:catalogue-item/infourl
+                        (first (:application/resources (get-app)))))))
+              (testing "... and fetch"
+                (let [data (-> (request :get (str "/api/catalogue-items/" id))
+                               (authenticate api-key user)
+                               handler
+                               read-ok-body)]
+                  (prn data)
+                  (is (= id (:id data)))
+                  (is (= {:title "En title"
+                          :infourl nil}
+                         (dissoc (get-in data [:localizations :en]) :id :langcode)))
+                  (is (= {:title "Sv title 2"
+                          :infourl nil}
+                         (dissoc (get-in data [:localizations :sv]) :id :langcode)))
+                  (is (= {:title "Fi title"
+                          :infourl "http://info.fi"}
+                         (dissoc (get-in data [:localizations :fi]) :id :langcode))))))))))))
 
 
 (deftest catalogue-items-api-security-test
