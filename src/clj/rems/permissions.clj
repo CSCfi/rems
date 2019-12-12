@@ -1,7 +1,7 @@
 (ns rems.permissions
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [map-vals]]
+            [medley.core :refer [map-vals map-kv-vals]]
             [rems.util :refer [conj-set]]))
 
 (defn- give-role-to-user [application role user]
@@ -136,12 +136,7 @@
                    (set (map :permission rules))))))
 
 (defn- map-permissions [application f]
-  (update application ::role-permissions
-          (fn [role-permissions]
-            (->> role-permissions
-                 (map (fn [[role permissions]]
-                        [role (f role permissions)]))
-                 (into {})))))
+  (update application ::role-permissions #(map-kv-vals f %)))
 
 (defn- permissions-for-role [rules role]
   (set/union (get rules role #{})
