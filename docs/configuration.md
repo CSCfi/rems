@@ -11,11 +11,21 @@ The full list of available configuration options can be seen in [config-defaults
 Currently supported authentication methods are SAML2 and OpenId Connect (e.g. Auth0). Login method to be used can be defined with the key `:authentication` and the following values are recognized:
 
 * `:shibboleth` for SAML2
+* `:oidc` for OpenId Connect
 * `:fake-shibboleth` for development login
 
 ### SAML2 (`:shibboleth`)
 
-When using this option, login requests are directed to `/Shibboleth.sso/Login`.
+When using this option, login requests are directed to `/Shibboleth.sso/Login`. A link to an alternative login endpoint can also be shown if the `:alternative-login-url` option is set.
+
+### OpenId Connect (`:oidc`)
+
+The `:oidc` authentication method has the following configuration options:
+
+* `:oidc-domain` – the openid connect configration is fetched from `https://{oidc-domain}/.well-known/openid-configuration`
+* `:oidc-client-id`
+* `:oidc-client-secret`
+* `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
 
 ### Development login (`:fake-shibboleth`)
 
