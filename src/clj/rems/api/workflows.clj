@@ -4,6 +4,7 @@
             [rems.api.services.workflow :as workflow]
             [rems.api.util :as api-util]
             [rems.api.util] ; required for route :roles
+            [rems.db.workflow :refer [workflow-types]]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -11,9 +12,7 @@
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
-   :type (s/enum :workflow/dynamic
-                 :workflow/bureaucratic
-                 :workflow/master)
+   :type (apply s/enum workflow-types)
    (s/optional-key :handlers) [UserId]})
 
 (s/defschema EditWorkflowCommand

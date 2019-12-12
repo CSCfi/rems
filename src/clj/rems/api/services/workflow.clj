@@ -5,17 +5,8 @@
             [rems.db.workflow :as workflow]
             [rems.json :as json]))
 
-(defn create-workflow! [{:keys [user-id organization type title handlers]}]
-  (assert user-id)
-  (assert organization)
-  (assert title)
-  (assert (every? string? handlers) {:handlers handlers})
-  (let [id (:id (db/create-workflow! {:organization organization,
-                                      :owneruserid user-id,
-                                      :modifieruserid user-id,
-                                      :title title,
-                                      :workflow (json/generate-string {:type type
-                                                                       :handlers handlers})}))]
+(defn create-workflow! [workflow]
+  (let [id (workflow/create-workflow! workflow)]
     {:id id
      :success (not (nil? id))}))
 
