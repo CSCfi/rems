@@ -455,11 +455,9 @@
 (defn enrich-workflow-handlers [application get-workflow]
   (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
         handlers (get-in workflow [:workflow :handlers])]
-    (if handlers
-      (-> application
-          (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
-          (permissions/give-role-to-users :handler (mapv :userid handlers)))
-      application)))
+    (-> application
+        (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
+        (permissions/give-role-to-users :handler (mapv :userid handlers)))))
 
 (defn- enrich-super-users [application get-users-with-role]
   (-> application
