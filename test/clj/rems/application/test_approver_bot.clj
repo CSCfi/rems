@@ -46,7 +46,7 @@
                        :application/licenses []
                        :form/id 40
                        :workflow/id 50
-                       :workflow/type :workflow/dynamic}
+                       :workflow/type :workflow/default}
         submitted-event {:event/type :application.event/submitted
                          :event/time (DateTime. 2000)
                          :event/actor "applicant"

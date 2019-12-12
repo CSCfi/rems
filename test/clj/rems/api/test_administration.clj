@@ -23,8 +23,8 @@
         form-id (:id (api-call :post "/api/forms/create" {:form/organization "abc" :form/title "form update test" :form/fields []}
                                api-key user-id))
         workflow-id (:id (api-call :post "/api/workflows/create"
-                                   {:organization "abc" :title "dynamic workflow"
-                                    :type :workflow/dynamic :handlers [user-id]}
+                                   {:organization "abc" :title "default workflow"
+                                    :type :workflow/default :handlers [user-id]}
                                    api-key user-id))
         catalogue-id (:id (api-call :post "/api/catalogue-items/create"
                                     {:form form-id
@@ -129,7 +129,7 @@
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/license-in-use"
                  :resources [{:id resource-id :resid "test"}]
-                 :workflows [{:id workflow-id :title "dynamic workflow"}]}]
+                 :workflows [{:id workflow-id :title "default workflow"}]}]
                (:errors resp)))))
 
     (testing "can archive a catalogue item"

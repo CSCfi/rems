@@ -19,7 +19,7 @@
                ::workflow-id workflow-id
                ::loading-workflow? (not (nil? workflow-id))
                ::actors nil
-               ::form {:type :workflow/dynamic})
+               ::form {:type :workflow/default})
     ::fetch-actors nil
     ::fetch-workflow workflow-id}))
 
@@ -56,10 +56,10 @@
 
 ;;; form submit
 
-(def workflow-types #{:workflow/dynamic :workflow/bureaucratic :workflow/master})
+(def workflow-types #{:workflow/default :workflow/decider :workflow/master})
 
 (defn needs-handlers? [type]
-  (contains? #{:workflow/dynamic :workflow/bureaucratic :workflow/master} type))
+  (contains? #{:workflow/default :workflow/decider :workflow/master} type))
 
 (defn- valid-create-request? [request]
   (and
@@ -157,10 +157,10 @@
                                :readonly @(rf/subscribe [::editing?])
                                :orientation :horizontal
                                :options (concat
-                                         [{:value :workflow/dynamic
-                                           :label (text :t.create-workflow/dynamic-workflow)}
-                                          {:value :workflow/bureaucratic
-                                           :label (text :t.create-workflow/bureaucratic-workflow)}]
+                                         [{:value :workflow/default
+                                           :label (text :t.create-workflow/default-workflow)}
+                                          {:value :workflow/decider
+                                           :label (text :t.create-workflow/decider-workflow)}]
                                          (when (config/dev-environment?)
                                            [{:value :workflow/master
                                              :label (text :t.create-workflow/master-workflow)}]))}])
@@ -204,14 +204,14 @@
        :multi? true
        :on-change #(rf/dispatch [::set-handlers %])}]]))
 
-(defn dynamic-workflow-form []
+(defn default-workflow-form []
   [:div
-   [workflow-type-description (text :t.create-workflow/dynamic-workflow-description)]
+   [workflow-type-description (text :t.create-workflow/default-workflow-description)]
    [workflow-handlers-field]])
 
-(defn bureaucratic-workflow-form []
+(defn decider-workflow-form []
   [:div
-   [workflow-type-description (text :t.create-workflow/bureaucratic-workflow-description)]
+   [workflow-type-description (text :t.create-workflow/decider-workflow-description)]
    [workflow-handlers-field]])
 
 (defn master-workflow-form []
@@ -242,8 +242,8 @@
                   [workflow-type-field]
 
                   (case workflow-type
-                    :workflow/dynamic [dynamic-workflow-form]
-                    :workflow/bureaucratic [bureaucratic-workflow-form]
+                    :workflow/default [default-workflow-form]
+                    :workflow/decider [decider-workflow-form]
                     :workflow/master [master-workflow-form])
 
                   [:div.col.commands

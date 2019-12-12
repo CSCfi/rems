@@ -1154,7 +1154,7 @@
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
                                                      :event/actor "applicant"
-                                                     :workflow/type :workflow/dynamic})
+                                                     :workflow/type :workflow/default})
                         (assoc-in [:application/workflow :workflow.dynamic/handlers] [{:userid "handler"}])
                         (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])

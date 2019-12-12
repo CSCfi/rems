@@ -18,7 +18,7 @@
 (def ^:private expected
   {:organization "abc"
    :title "workflow title"
-   :workflow {:type "workflow/dynamic"
+   :workflow {:type "workflow/default"
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
                          {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
    :enabled true
@@ -55,11 +55,11 @@
                          handler)]
         (is (response-is-not-found? response)))))
 
-  (testing "create dynamic workflow"
+  (testing "create default workflow"
     (let [body (-> (request :post "/api/workflows/create")
                    (json-body {:organization "abc"
                                :title "workflow title"
-                               :type :workflow/dynamic
+                               :type :workflow/default
                                :handlers ["handler" "carl"]})
                    (authenticate "42" "owner")
                    handler
@@ -72,11 +72,11 @@
         (is (= expected
                (fetch "42" "owner" id))))))
 
-  (testing "create bureaucratic workflow"
+  (testing "create decider workflow"
     (let [body (-> (request :post "/api/workflows/create")
                    (json-body {:organization "abc"
                                :title "workflow title"
-                               :type :workflow/bureaucratic
+                               :type :workflow/decider
                                :handlers ["handler" "carl"]})
                    (authenticate "42" "owner")
                    handler
@@ -86,7 +86,7 @@
       (is (< 0 id))
       (sync-with-database-time)
       (testing "and fetch"
-        (is (= (assoc-in expected [:workflow :type] "workflow/bureaucratic")
+        (is (= (assoc-in expected [:workflow :type] "workflow/decider")
                (fetch "42" "owner" id)))))))
 
 (deftest workflows-enabled-archived-test
@@ -94,7 +94,7 @@
         user-id "owner"
         wfid (test-data/create-workflow! {:organization "abc"
                                           :title "workflow title"
-                                          :type :workflow/dynamic
+                                          :type :workflow/default
                                           :handlers ["handler" "carl"]})
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
@@ -145,7 +145,7 @@
         user-id "owner"
         wfid (test-data/create-workflow! {:organization "abc"
                                           :title "workflow title"
-                                          :type :workflow/dynamic
+                                          :type :workflow/default
                                           :handlers ["handler" "carl"]})
         fetch #(fetch api-key user-id wfid)
         edit! #(-> (request :put "/api/workflows/edit")
@@ -163,7 +163,7 @@
       (is (:success (edit! {:handlers ["owner" "alice"]})))
       (is (= (assoc expected
                     :title "x"
-                    :workflow {:type "workflow/dynamic"
+                    :workflow {:type "workflow/default"
                                :handlers [{:email "owner@example.com"
                                            :name "Owner"
                                            :userid "owner"}

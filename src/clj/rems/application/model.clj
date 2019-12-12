@@ -212,7 +212,7 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   application)
 
-(def dynamic-workflow
+(def default-workflow
   (permissions/compile-rules
    [{:permission :see-everything}
     {:permission :application.command/accept-invitation}
@@ -238,7 +238,7 @@
     {:role :handler :permission :application.command/approve}
     {:role :handler :permission :application.command/reject}]))
 
-(def bureaucratic-workflow
+(def decider-workflow
   (permissions/compile-rules
    [{:permission :see-everything}
     {:permission :application.command/accept-invitation}
@@ -264,8 +264,8 @@
 
 (defn- calculate-permissions [application event]
   (let [whitelist (case (get-in application [:application/workflow :workflow/type])
-                    :workflow/dynamic dynamic-workflow
-                    :workflow/bureaucratic bureaucratic-workflow
+                    :workflow/default default-workflow
+                    :workflow/decider decider-workflow
                     :workflow/master master-workflow/whitelist)]
     (-> application
         (master-workflow/calculate-permissions event)

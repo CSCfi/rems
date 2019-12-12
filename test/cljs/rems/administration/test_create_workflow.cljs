@@ -6,7 +6,7 @@
   (testing "all workflows"
     (let [form {:organization "abc"
                 :title "workflow title"
-                :type :workflow/dynamic
+                :type :workflow/default
                 :handlers ["bob"]}]
       (is (not (nil? (build-create-request form))))
       (testing "missing organization"
@@ -18,29 +18,29 @@
       (testing "invalid workflow type"
         (is (nil? (build-create-request (assoc form :type :no-such-type)))))))
 
-  (testing "dynamic workflow"
+  (testing "default workflow"
     (let [form {:organization "abc"
                 :title "workflow title"
-                :type :workflow/dynamic
+                :type :workflow/default
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
-                :type :workflow/dynamic
+                :type :workflow/default
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
 
-  (testing "bureaucratic workflow"
+  (testing "decider workflow"
     (let [form {:organization "abc"
                 :title "workflow title"
-                :type :workflow/bureaucratic
+                :type :workflow/decider
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
-                :type :workflow/bureaucratic
+                :type :workflow/decider
                 :handlers ["bob" "carl"]}
                (build-create-request form))))
       (testing "missing handlers"

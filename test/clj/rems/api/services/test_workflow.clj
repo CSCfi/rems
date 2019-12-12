@@ -11,16 +11,16 @@
   (test-data/create-user! {:eppn "user1" :commonName "User 1" :mail "user1@example.com"})
   (test-data/create-user! {:eppn "user2" :commonName "User 2" :mail "user2@example.com"})
 
-  (testing "dynamic workflow"
+  (testing "default workflow"
     (let [wf-id (:id (workflow/create-workflow! {:user-id "creator"
                                                  :organization "org"
-                                                 :type :workflow/dynamic
+                                                 :type :workflow/default
                                                  :title "the title"
                                                  :handlers ["user1" "user2"]}))]
       (is (= {:id wf-id
               :organization "org"
               :title "the title"
-              :workflow {:type :workflow/dynamic
+              :workflow {:type :workflow/default
                          :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                     {:userid "user2" :name "User 2" :email "user2@example.com"}]}
               :licenses []
@@ -30,16 +30,16 @@
               :archived false}
              (workflow/get-workflow wf-id)))))
 
-  (testing "bureaucratic workflow"
+  (testing "decider workflow"
     (let [wf-id (:id (workflow/create-workflow! {:user-id "creator"
                                                  :organization "org"
-                                                 :type :workflow/bureaucratic
+                                                 :type :workflow/decider
                                                  :title "the title"
                                                  :handlers ["user1" "user2"]}))]
       (is (= {:id wf-id
               :organization "org"
               :title "the title"
-              :workflow {:type :workflow/bureaucratic
+              :workflow {:type :workflow/decider
                          :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                     {:userid "user2" :name "User 2" :email "user2@example.com"}]}
               :licenses []

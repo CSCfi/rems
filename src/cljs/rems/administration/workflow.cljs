@@ -48,8 +48,8 @@
    (text :t.administration/edit)])
 
 (def workflow-types
-  {:workflow/dynamic :t.create-workflow/dynamic-workflow
-   :workflow/bureaucratic :t.create-workflow/bureaucratic-workflow
+  {:workflow/default :t.create-workflow/default-workflow
+   :workflow/decider :t.create-workflow/decider-workflow
    :workflow/master :t.create-workflow/master-workflow})
 
 (defn workflow-view [workflow language]

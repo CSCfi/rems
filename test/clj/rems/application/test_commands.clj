@@ -24,7 +24,7 @@
                                     :application/licenses []
                                     :form/id 1
                                     :workflow/id 1
-                                    :workflow/type :workflow/dynamic})
+                                    :workflow/type :workflow/default})
 (def ^:private dummy-licenses {1 {:id 1
                                   :licensetype "link"
                                   :localizations {:en {:title "en title"
@@ -119,7 +119,7 @@
                                                   :wfid wf-id}}
                     :get-catalogue-item-licenses {cat-id [{:id licence-id}]
                                                   cat-id2 [{:id licence-id2}]}
-                    :get-workflow {wf-id {:workflow {:type :workflow/dynamic}}}
+                    :get-workflow {wf-id {:workflow {:type :workflow/default}}}
                     :allocate-application-ids! (fn [^DateTime time]
                                                  {:application/id app-id
                                                   :application/external-id (str (.getYear time) "/1")})}]
@@ -134,7 +134,7 @@
               :application/licenses [{:license/id licence-id}]
               :form/id form-id
               :workflow/id wf-id
-              :workflow/type :workflow/dynamic}
+              :workflow/type :workflow/default}
              (ok-command nil {:type :application.command/create
                               :actor applicant-user-id
                               :catalogue-item-ids [cat-id]}
@@ -154,7 +154,7 @@
                                      {:license/id licence-id2}]
               :form/id form-id
               :workflow/id wf-id
-              :workflow/type :workflow/dynamic}
+              :workflow/type :workflow/default}
              (ok-command nil {:type :application.command/create
                               :actor applicant-user-id
                               :catalogue-item-ids [cat-id cat-id2]}
@@ -501,7 +501,7 @@
                        :application/licenses [{:license/id 1}]
                        :form/id 40
                        :workflow/id 50
-                       :workflow/type :workflow/dynamic}
+                       :workflow/type :workflow/default}
         draft-saved-event {:event/type :application.event/draft-saved
                            :event/time test-time
                            :event/actor applicant-user-id
@@ -1319,7 +1319,7 @@
                        :application/licenses []
                        :form/id 40
                        :workflow/id 50
-                       :workflow/type :workflow/dynamic}
+                       :workflow/type :workflow/default}
         injections {:get-catalogue-item {10 {:id 10
                                              :resid "urn:11"
                                              :formid 40
@@ -1330,7 +1330,7 @@
                                              :wfid 50}}
                     :get-catalogue-item-licenses {10 []
                                                   20 []}
-                    :get-workflow {50 {:workflow {:type :workflow/dynamic}}}
+                    :get-workflow {50 {:workflow {:type :workflow/default}}}
                     :allocate-application-ids! (fn [_time]
                                                  {:application/id new-app-id
                                                   :application/external-id "2019/66"})}
@@ -1353,7 +1353,7 @@
                :application/licenses []
                :form/id 40
                :workflow/id 50
-               :workflow/type :workflow/dynamic}
+               :workflow/type :workflow/default}
               {:event/type :application.event/draft-saved
                :event/time test-time
                :event/actor applicant-user-id
@@ -1379,7 +1379,7 @@
 (deftest test-handle-command
   (let [application (model/application-view nil {:event/type :application.event/created
                                                  :event/actor "applicant"
-                                                 :workflow/type :workflow/dynamic})
+                                                 :workflow/type :workflow/default})
         command {:application-id 123 :time (DateTime. 1000)
                  :type :application.command/save-draft
                  :field-values []

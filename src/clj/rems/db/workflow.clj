@@ -8,8 +8,8 @@
             [schema.core :as s]))
 
 (def workflow-types
-  #{:workflow/bureaucratic
-    :workflow/dynamic
+  #{:workflow/decider
+    :workflow/default
     :workflow/master})
 
 (s/defschema WorkflowBody
