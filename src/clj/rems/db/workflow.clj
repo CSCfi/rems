@@ -1,5 +1,6 @@
 (ns rems.db.workflow
-  (:require [rems.db.core :as db]
+  (:require [rems.application.events :as events]
+            [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.json :as json]
@@ -7,13 +8,8 @@
             [schema.coerce :as coerce]
             [schema.core :as s]))
 
-(def workflow-types
-  #{:workflow/decider
-    :workflow/default
-    :workflow/master})
-
 (s/defschema WorkflowBody
-  {:type (apply s/enum workflow-types)
+  {:type (apply s/enum events/workflow-types)
    :handlers [s/Str]})
 
 (def ^:private workflow-body-coercer

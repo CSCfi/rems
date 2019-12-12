@@ -4,7 +4,7 @@
             [rems.api.services.workflow :as workflow]
             [rems.api.util :as api-util]
             [rems.api.util] ; required for route :roles
-            [rems.db.workflow :refer [workflow-types]]
+            [rems.application.events :as events]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -12,7 +12,7 @@
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
-   :type (apply s/enum workflow-types) ; TODO: exclude master workflow?
+   :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?
    (s/optional-key :handlers) [UserId]})
 
 (s/defschema EditWorkflowCommand

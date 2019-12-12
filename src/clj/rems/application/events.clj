@@ -48,6 +48,10 @@
          :event/type (s/enum :application.event/copied-to)
          :application/copied-to {:application/id s/Int
                                  :application/external-id s/Str}))
+(def workflow-types
+  #{:workflow/decider
+    :workflow/default
+    :workflow/master})
 (s/defschema CreatedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/created)
@@ -57,7 +61,7 @@
          :application/licenses [{:license/id s/Int}]
          :form/id s/Int
          :workflow/id s/Int
-         :workflow/type s/Keyword))
+         :workflow/type (apply s/enum workflow-types)))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/decided)
