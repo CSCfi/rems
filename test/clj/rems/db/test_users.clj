@@ -34,7 +34,15 @@
   (testing "get-users-with-role"
     (roles/add-role! "user1" :owner)
     (is (= ["user1"] (users/get-users-with-role :owner)))
-    (is (= [] (users/get-users-with-role :reporter)))))
+    (is (= [] (users/get-users-with-role :reporter))))
+
+  (testing "update user"
+    (users/add-user! "user1" {:eppn "user1"
+                              :commonName "new name"})
+    (is (= {:userid "user1"
+            :name "new name"
+            :email nil}
+           (users/get-user "user1")))))
 
 (deftest test-nonexistent-user
   (is (= {:userid "nonexistent"
