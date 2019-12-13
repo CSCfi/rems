@@ -35,6 +35,7 @@ Changes since v2.6
 - Users can be added and removed from the blacklist in the resource admin page (#1706)
 - POSTing entitlements to entitlement-target is now retried (#1784)
 - [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
+- "Assign external id" command for setting the id of an application (#1858)
 
 ## v2.6 "Kalevalantie" 2018-11-12
 
