@@ -46,7 +46,7 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [action-comment {:id action-form-id
-                    :label "TODO" #_(text :t.form/add-comments-not-shown-to-applicant)
+                    :label "" ;; TODO no explanation for now
                     :comment external-id
                     :on-comment on-set-external-id}]])
 
