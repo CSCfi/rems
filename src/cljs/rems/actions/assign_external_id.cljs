@@ -46,7 +46,7 @@
                      :class "btn-primary"
                      :on-click on-send}]]
    [action-comment {:id action-form-id
-                    :label "" ;; TODO no explanation for now
+                    :label (text :t.actions/assign-external-id-info)
                     :comment external-id
                     :on-comment on-set-external-id}]])
 

@@ -8,6 +8,7 @@
             :approve "Hyväksy"
             :approve-reject "Hyväksy tai hylkää"
             :assign-external-id "Aseta tunniste"
+            :assign-external-id-info "Tunniste"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama hakemuslomake ja työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
             :change-resources "Muuta resursseja"
