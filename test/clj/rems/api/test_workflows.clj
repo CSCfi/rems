@@ -12,7 +12,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 ;; this is a subset of what we expect to get from the api
