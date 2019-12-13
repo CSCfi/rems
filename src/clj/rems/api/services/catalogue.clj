@@ -1,5 +1,6 @@
 (ns rems.api.services.catalogue
   (:require [rems.common-util :refer [index-by]]
+            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
             [rems.db.form :as form]
@@ -37,6 +38,7 @@
             (select-keys localization [:title :infourl]))))
   ;; Reset cache so that next call to get localizations will get these ones.
   (catalogue/reset-cache!)
+  (applications/reload-cache!)
   {:success true})
 
 (defn set-catalogue-item-enabled! [command]

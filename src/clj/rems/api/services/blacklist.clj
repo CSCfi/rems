@@ -1,6 +1,7 @@
 (ns rems.api.services.blacklist
   (:require [clj-time.core :as time]
             [rems.application.events :as events]
+            [rems.db.applications :as applications]
             [rems.db.blacklist :as blacklist]
             [rems.json :as json]
             [schema.core :as s]))
@@ -14,11 +15,13 @@
 
 (defn add-user-to-blacklist! [actor command]
   (blacklist/add-event! (-> (command->event command actor)
-                            (assoc :event/type :blacklist.event/add))))
+                            (assoc :event/type :blacklist.event/add)))
+  (applications/reload-cache!))
 
 (defn remove-user-from-blacklist! [actor command]
   (blacklist/add-event! (-> (command->event command actor)
-                            (assoc :event/type :blacklist.event/remove))))
+                            (assoc :event/type :blacklist.event/remove)))
+  (applications/reload-cache!))
 
 ;; TODO: Could unify API with add-user-to-blacklist!
 (defn add-users-to-blacklist! [{:keys [users actor comment] :as params}]
@@ -28,6 +31,7 @@
                            :event/time (time/now)
                            :userid (:userid user)
                            :resource/ext-id (:resource/ext-id params)
-                           :event/comment comment})))
+                           :event/comment comment}))
+  (applications/reload-cache!))
 
 (defn get-blacklist [params] (blacklist/get-blacklist params))

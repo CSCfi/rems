@@ -1,5 +1,6 @@
 (ns rems.api.services.workflow
-  (:require [rems.db.catalogue :as catalogue]
+  (:require [rems.db.applications :as applications]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
@@ -23,6 +24,7 @@
     (db/edit-workflow! {:id id
                         :title title
                         :workflow (json/generate-string workflow-body)}))
+  (applications/reload-cache!)
   {:success true})
 
 (defn set-workflow-enabled! [command]

@@ -4,6 +4,7 @@
             [rems.api.services.workflow :as workflow]
             [rems.api.testing :refer :all]
             [rems.common-util :refer [index-by]]
+            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [sync-with-database-time]]
@@ -152,13 +153,25 @@
                    (json-body (merge {:id wfid} %))
                    (authenticate api-key user-id)
                    handler
-                   read-ok-body)]
+                   read-ok-body)
+
+        cat-id (test-data/create-catalogue-item! {:workflow-id wfid})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor "tester"})
+        application->handler-user-ids
+        (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
     (sync-with-database-time)
+    (testing "application is initialized with the correct set of handlers"
+      (let [app (applications/get-unrestricted-application app-id)]
+        (is (= #{"handler" "carl"}
+               (application->handler-user-ids app)))))
+
     (testing "change title"
       (is (:success (edit! {:title "x"})))
       (is (= (assoc expected
                     :title "x")
              (fetch))))
+
     (testing "change handlers"
       (is (:success (edit! {:handlers ["owner" "alice"]})))
       (is (= (assoc expected
@@ -170,7 +183,12 @@
                                           {:email "alice@example.com"
                                            :name "Alice Applicant"
                                            :userid "alice"}]})
-             (fetch))))))
+             (fetch))))
+
+    (testing "application is updated when handlers are changed"
+      (let [app (applications/get-unrestricted-application app-id)]
+        (is (= #{"owner" "alice"}
+               (application->handler-user-ids app)))))))
 
 (deftest workflows-api-filtering-test
   (let [enabled-wf (test-data/create-workflow! {})

@@ -7,9 +7,9 @@
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
+            [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]))
 
-(use-fixtures :once test-db-fixture)
+(use-fixtures :once test-db-fixture caches-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (defn- status-flags [item-id]
