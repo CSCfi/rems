@@ -225,11 +225,13 @@
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:auto-approve-workflow "Automaattinen hyväksyntä"
-                    :auto-approve-workflow-description "Hakemus hyväksytään välittömästi, keneltäkään erikseen kysymättä."
-                    :dynamic-workflow "Dynaaminen työvuo"
-                    :dynamic-workflow-description "Hakemuksen käsittelijä päättää tapauskohtaisesti, tarvitseeko hakemus katselmointia tai hyväksyntää."
+  :create-workflow {:decider-workflow "Päättäjätyövuo"
+                    :decider-workflow-description "Käsittelijällä ei ole valtuutta hyväksyä tai hylätä hakemusta, vaan vain erillisellä hyväksyjällä on. Hakemusta ei voi sulkea."
+                    :default-workflow "Oletustyövuo"
+                    :default-workflow-description "Hakemus on täysin käsittelijän hallinnassa. Käsittelijä voi pyytää toisilta katselmointeja ja päätöksiä tarpeen mukaan."
                     :handlers "Käsittelijät"
+                    :master-workflow "Master-työvuo"
+                    :master-workflow-description "VAIN TESTAUKSEEN. Unioni kaikista mahdollista työvoista."
                     :title "Työvuon nimi"}
   :dropdown {:no-results "Ei tuloksia"
              :placeholder "Valitse..."}

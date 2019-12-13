@@ -10,6 +10,7 @@ Changes since v2.6
 
 ### Breaking changes
 - Removed support for LDAP authentication
+- `/api/workflows/create` API: the `type` parameter's allowed value was changed from `dynamic` to `workflow/dynamic`
 
 ### Additions
 - Catalogue item form can be changed for one or more items at a time.
@@ -108,6 +109,7 @@ Changes since v2.6
 - Approver bot which approves applications automatically, unless the user+resource is blacklisted (#1660)
 - Administration view for blacklist
 - Read-only access to administration pages for handlers (#1705)
+- New "decider workflow" where the handler cannot approve/reject the application, but only the decider can (#1830)
 
 ### Enhancements
 - Improved version information in footer

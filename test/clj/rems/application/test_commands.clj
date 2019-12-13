@@ -5,8 +5,10 @@
             [rems.application.model :as model]
             [rems.common-util :refer [distinct-by]]
             [rems.form-validation :as form-validation]
+            [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx]])
-  (:import [java.util UUID]
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]
            [org.joda.time DateTime]))
 
 (def ^:private test-time (DateTime. 1000))
@@ -22,7 +24,7 @@
                                     :application/licenses []
                                     :form/id 1
                                     :workflow/id 1
-                                    :workflow/type :workflow/dynamic})
+                                    :workflow/type :workflow/default})
 (def ^:private dummy-licenses {1 {:id 1
                                   :licensetype "link"
                                   :localizations {:en {:title "en title"
@@ -117,7 +119,7 @@
                                                   :wfid wf-id}}
                     :get-catalogue-item-licenses {cat-id [{:id licence-id}]
                                                   cat-id2 [{:id licence-id2}]}
-                    :get-workflow {wf-id {:workflow {:type :workflow/dynamic}}}
+                    :get-workflow {wf-id {:workflow {:type :workflow/default}}}
                     :allocate-application-ids! (fn [^DateTime time]
                                                  {:application/id app-id
                                                   :application/external-id (str (.getYear time) "/1")})}]
@@ -132,7 +134,7 @@
               :application/licenses [{:license/id licence-id}]
               :form/id form-id
               :workflow/id wf-id
-              :workflow/type :workflow/dynamic}
+              :workflow/type :workflow/default}
              (ok-command nil {:type :application.command/create
                               :actor applicant-user-id
                               :catalogue-item-ids [cat-id]}
@@ -152,7 +154,7 @@
                                      {:license/id licence-id2}]
               :form/id form-id
               :workflow/id wf-id
-              :workflow/type :workflow/dynamic}
+              :workflow/type :workflow/default}
              (ok-command nil {:type :application.command/create
                               :actor applicant-user-id
                               :catalogue-item-ids [cat-id cat-id2]}
@@ -499,7 +501,7 @@
                        :application/licenses [{:license/id 1}]
                        :form/id 40
                        :workflow/id 50
-                       :workflow/type :workflow/dynamic}
+                       :workflow/type :workflow/default}
         draft-saved-event {:event/type :application.event/draft-saved
                            :event/time test-time
                            :event/actor applicant-user-id
@@ -742,7 +744,7 @@
                   :application/decision :rejected
                   :application/comment ""}
                  event)))
-        (testing "can not reject twice"
+        (testing "cannot reject twice"
           (is (= {:errors [{:type :forbidden}]}
                  (fail-command rejected
                                {:type :application.command/decide
@@ -1317,7 +1319,7 @@
                        :application/licenses []
                        :form/id 40
                        :workflow/id 50
-                       :workflow/type :workflow/dynamic}
+                       :workflow/type :workflow/default}
         injections {:get-catalogue-item {10 {:id 10
                                              :resid "urn:11"
                                              :formid 40
@@ -1328,7 +1330,7 @@
                                              :wfid 50}}
                     :get-catalogue-item-licenses {10 []
                                                   20 []}
-                    :get-workflow {50 {:workflow {:type :workflow/dynamic}}}
+                    :get-workflow {50 {:workflow {:type :workflow/default}}}
                     :allocate-application-ids! (fn [_time]
                                                  {:application/id new-app-id
                                                   :application/external-id "2019/66"})}
@@ -1351,7 +1353,7 @@
                :application/licenses []
                :form/id 40
                :workflow/id 50
-               :workflow/type :workflow/dynamic}
+               :workflow/type :workflow/default}
               {:event/type :application.event/draft-saved
                :event/time test-time
                :event/actor applicant-user-id
@@ -1373,3 +1375,23 @@
                          {:type :application.command/copy-as-new
                           :actor applicant-user-id}
                          injections))))))
+
+(deftest test-handle-command
+  (let [application (model/application-view nil {:event/type :application.event/created
+                                                 :event/actor "applicant"
+                                                 :workflow/type :workflow/default})
+        command {:application-id 123 :time (DateTime. 1000)
+                 :type :application.command/save-draft
+                 :field-values []
+                 :actor "applicant"}]
+    (testing "executes command when user is authorized"
+      (is (not (:errors (commands/handle-command command application {})))))
+    (testing "fails when command fails validation"
+      (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
+                            (commands/handle-command (assoc command :time 3) application {}))))
+    (testing "fails when user is not authorized"
+      ;; the permission checks should happen before executing the command handler
+      ;; and only depend on the roles and permissions
+      (let [application (permissions/remove-role-from-user application :applicant "applicant")
+            result (commands/handle-command command application {})]
+        (is (= {:errors [{:type :forbidden}]} result))))))

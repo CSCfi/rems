@@ -14,7 +14,9 @@
 (deftest catalogue-items-api-test
   (let [api-key "42"
         user-id "alice"
-        form-id (test-data/create-form! {:form/title "form name"})]
+        form-id (test-data/create-form! {:form/title "form name"})
+        wf-id (test-data/create-workflow! {:title "workflow name"})
+        res-id (test-data/create-resource! {:resource-ext-id "resource ext id"})]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
                    handler
@@ -24,8 +26,8 @@
     (let [data (-> (request :post "/api/catalogue-items/create")
                    (authenticate api-key "owner")
                    (json-body {:form form-id
-                               :resid 1
-                               :wfid 1
+                               :resid res-id
+                               :wfid wf-id
                                :archived true
                                :localizations {}})
                    handler
@@ -38,9 +40,9 @@
                      handler
                      read-body)]
         (is (= {:id id
-                :workflow-name "dynamic workflow"
+                :workflow-name "workflow name"
                 :form-name "form name"
-                :resource-name "urn:nbn:fi:lb-201403262"
+                :resource-name "resource ext id"
                 :localizations {}}
                (select-keys data [:id :workflow-name :form-name :resource-name :localizations])))))
     (testing "not found"
@@ -51,16 +53,18 @@
         (is (= "application/json" (get-in response [:headers "Content-Type"])))))))
 
 (deftest catalogue-items-edit-test
-  (let [form-id (test-data/create-form! {:form/title "form name"})
-        api-key "42"
+  (let [api-key "42"
         owner "owner"
-        user "alice"]
+        user "alice"
+        form-id (test-data/create-form! {})
+        wf-id (test-data/create-workflow! {})
+        res-id (test-data/create-resource! {})]
     (testing "create"
       (let [create (-> (request :post "/api/catalogue-items/create")
                        (authenticate api-key owner)
                        (json-body {:form form-id
-                                   :resid 1
-                                   :wfid 1
+                                   :resid res-id
+                                   :wfid wf-id
                                    :localizations {:en {:title "En title"}
                                                    :sv {:title "Sv title"
                                                         :infourl "http://info.se"}}})
@@ -167,10 +171,7 @@
 
 (deftest change-form-test
   (let [api-key "42"
-        resource-id (test-data/create-resource!
-                     {:resid "change-form-test-resource"
-                      :organization "change-form-test"
-                      :licenses []})
+        resource-id (test-data/create-resource! {})
         old-form-id (test-data/create-form! {:form/title "old form"})
         new-form-id (test-data/create-form! {:form/title "new form"})
         old-catalogue-item-id (test-data/create-catalogue-item!

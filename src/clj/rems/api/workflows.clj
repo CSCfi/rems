@@ -2,7 +2,9 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer [SuccessResponse ArchivedCommand EnabledCommand UserId UserWithAttributes Workflow]]
             [rems.api.services.workflow :as workflow]
+            [rems.api.util :as api-util]
             [rems.api.util] ; required for route :roles
+            [rems.application.events :as events]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -10,7 +12,7 @@
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
-   :type (s/enum :dynamic)
+   :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?
    (s/optional-key :handlers) [UserId]})
 
 (s/defschema EditWorkflowCommand
@@ -79,4 +81,6 @@
       :roles #{:owner :handler}
       :path-params [workflow-id :- (describe s/Int "workflow-id")]
       :return Workflow
-      (ok (workflow/get-workflow workflow-id)))))
+      (if-some [wf (workflow/get-workflow workflow-id)]
+        (ok wf)
+        (api-util/not-found-json-response)))))

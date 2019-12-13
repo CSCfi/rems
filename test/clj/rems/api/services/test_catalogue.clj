@@ -20,7 +20,7 @@
   (let [form-id (test-data/create-form! {})
         lic-id (test-data/create-license! {})
         res-id (test-data/create-resource! {:license-ids [lic-id]})
-        workflow-id (test-data/create-dynamic-workflow! {})
+        workflow-id (test-data/create-workflow! {})
         item-id (test-data/create-catalogue-item! {:resource-id res-id
                                                    :form-id form-id
                                                    :workflow-id workflow-id})
