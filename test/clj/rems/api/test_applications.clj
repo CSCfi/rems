@@ -127,7 +127,8 @@
         license-id3 (test-data/create-license! {})
         license-id4 (test-data/create-license! {})
         form-id (test-data/create-form! {})
-        workflow-id (test-data/create-dynamic-workflow! {:handlers [handler-id]})
+        workflow-id (test-data/create-workflow! {:type :workflow/master
+                                                 :handlers [handler-id]})
         cat-item-id1 (test-data/create-catalogue-item! {:resource-id (test-data/create-resource!
                                                                       {:license-ids [license-id1 license-id2]})
                                                         :form-id form-id
@@ -161,9 +162,9 @@
                                            {:type :application.command/submit
                                             :application-id application-id}))))
 
-    (testing "getting dynamic application as applicant"
+    (testing "getting application as applicant"
       (let [application (get-application application-id user-id)]
-        (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
+        (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
         (is (= ["application.event/created"
                 "application.event/licenses-accepted"
                 "application.event/draft-saved"
@@ -175,9 +176,9 @@
                  "application.command/copy-as-new"}
                (set (get application :application/permissions))))))
 
-    (testing "getting dynamic application as handler"
+    (testing "getting application as handler"
       (let [application (get-application application-id handler-id)]
-        (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
+        (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
                  "application.command/remark"
@@ -489,22 +490,11 @@
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
 
-(deftest test-application-auto-approve
-  (let [applicant "alice"
-        wfid (test-data/create-dynamic-workflow! {:handlers [approver-bot/bot-userid]})
-        cat-item (test-data/create-catalogue-item! {:workflow-id wfid})
-        app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [cat-item]})]
-    (is (= {:success true}
-           (send-command applicant {:type :application.command/submit
-                                    :application-id app-id})))
-    (is (= "application.state/approved"
-           (:application/state (get-application app-id applicant))))))
-
 (deftest test-revoke
   (let [applicant-id "alice"
         member-id "malice"
         handler-id "handler"
-        wfid (test-data/create-dynamic-workflow! {:handlers [handler-id]})
+        wfid (test-data/create-workflow! {:handlers [handler-id]})
         formid (test-data/create-form! {})
         ext1 "revoke-test-resource-1"
         ext2 "revoke-test-resource-2"
@@ -821,6 +811,8 @@
 
 (deftest test-todos
   (let [app-id (test-data/create-application! {:actor "alice"})]
+    (test-data/create-user! {:eppn "commenter"})
+    (test-data/create-user! {:eppn "decider"})
 
     (testing "does not list drafts"
       (is (not (contains? (get-ids (get-todos "developer"))
@@ -840,13 +832,27 @@
       (is (empty? (get-ids (get-todos "developer" {:query "applicant:no-such-user"})))))
 
     (testing "commenter sees application in todos"
+      (is (not (contains? (get-ids (get-todos "commenter"))
+                          app-id)))
       (is (= {:success true} (send-command "developer" {:type :application.command/request-comment
                                                         :application-id app-id
-                                                        :commenters ["elsa"]
+                                                        :commenters ["commenter"]
                                                         :comment "x"})))
-      (is (contains? (get-ids (get-todos "elsa"))
+      (is (contains? (get-ids (get-todos "commenter"))
                      app-id))
-      (is (not (contains? (get-ids (get-handled-todos "elsa"))
+      (is (not (contains? (get-ids (get-handled-todos "commenter"))
+                          app-id))))
+
+    (testing "decider sees application in todos"
+      (is (not (contains? (get-ids (get-todos "decider"))
+                          app-id)))
+      (is (= {:success true} (send-command "developer" {:type :application.command/request-decision
+                                                        :application-id app-id
+                                                        :deciders ["decider"]
+                                                        :comment "x"})))
+      (is (contains? (get-ids (get-todos "decider"))
+                     app-id))
+      (is (not (contains? (get-ids (get-handled-todos "decider"))
                           app-id))))
 
     (testing "lists handled in handled"
@@ -863,10 +869,16 @@
                      app-id))
       (is (empty? (get-ids (get-handled-todos "developer" {:query "applicant:no-such-user"})))))
 
-    (testing "commenter doesn't see accepted application in todos"
-      (is (not (contains? (get-ids (get-todos "elsa"))
+    (testing "commenter sees accepted application in handled todos"
+      (is (not (contains? (get-ids (get-todos "commenter"))
                           app-id)))
-      (is (contains? (get-ids (get-handled-todos "elsa"))
+      (is (contains? (get-ids (get-handled-todos "commenter"))
+                     app-id)))
+
+    (testing "decider sees accepted application in handled todos"
+      (is (not (contains? (get-ids (get-todos "decider"))
+                          app-id)))
+      (is (contains? (get-ids (get-handled-todos "decider"))
                      app-id)))))
 
 (deftest test-pdf-smoke

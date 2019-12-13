@@ -47,6 +47,11 @@
    (str "/administration/workflows/edit/" id)
    (text :t.administration/edit)])
 
+(def workflow-types
+  {:workflow/default :t.create-workflow/default-workflow
+   :workflow/decider :t.create-workflow/decider-workflow
+   :workflow/master :t.create-workflow/master-workflow})
+
 (defn workflow-view [workflow language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -55,11 +60,9 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:organization workflow)]
               [inline-info-field (text :t.administration/title) (:title workflow)]
-              [inline-info-field (text :t.administration/type)
-               (if (:workflow workflow)
-                 (text :t.create-workflow/dynamic-workflow)
-                 ;; TODO: Not implemented.
-                 (text :t.create-workflow/auto-approve-workflow))]
+              [inline-info-field (text :t.administration/type) (text (get workflow-types
+                                                                          (get-in workflow [:workflow :type])
+                                                                          :t/missing))]
               [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
                                                                          (map enrich-user)
                                                                          (map :display)

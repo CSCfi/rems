@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [hiccup.core :as hiccup]
+            [medley.core :refer [map-vals]]
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
@@ -205,30 +206,113 @@
 
 ;;;; Collecting sample applications
 
-(def ^:dynamic *sample-applications*)
+(def ^:dynamic *sample-event-seqs*)
 
-(defn save-sample-application! [application]
-  (swap! *sample-applications* conj application)
-  application)
+(defn save-sample-events! [events]
+  (swap! *sample-event-seqs* conj events)
+  events)
 
 (defn state-role-permissions [application]
-  (map (fn [[role permissions]]
-         {:state (:application/state application)
-          :role role
-          :permissions permissions})
-       (:rems.permissions/role-permissions application)))
+  (->> (:rems.permissions/role-permissions application)
+       (map (fn [[role permissions]]
+              {:state (:application/state application)
+               :role role
+               :permissions permissions}))
+       (sort-by :role)))
 
-(defn output-permissions-reference [applications]
-  (let [data (mapcat state-role-permissions applications)
-        states (->> data (map :state) distinct sort)
-        roles (->> data (map :role) distinct sort)
+(deftest test-state-role-permissions
+  (is (= [{:state :application.state/submitted
+           :role :role-1
+           :permissions #{:foo}}
+          {:state :application.state/submitted
+           :role :role-2
+           :permissions #{:bar :gazonk}}]
+         (state-role-permissions
+          (-> {:application/state :application.state/submitted}
+              (permissions/update-role-permissions {:role-1 #{:foo}
+                                                    :role-2 #{:bar :gazonk}}))))))
+
+(defn summarize-permissions [state-role-permissions]
+  (let [states (->> state-role-permissions (map :state) distinct sort)
+        roles (->> state-role-permissions (map :role) distinct sort)]
+    (for [state states
+          role roles]
+      (let [perm-sets (->> state-role-permissions
+                           (filter #(= state (:state %)))
+                           (filter #(= role (:role %)))
+                           (map :permissions))
+            all-perms (apply set/union perm-sets)
+            ;; the states and permissions are not guaranteed to have a 1:1 mapping,
+            ;; so we separate conditional permissions from those that are always there
+            always-perms (if (empty? perm-sets)
+                           #{}
+                           (apply set/intersection perm-sets))
+            sometimes-perms (set/difference all-perms always-perms)]
+        {:state state
+         :role role
+         :always-perms always-perms
+         :sometimes-perms sometimes-perms}))))
+
+(deftest test-summarize-permissions
+  (testing "always same permissions"
+    (is (= [{:state :application.state/submitted
+             :role :role-1
+             :always-perms #{:foo}
+             :sometimes-perms #{}}]
+           (summarize-permissions
+            [{:state :application.state/submitted
+              :role :role-1
+              :permissions #{:foo}}]))))
+
+  (testing "sometimes different permissions"
+    (is (= [{:state :application.state/submitted
+             :role :role-1
+             :always-perms #{}
+             :sometimes-perms #{:bar :foo}}]
+           (summarize-permissions
+            [{:state :application.state/submitted
+              :role :role-1
+              :permissions #{:foo}}
+             {:state :application.state/submitted
+              :role :role-1
+              :permissions #{:bar}}]))))
+
+  (testing "fills out missing state-role combinations"
+    (is (= [{:state :application.state/draft
+             :role :role-1
+             :always-perms #{}
+             :sometimes-perms #{}}
+            {:state :application.state/draft
+             :role :role-2
+             :always-perms #{:bar :gazonk}
+             :sometimes-perms #{}}
+            {:state :application.state/submitted
+             :role :role-1
+             :always-perms #{:foo}
+             :sometimes-perms #{}}
+            {:state :application.state/submitted
+             :role :role-2
+             :always-perms #{}
+             :sometimes-perms #{}}]
+           (summarize-permissions
+            [{:state :application.state/submitted
+              :role :role-1
+              :permissions #{:foo}}
+             {:state :application.state/draft
+              :role :role-2
+              :permissions #{:bar :gazonk}}])))))
+
+(defn permissions-reference-doc [summary]
+  (let [states (->> summary (map :state) distinct sort)
+        roles (->> summary (map :role) distinct sort)
+        perms-by-state-and-role (->> (group-by (juxt :state :role) summary)
+                                     (map-vals first))
         nowrap (fn [s]
                  ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
                  (-> s
                      (str/replace " " "\u00A0") ;  non-breaking space
                      (str/replace "-" "\u2011")))] ; non-breaking hyphen
     (->> (hiccup/html
-          "# Application Permissions Reference\n\n"
           [:table {:border 1}
            [:tr
             [:th (nowrap "State \\ Role")]
@@ -239,30 +323,30 @@
               [:th {:valign :top}
                (nowrap (name state))]
               (for [role roles]
-                (let [perm-sets (->> data
-                                     (filter #(= state (:state %)))
-                                     (filter #(= role (:role %)))
-                                     (map :permissions))
-                      all-perms (apply set/union perm-sets)
-                      ;; the states and permissions are not guaranteed to have a 1:1 mapping,
-                      ;; so we separate conditional permissions from those that are always there
-                      always-perms (if (empty? perm-sets)
-                                     #{}
-                                     (apply set/intersection perm-sets))
-                      sometimes-perms (set/difference all-perms always-perms)]
+                (let [{:keys [always-perms sometimes-perms]} (get perms-by-state-and-role [state role])]
                   [:td {:valign :top}
                    "<!-- role: " (name role) " -->"
                    (for [perm (sort always-perms)]
                      [:div (nowrap (name perm))])
                    (for [perm (sort sometimes-perms)]
                      [:div [:i "(" (nowrap (name perm)) ")"]])]))])])
-         (bw/beautify-html)
-         (spit "docs/application-permissions.md"))))
+         (bw/beautify-html))))
+
+(defn output-permissions-reference [event-seqs]
+  (let [applications (map (fn [events]
+                            (reduce model/application-view nil events))
+                          event-seqs)]
+    (spit "docs/application-permissions.md"
+          (str
+           "# Application Permissions Reference\n\n"
+           (permissions-reference-doc
+            (summarize-permissions
+             (mapcat state-role-permissions applications)))))))
 
 (defn permissions-reference-fixture [f]
-  (binding [*sample-applications* (atom [])]
+  (binding [*sample-event-seqs* (atom [])]
     (f)
-    (output-permissions-reference @*sample-applications*)))
+    (output-permissions-reference @*sample-event-seqs*)))
 
 (use-fixtures :once permissions-reference-fixture)
 
@@ -271,8 +355,8 @@
 (defn apply-events [events]
   (let [application (->> events
                          events/validate-events
+                         save-sample-events!
                          (reduce model/application-view nil)
-                         save-sample-application!
                          ;; permissions are tested separately
                          permissions/cleanup)]
     (is (contains? model/states (:application/state application)))
@@ -301,7 +385,7 @@
                                            {:license/id 32}]
                     :form/id 40
                     :workflow/id 50
-                    :workflow/type :workflow/dynamic})
+                    :workflow/type :workflow/master})
 
 (def created-application {:application/id 1
                           :application/external-id "extid"
@@ -324,7 +408,7 @@
                           :application/accepted-licenses {}
                           :application/events [created-event]
                           :application/form {:form/id 40}
-                          :application/workflow {:workflow/type :workflow/dynamic
+                          :application/workflow {:workflow/type :workflow/master
                                                  :workflow/id 50}})
 
 (deftest test-application-view-created
@@ -903,7 +987,7 @@
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]
                                 :form/id 40
                                 :workflow/id 50
-                                :workflow/type :workflow/dynamic
+                                :workflow/type :workflow/master
                                 :application/licenses [{:license/id 30} {:license/id 31} {:license/id 32}]}
                                {:event/type :application.event/draft-saved
                                 :application/id 1
@@ -950,7 +1034,7 @@
                                             :field/max-length 100}]}
           :application/attachments []
           :application/workflow {:workflow/id 50
-                                 :workflow/type :workflow/dynamic
+                                 :workflow/type :workflow/master
                                  :workflow.dynamic/handlers [{:userid "handler"
                                                               :name "Handler"
                                                               :email "handler@example.com"}]}}
@@ -1067,59 +1151,10 @@
            (model/enrich-answers {:rems.application.model/previous-submitted-answers {1 "a" 2 "b"}
                                   :rems.application.model/submitted-answers {1 "aa" 2 "bb"}})))))
 
-;;;; Tests for permissions
-
-(deftest test-calculate-permissions
-  (testing "commenter may comment only once"
-    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/submitted
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/comment-requested
-                                                              :event/actor "handler"
-                                                              :application/commenters ["commenter1" "commenter2"]}])
-          commented (reduce model/calculate-permissions requested [{:event/type :application.event/commented
-                                                                    :event/actor "commenter1"}])]
-      (is (= #{:see-everything :application.command/comment :application.command/remark}
-             (permissions/user-permissions requested "commenter1")))
-      (is (= #{:see-everything :application.command/remark}
-             (permissions/user-permissions commented "commenter1")))
-      (is (= #{:see-everything :application.command/comment :application.command/remark}
-             (permissions/user-permissions commented "commenter2")))))
-
-  (testing "decider may decide only once"
-    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/submitted
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/decision-requested
-                                                              :event/actor "handler"
-                                                              :application/deciders ["decider"]}])
-          decided (reduce model/calculate-permissions requested [{:event/type :application.event/decided
-                                                                  :event/actor "decider"}])]
-      (is (= #{:see-everything :application.command/decide :application.command/remark}
-             (permissions/user-permissions requested "decider")))
-      (is (= #{:see-everything :application.command/remark}
-             (permissions/user-permissions decided "decider")))))
-
-  (testing "everyone can accept invitation"
-    (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                            :event/actor "applicant"}])]
-      (is (contains? (permissions/user-permissions created "joe")
-                     :application.command/accept-invitation))))
-  (testing "nobody can accept invitation for closed application"
-    (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                           :event/actor "applicant"}
-                                                          {:event/type :application.event/closed
-                                                           :event/actor "applicant"}])]
-      (is (not (contains? (permissions/user-permissions closed "joe")
-                          :application.command/accept-invitation)))
-      (is (not (contains? (permissions/user-permissions closed "applicant")
-                          :application.command/accept-invitation))))))
-
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
-                                                     :event/actor "applicant"})
+                                                     :event/actor "applicant"
+                                                     :workflow/type :workflow/default})
                         (assoc-in [:application/workflow :workflow.dynamic/handlers] [{:userid "handler"}])
                         (permissions/give-role-to-users :handler ["handler"])
                         (permissions/give-role-to-users :role-1 ["user-1"])

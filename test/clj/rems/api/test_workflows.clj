@@ -17,21 +17,19 @@
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
   {:organization "abc"
-   :title "dynamic workflow"
-   :workflow {:type "workflow/dynamic"
+   :title "workflow title"
+   :workflow {:type "workflow/default"
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
                          {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
    :enabled true
    :archived false})
 
 (defn- fetch [api-key user-id wfid]
-  (let [wfs (-> (request :get "/api/workflows" {:archived true :disabled true})
-                (authenticate api-key user-id)
-                handler
-                read-ok-body)]
-    (select-keys
-     (first (filter #(= wfid (:id %)) wfs))
-     (keys expected))))
+  (-> (request :get (str "/api/workflows/" wfid))
+      (authenticate api-key user-id)
+      handler
+      read-ok-body
+      (select-keys (keys expected))))
 
 (deftest workflows-api-test
   (testing "list"
@@ -42,36 +40,26 @@
                    read-body)]
       (is (coll-is-not-empty? data))))
 
-  ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-  #_(testing "create auto-approved workflow"
-      (let [body (-> (request :post (str "/api/workflows/create"))
-                     (json-body {:organization "abc"
-                                 :title "auto-approved workflow"
-                                 :type :auto-approve})
+  (let [id (test-data/create-workflow! {})]
+    (testing "get by id"
+      (let [data (-> (request :get (str "/api/workflows/" id))
                      (authenticate "42" "owner")
                      handler
                      assert-response-is-ok
-                     read-body)
-            id (:id body)]
-        (is (< 0 id))
-        (testing "and fetch"
-          (let [workflows (-> (request :get "/api/workflows")
-                              (authenticate "42" "owner")
-                              handler
-                              assert-response-is-ok
-                              read-body)
-                workflow (first (filter #(= id (:id %)) workflows))]
-            (is (= {:id id
-                    :organization "abc"
-                    :title "auto-approved workflow"
-                    :actors []}
-                   (select-keys workflow [:id :organization :title :actors])))))))
+                     read-body)]
+        (is (= id (:id data)))))
 
-  (testing "create dynamic workflow"
+    (testing "id not found"
+      (let [response (-> (request :get (str "/api/workflows/" 666))
+                         (authenticate "42" "owner")
+                         handler)]
+        (is (response-is-not-found? response)))))
+
+  (testing "create default workflow"
     (let [body (-> (request :post "/api/workflows/create")
                    (json-body {:organization "abc"
-                               :title "dynamic workflow"
-                               :type :dynamic
+                               :title "workflow title"
+                               :type :workflow/default
                                :handlers ["handler" "carl"]})
                    (authenticate "42" "owner")
                    handler
@@ -82,14 +70,32 @@
       (sync-with-database-time)
       (testing "and fetch"
         (is (= expected
+               (fetch "42" "owner" id))))))
+
+  (testing "create decider workflow"
+    (let [body (-> (request :post "/api/workflows/create")
+                   (json-body {:organization "abc"
+                               :title "workflow title"
+                               :type :workflow/decider
+                               :handlers ["handler" "carl"]})
+                   (authenticate "42" "owner")
+                   handler
+                   assert-response-is-ok
+                   read-body)
+          id (:id body)]
+      (is (< 0 id))
+      (sync-with-database-time)
+      (testing "and fetch"
+        (is (= (assoc-in expected [:workflow :type] "workflow/decider")
                (fetch "42" "owner" id)))))))
 
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-dynamic-workflow! {:organization "abc"
-                                                  :title "dynamic workflow"
-                                                  :handlers ["handler" "carl"]})
+        wfid (test-data/create-workflow! {:organization "abc"
+                                          :title "workflow title"
+                                          :type :workflow/default
+                                          :handlers ["handler" "carl"]})
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
 
@@ -137,9 +143,10 @@
 (deftest workflows-edit-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-dynamic-workflow! {:organization "abc"
-                                                  :title "dynamic workflow"
-                                                  :handlers ["handler" "carl"]})
+        wfid (test-data/create-workflow! {:organization "abc"
+                                          :title "workflow title"
+                                          :type :workflow/default
+                                          :handlers ["handler" "carl"]})
         fetch #(fetch api-key user-id wfid)
         edit! #(-> (request :put "/api/workflows/edit")
                    (json-body (merge {:id wfid} %))
@@ -156,7 +163,7 @@
       (is (:success (edit! {:handlers ["owner" "alice"]})))
       (is (= (assoc expected
                     :title "x"
-                    :workflow {:type "workflow/dynamic"
+                    :workflow {:type "workflow/default"
                                :handlers [{:email "owner@example.com"
                                            :name "Owner"
                                            :userid "owner"}
@@ -166,8 +173,8 @@
              (fetch))))))
 
 (deftest workflows-api-filtering-test
-  (let [enabled-wf (test-data/create-dynamic-workflow! {})
-        disabled-wf (test-data/create-dynamic-workflow! {})
+  (let [enabled-wf (test-data/create-workflow! {})
+        disabled-wf (test-data/create-workflow! {})
         _ (workflow/set-workflow-enabled! {:id disabled-wf
                                            :enabled false})
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})

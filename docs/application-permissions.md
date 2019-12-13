@@ -311,7 +311,9 @@
         <td valign="top">
             <!-- role: decider -->
             <div>see‑everything</div>
+            <div>approve</div>
             <div>decide</div>
+            <div>reject</div>
             <div>remark</div>
         </td>
         <td valign="top">

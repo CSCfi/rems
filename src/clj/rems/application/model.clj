@@ -1,183 +1,11 @@
 (ns rems.application.model
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
-            [rems.application.events :as events]
             [rems.application-util :as application-util]
+            [rems.application.events :as events]
+            [rems.application.master-workflow :as master-workflow]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
-
-;;;; Roles & Permissions
-
-(defn see-application? [application user-id]
-  (not= #{:everyone-else} (permissions/user-roles application user-id)))
-
-(defmulti calculate-permissions
-  (fn [_application event] (:event/type event)))
-
-(defmethod calculate-permissions :default
-  [application _event]
-  application)
-
-(def ^:private submittable-application-commands
-  #{:application.command/save-draft
-    :application.command/submit
-    :application.command/close
-    :application.command/remove-member
-    :application.command/invite-member
-    :application.command/uninvite-member
-    :application.command/accept-licenses
-    :application.command/change-resources
-    :application.command/copy-as-new})
-
-(def ^:private non-submittable-application-commands
-  #{:application.command/remove-member
-    :application.command/uninvite-member
-    :application.command/accept-licenses
-    :application.command/copy-as-new})
-
-(def ^:private handler-all-commands
-  #{:application.command/remark
-    :application.command/add-licenses
-    :application.command/add-member
-    :application.command/change-resources
-    :application.command/remove-member
-    :application.command/invite-member
-    :application.command/uninvite-member
-    :application.command/request-comment
-    :application.command/request-decision
-    :application.command/return
-    :application.command/approve
-    :application.command/reject
-    :application.command/close})
-
-(def ^:private handler-returned-commands
-  (disj handler-all-commands
-        :application.command/return
-        :application.command/approve
-        :application.command/reject
-        :application.command/request-decision))
-
-(def ^:private created-permissions
-  {:applicant submittable-application-commands
-   :member #{:application.command/accept-licenses
-             :application.command/copy-as-new}
-   :reporter #{:see-everything}
-   ;; member before accepting an invitation
-   :everyone-else #{:application.command/accept-invitation}})
-
-(def ^:private submitted-permissions
-  {:applicant non-submittable-application-commands
-   :handler (conj handler-all-commands :see-everything)
-   :commenter #{:see-everything
-                :application.command/remark
-                :application.command/comment}
-   :past-commenter #{:see-everything
-                     :application.command/remark}
-   :decider #{:see-everything
-              :application.command/remark
-              :application.command/decide}
-   :past-decider #{:see-everything
-                   :application.command/remark}})
-
-(def ^:private returned-permissions
-  {:applicant submittable-application-commands
-   :handler (conj handler-returned-commands :see-everything)})
-
-(def ^:private approved-permissions
-  {:applicant non-submittable-application-commands
-   :handler #{:see-everything
-              :application.command/remark
-              :application.command/add-member
-              :application.command/change-resources
-              :application.command/remove-member
-              :application.command/invite-member
-              :application.command/uninvite-member
-              :application.command/close
-              :application.command/revoke}})
-
-(def ^:private closed-permissions
-  {:applicant #{:application.command/copy-as-new}
-   :member #{:application.command/copy-as-new}
-   :handler #{:see-everything
-              :application.command/remark}
-   :commenter #{:see-everything}
-   :past-commenter #{:see-everything}
-   :decider #{:see-everything}
-   :past-decider #{:see-everything}
-   :everyone-else #{}})
-
-(defmethod calculate-permissions :application.event/created
-  [application event]
-  (-> application
-      (permissions/give-role-to-users :applicant [(:event/actor event)])
-      (permissions/update-role-permissions created-permissions)))
-
-(defmethod calculate-permissions :application.event/member-added
-  [application event]
-  (-> application
-      (permissions/give-role-to-users :member [(get-in event [:application/member :userid])])))
-
-(defmethod calculate-permissions :application.event/member-joined
-  [application event]
-  (-> application
-      (permissions/give-role-to-users :member [(:event/actor event)])))
-
-(defmethod calculate-permissions :application.event/member-removed
-  [application event]
-  (-> application
-      (permissions/remove-role-from-user :member (get-in event [:application/member :userid]))))
-
-(defmethod calculate-permissions :application.event/submitted
-  [application _event]
-  (-> application
-      (permissions/update-role-permissions submitted-permissions)))
-
-(defmethod calculate-permissions :application.event/returned
-  [application _event]
-  (-> application
-      (permissions/update-role-permissions returned-permissions)))
-
-(defmethod calculate-permissions :application.event/comment-requested
-  [application event]
-  (-> application
-      (permissions/give-role-to-users :commenter (:application/commenters event))))
-
-(defmethod calculate-permissions :application.event/commented
-  [application event]
-  (-> application
-      (permissions/remove-role-from-user :commenter (:event/actor event))
-      (permissions/give-role-to-users :past-commenter [(:event/actor event)]))) ; allow to still view the application
-
-(defmethod calculate-permissions :application.event/decision-requested
-  [application event]
-  (-> application
-      (permissions/give-role-to-users :decider (:application/deciders event))))
-
-(defmethod calculate-permissions :application.event/decided
-  [application event]
-  (-> application
-      (permissions/remove-role-from-user :decider (:event/actor event))
-      (permissions/give-role-to-users :past-decider [(:event/actor event)]))) ; allow to still view the application
-
-(defmethod calculate-permissions :application.event/approved
-  [application _event]
-  (-> application
-      (permissions/update-role-permissions approved-permissions)))
-
-(defmethod calculate-permissions :application.event/rejected
-  [application _event]
-  (-> application
-      (permissions/update-role-permissions closed-permissions)))
-
-(defmethod calculate-permissions :application.event/closed
-  [application _event]
-  (-> application
-      (permissions/update-role-permissions closed-permissions)))
-
-(defmethod calculate-permissions :application.event/revoked
-  [application _event]
-  (-> application
-      (permissions/update-role-permissions closed-permissions)))
 
 ;;;; Application
 
@@ -384,6 +212,65 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   application)
 
+(def default-workflow
+  (permissions/compile-rules
+   [{:permission :see-everything}
+    {:permission :application.command/accept-invitation}
+    {:permission :application.command/accept-licenses}
+    {:permission :application.command/add-licenses}
+    {:permission :application.command/add-member}
+    {:permission :application.command/change-resources}
+    {:permission :application.command/close}
+    {:permission :application.command/comment}
+    {:permission :application.command/copy-as-new}
+    {:permission :application.command/create}
+    {:permission :application.command/decide}
+    {:permission :application.command/invite-member}
+    {:permission :application.command/remark}
+    {:permission :application.command/remove-member}
+    {:permission :application.command/request-comment}
+    {:permission :application.command/request-decision}
+    {:permission :application.command/return}
+    {:permission :application.command/revoke}
+    {:permission :application.command/save-draft}
+    {:permission :application.command/submit}
+    {:permission :application.command/uninvite-member}
+    {:role :handler :permission :application.command/approve}
+    {:role :handler :permission :application.command/reject}]))
+
+(def decider-workflow
+  (permissions/compile-rules
+   [{:permission :see-everything}
+    {:permission :application.command/accept-invitation}
+    {:permission :application.command/accept-licenses}
+    {:permission :application.command/add-licenses}
+    {:permission :application.command/add-member}
+    {:permission :application.command/change-resources}
+    {:permission :application.command/comment}
+    {:permission :application.command/copy-as-new}
+    {:permission :application.command/create}
+    {:permission :application.command/invite-member}
+    {:permission :application.command/remark}
+    {:permission :application.command/remove-member}
+    {:permission :application.command/request-comment}
+    {:permission :application.command/request-decision}
+    {:permission :application.command/return}
+    {:permission :application.command/revoke}
+    {:permission :application.command/save-draft}
+    {:permission :application.command/submit}
+    {:permission :application.command/uninvite-member}
+    {:role :decider :permission :application.command/approve}
+    {:role :decider :permission :application.command/reject}]))
+
+(defn- calculate-permissions [application event]
+  (let [whitelist (case (get-in application [:application/workflow :workflow/type])
+                    :workflow/default default-workflow
+                    :workflow/decider decider-workflow
+                    :workflow/master master-workflow/whitelist)]
+    (-> application
+        (master-workflow/calculate-permissions event)
+        (permissions/whitelist whitelist))))
+
 (defn application-view
   "Projection for the current state of a single application.
   Pure function; must use `enrich-with-injections` to enrich the model with
@@ -566,13 +453,11 @@
             enrich-members)))
 
 (defn enrich-workflow-handlers [application get-workflow]
-  (if (= :workflow/dynamic (get-in application [:application/workflow :workflow/type]))
-    (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
-          handlers (get-in workflow [:workflow :handlers])]
-      (-> application
-          (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
-          (permissions/give-role-to-users :handler (mapv :userid handlers))))
-    application))
+  (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
+        handlers (get-in workflow [:workflow :handlers])]
+    (-> application
+        (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
+        (permissions/give-role-to-users :handler (mapv :userid handlers)))))
 
 (defn- enrich-super-users [application get-users-with-role]
   (-> application
@@ -659,6 +544,9 @@
 
     (contains? (::latest-decision-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-decision)))
+
+(defn see-application? [application user-id]
+  (not= #{:everyone-else} (permissions/user-roles application user-id)))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)

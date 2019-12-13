@@ -116,7 +116,7 @@
                                               {:catalogue-item/id 20
                                                :resource/ext-id "urn:21"}]
                       :workflow/id 5
-                      :workflow/type :workflow/dynamic}
+                      :workflow/type :workflow/default}
                      {:application/id 7
                       :event/type :application.event/draft-saved
                       :application/field-values {1 "Application title"}}])
@@ -317,7 +317,7 @@
                              :application/resources [{:catalogue-item/id 10
                                                       :resource/ext-id "urn:11"}]
                              :workflow/id 5
-                             :workflow/type :workflow/dynamic}]
+                             :workflow/type :workflow/default}]
                            {:application/id 7
                             :event/type :application.event/submitted
                             :event/actor "applicant"})))))

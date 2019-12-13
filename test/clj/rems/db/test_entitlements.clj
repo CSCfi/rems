@@ -75,7 +75,7 @@
   (let [applicant "bob"
         member "elsa"
         admin "owner"
-        wfid (test-data/create-dynamic-workflow! {:handlers [admin]})
+        wfid (test-data/create-workflow! {:handlers [admin]})
         form-id (test-data/create-form! {})
         lic-id1 (test-data/create-license! {})
         lic-id2 (test-data/create-license! {})
@@ -158,9 +158,9 @@
                     [member "resource1"] [member "resource2"]]
                    (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
           (testing "POST"
-              (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                      {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
-                     (get-requests server))))))
+            (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                    {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
+                   (get-requests server))))))
 
       (testing "removing a member ends entitlements"
         (with-stub-server server

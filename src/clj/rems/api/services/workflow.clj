@@ -1,43 +1,28 @@
 (ns rems.api.services.workflow
   (:require [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.db.workflow :as workflow]
             [rems.db.users :as users]
-            [rems.json :as json])
-  (:import [org.apache.commons.lang3 NotImplementedException]))
+            [rems.db.workflow :as workflow]
+            [rems.json :as json]))
 
-(defn- create-auto-approve-workflow! [{:keys [user-id organization title]}]
-  (assert user-id)
-  ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-  (throw (NotImplementedException. "auto-approve workflows are not yet implemented")))
+(defn create-workflow! [workflow]
+  (let [id (workflow/create-workflow! workflow)]
+    {:id id
+     :success (not (nil? id))}))
 
-(defn- create-dynamic-workflow! [{:keys [user-id organization title handlers]}]
-  (assert user-id)
-  (assert organization)
-  (assert title)
-  (assert (every? string? handlers) {:handlers handlers})
-  (let [wfid (:id (db/create-workflow! {:organization organization,
-                                        :owneruserid user-id,
-                                        :modifieruserid user-id,
-                                        :title title,
-                                        :workflow (json/generate-string {:type :workflow/dynamic
-                                                                         :handlers handlers})}))]
-    {:id wfid}))
+(defn- unrich-workflow [workflow]
+  ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)
+  (if (get-in workflow [:workflow :handlers])
+    (update-in workflow [:workflow :handlers] #(map :userid %))
+    workflow))
 
-(defn create-workflow! [command]
-  (let [result (case (:type command)
-                 :auto-approve (create-auto-approve-workflow! command)
-                 :dynamic (create-dynamic-workflow! command))]
-    (merge
-     result
-     {:success (not (nil? (:id result)))})))
-
-(defn edit-workflow! [command]
-  (db/edit-workflow!
-   (merge (select-keys command [:id :title])
-          (when-let [handlers (:handlers command)]
-            {:workflow (json/generate-string {:type :workflow/dynamic
-                                              :handlers handlers})})))
+(defn edit-workflow! [{:keys [id title handlers]}]
+  (let [workflow (unrich-workflow (workflow/get-workflow id))
+        workflow-body (cond-> (:workflow workflow)
+                        handlers (assoc :handlers handlers))]
+    (db/edit-workflow! {:id id
+                        :title title
+                        :workflow (json/generate-string workflow-body)}))
   {:success true})
 
 (defn set-workflow-enabled! [command]

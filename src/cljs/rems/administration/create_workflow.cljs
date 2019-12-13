@@ -5,6 +5,7 @@
             [rems.administration.components :refer [radio-button-group text-field]]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
+            [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
@@ -18,7 +19,7 @@
                ::workflow-id workflow-id
                ::loading-workflow? (not (nil? workflow-id))
                ::actors nil
-               ::form {:type :dynamic})
+               ::form {:type :workflow/default})
     ::fetch-actors nil
     ::fetch-workflow workflow-id}))
 
@@ -47,6 +48,7 @@
  (fn [db [_ workflow]]
    (let [new-stuff {:title (:title workflow)
                     :organization (:organization workflow)
+                    :type (:type (:workflow workflow))
                     :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}]
      (-> db
          (update ::form merge new-stuff)
@@ -54,21 +56,27 @@
 
 ;;; form submit
 
+(def workflow-types #{:workflow/default :workflow/decider :workflow/master})
+
+(defn needs-handlers? [type]
+  (contains? #{:workflow/default :workflow/decider :workflow/master} type))
+
 (defn- valid-create-request? [request]
-  (and (case (:type request)
-         :auto-approve true
-         :dynamic (seq (:handlers request))
-         nil false)
-       (not (str/blank? (:organization request)))
-       (not (str/blank? (:title request)))))
+  (and
+   (contains? workflow-types (:type request))
+   (if (needs-handlers? (:type request))
+     (seq (:handlers request))
+     true)
+   (not (str/blank? (:organization request)))
+   (not (str/blank? (:title request)))))
 
 (defn build-create-request [form]
-  (let [request {:organization (trim-when-string (:organization form))
-                 :title (trim-when-string (:title form))
-                 :type (:type form)}
-        request (case (:type form)
-                  :auto-approve request
-                  :dynamic (assoc request :handlers (map :userid (:handlers form))))]
+  (let [request (merge
+                 {:organization (trim-when-string (:organization form))
+                  :title (trim-when-string (:title form))
+                  :type (:type form)}
+                 (when (needs-handlers? (:type form))
+                   {:handlers (map :userid (:handlers form))}))]
     (when (valid-create-request? request)
       request)))
 
@@ -148,11 +156,14 @@
                                :keys [:type]
                                :readonly @(rf/subscribe [::editing?])
                                :orientation :horizontal
-                               :options [;; TODO: create a new auto-approve workflow in the style of dynamic workflows
-                                         #_{:value :auto-approve
-                                            :label (text :t.create-workflow/auto-approve-workflow)}
-                                         {:value :dynamic
-                                          :label (text :t.create-workflow/dynamic-workflow)}]}])
+                               :options (concat
+                                         [{:value :workflow/default
+                                           :label (text :t.create-workflow/default-workflow)}
+                                          {:value :workflow/decider
+                                           :label (text :t.create-workflow/decider-workflow)}]
+                                         (when (config/dev-environment?)
+                                           [{:value :workflow/master
+                                             :label (text :t.create-workflow/master-workflow)}]))}])
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])
@@ -193,14 +204,20 @@
        :multi? true
        :on-change #(rf/dispatch [::set-handlers %])}]]))
 
-(defn dynamic-workflow-form []
+(defn default-workflow-form []
   [:div
-   [workflow-type-description (text :t.create-workflow/dynamic-workflow-description)]
+   [workflow-type-description (text :t.create-workflow/default-workflow-description)]
    [workflow-handlers-field]])
 
-(defn auto-approve-workflow-form []
+(defn decider-workflow-form []
   [:div
-   [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
+   [workflow-type-description (text :t.create-workflow/decider-workflow-description)]
+   [workflow-handlers-field]])
+
+(defn master-workflow-form []
+  [:div
+   [workflow-type-description (text :t.create-workflow/master-workflow-description)]
+   [workflow-handlers-field]])
 
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
@@ -225,8 +242,9 @@
                   [workflow-type-field]
 
                   (case workflow-type
-                    :auto-approve [auto-approve-workflow-form]
-                    :dynamic [dynamic-workflow-form])
+                    :workflow/default [default-workflow-form]
+                    :workflow/decider [decider-workflow-form]
+                    :workflow/master [master-workflow-form])
 
                   [:div.col.commands
                    [cancel-button]
