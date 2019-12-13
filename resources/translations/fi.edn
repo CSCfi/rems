@@ -7,6 +7,8 @@
             :add-member "Lisää jäsen"
             :approve "Hyväksy"
             :approve-reject "Hyväksy tai hylkää"
+            :assign-external-id "Aseta tunniste"
+            :assign-external-id-info "Tunniste"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama hakemuslomake ja työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
             :change-resources "Muuta resursseja"
@@ -127,6 +129,7 @@
                           :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
                           :decided "%1 teki päätöksen hakemukselle."
                           :draft-saved "%1 tallensi hakemuksen luonnoksen."
+                          :external-id-assigned "%1 lisäsi tunnisteen %2."
                           :licenses-accepted "%1 hyväksyi käyttöehdot."
                           :licenses-added "%1 lisäsi käyttöehtoja."
                           :member-added "%1 lisäsi käyttäjän %2 hakemuksen jäseneksi."

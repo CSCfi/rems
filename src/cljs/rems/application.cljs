@@ -9,6 +9,7 @@
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
+            [rems.actions.assign-external-id :refer [assign-external-id-button assign-external-id-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
@@ -640,6 +641,7 @@
                               :application.command/approve [approve-reject-action-button]
                               :application.command/reject [approve-reject-action-button]
                               :application.command/revoke [revoke-action-button]
+                              :application.command/assign-external-id [assign-external-id-button]
                               :application.command/close [close-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
     (distinct (for [[command action] (partition 2 commands-and-actions)
@@ -663,7 +665,8 @@
                 [revoke-form app-id reload]
                 [decide-form app-id reload]
                 [return-form app-id reload]
-                [approve-reject-form app-id reload]]]]
+                [approve-reject-form app-id reload]
+                [assign-external-id-form app-id reload]]]]
     (when (seq actions)
       [collapsible/component
        {:id "actions"
