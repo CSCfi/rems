@@ -7,6 +7,7 @@
             :add-member "Add member"
             :approve "Approve"
             :approve-reject "Approve or reject"
+            :assign-external-id "Assign external id"
             :bundling-intro [:div.intro [:p "Note that only resources that have the same application form and workflow can be bundled together."]]
             :cancel "Cancel"
             :change-resources "Change resources"
