@@ -501,6 +501,31 @@
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
 
+(deftest test-decider-workflow
+  (let [applicant "alice"
+        handler "handler"
+        decider "carl"
+        wf-id (test-data/create-workflow! {:type :workflow/decider
+                                           :handlers [handler]})
+        cat-id (test-data/create-catalogue-item! {:workflow-id wf-id})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor applicant})]
+    (testing "submit"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id}))))
+    (testing "request decision"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/request-decision
+                                    :application-id app-id
+                                    :deciders [decider]
+                                    :comment ""}))))
+    (testing "approve"
+      (is (= {:success true}
+             (send-command decider {:type :application.command/approve
+                                    :application-id app-id
+                                    :comment ""}))))))
+
 (deftest test-revoke
   (let [applicant-id "alice"
         member-id "malice"
