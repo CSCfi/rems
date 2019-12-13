@@ -272,6 +272,7 @@
     (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
     (command-endpoint :application.command/add-licenses commands/AddLicensesCommand)
     (command-endpoint :application.command/add-member commands/AddMemberCommand)
+    (command-endpoint :application.command/assign-external-id commands/AssignExternalIdCommand)
     (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/approve commands/ApproveCommand)

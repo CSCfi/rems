@@ -212,6 +212,14 @@
                                     :comment ""}))
           "user should be forbidden to send command"))
 
+    (testing "assing external id"
+      (is (= {:success true} (send-command handler-id
+                                           {:type :application.command/assign-external-id
+                                            :application-id application-id
+                                            :external-id "abc123"})))
+      (let [application (get-application application-id handler-id)]
+        (is (= "abc123" (:application/external-id application)))))
+
     (testing "application can be returned"
       (is (= {:success true} (send-command handler-id
                                            {:type :application.command/return
@@ -334,6 +342,7 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/external-id-assigned"
                     "application.event/returned"
                     "application.event/resources-changed"
                     "application.event/submitted"
@@ -354,6 +363,7 @@
                     "application.event/licenses-accepted"
                     "application.event/draft-saved"
                     "application.event/submitted"
+                    "application.event/external-id-assigned"
                     "application.event/returned"
                     "application.event/resources-changed"
                     "application.event/submitted"
