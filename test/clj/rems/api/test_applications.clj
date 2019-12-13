@@ -192,6 +192,7 @@
                  "application.command/uninvite-member"
                  "application.command/change-resources"
                  "application.command/close"
+                 "application.command/assign-external-id"
                  "see-everything"}
                (set (get application :application/permissions))))))
 

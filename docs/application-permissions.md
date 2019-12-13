@@ -226,6 +226,7 @@
             <div>see‑everything</div>
             <div>add‑licenses</div>
             <div>add‑member</div>
+            <div>assign‑external‑id</div>
             <div>change‑resources</div>
             <div>close</div>
             <div>invite‑member</div>
@@ -326,6 +327,7 @@
             <div>add‑licenses</div>
             <div>add‑member</div>
             <div>approve</div>
+            <div>assign‑external‑id</div>
             <div>change‑resources</div>
             <div>close</div>
             <div>invite‑member</div>

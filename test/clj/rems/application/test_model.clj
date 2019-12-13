@@ -464,6 +464,19 @@
 (deftest test-application-view-submitted
   (is (= submitted-application (recreate submitted-application))))
 
+(deftest test-application-view-external-id-assigned
+  (let [event {:event/type :application.event/external-id-assigned
+               :event/time (DateTime. 4000)
+               :event/actor "handler"
+               :application/id 1
+               :application/external-id "ext123"}
+        application (merge submitted-application
+                           {:application/last-activity (DateTime. 4000)
+                            :application/events (conj (:application/events submitted-application)
+                                                      event)
+                            :application/external-id "ext123"})]
+    (is (= application (recreate application)))))
+
 (def approved-event {:event/type :application.event/approved
                      :event/time (DateTime. 4000)
                      :event/actor "handler"

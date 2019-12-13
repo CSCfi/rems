@@ -200,6 +200,10 @@
   (-> application
       (update :application/copied-to conj-vec (:application/copied-to event))))
 
+(defmethod event-type-specific-application-view :application.event/external-id-assigned
+  [application event]
+  (assoc application :application/external-id (:application/external-id event)))
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -219,6 +223,7 @@
     {:permission :application.command/accept-licenses}
     {:permission :application.command/add-licenses}
     {:permission :application.command/add-member}
+    {:permission :application.command/assign-external-id}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/comment}
@@ -245,6 +250,7 @@
     {:permission :application.command/accept-licenses}
     {:permission :application.command/add-licenses}
     {:permission :application.command/add-member}
+    {:permission :application.command/assign-external-id}
     {:permission :application.command/change-resources}
     {:permission :application.command/comment}
     {:permission :application.command/copy-as-new}

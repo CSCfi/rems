@@ -37,6 +37,9 @@
 (s/defschema ApproveCommand
   (assoc CommandBase
          :comment s/Str))
+(s/defschema AssignExternalIdCommand
+  (assoc CommandBase
+         :external-id s/Str))
 (s/defschema ChangeResourcesCommand
   (assoc CommandBase
          (s/optional-key :comment) s/Str
@@ -104,6 +107,7 @@
    :application.command/add-licenses AddLicensesCommand
    :application.command/add-member AddMemberCommand
    :application.command/approve ApproveCommand
+   :application.command/assign-external-id AssignExternalIdCommand
    :application.command/change-resources ChangeResourcesCommand
    :application.command/close CloseCommand
    :application.command/comment CommentCommand
@@ -499,6 +503,11 @@
           {:event/type :application.event/copied-to
            :application/id old-app-id
            :application/copied-to (select-keys created-event [:application/id :application/external-id])}])))))
+
+(defmethod command-handler :application.command/assign-external-id
+  [cmd application _injections]
+  (ok {:event/type :application.event/external-id-assigned
+       :application/external-id (:external-id cmd)}))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event

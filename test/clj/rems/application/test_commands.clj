@@ -557,6 +557,30 @@
                                  :application/id app-id}])
                  (fail-command submit-command injections)))))))
 
+(deftest test-assign-external-id
+  (let [application (apply-events nil
+                                  [dummy-created-event
+                                   {:event/type :application.event/submitted
+                                    :event/time test-time
+                                    :event/actor applicant-user-id
+                                    :application/id app-id}])]
+    (testing "handler can assign id"
+      (is (= {:event/type :application.event/external-id-assigned
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id
+              :application/external-id "ext123"}
+             (ok-command application
+                         {:type :application.command/assign-external-id
+                          :actor handler-user-id
+                          :external-id "ext123"}))))
+    (testing "applicant can't assign id"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           {:type :application.command/assign-external-id
+                            :actor applicant-user-id
+                            :external-id "ext123"}))))))
+
 (deftest test-approve-or-reject
   (let [application (apply-events nil
                                   [dummy-created-event

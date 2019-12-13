@@ -78,6 +78,10 @@
   (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
          :application/field-values {s/Int s/Str}))
+(s/defschema ExternalIdAssignedEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/external-id-assigned)
+         :application/external-id s/Str))
 (s/defschema LicensesAcceptedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/licenses-accepted)
@@ -151,6 +155,7 @@
    :application.event/decided DecidedEvent
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
+   :application.event/external-id-assigned ExternalIdAssignedEvent
    :application.event/licenses-accepted LicensesAcceptedEvent
    :application.event/licenses-added LicensesAddedEvent
    :application.event/member-added MemberAddedEvent

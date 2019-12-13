@@ -127,6 +127,7 @@
                           :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
                           :decided "%1 teki päätöksen hakemukselle."
                           :draft-saved "%1 tallensi hakemuksen luonnoksen."
+                          :external-id-assigned "%1 lisäsi tunnisteen %2."
                           :licenses-accepted "%1 hyväksyi käyttöehdot."
                           :licenses-added "%1 lisäsi käyttöehtoja."
                           :member-added "%1 lisäsi käyttäjän %2 hakemuksen jäseneksi."
