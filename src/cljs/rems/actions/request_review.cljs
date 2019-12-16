@@ -1,11 +1,11 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch post!]]))
+            [rems.util :refer [fetch]]))
 
 ;; TODO: the api should probably be reviewers now
 (rf/reg-fx
@@ -45,18 +45,12 @@
 (rf/reg-event-fx
  ::send-request-review
  (fn [_ [_ {:keys [application-id reviewers comment on-finished]}]]
-   (let [description [text :t.actions/request-review]]
-     (post! "/api/applications/request-comment"
-            {:params {:application-id application-id
-                      :comment comment
-                      :commenters (map :userid reviewers)}
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler :actions description)}))
+   (command! "request-comment" {:application-id application-id
+                                :comment comment
+                                :commenters (map :userid reviewers)}
+             {:description [text :t.actions/request-review]
+              :collapse action-form-id
+              :on-finished on-finished})
    {}))
 
 (defn request-review-action-button []
