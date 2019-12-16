@@ -1,6 +1,8 @@
 (ns rems.actions.action
   (:require [rems.atoms :refer [textarea]]
-            [rems.text :refer [text]]))
+            [rems.flash-message :as flash-message]
+            [rems.text :refer [text]]
+            [rems.util :refer [post!]]))
 
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
@@ -68,3 +70,14 @@
     :data-target (str "#" (action-collapse-id id))
     :on-click on-click}
    text])
+
+(defn command! [command params {:keys [description collapse on-finished]}]
+  (post! (str "/api/applications/" command)
+         {:params params
+          :handler (flash-message/default-success-handler
+                    :actions
+                    description
+                    (fn [_]
+                      (collapse-action-form collapse)
+                      (on-finished)))
+          :error-handler (flash-message/default-error-handler :actions description)}))

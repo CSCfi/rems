@@ -1,9 +1,7 @@
 (ns rems.actions.approve-reject
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
-            [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
+            [rems.text :refer [text]]))
 
 (rf/reg-event-fx
  ::open-form
@@ -18,33 +16,21 @@
 (rf/reg-event-fx
  ::send-approve
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description [text :t.actions/approve]]
-     (post! "/api/applications/approve"
-            {:params {:application-id application-id
-                      :comment comment}
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler :actions description)}))
+   (command! "approve" {:application-id application-id
+                        :comment comment}
+             {:description [text :t.actions/approve]
+              :collapse action-form-id
+              :on-finished on-finished})
    {}))
 
 (rf/reg-event-fx
  ::send-reject
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description [text :t.actions/reject]]
-     (post! "/api/applications/reject"
-            {:params {:application-id application-id
-                      :comment comment}
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler :actions description)}))
+   (command! "reject" {:application-id application-id
+                       :comment comment}
+             {:description [text :t.actions/reject]
+              :collapse action-form-id
+              :on-finished on-finished})
    {}))
 
 (defn approve-reject-action-button []
