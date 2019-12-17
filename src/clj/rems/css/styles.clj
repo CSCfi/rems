@@ -634,6 +634,8 @@
     [:legend {:font-size "inherit"}]]
    [:#application-fields
     [:.application-field-label {:font-weight "bold"}]]
+   [:.field-container {:position :relative
+                       :margin-left (u/rem 1)}]
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
 
@@ -669,6 +671,7 @@
                     :top "100px"}
     [:.collapse-content {:overflow-y :scroll
                          :overflow-x :hidden
+                         :margin-left 0
                          ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
                          :max-height "calc(100vh - 220px)"}]]
 
