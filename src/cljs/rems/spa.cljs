@@ -7,6 +7,7 @@
             [reagent.core :as r]
             [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
+            [rems.administration.applications :refer [admin-applications-page]]
             [rems.administration.blacklist :refer [blacklist-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
@@ -16,6 +17,7 @@
             [rems.administration.create-license :refer [create-license-page]]
             [rems.administration.create-resource :refer [create-resource-page]]
             [rems.administration.create-workflow :refer [create-workflow-page]]
+            [rems.administration.export-applications :refer [export-applications-page]]
             [rems.administration.form :refer [form-page]]
             [rems.administration.forms :refer [forms-page]]
             [rems.administration.license :refer [license-page]]
@@ -227,6 +229,7 @@
    :applications applications-page
    :extra-pages extra-pages
    :rems.actions/accept-invitation accept-invitation-page
+   :rems.administration/applications admin-applications-page
    :rems.administration/blacklist blacklist-page
    :rems.administration/catalogue-item catalogue-item-page
    :rems.administration/catalogue-items catalogue-items-page
@@ -236,6 +239,7 @@
    :rems.administration/create-license create-license-page
    :rems.administration/create-resource create-resource-page
    :rems.administration/create-workflow create-workflow-page
+   :rems.administration/export-applications export-applications-page
    :rems.administration/form form-page
    :rems.administration/forms forms-page
    :rems.administration/license license-page
@@ -347,6 +351,14 @@
 
 (secretary/defroute "/administration" []
   (replace-url! "/administration/catalogue-items"))
+
+(secretary/defroute "/administration/applications" []
+  (rf/dispatch [:rems.administration.applications/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/applications]))
+
+(secretary/defroute "/administration/applications/export" []
+  (rf/dispatch [:rems.administration.export-applications/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/export-applications]))
 
 (secretary/defroute "/administration/blacklist" []
   (rf/dispatch [:rems.administration.blacklist/enter-page])

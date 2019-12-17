@@ -12,6 +12,7 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :as config]
             [rems.db.applications :as applications]
+            [rems.db.csv :as csv]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
@@ -190,6 +191,14 @@
       :roles #{:handler}
       :return Commenters
       (ok (users/get-commenters)))
+
+    (GET "/export/:form-id" []
+      :summary "Export all submitted applications of a given form as CSV"
+      :roles #{:owner}
+      :path-params [form-id :- (describe s/Int "form id")]
+      (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id) form-id))
+          (header "Content-Disposition" (str "filename=\"" (csv/applications-filename) "\""))
+          (content-type "text/csv")))
 
     (GET "/members" []
       :summary "Existing REMS users available for application membership"

@@ -14,6 +14,7 @@
             [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.csv :as csv]
             [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
@@ -215,6 +216,11 @@
 (defn get-my-applications [user-id]
   (->> (get-all-applications user-id)
        (filter my-application?)))
+
+(defn export-applications-for-form-as-csv [user-id form-id]
+  (let [applications (get-all-unrestricted-applications)
+        filtered-applications (filter #(= (:form/id (:application/form %)) form-id) applications)]
+    (csv/applications-to-csv filtered-applications user-id)))
 
 (defn reload-cache! []
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.

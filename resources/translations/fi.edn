@@ -45,6 +45,7 @@
                    :add "Lisää"
                    :added-at "Lisätty"
                    :added-by "Lisääjä"
+                   :applications "Hakemukset"
                    :archive "Arkistoi"
                    :back "Takaisin"
                    :blacklist "Kieltolista"
@@ -79,6 +80,7 @@
                             :resource-in-use "Resurssi on käytössä:"
                             :workflow-archived "Työvuo on arkistoitu:"
                             :workflow-in-use "Työvuo on käytössä:"}
+                   :export-applications "Vie hakemuksia"
                    :form "Lomake"
                    :forms "Lomakkeet"
                    :license "Lisenssi"
@@ -141,6 +143,12 @@
                           :revoked "%1 perui käyttöoikeuden."
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"}
+                 :export {:applicant "Hakija"
+                          :external-id "Ulkoinen tunniste"
+                          :first-submitted "Lähetetty"
+                          :id "Tunniste"
+                          :resources "Resurssit"
+                          :state "Tila"}
                  :id "Tunniste"
                  :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
                  :last-activity "Muokattu"
