@@ -85,8 +85,10 @@
            :todo (let [value (localize-todo (:application/todo app))]
                    {:value value
                     :td [:td.state
-                         {:class (when (current-user-needs-to-do-something? app)
-                                   "text-highlight")}
+                         {:class (str (when (current-user-needs-to-do-something? app)
+                                        "text-highlight ")
+                                      (when (:application/past-deadline app)
+                                        "text-danger"))}
                          value]})
            :created (let [value (:application/created app)]
                       {:value value

@@ -194,6 +194,7 @@
    :application/created DateTime
    :application/modified DateTime
    (s/optional-key :application/first-submitted) DateTime
+   (s/optional-key :application/past-deadline) s/Bool
    (s/optional-key :application/copied-from) {:application/id s/Int
                                               :application/external-id s/Str}
    (s/optional-key :application/copied-to) [{:application/id s/Int

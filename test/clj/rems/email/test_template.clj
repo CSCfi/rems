@@ -5,7 +5,8 @@
             [rems.config]
             [rems.db.user-settings :as user-settings]
             [rems.email.template :as template]
-            [rems.locales]))
+            [rems.locales])
+  (:import (org.joda.time DateTime)))
 
 (defn empty-footer [f]
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "")]
@@ -34,6 +35,12 @@
                             :title "en title 21"}
                        :fi {:langcode :fi
                             :title "fi title 21"}}}})
+
+(def ^:private get-config
+  (constantly {}))
+
+(def ^:private get-current-time
+  (constantly (DateTime. 3000)))
 
 (def ^:private get-workflow
   {5 {:workflow {:handlers [{:userid "handler"
@@ -92,6 +99,8 @@
                          (model/enrich-with-injections {:blacklisted? (constantly false)
                                                         :get-workflow get-workflow
                                                         :get-catalogue-item get-catalogue-item
+                                                        :get-config get-config
+                                                        :get-current-time get-current-time
                                                         :get-form-template get-form-template
                                                         :get-license get-license
                                                         :get-user get-user

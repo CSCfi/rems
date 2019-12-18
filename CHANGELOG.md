@@ -18,6 +18,7 @@ Changes since v2.6
   are disabled and archived. The name of the new item will be exactly
   the same as before. See #837
 - Applications can be exported as CSV in admin menu (#1857)
+- Added a configuration option for setting a maximum number of days for handling a new application (#1861)
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
