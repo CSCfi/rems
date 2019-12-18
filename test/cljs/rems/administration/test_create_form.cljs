@@ -281,7 +281,60 @@
                                                {:key "bacon"
                                                 :label {:en "Bacon"
                                                         :fi "Pekonia"}}]}]}
-               (build-request form languages)))))))
+               (build-request form languages)))))
+
+    (testing "visibility"
+      (let [form (-> form
+                     (assoc-in [:form/fields 0 :field/id] 0)
+                     (assoc-in [:form/fields 0 :field/type] :option)
+                     (assoc-in [:form/fields 0 :field/options] [{:key "yes"
+                                                                 :label {:en "en yes"
+                                                                         :fi "fi yes"}}
+                                                                {:key "no"
+                                                                 :label {:en "en no"
+                                                                         :fi "fi no"}}])
+                     (assoc-in [:form/fields 1] {:field/id 1
+                                                 :field/stable-id "stable9999"
+                                                 :field/title {:en "en title additional"
+                                                               :fi "fi title additional"}
+                                                 :field/optional false
+                                                 :field/type :text
+                                                 :field/max-length "12"
+                                                 :field/placeholder {:en "en placeholder"
+                                                                     :fi "fi placeholder"}}))]
+
+        (testing "default"
+          (is (nil? (get-in (build-request (assoc-in form [:form/fields 1 :field/visible] {:visible/type :always}) languages)
+                            [:form/fields 1 :field/visible]))
+              "always is the default so nothing needs to be included")
+          (is (= {:visible/type :only-if
+                  :visible/field nil
+                  :visible/value nil}
+                 (getx-in (build-request (assoc-in form
+                                                   [:form/fields 1 :field/visible]
+                                                   {:visible/type :only-if})
+                                         languages)
+                          [:form/fields 1 :field/visible]))
+              "missing data is nil"))
+
+        (testing "correct data"
+          (is (= {:field/title {:en "en title additional"
+                                :fi "fi title additional"}
+                  :field/optional false
+                  :field/type :text
+                  :field/max-length 12
+                  :field/placeholder {:en "en placeholder"
+                                      :fi "fi placeholder"}
+                  :field/visible {:visible/type :only-if
+                                  :visible/field {:field/id 0}
+                                  :visible/value "yes"}}
+                 (getx-in (build-request (assoc-in form
+                                                   [:form/fields 1 :field/visible]
+                                                   {:visible/type :only-if
+                                                    :visible/field {:field/id 0}
+                                                    :visible/value "yes"})
+                                         languages)
+                          [:form/fields 1]))))))))
 
 (deftest validate-form-test
   (let [form {:form/organization "abc"
@@ -397,7 +450,66 @@
                    (get-in empty-label [:form/fields 0 :field/options 0 :label :fi])
                    (get-in nil-label [:form/fields 0 :field/options 0 :label :en])
                    (get-in nil-label [:form/fields 0 :field/options 0 :label :fi])
-                   :t.form.validation/required))))))))
+                   :t.form.validation/required))))))
+
+    (testing "visible"
+      (let [form (-> form
+                     (assoc-in [:form/fields 0 :field/id] 0)
+                     (assoc-in [:form/fields 0 :field/type] :option)
+                     (assoc-in [:form/fields 0 :field/options] [{:key "yes"
+                                                                 :label {:en "en yes"
+                                                                         :fi "fi yes"}}
+                                                                {:key "no"
+                                                                 :label {:en "en no"
+                                                                         :fi "fi no"}}])
+                     (assoc-in [:form/fields 1] {:field/id 1
+                                                 :field/stable-id "stable9999"
+                                                 :field/title {:en "en title additional"
+                                                               :fi "fi title additional"}
+                                                 :field/optional false
+                                                 :field/type :text
+                                                 :field/max-length "12"
+                                                 :field/placeholder {:en "en placeholder"
+                                                                     :fi "fi placeholder"}}))
+            validate-visible (fn [visible]
+                               (validate-form (assoc-in form [:form/fields 1 :field/visible] visible) languages))]
+
+        (testing "invalid type"
+          (is (= (getx-in (validate-visible {:visible/type nil})
+                          [:form/fields 1 :field/visible :visible/type])
+                 :t.form.validation/required))
+          (is (= (getx-in (validate-visible {:visible/type :does-not-exist})
+                          [:form/fields 1 :field/visible :visible/type])
+                 :t.form.validation/invalid-value)))
+
+        (testing "invalid field"
+          (is (= (getx-in (validate-visible {:visible/type :only-if})
+                          [:form/fields 1 :field/visible :visible/field])
+                 (getx-in (validate-visible {:visible/type :only-if
+                                             :visible/field nil})
+                          [:form/fields 1 :field/visible :visible/field])
+                 :t.form.validation/required))
+          (is (= (getx-in (validate-visible {:visible/type :only-if
+                                             :visible/field {}})
+                          [:form/fields 1 :field/visible :visible/field])
+                 :t.form.validation/invalid-value)))
+
+        (testing "invalid value"
+          (is (= (getx-in (validate-visible {:visible/type :only-if
+                                             :visible/field {:field/id 0}})
+                          [:form/fields 1 :field/visible :visible/value])
+                 :t.form.validation/required))
+          (is (= (getx-in (validate-visible {:visible/type :only-if
+                                             :visible/field {:field/id 0}
+                                             :visible/value "does-not-exist"})
+                          [:form/fields 1 :field/visible :visible/value])
+                 :t.form.validation/invalid-value)))
+
+        (testing "correct data"
+          (is (empty? (validate-visible {:visible/type :always})))
+          (is (empty? (validate-visible {:visible/type :only-if
+                                         :visible/field {:field/id 0}
+                                         :visible/value "yes"}))))))))
 
 (deftest build-localized-string-test
   (let [languages [:en :fi]]
