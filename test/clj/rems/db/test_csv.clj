@@ -18,39 +18,46 @@
                              :separator ",")
            "col1,col2\nval1,val2\nval3,val4\n")))
 
-  (testing "encloses strings in quotes"
+  (testing "different separator"
+    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+                             :rows [["val1" "val2"]
+                                    ["val3" "val4"]]
+                             :separator ";")
+           "col1;col2\nval1;val2\nval3;val4\n")))
+
+  (testing "quote strings"
     (is (= (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     ["val3" "val4"]]
                              :separator ","
-                             :enclose-strings-in-quotes true)
+                             :quote-strings? true)
            "\"col1\",\"col2\"\n\"val1\",\"val2\"\n\"val3\",\"val4\"\n")))
 
-  (testing "does not enclose numeric values in quotes"
+  (testing "do not quote numeric values"
     (is (= (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     ["val3" 4]]
                              :separator ","
-                             :enclose-strings-in-quotes true)
+                             :quote-strings? true)
            "\"col1\",\"col2\"\n\"val1\",\"val2\"\n\"val3\",4\n")))
 
-  (testing "does not enclose nil values in quotes"
+  (testing "do not quote nil values"
     (is (= (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     [nil "val4"]]
                              :separator ","
-                             :enclose-strings-in-quotes true)
+                             :quote-strings? true)
            "\"col1\",\"col2\"\n\"val1\",\"val2\"\n,\"val4\"\n")))
   
-  (testing "escapes quotes inside strings when enclosed in quotes"
+  (testing "escape quotes inside strings when strings are quoted"
     (is (= (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["\"so called\" value" "val2"]
                                     ["val3" "val4"]]
                              :separator ","
-                             :enclose-strings-in-quotes true)
+                             :quote-strings? true)
            "\"col1\",\"col2\"\n\"\\\"so called\\\" value\",\"val2\"\n\"val3\",\"val4\"\n")))
 
-  (testing "does not escape quotes inside strings when not enclosed in quotes"
+  (testing "do not escape quotes inside strings when strings are not quoted"
     (is (= (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["\"so called\" value" "val2"]
                                     ["val3" "val4"]]
@@ -60,6 +67,8 @@
 (def ^:private applicant "applicant")
 (def ^:private test-time (DateTime. 1000))
 
+;; TODO: This could be non-integration non-db test if the application was
+;;       created from events.
 (deftest test-applications-to-csv
   (test-data/create-user! {:eppn applicant :commonName "Alice Applicant" :mail "alice@applicant.com"})
   (let [form-id (test-data/create-form!

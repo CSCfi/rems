@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-applications
   (:require [clj-http.client :as http]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [luminus.http-server]
             [rems.api.services.catalogue :as catalogue]
@@ -549,6 +550,22 @@
       (is (blacklist/blacklisted? applicant-id ext2))
       (is (blacklist/blacklisted? member-id ext1))
       (is (blacklist/blacklisted? member-id ext2)))))
+
+(deftest test-application-export
+  (let [applicant "alice"
+        owner "owner"
+        api-key "42"
+        form-id (test-data/create-form! {})
+        cat-id (test-data/create-catalogue-item! {:form-id form-id})
+        app-id (test-data/create-application! {:actor applicant
+                                               :catalogue-item-ids [cat-id]})]
+    (send-command applicant {:type :application.command/submit
+                             :application-id app-id})
+    (let [exported (-> (request :get (str "/api/applications/export?form-id=" form-id))
+                       (authenticate api-key owner)
+                       handler
+                       read-ok-body)]
+      (is (= (count (str/split exported #"\n")) 2)))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 

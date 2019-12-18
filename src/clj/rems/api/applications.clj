@@ -192,10 +192,10 @@
       :return Commenters
       (ok (users/get-commenters)))
 
-    (GET "/export/:form-id" []
+    (GET "/export" []
       :summary "Export all submitted applications of a given form as CSV"
       :roles #{:owner}
-      :path-params [form-id :- (describe s/Int "form id")]
+      :query-params [form-id :- (describe s/Int "form id")]
       (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id) form-id))
           (header "Content-Disposition" (str "filename=\"" (csv/applications-filename) "\""))
           (content-type "text/csv")))

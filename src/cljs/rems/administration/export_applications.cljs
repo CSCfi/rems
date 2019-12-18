@@ -48,7 +48,7 @@
     [(if disabled?
        :a.btn.btn-primary.disabled
        :a.btn.btn-primary)
-     {:href (str "/api/applications/export/" form-id)
+     {:href (str "/api/applications/export?form-id=" form-id)
       :target :_blank
       :aria-disabled disabled?
       :tabIndex (when disabled? "-1")}

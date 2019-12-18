@@ -7,17 +7,17 @@
             [rems.text :as text]))
 
 (defn print-to-csv [& {:keys [column-names rows
-                              enclose-strings-in-quotes separator]
+                              quote-strings? separator]
                        :or {separator (:csv-separator env)}}]
   (let [escape-quotes #(str/replace % "\"" "\\\"")
-        maybe-enclose-in-quotes #(if (and (string? %)
-                                          enclose-strings-in-quotes)
-                                   (str "\"" (escape-quotes %) "\"")
-                                   %)]
+        maybe-quote #(if (and (string? %)
+                              quote-strings?)
+                       (str "\"" (escape-quotes %) "\"")
+                       %)]
     (with-out-str
-      (println (str/join separator (mapv maybe-enclose-in-quotes column-names)))
+      (println (str/join separator (mapv maybe-quote column-names)))
       (doseq [row rows]
-        (println (str/join separator (mapv maybe-enclose-in-quotes row)))))))
+        (println (str/join separator (mapv maybe-quote row)))))))
 
 ;; Export applications
 
@@ -96,7 +96,7 @@
         #(print-to-csv :column-names (concat (mapv (comp text/text :name) application-columns)
                                              (form-field-names applications))
                        :rows (mapv application-to-row applications)
-                       :enclose-strings-in-quotes true)))))
+                       :quote-strings? true)))))
 
 (defn applications-filename []
   (format "applications_%s.csv" (str/replace (text/localize-time (time/now)) " " "_")))
@@ -109,7 +109,7 @@
    (:userid entitlement)
    (text/localize-time (:start entitlement))])
 
-;; TODO: Consider enclosing strings in quotes to unify with application export.
+;; TODO: Consider quoting strings to unify with exporting of applications.
 (defn entitlements-to-csv [entitlements]
   (print-to-csv :column-names ["resource" "application" "user" "start"]
                 :rows (mapv entitlement-to-row entitlements)))
