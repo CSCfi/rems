@@ -170,9 +170,9 @@
                               :label (build-localized-string label languages)})})
          (when (supports-visible? field)
            (let [{:visible/keys [type field value]} (:field/visible field)]
-             (when (and type field value)
+             (when (= type :only-if)
                {:field/visible {:visible/type type
-                                :visible/field (select-keys field [:field/id])
+                                :visible/field (when (:field/id field) (select-keys field [:field/id]))
                                 :visible/value value}})))))
 
 (defn build-request [form languages]
@@ -216,23 +216,25 @@
 
 (defn- validate-only-if-field [field visible fields]
   (if (-> visible :visible/field)
-    (let [referred-field (-> visible :visible/field :field/id fields)]
-      (merge (if referred-field
-               (when-not (supports-options? referred-field)
-                 {:field/visible-field :t.form.validation/invalid-value})
-               {:field/visible-field :t.form.validation/required})
-             (if (:visible/value visible)
-               (when-not (contains? (field-option-keys referred-field) (:visible/value visible))
-                 {:field/visible-value :t.form.validation/invalid-value})
-               {:field/visible-value :t.form.validation/required})))
-    {:field/visible-field :t.form.validation/required}))
+    (if-let [referred-field (-> visible :visible/field :field/id fields)]
+      (if-not  (supports-options? referred-field)
+        {:field/visible {:visible/field :t.form.validation/invalid-value}}
+        (if-not (-> visible :visible/field :field/id)
+          {:field/visible {:visible/field :t.form.validation/invalid-value}}
+          (if (:visible/value visible)
+            (when-not (contains? (field-option-keys referred-field) (:visible/value visible))
+              {:field/visible {:visible/value :t.form.validation/invalid-value}})
+            {:field/visible {:visible/value :t.form.validation/required}})))
+      {:field/visible {:visible/field :t.form.validation/required}})
+    {:field/visible {:visible/field :t.form.validation/required}}))
 
 (defn- validate-visible [field fields]
   (when-let [visible (:field/visible field)]
     (case (:visible/type visible)
       :always nil
       :only-if (validate-only-if-field field visible fields)
-      {:field/visible-type :t.form.validation/required})))
+      nil {:field/visible {:visible/type :t.form.validation/required}}
+      {:field/visible {:visible/type :t.form.validation/invalid-value}})))
 
 (defn- validate-field [field index languages fields]
   {index (merge (validate-text-field field :field/type)
@@ -418,9 +420,9 @@
   [field-index]
   (let [form @(rf/subscribe [::form])
         form-errors @(rf/subscribe [::form-errors])
-        error-type (get-in form-errors [:form/fields field-index :field/visible-type])
-        error-field (get-in form-errors [:form/fields field-index :field/visible-field])
-        error-value (get-in form-errors [:form/fields field-index :field/visible-value])
+        error-type (get-in form-errors [:form/fields field-index :field/visible :visible/type])
+        error-field (get-in form-errors [:form/fields field-index :field/visible :visible/field])
+        error-value (get-in form-errors [:form/fields field-index :field/visible :visible/value])
         lang @(rf/subscribe [:language])
         id-type (str "fields-" field-index "-visible-type")
         id-field (str "fields-" field-index "-visible-field")
@@ -544,15 +546,15 @@
             (when (:field/max-length field-errors)
               [(format-validation-link (str "fields-" field-index "-max-length")
                                        (str (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))))])
-            (when (:field/visible-type field-errors)
+            (when (-> field-errors :field/visible :visible/type)
               [(format-validation-link (str "fields-" field-index "-visible-type")
-                                       (str (text :t.create-form/type-visible) ": " (text-format (:field/visible-type field-errors) (text :t.create-form/type-visible))))])
-            (when (:field/visible-field field-errors)
+                                       (str (text :t.create-form/type-visible) ": " (text-format (-> field-errors :field/visible :visible/type) (text :t.create-form/type-visible))))])
+            (when (-> field-errors :field/visible :visible/field)
               [(format-validation-link (str "fields-" field-index "-visible-field")
-                                       (str (text :t.create-form/type-visible) ": " (text-format (:field/visible-field field-errors) (text :t.create-form.visible/field))))])
-            (when (:field/visible-value field-errors)
+                                       (str (text :t.create-form/type-visible) ": " (text-format (-> field-errors :field/visible :visible/field) (text :t.create-form.visible/field))))])
+            (when (-> field-errors :field/visible :visible/value)
               [(format-validation-link (str "fields-" field-index "-visible-value")
-                                       (str (text :t.create-form/type-visible) ": " (text-format (:field/visible-value field-errors) (text :t.create-form.visible/has-value))))])
+                                       (str (text :t.create-form/type-visible) ": " (text-format (-> field-errors :field/visible :visible/value) (text :t.create-form.visible/has-value))))])
             (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
               [:li (text-format :t.create-form/option-n (inc option-id))
                [:ul
