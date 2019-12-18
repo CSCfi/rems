@@ -47,6 +47,7 @@
                    :add "Add"
                    :added-at "Added at"
                    :added-by "Added by"
+                   :applications "Applications"
                    :archive "Archive"
                    :back "Back"
                    :blacklist "Blacklist"
@@ -81,6 +82,7 @@
                             :resource-in-use "Resource in use:"
                             :workflow-archived "Workflow has been archived:"
                             :workflow-in-use "Workflow in use:"}
+                   :export-applications "Export applications"
                    :form "Form"
                    :forms "Forms"
                    :license "License"
@@ -146,6 +148,12 @@
                           :revoked "%1 revoked the entitlement."
                           :submitted "%1 submitted the application for review."
                           :unknown "Unknown"}
+                 :export {:applicant "Applicant"
+                          :external-id "External id"
+                          :first-submitted "Submitted"
+                          :id "Id"
+                          :resources "Resources"
+                          :state "State"}
                  :id "Id"
                  :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
                  :last-activity "Last activity"

@@ -17,6 +17,7 @@ Changes since v2.6
   New items will be created that use the new form while the old items
   are disabled and archived. The name of the new item will be exactly
   the same as before. See #837
+- Applications can be exported as CSV in admin menu (#1857)
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
