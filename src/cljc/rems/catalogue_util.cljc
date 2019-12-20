@@ -1,9 +1,9 @@
 (ns rems.catalogue-util
   (:require [clojure.string :as str]))
 
-(defn urn-catalogue-item? [{:keys [resid]}]
+(defn urn? [resid]
   (and resid (str/starts-with? resid "urn:")))
 
 (defn urn-catalogue-item-link [{:keys [resid]} {:keys [urn-organization]}]
-  (when resid
+  (when (urn? resid)
     (str (or urn-organization "http://urn.fi/") resid)))
