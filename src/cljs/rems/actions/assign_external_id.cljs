@@ -1,11 +1,9 @@
 (ns rems.actions.assign-external-id
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view button-wrapper collapse-action-form]]
+            [rems.actions.action :refer [action-button action-form-view button-wrapper command!]]
             [rems.atoms :refer [textarea]]
-            [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.text :refer [text]]))
 
 (rf/reg-event-fx
  ::open-form
@@ -20,17 +18,12 @@
 (rf/reg-event-fx
  ::send
  (fn [_ [_ {:keys [application-id external-id on-finished]}]]
-   (let [description [text :t.actions/assign-external-id]]
-     (post! "/api/applications/assign-external-id"
-            {:params {:application-id application-id
-                      :external-id (str/trim external-id)}
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler :actions description)}))
+   (command! :application.command/assign-external-id
+             {:application-id application-id
+              :external-id (str/trim external-id)}
+             {:description [text :t.actions/assign-external-id]
+              :collapse action-form-id
+              :on-finished on-finished})
    {}))
 
 (defn assign-external-id-button []

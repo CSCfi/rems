@@ -1,9 +1,7 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
-            [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
+            [rems.text :refer [text]]))
 
 (rf/reg-event-fx
  ::open-form
@@ -23,18 +21,13 @@
 (rf/reg-event-fx
  ::send-remark
  (fn [{:keys [db]} [_ {:keys [application-id on-finished]}]]
-   (let [description [text :t.actions/remark]]
-     (post! "/api/applications/remark"
-            {:params {:application-id application-id
-                      :comment (::comment db)
-                      :public (::public db)}
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler :actions description)}))
+   (command! :application.command/remark
+             {:application-id application-id
+              :comment (::comment db)
+              :public (::public db)}
+             {:description [text :t.actions/remark]
+              :collapse action-form-id
+              :on-finished on-finished})
    {}))
 
 (defn remark-action-button []
