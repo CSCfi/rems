@@ -18,8 +18,8 @@
 (rf/reg-event-fx
  ::send
  (fn [_ [_ {:keys [application-id external-id on-finished]}]]
-   (command! "assign-external-id" {:application-id application-id
-                                   :external-id (str/trim external-id)}
+   (command! :application.command/assign-external-id
+             {:application-id application-id :external-id (str/trim external-id)}
              {:description [text :t.actions/assign-external-id]
               :collapse action-form-id
               :on-finished on-finished})

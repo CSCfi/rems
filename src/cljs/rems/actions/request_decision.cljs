@@ -43,9 +43,8 @@
 (rf/reg-event-fx
  ::send-request-decision
  (fn [_ [_ {:keys [deciders application-id comment on-finished]}]]
-   (command! "request-decision" {:application-id application-id
-                                 :comment comment
-                                 :deciders (map :userid deciders)}
+   (command! :application.command/request-decision
+             {:application-id application-id :comment comment :deciders (map :userid deciders)}
              {:description [text :t.actions/request-decision]
               :collapse action-form-id
               :on-finished on-finished})

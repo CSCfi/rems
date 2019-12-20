@@ -16,9 +16,8 @@
 (rf/reg-event-fx
  ::send-decide
  (fn [_ [_ {:keys [application-id comment decision on-finished]}]]
-   (command! "decide" {:application-id application-id
-                       :decision decision
-                       :comment comment}
+   (command! :application.command/decide
+             {:application-id application-id :decision decision :comment comment}
              {:description [text :t.actions/decide]
               :collapse action-form-id
               :on-finished on-finished})

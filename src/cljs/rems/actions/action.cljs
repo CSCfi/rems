@@ -72,7 +72,9 @@
    text])
 
 (defn command! [command params {:keys [description collapse on-finished]}]
-  (post! (str "/api/applications/" command)
+  (assert (qualified-keyword? command)
+          (pr-str command))
+  (post! (str "/api/applications/" (name command))
          {:params params
           :handler (flash-message/default-success-handler
                     :actions

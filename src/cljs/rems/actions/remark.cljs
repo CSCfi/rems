@@ -21,9 +21,8 @@
 (rf/reg-event-fx
  ::send-remark
  (fn [{:keys [db]} [_ {:keys [application-id on-finished]}]]
-   (command! "remark" {:application-id application-id
-                       :comment (::comment db)
-                       :public (::public db)}
+   (command! :application.command/remark
+             {:application-id application-id :comment (::comment db) :public (::public db)}
              {:description [text :t.actions/remark]
               :collapse action-form-id
               :on-finished on-finished})

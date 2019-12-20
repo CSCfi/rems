@@ -16,8 +16,8 @@
 (rf/reg-event-fx
  ::send-return
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (command! "return" {:application-id application-id
-                       :comment comment}
+   (command! :application.command/return
+             {:application-id application-id :comment comment}
              {:description [text :t.actions/return]
               :collapse action-form-id
               :on-finished on-finished})

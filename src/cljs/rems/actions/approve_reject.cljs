@@ -16,8 +16,8 @@
 (rf/reg-event-fx
  ::send-approve
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (command! "approve" {:application-id application-id
-                        :comment comment}
+   (command! :application.command/approve
+             {:application-id application-id :comment comment}
              {:description [text :t.actions/approve]
               :collapse action-form-id
               :on-finished on-finished})
@@ -26,8 +26,8 @@
 (rf/reg-event-fx
  ::send-reject
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (command! "reject" {:application-id application-id
-                       :comment comment}
+   (command! :application.command/reject
+             {:application-id application-id :comment comment}
              {:description [text :t.actions/reject]
               :collapse action-form-id
               :on-finished on-finished})

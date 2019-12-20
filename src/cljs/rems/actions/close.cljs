@@ -16,8 +16,8 @@
 (rf/reg-event-fx
  ::send-close
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (command! "close" {:application-id application-id
-                      :comment comment}
+   (command! :application.command/close
+             {:application-id application-id :comment comment}
              {:description [text :t.actions/close]
               :collapse action-form-id
               :on-finished on-finished})

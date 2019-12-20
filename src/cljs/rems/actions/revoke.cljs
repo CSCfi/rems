@@ -16,8 +16,8 @@
 (rf/reg-event-fx
  ::send-revoke
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (command! "revoke" {:application-id application-id
-                       :comment comment}
+   (command! :application.command/revoke
+             {:application-id application-id :comment comment}
              {:description [text :t.actions/revoke]
               :collapse action-form-id
               :on-finished on-finished})
