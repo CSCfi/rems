@@ -17,7 +17,8 @@
  ::send-approve
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
    (command! :application.command/approve
-             {:application-id application-id :comment comment}
+             {:application-id application-id
+              :comment comment}
              {:description [text :t.actions/approve]
               :collapse action-form-id
               :on-finished on-finished})
@@ -27,7 +28,8 @@
  ::send-reject
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
    (command! :application.command/reject
-             {:application-id application-id :comment comment}
+             {:application-id application-id
+              :comment comment}
              {:description [text :t.actions/reject]
               :collapse action-form-id
               :on-finished on-finished})

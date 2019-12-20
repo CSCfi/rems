@@ -17,7 +17,8 @@
  ::send-review
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
    (command! :application.command/comment
-             {:application-id application-id :comment comment}
+             {:application-id application-id
+              :comment comment}
              {:description [text :t.actions/review]
               :collapse action-form-id
               :on-finished on-finished})

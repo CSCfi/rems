@@ -46,7 +46,9 @@
  ::send-request-review
  (fn [_ [_ {:keys [application-id reviewers comment on-finished]}]]
    (command! :application.command/request-comment
-             {:application-id application-id :comment comment :commenters (map :userid reviewers)}
+             {:application-id application-id
+              :comment comment
+              :commenters (map :userid reviewers)}
              {:description [text :t.actions/request-review]
               :collapse action-form-id
               :on-finished on-finished})

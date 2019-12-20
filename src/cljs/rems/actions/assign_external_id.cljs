@@ -19,7 +19,8 @@
  ::send
  (fn [_ [_ {:keys [application-id external-id on-finished]}]]
    (command! :application.command/assign-external-id
-             {:application-id application-id :external-id (str/trim external-id)}
+             {:application-id application-id
+              :external-id (str/trim external-id)}
              {:description [text :t.actions/assign-external-id]
               :collapse action-form-id
               :on-finished on-finished})

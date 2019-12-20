@@ -17,7 +17,9 @@
  ::send-decide
  (fn [_ [_ {:keys [application-id comment decision on-finished]}]]
    (command! :application.command/decide
-             {:application-id application-id :decision decision :comment comment}
+             {:application-id application-id
+              :decision decision
+              :comment comment}
              {:description [text :t.actions/decide]
               :collapse action-form-id
               :on-finished on-finished})

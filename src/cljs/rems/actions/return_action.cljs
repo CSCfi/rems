@@ -17,7 +17,8 @@
  ::send-return
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
    (command! :application.command/return
-             {:application-id application-id :comment comment}
+             {:application-id application-id
+              :comment comment}
              {:description [text :t.actions/return]
               :collapse action-form-id
               :on-finished on-finished})
