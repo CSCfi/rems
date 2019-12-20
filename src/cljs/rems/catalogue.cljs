@@ -4,7 +4,7 @@
             [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
-            [rems.catalogue-util :refer [urn-catalogue-item-link urn-catalogue-item?]]
+            [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.flash-message :as flash-message]
             [rems.guide-functions]
             [rems.roles :as roles]
@@ -81,8 +81,7 @@
 ;;;; UI
 
 (defn- catalogue-item-more-info [item language config]
-  (let [urn-link (when (urn-catalogue-item? item)
-                   (urn-catalogue-item-link item config))
+  (let [urn-link (urn-catalogue-item-link item config)
         more-info-link (get-in item [:localizations language :infourl])
         link (or more-info-link
                  urn-link)]
