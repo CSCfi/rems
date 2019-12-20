@@ -46,8 +46,9 @@
     (-> (redirect "/") ; TODO Could redirect with state param
         (assoc :session (:session request))
         (assoc-in [:session :identity] {:eppn (:sub oidc-data)
-                                        ;; NOTE Some IdPs don't provide name, but family_name works
-                                        :commonName (some oidc-data [:name :family_name])
+                                        ;; need to maintain a fallback list of name attributes since identity
+                                        ;; providers differ in what they give us
+                                        :commonName (some oidc-data [:name :unique_name :family_name])
                                         :mail (:email oidc-data)}))))
 
 ; TODO Logout. Federated or not?
