@@ -1,21 +1,16 @@
 (ns ^:integration rems.test-db
   "Namespace for tests that use an actual database."
-  (:require [cheshire.core :as cheshire]
-            [clj-time.core :as time]
-            [clojure.string :refer [split-lines]]
+  (:require [clojure.string :refer [split-lines]]
             [clojure.test :refer :all]
             [rems.config]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
-            [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
-            [rems.db.users :as users]
-            [rems.testing-tempura :refer [fake-tempura-fixture]]
-            [rems.util :refer [get-user-id]])
+            [rems.testing-tempura :refer [fake-tempura-fixture]])
   (:import (rems.auth ForbiddenException)))
 
 (use-fixtures :once fake-tempura-fixture test-db-fixture)
