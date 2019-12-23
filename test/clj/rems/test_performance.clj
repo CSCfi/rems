@@ -3,7 +3,7 @@
             [criterium.core :as criterium]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
-            [rems.api.applications :as applications-api]
+            [rems.api.services.todos :as todos]
             [rems.db.applications :as applications]
             [rems.db.events :as events])
   (:import [java.util Locale]))
@@ -51,7 +51,7 @@
         test-get-all-application-roles #(doall (applications/get-all-application-roles "developer"))
         test-get-my-applications #(doall (applications/get-my-applications "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
-        test-get-todos #(doall (applications-api/get-todos "developer"))
+        test-get-todos #(doall (todos/get-todos "developer"))
         no-cache (fn []
                    (mount/stop #'applications/all-applications-cache))
         cached (fn []
