@@ -5,6 +5,8 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
+            [rems.api.services.todos :as todos]
+            [rems.api.services.workflow :as workflow]
             [rems.application.model]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
@@ -20,12 +22,23 @@
     (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
                               (applications/get-unrestricted-application app-id))))
 
-(defn generate-emails! [new-events]
+(defn- enqueue-email! [email]
+  (outbox/put! {:outbox/type :email
+                :outbox/email email
+                :outbox/deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))}))
+
+(defn generate-event-emails! [new-events]
   (doseq [event new-events
           email (event-to-emails event)]
-    (outbox/put! {:outbox/type :email
-                  :outbox/email email
-                  :outbox/deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))})))
+    (enqueue-email! email)))
+
+;; TODO: scheduler or API+cron
+(defn generate-handler-reminder-emails! []
+  (doseq [email (->> (workflow/get-handlers)
+                     (map (fn [handler]
+                            (template/handler-reminder-email :en handler (todos/get-todos (:userid handler)))))
+                     (remove nil?))]
+    (enqueue-email! email)))
 
 ;;; Email poller
 
