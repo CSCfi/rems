@@ -154,6 +154,7 @@
                           :id "Id"
                           :resources "Resources"
                           :state "State"}
+                 :handlers "Handlers"
                  :id "Id"
                  :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
                  :last-activity "Last activity"
