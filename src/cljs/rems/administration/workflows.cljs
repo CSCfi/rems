@@ -1,6 +1,6 @@
 (ns rems.administration.workflows
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.status-flags :as status-flags]
             [rems.administration.workflow :as workflow]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
@@ -110,7 +110,7 @@
 ;; TODO Very similar components are used in here, licenses, forms, resources
 (defn workflows-page []
   (into [:div
-         [administration-navigator-container]
+         [administration/navigator-container]
          [document-title (text :t.administration/workflows)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

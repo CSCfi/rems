@@ -1,7 +1,7 @@
 (ns rems.administration.license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
@@ -131,7 +131,7 @@
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
-       [administration-navigator-container]
+       [administration/navigator-container]
        [document-title (text :t.administration/license)]
        [flash-message/component :top]
        (if @loading?

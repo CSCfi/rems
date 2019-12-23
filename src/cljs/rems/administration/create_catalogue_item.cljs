@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [text-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
@@ -284,7 +284,7 @@
         loading? @(rf/subscribe [::loading?])
         form @(rf/subscribe [::form])]
     [:div
-     [administration-navigator-container]
+     [administration/navigator-container]
      [document-title (page-title editing?)]
      [flash-message/component :top]
      [collapsible/component

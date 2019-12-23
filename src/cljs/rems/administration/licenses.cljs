@@ -1,6 +1,6 @@
 (ns rems.administration.licenses
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
@@ -108,7 +108,7 @@
 
 (defn licenses-page []
   (into [:div
-         [administration-navigator-container]
+         [administration/navigator-container]
          [document-title (text :t.administration/licenses)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

@@ -1,7 +1,7 @@
 (ns rems.administration.blacklist
   "Implements both a blacklist component and the blacklist-page"
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.application-util]
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
@@ -242,7 +242,7 @@
 
 (defn blacklist-page []
   [:div
-   [administration-navigator-container]
+   [administration/navigator-container]
    [atoms/document-title (text :t.administration/blacklist)]
    [flash-message/component :top]
    [blacklist]])

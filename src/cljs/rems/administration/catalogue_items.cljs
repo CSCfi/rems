@@ -1,7 +1,7 @@
 (ns rems.administration.catalogue-items
   (:require [cljs-time.coerce :as time-coerce]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.catalogue-item :as catalogue-item]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
@@ -10,7 +10,7 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title]]
-            [rems.util :refer [navigate! fetch put!]] ))
+            [rems.util :refer [navigate! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -82,7 +82,7 @@
    {:disabled (when (empty? items) :disabled)
     :on-click (fn []
                 (rf/dispatch [:rems.administration.change-catalogue-item-form/enter-page items])
-                (navigate! "/administration/catalogue-items/change-form") )}
+                (navigate! "/administration/catalogue-items/change-form"))}
    (text :t.administration/change-form)])
 
 (defn- view-button [catalogue-item-id]
@@ -165,7 +165,7 @@
 
 (defn catalogue-items-page []
   (into [:div
-         [administration-navigator-container]
+         [administration/navigator-container]
          [document-title (text :t.administration/catalogue-items)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

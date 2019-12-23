@@ -1,6 +1,6 @@
 (ns rems.administration.form
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.create-form :refer [form-preview]]
             [rems.administration.status-flags :as status-flags]
@@ -92,7 +92,7 @@
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
-       [administration-navigator-container]
+       [administration/navigator-container]
        [document-title (text :t.administration/form)]
        [flash-message/component :top]
        (if @loading?

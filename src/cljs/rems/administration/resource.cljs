@@ -1,6 +1,6 @@
 (ns rems.administration.resource
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.blacklist :as blacklist]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
@@ -75,7 +75,7 @@
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     [:div
-     [administration-navigator-container]
+     [administration/navigator-container]
      [document-title (text :t.administration/resource)]
      [flash-message/component :top]
      (if @loading?

@@ -1,7 +1,7 @@
 (ns rems.administration.create-license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
             [rems.atoms :as atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
@@ -201,7 +201,7 @@
 (defn create-license-page []
   (let [languages @(rf/subscribe [:languages])]
     [:div
-     [administration-navigator-container]
+     [administration/navigator-container]
      [document-title (text :t.administration/create-license)]
      [flash-message/component :top]
      [collapsible/component

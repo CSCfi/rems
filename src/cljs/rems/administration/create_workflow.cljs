@@ -1,7 +1,7 @@
 (ns rems.administration.create-workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [radio-button-group text-field]]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
@@ -228,7 +228,7 @@
                 (text :t.administration/edit-workflow)
                 (text :t.administration/create-workflow))]
     [:div
-     [administration-navigator-container]
+     [administration/navigator-container]
      [document-title title]
      [flash-message/component :top]
      [collapsible/component

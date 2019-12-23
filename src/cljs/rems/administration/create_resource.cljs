@@ -1,7 +1,7 @@
 (ns rems.administration.create-resource
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [text-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
@@ -126,7 +126,7 @@
   (let [loading? @(rf/subscribe [::loading?])
         form @(rf/subscribe [::form])]
     [:div
-     [administration-navigator-container]
+     [administration/navigator-container]
      [document-title (text :t.administration/create-resource)]
      [flash-message/component :top]
      [collapsible/component

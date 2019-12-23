@@ -1,6 +1,6 @@
 (ns rems.administration.forms
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.form :as form]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
@@ -117,7 +117,7 @@
 
 (defn forms-page []
   (into [:div
-         [administration-navigator-container]
+         [administration/navigator-container]
          [document-title (text :t.administration/forms)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

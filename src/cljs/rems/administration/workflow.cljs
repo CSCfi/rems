@@ -1,7 +1,7 @@
 (ns rems.administration.workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
             [rems.administration.status-flags :as status-flags]
@@ -83,7 +83,7 @@
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
-       [administration-navigator-container]
+       [administration/navigator-container]
        [document-title (text :t.administration/workflow)]
        [flash-message/component :top]
        (if @loading?

@@ -1,6 +1,6 @@
 (ns rems.administration.change-catalogue-item-form
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
@@ -134,7 +134,7 @@
     (when (empty? catalogue-items)
       (navigate! "/administration/catalogue-items"))
     [:div
-     [administration-navigator-container]
+     [administration/navigator-container]
      [document-title (text :t.administration/change-form)]
      [flash-message/component :top]
      [:div
