@@ -84,7 +84,7 @@
                           value]})
            :todo (let [value (localize-todo (:application/todo app))]
                    {:value value
-                    :td [:td.state
+                    :td [:td.todo
                          {:class (str (when (current-user-needs-to-do-something? app)
                                         "text-highlight ")
                                       (when (:application/past-deadline app)
@@ -95,7 +95,10 @@
                        :display-value (localize-time value)})
            :submitted (let [value (:application/first-submitted app)]
                         {:value value
-                         :display-value (localize-time value)})
+                         :td [:td.submitted
+                              {:class (when (:application/past-deadline app)
+                                        "text-highlight text-danger")}
+                              (localize-time value)]})
            :last-activity (let [value (:application/last-activity app)]
                             {:value value
                              :display-value (localize-time value)})
