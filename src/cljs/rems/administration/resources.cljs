@@ -14,7 +14,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:dispatch-n [[::fetch-resources]
-                 [:rems.table/reset]]}))
+                 [:rems.table/reset]
+                 [:rems.administration.administration/remember-current-page]]}))
 
 (rf/reg-event-fx
  ::fetch-resources

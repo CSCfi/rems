@@ -1,9 +1,22 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :as atoms]
             [rems.navbar :as navbar]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
+
+(rf/reg-event-db
+ ::remember-current-page
+ (fn [db _]
+   (assoc db ::previous-page js/window.location.href)))
+
+(rf/reg-sub ::previous-page (fn [db] (::previous-page db)))
+
+(defn back-button [href]
+  (let [previous-page @(rf/subscribe [::previous-page])]
+    [atoms/link {:class "btn btn-secondary"}
+     (or previous-page href)
+     (text :t.administration/back)]))
 
 (defn navigator []
   [:div.navbar.mb-4.mr-auto.ml-auto

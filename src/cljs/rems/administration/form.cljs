@@ -49,11 +49,6 @@
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
-(defn- back-button []
-  [atoms/link {:class "btn btn-secondary"}
-   "/administration/forms"
-   (text :t.administration/back)])
-
 (defn edit-button [id]
   [:button.btn.btn-primary
    {:type :button
@@ -78,7 +73,7 @@
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? form)}]]]}]
    (let [id (:form/id form)]
      [:div.col.commands
-      [back-button]
+      [administration/back-button "/administration/forms"]
       [roles/when roles/show-admin-edit-buttons?
        [edit-button id]
        [copy-as-new-button id]

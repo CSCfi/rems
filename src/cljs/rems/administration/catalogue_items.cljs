@@ -17,7 +17,8 @@
  (fn [{:keys [db]}]
    {:db (assoc db ::selected-items (or (::selected-items db) #{}))
     :dispatch-n [[::fetch-catalogue]
-                 [:rems.table/reset]]}))
+                 [:rems.table/reset]
+                 [:rems.administration.administration/remember-current-page]]}))
 
 (rf/reg-event-fx
  ::fetch-catalogue

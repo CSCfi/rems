@@ -34,7 +34,7 @@
 (rf/reg-event-fx
  ::change-catalogue-item-form
  (fn [{:keys [db]} [_ catalogue-item-id form on-success]]
-   (post! (str  "/api/catalogue-items/" catalogue-item-id "/change-form")
+   (post! (str "/api/catalogue-items/" catalogue-item-id "/change-form")
           {:params {:form (:form/id form)}
            :handler (fn [result]
                       (rf/dispatch [::update-catalogue-item catalogue-item-id (:catalogue-item-id result) form])
@@ -76,11 +76,6 @@
                   (empty? items)
                   (all-items-have-the-form-already? items form))}
    (text :t.administration/change)])
-
-(defn- back-button []
-  [atoms/link {:class "btn btn-primary"}
-   (str "/administration/catalogue-items")
-   (text :t.administration/back)])
 
 (defn- to-catalogue-item [catalogue-item-id]
   [atoms/link {:class "btn btn-primary"}
@@ -142,5 +137,5 @@
       [catalogue-items-table]
       [form-select]
       [:div.col.commands
-       [back-button]
+       [administration/back-button "/administration/catalogue-items"]
        [change-catalogue-item-form-button catalogue-items @(rf/subscribe [::form])]]]]))

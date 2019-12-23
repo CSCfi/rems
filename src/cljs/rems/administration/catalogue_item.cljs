@@ -35,11 +35,6 @@
 (rf/reg-sub ::catalogue-item (fn [db _] (::catalogue-item db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- back-button []
-  [atoms/link {:class "btn btn-secondary"}
-   "/administration/catalogue-items"
-   (text :t.administration/back)])
-
 (defn edit-button [id]
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/catalogue-items/edit/" id)
@@ -60,7 +55,7 @@
                          [inline-info-field (str (text :t.catalogue/more-info) suffix)
                           (let [infourl (:infourl localization)]
                             (when-not (empty? infourl)
-                              [:a {:href infourl  :target :_blank} infourl " " [atoms/external-link]]))]]))
+                              [:a {:href infourl :target :_blank} infourl " " [atoms/external-link]]))]]))
                     [[inline-info-field (text :t.administration/resource)
                       [atoms/link nil
                        (str "/administration/resources/" (:resource-id catalogue-item))
@@ -78,7 +73,7 @@
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
    (let [id (:id catalogue-item)]
      [:div.col.commands
-      [back-button]
+      [administration/back-button "/administration/catalogue-items"]
       [roles/when roles/show-admin-edit-buttons?
        [edit-button id]
        [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page id]])]

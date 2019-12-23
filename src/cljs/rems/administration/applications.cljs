@@ -9,7 +9,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {}))
+   {:dispatch [:rems.administration.administration/remember-current-page]}))
 
 (defn- export-applications-button []
   [atoms/link {:class "btn btn-primary"}
