@@ -283,6 +283,9 @@
           :decision-requested {:subject "(%3) Decision request"
                                :message "Dear %1,\n\n%2 has requested your decision on application %3, submitted by %4.\n\nYou can review application at %6"}
           :footer "\n\nPlease do not reply to this automatically generated message."
+          :handler-reminder {:application "%1, submitted by %2"
+                             :message "Dear %1,\n\nThe following applications are in progress and may require your actions:\n\n%2\n\nYou can view the applications at %3"
+                             :subject "Applications in progress"}
           :member-added {:subject "Added as a member of an application %3"
                          :message "Dear %1,\n\nYou've been added as a member of application %3, submitted by %4.\n\nYou can view application and accept the terms of use at %6"}
           :member-invited {:subject "Invitation to participate in application %3"
