@@ -110,7 +110,7 @@
 ;; TODO Very similar components are used in here, licenses, forms, resources
 (defn workflows-page []
   (into [:div
-         [administration/navigator-container]
+         [administration/navigator]
          [document-title (text :t.administration/workflows)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

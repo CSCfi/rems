@@ -228,7 +228,7 @@
                 (text :t.administration/edit-workflow)
                 (text :t.administration/create-workflow))]
     [:div
-     [administration/navigator-container]
+     [administration/navigator]
      [document-title title]
      [flash-message/component :top]
      [collapsible/component

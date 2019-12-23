@@ -90,7 +90,7 @@
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
-       [administration/navigator-container]
+       [administration/navigator]
        [document-title (text :t.administration/catalogue-item)]
        [flash-message/component :top]
        (if @loading?

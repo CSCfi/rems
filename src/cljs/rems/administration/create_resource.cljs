@@ -126,7 +126,7 @@
   (let [loading? @(rf/subscribe [::loading?])
         form @(rf/subscribe [::form])]
     [:div
-     [administration/navigator-container]
+     [administration/navigator]
      [document-title (text :t.administration/create-resource)]
      [flash-message/component :top]
      [collapsible/component

@@ -134,7 +134,7 @@
     (when (empty? catalogue-items)
       (navigate! "/administration/catalogue-items"))
     [:div
-     [administration/navigator-container]
+     [administration/navigator]
      [document-title (text :t.administration/change-form)]
      [flash-message/component :top]
      [:div

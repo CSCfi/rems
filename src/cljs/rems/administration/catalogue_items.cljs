@@ -165,7 +165,7 @@
 
 (defn catalogue-items-page []
   (into [:div
-         [administration/navigator-container]
+         [administration/navigator]
          [document-title (text :t.administration/catalogue-items)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

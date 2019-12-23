@@ -497,7 +497,7 @@
         edit-form? @(rf/subscribe [::edit-form?])
         loading-form? @(rf/subscribe [::loading-form?])]
     [:div
-     [administration/navigator-container]
+     [administration/navigator]
      [document-title (page-title edit-form?)]
      [flash-message/component :top]
      (if loading-form?

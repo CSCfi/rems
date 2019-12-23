@@ -108,7 +108,7 @@
 
 (defn licenses-page []
   (into [:div
-         [administration/navigator-container]
+         [administration/navigator]
          [document-title (text :t.administration/licenses)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

@@ -117,7 +117,7 @@
 
 (defn forms-page []
   (into [:div
-         [administration/navigator-container]
+         [administration/navigator]
          [document-title (text :t.administration/forms)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

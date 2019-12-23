@@ -21,7 +21,7 @@
 
 (defn admin-applications-page []
   [:div
-   [administration/navigator-container]
+   [administration/navigator]
    [atoms/document-title (text :t.administration/applications)]
    [flash-message/component :top]
    [admin-applications]])

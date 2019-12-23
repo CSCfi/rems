@@ -201,7 +201,7 @@
 (defn create-license-page []
   (let [languages @(rf/subscribe [:languages])]
     [:div
-     [administration/navigator-container]
+     [administration/navigator]
      [document-title (text :t.administration/create-license)]
      [flash-message/component :top]
      [collapsible/component

@@ -76,7 +76,7 @@
   (let [loading? @(rf/subscribe [::loading?])
         form-id @(rf/subscribe [::selected-form-id])]
     [:div
-     [administration/navigator-container]
+     [administration/navigator]
      [atoms/document-title (text :t.administration/export-applications)]
      [flash-message/component :top]
      [collapsible/component

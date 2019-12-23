@@ -242,7 +242,7 @@
 
 (defn blacklist-page []
   [:div
-   [administration/navigator-container]
+   [administration/navigator]
    [atoms/document-title (text :t.administration/blacklist)]
    [flash-message/component :top]
    [blacklist]])
