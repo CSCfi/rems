@@ -369,3 +369,35 @@
                 :subject "(2001/3, \"Application title\") Uusi hakemus"
                 :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta osoitteessa http://example.com/application/7\n\nTämä on automaattinen viesti. Älä vastaa."}
                (email-to "handler" mails)))))))
+
+(deftest test-handler-reminder-email
+  (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")]
+    (testing "no applications"
+      (is (empty? (template/handler-reminder-email
+                   :en
+                   {:userid "handler"
+                    :name "Hanna Handler"
+                    :email "handler@example.com"}
+                   []))))
+
+    (testing "some applications"
+      (is (= {:to-user "handler"
+              :subject "Applications in progress"
+              :body "Dear Hanna Handler,\n\nThe following applications are in progress and may require your actions:\n\n2001/3, \"Application title 1\", submitted by Alice Applicant\n2001/5, \"Application title 2\", submitted by Arnold Applicant\n\nYou can view the applications at http://example.com/actions"}
+             (template/handler-reminder-email
+              :en
+              {:userid "handler"
+               :name "Hanna Handler"
+               :email "handler@example.com"}
+              [{:application/id 1
+                :application/external-id "2001/3"
+                :application/description "Application title 1"
+                :application/applicant {:userid "alice"
+                                        :email "alice@example.com"
+                                        :name "Alice Applicant"}}
+               {:application/id 2
+                :application/external-id "2001/5"
+                :application/description "Application title 2"
+                :application/applicant {:userid "arnold"
+                                        :email "arnold@example.com"
+                                        :name "Arnold Applicant"}}]))))))

@@ -36,7 +36,7 @@
 (defn run-process-managers [new-events]
   (concat
    (revokes-to-blacklist new-events)
-   (email/generate-emails! new-events)
+   (email/generate-event-emails! new-events)
    (run-entitlements new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)))
