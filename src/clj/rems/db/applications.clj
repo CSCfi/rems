@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.core.cache :as cache]
+  (:require [clj-time.core :as time]
+            [clojure.core.cache :as cache]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
@@ -10,6 +11,7 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
             [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
@@ -64,6 +66,8 @@
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template form/get-form-template
    :get-catalogue-item catalogue/get-localized-catalogue-item
+   :get-config (fn [] env)
+   :get-current-time time/now
    :get-license licenses/get-license
    :get-user users/get-user
    :get-users-with-role users/get-users-with-role

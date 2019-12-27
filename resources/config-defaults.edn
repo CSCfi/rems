@@ -91,5 +91,9 @@
  ;; The character used as the separator in csv files.
  :csv-separator ","
 
+ ;; Optional, the number of days until the deadline for making a decision
+ ;; on an application, starting from the first submission.
+ :application-deadline-days nil
+
  ;; Experimental features
  :enable-pdf-api false}

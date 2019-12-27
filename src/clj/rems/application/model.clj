@@ -487,10 +487,21 @@
                                                                            :field/value value})
                                                                         current-answers))))))
 
+(defn enrich-past-deadline [application get-config get-current-time]
+  (let [days ((get-config) :application-deadline-days)]
+    (if (and days
+             (:application/first-submitted application))
+      (assoc application :application/past-deadline
+             (-> (:application/first-submitted application)
+                 (.plusDays days)
+                 (.isBefore (get-current-time))))
+      application)))
+
 (defn enrich-with-injections [application {:keys [blacklisted?
                                                   get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
-                                                  get-attachments-for-application]}]
+                                                  get-attachments-for-application get-current-time
+                                                  get-config]}]
   (-> application
       enrich-answers
       (update :application/form enrich-form get-form-template)
@@ -503,6 +514,7 @@
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)
+      (enrich-past-deadline get-config get-current-time)
       (enrich-super-users get-users-with-role)))
 
 (defn build-application-view [events injections]
