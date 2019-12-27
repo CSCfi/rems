@@ -5,7 +5,6 @@
             [luminus.http-server]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
-            [rems.application.approver-bot :as approver-bot]
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
