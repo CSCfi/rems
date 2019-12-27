@@ -1059,7 +1059,8 @@
                                  :workflow/type :workflow/master
                                  :workflow.dynamic/handlers [{:userid "handler"
                                                               :name "Handler"
-                                                              :email "handler@example.com"}]}}
+                                                              :email "handler@example.com"
+                                                              :handler/active? true}]}}
          (model/enrich-with-injections approved-application injections))))
 
 (deftest test-enrich-event
@@ -1172,6 +1173,24 @@
                                              {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
            (model/enrich-answers {:rems.application.model/previous-submitted-answers {1 "a" 2 "b"}
                                   :rems.application.model/submitted-answers {1 "aa" 2 "bb"}})))))
+
+(deftest test-enrich-active-handlers
+  (let [application {:application/workflow {:workflow/id 1}
+                     :application/events [{:event/actor "applicant"} ; should ignore active non-handlers
+                                          {:event/actor "edward"}
+                                          {:event/actor "reviewer"}]}
+        get-workflow {1 {:workflow {:handlers [{:userid "alphonse" ; should ignore inactive handlers
+                                                :name "Alphonse Elric"}
+                                               {:userid "edward"
+                                                :name "Edward Elric"}]}}}]
+    (is (= {:application/workflow {:workflow/id 1
+                                   :workflow.dynamic/handlers [{:userid "alphonse"
+                                                                :name "Alphonse Elric"}
+                                                               {:userid "edward"
+                                                                :name "Edward Elric"
+                                                                :handler/active? true}]}}
+           (-> (model/enrich-workflow-handlers application get-workflow)
+               (select-keys [:application/workflow]))))))
 
 (deftest test-enrich-past-deadline
   (testing "non-submitted application"

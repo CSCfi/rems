@@ -460,7 +460,13 @@
 
 (defn enrich-workflow-handlers [application get-workflow]
   (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
-        handlers (get-in workflow [:workflow :handlers])]
+        handlers (get-in workflow [:workflow :handlers])
+        active-users (set (map :event/actor (:application/events application)))
+        handlers (map (fn [handler]
+                        (if (contains? active-users (:userid handler))
+                          (assoc handler :handler/active? true)
+                          handler))
+                      handlers)]
     (-> application
         (assoc-in [:application/workflow :workflow.dynamic/handlers] handlers)
         (permissions/give-role-to-users :handler (mapv :userid handlers)))))

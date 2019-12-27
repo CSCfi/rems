@@ -719,7 +719,7 @@
    {:id "previous-applications"
     :title (text :t.form/previous-applications)
     :collapse [application-list/component {:applications ::previous-applications-except-current
-                                           :hidden-columns #{:created :todo :last-activity}
+                                           :hidden-columns #{:created :handlers :todo :last-activity}
                                            :default-sort-column :submitted
                                            :default-sort-order :desc}]}])
 

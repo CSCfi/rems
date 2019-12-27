@@ -72,10 +72,15 @@
            :description {:value (:application/description app)
                          :td [:td.description (format-description app)]}
            :resource {:value (format-catalogue-items app)}
-           :applicant
-           (let [applicant (application-util/get-applicant-name app)]
-             {:value applicant
-              :td [:td.applicant (format-applicant applicant)]})
+           :applicant (let [applicant (application-util/get-applicant-name app)]
+                        {:value applicant
+                         :td [:td.applicant (format-applicant applicant)]})
+           :handlers (let [handlers (->> (get-in app [:application/workflow :workflow.dynamic/handlers])
+                                         (filter :handler/active?)
+                                         (map application-util/get-member-name)
+                                         (sort)
+                                         (str/join ", "))]
+                       {:value handlers})
            :state (let [value (localize-state (:application/state app))]
                     {:value value
                      :td [:td.state
@@ -117,6 +122,8 @@
                       :title (text :t.applications/resource)}
                      {:key :applicant
                       :title (text :t.applications/applicant)}
+                     {:key :handlers
+                      :title (text :t.applications/handlers)}
                      {:key :state
                       :title (text :t.applications/state)}
                      {:key :todo
@@ -140,7 +147,7 @@
 (defn- application-list-defaults []
   (let [config @(rf/subscribe [:rems.config/config])
         id-column (get config :application-id-column :id)]
-    {:visible-columns #{id-column :description :resource :applicant :state :todo :created :submitted :last-activity :view}
+    {:visible-columns #{id-column :description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view}
      :default-sort-column :created
      :default-sort-order :desc}))
 

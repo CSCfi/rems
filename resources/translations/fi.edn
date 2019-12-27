@@ -152,6 +152,7 @@
                           :id "Tunniste"
                           :resources "Resurssit"
                           :state "Tila"}
+                 :handlers "Käsittelijät"
                  :id "Tunniste"
                  :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
                  :last-activity "Muokattu"
