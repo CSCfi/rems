@@ -24,4 +24,15 @@
         (let [resp (-> (request :get "/api/blacklist/remove")
                        (authenticate "42" "handler")
                        handler)]
-          (is (response-is-not-found? resp)))))))
+          (is (response-is-not-found? resp))))))
+  (testing "API key roles"
+    (testing "all available"
+      (let [resp (-> (request :get "/api/forms")
+                     (authenticate "42" "owner")
+                     handler)]
+        (is (= 200 (:status resp)))))
+    (testing "handler and owner roles unavailable"
+      (let [resp (-> (request :get "/api/forms")
+                     (authenticate "43" "owner")
+                     handler)]
+        (is (response-is-forbidden? resp))))))

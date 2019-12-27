@@ -68,13 +68,19 @@
 
 (defn wrap-context [handler]
   (fn [request]
-    (binding [context/*root-path* (calculate-root-path request)
-              context/*roles* (cond-> #{}
-                                context/*user* (set/union (roles/get-roles (getx-user-id))
-                                                          (applications/get-all-application-roles (getx-user-id)))
-                                (:uses-api-key? request) (conj :api-key))]
-      (with-mdc {:roles (str/join " " (sort context/*roles*))}
-        (handler request)))))
+    (let [unavailable-roles (-> request
+                                auth/get-api-key
+                                api-key/unavailable-roles)]
+      (binding [context/*root-path* (calculate-root-path request)
+                context/*roles* (cond-> #{}
+                                  context/*user* (set/union
+                                                  (set/difference
+                                                   (set/union (roles/get-roles (getx-user-id))
+                                                              (applications/get-all-application-roles (getx-user-id)))
+                                                   unavailable-roles))
+                                  (:uses-api-key? request) (conj :api-key))]
+        (with-mdc {:roles (str/join " " (sort context/*roles*))}
+          (handler request))))))
 
 (defn wrap-role-headers [handler]
   (fn [request]
