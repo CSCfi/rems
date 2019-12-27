@@ -1,7 +1,7 @@
 (ns rems.administration.license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
@@ -34,11 +34,6 @@
 
 (rf/reg-sub ::license (fn [db _] (::license db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
-
-(defn- back-button []
-  [atoms/link {:class "btn btn-secondary"}
-   "/administration/licenses"
-   (text :t.administration/back)])
 
 (defn- license-view [license language]
   [:div.spaced-vertically-3
@@ -76,7 +71,7 @@
                     [[inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? license)}]]]))}]
    (let [id (:id license)]
      [:div.col.commands
-      [back-button]
+      [administration/back-button "/administration/licenses"]
       [roles/when roles/show-admin-edit-buttons?
        [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]]])])
@@ -131,7 +126,7 @@
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
-       [administration-navigator-container]
+       [administration/navigator]
        [document-title (text :t.administration/license)]
        [flash-message/component :top]
        (if @loading?

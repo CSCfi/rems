@@ -1,6 +1,6 @@
 (ns rems.administration.licenses
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
@@ -14,7 +14,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:dispatch-n [[::fetch-licenses]
-                 [:rems.table/reset]]}))
+                 [:rems.table/reset]
+                 [:rems.administration.administration/remember-current-page]]}))
 
 (rf/reg-event-db
  ::fetch-licenses
@@ -108,7 +109,7 @@
 
 (defn licenses-page []
   (into [:div
-         [administration-navigator-container]
+         [administration/navigator]
          [document-title (text :t.administration/licenses)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])
