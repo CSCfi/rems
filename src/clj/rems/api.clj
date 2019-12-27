@@ -8,6 +8,7 @@
             [rems.api.blacklist :refer [blacklist-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
+            [rems.api.email :refer [email-api]]
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.extra-pages :refer [extra-pages-api]]
             [rems.api.forms :refer [forms-api]]
@@ -124,6 +125,7 @@
       blacklist-api
       catalogue-api
       catalogue-items-api
+      email-api
       entitlements-api
       extra-pages-api
       forms-api
