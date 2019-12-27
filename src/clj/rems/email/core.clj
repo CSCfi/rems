@@ -11,6 +11,7 @@
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
+            [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.email.template :as template]
             [rems.scheduler :as scheduler])
@@ -36,7 +37,8 @@
 (defn generate-handler-reminder-emails! []
   (doseq [email (->> (workflow/get-handlers)
                      (map (fn [handler]
-                            (template/handler-reminder-email :en handler (todos/get-todos (:userid handler)))))
+                            (let [lang (:language (user-settings/get-user-settings (:userid handler)))]
+                              (template/handler-reminder-email lang handler (todos/get-todos (:userid handler))))))
                      (remove nil?))]
     (enqueue-email! email)))
 

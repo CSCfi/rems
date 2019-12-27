@@ -362,10 +362,7 @@
                (email-to "handler" mails)))))))
 
 (deftest test-handler-reminder-email
-  (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
-                user-settings/get-user-settings (fn [userid]
-                                                  (assert (string? userid))
-                                                  {:language :en})]
+  (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")]
     (testing "no applications"
       (is (empty? (template/handler-reminder-email
                    :en
