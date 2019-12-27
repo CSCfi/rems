@@ -1,7 +1,7 @@
 (ns rems.administration.blacklist
   "Implements both a blacklist component and the blacklist-page"
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.application-util]
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
@@ -15,7 +15,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:dispatch-n [[::fetch-blacklist {}]
-                 [:rems.table/reset]]}))
+                 [:rems.table/reset]
+                 [:rems.administration.administration/remember-current-page]]}))
 
 (rf/reg-event-fx
  ::fetch-blacklist
@@ -242,7 +243,7 @@
 
 (defn blacklist-page []
   [:div
-   [administration-navigator-container]
+   [administration/navigator]
    [atoms/document-title (text :t.administration/blacklist)]
    [flash-message/component :top]
    [blacklist]])

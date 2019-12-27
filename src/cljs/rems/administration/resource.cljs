@@ -1,6 +1,6 @@
 (ns rems.administration.resource
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.blacklist :as blacklist]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
@@ -39,11 +39,6 @@
 (rf/reg-sub ::resource (fn [db _] (::resource db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- back-button []
-  [atoms/link {:class "btn btn-secondary"}
-   "/administration/resources"
-   (text :t.administration/back)])
-
 (defn resource-blacklist []
   [collapsible/component
    {:id "blacklist"
@@ -65,7 +60,7 @@
    [resource-blacklist]
    (let [id (:id resource)]
      [:div.col.commands
-      [back-button]
+      [administration/back-button "/administration/resources"]
       [roles/when roles/show-admin-edit-buttons?
        [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]]])])
@@ -75,7 +70,7 @@
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     [:div
-     [administration-navigator-container]
+     [administration/navigator]
      [document-title (text :t.administration/resource)]
      [flash-message/component :top]
      (if @loading?

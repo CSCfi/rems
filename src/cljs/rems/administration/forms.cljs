@@ -1,6 +1,6 @@
 (ns rems.administration.forms
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.form :as form]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
@@ -15,7 +15,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:dispatch-n [[::fetch-forms]
-                 [:rems.table/reset]]}))
+                 [:rems.table/reset]
+                 [:rems.administration.administration/remember-current-page]]}))
 
 (rf/reg-event-db
  ::fetch-forms
@@ -117,7 +118,7 @@
 
 (defn forms-page []
   (into [:div
-         [administration-navigator-container]
+         [administration/navigator]
          [document-title (text :t.administration/forms)]
          [flash-message/component :top]]
         (if @(rf/subscribe [::loading?])

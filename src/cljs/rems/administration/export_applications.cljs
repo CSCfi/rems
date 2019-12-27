@@ -1,7 +1,7 @@
 (ns rems.administration.export-applications
   "Page for exporting applications."
   (:require [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.atoms :as atoms]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
@@ -76,7 +76,7 @@
   (let [loading? @(rf/subscribe [::loading?])
         form-id @(rf/subscribe [::selected-form-id])]
     [:div
-     [administration-navigator-container]
+     [administration/navigator]
      [atoms/document-title (text :t.administration/export-applications)]
      [flash-message/component :top]
      [collapsible/component
