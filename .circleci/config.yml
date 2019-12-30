@@ -27,9 +27,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "project.clj" }}
-          # fallback to using the latest cache if no exact match is found
-          - v2-dependencies-
+            - v2-dependencies-{{ checksum "project.clj" }}
+            # fallback to using the latest cache if no exact match is found
+            - v2-dependencies-
 
       # upgrade node
       # TODO: could upgrade node using NVM but it seems poorly documented and a hassle
@@ -54,7 +54,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "project.clj" }}
+            - v2-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
 
@@ -64,7 +64,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "project.clj" }}
+            - v2-dependencies-{{ checksum "project.clj" }}
       # killall is a workaround for apt failing with: Could not get lock /var/lib/apt/lists/lock
       - run: sudo killall -9 apt-get || true; sudo apt update
 
@@ -87,7 +87,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "project.clj" }}
+            - v2-dependencies-{{ checksum "project.clj" }}
       - run: lein doo chrome-headless test once
 
   war:
@@ -96,7 +96,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "project.clj" }}
+            - v2-dependencies-{{ checksum "project.clj" }}
       - run: lein uberwar
       - store_artifacts:
           path: target/uberjar/rems.war
@@ -117,23 +117,23 @@ workflows:
   version: 2
   build-test-and-deploy:
     jobs:
-        - build
-        - without-db:
-            requires:
-              - build
-        - test:
-            requires:
-              - build
-        - doo:
-            requires:
-              - build
-        - war:
-            requires:
-              - build
-        - ok:
-            requires:
-              - build
-              - without-db
-              - test
-              - doo
-              - war
+      - build
+      - without-db:
+          requires:
+            - build
+      - test:
+          requires:
+            - build
+      - doo:
+          requires:
+            - build
+      - war:
+          requires:
+            - build
+      - ok:
+          requires:
+            - build
+            - without-db
+            - test
+            - doo
+            - war
