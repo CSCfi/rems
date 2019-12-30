@@ -79,7 +79,7 @@
 (defn wrap-role-headers [handler]
   (fn [request]
     (cond-> (handler request)
-      (not (empty? context/*roles*)) (header "x-rems-roles" (str/join " " (map name context/*roles*))))))
+      (not (empty? context/*roles*)) (header "x-rems-roles" (str/join " " (sort (map name context/*roles*)))))))
 
 (deftest test-wrap-role-headers
   (testing "no roles"
@@ -94,8 +94,8 @@
            (binding [context/*roles* #{:foo}]
              ((wrap-role-headers identity) {})))))
   (testing "multiple role"
-    (is (= {:headers {"x-rems-roles" "foo bar"}}
-           (binding [context/*roles* [:foo :bar]]
+    (is (= {:headers {"x-rems-roles" "bar foo"}}
+           (binding [context/*roles* #{:foo :bar}]
              ((wrap-role-headers identity) {}))))))
 
 (defn wrap-internal-error [handler]
