@@ -12,4 +12,10 @@
       :summary "Send reminders about open applications to all handlers."
       :roles #{:api-key}
       (email/generate-handler-reminder-emails!)
+      (ok "OK"))
+
+    (POST "/send-reviewer-reminder" []
+      :summary "Send reminders about applications pending review."
+      :roles #{:api-key}
+      (email/generate-reviewer-reminder-emails!)
       (ok "OK"))))
