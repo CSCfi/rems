@@ -24,7 +24,7 @@
             [rems.db.workflow :as workflow]
             [rems.permissions :as permissions]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [atom? getx]])
+            [rems.util :refer [atom? getx conj-set]])
   (:import [org.joda.time Duration]))
 
 ;;; Creating applications
@@ -178,6 +178,25 @@
             "user-2" #{:foo}}
            (group-roles-by-user apps)))))
 
+(defn- group-users-by-role [apps]
+  (->> apps
+       (mapcat (fn [app]
+                 (for [[user roles] (:rems.permissions/user-roles app)
+                       role roles]
+                   [user role])))
+       (reduce (fn [users-by-role [user role]]
+                 (update users-by-role role conj-set user))
+               {})))
+
+(deftest test-group-users-by-role
+  (let [apps [(-> {:application/id 1}
+                  (permissions/give-role-to-users :foo ["user-1" "user-2"]))
+              (-> {:application/id 2}
+                  (permissions/give-role-to-users :bar ["user-1"]))]]
+    (is (= {:foo #{"user-1" "user-2"}
+            :bar #{"user-1"}}
+           (group-users-by-role apps)))))
+
 (defn refresh-all-applications-cache! []
   (events-cache/refresh!
    all-applications-cache
@@ -197,7 +216,8 @@
        {::raw-apps raw-apps
         ::enriched-apps enriched-apps
         ::apps-by-user (group-apps-by-user (vals enriched-apps))
-        ::roles-by-user (group-roles-by-user (vals enriched-apps))}))))
+        ::roles-by-user (group-roles-by-user (vals enriched-apps))
+        ::users-by-role (group-users-by-role (vals enriched-apps))}))))
 
 (defn get-all-unrestricted-applications []
   (-> (refresh-all-applications-cache!)
@@ -212,6 +232,11 @@
 (defn get-all-application-roles [user-id]
   (-> (refresh-all-applications-cache!)
       (get-in [::roles-by-user user-id])
+      (set)))
+
+(defn get-users-with-role [role]
+  (-> (refresh-all-applications-cache!)
+      (get-in [::users-by-role role])
       (set)))
 
 (defn- my-application? [application]
