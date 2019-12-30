@@ -19,6 +19,9 @@ Changes since v2.6
   the same as before. See #837
 - Applications can be exported as CSV in admin menu (#1857)
 - Added a configuration option for setting a maximum number of days for handling a new application (#1861)
+- Reminder email about open applications to all handlers. The emails can
+  be sent by calling `/api/email/send-handler-reminder` on a cron schedule
+  or similar. The API requires an API key. (#1611)
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)

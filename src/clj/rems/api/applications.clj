@@ -11,6 +11,7 @@
             [rems.api.util :as api-util] ; required for route :roles
             [rems.application.commands :as commands]
             [rems.application.search :as search]
+            [rems.auth.auth :as auth]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :as config]
             [rems.db.applications :as applications]
@@ -250,21 +251,16 @@
 
     (GET "/:application-id/pdf" request
       :summary "PDF export of application (EXPERIMENTAL)"
-      :roles #{:logged-in}
+      :roles #{:logged-in :api-key}
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {}
                   501 {:schema s/Str}
                   401 {:schema s/Str}}
-      (let [api-key (get-in request [:headers "x-rems-api-key"])]
-        (cond
-          (not (:enable-pdf-api config/env))
-          (not-implemented "pdf api not enabled")
-          (not api-key)
-          (unauthorized "this api only works with an explicit x-rems-api-key header")
-          :else
-          (let [bytes (pdf/application-to-pdf (getx-user-id) api-key application-id)]
-            (-> (ok (ByteArrayInputStream. bytes))
-                (content-type "application/pdf"))))))
+      (if (not (:enable-pdf-api config/env))
+        (not-implemented "pdf api not enabled")
+        (let [bytes (pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
+          (-> (ok (ByteArrayInputStream. bytes))
+              (content-type "application/pdf")))))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []
       :summary "Get file associated with licence of type attachment associated with application."

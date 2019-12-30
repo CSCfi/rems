@@ -5,7 +5,6 @@
             [luminus.http-server]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
-            [rems.application.approver-bot :as approver-bot]
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
@@ -69,29 +68,11 @@
 
 ;;; tests
 
-(defn- strip-cookie-attributes [cookie]
-  (re-find #"[^;]*" cookie))
-
-(defn- get-csrf-token [response]
-  (let [token-regex #"var csrfToken = '([^\']*)'"
-        [_ token] (re-find token-regex (:body response))]
-    token))
-
 (deftest test-application-api-session
   (let [username "alice"
-        login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
-                          handler
-                          :headers)
-        cookie (-> (get login-headers "Set-Cookie")
-                   first
-                   strip-cookie-attributes)
-        csrf (-> (request :get "/")
-                 (header "Cookie" cookie)
-                 handler
-                 get-csrf-token)
+        cookie (login-with-cookies username)
+        csrf (get-csrf-token cookie)
         cat-id (test-data/create-catalogue-item! {})]
-    (is cookie)
-    (is csrf)
     (testing "save with session"
       (let [body (-> (request :post "/api/applications/create")
                      (header "Cookie" cookie)

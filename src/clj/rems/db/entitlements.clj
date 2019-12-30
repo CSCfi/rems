@@ -16,7 +16,6 @@
             [rems.json :as json]
             [rems.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
-            [rems.text :as text]
             [rems.util :refer [getx-user-id]]))
 
 ;; TODO move Entitlement schema here from rems.api?

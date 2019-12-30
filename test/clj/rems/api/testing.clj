@@ -79,3 +79,31 @@
 (defn assert-success [body]
   (assert (:success body) (pr-str body))
   body)
+
+;;; Fake login without API key
+
+(defn- strip-cookie-attributes [cookie]
+  (re-find #"[^;]*" cookie))
+
+(defn login-with-cookies [username]
+  (let [login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
+                          handler
+                          :headers)
+        cookie (-> (get login-headers "Set-Cookie")
+                   first
+                   strip-cookie-attributes)]
+    (assert cookie)
+    cookie))
+
+(defn- parse-csrf-token [response]
+  (let [token-regex #"var csrfToken = '([^\']*)'"
+        [_ token] (re-find token-regex (:body response))]
+    token))
+
+(defn get-csrf-token [cookie]
+  (let [csrf (-> (request :get "/")
+                 (header "Cookie" cookie)
+                 handler
+                 parse-csrf-token)]
+    (assert csrf)
+    csrf))
