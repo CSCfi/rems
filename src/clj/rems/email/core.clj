@@ -33,7 +33,6 @@
           email (event-to-emails event)]
     (enqueue-email! email)))
 
-;; TODO: tests for this function
 (defn generate-handler-reminder-emails! []
   (doseq [email (->> (workflow/get-handlers)
                      (map (fn [handler]
