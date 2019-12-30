@@ -22,6 +22,9 @@ Changes since v2.6
 - Reminder email about open applications to all handlers. The emails can
   be sent by calling `/api/email/send-handler-reminder` on a cron schedule
   or similar. The API requires an API key. (#1611)
+- Reminder email about applications with open review requests to reviewers.
+  The emails can be sent by calling `/api/email/send-reviewer-reminder` on a
+  cron schedule or similar. The API requires an API key. (#1860)
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
