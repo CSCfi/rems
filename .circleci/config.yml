@@ -103,6 +103,8 @@ jobs:
       - run: lein uberjar
       - store_artifacts:
           path: target/uberjar/rems.jar
+      - run: docker build --pull --tag rems .
+        # TODO: push the docker image to a repository
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
