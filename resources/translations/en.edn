@@ -293,7 +293,10 @@
                            :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
           :regards "\n\nKind regards,\n\nREMS\n"
           :remarked {:subject "(%3) Application has been commented"
-                     :message "Dear %1,\n\n%2 has commented on the application %3, submitted by %4.\n\nYou can review the application at %6"}}
+                     :message "Dear %1,\n\n%2 has commented on the application %3, submitted by %4.\n\nYou can review the application at %6"}
+          :reviewer-reminder {:application "%1, submitted by %2"
+                              :message "Dear %1,\n\nThe following applications are waiting for a review from you:\n\n%2\n\nYou can view the applications at %3"
+                              :subject "Applications pending review"}}
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"

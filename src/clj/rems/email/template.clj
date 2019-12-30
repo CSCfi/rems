@@ -210,3 +210,20 @@
                               (application-util/get-member-name handler)
                               list
                               (str (:public-url env) "actions"))})))))
+
+(defn reviewer-reminder-email [lang reviewer applications]
+  (with-language lang
+    (fn []
+      (when (not (empty? applications))
+        (let [list (->> applications
+                        (map (fn [application]
+                               (text-format :t.email.reviewer-reminder/application
+                                            (format-application-for-email application)
+                                            (application-util/get-member-name (:application/applicant application)))))
+                        (str/join "\n"))]
+          {:to-user (:userid reviewer)
+           :subject (text :t.email.reviewer-reminder/subject)
+           :body (text-format :t.email.reviewer-reminder/message
+                              (application-util/get-member-name reviewer)
+                              list
+                              (str (:public-url env) "actions"))})))))

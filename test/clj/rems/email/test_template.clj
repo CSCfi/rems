@@ -401,3 +401,35 @@
                 :application/applicant {:userid "arnold"
                                         :email "arnold@example.com"
                                         :name "Arnold Applicant"}}]))))))
+
+(deftest test-reviewer-reminder-email
+  (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")]
+    (testing "no applications"
+      (is (empty? (template/reviewer-reminder-email
+                   :en
+                   {:userid "reviewer"
+                    :name "Rene Reviewer"
+                    :email "reviewer@example.com"}
+                   []))))
+
+    (testing "some applications"
+      (is (= {:to-user "reviewer"
+              :subject "Applications pending review"
+              :body "Dear Rene Reviewer,\n\nThe following applications are waiting for a review from you:\n\n2001/3, \"Application title 1\", submitted by Alice Applicant\n2001/5, \"Application title 2\", submitted by Arnold Applicant\n\nYou can view the applications at http://example.com/actions"}
+             (template/reviewer-reminder-email
+              :en
+              {:userid "reviewer"
+               :name "Rene Reviewer"
+               :email "reviewer@example.com"}
+              [{:application/id 1
+                :application/external-id "2001/3"
+                :application/description "Application title 1"
+                :application/applicant {:userid "alice"
+                                        :email "alice@example.com"
+                                        :name "Alice Applicant"}}
+               {:application/id 2
+                :application/external-id "2001/5"
+                :application/description "Application title 2"
+                :application/applicant {:userid "arnold"
+                                        :email "arnold@example.com"
+                                        :name "Arnold Applicant"}}]))))))
