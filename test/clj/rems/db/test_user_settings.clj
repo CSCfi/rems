@@ -8,38 +8,42 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-user-settings
-  (users/add-user! "user1" {:eppn "user1"})
-  (users/add-user! "user2" {:eppn "user2"})
+  (users/add-user! "user" {:eppn "user"})
+  (users/add-user! "unrelated" {:eppn "unrelated"})
 
-  (testing "user settings have the default settings for a new user"
-    (is (= (user-settings/get-user-settings "user1")
+  (testing "default settings for a new user"
+    (is (= (user-settings/get-user-settings "user")
            {:language :en})))
 
-  (testing "add a user setting"
-    (user-settings/update-user-settings! "user1" {:language :en})
-    (is (= (user-settings/get-user-settings "user1")
+  ;; TODO: use some other setting which has more than two possible values
+  (testing "add settings"
+    (user-settings/update-user-settings! "user" {:language :fi})
+    (is (= (user-settings/get-user-settings "user")
+           {:language :fi})))
+
+  (testing "modify settings"
+    (user-settings/update-user-settings! "user" {:language :en})
+    (is (= (user-settings/get-user-settings "user")
            {:language :en})))
 
-  (testing "modify a user setting"
-    (user-settings/update-user-settings! "user1" {:language :fi})
-    (is (= (user-settings/get-user-settings "user1")
-           {:language :fi})))
+  (testing "updating with empty settings does not change settings"
+    (user-settings/update-user-settings! "user" {})
+    (is (= (user-settings/get-user-settings "user")
+           {:language :en})))
 
-  (testing "updating with empty settings does not change the setting"
-    (user-settings/update-user-settings! "user1" {})
-    (is (= (user-settings/get-user-settings "user1")
-           {:language :fi})))
+  (testing "changing one user's settings does not change unrelated user's settings"
+    (user-settings/update-user-settings! "unrelated" {:language :fi})
+    (user-settings/update-user-settings! "user" {:language :en})
+    (is (= (user-settings/get-user-settings "unrelated")
+           {:language :fi}))))
 
-  (testing "updating with nil language does not change the setting"
-    (user-settings/update-user-settings! "user1" {:language nil})
-    (is (= (user-settings/get-user-settings "user1")
-           {:language :fi})))
+(deftest test-user-language
+  (testing "valid language"
+    (is (= {:language :en} (user-settings/validate-settings {:language :en})))
+    (is (= {:language :fi} (user-settings/validate-settings {:language :fi}))))
 
-  (testing "updating with undefined language does not change the setting"
-    (user-settings/update-user-settings! "user1" {:language :de})
-    (is (= (user-settings/get-user-settings "user1")
-           {:language :fi})))
+  (testing "undefined language"
+    (is (= {} (user-settings/validate-settings {:language :de}))))
 
-  (testing "modifying a setting does not change setting for an unrelated user"
-    (is (= (user-settings/get-user-settings "user2")
-           {:language :en}))))
+  (testing "nil language"
+    (is (= {} (user-settings/validate-settings {:language nil})))))

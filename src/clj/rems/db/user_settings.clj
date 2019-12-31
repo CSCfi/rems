@@ -16,11 +16,10 @@
          (when user
            (parse-settings (:settings (db/get-user-settings {:user user}))))))
 
-(defn- validate-settings [settings]
-  (let [{:keys [language]} settings]
-    (when (and language
-               (contains? (set (env :languages)) language))
-      settings)))
+(defn validate-settings [{:keys [language]}]
+  (into {}
+        (when (contains? (set (env :languages)) language)
+          {:language language})))
 
 (defn update-user-settings! [user new-settings]
   (assert user "User missing!")
