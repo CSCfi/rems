@@ -3,11 +3,7 @@
             [rems.api.schema :refer :all]
             [rems.db.user-settings :as user-settings]
             [rems.util :refer [getx-user-id get-user-id]]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]))
-
-(s/defschema UserSettings
-  {:language s/Keyword})
+            [ring.util.http-response :refer :all]))
 
 (def user-settings-api
   (context "/user-settings" []
@@ -15,12 +11,12 @@
 
     (GET "/" []
       :summary "Get user settings"
-      :return UserSettings
+      :return user-settings/UserSettings
       (ok (user-settings/get-user-settings (get-user-id))))
 
     (PUT "/" []
       :summary "Update user settings"
       :roles #{:logged-in}
-      :body [settings UserSettings]
+      :body [settings user-settings/PartialUserSettings]
       :return SuccessResponse
       (ok (user-settings/update-user-settings! (getx-user-id) settings)))))

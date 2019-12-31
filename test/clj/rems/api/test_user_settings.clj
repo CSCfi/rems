@@ -37,4 +37,6 @@
                    (authenticate "42" user-id)
                    handler
                    read-ok-body)]
-      (is (= body {:language "fi"})))))
+      (is (= {:language "fi"
+              :email nil}
+             body)))))
