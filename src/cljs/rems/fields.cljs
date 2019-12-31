@@ -115,6 +115,11 @@
          :style {:display "block"}}
         (text-format (:type validation) title)])]))
 
+(defn- non-field-wrapper [opts children]
+  [:div.form-group
+   {:id (str "container-" (id-to-name (:field/id opts)))}
+   children])
+
 (defn- event-value [event]
   (.. event -target -value))
 
@@ -209,10 +214,8 @@
               (localized label)]))]))
 
 (defn label [opts]
-  (let [title (:field/title opts)]
-    [:div.form-group
-     {:id (str "container-" (id-to-name (:field/id opts)))}
-     [:label (localized title)]]))
+  (let [title (localized (:field/title opts))]
+    [non-field-wrapper opts [:label title]]))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
@@ -304,9 +307,9 @@
       (when success
         [success-symbol])]]))
 
-(defn header-field [field]
-  (let [title (localized (:field/title field))]
-    [:h3 title]))
+(defn header-field [opts]
+  (let [title (localized (:field/title opts))]
+    [non-field-wrapper opts [:h3 title]]))
 
 (defn unsupported-field
   [f]
