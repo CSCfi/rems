@@ -24,6 +24,9 @@
 (def ^Duration initial-backoff (Duration/standardSeconds 10))
 (def ^Duration max-backoff (Duration/standardHours 12))
 
+(def ^:private validate-outbox-data
+  (s/validator OutboxData))
+
 (defn put! [data]
   (let [amended (assoc data
                        :outbox/created (DateTime/now)
@@ -31,8 +34,8 @@
                        :outbox/latest-error nil
                        :outbox/latest-attempt nil
                        :outbox/backoff initial-backoff)]
-    (s/validate OutboxData amended)
-    (:id (db/put-to-outbox! {:outboxdata (json/generate-string amended)}))))
+    (:id (db/put-to-outbox! {:outboxdata (json/generate-string
+                                          (validate-outbox-data amended))}))))
 
 (defn update! [data]
   (db/update-outbox! {:id (getx data :outbox/id)
@@ -81,12 +84,12 @@
            :outbox/latest-attempt now
            :outbox/latest-error error
            :outbox/next-attempt (when (-> now (.isBefore deadline))
-                                        (if (-> next-attempt (.isAfter deadline))
-                                          deadline
-                                          next-attempt))
+                                  (if (-> next-attempt (.isAfter deadline))
+                                    deadline
+                                    next-attempt))
            :outbox/backoff (if (-> backoff (.isLongerThan max-backoff))
-                                   max-backoff
-                                   backoff))))
+                             max-backoff
+                             backoff))))
 
 (deftest test-next-attempt
   (let [now (DateTime. 1000)

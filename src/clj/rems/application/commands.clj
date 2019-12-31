@@ -130,10 +130,14 @@
   (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
          CommandInternal))
 
+(def ^:private validate-command-schema
+  (s/validator Command))
+
 (defn- validate-command [cmd]
-  (assert-ex (contains? command-schemas (:type cmd)) {:error {:type ::unknown-type}
-                                                      :value cmd})
-  (s/validate Command cmd))
+  (assert-ex (contains? command-schemas (:type cmd))
+             {:error {:type ::unknown-type}
+              :value cmd})
+  (validate-command-schema cmd))
 
 (deftest test-validate-command
   (testing "check specific command schema"

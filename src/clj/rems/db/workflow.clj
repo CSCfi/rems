@@ -15,15 +15,18 @@
 (def ^:private coerce-workflow-body
   (coerce/coercer! WorkflowBody coerce/string-coercion-matcher))
 
+(def ^:private validate-workflow-body
+  (s/validator WorkflowBody))
+
 (defn create-workflow! [{:keys [user-id organization type title handlers]}]
   (let [body {:type type
               :handlers handlers}]
-    (s/validate WorkflowBody body)
     (:id (db/create-workflow! {:organization organization,
                                :owneruserid user-id,
                                :modifieruserid user-id,
                                :title title,
-                               :workflow (json/generate-string body)}))))
+                               :workflow (json/generate-string
+                                          (validate-workflow-body body))}))))
 
 (defn- get-workflow-licenses [id]
   (->> (db/get-workflow-licenses {:wfid id})

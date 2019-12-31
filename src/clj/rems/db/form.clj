@@ -53,10 +53,13 @@
                  (assoc field :field/id (inc index)))
                fields))
 
+(def ^:private validate-fields
+  (s/validator [FieldTemplate]))
+
 (defn- serialize-fields [form]
   (->> (:form/fields form)
        (generate-field-ids)
-       (s/validate [FieldTemplate])
+       (validate-fields)
        (json/generate-string)))
 
 (defn create-form! [user-id form]

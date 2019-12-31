@@ -173,10 +173,14 @@
 (s/defschema Event
   (apply r/dispatch-on :event/type (flatten (seq event-schemas))))
 
+(def ^:private validate-event-schema
+  (s/validator Event))
+
 (defn validate-event [event]
-  (assert-ex (contains? event-schemas (:event/type event)) {:error {:event/type ::unknown-type}
-                                                            :value event})
-  (s/validate Event event))
+  (assert-ex (contains? event-schemas (:event/type event))
+             {:error {:event/type ::unknown-type}
+              :value event})
+  (validate-event-schema event))
 
 (defn validate-events [events]
   (doseq [event events]

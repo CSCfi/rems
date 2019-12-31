@@ -28,9 +28,11 @@
       json/parse-string
       coerce-event))
 
+(def ^:private validate-blacklist-event
+  (s/validator BlacklistEvent))
+
 (defn- event->json [event]
-  (s/validate BlacklistEvent event)
-  (json/generate-string event))
+  (json/generate-string (validate-blacklist-event event)))
 
 (defn- event-from-db [event]
   (assoc (json->event (:eventdata event))
