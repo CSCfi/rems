@@ -19,7 +19,8 @@
                                          :smtp-port 25
                                          :mail-from "rems@rems.rems")
                   postal.core/send-message (fn [_host message] (reset! message-atom message))
-                  rems.db.users/get-user (constantly {:email "user@example.com"})]
+                  rems.db.users/get-user (constantly {:email "user@example.com"})
+                  rems.db.user-settings/get-user-settings (constantly {})]
 
       (testing "mail to email address"
         (is (nil? (send-email! {:to "foo@example.com" :subject "ding" :body "boing"})))
@@ -33,6 +34,17 @@
       (testing "mail to user"
         (is (nil? (send-email! {:to-user "user" :subject "x" :body "y"})))
         (is (= {:to "user@example.com"
+                :to-user "user"
+                :subject "x"
+                :body "y"
+                :from "rems@rems.rems"}
+               @message-atom))
+        (reset! message-atom nil))
+
+      (testing "mail to user with alternative email in user settings"
+        (with-redefs [rems.db.user-settings/get-user-settings (constantly {:email "alternative@example.com"})]
+          (is (nil? (send-email! {:to-user "user" :subject "x" :body "y"}))))
+        (is (= {:to "alternative@example.com"
                 :to-user "user"
                 :subject "x"
                 :body "y"
