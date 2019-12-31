@@ -4,6 +4,7 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [medley.core :refer [map-vals]]
+            [rems.api.schema :as schema]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.command :as command]
             [rems.api.services.licenses :as licenses]
@@ -258,6 +259,97 @@
                                             :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
+(def ^:private all-field-types-example
+  [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
+                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
+    :field/optional false
+    :field/type :label}
+
+   {:field/title {:en "Application title field"
+                  :fi "Hakemuksen otsikko -kenttä"}
+    :field/optional false
+    :field/type :description}
+
+   {:field/title {:en "Text field"
+                  :fi "Tekstikenttä"}
+    :field/optional false
+    :field/type :text
+    :field/placeholder {:en "Placeholder text"
+                        :fi "Täyteteksti"}}
+
+   {:field/title {:en "Text area"
+                  :fi "Tekstialue"}
+    :field/optional false
+    :field/type :texta
+    :field/placeholder {:en "Placeholder text"
+                        :fi "Täyteteksti"}}
+
+   {:field/title {:en "Header"
+                  :fi "Otsikko"}
+    :field/type :header
+    :field/optional false}
+
+   {:field/title {:en "Date field"
+                  :fi "Päivämääräkenttä"}
+    :field/optional true
+    :field/type :date}
+
+   {:field/title {:en "Attachment"
+                  :fi "Liitetiedosto"}
+    :field/optional true
+    :field/type :attachment}
+
+   {:field/title {:en "Option list"
+                  :fi "Valintalista"}
+    :field/optional true
+    :field/type :option
+    :field/options [{:key "Option1"
+                     :label {:en "First option"
+                             :fi "Ensimmäinen vaihtoehto"}}
+                    {:key "Option2"
+                     :label {:en "Second option"
+                             :fi "Toinen vaihtoehto"}}
+                    {:key "Option3"
+                     :label {:en "Third option"
+                             :fi "Kolmas vaihtoehto"}}]}
+
+   {:field/title {:en "Multi-select list"
+                  :fi "Monivalintalista"}
+    :field/optional true
+    :field/type :multiselect
+    :field/options [{:key "Option1"
+                     :label {:en "First option"
+                             :fi "Ensimmäinen vaihtoehto"}}
+                    {:key "Option2"
+                     :label {:en "Second option"
+                             :fi "Toinen vaihtoehto"}}
+                    {:key "Option3"
+                     :label {:en "Third option"
+                             :fi "Kolmas vaihtoehto"}}]}
+
+   {:field/title {:en "The following field types can have a max length."
+                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."}
+    :field/optional false
+    :field/type :label}
+
+   ;; fields which support maxlength
+   {:field/title {:en "Text field with max length"
+                  :fi "Tekstikenttä pituusrajalla"}
+    :field/optional true
+    :field/type :text
+    :field/max-length 10}
+
+   {:field/title {:en "Text area with max length"
+                  :fi "Tekstialue pituusrajalla"}
+    :field/optional true
+    :field/type :texta
+    :field/max-length 100}])
+
+(deftest test-all-field-types-example
+  (is (= (:vs (:field/type schema/FieldTemplate))
+         (set (map :field/type all-field-types-example)))
+      "a new field has been added to schema but not to this test data"))
+
 (defn- create-all-field-types-example-form!
   "Creates a bilingual form with all supported field types. Returns the form ID."
   [users]
@@ -265,90 +357,7 @@
    {:actor (users :owner)
     :form/organization "nbn"
     :form/title "Example form with all field types"
-    :form/fields [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
-                                 :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
-                   :field/optional false
-                   :field/type :label}
-
-                  {:field/title {:en "Application title field"
-                                 :fi "Hakemuksen otsikko -kenttä"}
-                   :field/optional false
-                   :field/type :description}
-
-                  {:field/title {:en "Text field"
-                                 :fi "Tekstikenttä"}
-                   :field/optional false
-                   :field/type :text
-                   :field/placeholder {:en "Placeholder text"
-                                       :fi "Täyteteksti"}}
-
-                  {:field/title {:en "Text area"
-                                 :fi "Tekstialue"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/placeholder {:en "Placeholder text"
-                                       :fi "Täyteteksti"}}
-
-                  {:field/title {:en "Header"
-                                 :fi "Otsikko"}
-                   :field/type :header
-                   :field/optional false}
-
-                  {:field/title {:en "Date field"
-                                 :fi "Päivämääräkenttä"}
-                   :field/optional true
-                   :field/type :date}
-
-                  {:field/title {:en "Attachment"
-                                 :fi "Liitetiedosto"}
-                   :field/optional true
-                   :field/type :attachment}
-
-                  {:field/title {:en "Option list"
-                                 :fi "Valintalista"}
-                   :field/optional true
-                   :field/type :option
-                   :field/options [{:key "Option1"
-                                    :label {:en "First option"
-                                            :fi "Ensimmäinen vaihtoehto"}}
-                                   {:key "Option2"
-                                    :label {:en "Second option"
-                                            :fi "Toinen vaihtoehto"}}
-                                   {:key "Option3"
-                                    :label {:en "Third option"
-                                            :fi "Kolmas vaihtoehto"}}]}
-
-                  {:field/title {:en "Multi-select list"
-                                 :fi "Monivalintalista"}
-                   :field/optional true
-                   :field/type :multiselect
-                   :field/options [{:key "Option1"
-                                    :label {:en "First option"
-                                            :fi "Ensimmäinen vaihtoehto"}}
-                                   {:key "Option2"
-                                    :label {:en "Second option"
-                                            :fi "Toinen vaihtoehto"}}
-                                   {:key "Option3"
-                                    :label {:en "Third option"
-                                            :fi "Kolmas vaihtoehto"}}]}
-
-                  {:field/title {:en "The following field types can have a max length."
-                                 :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."}
-                   :field/optional false
-                   :field/type :label}
-
-                  ;; fields which support maxlength
-                  {:field/title {:en "Text field with max length"
-                                 :fi "Tekstikenttä pituusrajalla"}
-                   :field/optional true
-                   :field/type :text
-                   :field/max-length 10}
-
-                  {:field/title {:en "Text area with max length"
-                                 :fi "Tekstialue pituusrajalla"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}]}))
+    :form/fields all-field-types-example}))
 
 (defn create-thl-demo-form!
   [users]
