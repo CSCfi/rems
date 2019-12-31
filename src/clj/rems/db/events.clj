@@ -2,15 +2,15 @@
   (:require [rems.application.events :as events]
             [rems.db.core :as db]
             [rems.json :as json]
+            [schema-tools.core :as st]
             [schema.coerce :as coerce]
-            [schema.utils]
-            [schema-tools.core :as st]))
+            [schema.utils]))
 
 (def ^:private coerce-event-commons
-  (coerce/coercer (st/open-schema events/EventBase) json/coercion-matcher))
+  (coerce/coercer! (st/open-schema events/EventBase) json/coercion-matcher))
 
 (def ^:private coerce-event-specifics
-  (coerce/coercer events/Event json/coercion-matcher))
+  (coerce/coercer! events/Event json/coercion-matcher))
 
 (defn- coerce-event [event]
   ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
@@ -20,12 +20,7 @@
 
 (defn json->event [json]
   (when json
-    (let [result (coerce-event (json/parse-string json))]
-      (when (schema.utils/error? result)
-        ;; similar exception as what schema.core/validate throws
-        (throw (ex-info (str "Value does not match schema: " (pr-str result))
-                        {:schema events/Event :value json :error result})))
-      result)))
+    (coerce-event (json/parse-string json))))
 
 (defn event->json [event]
   (events/validate-event event)

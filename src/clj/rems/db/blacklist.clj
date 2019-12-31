@@ -21,16 +21,12 @@
    :event/comment (s/maybe s/Str)})
 
 (def ^:private coerce-event
-  (coerce/coercer BlacklistEvent json/coercion-matcher))
+  (coerce/coercer! BlacklistEvent json/coercion-matcher))
 
 (defn- json->event [json]
-  (let [result (-> json
-                   json/parse-string
-                   coerce-event)]
-    (when (schema.utils/error? result)
-      (throw (ex-info (str "Value does not match schema: " (pr-str result))
-                      {:value json :error result})))
-    result))
+  (-> json
+      json/parse-string
+      coerce-event))
 
 (defn- event->json [event]
   (s/validate BlacklistEvent event)

@@ -12,14 +12,8 @@
   {:type (apply s/enum events/workflow-types)
    :handlers [s/Str]})
 
-(def ^:private workflow-body-coercer
-  (coerce/coercer WorkflowBody coerce/string-coercion-matcher))
-
-(defn- coerce-workflow-body [body]
-  (let [result (workflow-body-coercer body)]
-    (if (schema.utils/error? result)
-      (throw (ex-info "Failed to coerce workflow body" {:body body :error result}))
-      result)))
+(def ^:private coerce-workflow-body
+  (coerce/coercer! WorkflowBody coerce/string-coercion-matcher))
 
 (defn create-workflow! [{:keys [user-id organization type title handlers]}]
   (let [body {:type type

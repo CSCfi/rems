@@ -83,7 +83,7 @@
       (coerce/string-coercion-matcher schema)))
 
 (deftest test-coercion-matcher
-  (let [coercer (coerce/coercer {:time DateTime :type s/Keyword} coercion-matcher)]
+  (let [coercer (coerce/coercer! {:time DateTime :type s/Keyword} coercion-matcher)]
     (is (= {:type :foo
             :time (time/date-time 2019 03 04 10)}
            (coercer {:type "foo"
