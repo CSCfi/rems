@@ -51,10 +51,10 @@
  (fn [{:keys [db]} [_ language]]
    (update-language language)
    {:db (assoc-in db [:user-settings :language] language)
-    :dispatch [::save-user-settings!]}))
+    :dispatch [::save-user-language!]}))
 
 (rf/reg-event-fx
- :check-if-should-save-settings!
+ :check-if-should-save-language!
  (fn [{:keys [db]} _]
    (let [current-language (get-language db)
          settings-language (get-in db [:user-settings :language])]
@@ -62,13 +62,13 @@
      ;; so we should sometimes save the language
      ;; to the profile after login
      (when (and current-language (not= current-language settings-language))
-       {:dispatch [::save-user-settings!]}))))
+       {:dispatch [::save-user-language!]}))))
 
 (rf/reg-event-fx
  :loaded-user-settings
  (fn [{:keys [db]} [_ user-settings]]
    {:db (assoc db :user-settings user-settings)
-    :dispatch [:check-if-should-save-settings!]}))
+    :dispatch [:check-if-should-save-language!]}))
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
@@ -76,7 +76,7 @@
           :error-handler (flash-message/default-error-handler :top "Fetch user settings")}))
 
 (rf/reg-event-fx
- ::save-user-settings!
+ ::save-user-language!
  (fn [{:keys [db]} [_]]
    (let [user-id (get-in db [:identity :user :userid])
          new-settings (assoc (:user-settings db)
