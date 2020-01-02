@@ -78,11 +78,10 @@
 (rf/reg-event-fx
  ::save-user-language!
  (fn [{:keys [db]} [_]]
-   (let [user-id (get-in db [:identity :user :userid])
-         new-settings (assoc (:user-settings db)
-                             :language (get-language db))]
+   (let [user-id (get-in db [:identity :user :userid])]
      (when user-id
        (put! "/api/user-settings"
-             {:params new-settings
+             {:params {:language (get-language db)}
+              :handler fetch-user-settings!
               :error-handler (flash-message/default-error-handler :top "Update user settings")}))
-     {:db (assoc db :user-settings new-settings)})))
+     {})))
