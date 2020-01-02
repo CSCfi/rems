@@ -21,9 +21,9 @@
 (def ^:private coerce-partial-settings
   (coerce/coercer! PartialUserSettings json/coercion-matcher))
 
-(defn- parse-settings [settings]
-  (when settings
-    (coerce-partial-settings (json/parse-string settings))))
+(defn- parse-settings [json]
+  (when json
+    (coerce-partial-settings (json/parse-string json))))
 
 (defn get-user-settings [user]
   (merge (default-settings)
