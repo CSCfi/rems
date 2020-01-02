@@ -86,9 +86,8 @@
                            :background-position [[:center :center]]}]
                          [:.logo
                           {:height (u/px 150)}]))
-   (stylesheet/at-media {:min-width (u/px 992)}
-                        (list
-                         [:.language-switcher {:padding ".5em .5em"}]))
+   (stylesheet/at-media {:max-width (u/px 870)}
+                        [:.user-widget [:.icon-description {:display "none"}]])
    (stylesheet/at-media {:min-width (u/px 480)}
                         [:.commands {:white-space "nowrap"}])))
 
@@ -546,17 +545,11 @@
    [:.btn.disabled {:opacity 0.25}]
    [:.catalogue-item-link {:color "#fff"
                            :text-decoration "underline"}]
-   ;; Has to be defined before the following media queries
    [:.language-switcher {:padding ".5em 0"}]
    (generate-media-queries)
-   [:.user
-    :.language-switcher
-    {:white-space "nowrap"}]
-   [(s/descendant :.user :.nav-link) {:display :inline-block}]
+   [:.navbar {:white-space "nowrap"}]
+   [(s/descendant :.user-widget :.nav-link) {:display :inline-block}]
    [:.user-name {:text-transform :none}]
-   [:.fa
-    :.user-name
-    {:margin-right (u/px 5)}]
    [:#big-navbar {:text-transform (util/get-theme-attribute :big-navbar-text-transform "none")}]
    [(s/descendant :.navbar-text :.language-switcher)
     {:margin-right (u/rem 1)}]

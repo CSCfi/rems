@@ -348,6 +348,7 @@
                :change-language "Vaihda kieleksi %1"
                :home "Etusivu"
                :logout "Kirjaudu ulos"
+               :settings "Asetukset"
                :skip-navigation "Siirry sivun pääsisältöön"}
   :not-found-page {:not-found "Ei löytynyt"
                    :page-was-not-found "Tätä sivua ei löytynyt."}
