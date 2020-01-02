@@ -43,7 +43,8 @@
 ;;;; UI
 
 (defn settings-page []
-  (let [form @(rf/subscribe [::form])]
+  (let [identity @(rf/subscribe [:identity])
+        form @(rf/subscribe [::form])]
     [:<>
      [document-title (text :t.navigation/settings)]
      [flash-message/component :top]
@@ -61,6 +62,7 @@
             {:type "email"
              :id id
              :value (:email form)
+             :placeholder (:email (:user identity))
              :on-change (fn [event]
                           (let [value (.. event -target -value)]
                             (rf/dispatch [::set-form (assoc form :email value)])))}]])
