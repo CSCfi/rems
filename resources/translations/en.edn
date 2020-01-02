@@ -369,6 +369,8 @@
            :example-searches "Example searches"
            :learn-more "Learn more"
            :search "Search"}
+  :settings {:email "Email address for notifications"
+             :save "Save"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
           :all-rows-selected "All rows selected"

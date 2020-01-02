@@ -367,6 +367,8 @@
            :example-searches "Esimerkkihakuja"
            :learn-more "Opi lisää"
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
+  :settings {:email "Sähköpostiosoite ilmoituksille"
+             :save "Tallenna"}
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"
           :all-rows-selected "Kaikki rivit valittuna"
