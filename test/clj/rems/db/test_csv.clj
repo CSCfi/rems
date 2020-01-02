@@ -85,6 +85,7 @@
                                                   :form-id form-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})
+        external-id (:application/external-id (applications/get-unrestricted-application app-id))
         get-application #(applications/get-unrestricted-application app-id)]
 
     (testing "draft applications not included as default"
@@ -94,7 +95,7 @@
     (testing "draft applications included when explicitly set"
       (is (= (csv/applications-to-csv [(get-application)] "owner" :include-drafts true)
              (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"2019/1\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"\",\"\"\n"))))
+                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"\",\"\"\n"))))
 
     (test-data/fill-form! {:application-id app-id
                            :actor applicant
@@ -103,7 +104,7 @@
     (testing "form filled out"
       (is (= (csv/applications-to-csv [(get-application)] "owner" :include-drafts true)
              (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"2019/1\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"test value\",\"\"\n"))))
+                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"test value\",\"\"\n"))))
 
     (test-data/accept-licenses! {:application-id app-id
                                  :actor applicant})
@@ -116,6 +117,6 @@
     (testing "submitted application"
       (is (= (csv/applications-to-csv [(get-application)] "owner")
              (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"2019/1\",\"Alice Applicant\",\""
+                  "1,\"" external-id "\",\"Alice Applicant\",\""
                   (text/localize-time test-time)
                   "\",\"Applied\",\"Test resource\",\"test value\",\"\"\n"))))))
