@@ -22,6 +22,8 @@ Changes since v2.6
 - Reminder email about open applications to all handlers. The emails can
   be sent by calling `/api/email/send-handler-reminder` on a cron schedule
   or similar. The API requires an API key. (#1611)
+- Allow users to change their email address, in case the identity provider
+  doesn't provide an email address or the users want to use a different one (#1884) 
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
