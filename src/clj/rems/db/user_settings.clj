@@ -51,4 +51,4 @@
      {:user user
       :settings (json/generate-string
                  (merge old-settings validated))})
-    {:success (some? validated)}))
+    {:success (not (empty? validated))}))

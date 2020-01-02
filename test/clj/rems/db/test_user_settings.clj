@@ -19,26 +19,38 @@
                        (user-settings/get-user-settings "user")))))
 
   (testing "add settings"
-    (user-settings/update-user-settings! "user" {:language :fi})
+    (is (= {:success true}
+           (user-settings/update-user-settings! "user" {:language :fi})))
     (is (= {:language :fi
             :email nil}
            (user-settings/get-user-settings "user"))))
 
   (testing "modify settings"
-    (user-settings/update-user-settings! "user" {:email "user@example.com"})
+    (is (= {:success true}
+           (user-settings/update-user-settings! "user" {:email "user@example.com"})))
     (is (= {:language :fi
             :email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with empty settings does not change settings"
-    (user-settings/update-user-settings! "user" {})
+    (is (= {:success false}
+           (user-settings/update-user-settings! "user" {})))
+    (is (= {:language :fi
+            :email "user@example.com"}
+           (user-settings/get-user-settings "user"))))
+
+  (testing "updating with invalid settings does not change settings"
+    (is (= {:success false}
+           (user-settings/update-user-settings! "user" {:email "foo"})))
     (is (= {:language :fi
             :email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "changing one user's settings does not change another user's settings"
-    (user-settings/update-user-settings! "unrelated" {:email "unrelated@example.com"})
-    (user-settings/update-user-settings! "user" {:email "changed@example.com"})
+    (is (= {:success true}
+           (user-settings/update-user-settings! "unrelated" {:email "unrelated@example.com"})))
+    (is (= {:success true}
+           (user-settings/update-user-settings! "user" {:email "changed@example.com"})))
     (is (= {:language :en
             :email "unrelated@example.com"}
            (user-settings/get-user-settings "unrelated")))))
