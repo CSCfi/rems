@@ -106,3 +106,32 @@
 (deftest test-get-workflow
   (testing "not found"
     (is (nil? (workflow/get-workflow 123)))))
+
+(deftest test-get-handlers
+  (let [simplify #(map :userid %)
+        wf1 (:id (workflow/create-workflow! {:user-id "owner"
+                                             :organization ""
+                                             :type :workflow/default
+                                             :title "workflow2"
+                                             :handlers ["handler1"
+                                                        "handler2"]}))
+        wf2 (:id (workflow/create-workflow! {:user-id "owner"
+                                             :organization ""
+                                             :type :workflow/default
+                                             :title "workflow2"
+                                             :handlers ["handler2"
+                                                        "handler3"]}))]
+
+    (testing "returns distinct handlers from all workflows"
+      (is (= ["handler1" "handler2" "handler3"]
+             (simplify (workflow/get-handlers)))))
+
+    (testing "ignores disabled workflows"
+      (workflow/set-workflow-enabled! {:id wf1 :enabled false})
+      (is (= ["handler2" "handler3"]
+             (simplify (workflow/get-handlers)))))
+
+    (testing "ignores archived workflows"
+      (workflow/set-workflow-archived! {:id wf2 :archived true})
+      (is (= []
+             (simplify (workflow/get-handlers)))))))

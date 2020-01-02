@@ -193,3 +193,20 @@
                (text :t.email/footer))}])))
 
 ;; TODO member-joined?
+
+(defn handler-reminder-email [lang handler applications]
+  (with-language lang
+    (fn []
+      (when (not (empty? applications))
+        (let [list (->> applications
+                        (map (fn [application]
+                               (text-format :t.email.handler-reminder/application
+                                            (format-application-for-email application)
+                                            (application-util/get-member-name (:application/applicant application)))))
+                        (str/join "\n"))]
+          {:to-user (:userid handler)
+           :subject (text :t.email.handler-reminder/subject)
+           :body (text-format :t.email.handler-reminder/message
+                              (application-util/get-member-name handler)
+                              list
+                              (str (:public-url env) "actions"))})))))

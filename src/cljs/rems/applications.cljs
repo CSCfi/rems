@@ -38,7 +38,7 @@
                                           :on-search #(rf/dispatch [::my-applications %])
                                           :searching? @(rf/subscribe [::my-applications :searching?])}]
         [application-list/component {:applications ::my-applications
-                                     :hidden-columns #{:applicant :todo}
+                                     :hidden-columns #{:applicant :handlers :todo}
                                      :default-sort-column :created
                                      :default-sort-order :desc}]
         (when (roles/show-all-applications? (:roles identity))
@@ -48,6 +48,6 @@
                                              :on-search #(rf/dispatch [::all-applications %])
                                              :searching? @(rf/subscribe [::all-applications :searching?])}]
            [application-list/component {:applications ::all-applications
-                                        :hidden-columns #{:todo :created :submitted}
+                                        :hidden-columns #{:handlers :todo :created :submitted}
                                         :default-sort-column :last-activity
                                         :default-sort-order :desc}]])])]))

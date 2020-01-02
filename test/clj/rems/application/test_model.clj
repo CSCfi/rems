@@ -93,6 +93,12 @@
        :archived false
        :expired false}})
 
+(def ^:private get-config
+  (constantly {:application-deadline-days 1}))
+
+(def ^:private get-current-time
+  (constantly (DateTime. 4000)))
+
 (def ^:private get-license
   {30 {:id 30
        :licensetype "link"
@@ -189,6 +195,8 @@
 (def injections {:blacklisted? blacklisted?
                  :get-form-template get-form-template
                  :get-catalogue-item get-catalogue-item
+                 :get-config get-config
+                 :get-current-time get-current-time
                  :get-license get-license
                  :get-user get-user
                  :get-users-with-role get-users-with-role
@@ -931,6 +939,7 @@
           :application/modified (DateTime. 2000)
           :application/first-submitted (DateTime. 3000)
           :application/last-activity (DateTime. 4000)
+          :application/past-deadline false
           :application/applicant {:userid "applicant"
                                   :email "applicant@example.com"
                                   :name "Applicant"}
@@ -1050,7 +1059,8 @@
                                  :workflow/type :workflow/master
                                  :workflow.dynamic/handlers [{:userid "handler"
                                                               :name "Handler"
-                                                              :email "handler@example.com"}]}}
+                                                              :email "handler@example.com"
+                                                              :handler/active? true}]}}
          (model/enrich-with-injections approved-application injections))))
 
 (deftest test-enrich-event
@@ -1163,6 +1173,62 @@
                                              {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
            (model/enrich-answers {:rems.application.model/previous-submitted-answers {1 "a" 2 "b"}
                                   :rems.application.model/submitted-answers {1 "aa" 2 "bb"}})))))
+
+(deftest test-enrich-active-handlers
+  (let [application {:application/workflow {:workflow/id 1}
+                     :application/events [{:event/actor "applicant"} ; should ignore active non-handlers
+                                          {:event/actor "edward"}
+                                          {:event/actor "reviewer"}]}
+        get-workflow {1 {:workflow {:handlers [{:userid "alphonse" ; should ignore inactive handlers
+                                                :name "Alphonse Elric"}
+                                               {:userid "edward"
+                                                :name "Edward Elric"}]}}}]
+    (is (= {:application/workflow {:workflow/id 1
+                                   :workflow.dynamic/handlers [{:userid "alphonse"
+                                                                :name "Alphonse Elric"}
+                                                               {:userid "edward"
+                                                                :name "Edward Elric"
+                                                                :handler/active? true}]}}
+           (-> (model/enrich-workflow-handlers application get-workflow)
+               (select-keys [:application/workflow]))))))
+
+(deftest test-enrich-past-deadline
+  (testing "non-submitted application"
+    (is (= {:application/created (DateTime. 3000)}
+           (model/enrich-past-deadline {:application/created (DateTime. 3000)}
+                                       (constantly
+                                        {:application-deadline-days 1})
+                                       (constantly
+                                        (DateTime. 4000))))))
+  (testing "submitted application, not past deadline"
+    (is (= {:application/created (DateTime. 3000)
+            :application/first-submitted (DateTime. 4000)
+            :application/past-deadline false}
+           (model/enrich-past-deadline {:application/created (DateTime. 3000)
+                                        :application/first-submitted (DateTime. 4000)}
+                                       (constantly
+                                        {:application-deadline-days 1})
+                                       (constantly
+                                        (DateTime. 5000))))))
+  (testing "submitted application, past deadline"
+    (is (= {:application/created (DateTime. 3000)
+            :application/first-submitted (DateTime. 4000)
+            :application/past-deadline true}
+           (model/enrich-past-deadline {:application/created (DateTime. 3000)
+                                        :application/first-submitted (DateTime. 4000)}
+                                       (constantly
+                                        {:application-deadline-days 1})
+                                       (constantly
+                                        (.plusDays (DateTime. 5000) 1))))))
+  (testing "submitted application, deadline not in use"
+    (is (= {:application/created (DateTime. 3000)
+            :application/first-submitted (DateTime. 4000)}
+           (model/enrich-past-deadline {:application/created (DateTime. 3000)
+                                        :application/first-submitted (DateTime. 4000)}
+                                       (constantly
+                                        {:application-deadline-days nil})
+                                       (constantly
+                                        (.plusDays (DateTime. 5000) 1)))))))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created

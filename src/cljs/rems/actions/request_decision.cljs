@@ -1,11 +1,11 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch post!]]))
+            [rems.util :refer [fetch]]))
 
 (rf/reg-fx
  ::fetch-potential-deciders
@@ -43,18 +43,13 @@
 (rf/reg-event-fx
  ::send-request-decision
  (fn [_ [_ {:keys [deciders application-id comment on-finished]}]]
-   (let [description [text :t.actions/request-decision]]
-     (post! "/api/applications/request-decision"
-            {:params {:application-id application-id
-                      :comment comment
-                      :deciders (map :userid deciders)}
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler :actions description)}))
+   (command! :application.command/request-decision
+             {:application-id application-id
+              :comment comment
+              :deciders (map :userid deciders)}
+             {:description [text :t.actions/request-decision]
+              :collapse action-form-id
+              :on-finished on-finished})
    {}))
 
 (defn request-decision-action-button []

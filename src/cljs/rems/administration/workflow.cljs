@@ -1,7 +1,7 @@
 (ns rems.administration.workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.license :refer [licenses-view]]
             [rems.administration.status-flags :as status-flags]
@@ -37,11 +37,6 @@
 (rf/reg-sub ::workflow (fn [db _] (::workflow db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- back-button []
-  [atoms/link {:class "btn btn-secondary"}
-   "/administration/workflows"
-   (text :t.administration/back)])
-
 (defn edit-button [id]
   [atoms/link {:class "btn btn-primary"}
    (str "/administration/workflows/edit/" id)
@@ -71,7 +66,7 @@
    [licenses-view (:licenses workflow) language]
    (let [id (:id workflow)]
      [:div.col.commands
-      [back-button]
+      [administration/back-button "/administration/workflows"]
       [roles/when roles/show-admin-edit-buttons?
        [edit-button id]
        [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
@@ -83,7 +78,7 @@
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
-       [administration-navigator-container]
+       [administration/navigator]
        [document-title (text :t.administration/workflow)]
        [flash-message/component :top]
        (if @loading?

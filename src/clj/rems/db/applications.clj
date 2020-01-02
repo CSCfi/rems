@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.core.cache :as cache]
+  (:require [clj-time.core :as time]
+            [clojure.core.cache :as cache]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
@@ -10,10 +11,12 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
             [rems.db.blacklist :as blacklist]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.csv :as csv]
             [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
@@ -63,6 +66,8 @@
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template form/get-form-template
    :get-catalogue-item catalogue/get-localized-catalogue-item
+   :get-config (fn [] env)
+   :get-current-time time/now
    :get-license licenses/get-license
    :get-user users/get-user
    :get-users-with-role users/get-users-with-role
@@ -215,6 +220,11 @@
 (defn get-my-applications [user-id]
   (->> (get-all-applications user-id)
        (filter my-application?)))
+
+(defn export-applications-for-form-as-csv [user-id form-id]
+  (let [applications (get-all-unrestricted-applications)
+        filtered-applications (filter #(= (:form/id (:application/form %)) form-id) applications)]
+    (csv/applications-to-csv filtered-applications user-id)))
 
 (defn reload-cache! []
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.

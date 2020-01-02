@@ -12,7 +12,7 @@
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [redirect]]))
 
-(defn- get-api-key [request]
+(defn get-api-key [request]
   (get-in request [:headers "x-rems-api-key"]))
 
 (defn- api-key-backend []

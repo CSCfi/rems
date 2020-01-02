@@ -51,7 +51,7 @@
                  [org.clojure/core.memoize "0.7.2"]
                  [org.clojure/tools.cli "0.4.2"]
                  [org.clojure/tools.logging "0.5.0"]
-                 [org.postgresql/postgresql "42.2.6"]
+                 [org.postgresql/postgresql "42.2.9"]
                  [org.webjars.bower/tether "1.4.4"]
                  [org.webjars.npm/better-dateinput-polyfill "3.0.0"]
                  [org.webjars.npm/better-dom "4.0.0"]

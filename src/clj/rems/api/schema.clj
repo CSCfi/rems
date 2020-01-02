@@ -180,6 +180,10 @@
 (s/defschema Blacklist
   [BlacklistEntry])
 
+(s/defschema Handler
+  (assoc UserWithAttributes
+         (s/optional-key :handler/active?) s/Bool))
+
 (s/defschema Application
   {:application/id s/Int
    :application/external-id s/Str
@@ -194,6 +198,7 @@
    :application/created DateTime
    :application/modified DateTime
    (s/optional-key :application/first-submitted) DateTime
+   (s/optional-key :application/past-deadline) s/Bool
    (s/optional-key :application/copied-from) {:application/id s/Int
                                               :application/external-id s/Str}
    (s/optional-key :application/copied-to) [{:application/id s/Int
@@ -214,7 +219,7 @@
    :application/form Form
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
-                          (s/optional-key :workflow.dynamic/handlers) [UserWithAttributes]}
+                          (s/optional-key :workflow.dynamic/handlers) [Handler]}
    :application/roles #{s/Keyword}
    :application/permissions #{s/Keyword}
    :application/attachments [ApplicationAttachment]})

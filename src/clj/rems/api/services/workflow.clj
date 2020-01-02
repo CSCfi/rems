@@ -58,3 +58,11 @@
 (defn get-workflow [id] (workflow/get-workflow id))
 (defn get-workflows [filters] (workflow/get-workflows filters))
 (defn get-available-actors [] (users/get-users))
+
+(defn get-handlers []
+  (let [workflows (workflow/get-workflows {:enabled true
+                                           :archived false})
+        handlers (mapcat (fn [wf]
+                           (get-in wf [:workflow :handlers]))
+                         workflows)]
+    (->> handlers distinct (sort-by :userid))))

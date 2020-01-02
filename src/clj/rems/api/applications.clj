@@ -1,6 +1,5 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
-            [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [compojure.api.sweet :refer :all]
@@ -8,12 +7,15 @@
             [rems.api.services.attachment :as attachment]
             [rems.api.services.command :as command]
             [rems.api.services.licenses :as licenses]
+            [rems.api.services.todos :as todos]
             [rems.api.util :as api-util] ; required for route :roles
             [rems.application.commands :as commands]
             [rems.application.search :as search]
+            [rems.auth.auth :as auth]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :as config]
             [rems.db.applications :as applications]
+            [rems.db.csv :as csv]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
@@ -61,70 +63,6 @@
          (s/optional-key :application-id) s/Int))
 
 ;; Api implementation
-
-(def ^:private todo-roles
-  #{:handler :commenter :decider :past-commenter :past-decider})
-
-(defn- potential-todo? [application]
-  (and (some todo-roles (:application/roles application))
-       (not= :application.state/draft (:application/state application))))
-
-(defn- get-potential-todos [user-id]
-  (->> (applications/get-all-applications user-id)
-       (filter potential-todo?)))
-
-(def ^:private todo-commands
-  #{:application.command/approve
-    :application.command/reject
-    :application.command/revoke ; should not be available in submitted state, but let's keep it here just in case
-    :application.command/return
-    :application.command/close ; available also in other states than submitted, but that's okay
-    :application.command/request-comment
-    :application.command/comment
-    :application.command/request-decision
-    :application.command/decide})
-
-(defn- todo? [application]
-  (and (= :application.state/submitted (:application/state application))
-       (some todo-commands (:application/permissions application))))
-
-(deftest test-todo-commands
-  (let [non-todo-commands
-        #{;; only done by the applicant or members
-          :application.command/accept-invitation
-          :application.command/accept-licenses
-          :application.command/copy-as-new
-          :application.command/create
-          :application.command/save-draft
-          :application.command/submit
-          ;; will not change the application's state, so they
-          ;; can be ignored from a workflow point of view
-          :application.command/add-licenses
-          :application.command/add-member
-          :application.command/assign-external-id
-          :application.command/change-resources
-          :application.command/invite-member
-          :application.command/remove-member
-          :application.command/uninvite-member
-          ;; remarks can be made without a request, also on handled todos
-          :application.command/remark}
-        all-commands (set (keys commands/command-schemas))]
-
-    ;; This test is to make sure that as new commands are added,
-    ;; we will make a conscious decision whether a submitted application
-    ;; with that permission should be shown on the Actions page as
-    ;; an "open application" or a "processed application".
-    (is (= (set/difference all-commands non-todo-commands)
-           todo-commands)
-        "seems like a new command has been added; is it a todo or handled todo?")))
-
-(defn get-todos [user-id]
-  (->> (get-potential-todos user-id)
-       (filter todo?)))
-
-(defn get-handled-todos [user-id]
-  (->> (get-potential-todos user-id)
-       (remove todo?)))
 
 (defn- filter-with-search [query apps]
   (if (str/blank? query)
@@ -200,7 +138,7 @@
       :roles #{:logged-in}
       :return [ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query") nil}]
-      (ok (->> (get-todos (getx-user-id))
+      (ok (->> (todos/get-todos (getx-user-id))
                (filter-with-search query))))
 
     (GET "/handled" []
@@ -208,7 +146,7 @@
       :roles #{:logged-in}
       :return [ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query") nil}]
-      (ok (->> (get-handled-todos (getx-user-id))
+      (ok (->> (todos/get-handled-todos (getx-user-id))
                (filter-with-search query))))
 
     (POST "/create" []
@@ -230,6 +168,14 @@
       :roles #{:handler}
       :return Commenters
       (ok (users/get-commenters)))
+
+    (GET "/export" []
+      :summary "Export all submitted applications of a given form as CSV"
+      :roles #{:owner}
+      :query-params [form-id :- (describe s/Int "form id")]
+      (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id) form-id))
+          (header "Content-Disposition" (str "filename=\"" (csv/applications-filename) "\""))
+          (content-type "text/csv")))
 
     (GET "/members" []
       :summary "Existing REMS users available for application membership"
@@ -305,21 +251,16 @@
 
     (GET "/:application-id/pdf" request
       :summary "PDF export of application (EXPERIMENTAL)"
-      :roles #{:logged-in}
+      :roles #{:logged-in :api-key}
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {}
                   501 {:schema s/Str}
                   401 {:schema s/Str}}
-      (let [api-key (get-in request [:headers "x-rems-api-key"])]
-        (cond
-          (not (:enable-pdf-api config/env))
-          (not-implemented "pdf api not enabled")
-          (not api-key)
-          (unauthorized "this api only works with an explicit x-rems-api-key header")
-          :else
-          (let [bytes (pdf/application-to-pdf (getx-user-id) api-key application-id)]
-            (-> (ok (ByteArrayInputStream. bytes))
-                (content-type "application/pdf"))))))
+      (if (not (:enable-pdf-api config/env))
+        (not-implemented "pdf api not enabled")
+        (let [bytes (pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
+          (-> (ok (ByteArrayInputStream. bytes))
+              (content-type "application/pdf")))))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []
       :summary "Get file associated with licence of type attachment associated with application."

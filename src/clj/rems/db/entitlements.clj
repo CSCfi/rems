@@ -3,7 +3,6 @@
   (:require [clj-http.client :as http]
             [clj-time.core :as time]
             [clojure.set :refer [union]]
-            [clojure.string :refer [join]]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.application-util :as application-util]
@@ -11,12 +10,12 @@
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.csv :as csv]
             [rems.db.outbox :as outbox]
             [rems.db.users :as users]
             [rems.json :as json]
             [rems.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
-            [rems.text :as text]
             [rems.util :refer [getx-user-id]]))
 
 ;; TODO move Entitlement schema here from rems.api?
@@ -42,12 +41,8 @@
   []
   (when-not (has-roles? :handler)
     (throw-forbidden))
-  (let [ents (db/get-entitlements)
-        separator (:csv-separator env)]
-    (with-out-str
-      (println (join separator ["resource" "application" "user" "start"]))
-      (doseq [e ents]
-        (println (join separator [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
+  (let [ents (db/get-entitlements)]
+    (csv/entitlements-to-csv ents)))
 
 (defn- post-entitlements! [{:keys [entitlements action] :as params}]
   (when-let [target (get-in env [:entitlements-target action])]

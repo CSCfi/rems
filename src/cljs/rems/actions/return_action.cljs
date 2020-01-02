@@ -1,9 +1,7 @@
 (ns rems.actions.return-action
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper collapse-action-form]]
-            [rems.flash-message :as flash-message]
-            [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
+            [rems.text :refer [text]]))
 
 (rf/reg-event-fx
  ::open-form
@@ -18,17 +16,12 @@
 (rf/reg-event-fx
  ::send-return
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (let [description (text :t.actions/return)]
-     (post! "/api/applications/return"
-            {:params {:application-id application-id
-                      :comment comment}
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
-             :error-handler (flash-message/default-error-handler :actions description)}))
+   (command! :application.command/return
+             {:application-id application-id
+              :comment comment}
+             {:description [text :t.actions/return]
+              :collapse action-form-id
+              :on-finished on-finished})
    {}))
 
 (defn return-action-button []

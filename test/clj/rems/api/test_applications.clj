@@ -1,10 +1,10 @@
 (ns ^:integration rems.api.test-applications
   (:require [clj-http.client :as http]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [luminus.http-server]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
-            [rems.application.approver-bot :as approver-bot]
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
@@ -68,29 +68,11 @@
 
 ;;; tests
 
-(defn- strip-cookie-attributes [cookie]
-  (re-find #"[^;]*" cookie))
-
-(defn- get-csrf-token [response]
-  (let [token-regex #"var csrfToken = '([^\']*)'"
-        [_ token] (re-find token-regex (:body response))]
-    token))
-
 (deftest test-application-api-session
   (let [username "alice"
-        login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
-                          handler
-                          :headers)
-        cookie (-> (get login-headers "Set-Cookie")
-                   first
-                   strip-cookie-attributes)
-        csrf (-> (request :get "/")
-                 (header "Cookie" cookie)
-                 handler
-                 get-csrf-token)
+        cookie (login-with-cookies username)
+        csrf (get-csrf-token cookie)
         cat-id (test-data/create-catalogue-item! {})]
-    (is cookie)
-    (is csrf)
     (testing "save with session"
       (let [body (-> (request :post "/api/applications/create")
                      (header "Cookie" cookie)
@@ -501,6 +483,31 @@
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))))
 
+(deftest test-decider-workflow
+  (let [applicant "alice"
+        handler "handler"
+        decider "carl"
+        wf-id (test-data/create-workflow! {:type :workflow/decider
+                                           :handlers [handler]})
+        cat-id (test-data/create-catalogue-item! {:workflow-id wf-id})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor applicant})]
+    (testing "submit"
+      (is (= {:success true}
+             (send-command applicant {:type :application.command/submit
+                                      :application-id app-id}))))
+    (testing "request decision"
+      (is (= {:success true}
+             (send-command handler {:type :application.command/request-decision
+                                    :application-id app-id
+                                    :deciders [decider]
+                                    :comment ""}))))
+    (testing "approve"
+      (is (= {:success true}
+             (send-command decider {:type :application.command/approve
+                                    :application-id app-id
+                                    :comment ""}))))))
+
 (deftest test-revoke
   (let [applicant-id "alice"
         member-id "malice"
@@ -550,6 +557,22 @@
       (is (blacklist/blacklisted? applicant-id ext2))
       (is (blacklist/blacklisted? member-id ext1))
       (is (blacklist/blacklisted? member-id ext2)))))
+
+(deftest test-application-export
+  (let [applicant "alice"
+        owner "owner"
+        api-key "42"
+        form-id (test-data/create-form! {})
+        cat-id (test-data/create-catalogue-item! {:form-id form-id})
+        app-id (test-data/create-application! {:actor applicant
+                                               :catalogue-item-ids [cat-id]})]
+    (send-command applicant {:type :application.command/submit
+                             :application-id app-id})
+    (let [exported (-> (request :get (str "/api/applications/export?form-id=" form-id))
+                       (authenticate api-key owner)
+                       handler
+                       read-ok-body)]
+      (is (= (count (str/split exported #"\n")) 2)))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 

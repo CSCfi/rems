@@ -1,29 +1,35 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [document-title]]
+            [rems.atoms :as atoms]
             [rems.navbar :as navbar]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn administration-navigator [selected]
+(rf/reg-event-db
+ ::remember-current-page
+ (fn [db _]
+   (assoc db ::previous-page js/window.location.href)))
+
+(rf/reg-sub ::previous-page (fn [db] (::previous-page db)))
+
+(defn back-button [href]
+  (let [previous-page @(rf/subscribe [::previous-page])]
+    [atoms/link {:class "btn btn-secondary"}
+     (or previous-page href)
+     (text :t.administration/back)]))
+
+(defn navigator []
   [:div.navbar.mb-4.mr-auto.ml-auto
    [navbar/nav-link "/administration/catalogue-items" (text :t.administration/catalogue-items)]
    [navbar/nav-link "/administration/resources" (text :t.administration/resources)]
    [navbar/nav-link "/administration/forms" (text :t.administration/forms)]
    [navbar/nav-link "/administration/workflows" (text :t.administration/workflows)]
    [navbar/nav-link "/administration/licenses" (text :t.administration/licenses)]
+   [navbar/nav-link "/administration/applications" (text :t.administration/applications)]
    [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist)]])
-
-(defn administration-navigator-container
-  "Component for showing a navigator in the administration pages.
-
-  Subscribes to current page to show the link as selected. The pure functional version is `administration-navigator`"
-  []
-  (let [page (rf/subscribe [:page])]
-    [administration-navigator @page]))
 
 (defn guide []
   [:div
-   (component-info administration-navigator)
-   (example "administration-navigator with resources selected"
-            [administration-navigator :rems.administration/resources])])
+   (component-info navigator)
+   (example "navigator"
+            [navigator])])

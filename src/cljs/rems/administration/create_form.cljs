@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
-            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.administration :as administration]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
@@ -675,7 +675,7 @@
         edit-form? @(rf/subscribe [::edit-form?])
         loading-form? @(rf/subscribe [::loading-form?])]
     [:div
-     [administration-navigator-container]
+     [administration/navigator]
      [document-title (page-title edit-form?)]
      [flash-message/component :top]
      (if loading-form?
