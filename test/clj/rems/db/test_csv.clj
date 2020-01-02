@@ -12,57 +12,57 @@
 
 (deftest test-print-to-csv
   (testing "with default settings"
-    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+    (is (= "col1,col2\nval1,val2\nval3,val4\n"
+           (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     ["val3" "val4"]]
-                             :separator ",")
-           "col1,col2\nval1,val2\nval3,val4\n")))
+                             :separator ","))))
 
   (testing "different separator"
-    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+    (is (= "col1;col2\nval1;val2\nval3;val4\n"
+           (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     ["val3" "val4"]]
-                             :separator ";")
-           "col1;col2\nval1;val2\nval3;val4\n")))
+                             :separator ";"))))
 
   (testing "quote strings"
-    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+    (is (= "\"col1\",\"col2\"\n\"val1\",\"val2\"\n\"val3\",\"val4\"\n"
+           (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     ["val3" "val4"]]
                              :separator ","
-                             :quote-strings? true)
-           "\"col1\",\"col2\"\n\"val1\",\"val2\"\n\"val3\",\"val4\"\n")))
+                             :quote-strings? true))))
 
   (testing "do not quote numeric values"
-    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+    (is (= "\"col1\",\"col2\"\n\"val1\",\"val2\"\n\"val3\",4\n"
+           (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     ["val3" 4]]
                              :separator ","
-                             :quote-strings? true)
-           "\"col1\",\"col2\"\n\"val1\",\"val2\"\n\"val3\",4\n")))
+                             :quote-strings? true))))
 
   (testing "do not quote nil values"
-    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+    (is (= "\"col1\",\"col2\"\n\"val1\",\"val2\"\n,\"val4\"\n"
+           (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["val1" "val2"]
                                     [nil "val4"]]
                              :separator ","
-                             :quote-strings? true)
-           "\"col1\",\"col2\"\n\"val1\",\"val2\"\n,\"val4\"\n")))
+                             :quote-strings? true))))
   
   (testing "escape quotes inside strings when strings are quoted"
-    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+    (is (= "\"col1\",\"col2\"\n\"\\\"so called\\\" value\",\"val2\"\n\"val3\",\"val4\"\n"
+           (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["\"so called\" value" "val2"]
                                     ["val3" "val4"]]
                              :separator ","
-                             :quote-strings? true)
-           "\"col1\",\"col2\"\n\"\\\"so called\\\" value\",\"val2\"\n\"val3\",\"val4\"\n")))
+                             :quote-strings? true))))
 
   (testing "do not escape quotes inside strings when strings are not quoted"
-    (is (= (csv/print-to-csv :column-names ["col1" "col2"]
+    (is (= "col1,col2\n\"so called\" value,val2\nval3,val4\n"
+           (csv/print-to-csv :column-names ["col1" "col2"]
                              :rows [["\"so called\" value" "val2"]
                                     ["val3" "val4"]]
-                             :separator ",")
-           "col1,col2\n\"so called\" value,val2\nval3,val4\n"))))
+                             :separator ",")))))
 
 (def ^:private applicant "applicant")
 (def ^:private test-time (DateTime. 1000))
@@ -89,22 +89,22 @@
         get-application #(applications/get-unrestricted-application app-id)]
 
     (testing "draft applications not included as default"
-      (is (= (csv/applications-to-csv [(get-application)] "owner")
-             "")))
+      (is (= ""
+             (csv/applications-to-csv [(get-application)] "owner"))))
 
     (testing "draft applications included when explicitly set"
-      (is (= (csv/applications-to-csv [(get-application)] "owner" :include-drafts true)
-             (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"\",\"\"\n"))))
+      (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
+                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"\",\"\"\n")
+             (csv/applications-to-csv [(get-application)] "owner" :include-drafts true))))
 
     (test-data/fill-form! {:application-id app-id
                            :actor applicant
                            :field-value "test value"})
 
     (testing "form filled out"
-      (is (= (csv/applications-to-csv [(get-application)] "owner" :include-drafts true)
-             (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"test value\",\"\"\n"))))
+      (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
+                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"test value\",\"\"\n")
+             (csv/applications-to-csv [(get-application)] "owner" :include-drafts true))))
 
     (test-data/accept-licenses! {:application-id app-id
                                  :actor applicant})
@@ -115,8 +115,8 @@
                          :time test-time})
 
     (testing "submitted application"
-      (is (= (csv/applications-to-csv [(get-application)] "owner")
-             (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
+      (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
                   "1,\"" external-id "\",\"Alice Applicant\",\""
                   (text/localize-time test-time)
-                  "\",\"Applied\",\"Test resource\",\"test value\",\"\"\n"))))))
+                  "\",\"Applied\",\"Test resource\",\"test value\",\"\"\n")
+             (csv/applications-to-csv [(get-application)] "owner"))))))
