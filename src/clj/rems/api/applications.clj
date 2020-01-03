@@ -37,11 +37,11 @@
 (s/defschema Applicant
   UserWithAttributes)
 
-(s/defschema Commenter
+(s/defschema Reviewer
   UserWithAttributes)
 
-(s/defschema Commenters
-  [Commenter])
+(s/defschema Reviewers
+  [Reviewer])
 
 (s/defschema Decider
   UserWithAttributes)
@@ -163,11 +163,11 @@
       :return CopyAsNewResponse
       (ok (api-command :application.command/copy-as-new request)))
 
-    (GET "/commenters" []
-      :summary "Available third party commenters"
+    (GET "/reviewers" []
+      :summary "Available reviewers"
       :roles #{:handler}
-      :return Commenters
-      (ok (users/get-commenters)))
+      :return Reviewers
+      (ok (users/get-reviewers)))
 
     (GET "/export" []
       :summary "Export all submitted applications of a given form as CSV"
