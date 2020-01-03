@@ -151,9 +151,9 @@
   {"applicant" {:userid "applicant"
                 :email "applicant@example.com"
                 :name "Applicant"}
-   "commenter" {:userid "commenter"
-                :email "commenter@example.com"
-                :name "Commenter"}
+   "reviewer" {:userid "reviewer"
+               :email "reviewer@example.com"
+               :name "Reviewer"}
    "decider" {:userid "decider"
               :email "decider@example.com"
               :name "Decider"}
@@ -792,20 +792,20 @@
                      :event/actor "handler"
                      :application/id 1
                      :application/request-id request-id
-                     :application/commenters ["commenter"]
+                     :application/commenters ["reviewer"]
                      :application/comment "please comment"}
           events (conj (:application/events submitted-application) new-event)
           expected-application (deep-merge submitted-application
                                            {:application/last-activity (DateTime. 4000)
                                             :application/events events
                                             :application/todo :waiting-for-review
-                                            ::model/latest-review-request-by-user {"commenter" request-id}})]
+                                            ::model/latest-review-request-by-user {"reviewer" request-id}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> reviewed"
         (let [new-event {:event/type :application.event/reviewed
                          :event/time (DateTime. 5000)
-                         :event/actor "commenter"
+                         :event/actor "reviewer"
                          :application/id 1
                          :application/request-id request-id
                          :application/comment "looks good"}
@@ -1106,12 +1106,12 @@
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
             :application/id 1
             :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                   {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
+                                   {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
            (model/enrich-event {:event/type :application.event/decision-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
                                 :application/id 1
-                                :application/deciders ["decider" "commenter"]}
+                                :application/deciders ["decider" "reviewer"]}
                                get-user get-catalogue-item))))
   (testing "review-requested"
     (is (= {:event/type :application.event/review-requested
@@ -1120,12 +1120,12 @@
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
             :application/id 1
             :application/commenters [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                     {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
+                                     {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
            (model/enrich-event {:event/type :application.event/review-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
                                 :application/id 1
-                                :application/commenters ["decider" "commenter"]}
+                                :application/commenters ["decider" "reviewer"]}
                                get-user get-catalogue-item))))
   (testing "member-added"
     (is (= {:event/type :application.event/member-added

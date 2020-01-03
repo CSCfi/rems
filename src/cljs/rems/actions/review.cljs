@@ -16,7 +16,7 @@
 (rf/reg-event-fx
  ::send-review
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-   (command! :application.command/comment
+   (command! :application.command/review
              {:application-id application-id
               :comment comment}
              {:description [text :t.actions/review]

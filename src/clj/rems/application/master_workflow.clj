@@ -45,7 +45,7 @@
     :application.command/remove-member
     :application.command/invite-member
     :application.command/uninvite-member
-    :application.command/request-comment
+    :application.command/request-review
     :application.command/request-decision
     :application.command/return
     :application.command/approve
@@ -72,7 +72,7 @@
    :handler (conj handler-all-commands :see-everything)
    :commenter #{:see-everything
                 :application.command/remark
-                :application.command/comment}
+                :application.command/review}
    :past-commenter #{:see-everything
                      :application.command/remark}
    :decider #{:see-everything

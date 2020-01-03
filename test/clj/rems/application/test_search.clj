@@ -84,10 +84,10 @@
       (test-data/command! {:type :application.command/submit
                            :application-id app-id
                            :actor "alice"})
-      (test-data/command! {:type :application.command/request-comment
+      (test-data/command! {:type :application.command/request-review
                            :application-id app-id
                            :actor "developer"
-                           :commenters ["elsa"]
+                           :reviewers ["elsa"]
                            :comment ""})
       (is (= #{app-id} (search/find-applications "\"Waiting for a review\"")) "en todo, any field")
       (is (= #{app-id} (search/find-applications "\"waiting-for-review\"")) "keyword todo, any field")

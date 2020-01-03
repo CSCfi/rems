@@ -21,8 +21,8 @@
     :application.command/revoke ; should not be available in submitted state, but let's keep it here just in case
     :application.command/return
     :application.command/close ; available also in other states than submitted, but that's okay
-    :application.command/request-comment
-    :application.command/comment
+    :application.command/request-review
+    :application.command/review
     :application.command/request-decision
     :application.command/decide})
 

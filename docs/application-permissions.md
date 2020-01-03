@@ -25,8 +25,8 @@
         <td valign="top">
             <!-- role: commenter -->
             <div>see‑everything</div>
-            <div>comment</div>
             <div>remark</div>
+            <div>review</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
@@ -208,8 +208,8 @@
         <td valign="top">
             <!-- role: commenter -->
             <div>see‑everything</div>
-            <div>comment</div>
             <div>remark</div>
+            <div>review</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
@@ -232,7 +232,7 @@
             <div>invite‑member</div>
             <div>remark</div>
             <div>remove‑member</div>
-            <div>request‑comment</div>
+            <div>request‑review</div>
             <div>uninvite‑member</div>
         </td>
         <td valign="top">
@@ -306,8 +306,8 @@
         <td valign="top">
             <!-- role: commenter -->
             <div>see‑everything</div>
-            <div>comment</div>
             <div>remark</div>
+            <div>review</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
@@ -334,8 +334,8 @@
             <div>reject</div>
             <div>remark</div>
             <div>remove‑member</div>
-            <div>request‑comment</div>
             <div>request‑decision</div>
+            <div>request‑review</div>
             <div>return</div>
             <div>uninvite‑member</div>
         </td>
