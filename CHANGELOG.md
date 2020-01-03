@@ -11,6 +11,9 @@ Changes since v2.6
 ### Breaking changes
 - Removed support for LDAP authentication
 - `/api/workflows/create` API: the `type` parameter's allowed value was changed from `dynamic` to `workflow/dynamic`
+- `:application.event/commented` event renamed to `:application.event/reviewed`
+- `:application.event/comment-requested` event renamed to `:application.event/review-requested` and its `:application/commenters` field renamed to `:application/reviewers`
+- `/api/applications/commenters` API renamed to `/api/applications/reviewers`
 
 ### Additions
 - Catalogue item form can be changed for one or more items at a time.
