@@ -35,7 +35,7 @@
   (assoc EventBase
          :event/type (s/enum :application.event/review-requested)
          :application/request-id s/Uuid
-         :application/commenters [s/Str]
+         :application/reviewers [s/Str]
          :application/comment s/Str))
 (s/defschema CopiedFromEvent
   (assoc EventBase

@@ -1185,7 +1185,7 @@
         (is (instance? UUID request-id-1))
         (is (= {:event/type :application.event/review-requested
                 :application/request-id request-id-1
-                :application/commenters [reviewer reviewer2]
+                :application/reviewers [reviewer reviewer2]
                 :application/comment ""
                 :event/time test-time
                 :event/actor handler-user-id
@@ -1194,7 +1194,7 @@
         (is (instance? UUID request-id-2))
         (is (= {:event/type :application.event/review-requested
                 :application/request-id request-id-2
-                :application/commenters [reviewer]
+                :application/reviewers [reviewer]
                 :application/comment ""
                 :event/time test-time
                 :event/actor handler-user-id

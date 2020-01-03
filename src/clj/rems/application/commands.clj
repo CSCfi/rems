@@ -391,7 +391,7 @@
       (invalid-users-errors (:reviewers cmd) injections)
       (ok {:event/type :application.event/review-requested
            :application/request-id (UUID/randomUUID)
-           :application/commenters (:reviewers cmd)
+           :application/reviewers (:reviewers cmd)
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-reviewer-error [application cmd]

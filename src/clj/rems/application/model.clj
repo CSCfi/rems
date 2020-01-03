@@ -130,7 +130,7 @@
 (defmethod event-type-specific-application-view :application.event/review-requested
   [application event]
   (-> application
-      (update ::latest-review-request-by-user merge (zipmap (:application/commenters event)
+      (update ::latest-review-request-by-user merge (zipmap (:application/reviewers event)
                                                             (repeat (:application/request-id event))))
       (update-todo-for-requests)))
 
@@ -427,7 +427,7 @@
              {:application/deciders (mapv get-user (:application/deciders event))}
 
              :application.event/review-requested
-             {:application/commenters (mapv get-user (:application/commenters event))}
+             {:application/reviewers (mapv get-user (:application/reviewers event))}
 
              (:application.event/member-added
               :application.event/member-removed)

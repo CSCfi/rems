@@ -161,7 +161,7 @@
                  :event/type :application.event/review-requested
                  :event/actor "handler"
                  :application/request-id "r1"
-                 :application/commenters ["commenter1" "commenter2"]}
+                 :application/reviewers ["commenter1" "commenter2"]}
         requested-events (conj base-events request)]
     (testing "review-request"
       (let [mails (emails base-events request)]

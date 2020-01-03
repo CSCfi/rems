@@ -792,7 +792,7 @@
                      :event/actor "handler"
                      :application/id 1
                      :application/request-id request-id
-                     :application/commenters ["reviewer"]
+                     :application/reviewers ["reviewer"]
                      :application/comment "please comment"}
           events (conj (:application/events submitted-application) new-event)
           expected-application (deep-merge submitted-application
@@ -1119,13 +1119,13 @@
             :event/actor "handler"
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
             :application/id 1
-            :application/commenters [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                     {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
+            :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider"}
+                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
            (model/enrich-event {:event/type :application.event/review-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
                                 :application/id 1
-                                :application/commenters ["decider" "reviewer"]}
+                                :application/reviewers ["decider" "reviewer"]}
                                get-user get-catalogue-item))))
   (testing "member-added"
     (is (= {:event/type :application.event/member-added
@@ -1308,7 +1308,7 @@
     (testing "personalized waiting for your review"
       (let [application (model/application-view application {:event/type :application.event/review-requested
                                                              :event/actor "handler"
-                                                             :application/commenters ["reviewer1"]})]
+                                                             :application/reviewers ["reviewer1"]})]
         (is (= :waiting-for-review
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")

@@ -133,7 +133,7 @@
      (case event-type
        :application.event/review-requested
        (str/join ", " (mapv application-util/get-member-name
-                            (:application/commenters event)))
+                            (:application/reviewers event)))
 
        :application.event/decision-requested
        (str/join ", " (mapv application-util/get-member-name

@@ -138,7 +138,7 @@
                           :t.email.application-resubmitted/message)))
 
 (defmethod event-to-emails :application.event/review-requested [event application]
-  (emails-to-recipients (:application/commenters event)
+  (emails-to-recipients (:application/reviewers event)
                         event application
                         :t.email.comment-requested/subject
                         :t.email.comment-requested/message))

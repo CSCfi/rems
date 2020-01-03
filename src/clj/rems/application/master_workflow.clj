@@ -150,7 +150,7 @@
 (defmethod calculate-permissions :application.event/review-requested
   [application event]
   (-> application
-      (permissions/give-role-to-users :commenter (:application/commenters event))))
+      (permissions/give-role-to-users :commenter (:application/reviewers event))))
 
 (defmethod calculate-permissions :application.event/reviewed
   [application event]

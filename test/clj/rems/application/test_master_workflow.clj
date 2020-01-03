@@ -11,7 +11,7 @@
                                                         :event/actor "applicant"}
                                                        {:event/type :application.event/review-requested
                                                         :event/actor "handler"
-                                                        :application/commenters ["reviewer1" "reviewer2"]}])
+                                                        :application/reviewers ["reviewer1" "reviewer2"]}])
           reviewed (reduce calculate-permissions requested [{:event/type :application.event/reviewed
                                                              :event/actor "reviewer1"}])]
       (is (contains? (permissions/user-permissions requested "reviewer1")
