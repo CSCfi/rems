@@ -33,7 +33,8 @@
           (try-catch-ex (db-events/event->json {}))))))
 
   (testing "json->event validates events"
-    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (db-events/json->event "{}"))))
+    (is (thrown-with-msg? ExceptionInfo #"Value cannot be coerced to match schema"
+                          (db-events/json->event "{}"))))
 
   (testing "json data format"
     (let [event {:event/type :application.event/submitted
