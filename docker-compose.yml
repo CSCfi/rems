@@ -1,0 +1,27 @@
+version: '2'
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rems
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://db:5432/rems?user=rems&password=remspassword
+      AUTHENTICATION: :fake-shibboleth
+      PUBLIC_URL: http://localhost:3000/
+    mem_reservation: 200m
+    mem_limit: 500m
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  db:
+    image: postgres:9.6
+    environment:
+      POSTGRES_USER: rems
+      POSTGRES_PASSWORD: remspassword
+    mem_reservation: 30m
+    mem_limit: 150m
+    ports:
+      - "127.0.0.1:5432:5432"
