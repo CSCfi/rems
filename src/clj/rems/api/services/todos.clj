@@ -5,7 +5,7 @@
             [rems.db.applications :as applications]))
 
 (def ^:private todo-roles
-  #{:handler :commenter :decider :past-commenter :past-decider})
+  #{:handler :reviewer :decider :past-reviewer :past-decider})
 
 (defn- potential-todo? [application]
   (and (some todo-roles (:application/roles application))
