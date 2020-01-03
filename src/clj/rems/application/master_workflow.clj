@@ -147,12 +147,12 @@
   (-> application
       (permissions/update-role-permissions returned-permissions)))
 
-(defmethod calculate-permissions :application.event/comment-requested
+(defmethod calculate-permissions :application.event/review-requested
   [application event]
   (-> application
       (permissions/give-role-to-users :commenter (:application/commenters event))))
 
-(defmethod calculate-permissions :application.event/commented
+(defmethod calculate-permissions :application.event/reviewed
   [application event]
   (-> application
       (permissions/remove-role-from-user :commenter (:event/actor event))

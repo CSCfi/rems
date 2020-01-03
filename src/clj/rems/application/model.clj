@@ -120,24 +120,24 @@
 (defn- update-todo-for-requests [application]
   (assoc application :application/todo
          (cond
-           (not (empty? (::latest-comment-request-by-user application)))
+           (not (empty? (::latest-review-request-by-user application)))
            :waiting-for-review
            (not (empty? (::latest-decision-request-by-user application)))
            :waiting-for-decision
            :else
            :no-pending-requests)))
 
-(defmethod event-type-specific-application-view :application.event/comment-requested
+(defmethod event-type-specific-application-view :application.event/review-requested
   [application event]
   (-> application
-      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
-                                                             (repeat (:application/request-id event))))
+      (update ::latest-review-request-by-user merge (zipmap (:application/commenters event)
+                                                            (repeat (:application/request-id event))))
       (update-todo-for-requests)))
 
-(defmethod event-type-specific-application-view :application.event/commented
+(defmethod event-type-specific-application-view :application.event/reviewed
   [application event]
   (-> application
-      (update ::latest-comment-request-by-user dissoc (:event/actor event))
+      (update ::latest-review-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
@@ -426,7 +426,7 @@
              :application.event/decision-requested
              {:application/deciders (mapv get-user (:application/deciders event))}
 
-             :application.event/comment-requested
+             :application.event/review-requested
              {:application/commenters (mapv get-user (:application/commenters event))}
 
              (:application.event/member-added
@@ -532,8 +532,8 @@
 
 (defn hide-sensitive-events [events]
   (->> events
-       (remove (comp #{:application.event/comment-requested
-                       :application.event/commented
+       (remove (comp #{:application.event/review-requested
+                       :application.event/reviewed
                        :application.event/decided
                        :application.event/decision-requested}
                      :event/type))
@@ -558,12 +558,12 @@
   (-> application
       hide-invitation-tokens
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
-      (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
+      (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
 (defn- personalize-todo [application user-id]
   (cond-> application
-    (contains? (::latest-comment-request-by-user application) user-id)
+    (contains? (::latest-review-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-review)
 
     (contains? (::latest-decision-request-by-user application) user-id)

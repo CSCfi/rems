@@ -390,21 +390,21 @@
   [cmd _application injections]
   (or (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
-      (ok {:event/type :application.event/comment-requested
+      (ok {:event/type :application.event/review-requested
            :application/request-id (UUID/randomUUID)
            :application/commenters (:commenters cmd)
            :application/comment (:comment cmd)})))
 
-(defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (get application :rems.application.model/latest-comment-request-by-user)
+(defn- actor-is-not-reviewer-error [application cmd]
+  (when-not (contains? (get application :rems.application.model/latest-review-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
 (defmethod command-handler :application.command/comment
   [cmd application _injections]
-  (or (actor-is-not-commenter-error application cmd)
-      (let [last-request-for-actor (get-in application [:rems.application.model/latest-comment-request-by-user (:actor cmd)])]
-        (ok {:event/type :application.event/commented
+  (or (actor-is-not-reviewer-error application cmd)
+      (let [last-request-for-actor (get-in application [:rems.application.model/latest-review-request-by-user (:actor cmd)])]
+        (ok {:event/type :application.event/reviewed
              ;; Currently we want to tie all comments to the latest request.
              ;; In the future this might change so that commenters can freely continue to comment
              ;; on any request they have gotten.

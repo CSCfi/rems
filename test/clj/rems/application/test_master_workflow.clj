@@ -4,15 +4,15 @@
             [rems.permissions :as permissions]))
 
 (deftest test-calculate-permissions
-  (testing "commenter may comment only once"
+  (testing "reviewer may review only once"
     (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created
                                                         :event/actor "applicant"}
                                                        {:event/type :application.event/submitted
                                                         :event/actor "applicant"}
-                                                       {:event/type :application.event/comment-requested
+                                                       {:event/type :application.event/review-requested
                                                         :event/actor "handler"
                                                         :application/commenters ["commenter1" "commenter2"]}])
-          commented (reduce calculate-permissions requested [{:event/type :application.event/commented
+          commented (reduce calculate-permissions requested [{:event/type :application.event/reviewed
                                                               :event/actor "commenter1"}])]
       (is (contains? (permissions/user-permissions requested "commenter1")
                      :application.command/comment))

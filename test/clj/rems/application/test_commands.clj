@@ -1178,9 +1178,9 @@
                               injections)
           request-id-2 (:application/request-id event-2)
           application (apply-events application [event-2])]
-      (testing "comment requested successfully"
+      (testing "review requested successfully"
         (is (instance? UUID request-id-1))
-        (is (= {:event/type :application.event/comment-requested
+        (is (= {:event/type :application.event/review-requested
                 :application/request-id request-id-1
                 :application/commenters ["commenter" "commenter2"]
                 :application/comment ""
@@ -1189,7 +1189,7 @@
                 :application/id app-id}
                event-1))
         (is (instance? UUID request-id-2))
-        (is (= {:event/type :application.event/comment-requested
+        (is (= {:event/type :application.event/review-requested
                 :application/request-id request-id-2
                 :application/commenters ["commenter"]
                 :application/comment ""
@@ -1225,8 +1225,8 @@
                                :comment "..."}
                               injections)
             application (apply-events application [event])]
-        (testing "commented succesfully"
-          (is (= {:event/type :application.event/commented
+        (testing "reviewed succesfully"
+          (is (= {:event/type :application.event/reviewed
                   :event/time test-time
                   :event/actor "commenter"
                   :application/id app-id
@@ -1240,8 +1240,8 @@
                                 :actor "commenter"
                                 :comment "..."}
                                injections))))
-        (testing "other commenter can still comment"
-          (is (= {:event/type :application.event/commented
+        (testing "other reviewer can still review"
+          (is (= {:event/type :application.event/reviewed
                   :event/time test-time
                   :event/actor "commenter2"
                   :application/id app-id
