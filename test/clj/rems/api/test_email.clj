@@ -11,12 +11,23 @@
   :once
   api-fixture)
 
-(deftest test-send-handler-reminder
-  (let [api-key "42"
-        user-id "developer"
-        outbox-emails (atom [])]
+(def api-key "42")
+(def user-id "developer")
 
-    (testing "sends emails"
+(defn- create-application-in-review! []
+  (let [app-id (test-data/create-application! {:actor "alice"})]
+    (test-data/command! {:type :application.command/submit
+                         :application-id app-id
+                         :actor "alice"})
+    (test-data/command! {:type :application.command/request-comment
+                         :application-id app-id
+                         :actor "developer"
+                         :commenters ["carl"]
+                         :comment ""})))
+
+(deftest test-send-handler-reminder
+  (testing "sends emails"
+    (let [outbox-emails (atom [])]
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-handler-reminder")
@@ -28,35 +39,24 @@
                   {:subject "Applications in progress", :to-user "handler"}]
                  (->> @outbox-emails
                       (map #(select-keys (:outbox/email %) [:subject :to-user]))
-                      (sort-by :to-user)))))))
+                      (sort-by :to-user))))))))
 
-    (testing "requires API key"
-      (let [cookie (login-with-cookies user-id)
-            csrf (get-csrf-token cookie)
-            response (-> (request :post "/api/email/send-handler-reminder")
-                         (header "Cookie" cookie)
-                         (header "x-csrf-token" csrf)
-                         handler)]
-        (is (response-is-forbidden? response))
-        (is (str/includes? (get-in response [:headers "x-rems-roles"])
-                           "logged-in"))))))
+  (testing "requires API key"
+    (let [cookie (login-with-cookies user-id)
+          csrf (get-csrf-token cookie)
+          response (-> (request :post "/api/email/send-handler-reminder")
+                       (header "Cookie" cookie)
+                       (header "x-csrf-token" csrf)
+                       handler)]
+      (is (response-is-forbidden? response))
+      (is (str/includes? (get-in response [:headers "x-rems-roles"])
+                         "logged-in")))))
 
 (deftest test-send-reviewer-reminder
-  (let [api-key "42"
-        user-id "developer"
-        outbox-emails (atom [])
+  (create-application-in-review!)
 
-        app-id (test-data/create-application! {:actor "alice"})]
-    (test-data/command! {:type :application.command/submit
-                         :application-id app-id
-                         :actor "alice"})
-    (test-data/command! {:type :application.command/request-comment
-                         :application-id app-id
-                         :actor "developer"
-                         :commenters ["carl"]
-                         :comment ""})
-
-    (testing "sends emails"
+  (testing "sends emails"
+    (let [outbox-emails (atom [])]
       (with-redefs [outbox/put! (fn [email]
                                   (swap! outbox-emails conj email))]
         (let [body (-> (request :post "/api/email/send-reviewer-reminder")
@@ -67,15 +67,15 @@
           (is (= [{:subject "Applications pending review", :to-user "carl"}]
                  (->> @outbox-emails
                       (map #(select-keys (:outbox/email %) [:subject :to-user]))
-                      (sort-by :to-user)))))))
+                      (sort-by :to-user))))))))
 
-    (testing "requires API key"
-      (let [cookie (login-with-cookies user-id)
-            csrf (get-csrf-token cookie)
-            response (-> (request :post "/api/email/send-reviewer-reminder")
-                         (header "Cookie" cookie)
-                         (header "x-csrf-token" csrf)
-                         handler)]
-        (is (response-is-forbidden? response))
-        (is (str/includes? (get-in response [:headers "x-rems-roles"])
-                           "logged-in"))))))
+  (testing "requires API key"
+    (let [cookie (login-with-cookies user-id)
+          csrf (get-csrf-token cookie)
+          response (-> (request :post "/api/email/send-reviewer-reminder")
+                       (header "Cookie" cookie)
+                       (header "x-csrf-token" csrf)
+                       handler)]
+      (is (response-is-forbidden? response))
+      (is (str/includes? (get-in response [:headers "x-rems-roles"])
+                         "logged-in")))))
