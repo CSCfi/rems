@@ -59,10 +59,20 @@
                  (assoc field :field/id (inc index)))
                fields))
 
+(defn- normalize-field-values [field]
+  (let [visible-type (get-in field [:field/visible :visible/type] :always)]
+    (if (= :always visible-type)
+      (dissoc field :field/visible)
+      field)))
+
+(defn- normalize-fields-values [fields]
+  (map normalize-field-values fields))
+
 (defn- serialize-fields [form]
   (->> (:form/fields form)
        (generate-field-ids)
        (s/validate [FieldTemplate])
+       (normalize-fields-values)
        (json/generate-string)))
 
 (defn create-form! [user-id form]

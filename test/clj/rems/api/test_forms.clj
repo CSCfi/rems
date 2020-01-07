@@ -9,11 +9,17 @@
   :once
   api-fixture)
 
+(defn- fixup-field-visible-type [field]
+  (if (get-in field [:field/visible :visible/type])
+    (update-in field [:field/visible :visible/type] keyword)
+    field))
+
 (defn fixup-field-to-match-command [field]
   (-> field
       (dissoc :field/id)
       ;; XXX: these tests use the JSON API, so keywords are not maintained
-      (update :field/type keyword)))
+      (update :field/type keyword)
+      fixup-field-visible-type))
 
 (deftest forms-api-test
   (let [api-key "42"
@@ -284,6 +290,46 @@
                          handler
                          read-ok-body)]
             (is (= (:form/fields command)
+                   (mapv fixup-field-to-match-command (:form/fields form))))))))))
+
+(deftest forms-api-visible-test
+  (let [api-key "42"
+        user-id "owner"
+        localized {:en "en" :fi "fi"}
+        command {:form/organization "abc"
+                 :form/title "text fields that depend on a field"
+                 :form/fields [{:field/type :option
+                                :field/title localized
+                                :field/optional false
+                                :field/options [{:key "a" :label localized}
+                                                {:key "b" :label localized}
+                                                {:key "c" :label localized}]}
+                               {:field/type :text
+                                :field/title localized
+                                :field/optional false
+                                :field/visible {:visible/type :always}}
+                               {:field/type :text
+                                :field/title localized
+                                :field/optional false
+                                :field/visible {:visible/type :only-if
+                                                :visible/field {:field/id 1}
+                                                :visible/value "c"}}]}]
+    (testing "creating"
+      (let [form-id (-> (request :post "/api/forms/create")
+                        (authenticate api-key user-id)
+                        (json-body command)
+                        handler
+                        read-ok-body
+                        :id)]
+        (is form-id)
+        (testing "and fetching"
+          (let [form (-> (request :get (str "/api/forms/" form-id))
+                         (authenticate api-key user-id)
+                         handler
+                         read-ok-body)]
+            (is (= (select-keys command [:form/organization :form/title])
+                   (select-keys form [:form/organization :form/title])))
+            (is (= (update-in (:form/fields command) [1] dissoc :field/visible) ; always visible field is not saved as it's the default
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test
