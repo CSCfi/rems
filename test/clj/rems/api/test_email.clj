@@ -42,15 +42,11 @@
                       (sort-by :to-user))))))))
 
   (testing "requires API key"
-    (let [cookie (login-with-cookies user-id)
-          csrf (get-csrf-token cookie)
-          response (-> (request :post "/api/email/send-handler-reminder")
-                       (header "Cookie" cookie)
-                       (header "x-csrf-token" csrf)
+    (let [response (-> (request :post "/api/email/send-handler-reminder")
+                       (add-login-cookies user-id)
                        handler)]
       (is (response-is-forbidden? response))
-      (is (str/includes? (get-in response [:headers "x-rems-roles"])
-                         "logged-in")))))
+      (is (logged-in? response)))))
 
 (deftest test-send-reviewer-reminder
   (create-application-in-review!)
@@ -70,12 +66,8 @@
                       (sort-by :to-user))))))))
 
   (testing "requires API key"
-    (let [cookie (login-with-cookies user-id)
-          csrf (get-csrf-token cookie)
-          response (-> (request :post "/api/email/send-reviewer-reminder")
-                       (header "Cookie" cookie)
-                       (header "x-csrf-token" csrf)
+    (let [response (-> (request :post "/api/email/send-reviewer-reminder")
+                       (add-login-cookies user-id)
                        handler)]
       (is (response-is-forbidden? response))
-      (is (str/includes? (get-in response [:headers "x-rems-roles"])
-                         "logged-in")))))
+      (is (logged-in? response)))))
