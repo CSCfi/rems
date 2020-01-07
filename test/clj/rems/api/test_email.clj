@@ -71,3 +71,29 @@
                        handler)]
       (is (response-is-forbidden? response))
       (is (logged-in? response)))))
+
+(deftest test-send-reminders
+  (create-application-in-review!)
+
+  (testing "sends emails"
+    (let [outbox-emails (atom [])]
+      (with-redefs [outbox/put! (fn [email]
+                                  (swap! outbox-emails conj email))]
+        (let [body (-> (request :post "/api/email/send-reminders")
+                       (authenticate api-key user-id)
+                       handler
+                       read-ok-body)]
+          (is (= "OK" body))
+          (is (= [{:subject "Applications pending review", :to-user "carl"}
+                  {:subject "Applications in progress", :to-user "developer"}
+                  {:subject "Applications in progress", :to-user "handler"}]
+                 (->> @outbox-emails
+                      (map #(select-keys (:outbox/email %) [:subject :to-user]))
+                      (sort-by :to-user))))))))
+
+  (testing "requires API key"
+    (let [response (-> (request :post "/api/email/send-reminders")
+                       (add-login-cookies user-id)
+                       handler)]
+      (is (response-is-forbidden? response))
+      (is (logged-in? response)))))
