@@ -41,8 +41,8 @@
                @message-atom))
         (reset! message-atom nil))
 
-      (testing "mail to user with alternative email in user settings"
-        (with-redefs [rems.db.user-settings/get-user-settings (constantly {:email "alternative@example.com"})]
+      (testing "mail to user with notification email in user settings"
+        (with-redefs [rems.db.user-settings/get-user-settings (constantly {:notification-email "alternative@example.com"})]
           (is (nil? (send-email! {:to-user "user" :subject "x" :body "y"}))))
         (is (= {:to "alternative@example.com"
                 :to-user "user"

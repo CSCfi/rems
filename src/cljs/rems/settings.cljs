@@ -16,7 +16,7 @@
  ::fetch-user-settings
  (fn [{:keys [db]} _]
    (fetch "/api/user-settings"
-          {:handler #(rf/dispatch-sync [::set-form (select-keys % [:email])]) ; only the keys that can be edited on this page
+          {:handler #(rf/dispatch-sync [::set-form (select-keys % [:notification-email])]) ; only the keys that can be edited on this page
            :error-handler (flash-message/default-error-handler :top "Fetch user settings")})
    {:db (assoc db ::form ::loading)}))
 
@@ -59,16 +59,16 @@
          (text :t.settings/idp-email) ": " (or (:email (:user identity))
                                                [:span.text-muted (text :t.settings/no-email)])]
 
-        (let [id "email"]
+        (let [id "notification-email"]
           [:div.form-group
            [:label {:for id} (text :t.settings/notification-email) ":"]
            [:input.form-control
             {:type "email"
              :id id
-             :value (:email form)
+             :value (:notification-email form)
              :on-change (fn [event]
                           (let [value (.. event -target -value)]
-                            (rf/dispatch [::set-form (assoc form :email value)])))}]])
+                            (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
 
         [:button.btn.btn-primary
          {:type "submit"}

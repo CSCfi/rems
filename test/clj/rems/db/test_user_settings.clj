@@ -14,7 +14,7 @@
 
   (testing "default settings for a new user"
     (is (= {:language :en
-            :email nil}
+            :notification-email nil}
            (s/validate user-settings/UserSettings
                        (user-settings/get-user-settings "user")))))
 
@@ -22,42 +22,42 @@
     (is (= {:success true}
            (user-settings/update-user-settings! "user" {:language :fi})))
     (is (= {:language :fi
-            :email nil}
+            :notification-email nil}
            (user-settings/get-user-settings "user"))))
 
   (testing "modify settings"
     (is (= {:success true}
-           (user-settings/update-user-settings! "user" {:email "user@example.com"})))
+           (user-settings/update-user-settings! "user" {:notification-email "user@example.com"})))
     (is (= {:language :fi
-            :email "user@example.com"}
+            :notification-email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with empty settings does not change settings"
     (is (= {:success true}
            (user-settings/update-user-settings! "user" {})))
     (is (= {:language :fi
-            :email "user@example.com"}
+            :notification-email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with invalid settings does not change settings"
     (is (= {:success false}
-           (user-settings/update-user-settings! "user" {:email "foo"}))
+           (user-settings/update-user-settings! "user" {:notification-email "foo"}))
         "completely invalid")
     (is (= {:success false}
-           (user-settings/update-user-settings! "user" {:email "bar@example.com" ; valid
+           (user-settings/update-user-settings! "user" {:notification-email "bar@example.com" ; valid
                                                         :language :de})) ; invalid
         "partially invalid")
     (is (= {:language :fi
-            :email "user@example.com"}
+            :notification-email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "changing one user's settings does not change another user's settings"
     (is (= {:success true}
-           (user-settings/update-user-settings! "unrelated" {:email "unrelated@example.com"})))
+           (user-settings/update-user-settings! "unrelated" {:notification-email "unrelated@example.com"})))
     (is (= {:success true}
-           (user-settings/update-user-settings! "user" {:email "changed@example.com"})))
+           (user-settings/update-user-settings! "user" {:notification-email "changed@example.com"})))
     (is (= {:language :en
-            :email "unrelated@example.com"}
+            :notification-email "unrelated@example.com"}
            (user-settings/get-user-settings "unrelated")))))
 
 (deftest test-language
@@ -71,15 +71,19 @@
   (testing "nil language"
     (is (= {} (user-settings/validate-settings {:language nil})))))
 
-(deftest test-email
+(deftest test-notification-email
   (testing "valid email"
-    (is (= {:email "somebody@example.com"} (user-settings/validate-settings {:email "somebody@example.com"}))))
+    (is (= {:notification-email "somebody@example.com"}
+           (user-settings/validate-settings {:notification-email "somebody@example.com"}))))
 
   (testing "invalid email"
-    (is (= {} (user-settings/validate-settings {:email "somebody"}))))
+    (is (= {}
+           (user-settings/validate-settings {:notification-email "somebody"}))))
 
   (testing "empty email will clear the setting"
-    (is (= {:email nil} (user-settings/validate-settings {:email ""}))))
+    (is (= {:notification-email nil}
+           (user-settings/validate-settings {:notification-email ""}))))
 
   (testing "nil email will clear the setting"
-    (is (= {:email nil} (user-settings/validate-settings {:email nil})))))
+    (is (= {:notification-email nil}
+           (user-settings/validate-settings {:notification-email nil})))))
