@@ -47,8 +47,12 @@
   (assert user "User missing!")
   (let [old-settings (get-user-settings user)
         validated (validate-settings new-settings)]
-    (db/update-user-settings!
-     {:user user
-      :settings (json/generate-string
-                 (merge old-settings validated))})
-    {:success (not (empty? validated))}))
+    (if (= (set (keys validated))
+           (set (keys new-settings)))
+      (do
+        (db/update-user-settings!
+         {:user user
+          :settings (json/generate-string
+                     (merge old-settings validated))})
+        {:success true})
+      {:success false})))

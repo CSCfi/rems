@@ -33,7 +33,7 @@
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with empty settings does not change settings"
-    (is (= {:success false}
+    (is (= {:success true}
            (user-settings/update-user-settings! "user" {})))
     (is (= {:language :fi
             :email "user@example.com"}
@@ -41,7 +41,12 @@
 
   (testing "updating with invalid settings does not change settings"
     (is (= {:success false}
-           (user-settings/update-user-settings! "user" {:email "foo"})))
+           (user-settings/update-user-settings! "user" {:email "foo"}))
+        "completely invalid")
+    (is (= {:success false}
+           (user-settings/update-user-settings! "user" {:email "bar@example.com" ; valid
+                                                        :language :de})) ; invalid
+        "partially invalid")
     (is (= {:language :fi
             :email "user@example.com"}
            (user-settings/get-user-settings "user"))))
