@@ -7,7 +7,8 @@
 ;; TODO could pass through additional (configurable?) attributes
 (defn format-user [u]
   {:userid (:eppn u)
-   :name (:commonName u)
+   :name (or (:commonName u)
+             (:displayName u)) ;; some shibboleth idps don't send commonName
    :email (:mail u)})
 
 (defn unformat-user
@@ -25,8 +26,9 @@
     (is (= api-user (format-user (unformat-user api-user))))))
 
 (defn- invalid-user? [u]
-  (or (str/blank? (:eppn u))
-      (str/blank? (:commonName u))))
+  (let [user (format-user u)]
+    (or (str/blank? (:userid user))
+        (str/blank? (:name user)))))
 
 (defn add-user! [user userattrs]
   (assert user)
