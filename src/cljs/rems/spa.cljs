@@ -42,7 +42,7 @@
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
-            [rems.settings :refer [settings-page]]
+            [rems.settings :refer [settings-page missing-email-warning]]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [navigate! fetch parse-int replace-url! set-location!]]
@@ -293,7 +293,9 @@
                          {:class (str "page-" (name page-id))
                           :id "main-content"}
                          (if-let [content (pages page-id)]
-                           [content]
+                           [:<>
+                            [missing-email-warning]
+                            [content]]
                            (do ; implementation error
                              (println "Unknown page-id" page-id)
                              (rf/dispatch [:set-active-page :not-found])
