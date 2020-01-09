@@ -372,7 +372,9 @@
            :example-searches "Example searches"
            :learn-more "Learn more"
            :search "Search"}
-  :settings {:email "Email address for notifications"
+  :settings {:idp-email "Email address from identity provider"
+             :no-email "(no email address)"
+             :notification-email "Use another email address for notifications"
              :save "Save"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"

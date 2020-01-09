@@ -370,7 +370,9 @@
            :example-searches "Esimerkkihakuja"
            :learn-more "Opi lisää"
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
-  :settings {:email "Sähköpostiosoite ilmoituksille"
+  :settings {:idp-email "Sähköpostiosoite tunnistautumispalvelulta"
+             :no-email "(ei sähköpostiosoitetta)"
+             :notification-email "Käytä toista sähköpostiosoitetta ilmoituksille"
              :save "Tallenna"}
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"

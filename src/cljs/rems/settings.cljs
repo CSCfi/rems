@@ -55,14 +55,17 @@
                       (.preventDefault event)
                       (rf/dispatch [::save]))}
 
+        [:div.form-group
+         (text :t.settings/idp-email) ": " (or (:email (:user identity))
+                                               [:span.text-muted (text :t.settings/no-email)])]
+
         (let [id "email"]
           [:div.form-group
-           [:label {:for id} (text :t.settings/email)]
+           [:label {:for id} (text :t.settings/notification-email) ":"]
            [:input.form-control
             {:type "email"
              :id id
              :value (:email form)
-             :placeholder (:email (:user identity))
              :on-change (fn [event]
                           (let [value (.. event -target -value)]
                             (rf/dispatch [::set-form (assoc form :email value)])))}]])
