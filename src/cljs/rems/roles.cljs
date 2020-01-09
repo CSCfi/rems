@@ -12,7 +12,7 @@
   (some #{:reporter} roles))
 
 (defn show-reviews? [roles]
-  (some #{:handler :commenter :decider :past-commenter :past-decider} roles))
+  (some #{:handler :reviewer :decider :past-reviewer :past-decider} roles))
 
 (defn show-admin-pages? [roles]
   (some #{:owner :handler} roles))

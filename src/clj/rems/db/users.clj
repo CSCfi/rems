@@ -58,7 +58,7 @@
 ;; XXX: Removing invalid users is not done consistently. It seems that
 ;;   only the following API calls are affected:
 ;;
-;;     /applications/commenters
+;;     /applications/reviewers
 ;;     /applications/members
 ;;     /applications/deciders
 ;;     /workflows/actors
@@ -73,7 +73,7 @@
 
 (def get-applicants get-users)
 
-(def get-commenters get-users)
+(def get-reviewers get-users)
 
 (def get-deciders get-users)
 

@@ -47,9 +47,6 @@
 (s/defschema CloseCommand
   (assoc CommandBase
          :comment s/Str))
-(s/defschema CommentCommand
-  (assoc CommandBase
-         :comment s/Str))
 (s/defschema CopyAsNewCommand
   CommandBase)
 (s/defschema CreateCommand
@@ -73,16 +70,18 @@
   (assoc CommandBase
          :member {:userid UserId}
          :comment s/Str))
-;; TODO RequestComment/Comment could be renamed to RequestReview/Review to be in line with the UI
-(s/defschema RequestCommentCommand
+(s/defschema RequestReviewCommand
   (assoc CommandBase
-         :commenters [UserId]
+         :reviewers [UserId]
          :comment s/Str))
 (s/defschema RequestDecisionCommand
   (assoc CommandBase
          :deciders [UserId]
          :comment s/Str))
 (s/defschema ReturnCommand
+  (assoc CommandBase
+         :comment s/Str))
+(s/defschema ReviewCommand
   (assoc CommandBase
          :comment s/Str))
 (s/defschema RevokeCommand
@@ -110,7 +109,6 @@
    :application.command/assign-external-id AssignExternalIdCommand
    :application.command/change-resources ChangeResourcesCommand
    :application.command/close CloseCommand
-   :application.command/comment CommentCommand
    :application.command/copy-as-new CopyAsNewCommand
    :application.command/create CreateCommand
    :application.command/decide DecideCommand
@@ -118,9 +116,10 @@
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
    :application.command/remove-member RemoveMemberCommand
-   :application.command/request-comment RequestCommentCommand
    :application.command/request-decision RequestDecisionCommand
+   :application.command/request-review RequestReviewCommand
    :application.command/return ReturnCommand
+   :application.command/review ReviewCommand
    :application.command/revoke RevokeCommand
    :application.command/save-draft SaveDraftCommand
    :application.command/submit SubmitCommand
@@ -386,25 +385,25 @@
              :application/decision (:decision cmd)
              :application/comment (:comment cmd)}))))
 
-(defmethod command-handler :application.command/request-comment
+(defmethod command-handler :application.command/request-review
   [cmd _application injections]
-  (or (must-not-be-empty cmd :commenters)
-      (invalid-users-errors (:commenters cmd) injections)
-      (ok {:event/type :application.event/comment-requested
+  (or (must-not-be-empty cmd :reviewers)
+      (invalid-users-errors (:reviewers cmd) injections)
+      (ok {:event/type :application.event/review-requested
            :application/request-id (UUID/randomUUID)
-           :application/commenters (:commenters cmd)
+           :application/reviewers (:reviewers cmd)
            :application/comment (:comment cmd)})))
 
-(defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (get application :rems.application.model/latest-comment-request-by-user)
+(defn- actor-is-not-reviewer-error [application cmd]
+  (when-not (contains? (get application :rems.application.model/latest-review-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
-(defmethod command-handler :application.command/comment
+(defmethod command-handler :application.command/review
   [cmd application _injections]
-  (or (actor-is-not-commenter-error application cmd)
-      (let [last-request-for-actor (get-in application [:rems.application.model/latest-comment-request-by-user (:actor cmd)])]
-        (ok {:event/type :application.event/commented
+  (or (actor-is-not-reviewer-error application cmd)
+      (let [last-request-for-actor (get-in application [:rems.application.model/latest-review-request-by-user (:actor cmd)])]
+        (ok {:event/type :application.event/reviewed
              ;; Currently we want to tie all comments to the latest request.
              ;; In the future this might change so that commenters can freely continue to comment
              ;; on any request they have gotten.

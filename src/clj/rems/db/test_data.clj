@@ -656,12 +656,12 @@
       (command! {:type :application.command/submit
                  :application-id app-id
                  :actor applicant})
-      (command! {:type :application.command/request-comment
+      (command! {:type :application.command/request-review
                  :application-id app-id
                  :actor approver
-                 :commenters [reviewer]
+                 :reviewers [reviewer]
                  :comment "please have a look"})
-      (command! {:type :application.command/comment
+      (command! {:type :application.command/review
                  :application-id app-id
                  :actor reviewer
                  :comment "looking good"})
@@ -692,12 +692,12 @@
       (command! {:type :application.command/submit
                  :application-id app-id
                  :actor applicant})
-      (command! {:type :application.command/request-comment
+      (command! {:type :application.command/request-review
                  :application-id app-id
                  :actor approver
-                 :commenters [reviewer]
+                 :reviewers [reviewer]
                  :comment "please have a look"})
-      (command! {:type :application.command/comment
+      (command! {:type :application.command/review
                  :application-id app-id
                  :actor reviewer
                  :comment "looking good"})
@@ -710,14 +710,14 @@
                  :actor approver
                  :comment "Research project complete, closing."}))
 
-    (let [app-id (create-draft! applicant [catid] "waiting for comment")]
+    (let [app-id (create-draft! applicant [catid] "waiting for review")]
       (command! {:type :application.command/submit
                  :application-id app-id
                  :actor applicant})
-      (command! {:type :application.command/request-comment
+      (command! {:type :application.command/request-review
                  :application-id app-id
                  :actor approver
-                 :commenters [reviewer]
+                 :reviewers [reviewer]
                  :comment ""}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for decision")]

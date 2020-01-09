@@ -43,7 +43,7 @@
     (enqueue-email! email)))
 
 (defn generate-reviewer-reminder-emails! []
-  (doseq [email (->> (applications/get-users-with-role :commenter) ; TODO: rename commenter to reviewer
+  (doseq [email (->> (applications/get-users-with-role :reviewer)
                      (map users/get-user)
                      (map (fn [reviewer]
                             (let [lang (:language (user-settings/get-user-settings (:userid reviewer)))

@@ -4,22 +4,22 @@
             [rems.permissions :as permissions]))
 
 (deftest test-calculate-permissions
-  (testing "commenter may comment only once"
+  (testing "reviewer may review only once"
     (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created
                                                         :event/actor "applicant"}
                                                        {:event/type :application.event/submitted
                                                         :event/actor "applicant"}
-                                                       {:event/type :application.event/comment-requested
+                                                       {:event/type :application.event/review-requested
                                                         :event/actor "handler"
-                                                        :application/commenters ["commenter1" "commenter2"]}])
-          commented (reduce calculate-permissions requested [{:event/type :application.event/commented
-                                                              :event/actor "commenter1"}])]
-      (is (contains? (permissions/user-permissions requested "commenter1")
-                     :application.command/comment))
-      (is (not (contains? (permissions/user-permissions commented "commenter1")
-                          :application.command/comment)))
-      (is (contains? (permissions/user-permissions commented "commenter2")
-                     :application.command/comment))))
+                                                        :application/reviewers ["reviewer1" "reviewer2"]}])
+          reviewed (reduce calculate-permissions requested [{:event/type :application.event/reviewed
+                                                             :event/actor "reviewer1"}])]
+      (is (contains? (permissions/user-permissions requested "reviewer1")
+                     :application.command/review))
+      (is (not (contains? (permissions/user-permissions reviewed "reviewer1")
+                          :application.command/review)))
+      (is (contains? (permissions/user-permissions reviewed "reviewer2")
+                     :application.command/review))))
 
   (testing "decider may decide only once"
     (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created

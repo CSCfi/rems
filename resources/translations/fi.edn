@@ -123,13 +123,11 @@
                  :empty "Ei hakemuksia."
                  :events {:approved "%1 hyväksyi hakemuksen."
                           :closed "%1 sulki hakemuksen."
-                          :comment-requested "%1 pyysi katselmointia käyttäjältä %2."
-                          :commented "%1 katselmoi hakemuksen."
                           :copied-from "%1 kopioi hakemuksen vanhasta hakemuksesta."
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."
                           :created "%1 loi uuden hakemuksen."
-                          :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
                           :decided "%1 teki päätöksen hakemukselle."
+                          :decision-requested "%1 pyysi päätöstä käyttäjältä %2."
                           :draft-saved "%1 tallensi hakemuksen luonnoksen."
                           :external-id-assigned "%1 lisäsi tunnisteen %2."
                           :licenses-accepted "%1 hyväksyi käyttöehdot."
@@ -143,6 +141,8 @@
                           :remarked "%1 kirjasi huomion."
                           :resources-changed "%1 muutti haettavia resursseja. Uudet resurssit: %2."
                           :returned "%1 palautti hakemuksen muokattavaksi."
+                          :review-requested "%1 pyysi katselmointia käyttäjältä %2."
+                          :reviewed "%1 katselmoi hakemuksen."
                           :revoked "%1 perui käyttöoikeuden."
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"}
@@ -273,10 +273,6 @@
                                     :message "Dear %1,\n\nKäyttäjä %4 on lähettänyt uudelleen hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :application-submitted {:subject "(%3) Uusi hakemus"
                                   :message "Hyvä %1,\n\n%4 on lähettänyt käyttöoikeushakemuksen %3 resurss(e)ille %5.\n\nVoit tarkastella hakemusta osoitteessa %6"}
-          :comment-requested {:subject "(%3) Katselmointipyyntö"
-                              :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
-          :commented {:subject "(%3) Hakemus katselmoitu"
-                      :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :decided {:subject "(%3) Päätös lähetetty"
                     :message "Hyvä %1,\n\n%2 on antanut päätöksen käyttäjän %4 hakemuksesta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :decision-requested {:subject "(%3) Päätöspyyntö"
@@ -292,6 +288,10 @@
           :regards "\n\nYstävällisin terveisin,\n\nREMS\n"
           :remarked {:subject "(%3) Hakemusta kommentoitu"
                      :message "Hyvä %1,\n\n%2 on kommentoinut käyttäjän %4 lähettämää hakemusta %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :review-requested {:subject "(%3) Katselmointipyyntö"
+                             :message "Hyvä %1,\n\n%2 on pyytänyt katselmointiasi käyttäjän %4 lähettämälle hakemukselle %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
+          :reviewed {:subject "(%3) Hakemus katselmoitu"
+                     :message "Hyvä %1,\n\n%2 on katselmoinut käyttäjän %4 lähettämän hakemuksen %3.\n\nVoit tarkastella hakemusta osoitteessa %6"}
           :reviewer-reminder {:application "%1, lähettänyt %2"
                               :message "Hyvä %1,\n\nSeuraavat hakemukset odottavat katselmointiasi:\n\n%2\n\nVoit tarkastella hakemuksia osoitteessa %3"
                               :subject "Katselmointia odottavat hakemukset"}}

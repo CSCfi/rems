@@ -1121,146 +1121,150 @@
                             :comment ""}
                            injections))))))
 
-(deftest test-comment
-  (let [application (apply-events nil
+(deftest test-review
+  (let [reviewer "reviewer"
+        reviewer2 "reviewer2"
+        reviewer3 "reviewer3"
+        application (apply-events nil
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
+        injections {:valid-user? #{reviewer reviewer2 reviewer3}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (fail-command application
-                           {:type :application.command/request-comment
+                           {:type :application.command/request-review
                             :actor handler-user-id
-                            :commenters ["commenter"]
+                            :reviewers [reviewer]
                             :comment ""}
                            {}))))
-    (testing "commenters must not be empty"
-      (is (= {:errors [{:type :must-not-be-empty :key :commenters}]}
+    (testing "reviewers must not be empty"
+      (is (= {:errors [{:type :must-not-be-empty :key :reviewers}]}
              (fail-command application
-                           {:type :application.command/request-comment
+                           {:type :application.command/request-review
                             :actor handler-user-id
-                            :commenters []
+                            :reviewers []
                             :comment ""}
                            {}))))
-    (testing "commenters must be a valid users"
+    (testing "reviewers must be a valid users"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"}
                        {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
              (fail-command application
-                           {:type :application.command/request-comment
+                           {:type :application.command/request-review
                             :actor handler-user-id
-                            :commenters ["invaliduser" "commenter" "invaliduser2"]
+                            :reviewers ["invaliduser" reviewer "invaliduser2"]
                             :comment ""}
                            injections))))
-    (testing "commenting before ::request-comment should fail"
+    (testing "reviewing before ::request-review should fail"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
-                           {:type :application.command/comment
-                            :actor "commenter"
+                           {:type :application.command/review
+                            :actor reviewer
                             :comment ""}
                            injections))))
     (let [event-1 (ok-command application
-                              {:type :application.command/request-comment
+                              {:type :application.command/request-review
                                :actor handler-user-id
-                               :commenters ["commenter" "commenter2"]
+                               :reviewers [reviewer reviewer2]
                                :comment ""}
                               injections)
           request-id-1 (:application/request-id event-1)
           application (apply-events application [event-1])
           ;; Make a new request that should partly override previous
           event-2 (ok-command application
-                              {:type :application.command/request-comment
+                              {:type :application.command/request-review
                                :actor handler-user-id
-                               :commenters ["commenter"]
+                               :reviewers [reviewer]
                                :comment ""}
                               injections)
           request-id-2 (:application/request-id event-2)
           application (apply-events application [event-2])]
-      (testing "comment requested successfully"
+      (testing "review requested successfully"
         (is (instance? UUID request-id-1))
-        (is (= {:event/type :application.event/comment-requested
+        (is (= {:event/type :application.event/review-requested
                 :application/request-id request-id-1
-                :application/commenters ["commenter" "commenter2"]
+                :application/reviewers [reviewer reviewer2]
                 :application/comment ""
                 :event/time test-time
                 :event/actor handler-user-id
                 :application/id app-id}
                event-1))
         (is (instance? UUID request-id-2))
-        (is (= {:event/type :application.event/comment-requested
+        (is (= {:event/type :application.event/review-requested
                 :application/request-id request-id-2
-                :application/commenters ["commenter"]
+                :application/reviewers [reviewer]
                 :application/comment ""
                 :event/time test-time
                 :event/actor handler-user-id
                 :application/id app-id}
                event-2)))
-      (testing "only the requested commenter can comment"
+      (testing "only the requested reviewer can review"
         (is (= {:errors [{:type :forbidden}]}
                (fail-command application
-                             {:type :application.command/comment
-                              :actor "commenter3"
+                             {:type :application.command/review
+                              :actor reviewer3
                               :comment "..."}
                              injections))))
-      (testing "comments are linked to different requests"
+      (testing "reviews are linked to different requests"
         (is (= request-id-2
                (:application/request-id
                 (ok-command application
-                            {:type :application.command/comment
-                             :actor "commenter"
+                            {:type :application.command/review
+                             :actor reviewer
                              :comment "..."}
                             injections))))
         (is (= request-id-1
                (:application/request-id
                 (ok-command application
-                            {:type :application.command/comment
-                             :actor "commenter2"
+                            {:type :application.command/review
+                             :actor reviewer2
                              :comment "..."}
                             injections)))))
       (let [event (ok-command application
-                              {:type :application.command/comment
-                               :actor "commenter"
+                              {:type :application.command/review
+                               :actor reviewer
                                :comment "..."}
                               injections)
             application (apply-events application [event])]
-        (testing "commented succesfully"
-          (is (= {:event/type :application.event/commented
+        (testing "reviewed succesfully"
+          (is (= {:event/type :application.event/reviewed
                   :event/time test-time
-                  :event/actor "commenter"
+                  :event/actor reviewer
                   :application/id app-id
                   :application/request-id request-id-2
                   :application/comment "..."}
                  event)))
-        (testing "cannot comment twice"
+        (testing "cannot review twice"
           (is (= {:errors [{:type :forbidden}]}
                  (fail-command application
-                               {:type :application.command/comment
-                                :actor "commenter"
+                               {:type :application.command/review
+                                :actor reviewer
                                 :comment "..."}
                                injections))))
-        (testing "other commenter can still comment"
-          (is (= {:event/type :application.event/commented
+        (testing "other reviewer can still review"
+          (is (= {:event/type :application.event/reviewed
                   :event/time test-time
-                  :event/actor "commenter2"
+                  :event/actor reviewer2
                   :application/id app-id
                   :application/request-id request-id-1
                   :application/comment "..."}
                  (ok-command application
-                             {:type :application.command/comment
-                              :actor "commenter2"
+                             {:type :application.command/review
+                              :actor reviewer2
                               :comment "..."}
                              injections))))))))
 
 (deftest test-remark
-  (let [application (apply-events nil
+  (let [reviewer "reviewer"
+        application (apply-events nil
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{"commenter"}}]
+        injections {:valid-user? #{reviewer}}]
     (testing "handler can remark"
       (let [event (ok-command application
                               {:type :application.command/remark
@@ -1284,53 +1288,53 @@
                             :comment ""
                             :public false}
                            injections))))
-    (testing "commenter cannot remark before becoming commenter"
+    (testing "reviewer cannot remark before becoming reviewer"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/remark
-                            :actor "commenter"
+                            :actor reviewer
                             :comment ""
                             :public false}
                            injections))))
     (let [event-1 (ok-command application
-                              {:type :application.command/request-comment
+                              {:type :application.command/request-review
                                :actor handler-user-id
-                               :commenters ["commenter"]
+                               :reviewers [reviewer]
                                :comment ""}
                               injections)
           application (apply-events application [event-1])
           event-2 (ok-command application
                               {:type :application.command/remark
-                               :actor "commenter"
+                               :actor reviewer
                                :comment "first remark"
                                :public false}
                               injections)
           application (apply-events application [event-2])]
-      (testing "commenter can remark before"
+      (testing "reviewer can remark before"
         (is (= {:event/type :application.event/remarked
                 :event/time test-time
-                :event/actor "commenter"
+                :event/actor reviewer
                 :application/id app-id
                 :application/comment "first remark"
                 :application/public false}
                event-2))
         (let [event-1 (ok-command application
-                                  {:type :application.command/comment
-                                   :actor "commenter"
+                                  {:type :application.command/review
+                                   :actor reviewer
                                    :comment "..."}
                                   injections)
               application (apply-events application [event-1])
               event-2 (ok-command application
                                   {:type :application.command/remark
-                                   :actor "commenter"
+                                   :actor reviewer
                                    :comment "second remark"
                                    :public false}
                                   injections)
               application (apply-events application [event-2])]
-          (testing "and after commenting"
+          (testing "and after reviewing"
             (is (= {:event/type :application.event/remarked
                     :event/time test-time
-                    :event/actor "commenter"
+                    :event/actor reviewer
                     :application/id app-id
                     :application/comment "second remark"
                     :application/public false}

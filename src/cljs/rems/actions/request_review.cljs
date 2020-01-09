@@ -7,11 +7,10 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
-;; TODO: the api should probably be reviewers now
 (rf/reg-fx
  ::fetch-potential-reviewers
  (fn [on-success]
-   (fetch "/api/applications/commenters"
+   (fetch "/api/applications/reviewers"
           {:handler on-success
            :error-handler (flash-message/default-error-handler :top "Fetch potential reviewers")})))
 
@@ -45,10 +44,10 @@
 (rf/reg-event-fx
  ::send-request-review
  (fn [_ [_ {:keys [application-id reviewers comment on-finished]}]]
-   (command! :application.command/request-comment
+   (command! :application.command/request-review
              {:application-id application-id
               :comment comment
-              :commenters (map :userid reviewers)}
+              :reviewers (map :userid reviewers)}
              {:description [text :t.actions/request-review]
               :collapse action-form-id
               :on-finished on-finished})

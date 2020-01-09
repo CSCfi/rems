@@ -156,30 +156,30 @@
                   :application/member {:name "Some Body" :email "somebody@example.com"}
                   :invitation/token "abc"}))))
 
-(deftest test-commenting
+(deftest test-reviewing
   (let [request {:application/id 7
-                 :event/type :application.event/comment-requested
+                 :event/type :application.event/review-requested
                  :event/actor "handler"
                  :application/request-id "r1"
-                 :application/commenters ["commenter1" "commenter2"]}
+                 :application/reviewers ["reviewer1" "reviewer2"]}
         requested-events (conj base-events request)]
-    (testing "comment-request"
+    (testing "review-request"
       (let [mails (emails base-events request)]
-        (is (= #{"commenter1" "commenter2"} (email-recipients mails)))
-        (is (= {:to-user "commenter1"
+        (is (= #{"reviewer1" "reviewer2"} (email-recipients mails)))
+        (is (= {:to-user "reviewer1"
                 :subject "(2001/3, \"Application title\") Review request"
-                :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
-               (email-to "commenter1" mails)))))
-    (testing "commented"
+                :body "Dear reviewer1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
+               (email-to "reviewer1" mails)))))
+    (testing "reviewed"
       (let [mails (emails requested-events {:application/id 7
-                                            :event/type :application.event/commented
-                                            :event/actor "commenter2"
+                                            :event/type :application.event/reviewed
+                                            :event/actor "reviewer2"
                                             :application/request-id "r1"
                                             :application/comment "this is a comment"})]
         (is (= #{"assistant" "handler"} (email-recipients mails)))
         (is (= {:to-user "assistant"
                 :subject "(2001/3, \"Application title\") Application has been reviewed"
-                :body "Dear Amber Assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
+                :body "Dear Amber Assistant,\n\nreviewer2 has reviewed the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
                (email-to "assistant" mails)))))))
 
 (deftest test-remarked
