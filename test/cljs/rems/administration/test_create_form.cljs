@@ -509,7 +509,7 @@
           (is (empty? (validate-visible {:visible/type :always})))
           (is (empty? (validate-visible {:visible/type :only-if
                                          :visible/field {:field/id 0}
-                                         :visible/value "yes"}))))))))
+                                         :visible/value ["yes"]}))))))))
 
 (deftest build-localized-string-test
   (let [languages [:en :fi]]

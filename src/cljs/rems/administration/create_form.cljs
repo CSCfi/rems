@@ -221,8 +221,8 @@
         {:field/visible {:visible/field :t.form.validation/invalid-value}}
         (if-not (-> visible :visible/field :field/id)
           {:field/visible {:visible/field :t.form.validation/invalid-value}}
-          (if (:visible/value visible)
-            (when-not (contains? (field-option-keys referred-field) (:visible/value visible))
+          (if-not (empty? (:visible/value visible))
+            (when-not (some (field-option-keys referred-field) (:visible/value visible))
               {:field/visible {:visible/value :t.form.validation/invalid-value}})
             {:field/visible {:visible/value :t.form.validation/required}})))
       {:field/visible {:visible/field :t.form.validation/required}})
@@ -469,8 +469,8 @@
            [:select.form-control
             {:id id-value
              :class (when error-value "is-invalid")
-             :on-change #(rf/dispatch [::form-field-visible-value field-index (.. % -target -value)])
-             :value (or visible-value "")}
+             :on-change #(rf/dispatch [::form-field-visible-value field-index [(.. % -target -value)]])
+             :value (or (first visible-value) "")}
             ^{:key "not-selected"} [:option ""]
             (doall (for [value (form-field-values form visible-field)]
                      ^{:key (str field-index "-" (:value value))}
@@ -638,8 +638,8 @@
     (or (nil? visible)
         (= :always (:visible/type visible))
         (and (= :only-if (:visible/type visible))
-             (= (:visible/value visible)
-                (get values (:field/id (:visible/field visible))))))))
+             (contains? (set (:visible/value visible))
+                        (get values (:field/id (:visible/field visible))))))))
 
 (defn form-preview [form]
   (let [preview @(rf/subscribe [::preview])

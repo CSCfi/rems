@@ -313,7 +313,7 @@
                                 :field/optional false
                                 :field/visible {:visible/type :only-if
                                                 :visible/field {:field/id 1}
-                                                :visible/value "c"}}]}]
+                                                :visible/value ["c"]}}
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)

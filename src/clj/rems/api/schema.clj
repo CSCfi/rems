@@ -144,7 +144,7 @@
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :field/visible) {:visible/type (s/enum :always :only-if)
                                     (s/optional-key :visible/field) {:field/id s/Int}
-                                    (s/optional-key :visible/value) s/Str}})
+                                    (s/optional-key :visible/value) [s/Str]}})
 
 (s/defschema NewFieldTemplate
   (dissoc FieldTemplate :field/id))
