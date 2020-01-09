@@ -314,6 +314,19 @@
                                 :field/visible {:visible/type :only-if
                                                 :visible/field {:field/id 1}
                                                 :visible/value ["c"]}}
+                               {:field/type :multiselect
+                                :field/title localized
+                                :field/optional false
+                                :field/options [{:key "a" :label localized}
+                                                {:key "b" :label localized}
+                                                {:key "c" :label localized}
+                                                {:key "d" :label localized}]}
+                               {:field/type :text
+                                :field/title localized
+                                :field/optional false
+                                :field/visible {:visible/type :only-if
+                                                :visible/field {:field/id 4}
+                                                :visible/value ["c" "d"]}}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)
