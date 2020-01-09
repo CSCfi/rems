@@ -1,7 +1,8 @@
 (ns rems.api.testing
   "Shared code for API testing"
-  (:require [clojure.test :refer :all]
-            [cheshire.core :refer [parse-stream]]
+  (:require [cheshire.core :refer [parse-stream]]
+            [clojure.string :as str]
+            [clojure.test :refer :all]
             [mount.core :as mount]
             [rems.db.testing :refer [test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
@@ -51,6 +52,10 @@
 
 (defn response-is-not-found? [response]
   (= 404 (:status response)))
+
+(defn logged-in? [response]
+  (str/includes? (get-in response [:headers "x-rems-roles"])
+                 "logged-in"))
 
 (defn coll-is-empty? [data]
   (and (coll? data)
@@ -107,3 +112,10 @@
                  parse-csrf-token)]
     (assert csrf)
     csrf))
+
+(defn add-login-cookies [request user-id]
+  (let [cookie (login-with-cookies user-id)
+        csrf (get-csrf-token cookie)]
+    (-> request
+        (header "Cookie" cookie)
+        (header "x-csrf-token" csrf))))

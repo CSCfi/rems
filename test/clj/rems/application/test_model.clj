@@ -151,9 +151,9 @@
   {"applicant" {:userid "applicant"
                 :email "applicant@example.com"
                 :name "Applicant"}
-   "commenter" {:userid "commenter"
-                :email "commenter@example.com"
-                :name "Commenter"}
+   "reviewer" {:userid "reviewer"
+               :email "reviewer@example.com"
+               :name "Reviewer"}
    "decider" {:userid "decider"
               :email "decider@example.com"
               :name "Decider"}
@@ -784,28 +784,28 @@
                                        :application/todo nil})]
       (is (= expected-application (recreate expected-application))))))
 
-(deftest test-application-view-commenting
-  (testing "> comment requested"
+(deftest test-application-view-reviewing
+  (testing "> review requested"
     (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
-          new-event {:event/type :application.event/comment-requested
+          new-event {:event/type :application.event/review-requested
                      :event/time (DateTime. 4000)
                      :event/actor "handler"
                      :application/id 1
                      :application/request-id request-id
-                     :application/commenters ["commenter"]
+                     :application/reviewers ["reviewer"]
                      :application/comment "please comment"}
           events (conj (:application/events submitted-application) new-event)
           expected-application (deep-merge submitted-application
                                            {:application/last-activity (DateTime. 4000)
                                             :application/events events
                                             :application/todo :waiting-for-review
-                                            :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
+                                            ::model/latest-review-request-by-user {"reviewer" request-id}})]
       (is (= expected-application (recreate expected-application)))
 
-      (testing "> commented"
-        (let [new-event {:event/type :application.event/commented
+      (testing "> reviewed"
+        (let [new-event {:event/type :application.event/reviewed
                          :event/time (DateTime. 5000)
-                         :event/actor "commenter"
+                         :event/actor "reviewer"
                          :application/id 1
                          :application/request-id request-id
                          :application/comment "looks good"}
@@ -814,7 +814,7 @@
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
                                            :application/todo :no-pending-requests
-                                           :rems.application.model/latest-comment-request-by-user {}})]
+                                           ::model/latest-review-request-by-user {}})]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-deciding
@@ -1106,26 +1106,26 @@
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
             :application/id 1
             :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                   {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
+                                   {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
            (model/enrich-event {:event/type :application.event/decision-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
                                 :application/id 1
-                                :application/deciders ["decider" "commenter"]}
+                                :application/deciders ["decider" "reviewer"]}
                                get-user get-catalogue-item))))
-  (testing "comment-requested"
-    (is (= {:event/type :application.event/comment-requested
+  (testing "review-requested"
+    (is (= {:event/type :application.event/review-requested
             :event/time (DateTime. 1)
             :event/actor "handler"
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
             :application/id 1
-            :application/commenters [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                     {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
-           (model/enrich-event {:event/type :application.event/comment-requested
+            :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider"}
+                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
+           (model/enrich-event {:event/type :application.event/review-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
                                 :application/id 1
-                                :application/commenters ["decider" "commenter"]}
+                                :application/reviewers ["decider" "reviewer"]}
                                get-user get-catalogue-item))))
   (testing "member-added"
     (is (= {:event/type :application.event/member-added
@@ -1253,7 +1253,7 @@
 
     (let [all-events [{:event/type :application.event/created}
                       {:event/type :application.event/submitted}
-                      {:event/type :application.event/comment-requested}
+                      {:event/type :application.event/review-requested}
                       {:event/type :application.event/remarked
                        :application/public true}
                       {:event/type :application.event/remarked
@@ -1306,9 +1306,9 @@
                      (:application/invited-members application))))))))
 
     (testing "personalized waiting for your review"
-      (let [application (model/application-view application {:event/type :application.event/comment-requested
+      (let [application (model/application-view application {:event/type :application.event/review-requested
                                                              :event/actor "handler"
-                                                             :application/commenters ["reviewer1"]})]
+                                                             :application/reviewers ["reviewer1"]})]
         (is (= :waiting-for-review
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")

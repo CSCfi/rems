@@ -102,7 +102,7 @@
 (deftest test-application-commands
   (let [user-id "alice"
         handler-id "developer"
-        commenter-id "carl"
+        reviewer-id "carl"
         decider-id "elsa"
         license-id1 (test-data/create-license! {})
         license-id2 (test-data/create-license! {})
@@ -161,7 +161,7 @@
     (testing "getting application as handler"
       (let [application (get-application application-id handler-id)]
         (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
-        (is (= #{"application.command/request-comment"
+        (is (= #{"application.command/request-review"
                  "application.command/request-decision"
                  "application.command/remark"
                  "application.command/reject"
@@ -220,31 +220,31 @@
                                             :application-id application-id}))))
 
     (testing "send commands with authorized user"
-      (testing "even handler cannot comment without request"
+      (testing "even handler cannot review without request"
         (is (= {:errors [{:type "forbidden"}], :success false}
                (send-command handler-id
-                             {:type :application.command/comment
+                             {:type :application.command/review
                               :application-id application-id
                               :comment "What am I commenting on?"}))))
-      (testing "comment with request"
+      (testing "review with request"
         (let [eventcount (count (get (get-application application-id handler-id) :events))]
-          (testing "requesting comment"
+          (testing "requesting review"
             (is (= {:success true} (send-command handler-id
-                                                 {:type :application.command/request-comment
+                                                 {:type :application.command/request-review
                                                   :application-id application-id
-                                                  :commenters [decider-id commenter-id]
+                                                  :reviewers [decider-id reviewer-id]
                                                   :comment "What say you?"}))))
-          (testing "commenter can now comment"
-            (is (= {:success true} (send-command commenter-id
-                                                 {:type :application.command/comment
+          (testing "reviewer can now review"
+            (is (= {:success true} (send-command reviewer-id
+                                                 {:type :application.command/review
                                                   :application-id application-id
                                                   :comment "Yeah, I dunno"}))))
-          (testing "comment was linked to request"
+          (testing "review was linked to request"
             (let [application (get-application application-id handler-id)
                   request-event (get-in application [:application/events eventcount])
-                  comment-event (get-in application [:application/events (inc eventcount)])]
+                  review-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
-                     (:application/request-id comment-event)))))))
+                     (:application/request-id review-event)))))))
 
       (testing "adding and then accepting additional licenses"
         (testing "add licenses"
@@ -328,8 +328,8 @@
                     "application.event/returned"
                     "application.event/resources-changed"
                     "application.event/submitted"
-                    "application.event/comment-requested"
-                    "application.event/commented"
+                    "application.event/review-requested"
+                    "application.event/reviewed"
                     "application.event/licenses-added"
                     "application.event/licenses-accepted"
                     "application.event/resources-changed"
@@ -844,75 +844,79 @@
       (is (empty? (get-ids (get-all-applications "alice" {:query "applicant:no-such-user"})))))))
 
 (deftest test-todos
-  (let [app-id (test-data/create-application! {:actor "alice"})]
-    (test-data/create-user! {:eppn "commenter"})
-    (test-data/create-user! {:eppn "decider"})
+  (let [applicant "alice"
+        handler "developer"
+        reviewer "reviewer"
+        decider "decider"
+        app-id (test-data/create-application! {:actor applicant})]
+    (test-data/create-user! {:eppn reviewer})
+    (test-data/create-user! {:eppn decider})
 
     (testing "does not list drafts"
-      (is (not (contains? (get-ids (get-todos "developer"))
+      (is (not (contains? (get-ids (get-todos handler))
                           app-id))))
 
     (testing "lists submitted in todos"
-      (is (= {:success true} (send-command "alice" {:type :application.command/submit
-                                                    :application-id app-id})))
-      (is (contains? (get-ids (get-todos "developer"))
+      (is (= {:success true} (send-command applicant {:type :application.command/submit
+                                                      :application-id app-id})))
+      (is (contains? (get-ids (get-todos handler))
                      app-id))
-      (is (not (contains? (get-ids (get-handled-todos "developer"))
+      (is (not (contains? (get-ids (get-handled-todos handler))
                           app-id))))
 
     (testing "search todos"
-      (is (contains? (get-ids (get-todos "developer" {:query "applicant:alice"}))
+      (is (contains? (get-ids (get-todos handler {:query (str "applicant:" applicant)}))
                      app-id))
-      (is (empty? (get-ids (get-todos "developer" {:query "applicant:no-such-user"})))))
+      (is (empty? (get-ids (get-todos handler {:query "applicant:no-such-user"})))))
 
-    (testing "commenter sees application in todos"
-      (is (not (contains? (get-ids (get-todos "commenter"))
+    (testing "reviewer sees application in todos"
+      (is (not (contains? (get-ids (get-todos reviewer))
                           app-id)))
-      (is (= {:success true} (send-command "developer" {:type :application.command/request-comment
-                                                        :application-id app-id
-                                                        :commenters ["commenter"]
-                                                        :comment "x"})))
-      (is (contains? (get-ids (get-todos "commenter"))
+      (is (= {:success true} (send-command handler {:type :application.command/request-review
+                                                    :application-id app-id
+                                                    :reviewers [reviewer]
+                                                    :comment "x"})))
+      (is (contains? (get-ids (get-todos reviewer))
                      app-id))
-      (is (not (contains? (get-ids (get-handled-todos "commenter"))
+      (is (not (contains? (get-ids (get-handled-todos reviewer))
                           app-id))))
 
     (testing "decider sees application in todos"
-      (is (not (contains? (get-ids (get-todos "decider"))
+      (is (not (contains? (get-ids (get-todos decider))
                           app-id)))
-      (is (= {:success true} (send-command "developer" {:type :application.command/request-decision
-                                                        :application-id app-id
-                                                        :deciders ["decider"]
-                                                        :comment "x"})))
-      (is (contains? (get-ids (get-todos "decider"))
+      (is (= {:success true} (send-command handler {:type :application.command/request-decision
+                                                    :application-id app-id
+                                                    :deciders [decider]
+                                                    :comment "x"})))
+      (is (contains? (get-ids (get-todos decider))
                      app-id))
-      (is (not (contains? (get-ids (get-handled-todos "decider"))
+      (is (not (contains? (get-ids (get-handled-todos decider))
                           app-id))))
 
     (testing "lists handled in handled"
-      (is (= {:success true} (send-command "developer" {:type :application.command/approve
-                                                        :application-id app-id
-                                                        :comment ""})))
-      (is (not (contains? (get-ids (get-todos "developer"))
+      (is (= {:success true} (send-command handler {:type :application.command/approve
+                                                    :application-id app-id
+                                                    :comment ""})))
+      (is (not (contains? (get-ids (get-todos handler))
                           app-id)))
-      (is (contains? (get-ids (get-handled-todos "developer"))
+      (is (contains? (get-ids (get-handled-todos handler))
                      app-id)))
 
     (testing "search handled todos"
-      (is (contains? (get-ids (get-handled-todos "developer" {:query "applicant:alice"}))
+      (is (contains? (get-ids (get-handled-todos handler {:query (str "applicant:" applicant)}))
                      app-id))
-      (is (empty? (get-ids (get-handled-todos "developer" {:query "applicant:no-such-user"})))))
+      (is (empty? (get-ids (get-handled-todos handler {:query "applicant:no-such-user"})))))
 
-    (testing "commenter sees accepted application in handled todos"
-      (is (not (contains? (get-ids (get-todos "commenter"))
+    (testing "reviewer sees accepted application in handled todos"
+      (is (not (contains? (get-ids (get-todos reviewer))
                           app-id)))
-      (is (contains? (get-ids (get-handled-todos "commenter"))
+      (is (contains? (get-ids (get-handled-todos reviewer))
                      app-id)))
 
     (testing "decider sees accepted application in handled todos"
-      (is (not (contains? (get-ids (get-todos "decider"))
+      (is (not (contains? (get-ids (get-todos decider))
                           app-id)))
-      (is (contains? (get-ids (get-handled-todos "decider"))
+      (is (contains? (get-ids (get-handled-todos decider))
                      app-id)))))
 
 (deftest test-pdf-smoke

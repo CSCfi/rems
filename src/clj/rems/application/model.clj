@@ -120,24 +120,24 @@
 (defn- update-todo-for-requests [application]
   (assoc application :application/todo
          (cond
-           (not (empty? (::latest-comment-request-by-user application)))
+           (not (empty? (::latest-review-request-by-user application)))
            :waiting-for-review
            (not (empty? (::latest-decision-request-by-user application)))
            :waiting-for-decision
            :else
            :no-pending-requests)))
 
-(defmethod event-type-specific-application-view :application.event/comment-requested
+(defmethod event-type-specific-application-view :application.event/review-requested
   [application event]
   (-> application
-      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
-                                                             (repeat (:application/request-id event))))
+      (update ::latest-review-request-by-user merge (zipmap (:application/reviewers event)
+                                                            (repeat (:application/request-id event))))
       (update-todo-for-requests)))
 
-(defmethod event-type-specific-application-view :application.event/commented
+(defmethod event-type-specific-application-view :application.event/reviewed
   [application event]
   (-> application
-      (update ::latest-comment-request-by-user dissoc (:event/actor event))
+      (update ::latest-review-request-by-user dissoc (:event/actor event))
       (update-todo-for-requests)))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
@@ -226,16 +226,16 @@
     {:permission :application.command/assign-external-id}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
-    {:permission :application.command/comment}
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
     {:permission :application.command/decide}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
-    {:permission :application.command/request-comment}
     {:permission :application.command/request-decision}
+    {:permission :application.command/request-review}
     {:permission :application.command/return}
+    {:permission :application.command/review}
     {:permission :application.command/revoke}
     {:permission :application.command/save-draft}
     {:permission :application.command/submit}
@@ -252,15 +252,15 @@
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
     {:permission :application.command/change-resources}
-    {:permission :application.command/comment}
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
     {:permission :application.command/invite-member}
     {:permission :application.command/remark}
     {:permission :application.command/remove-member}
-    {:permission :application.command/request-comment}
     {:permission :application.command/request-decision}
+    {:permission :application.command/request-review}
     {:permission :application.command/return}
+    {:permission :application.command/review}
     {:permission :application.command/revoke}
     {:permission :application.command/save-draft}
     {:permission :application.command/submit}
@@ -426,8 +426,8 @@
              :application.event/decision-requested
              {:application/deciders (mapv get-user (:application/deciders event))}
 
-             :application.event/comment-requested
-             {:application/commenters (mapv get-user (:application/commenters event))}
+             :application.event/review-requested
+             {:application/reviewers (mapv get-user (:application/reviewers event))}
 
              (:application.event/member-added
               :application.event/member-removed)
@@ -532,8 +532,8 @@
 
 (defn hide-sensitive-events [events]
   (->> events
-       (remove (comp #{:application.event/comment-requested
-                       :application.event/commented
+       (remove (comp #{:application.event/review-requested
+                       :application.event/reviewed
                        :application.event/decided
                        :application.event/decision-requested}
                      :event/type))
@@ -558,12 +558,12 @@
   (-> application
       hide-invitation-tokens
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
-      (dissoc ::latest-comment-request-by-user ::latest-decision-request-by-user)
+      (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)))
 
 (defn- personalize-todo [application user-id]
   (cond-> application
-    (contains? (::latest-comment-request-by-user application) user-id)
+    (contains? (::latest-review-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-review)
 
     (contains? (::latest-decision-request-by-user application) user-id)

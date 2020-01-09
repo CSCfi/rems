@@ -8,9 +8,12 @@
             [rems.db.form :as form]
             [schema.core :as s]))
 
+(def ^:private validate-form-template
+  (s/validator rems.api.schema/FormTemplate))
+
 (defn validate-forms []
   (doseq [template (form/get-form-templates {})]
-    (s/validate rems.api.schema/FormTemplate template)))
+    (validate-form-template template)))
 
 (defn validate []
   (log/info "Validating data")

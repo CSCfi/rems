@@ -45,7 +45,7 @@
     :application.command/remove-member
     :application.command/invite-member
     :application.command/uninvite-member
-    :application.command/request-comment
+    :application.command/request-review
     :application.command/request-decision
     :application.command/return
     :application.command/approve
@@ -70,11 +70,11 @@
 (def ^:private submitted-permissions
   {:applicant non-submittable-application-commands
    :handler (conj handler-all-commands :see-everything)
-   :commenter #{:see-everything
-                :application.command/remark
-                :application.command/comment}
-   :past-commenter #{:see-everything
-                     :application.command/remark}
+   :reviewer #{:see-everything
+               :application.command/remark
+               :application.command/review}
+   :past-reviewer #{:see-everything
+                    :application.command/remark}
    :decider #{:see-everything
               :application.command/remark
               :application.command/decide
@@ -110,8 +110,8 @@
    :member #{:application.command/copy-as-new}
    :handler #{:see-everything
               :application.command/remark}
-   :commenter #{:see-everything}
-   :past-commenter #{:see-everything}
+   :reviewer #{:see-everything}
+   :past-reviewer #{:see-everything}
    :decider #{:see-everything}
    :past-decider #{:see-everything}
    :everyone-else #{}})
@@ -147,16 +147,16 @@
   (-> application
       (permissions/update-role-permissions returned-permissions)))
 
-(defmethod calculate-permissions :application.event/comment-requested
+(defmethod calculate-permissions :application.event/review-requested
   [application event]
   (-> application
-      (permissions/give-role-to-users :commenter (:application/commenters event))))
+      (permissions/give-role-to-users :reviewer (:application/reviewers event))))
 
-(defmethod calculate-permissions :application.event/commented
+(defmethod calculate-permissions :application.event/reviewed
   [application event]
   (-> application
-      (permissions/remove-role-from-user :commenter (:event/actor event))
-      (permissions/give-role-to-users :past-commenter [(:event/actor event)]))) ; allow to still view the application
+      (permissions/remove-role-from-user :reviewer (:event/actor event))
+      (permissions/give-role-to-users :past-reviewer [(:event/actor event)]))) ; allow to still view the application
 
 (defmethod calculate-permissions :application.event/decision-requested
   [application event]
