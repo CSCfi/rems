@@ -29,6 +29,8 @@ Changes since v2.6
   - `/api/email/send-handler-reminder` sends email about open applications to all handlers.
   - `/api/email/send-reviewer-reminder` sends email about applications with open review requests to reviewers.
   - `/api/email/send-reminders` sends all of the above emails.
+- Allow users to change their email address, in case the identity provider
+  doesn't provide an email address or the users want to use a different one (#1884) 
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)

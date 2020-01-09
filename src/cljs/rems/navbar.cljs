@@ -15,7 +15,7 @@
   (str (:root-path context) dest))
 
 (defn- nav-link-impl [path title & [active?]]
-  [atoms/link {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title])
+  [atoms/link {:class (str "nav-link" (if active? " active" ""))} (url-dest path) title])
 
 (defn nav-link
   "A link to path that is shown as active when the current browser location matches the path.
@@ -33,10 +33,18 @@
 
 (defn user-widget [user]
   (when user
-    [:div.user.px-2.px-sm-0
-     [:i.fa.fa-user]
-     [:span.user-name (str (:name user) " /")]
-     [atoms/link {:id "logout", :class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout)]]))
+    [:div.user-widget.px-2.px-sm-0
+     [:span
+      [:i.fa.fa-user.mr-1]
+      [:span.user-name (:name user)]]
+     [atoms/link {:id "settings", :class "nav-link"} (url-dest "/settings")
+      [:span {:aria-label (text :t.navigation/settings)}
+       [:i.fa.fa-cog.mr-1]
+       [:span.icon-description (text :t.navigation/settings)]]]
+     [atoms/link {:id "logout", :class "nav-link"} (url-dest "/logout")
+      [:span {:aria-label (text :t.navigation/logout)}
+       [:i.fa.fa-sign-out-alt.mr-1]
+       [:span.icon-description (text :t.navigation/logout)]]]]))
 
 (defn navbar-extra-pages [page-id]
   (let [config @(rf/subscribe [:rems.config/config])

@@ -86,9 +86,8 @@
         email (assoc email-spec
                      :from (:mail-from env)
                      :to (or (:to email-spec)
-                             (:email
-                              (users/get-user
-                               (:to-user email-spec)))))
+                             (:notification-email (user-settings/get-user-settings (:to-user email-spec)))
+                             (:email (users/get-user (:to-user email-spec)))))
         to-error (validate-address (:to email))]
     (when (:to email)
       (log/info "sending email:" (pr-str email))
