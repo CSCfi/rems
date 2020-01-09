@@ -29,7 +29,8 @@
       (str/blank? (:commonName u))))
 
 (defn add-user! [user userattrs]
-  (assert (and userattrs user) "User or user attributes missing!")
+  (assert user)
+  (assert userattrs)
   (db/add-user! {:user user :userattrs (json/generate-string userattrs)}))
 
 (defn add-user-if-logged-in! [user userattrs]
