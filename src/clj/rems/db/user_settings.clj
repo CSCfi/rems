@@ -15,28 +15,38 @@
   {:language s/Keyword
    :notification-email (s/maybe s/Str)})
 
-(def ^:private validate-user-settings-schema
+(def ^:private validate-user-settings
   (s/validator UserSettings))
+
+(defn- settings->json [settings]
+  (-> settings
+      validate-user-settings
+      json/generate-string))
 
 (s/defschema PartialUserSettings
   (map-keys s/optional-key UserSettings))
 
-(def ^:private coerce-partial-settings
+(def ^:private coerce-partial-user-settings
   (coerce/coercer! PartialUserSettings json/coercion-matcher))
 
-(defn- parse-settings [json]
+(defn- json->settings [json]
+  ;; Allows missing keys, so we don't need to write migrations
+  ;; if we add new keys to user settings. Migrations are needed if
+  ;; we remove keys or make their validation stricter.
   (when json
-    (coerce-partial-settings (json/parse-string json))))
+    (-> json
+        json/parse-string
+        coerce-partial-user-settings)))
 
 (defn get-user-settings [user]
   (merge (default-settings)
          (when user
-           (parse-settings (:settings (db/get-user-settings {:user user}))))))
+           (json->settings (:settings (db/get-user-settings {:user user}))))))
 
 ;; regex from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#Validation
 (def ^:private email-regex #"[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*")
 
-(defn validate-settings [{:keys [language notification-email] :as settings}]
+(defn validate-new-settings [{:keys [language notification-email] :as settings}]
   (into {} [(when (contains? (set (:languages env)) language)
               {:language language})
             (when (and notification-email (re-matches email-regex notification-email))
@@ -49,14 +59,12 @@
 (defn update-user-settings! [user new-settings]
   (assert user "User missing!")
   (let [old-settings (get-user-settings user)
-        validated (validate-settings new-settings)]
+        validated (validate-new-settings new-settings)]
     (if (= (set (keys validated))
            (set (keys new-settings)))
       (do
         (db/update-user-settings!
          {:user user
-          :settings (json/generate-string
-                     (validate-user-settings-schema
-                      (merge old-settings validated)))})
+          :settings (settings->json (merge old-settings validated))})
         {:success true})
       {:success false})))

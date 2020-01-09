@@ -62,28 +62,28 @@
 
 (deftest test-language
   (testing "valid language"
-    (is (= {:language :en} (user-settings/validate-settings {:language :en})))
-    (is (= {:language :fi} (user-settings/validate-settings {:language :fi}))))
+    (is (= {:language :en} (user-settings/validate-new-settings {:language :en})))
+    (is (= {:language :fi} (user-settings/validate-new-settings {:language :fi}))))
 
   (testing "undefined language"
-    (is (= {} (user-settings/validate-settings {:language :de}))))
+    (is (= {} (user-settings/validate-new-settings {:language :de}))))
 
   (testing "nil language"
-    (is (= {} (user-settings/validate-settings {:language nil})))))
+    (is (= {} (user-settings/validate-new-settings {:language nil})))))
 
 (deftest test-notification-email
   (testing "valid email"
     (is (= {:notification-email "somebody@example.com"}
-           (user-settings/validate-settings {:notification-email "somebody@example.com"}))))
+           (user-settings/validate-new-settings {:notification-email "somebody@example.com"}))))
 
   (testing "invalid email"
     (is (= {}
-           (user-settings/validate-settings {:notification-email "somebody"}))))
+           (user-settings/validate-new-settings {:notification-email "somebody"}))))
 
   (testing "empty email will clear the setting"
     (is (= {:notification-email nil}
-           (user-settings/validate-settings {:notification-email ""}))))
+           (user-settings/validate-new-settings {:notification-email ""}))))
 
   (testing "nil email will clear the setting"
     (is (= {:notification-email nil}
-           (user-settings/validate-settings {:notification-email nil})))))
+           (user-settings/validate-new-settings {:notification-email nil})))))
