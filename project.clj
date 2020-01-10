@@ -47,7 +47,7 @@
                  [org.apache.lucene/lucene-queryparser "8.2.0"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/clojurescript "1.10.520" :exclusions [com.fasterxml.jackson.core/jackson-core]]
-                 [org.clojure/core.cache "0.7.2"]
+                 [org.clojure/core.cache "0.8.2"]
                  [org.clojure/core.memoize "0.7.2"]
                  [org.clojure/tools.cli "0.4.2"]
                  [org.clojure/tools.logging "0.5.0"]

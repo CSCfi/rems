@@ -21,6 +21,7 @@
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
+  (rems.db.applications/empty-injections-cache!)
   (f)
   (mount/stop))
 

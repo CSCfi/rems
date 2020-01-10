@@ -1,7 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [clj-time.core :as time]
-            [clojure.core.cache :as cache]
+            [clojure.core.cache.wrapped :as cache]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
@@ -60,19 +60,37 @@
 (defn get-application-by-invitation-token [invitation-token]
   (:id (db/get-application-by-invitation-token {:token invitation-token})))
 
-;;; Fetching applications (for API) (incl. caching)
+;;; Fetching applications (for API)
+
+(def ^:private form-template-cache (cache/ttl-cache-factory {}))
+(def ^:private catalogue-item-cache (cache/ttl-cache-factory {}))
+(def ^:private license-cache (cache/ttl-cache-factory {}))
+(def ^:private user-cache (cache/ttl-cache-factory {}))
+(def ^:private users-with-role-cache (cache/ttl-cache-factory {}))
+(def ^:private workflow-cache (cache/ttl-cache-factory {}))
+(def ^:private blacklist-cache (cache/ttl-cache-factory {}))
+
+(defn empty-injections-cache! []
+  (swap! form-template-cache empty)
+  (swap! catalogue-item-cache empty)
+  (swap! license-cache empty)
+  (swap! user-cache empty)
+  (swap! users-with-role-cache empty)
+  (swap! workflow-cache empty)
+  (swap! blacklist-cache empty))
 
 (def ^:private fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
-   :get-form-template form/get-form-template
-   :get-catalogue-item catalogue/get-localized-catalogue-item
+   :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
+   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % catalogue/get-localized-catalogue-item)
    :get-config (fn [] env)
    :get-current-time time/now
-   :get-license licenses/get-license
-   :get-user users/get-user
-   :get-users-with-role users/get-users-with-role
-   :get-workflow workflow/get-workflow
-   :blacklisted? blacklist/blacklisted?})
+   :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
+   :get-user #(cache/lookup-or-miss user-cache % users/get-user)
+   :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
+   :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
+   :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
+                                                                  (blacklist/blacklisted? userid resource)))})
 
 (defn get-unrestricted-application
   "Returns the full application state without any user permission
@@ -237,6 +255,7 @@
     (csv/applications-to-csv filtered-applications user-id)))
 
 (defn reload-cache! []
+  (empty-injections-cache!)
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!))
