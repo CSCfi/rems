@@ -4,7 +4,8 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch put!]]))
+            [rems.util :refer [fetch put!]])
+  (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -16,7 +17,11 @@
  ::fetch-user-settings
  (fn [{:keys [db]} _]
    (fetch "/api/user-settings"
-          {:handler #(rf/dispatch-sync [::set-form (select-keys % [:notification-email])]) ; only the keys that can be edited on this page
+          {:handler #(do
+                       ;; select only the keys that can be edited on this page
+                       (rf/dispatch [::set-form (select-keys % [:notification-email])])
+                       ;; update user settings in SPA state after user has changed them
+                       (rf/dispatch [:loaded-user-settings %]))
            :error-handler (flash-message/default-error-handler :top "Fetch user settings")})
    {:db (assoc db ::form ::loading)}))
 
@@ -40,7 +45,23 @@
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
+(rf/reg-sub
+ ::missing-email?
+ (fn [db _]
+   (let [user (:user (:identity db))]
+     (and user
+          (not (:email user))
+          (not (:notification-email (:user-settings db)))))))
+
 ;;;; UI
+
+(defn- missing-email-warning-dialog []
+  [:div.alert.alert-warning
+   (text :t.settings/warning-about-missing-email)])
+
+(defn missing-email-warning []
+  (when @(rf/subscribe [::missing-email?])
+    [missing-email-warning-dialog]))
 
 (defn settings-page []
   (let [identity @(rf/subscribe [:identity])
@@ -73,3 +94,10 @@
         [:button.btn.btn-primary
          {:type "submit"}
          (text :t.settings/save)]])]))
+
+(defn guide []
+  [:div
+   (component-info missing-email-warning-dialog)
+
+   (example "warning message"
+            [missing-email-warning-dialog])])

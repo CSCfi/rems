@@ -373,7 +373,8 @@
   :settings {:idp-email "Sähköpostiosoite tunnistautumispalvelulta"
              :no-email "(ei sähköpostiosoitetta)"
              :notification-email "Käytä toista sähköpostiosoitetta ilmoituksille"
-             :save "Tallenna"}
+             :save "Tallenna"
+             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/settings"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]}
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"
           :all-rows-selected "Kaikki rivit valittuna"
