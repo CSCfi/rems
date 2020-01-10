@@ -1,9 +1,11 @@
 (ns rems.application.model
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
+            [rems.config :refer [env]]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
@@ -572,10 +574,13 @@
 (defn see-application? [application user-id]
   (not= #{:everyone-else} (permissions/user-roles application user-id)))
 
+(defn- hide-commands [commands]
+  (set/difference commands (set (:hide-commands env))))
+
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
         roles (permissions/user-roles application user-id)
-        permissions (permissions/user-permissions application user-id)
+        permissions (hide-commands (permissions/user-permissions application user-id))
         see-everything? (contains? permissions :see-everything)]
     (when see-application?
       (-> (if see-everything?

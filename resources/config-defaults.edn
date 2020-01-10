@@ -95,5 +95,10 @@
  ;; on an application, starting from the first submission.
  :application-deadline-days nil
 
+ ;; List of commands to hide. See the swagger schema of
+ ;; /api/applications/{id} field application/permissions for possible
+ ;; values.
+ :hide-commands []
+
  ;; Experimental features
  :enable-pdf-api false}
