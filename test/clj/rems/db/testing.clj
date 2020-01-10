@@ -31,8 +31,7 @@
 
 (defn caches-fixture [f]
   ;; no specific teardown. relies on the teardown of test-db-fixture.
-  (mount/start #'rems.db.applications/application-cache
-               #'rems.db.applications/all-applications-cache)
+  (mount/start #'rems.db.applications/all-applications-cache)
   (f))
 
 (defn test-data-fixture [f]
