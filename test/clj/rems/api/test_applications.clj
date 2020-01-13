@@ -180,7 +180,6 @@
 
     (testing "disabling a command"
       (with-redefs [rems.config/env (assoc rems.config/env :disable-commands [:application.command/remark])]
-        (rems.db.applications/reload-cache!)
         (testing "handler doesn't see hidden command"
           (let [application (get-application application-id handler-id)]
             (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
@@ -207,8 +206,6 @@
                                 :application-id application-id
                                 :public false
                                 :comment "this is a remark"}))))))
-
-    (rems.db.applications/reload-cache!)
 
     (testing "send command without user"
       (is (= {:success false
