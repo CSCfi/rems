@@ -189,7 +189,7 @@
                                        :licenses []})
                            handler)]
           (is (response-is-unauthorized? response))
-          (is (= "unauthorized" (read-body response)))))))
+          (is (= "Invalid anti-forgery token" (read-body response)))))))
 
   (testing "without owner role"
     (let [api-key "42"

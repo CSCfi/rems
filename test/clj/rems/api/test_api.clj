@@ -24,7 +24,9 @@
         (let [resp (-> (request :get "/api/blacklist/remove")
                        (authenticate "42" "handler")
                        handler)]
-          (is (response-is-not-found? resp))))))
+          (is (response-is-not-found? resp)))))))
+
+(deftest test-api-key-roles
   (testing "API key roles"
     (testing "all available"
       (let [resp (-> (request :get "/api/forms")
@@ -35,4 +37,14 @@
       (let [resp (-> (request :get "/api/forms")
                      (authenticate "43" "owner")
                      handler)]
-        (is (response-is-forbidden? resp))))))
+        (is (response-is-forbidden? resp)))))
+  (testing ":api-key role not available when using wrong API key"
+    (let [username "alice"
+          cookie (login-with-cookies username)
+          csrf (get-csrf-token cookie)
+          resp (-> (request :post "/api/email/send-reminders")
+                   (header "Cookie" cookie)
+                   (header "x-csrf-token" csrf)
+                   (header "x-rems-api-key" "WRONG")
+                   handler)]
+      (is (response-is-forbidden? resp)))))
