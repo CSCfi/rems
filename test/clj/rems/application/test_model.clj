@@ -1035,6 +1035,7 @@
                                 :application/comment "looks good"
                                 :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}}]
           :rems.permissions/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
+          :rems.permissions/role-permissions nil
           :application/description "foo"
           :application/form {:form/id 40
                              :form/title "form title"

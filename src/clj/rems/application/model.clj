@@ -4,7 +4,6 @@
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
-            [rems.config :refer [env]]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
@@ -273,14 +272,10 @@
   (let [whitelist (case (get-in application [:application/workflow :workflow/type])
                     :workflow/default default-workflow
                     :workflow/decider decider-workflow
-                    :workflow/master master-workflow/whitelist)
-        blacklist (permissions/compile-rules
-                   (for [command (:disable-commands env)]
-                     {:permission command}))]
+                    :workflow/master master-workflow/whitelist)]
     (-> application
         (master-workflow/calculate-permissions event)
-        (permissions/whitelist whitelist)
-        (permissions/blacklist blacklist))))
+        (permissions/whitelist whitelist))))
 
 (defn application-view
   "Projection for the current state of a single application.
@@ -508,6 +503,12 @@
                  (.isBefore (get-current-time))))
       application)))
 
+(defn- enrich-disable-commands [application get-config]
+  (permissions/blacklist application
+                         (permissions/compile-rules
+                          (for [command (:disable-commands (get-config))]
+                            {:permission command}))))
+
 (defn enrich-with-injections [application {:keys [blacklisted?
                                                   get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
@@ -526,7 +527,8 @@
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)
       (enrich-past-deadline get-config get-current-time)
-      (enrich-super-users get-users-with-role)))
+      (enrich-super-users get-users-with-role)
+      (enrich-disable-commands get-config)))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
