@@ -276,7 +276,7 @@
                     :workflow/decider decider-workflow
                     :workflow/master master-workflow/whitelist)
         blacklist (permissions/compile-rules
-                   (for [command (:hide-commands env)]
+                   (for [command (:disable-commands env)]
                      {:permission command}))]
     (-> application
         (master-workflow/calculate-permissions event)

@@ -51,7 +51,7 @@ Changes since v2.6
 - POSTing entitlements to entitlement-target is now retried (#1784)
 - [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
 - "Assign external id" command for setting the id of an application (#1858)
-- Configuration `:hide-commands` for hiding commands from the UI (#1891)
+- Configuration `:disabling-commands` for disabling commands (#1891)
 - Display on the actions page the handlers who are handling an application (#1795)
 
 ## v2.6 "Kalevalantie" 2018-11-12

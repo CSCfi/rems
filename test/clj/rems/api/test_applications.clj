@@ -178,8 +178,8 @@
                  "see-everything"}
                (set (get application :application/permissions))))))
 
-    (testing "hiding a command"
-      (with-redefs [rems.config/env (assoc rems.config/env :hide-commands [:application.command/remark])]
+    (testing "disabling a command"
+      (with-redefs [rems.config/env (assoc rems.config/env :disable-commands [:application.command/remark])]
         (rems.db.applications/reload-cache!)
         (testing "handler doesn't see hidden command"
           (let [application (get-application application-id handler-id)]
@@ -199,7 +199,7 @@
                      "application.command/assign-external-id"
                      "see-everything"}
                    (set (get application :application/permissions))))))
-        (testing "hidden command fails"
+        (testing "disabled command fails"
           (is (= {:success false
                   :errors [{:type "forbidden"}]}
                  (send-command handler-id
