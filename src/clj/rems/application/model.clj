@@ -274,10 +274,14 @@
   (let [whitelist (case (get-in application [:application/workflow :workflow/type])
                     :workflow/default default-workflow
                     :workflow/decider decider-workflow
-                    :workflow/master master-workflow/whitelist)]
+                    :workflow/master master-workflow/whitelist)
+        blacklist (permissions/compile-rules
+                   (for [command (:hide-commands env)]
+                     {:permission command}))]
     (-> application
         (master-workflow/calculate-permissions event)
-        (permissions/whitelist whitelist))))
+        (permissions/whitelist whitelist)
+        (permissions/blacklist blacklist))))
 
 (defn application-view
   "Projection for the current state of a single application.
@@ -574,13 +578,10 @@
 (defn see-application? [application user-id]
   (not= #{:everyone-else} (permissions/user-roles application user-id)))
 
-(defn- hide-commands [commands]
-  (set/difference commands (set (:hide-commands env))))
-
 (defn apply-user-permissions [application user-id]
   (let [see-application? (see-application? application user-id)
         roles (permissions/user-roles application user-id)
-        permissions (hide-commands (permissions/user-permissions application user-id))
+        permissions (permissions/user-permissions application user-id)
         see-everything? (contains? permissions :see-everything)]
     (when see-application?
       (-> (if see-everything?
