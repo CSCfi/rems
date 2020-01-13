@@ -36,6 +36,9 @@
 (defn get-all-events-since [event-id]
   (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
+(defn get-latest-event []
+  (fix-event-from-db (db/get-latest-application-event {})))
+
 (defn add-event! [event]
   (db/add-application-event! {:application (:application/id event)
                               :eventdata (event->json event)})

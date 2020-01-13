@@ -12,6 +12,7 @@
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.extra-pages :refer [extra-pages-api]]
             [rems.api.forms :refer [forms-api]]
+            [rems.api.health :refer [health-api]]
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
@@ -129,6 +130,7 @@
       entitlements-api
       extra-pages-api
       forms-api
+      health-api
       licenses-api
       resources-api
       user-settings-api
