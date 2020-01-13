@@ -5,10 +5,10 @@
 (defn valid? [key]
   (not (nil? (db/get-api-key {:apikey key}))))
 
-(defn add-api-key! [key unavailable-roles comment]
+(defn add-api-key! [key permitted-roles comment]
   (db/add-api-key! {:apikey key
                     :comment comment
-                    :unavailableroles (json/generate-string unavailable-roles)}))
+                    :permittedroles (json/generate-string permitted-roles)}))
 
-(defn unavailable-roles [key]
-  (set (mapv keyword (json/parse-string (:unavailableroles (db/get-api-key {:apikey key}))))))
+(defn permitted-roles [key]
+  (set (mapv keyword (json/parse-string (:permittedroles (db/get-api-key {:apikey key}))))))

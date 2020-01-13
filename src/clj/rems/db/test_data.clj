@@ -839,10 +839,12 @@
   (assert (empty? (db/get-catalogue-items {}))
           "You have existing catalogue items, refusing to continue. An empty database is needed."))
 
+(def ^:private +all-roles+ ["applicant" "handler" "logged-in" "owner" "reporter"])
+
 (defn create-test-data! []
   (assert-no-existing-data!)
-  (api-key/add-api-key! 42 nil "test data")
-  (api-key/add-api-key! 43 ["handler" "owner"] "test data, handler and owner roles unavailable")
+  (api-key/add-api-key! 42 +all-roles+ "test data with all roles permitted")
+  (api-key/add-api-key! 43 ["logged-in"] "test data with only logged-in role permitted")
   (create-test-users-and-roles!)
   (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                 :organization "nbn"
@@ -928,7 +930,7 @@
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
-    (api-key/add-api-key! 55 nil "Finna")
+    (api-key/add-api-key! 55 +all-roles+ "Finna")
     (create-users-and-roles! users user-data)
     (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                   :organization "nbn"
