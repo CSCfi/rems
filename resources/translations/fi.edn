@@ -221,6 +221,7 @@
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
                 :type-description "Hakemuksen otsikko"
+                :type-email "Sähköpostiosoite"
                 :type-header "Otsikko"
                 :type-label "Lisätietokenttä"
                 :type-multiselect "Monivalintalista"
@@ -327,7 +328,8 @@
          :submit "Lähetä hakemus"
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
-         :validation {:invalid-user "Käyttäjä ei kelpaa."
+         :validation {:invalid-email "Sähköpostiosoite ei kelpaa."
+                      :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" sisältö on liian pitkä."}}
