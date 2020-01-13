@@ -64,7 +64,7 @@
   editor-component - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
   (let [id (:field/id opts)
-        title (localized (:field/title opts))
+        title (linkify (localized (:field/title opts)))
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
