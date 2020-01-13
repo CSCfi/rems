@@ -471,14 +471,16 @@ ORDER BY id ASC;
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb);
 
--- :name add-api-key! :insert
+-- :name upsert-api-key! :insert
 INSERT INTO api_key (apiKey, comment, permittedRoles)
 VALUES (
 :apikey,
 :comment,
 :permittedroles::jsonb
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (apiKey)
+DO UPDATE
+SET (apiKey, comment, permittedRoles) = (:apikey, :comment, :permittedroles::jsonb);
 
 -- :name get-api-key :? :1
 SELECT apiKey, permittedRoles::TEXT FROM api_key

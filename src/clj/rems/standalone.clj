@@ -8,10 +8,12 @@
             [mount.core :as mount]
             [rems.application.search :as search]
             [rems.config :refer [env]]
+            [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.handler :as handler]
+            [rems.json :as json]
             [rems.validate :as validate])
   (:refer-clojure :exclude [parse-opts])
   (:gen-class))
@@ -66,7 +68,12 @@
      \"test-data\" -- insert test data into database
      \"demo-data\" -- insert data for demoing purposes into database
      \"validate\" -- validate data in db
-     \"add-api-key <api-key> [<description>]\" -- add api key to db"
+     \"add-api-key <api-key> [<description>] [<permitted-role 1>] ... [<permitted-role n>]\" -- add api key to db.
+        <description> is an optional text comment.
+        <permitted-role> is, e.g., owner or handler. If no permitted roles are
+          given, permit all roles.
+        If a pre-existing <api-key> is given, update description and permitted
+          roles for that api-key."
   [& args]
   (case (first args)
     ("migrate" "rollback")
@@ -101,9 +108,9 @@
       (test-data/create-demo-data!))
 
     "add-api-key"
-    (let [[_ key comment] args]
+    (let [[_ key comment & permitted-roles] args]
       (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (db/add-api-key! {:apikey key :comment comment})
+      (api-key/add-api-key! key comment (or permitted-roles api-key/+all-roles+))
       (log/info "Api key added"))
 
     "validate"
