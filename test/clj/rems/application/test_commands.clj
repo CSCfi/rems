@@ -36,7 +36,10 @@
 (def ^:private dummy-workflows {1 {:workflow {:handlers [{:userid handler-user-id
                                                           :name "user"
                                                           :email "user@example.com"}]}}})
-(def ^:private dummy-forms {1 {}})
+(def ^:private dummy-forms {1 {:form/fields [{:field/id 1
+                                              :field/optional false}
+                                             {:field/id 2
+                                              :field/optional true}]}})
 
 (defn- dummy-get-catalogue-item [id]
   {:enabled true :archived false :expired false
@@ -514,8 +517,8 @@
                            :event/time test-time
                            :event/actor applicant-user-id
                            :application/id app-id
-                           :application/field-values {41 "foo"
-                                                      42 "bar"}}
+                           :application/field-values {1 "foo"
+                                                      2 "bar"}}
         licenses-accepted-event {:event/type :application.event/licenses-accepted
                                  :event/time test-time
                                  :event/actor applicant-user-id
@@ -539,9 +542,9 @@
 
     (testing "cannot submit when required fields are empty"
       (is (= {:errors [{:type :t.form.validation/required
-                        :field-id 41}]}
+                        :field-id 1}]}
              (-> application
-                 (apply-events [(assoc-in draft-saved-event [:application/field-values 41] "")])
+                 (apply-events [(assoc-in draft-saved-event [:application/field-values 1] "")])
                  (fail-command submit-command injections)))))
 
     (testing "cannot submit if catalogue item is disabled"
