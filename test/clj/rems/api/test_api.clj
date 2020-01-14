@@ -48,3 +48,11 @@
                    (header "x-rems-api-key" "WRONG")
                    handler)]
       (is (response-is-forbidden? resp)))))
+
+(deftest test-health-api
+  (let [body (-> (request :get "/api/health")
+                 handler
+                 read-ok-body)]
+    (is (:healthy body))
+    (is (string? (:latest-event body)))
+    (is (not (empty? (:latest-event body))))))

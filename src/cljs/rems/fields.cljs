@@ -64,7 +64,7 @@
   editor-component - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
   (let [id (:field/id opts)
-        title (localized (:field/title opts))
+        title (linkify (localized (:field/title opts)))
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
@@ -324,6 +324,7 @@
       :attachment [attachment-field f]
       :date [date-field f]
       :description [text-field f]
+      :email [text-field f]
       :header [header-field f]
       :label [label f]
       :multiselect [multiselect-field f]

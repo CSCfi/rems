@@ -125,6 +125,9 @@
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand})
 
+(def command-names
+  (keys command-schemas))
+
 (s/defschema Command
   (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
          CommandInternal))
@@ -165,7 +168,7 @@
   (fn [cmd _application _injections] (:type cmd)))
 
 (deftest test-all-command-types-handled
-  (is (= (set (keys command-schemas))
+  (is (= (set command-names)
          (set (keys (methods command-handler))))))
 
 (defn- must-not-be-empty [cmd key]

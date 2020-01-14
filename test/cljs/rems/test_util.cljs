@@ -44,11 +44,35 @@
     (is (= #{"foo" "bar"} (decode-option-keys (encode-option-keys #{"foo" "bar"}))))))
 
 (deftest test-linkify
-  (testing "retain original string"
-    (is (= (apply str (linkify "a b c") "a b c"))))
-  (testing "change link strings to hiccup links"
-    (is (= (linkify "a http://www.abc.com c")
-        ["a" " " [:a {:href "http://www.abc.com"} "http://www.abc.com"] " " "c"]))))
+  (let [link [:a {:target :_blank :href "http://www.abc.com"} "http://www.abc.com"]]
+    (testing "retain original string"
+      (is (= (apply str (linkify "a b c") "a b c"))))
+    (testing "change link strings to hiccup links"
+      (is (= (linkify "See http://www.abc.com")
+             ["See " link]))
+      (is (= (linkify "See https://www.abc.com")
+             ["See " [:a {:target :_blank :href "https://www.abc.com"} "https://www.abc.com"]])))
+    (testing "do not include subsequent punctuation marks in the link"
+      (is (= (linkify "See http://www.abc.com.")
+             ["See " link "."]))
+      (is (= (linkify "See http://www.abc.com, please.")
+             ["See " link ", please."]))
+      (is (= (linkify "See http://www.abc.com?")
+             ["See " link "?"]))
+      (is (= (linkify "See http://www.abc.com...")
+             ["See " link "..."]))
+      (is (= (linkify "See http://www.abc.com!")
+             ["See " link "!"])))
+    (testing "do not include subsequent parentheses in the link"
+      (is (= (linkify "(See http://www.abc.com.)")
+             ["(See " link ".)"]))
+      (is (= (linkify "(See http://www.abc.com?)")
+             ["(See " link "?)"])))
+    (testing "a link without http-prefix"
+      (is (= (linkify "(See www-page at www.abc.com.)")
+             ["(See www-page at "
+              [:a {:target :_blank :href "http://www.abc.com"} "www.abc.com"]
+              ".)"])))))
 
 (deftest test-remove-empty-keys
   (is (= (remove-empty-keys {}) {}))

@@ -178,6 +178,35 @@
                  "see-everything"}
                (set (get application :application/permissions))))))
 
+    (testing "disabling a command"
+      (with-redefs [rems.config/env (assoc rems.config/env :disable-commands [:application.command/remark])]
+        (testing "handler doesn't see hidden command"
+          (let [application (get-application application-id handler-id)]
+            (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
+            (is (= #{"application.command/request-review"
+                     "application.command/request-decision"
+                     "application.command/reject"
+                     "application.command/approve"
+                     "application.command/return"
+                     "application.command/add-licenses"
+                     "application.command/add-member"
+                     "application.command/remove-member"
+                     "application.command/invite-member"
+                     "application.command/uninvite-member"
+                     "application.command/change-resources"
+                     "application.command/close"
+                     "application.command/assign-external-id"
+                     "see-everything"}
+                   (set (get application :application/permissions))))))
+        (testing "disabled command fails"
+          (is (= {:success false
+                  :errors [{:type "forbidden"}]}
+                 (send-command handler-id
+                               {:type :application.command/remark
+                                :application-id application-id
+                                :public false
+                                :comment "this is a remark"}))))))
+
     (testing "send command without user"
       (is (= {:success false
               :errors [{:type "forbidden"}]}

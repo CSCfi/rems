@@ -467,6 +467,12 @@ FROM application_event
 WHERE id > :id
 ORDER BY id ASC;
 
+-- :name get-latest-application-event :? :1
+SELECT id, eventdata::TEXT
+FROM application_event
+ORDER BY id DESC
+LIMIT 1;
+
 -- :name add-application-event! :insert
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb);

@@ -1,6 +1,7 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
   (:require [rems.application.events :as events]
+            [rems.application.commands :as commands]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -135,7 +136,7 @@
 
 (s/defschema FieldTemplate
   {:field/id s/Int
-   :field/type (s/enum :attachment :date :description :header :label :multiselect :option :text :texta)
+   :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
    :field/optional s/Bool
@@ -184,6 +185,9 @@
   (assoc UserWithAttributes
          (s/optional-key :handler/active?) s/Bool))
 
+(s/defschema Permissions
+  #{(apply s/enum (conj commands/command-names :see-everything))})
+
 (s/defschema Application
   {:application/id s/Int
    :application/external-id s/Str
@@ -221,7 +225,7 @@
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) [Handler]}
    :application/roles #{s/Keyword}
-   :application/permissions #{s/Keyword}
+   :application/permissions Permissions
    :application/attachments [ApplicationAttachment]})
 
 (s/defschema ApplicationOverview
