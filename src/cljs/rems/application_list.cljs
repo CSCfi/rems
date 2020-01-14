@@ -1,6 +1,7 @@
 (ns rems.application-list
   (:refer-clojure :exclude [list])
-  (:require [clojure.set :as set]
+  (:require [cljs-time.core :as time]
+            [clojure.set :as set]
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application-util :as application-util]
@@ -57,6 +58,11 @@
                         :resubmitted-application}
                       (:application/todo app)))))
 
+;; could be in some util namespace, but only used here for now
+(defn- application-overdue? [application]
+  (when-let [dl (:application/deadline application)]
+    (time/after? (time/now) dl)))
+
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
@@ -92,7 +98,7 @@
                     :td [:td.todo
                          {:class (str (when (current-user-needs-to-do-something? app)
                                         "text-highlight ")
-                                      (when (:application/past-deadline app)
+                                      (when (application-overdue? app)
                                         "text-danger"))}
                          value]})
            :created (let [value (:application/created app)]
@@ -101,7 +107,7 @@
            :submitted (let [value (:application/first-submitted app)]
                         {:value value
                          :td [:td.submitted
-                              {:class (when (:application/past-deadline app)
+                              {:class (when (application-overdue? app)
                                         "text-highlight text-danger")}
                               (localize-time value)]})
            :last-activity (let [value (:application/last-activity app)]

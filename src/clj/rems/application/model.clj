@@ -493,14 +493,13 @@
                                                                            :field/value value})
                                                                         current-answers))))))
 
-(defn enrich-past-deadline [application get-config get-current-time]
+(defn enrich-deadline [application get-config]
   (let [days ((get-config) :application-deadline-days)]
     (if (and days
              (:application/first-submitted application))
-      (assoc application :application/past-deadline
-             (-> (:application/first-submitted application)
-                 (.plusDays days)
-                 (.isBefore (get-current-time))))
+      (assoc application :application/deadline
+             (.plusDays (:application/first-submitted application)
+                        days))
       application)))
 
 (defn- enrich-disable-commands [application get-config]
@@ -526,7 +525,7 @@
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)
-      (enrich-past-deadline get-config get-current-time)
+      (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
       (enrich-disable-commands get-config)))
 
