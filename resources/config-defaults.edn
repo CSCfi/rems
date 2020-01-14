@@ -95,9 +95,12 @@
  ;; on an application, starting from the first submission.
  :application-deadline-days nil
 
- ;; List of commands to disable. See the swagger schema of
- ;; /api/applications/{id} field application/permissions for possible
- ;; values.
+ ;; List of commands to disable. See the swagger model of
+ ;; /api/applications/{application-id} field application/permissions
+ ;; for all possible values.
+ ;;
+ ;; Example:
+ ;; :disable-commands [:application.command/assign-external-id :application.command/change-resources]
  :disable-commands []
 
  ;; Experimental features
