@@ -361,6 +361,7 @@
                                          {:value :option :label (text :t.create-form/type-option)}
                                          {:value :multiselect :label (text :t.create-form/type-multiselect)}
                                          {:value :date :label (text :t.create-form/type-date)}
+                                         {:value :email :label (text :t.create-form/type-email)}
                                          {:value :attachment :label (text :t.create-form/type-attachment)}
                                          {:value :label :label (text :t.create-form/type-label)}
                                          {:value :header :label (text :t.create-form/type-header)}]}])

@@ -56,4 +56,29 @@
                               :field/value "abcde"}
                              {:field/id 2
                               :field/max-length 5
-                              :field/value "abcdef"}])))))
+                              :field/value "abcdef"}]))))
+
+  (testing "error: field input invalid email address"
+    (is (= [{:type :t.form.validation/required :field-id 1}
+            {:type :t.form.validation/invalid-email :field-id 2}
+            {:type :t.form.validation/invalid-email :field-id 5}]
+           (validate-fields [{:field/id 1
+                              :field/type :email
+                              :field/optional false
+                              :field/value ""}
+                             {:field/id 2
+                              :field/type :email
+                              :field/optional false
+                              :field/value "invalid.email"}
+                             {:field/id 3
+                              :field/type :email
+                              :field/optional false
+                              :field/value "valid.email@example.com"}
+                             {:field/id 4
+                              :field/type :email
+                              :field/optional true
+                              :field/value ""}
+                             {:field/id 5
+                              :field/type :email
+                              :field/optional true
+                              :field/value "invalid.email"}])))))
