@@ -136,7 +136,7 @@
 
 (s/defschema FieldTemplate
   {:field/id s/Int
-   :field/type (s/enum :attachment :date :description :header :label :multiselect :option :text :texta)
+   :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
    :field/optional s/Bool

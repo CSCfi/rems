@@ -25,3 +25,11 @@
                        (authenticate "42" "handler")
                        handler)]
           (is (response-is-not-found? resp)))))))
+
+(deftest test-healt-api
+  (let [body (-> (request :get "/api/health")
+                 handler
+                 read-ok-body)]
+    (is (:healthy body))
+    (is (string? (:latest-event body)))
+    (is (not (empty? (:latest-event body))))))
