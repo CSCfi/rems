@@ -63,6 +63,13 @@
   (when-let [dl (:application/deadline application)]
     (time/after? (time/now) dl)))
 
+(defn- application-almost-overdue? [application]
+  (when-let [dl (:application/deadline application)]
+    (let [start (time/date-time (:application/first-submitted application))
+          seconds (time/seconds (* 0.75 (time/in-seconds (time/interval start dl))))
+          threshold (time/plus start seconds)]
+      (time/after? (time/now) threshold))))
+
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
@@ -96,10 +103,8 @@
            :todo (let [value (localize-todo (:application/todo app))]
                    {:value value
                     :td [:td.todo
-                         {:class (str (when (current-user-needs-to-do-something? app)
-                                        "text-highlight ")
-                                      (when (application-overdue? app)
-                                        "text-danger"))}
+                         {:class (when (current-user-needs-to-do-something? app)
+                                   "text-highlight")}
                          value]})
            :created (let [value (:application/created app)]
                       {:value value
@@ -107,8 +112,9 @@
            :submitted (let [value (:application/first-submitted app)]
                         {:value value
                          :td [:td.submitted
-                              {:class (when (application-overdue? app)
-                                        "text-highlight text-danger")}
+                              {:class (cond
+                                        (application-overdue? app) "text-highlight text-danger"
+                                        (application-almost-overdue? app) "text-highlight text-warning")}
                               (localize-time value)]})
            :last-activity (let [value (:application/last-activity app)]
                             {:value value
