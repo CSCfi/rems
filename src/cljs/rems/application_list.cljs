@@ -113,8 +113,8 @@
                         {:value value
                          :td [:td.submitted
                               {:class (cond
-                                        (application-overdue? app) "text-highlight text-danger"
-                                        (application-almost-overdue? app) "text-highlight text-warning")}
+                                        (application-overdue? app) "alert-danger"
+                                        (application-almost-overdue? app) "alert-warning")}
                               (localize-time value)]})
            :last-activity (let [value (:application/last-activity app)]
                             {:value value
