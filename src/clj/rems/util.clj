@@ -3,7 +3,6 @@
             [clojure.test :refer [deftest is]]
             [buddy.core.nonce :as buddy-nonce]
             [buddy.core.codecs :as buddy-codecs]
-            [rems.config :refer [env]]
             [rems.context :as context])
   (:import [clojure.lang Atom]
            [java.io ByteArrayOutputStream FileInputStream]))
@@ -15,18 +14,6 @@
   "Throw a RuntimeException, args passed to `clojure.core/format`."
   [& fmt-args]
   (throw (RuntimeException. (apply format fmt-args))))
-
-(defn get-theme-attribute
-  "Fetch the attribute value from the current theme with fallbacks.
-
-  Keywords denote attribute lookups while strings are interpreted as fallback constant value."
-  [& attr-names]
-  (when (seq attr-names)
-    (let [attr-name (first attr-names)
-          attr-value (if (keyword? attr-name)
-                       (get (:theme env) attr-name)
-                       attr-name)]
-      (or attr-value (recur (rest attr-names))))))
 
 (defn getx
   "Like `get` but throws an exception if the key is not found."

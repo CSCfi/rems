@@ -1,7 +1,7 @@
 (ns rems.test-themes
   (:require [clojure.test :refer :all]
             [rems.config :as config]
-            [rems.util :as util])
+            [rems.css.styles :as styles])
   (:import (java.io FileNotFoundException)))
 
 (deftest load-external-theme-test
@@ -35,6 +35,6 @@
 (deftest get-theme-attribute-test
   (with-redefs [config/env {:theme {:test "success"
                                     :test-color 2}}]
-    (is (= 2 (util/get-theme-attribute :test-color)))
-    (is (= "success" (util/get-theme-attribute :test)))
-    (is (nil? (util/get-theme-attribute :no-such-attribute)))))
+    (is (= 2 (styles/get-theme-attribute :test-color)))
+    (is (= "success" (styles/get-theme-attribute :test)))
+    (is (nil? (styles/get-theme-attribute :no-such-attribute)))))
