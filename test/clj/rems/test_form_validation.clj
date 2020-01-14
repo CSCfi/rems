@@ -57,3 +57,6 @@
                              {:field/id 2
                               :field/max-length 5
                               :field/value "abcdef"}])))))
+
+;; TODO where are option field validations tested?
+
