@@ -45,16 +45,12 @@
 (defn- dummy-get-config []
   {})
 
-(defn- dummy-get-current-time []
-  (DateTime. 3000))
-
 (def ^:private injections
   {:blacklisted? (constantly false)
    :get-workflow dummy-workflows
    :get-form-template dummy-forms
    :get-catalogue-item dummy-get-catalogue-item
    :get-config dummy-get-config
-   :get-current-time dummy-get-current-time
    :get-license dummy-licenses
    :get-user (fn [userid] {:userid userid})
    :get-users-with-role (constantly nil)

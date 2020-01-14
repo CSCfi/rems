@@ -511,7 +511,7 @@
 (defn enrich-with-injections [application {:keys [blacklisted?
                                                   get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
-                                                  get-attachments-for-application get-current-time
+                                                  get-attachments-for-application
                                                   get-config]}]
   (-> application
       enrich-answers

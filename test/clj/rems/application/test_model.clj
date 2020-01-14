@@ -96,9 +96,6 @@
 (def ^:private get-config
   (constantly {:application-deadline-days 1}))
 
-(def ^:private get-current-time
-  (constantly (DateTime. 4000)))
-
 (def ^:private get-license
   {30 {:id 30
        :licensetype "link"
@@ -196,7 +193,6 @@
                  :get-form-template get-form-template
                  :get-catalogue-item get-catalogue-item
                  :get-config get-config
-                 :get-current-time get-current-time
                  :get-license get-license
                  :get-user get-user
                  :get-users-with-role get-users-with-role

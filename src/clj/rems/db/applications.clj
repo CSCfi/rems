@@ -1,7 +1,6 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clj-time.core :as time]
-            [clojure.core.cache.wrapped :as cache]
+  (:require [clojure.core.cache.wrapped :as cache]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
@@ -84,7 +83,6 @@
    :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
    :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % catalogue/get-localized-catalogue-item)
    :get-config (fn [] env)
-   :get-current-time time/now
    :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
    :get-user #(cache/lookup-or-miss user-cache % users/get-user)
    :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)

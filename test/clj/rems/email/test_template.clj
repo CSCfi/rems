@@ -39,9 +39,6 @@
 (def ^:private get-config
   (constantly {}))
 
-(def ^:private get-current-time
-  (constantly (DateTime. 3000)))
-
 (def ^:private get-workflow
   {5 {:workflow {:handlers [{:userid "handler"
                              :name "Hannah Handler"
@@ -100,7 +97,6 @@
                                                         :get-workflow get-workflow
                                                         :get-catalogue-item get-catalogue-item
                                                         :get-config get-config
-                                                        :get-current-time get-current-time
                                                         :get-form-template get-form-template
                                                         :get-license get-license
                                                         :get-user get-user
