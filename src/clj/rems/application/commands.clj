@@ -2,7 +2,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [rems.application-util :as application-util]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx getx-in assert-ex try-catch-ex]]
+            [rems.util :refer [getx getx-in assert-ex try-catch-ex update-present]]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import [java.util UUID]
@@ -522,11 +522,9 @@
       (assoc :event/time (:time cmd)
              :event/actor (:actor cmd))))
 
-(defn- enrich-result [result cmd]
-  (if (:events result)
-    (update result :events (fn [events]
-                             (mapv #(add-common-event-fields-from-command % cmd) events)))
-    result))
+(defn- finalize-events [result cmd]
+  (update-present result :events (fn [events]
+                                   (mapv #(add-common-event-fields-from-command % cmd) events))))
 
 (defn ^:dynamic postprocess-command-result-for-tests [result _cmd _application]
   result)
@@ -538,7 +536,7 @@
                       #{:application.command/create})]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
-          (enrich-result cmd)
+          (finalize-events cmd)
           (postprocess-command-result-for-tests cmd application))
       {:errors (or (:errors (command-handler cmd application injections)) ; prefer more specific error
                    [{:type :forbidden}])})))
