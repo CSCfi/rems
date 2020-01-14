@@ -11,6 +11,7 @@
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.application.approver-bot :as approver-bot]
+            [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -845,7 +846,8 @@
 
 (defn create-test-data! []
   (assert-no-existing-data!)
-  (db/add-api-key! {:apikey 42 :comment "test data"})
+  (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
+  (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
   (create-test-users-and-roles!)
   (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                 :organization "nbn"
@@ -931,7 +933,7 @@
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
-    (db/add-api-key! {:apikey 55 :comment "Finna"})
+    (api-key/add-api-key! 55 "Finna" api-key/+all-roles+)
     (create-users-and-roles! users user-data)
     (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                   :organization "nbn"

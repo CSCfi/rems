@@ -26,7 +26,30 @@
                        handler)]
           (is (response-is-not-found? resp)))))))
 
-(deftest test-healt-api
+(deftest test-api-key-roles
+  (testing "API key roles"
+    (testing "all available"
+      (let [resp (-> (request :get "/api/forms")
+                     (authenticate "42" "owner")
+                     handler)]
+        (is (= 200 (:status resp)))))
+    (testing "handler and owner roles unavailable"
+      (let [resp (-> (request :get "/api/forms")
+                     (authenticate "43" "owner")
+                     handler)]
+        (is (response-is-forbidden? resp)))))
+  (testing ":api-key role not available when using wrong API key"
+    (let [username "alice"
+          cookie (login-with-cookies username)
+          csrf (get-csrf-token cookie)
+          resp (-> (request :post "/api/email/send-reminders")
+                   (header "Cookie" cookie)
+                   (header "x-csrf-token" csrf)
+                   (header "x-rems-api-key" "WRONG")
+                   handler)]
+      (is (response-is-forbidden? resp)))))
+
+(deftest test-health-api
   (let [body (-> (request :get "/api/health")
                  handler
                  read-ok-body)]

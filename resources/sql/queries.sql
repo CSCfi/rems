@@ -477,13 +477,19 @@ LIMIT 1;
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb);
 
--- :name add-api-key! :insert
-INSERT INTO api_key (apiKey, comment)
-VALUES (:apikey, :comment)
-ON CONFLICT DO NOTHING;
+-- :name upsert-api-key! :insert
+INSERT INTO api_key (apiKey, comment, permittedRoles)
+VALUES (
+:apikey,
+:comment,
+:permittedroles::jsonb
+)
+ON CONFLICT (apiKey)
+DO UPDATE
+SET (apiKey, comment, permittedRoles) = (:apikey, :comment, :permittedroles::jsonb);
 
 -- :name get-api-key :? :1
-SELECT apiKey FROM api_key
+SELECT apiKey, permittedRoles::TEXT FROM api_key
 WHERE apiKey = :apikey;
 
 -- :name get-application-by-invitation-token :? :1
