@@ -31,8 +31,8 @@ Changes since v2.6
   - `/api/email/send-reminders` sends all of the above emails.
 - Allow users to change their email address, in case the identity provider
   doesn't provide an email address or the users want to use a different one (#1884)
-- Healthcheck api `/api/health` (#1902)
 - Add form field of type 'email', which is validated as an email address (#1894)
+- Healthcheck api `/api/health` (#1902)
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
@@ -53,6 +53,7 @@ Changes since v2.6
 - POSTing entitlements to entitlement-target is now retried (#1784)
 - [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
 - "Assign external id" command for setting the id of an application (#1858)
+- Configuration `:disable-commands` for disabling commands (#1891)
 - Display on the actions page the handlers who are handling an application (#1795)
 
 ## v2.6 "Kalevalantie" 2018-11-12

@@ -40,7 +40,7 @@
                  [metosin/jsonista "0.2.4"]
                  [metosin/komponentit "0.3.9"]
                  [metosin/ring-swagger "0.26.2"]
-                 [metosin/ring-swagger-ui "3.20.1"]
+                 [metosin/ring-swagger-ui "3.24.3"]
                  [mount "0.1.16"]
                  [ns-tracker "0.4.0"]
                  [org.apache.lucene/lucene-core "8.2.0"]
