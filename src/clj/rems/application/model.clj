@@ -503,6 +503,12 @@
                  (.isBefore (get-current-time))))
       application)))
 
+(defn- enrich-disable-commands [application get-config]
+  (permissions/blacklist application
+                         (permissions/compile-rules
+                          (for [command (:disable-commands (get-config))]
+                            {:permission command}))))
+
 (defn enrich-with-injections [application {:keys [blacklisted?
                                                   get-form-template get-catalogue-item get-license
                                                   get-user get-users-with-role get-workflow
@@ -521,7 +527,8 @@
       (enrich-blacklist blacklisted?) ;; uses enriched users
       (enrich-workflow-handlers get-workflow)
       (enrich-past-deadline get-config get-current-time)
-      (enrich-super-users get-users-with-role)))
+      (enrich-super-users get-users-with-role)
+      (enrich-disable-commands get-config)))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
