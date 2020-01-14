@@ -526,17 +526,21 @@
   (update-present result :events (fn [events]
                                    (mapv #(add-common-event-fields-from-command % cmd) events))))
 
+(defn- forbidden-error [application cmd]
+  (let [permissions (if application
+                      (permissions/user-permissions application (:actor cmd))
+                      #{:application.command/create})]
+    (when-not (contains? permissions (:type cmd))
+      {:errors [{:type :forbidden}]})))
+
 (defn ^:dynamic postprocess-command-result-for-tests [result _cmd _application]
   result)
 
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (let [permissions (if application
-                      (permissions/user-permissions application (:actor cmd))
-                      #{:application.command/create})]
-    (if (contains? permissions (:type cmd))
-      (-> (command-handler cmd application injections)
-          (finalize-events cmd)
-          (postprocess-command-result-for-tests cmd application))
-      {:errors (or (:errors (command-handler cmd application injections)) ; prefer more specific error
-                   [{:type :forbidden}])})))
+  (let [result (command-handler cmd application injections)]
+    (or (when (:errors result) result) ;; prefer more specific errors
+        (forbidden-error application cmd)
+        (-> result
+            (finalize-events cmd)
+            (postprocess-command-result-for-tests cmd application)))))
