@@ -96,9 +96,6 @@
 (def ^:private get-config
   (constantly {:application-deadline-days 1}))
 
-(def ^:private get-current-time
-  (constantly (DateTime. 4000)))
-
 (def ^:private get-license
   {30 {:id 30
        :licensetype "link"
@@ -196,7 +193,6 @@
                  :get-form-template get-form-template
                  :get-catalogue-item get-catalogue-item
                  :get-config get-config
-                 :get-current-time get-current-time
                  :get-license get-license
                  :get-user get-user
                  :get-users-with-role get-users-with-role
@@ -939,7 +935,7 @@
           :application/modified (DateTime. 2000)
           :application/first-submitted (DateTime. 3000)
           :application/last-activity (DateTime. 4000)
-          :application/past-deadline false
+          :application/deadline (.plusDays (DateTime. 3000) 1)
           :application/applicant {:userid "applicant"
                                   :email "applicant@example.com"
                                   :name "Applicant"}
@@ -1193,43 +1189,24 @@
            (-> (model/enrich-workflow-handlers application get-workflow)
                (select-keys [:application/workflow]))))))
 
-(deftest test-enrich-past-deadline
+(deftest test-enrich-deadline
   (testing "non-submitted application"
     (is (= {:application/created (DateTime. 3000)}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)}
-                                       (constantly
-                                        {:application-deadline-days 1})
-                                       (constantly
-                                        (DateTime. 4000))))))
-  (testing "submitted application, not past deadline"
+           (model/enrich-deadline {:application/created (DateTime. 3000)}
+                                  (constantly {:application-deadline-days 1})))))
+  (testing "submitted application, deadline"
     (is (= {:application/created (DateTime. 3000)
             :application/first-submitted (DateTime. 4000)
-            :application/past-deadline false}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)
-                                        :application/first-submitted (DateTime. 4000)}
-                                       (constantly
-                                        {:application-deadline-days 1})
-                                       (constantly
-                                        (DateTime. 5000))))))
-  (testing "submitted application, past deadline"
-    (is (= {:application/created (DateTime. 3000)
-            :application/first-submitted (DateTime. 4000)
-            :application/past-deadline true}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)
-                                        :application/first-submitted (DateTime. 4000)}
-                                       (constantly
-                                        {:application-deadline-days 1})
-                                       (constantly
-                                        (.plusDays (DateTime. 5000) 1))))))
+            :application/deadline (.plusDays (DateTime. 4000) 2)}
+           (model/enrich-deadline {:application/created (DateTime. 3000)
+                                   :application/first-submitted (DateTime. 4000)}
+                                  (constantly {:application-deadline-days 2})))))
   (testing "submitted application, deadline not in use"
     (is (= {:application/created (DateTime. 3000)
             :application/first-submitted (DateTime. 4000)}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)
-                                        :application/first-submitted (DateTime. 4000)}
-                                       (constantly
-                                        {:application-deadline-days nil})
-                                       (constantly
-                                        (.plusDays (DateTime. 5000) 1)))))))
+           (model/enrich-deadline {:application/created (DateTime. 3000)
+                                   :application/first-submitted (DateTime. 4000)}
+                                  (constantly {:application-deadline-days nil}))))))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created

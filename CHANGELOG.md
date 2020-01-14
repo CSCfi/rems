@@ -24,6 +24,7 @@ Changes since v2.6
   the same as before. See #837
 - Applications can be exported as CSV in admin menu (#1857)
 - Added a configuration option for setting a maximum number of days for handling a new application (#1861)
+  - Applications that are close to or past the deadline are highlighted on the Actions page
 - Added reminder emails. The emails can be sent by calling one of the following
   APIs on a cron schedule or similar. The APIs require an API key. (#1611, #1860)
   - `/api/email/send-handler-reminder` sends email about open applications to all handlers.
