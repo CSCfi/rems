@@ -1,10 +1,13 @@
 (ns rems.config
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
+            [clojure.test :refer :all]
+            [clojure.tools.logging :as log]
             [cprop.core :refer [load-config]]
             [cprop.source :as source]
             [cprop.tools :refer [merge-maps]]
             [mount.core :refer [defstate]]
+            [rems.application.commands :as commands]
             [rems.json :as json])
   (:import [java.io FileNotFoundException]
            [org.joda.time Period]))
@@ -27,13 +30,27 @@
     config))
 
 (defn- parse-config [config]
-  (update config :email-retry-period #(Period/parse %)))
+  (-> config
+      (update :email-retry-period #(Period/parse %))
+      (update :disable-commands (partial mapv keyword))))
+
+(deftest test-parse-config
+  (is (= {:foo 1
+          :email-retry-period (Period/days 20)
+          :disable-commands [:application.command/close :application.command/reject]}
+         (parse-config
+          {:foo 1
+           :email-retry-period "P20d"
+           :disable-commands ["application.command/close" "application.command/reject"]}))))
 
 ;; if we start doing more thorough validation, could use a schema instead
 (defn- validate-config [config]
   (when-let [url (:public-url config)]
     (assert (.endsWith url "/")
             (str ":public-url should end with /:" (pr-str url))))
+  (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
+    (log/warn "Unrecognized values in :disable-commands : " (pr-str invalid-commands))
+    (log/warn "Supported-values: " (pr-str commands/command-names)))
   config)
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn"
