@@ -223,6 +223,7 @@
                 :type-attachment "Attachment"
                 :type-date "Date field"
                 :type-description "Application title"
+                :type-email "Email address"
                 :type-header "Header"
                 :type-label "Label"
                 :type-multiselect "Multi-select list"
@@ -329,7 +330,8 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
-         :validation {:invalid-user "Invalid user."
+         :validation {:invalid-email "Invalid email address."
+                      :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
                       :toolong "Text in field \"%1\" too long."}}

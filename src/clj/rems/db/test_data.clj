@@ -294,6 +294,11 @@
     :field/optional true
     :field/type :date}
 
+   {:field/title {:en "Email field"
+                  :fi "Sähköpostikenttä"}
+    :field/optional true
+    :field/type :email}
+
    {:field/title {:en "Attachment"
                   :fi "Liitetiedosto"}
     :field/optional true

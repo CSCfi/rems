@@ -324,6 +324,7 @@
       :attachment [attachment-field f]
       :date [date-field f]
       :description [text-field f]
+      :email [text-field f]
       :header [header-field f]
       :label [label f]
       :multiselect [multiselect-field f]

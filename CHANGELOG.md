@@ -32,6 +32,7 @@ Changes since v2.6
 - Allow users to change their email address, in case the identity provider
   doesn't provide an email address or the users want to use a different one (#1884)
 - Healthcheck api `/api/health` (#1902)
+- Add form field of type 'email', which is validated as an email address (#1894)
 - Support www links in form field titles (#1864)
 
 ### Enhancements

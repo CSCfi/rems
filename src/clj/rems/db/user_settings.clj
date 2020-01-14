@@ -4,6 +4,7 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
+            [rems.util :as util]
             [schema.coerce :as coerce]
             [schema.core :as s]))
 
@@ -43,13 +44,10 @@
          (when user
            (json->settings (:settings (db/get-user-settings {:user user}))))))
 
-;; regex from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#Validation
-(def ^:private email-regex #"[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*")
-
 (defn validate-new-settings [{:keys [language notification-email] :as settings}]
   (into {} [(when (contains? (set (:languages env)) language)
               {:language language})
-            (when (and notification-email (re-matches email-regex notification-email))
+            (when (and notification-email (re-matches util/+email-regex+ notification-email))
               {:notification-email notification-email})
             (when (and (contains? settings :notification-email)
                        (str/blank? notification-email))

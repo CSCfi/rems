@@ -117,6 +117,9 @@
                                  {:field/type :header
                                   :field/title localized
                                   :field/optional true}
+                                 {:field/type :email
+                                  :field/title localized
+                                  :field/optional true}
                                  {:field/type :date
                                   :field/title localized
                                   :field/optional true}
