@@ -533,14 +533,11 @@
     (when-not (contains? permissions (:type cmd))
       {:errors [{:type :forbidden}]})))
 
-(defn ^:dynamic postprocess-command-result-for-tests [result _cmd _application]
-  result)
-
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (let [result (command-handler cmd application injections)]
+  (let [result (-> cmd
+                   (command-handler application injections)
+                   (finalize-events cmd))]
     (or (when (:errors result) result) ;; prefer more specific errors
         (forbidden-error application cmd)
-        (-> result
-            (finalize-events cmd)
-            (postprocess-command-result-for-tests cmd application)))))
+        result)))
