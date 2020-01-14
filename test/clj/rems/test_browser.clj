@@ -126,7 +126,7 @@
 
 (defn fill-form-field [label text]
   (let [id (get-element-attr *driver* [:application-fields
-                                       {:tag :label, :fn/text label}]
+                                       {:tag :label, :fn/has-text label}]
                              :for)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (fill-human *driver* {:id id} text)))
@@ -215,14 +215,14 @@
     (fill-form-field "10. Place/plces of research, including place of sample and/or data analysis." "Test")
     (fill-form-field "11. Description of other research group members and their role in the applied project." "Test")
     (fill-form-field "12. Specify selection criteria of study participants (if applicable)" "Test")
-    (fill-form-field "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)" "Test")
+    (fill-form-field "13. Specify requested phenotype data" "Test")
     (select-option "16. Are biological samples requested?" "n")
     (fill-form-field "17. What study results will be returned to THL Biobank (if any)?" "Test")
     (fill-form-field "18. Ethical aspects of the project" "Test")
     (fill-form-field "19. Project keywords (max 5)" "Test")
     (fill-form-field "20. Planned publications (max 3)" "Test")
     (fill-form-field "21. Funding information" "Test")
-    (fill-form-field "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)" "Test")
+    (fill-form-field "22. Invoice address" "Test")
     (check-box "disease_prevention")
 
     (accept-licenses)
