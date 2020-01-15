@@ -18,7 +18,7 @@
 
     (POST "/create" []
       :summary "Create user"
-      :roles #{:owner}
+      :roles #{:owner :user-owner}
       :body [command CreateUserCommand]
       :return SuccessResponse
       (create-user command)

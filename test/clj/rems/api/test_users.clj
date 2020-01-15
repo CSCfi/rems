@@ -1,5 +1,7 @@
 (ns ^:integration rems.api.test-users
   (:require [clojure.test :refer :all]
+            [rems.db.api-key :as api-key]
+            [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
@@ -55,4 +57,21 @@
                          (authenticate "42" "alice")
                          handler)]
         (is (response-is-forbidden? response))
-        (is (= "forbidden" (read-body response)))))))
+        (is (= "forbidden" (read-body response))))))
+
+  (testing "user with user-owner role"
+    (users/add-user! "user-owner" {:eppn "user-owner"})
+    (roles/add-role! "user-owner" :user-owner)
+    (testing "with api key with all roles"
+      (-> (request :post (str "/api/users/create"))
+          (json-body new-user)
+          (authenticate "42" "user-owner")
+          handler
+          assert-response-is-ok))
+    (testing "with api key with only user-owner role"
+      (api-key/add-api-key! "999" "" [:user-owner])
+      (-> (request :post (str "/api/users/create"))
+          (json-body new-user)
+          (authenticate "42" "user-owner")
+          handler
+          assert-response-is-ok))))

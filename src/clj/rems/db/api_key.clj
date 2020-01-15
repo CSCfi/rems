@@ -3,7 +3,8 @@
             [rems.json :as json]))
 
 (def +all-roles+ #{:applicant :decider :handler :logged-in
-                   :owner :past-reviewer :reporter :reviewer})
+                   :owner :past-reviewer :reporter :reviewer
+                   :user-owner})
 
 (defn valid? [key]
   (not (nil? (db/get-api-key {:apikey key}))))
