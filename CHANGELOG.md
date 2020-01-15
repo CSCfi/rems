@@ -36,6 +36,7 @@ Changes since v2.6
 - Add form field of type 'email', which is validated as an email address (#1894)
 - Support www links in form field titles (#1864)
 - Have a set of permitted roles for API keys (#1662)
+- A `user-owner` role that can only create and edit users
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
