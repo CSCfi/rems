@@ -21,11 +21,16 @@
 
 (def ^:private ^String app-id-field "app-id")
 
+;; Only one IndexWriter may use the directory at a time.
+;; Otherwise it'll throw a LockObtainFailedException.
+(def ^:private index-lock (Object.))
+
 (mount/defstate ^Directory search-index
   :start (let [directory (NIOFSDirectory. (.toPath (io/file (:search-index-path env))))]
-           (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
-                                                          (.setOpenMode IndexWriterConfig$OpenMode/CREATE)))]
-             (.deleteAll writer))
+           (locking index-lock
+             (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
+                                                            (.setOpenMode IndexWriterConfig$OpenMode/CREATE)))]
+               (.deleteAll writer)))
            (atom {::directory directory
                   ::searcher-manager (SearcherManager. directory (SearcherFactory.))
                   ::last-processed-event-id 0}))
@@ -82,12 +87,8 @@
     (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
     (.updateDocument writer (Term. app-id-field app-id) doc)))
 
-(def ^:private refresh-lock (Object.))
-
 (defn refresh! []
-  ;; Only one IndexWriter may use the directory at a time.
-  ;; Otherwise it'll throw a LockObtainFailedException.
-  (locking refresh-lock
+  (locking index-lock
     (let [{::keys [directory ^SearcherManager searcher-manager last-processed-event-id]} @search-index
           events (events/get-all-events-since last-processed-event-id)]
       (when-not (empty? events)
