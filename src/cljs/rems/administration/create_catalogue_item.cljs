@@ -64,15 +64,17 @@
     str))
 
 (defn build-request [form languages]
-  (let [request {:wfid (:workflow-id form)
-                 :resid (:resource-id form)
-                 :form (:form-id form)
-                 :localizations (into {}
-                                      (for [lang languages]
-                                        [lang {:title (trim-when-string (get-in form [:title lang]))
-                                               :infourl (-> (get-in form [:infourl lang])
-                                                            empty-string-to-nil
-                                                            trim-when-string)}]))}]
+  (let [request (merge {:wfid (:workflow-id form)
+                        :resid (:resource-id form)
+                        :form (:form-id form)
+                        :localizations (into {}
+                                             (for [lang languages]
+                                               [lang {:title (trim-when-string (get-in form [:title lang]))
+                                                      :infourl (-> (get-in form [:infourl lang])
+                                                                   empty-string-to-nil
+                                                                   trim-when-string)}]))}
+                       (when (not (empty? (:organization form)))
+                         {:organization (:organization form)}))]
     (when (valid-request? request languages)
       request)))
 
@@ -172,11 +174,12 @@
 
 (rf/reg-event-db
  ::fetch-catalogue-item-result
- (fn [db [_ {:keys [wfid resource-id formid localizations] :as catalogue-item}]]
+ (fn [db [_ {:keys [wfid resource-id formid localizations organization]}]]
    (-> db
        (assoc ::form {:workflow-id wfid
                       :resource-id resource-id
                       :form-id formid
+                      :organization organization
                       :title (map-vals :title localizations)
                       :infourl (map-vals :infourl localizations)})
        (dissoc ::loading-catalogue-item?))))
@@ -190,6 +193,11 @@
 (def ^:private workflow-dropdown-id "workflow-dropdown")
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
+
+(defn- catalogue-item-organization-field []
+  [text-field context {:keys [:organization]
+                       :label (text :t.administration/organization)
+                       :readonly @(rf/subscribe [::editing?])}])
 
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]
@@ -206,7 +214,6 @@
 (defn- catalogue-item-workflow-field []
   (let [workflows @(rf/subscribe [::workflows])
         editing? @(rf/subscribe [::editing?])
-        catalogue-item @(rf/subscribe [::catalogue-item])
         selected-workflow-id @(rf/subscribe [::selected-workflow-id])
         item-selected? #(= (:id %) selected-workflow-id)]
     [:div.form-group
@@ -294,6 +301,7 @@
                 (if loading?
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
+                   [catalogue-item-organization-field]
                    (for [language languages]
                      [:<> {:key language}
                       [catalogue-item-title-field language]

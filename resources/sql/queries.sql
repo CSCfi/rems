@@ -7,7 +7,7 @@
 -- - :workflow workflow id to fetch items for
 -- - :form form id to fetch items for
 -- - :archived true if archived items should be included
-SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
+SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived, ci.organization
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
@@ -63,8 +63,8 @@ WHERE id = :id;
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(formid, resid, wfid, enabled, archived)
-VALUES (:form, :resid, :wfid,
+(formid, resid, wfid, organization, enabled, archived)
+VALUES (:form, :resid, :wfid, :organization,
 --~ (if (contains? params :enabled) ":enabled" "true")
 ,
 --~ (if (contains? params :archived) ":archived" "false")
