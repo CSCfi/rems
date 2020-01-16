@@ -797,6 +797,7 @@
                                                                   :fi (str "Suorituskykytestiresurssi " n)}
                                                           :resource-id resource-id
                                                           :form-id form-id
+                                                          :organization "perf"
                                                           :workflow-id workflow-id}))))))
         user-ids (vec (in-parallel
                        (for [n (range-1 user-count)]
@@ -885,6 +886,7 @@
                                        :fi "http://www.google.fi"}
                              :resource-id res1
                              :form-id form
+                             :organization "nbn"
                              :workflow-id (:master workflows)})
     (create-catalogue-item! {:title {:en "Decider workflow"
                                      :fi "Päättäjätyövuo"}
@@ -892,6 +894,7 @@
                                        :fi "http://www.google.fi"}
                              :resource-id res1
                              :form-id form
+                             :organization "nbn"
                              :workflow-id (:decider workflows)})
     (let [catid (create-catalogue-item! {:title {:en "Default workflow"
                                                  :fi "Oletustyövuo"}
@@ -899,24 +902,28 @@
                                                    :fi "http://www.google.fi"}
                                          :resource-id res1
                                          :form-id form
+                                         :organization "nbn"
                                          :workflow-id (:default workflows)})]
       (create-applications! catid +fake-users+))
     (create-catalogue-item! {:title {:en "Dynamic workflow with extra license"
                                      :fi "Dynaaminen työvuo ylimääräisellä lisenssillä"}
                              :resource-id res-with-extra-license
                              :form-id form
+                             :organization "nbn"
                              :workflow-id (:default workflows)})
     (let [thlform (create-thl-demo-form! +fake-users+)
           thl-catid (create-catalogue-item! {:title {:en "THL catalogue item"
                                                      :fi "THL katalogi-itemi"}
                                              :resource-id res1
                                              :form-id thlform
+                                             :organiztion "thl"
                                              :workflow-id (:default workflows)})]
       (create-member-applications! thl-catid (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
     (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
                                                             :fi "Dynaaminen työvuo (pois käytöstä)"}
                                                     :resource-id res1
                                                     :form-id form
+                                                    :organization "nbn"
                                                     :workflow-id (:default workflows)})]
       (create-disabled-applications! dynamic-disabled
                                      (+fake-users+ :applicant2)
@@ -926,6 +933,7 @@
                                                            :fi "Dynaaminen työvuo (vanhentunut)"}
                                                    :resource-id res1
                                                    :form-id form
+                                                   :organization "nbn"
                                                    :workflow-id (:default workflows)})]
       (db/set-catalogue-item-endt! {:id dynamic-expired :end (time/now)}))))
 
@@ -957,6 +965,7 @@
                                                      :fi "Dynaaminen työvuo"}
                                              :resource-id res1
                                              :form-id form
+                                             :organization "nbn"
                                              :workflow-id (:default workflows)})]
         (create-applications! dynamic users))
       (let [thlform (create-thl-demo-form! users)
@@ -964,12 +973,14 @@
                                                        :fi "THL katalogi-itemi"}
                                                :resource-id res1
                                                :form-id thlform
+                                               :organization "thl"
                                                :workflow-id (:default workflows)})]
         (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
       (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
                                                               :fi "Dynaaminen työvuo (pois käytöstä)"}
                                                       :resource-id res1
                                                       :form-id form
+                                                      :organization "nbn"
                                                       :workflow-id (:default workflows)})]
         (create-disabled-applications! dynamic-disabled
                                        (users :applicant2)
