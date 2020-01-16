@@ -17,7 +17,9 @@
                                        :items [id]})}))
 
 (defn create-catalogue-item! [{:keys [localizations] :as command}]
-  (let [id (:id (db/create-catalogue-item! (select-keys command [:form :resid :wfid :enabled :archived])))
+  ;; TODO make :organization unoptional?
+  (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
+                                                  (select-keys command [:form :resid :wfid :enabled :archived :organization]))))
         loc-ids
         (doall
          (for [[langcode localization] localizations]
@@ -82,6 +84,7 @@
     (let [new-item (db/create-catalogue-item! {:enabled true
                                                :archived false
                                                :form form-id
+                                               :organization (:organization item)
                                                :resid (:resource-id item)
                                                :wfid (:wfid item)})]
 

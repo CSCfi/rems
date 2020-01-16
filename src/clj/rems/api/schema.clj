@@ -33,6 +33,7 @@
    (s/optional-key :form-name) s/Str
    :resid s/Str
    :resource-id s/Int
+   :organization s/Str
    (s/optional-key :resource-name) s/Str
    :start DateTime
    :end (s/maybe DateTime)

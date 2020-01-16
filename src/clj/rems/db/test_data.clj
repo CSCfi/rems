@@ -179,7 +179,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id infourl]
+(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id infourl organization]
                                :as command}]
   (let [localizations (into {}
                             (for [lang (set (concat (keys title) (keys infourl)))]
@@ -188,6 +188,7 @@
         result (catalogue/create-catalogue-item!
                 {:resid (or resource-id (create-resource! {}))
                  :form (or form-id (create-form! {}))
+                 :organization (or organization "")
                  :wfid (or workflow-id (create-workflow! {}))
                  :localizations (or localizations {})})]
     (assert (:success result) {:command command :result result})
