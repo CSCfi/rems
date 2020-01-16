@@ -21,6 +21,7 @@
 
 (defn validate-fields [fields]
   (->> (sort-by :field/id fields)
+       (filter :field/visibility)
        (map validate-field)
        (remove nil?)
        (seq)))

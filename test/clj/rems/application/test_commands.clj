@@ -37,9 +37,15 @@
                                                           :name "user"
                                                           :email "user@example.com"}]}}})
 (def ^:private dummy-forms {1 {:form/fields [{:field/id 1
-                                              :field/optional false}
+                                              :field/optional true
+                                              :field/type :options
+                                              :field/options [{:key "foo" :label "Foo"}
+                                                              {:key "bar" :label "Bar"}]}
                                              {:field/id 2
-                                              :field/optional true}]}})
+                                              :field/optional false
+                                              :field/visible {:visible/type :only-if
+                                                              :visible/field {:field/id 1}
+                                                              :visible/value ["foo"]}}]}})
 
 (defn- dummy-get-catalogue-item [id]
   {:enabled true :archived false :expired false
@@ -499,7 +505,8 @@
                             :catalogue-item-ids []}))))))
 
 (deftest test-submit
-  (let [injections {:validate-fields form-validation/validate-fields}
+  (let [injections {:validate-fields form-validation/validate-fields
+                    :get-form-template dummy-forms}
         created-event {:event/type :application.event/created
                        :event/time test-time
                        :event/actor applicant-user-id
@@ -510,7 +517,7 @@
                                                {:catalogue-item/id 20
                                                 :resource/ext-id "urn:21"}]
                        :application/licenses [{:license/id 1}]
-                       :form/id 40
+                       :form/id 1
                        :workflow/id 50
                        :workflow/type :workflow/default}
         draft-saved-event {:event/type :application.event/draft-saved
@@ -541,11 +548,29 @@
              (ok-command application submit-command injections))))
 
     (testing "cannot submit when required fields are empty"
-      (is (= {:errors [{:type :t.form.validation/required
-                        :field-id 1}]}
-             (-> application
-                 (apply-events [(assoc-in draft-saved-event [:application/field-values 1] "")])
-                 (fail-command submit-command injections)))))
+      (testing "1st field is optional and empty, 2nd field is required but invisible"
+        (is (= {:event/type :application.event/submitted
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id}
+               (-> application
+                   (apply-events [(-> draft-saved-event
+                                      (assoc-in [:application/field-values 1] "")
+                                      (assoc-in [:application/field-values 2] ""))])
+                   (ok-command submit-command injections)))))
+      (testing "1st field is given, 2nd field is required and visible but empty"
+        (is (= {:errors [{:type :t.form.validation/required
+                          :field-id 2}]}
+               (-> application
+                   (apply-events [(assoc-in draft-saved-event [:application/field-values 2] "")])
+                   (fail-command submit-command injections)))))
+      (testing "1st field is given, 2nd field is given"
+        (is (= {:event/type :application.event/submitted
+                :event/time test-time
+                :event/actor applicant-user-id
+                :application/id app-id}
+               (-> application
+                   (ok-command submit-command injections))))))
 
     (testing "cannot submit if catalogue item is disabled"
       (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]

@@ -152,6 +152,7 @@
 (s/defschema Field
   (assoc FieldTemplate
          :field/value s/Str
+         :field/visibility s/Bool
          (s/optional-key :field/previous-value) s/Str))
 
 (s/defschema FormTemplate
