@@ -43,9 +43,9 @@
                                                               {:key "bar" :label "Bar"}]}
                                              {:field/id 2
                                               :field/optional false
-                                              :field/visible {:visible/type :only-if
-                                                              :visible/field {:field/id 1}
-                                                              :visible/value ["foo"]}}]}})
+                                              :field/visibility {                                                                 :visibility/type :only-if
+                                                                 :visibility/field {:field/id 1}
+                                                                 :visibility/value ["foo"]}}]}})
 
 (defn- dummy-get-catalogue-item [id]
   {:enabled true :archived false :expired false

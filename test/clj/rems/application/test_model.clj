@@ -1046,7 +1046,7 @@
                                             :field/optional false
                                             :field/options []
                                             :field/max-length 100
-                                            :field/visibility true}
+                                            :field/visible true}
                                            {:field/id 42
                                             :field/value "bar"
                                             :field/type :text
@@ -1055,7 +1055,7 @@
                                             :field/optional false
                                             :field/options []
                                             :field/max-length 100
-                                            :field/visibility true}]}
+                                            :field/visible true}]}
           :application/attachments []
           :application/workflow {:workflow/id 50
                                  :workflow/type :workflow/master
@@ -1232,19 +1232,19 @@
                                        (constantly
                                         (.plusDays (DateTime. 5000) 1)))))))
 
-(deftest test-enrich-field-visibility
+(deftest test-enrich-field-visible
   (let [application {:application/form {:form/fields [{:field/id 1
                                                        :field/title "Option"
                                                        :field/options [{:key "no" :label "No"}
                                                                        {:key "yes" :label "Yes"}]}
                                                       {:field/id 2
                                                        :field/title "Hidden field"
-                                                       :field/visible {:visible/type :only-if
-                                                                       :visible/field {:field/id 1}
-                                                                       :visible/value ["yes"]}}]}}
+                                                       :field/visibility {:visibility/type :only-if
+                                                                          :visibility/field {:field/id 1}
+                                                                          :visibility/value ["yes"]}}]}}
         visible-fields (fn [application]
-                         (->> (get-in (model/enrich-field-visibility application) [:application/form :form/fields])
-                              (filter :field/visibility)
+                         (->> (get-in (model/enrich-field-visible application) [:application/form :form/fields])
+                              (filter :field/visible)
                               (map :field/id)))]
     (is (= [1] (visible-fields application)) "no answer should not make field visible")
     (is (= [1] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "no"))) "other option value should not make field visible")

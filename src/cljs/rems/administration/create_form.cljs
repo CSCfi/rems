@@ -144,7 +144,7 @@
 (defn- supports-options? [field]
   (contains? #{:option :multiselect} (:field/type field)))
 
-(defn- supports-visible? [field]
+(defn- supports-visibility? [field]
   true) ; at the moment all field types
 
 (defn- localized-field-title [field lang]
@@ -168,12 +168,12 @@
            {:field/options (for [{:keys [key label]} (:field/options field)]
                              {:key key
                               :label (build-localized-string label languages)})})
-         (when (supports-visible? field)
-           (let [{:visible/keys [type field value]} (:field/visible field)]
+         (when (supports-visibility? field)
+           (let [{:visibility/keys [type field value]} (:field/visibility field)]
              (when (= type :only-if)
-               {:field/visible {:visible/type type
-                                :visible/field (when (:field/id field) (select-keys field [:field/id]))
-                                :visible/value value}})))))
+               {:field/visibility {:visibility/type type
+                                   :visibility/field (when (:field/id field) (select-keys field [:field/id]))
+                                   :visibility/value value}})))))
 
 (defn build-request [form languages]
   {:form/organization (trim-when-string (:form/organization form))
@@ -214,27 +214,27 @@
 (defn- field-option-keys [field]
   (set (map :key (:field/options field))))
 
-(defn- validate-only-if-field [field visible fields]
-  (if (-> visible :visible/field)
-    (if-let [referred-field (-> visible :visible/field :field/id fields)]
+(defn- validate-only-if-field [field visibility fields]
+  (if (-> visibility :visibility/field)
+    (if-let [referred-field (-> visibility :visibility/field :field/id fields)]
       (if-not  (supports-options? referred-field)
-        {:field/visible {:visible/field :t.form.validation/invalid-value}}
-        (if-not (-> visible :visible/field :field/id)
-          {:field/visible {:visible/field :t.form.validation/invalid-value}}
-          (if-not (empty? (:visible/value visible))
-            (when-not (some (field-option-keys referred-field) (:visible/value visible))
-              {:field/visible {:visible/value :t.form.validation/invalid-value}})
-            {:field/visible {:visible/value :t.form.validation/required}})))
-      {:field/visible {:visible/field :t.form.validation/required}})
-    {:field/visible {:visible/field :t.form.validation/required}}))
+        {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
+        (if-not (-> visibility :visibility/field :field/id)
+          {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
+          (if-not (empty? (:visibility/value visibility))
+            (when-not (some (field-option-keys referred-field) (:visibility/value visibility))
+              {:field/visibility {:visibility/value :t.form.validation/invalid-value}})
+            {:field/visibility {:visibility/value :t.form.validation/required}})))
+      {:field/visibility {:visibility/field :t.form.validation/required}})
+    {:field/visibility {:visibility/field :t.form.validation/required}}))
 
-(defn- validate-visible [field fields]
-  (when-let [visible (:field/visible field)]
-    (case (:visible/type visible)
+(defn- validate-visibility [field fields]
+  (when-let [visibility (:field/visibility field)]
+    (case (:visibility/type visibility)
       :always nil
-      :only-if (validate-only-if-field field visible fields)
-      nil {:field/visible {:visible/type :t.form.validation/required}}
-      {:field/visible {:visible/type :t.form.validation/invalid-value}})))
+      :only-if (validate-only-if-field field visibility fields)
+      nil {:field/visibility {:visibility/type :t.form.validation/required}}
+      {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
 
 (defn- validate-field [field index languages fields]
   {index (merge (validate-text-field field :field/type)
@@ -245,8 +245,8 @@
                   (validate-max-length (:field/max-length field)))
                 (when (supports-options? field)
                   (validate-options (:field/options field) languages))
-                (when (supports-visible? field)
-                  (validate-visible field fields)))})
+                (when (supports-visibility? field)
+                  (validate-visibility field fields)))})
 
 (defn- nil-if-empty [m]
   (when-not (empty? m)
@@ -306,13 +306,13 @@
         position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
     (.scrollTo frame 0 position)))
 
-(defn first-partially-visible-edit-field []
+(defn first-partially-visibility-edit-field []
   (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field:not(.new-form-field)"))
-        visible? #(<= 0 (-> % .getBoundingClientRect .-bottom))]
-    (first (filter visible? fields))))
+        visibility? #(<= 0 (-> % .getBoundingClientRect .-bottom))]
+    (first (filter visibility? fields))))
 
 (defn autoscroll []
-  (when-let [edit-field (first-partially-visible-edit-field)]
+  (when-let [edit-field (first-partially-visibility-edit-field)]
     (let [index (.getAttribute edit-field "data-field-index")
           preview-frame (.querySelector js/document "#preview-form .collapse-content")
           preview-field (-> js/document
@@ -389,7 +389,7 @@
           [[:div.form-field-option.new-form-field-option
             [add-form-field-option-button field-index]]])))
 
-(defn- form-fields-that-can-be-used-in-visible [form]
+(defn- form-fields-that-can-be-used-in-visibility [form]
   (filter #(contains? {:option :multiselect} (:field/type %))
           (:form/fields form)))
 
@@ -401,39 +401,39 @@
     []))
 
 (rf/reg-event-db
- ::form-field-visible-type
- (fn [db [_ field-index visible-type]]
-   (assoc-in db [::form :form/fields field-index :field/visible :visible/type] visible-type)))
+ ::form-field-visibility-type
+ (fn [db [_ field-index visibility-type]]
+   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/type] visibility-type)))
 
 (rf/reg-event-db
- ::form-field-visible-field
- (fn [db [_ field-index visible-field]]
-   (assoc-in db [::form :form/fields field-index :field/visible :visible/field] visible-field)))
+ ::form-field-visibility-field
+ (fn [db [_ field-index visibility-field]]
+   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/field] visibility-field)))
 
 (rf/reg-event-db
- ::form-field-visible-value
- (fn [db [_ field-index visible-value]]
-   (assoc-in db [::form :form/fields field-index :field/visible :visible/value] visible-value)))
+ ::form-field-visibility-value
+ (fn [db [_ field-index visibility-value]]
+   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/value] visibility-value)))
 
-(defn- form-field-visible
+(defn- form-field-visibility
   "Component for specifying form field visibility rules"
   [field-index]
   (let [form @(rf/subscribe [::form])
         form-errors @(rf/subscribe [::form-errors])
-        error-type (get-in form-errors [:form/fields field-index :field/visible :visible/type])
-        error-field (get-in form-errors [:form/fields field-index :field/visible :visible/field])
-        error-value (get-in form-errors [:form/fields field-index :field/visible :visible/value])
+        error-type (get-in form-errors [:form/fields field-index :field/visibility :visibility/type])
+        error-field (get-in form-errors [:form/fields field-index :field/visibility :visibility/field])
+        error-value (get-in form-errors [:form/fields field-index :field/visibility :visibility/value])
         lang @(rf/subscribe [:language])
-        id-type (str "fields-" field-index "-visible-type")
-        id-field (str "fields-" field-index "-visible-field")
-        id-value (str "fields-" field-index "-visible-value")
-        label-type (text :t.create-form/type-visible)
-        label-field (text :t.create-form.visible/field)
-        label-value (text :t.create-form.visible/has-value)
-        visible (get-in form [:form/fields field-index :field/visible])
-        visible-type (:visible/type visible)
-        visible-field (:visible/field visible)
-        visible-value (:visible/value visible)]
+        id-type (str "fields-" field-index "-visibility-type")
+        id-field (str "fields-" field-index "-visibility-field")
+        id-value (str "fields-" field-index "-visibility-value")
+        label-type (text :t.create-form/type-visibility)
+        label-field (text :t.create-form.visibility/field)
+        label-value (text :t.create-form.visibility/has-value)
+        visibility (get-in form [:form/fields field-index :field/visibility])
+        visibility-type (:visibility/type visibility)
+        visibility-field (:visibility/field visibility)
+        visibility-value (:visibility/value visibility)]
     [:<>
      [:div.form-group.field {:id (str "container-field" field-index)}
       [:label {:for id-type} label-type]
@@ -441,38 +441,38 @@
       [:select.form-control
        {:id id-type
         :class (when error-type "is-invalid")
-        :on-change #(rf/dispatch [::form-field-visible-type field-index (keyword (.. % -target -value))])
-        :value (or visible-type "")}
-       [:option {:value "always"} (text :t.create-form.visible/always)]
-       [:option {:value "only-if"} (text :t.create-form.visible/only-if)]]
+        :on-change #(rf/dispatch [::form-field-visibility-type field-index (keyword (.. % -target -value))])
+        :value (or visibility-type "")}
+       [:option {:value "always"} (text :t.create-form.visibility/always)]
+       [:option {:value "only-if"} (text :t.create-form.visibility/only-if)]]
       [:div.invalid-feedback
        (when error-type (text-format error-type label-type))]]
-     (when (= :only-if visible-type)
+     (when (= :only-if visibility-type)
        [:<>
         [:div.form-group
          [:label {:for id-field} label-field]
          [:select.form-control
           {:id id-field
            :class (when error-field "is-invalid")
-           :on-change #(rf/dispatch [::form-field-visible-field field-index (get-in form [:form/fields (js/parseInt (.. % -target -value))])])
-           :value (or (:field/id visible-field) "")}
+           :on-change #(rf/dispatch [::form-field-visibility-field field-index (get-in form [:form/fields (js/parseInt (.. % -target -value))])])
+           :value (or (:field/id visibility-field) "")}
           ^{:key "not-selected"} [:option ""]
-          (doall(for [field (form-fields-that-can-be-used-in-visible form)]
+          (doall(for [field (form-fields-that-can-be-used-in-visibility form)]
                   ^{:key (str field-index "-" (:field/id field))}
                   [:option {:value (:field/id field)}
                    (text-format :t.create-form/field-n (inc (:field/id field)) (localized-field-title field lang))]))]
          [:div.invalid-feedback
           (when error-field (text-format error-field label-field))]]
-        (when (:field/id visible-field)
+        (when (:field/id visibility-field)
           [:div.form-group
            [:label {:for id-value} label-value]
            [:select.form-control
             {:id id-value
              :class (when error-value "is-invalid")
-             :on-change #(rf/dispatch [::form-field-visible-value field-index [(.. % -target -value)]])
-             :value (or (first visible-value) "")}
+             :on-change #(rf/dispatch [::form-field-visibility-value field-index [(.. % -target -value)]])
+             :value (or (first visibility-value) "")}
             ^{:key "not-selected"} [:option ""]
-            (doall (for [value (form-field-values form visible-field)]
+            (doall (for [value (form-field-values form visibility-field)]
                      ^{:key (str field-index "-" (:value value))}
                      [:option {:value (:value value)} (get-in value [:title lang])]))]
            [:div.invalid-feedback
@@ -546,15 +546,15 @@
             (when (:field/max-length field-errors)
               [(format-validation-link (str "fields-" field-index "-max-length")
                                        (str (text :t.create-form/maxlength) ": " (text (:field/max-length field-errors))))])
-            (when (-> field-errors :field/visible :visible/type)
-              [(format-validation-link (str "fields-" field-index "-visible-type")
-                                       (str (text :t.create-form/type-visible) ": " (text-format (-> field-errors :field/visible :visible/type) (text :t.create-form/type-visible))))])
-            (when (-> field-errors :field/visible :visible/field)
-              [(format-validation-link (str "fields-" field-index "-visible-field")
-                                       (str (text :t.create-form/type-visible) ": " (text-format (-> field-errors :field/visible :visible/field) (text :t.create-form.visible/field))))])
-            (when (-> field-errors :field/visible :visible/value)
-              [(format-validation-link (str "fields-" field-index "-visible-value")
-                                       (str (text :t.create-form/type-visible) ": " (text-format (-> field-errors :field/visible :visible/value) (text :t.create-form.visible/has-value))))])
+            (when (-> field-errors :field/visibility :visibility/type)
+              [(format-validation-link (str "fields-" field-index "-visibility-type")
+                                       (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/type) (text :t.create-form/type-visibility))))])
+            (when (-> field-errors :field/visibility :visibility/field)
+              [(format-validation-link (str "fields-" field-index "-visibility-field")
+                                       (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/field) (text :t.create-form.visibility/field))))])
+            (when (-> field-errors :field/visibility :visibility/value)
+              [(format-validation-link (str "fields-" field-index "-visibility-value")
+                                       (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/value) (text :t.create-form.visibility/has-value))))])
             (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
               [:li (text-format :t.create-form/option-n (inc option-id))
                [:ul
@@ -617,8 +617,8 @@
               [form-field-max-length-field index])
             (when (supports-options? field)
               [form-field-option-fields index])
-            (when (supports-visible? field)
-              [form-field-visible index])]
+            (when (supports-visibility? field)
+              [form-field-visibility index])]
 
            [:div.form-field.new-form-field
             [add-form-field-button (inc index)]]])))
@@ -633,13 +633,13 @@
  (fn [db _]
    (::preview db {})))
 
-(defn- field-visible? [field values]
-  (let [visible (:field/visible field)]
-    (or (nil? visible)
-        (= :always (:visible/type visible))
-        (and (= :only-if (:visible/type visible))
-             (contains? (set (:visible/value visible))
-                        (get values (:field/id (:visible/field visible))))))))
+(defn- field-visibility? [field values]
+  (let [visibility (:field/visibility field)]
+    (or (nil? visibility)
+        (= :always (:visibility/type visibility))
+        (and (= :only-if (:visibility/type visibility))
+             (contains? (set (:visibility/value visibility))
+                        (get values (:field/id (:visibility/field visibility))))))))
 
 (defn form-preview [form]
   (let [preview @(rf/subscribe [::preview])
@@ -653,7 +653,7 @@
                        [fields/field (assoc field
                                             :on-change #(rf/dispatch [::set-field-value (:field/id field) %])
                                             :field/value (get-in preview [(:field/id field)]))]
-                       (when-not (field-visible? field preview)
+                       (when-not (field-visibility? field preview)
                          [:div {:style {:position :absolute
                                         :top 0
                                         :left 0
@@ -667,7 +667,7 @@
                                         :border-radius "0.4rem"
                                         :margin "-0.5rem"
                                         :background-color "rgba(230,230,230,0.5)"}}
-                          [:div.pr-4 (text :t.create-form.visible/hidden)]])]))}]))
+                          [:div.pr-4 (text :t.create-form.visibility/hidden)]])]))}]))
 
 (defn create-form-page []
   (enable-autoscroll!)

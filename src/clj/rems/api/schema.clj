@@ -142,9 +142,9 @@
    (s/optional-key :field/options) [{:key s/Str
                                      :label LocalizedString}]
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
-   (s/optional-key :field/visible) {:visible/type (s/enum :always :only-if)
-                                    (s/optional-key :visible/field) {:field/id s/Int}
-                                    (s/optional-key :visible/value) [s/Str]}})
+   (s/optional-key :field/visibility) {:visibility/type (s/enum :always :only-if)
+                                       (s/optional-key :visibility/field) {:field/id s/Int}
+                                       (s/optional-key :visibility/value) [s/Str]}})
 
 (s/defschema NewFieldTemplate
   (dissoc FieldTemplate :field/id))
@@ -152,7 +152,7 @@
 (s/defschema Field
   (assoc FieldTemplate
          :field/value s/Str
-         :field/visibility s/Bool
+         :field/visible s/Bool
          (s/optional-key :field/previous-value) s/Str))
 
 (s/defschema FormTemplate

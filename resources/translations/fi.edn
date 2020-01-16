@@ -227,12 +227,12 @@
                 :type-option "Valintalista"
                 :type-text "Tekstikenttä"
                 :type-texta "Tekstialue"
-                :type-visible "Näkyvissä"
-                :visible {:always "Aina"
-                          :field "Kentällä"
-                          :has-value "On arvo"
-                          :hidden "Piilossa"
-                          :only-if "Vain jos"}}
+                :type-visibility "Näkyvissä"
+                :visibility {:always "Aina"
+                             :field "Kentällä"
+                             :has-value "On arvo"
+                             :hidden "Piilossa"
+                             :only-if "Vain jos"}}
   :create-license {:external-link "Linkki"
                    :inline-text "Teksti"
                    :license-attachment "Liite"

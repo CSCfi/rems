@@ -504,43 +504,43 @@
       application)))
 
 ;; TODO: move to cljc, combine with others
-(defn- field-visible [field answers]
-  (let [visible (:field/visible field)]
-    (or (nil? visible)
-        (= :always (:visible/type visible))
-        (and (= :only-if (:visible/type visible))
-             (contains? (set (:visible/value visible))
-                        (get answers (:field/id (:visible/field visible))))))))
+(defn- field-visibile? [field answers]
+  (let [visibility (:field/visibility field)]
+    (or (nil? visibility)
+        (= :always (:visibility/type visibility))
+        (and (= :only-if (:visibility/type visibility))
+             (contains? (set (:visibility/value visibility))
+                        (get answers (:field/id (:visibility/field visibility))))))))
 
-(deftest field-visible-test
-  (is (true? (field-visible nil nil)))
-  (is (true? (field-visible {:field/visible {:visible/type :always}}
-                            nil)))
-  (is (false? (field-visible {:field/visible {:visible/type :only-if
-                                              :visible/field {:field/id 1}
-                                              :visible/value ["yes"]}}
-                             nil)))
-  (is (false? (field-visible {:field/visible {:visible/type :only-if
-                                              :visible/field {:field/id 1}
-                                              :visible/value ["yes"]}}
-                             {1 "no"})))
-  (is (true? (field-visible {:field/visible {:visible/type :only-if
-                                             :visible/field {:field/id 1}
-                                             :visible/value ["yes"]}}
-                            {1 "yes"})))
-  (is (true? (field-visible {:field/visible {:visible/type :only-if
-                                             :visible/field {:field/id 1}
-                                             :visible/value ["yes" "definitely"]}}
-                            {1 "definitely"}))))
+(deftest field-visible?-test
+  (is (true? (field-visibile? nil nil)))
+  (is (true? (field-visibile? {:field/visibility {:visibility/type :always}}
+                              nil)))
+  (is (false? (field-visibile? {:field/visibility {:visibility/type :only-if
+                                                   :visibility/field {:field/id 1}
+                                                   :visibility/value ["yes"]}}
+                               nil)))
+  (is (false? (field-visibile? {:field/visibility {:visibility/type :only-if
+                                                   :visibility/field {:field/id 1}
+                                                   :visibility/value ["yes"]}}
+                               {1 "no"})))
+  (is (true? (field-visibile? {:field/visibility {:visibility/type :only-if
+                                                  :visibility/field {:field/id 1}
+                                                  :visibility/value ["yes"]}}
+                              {1 "yes"})))
+  (is (true? (field-visibile? {:field/visibility {:visibility/type :only-if
+                                                  :visibility/field {:field/id 1}
+                                                  :visibility/value ["yes" "definitely"]}}
+                              {1 "definitely"}))))
 
-(defn enrich-field-visibility [application]
+(defn enrich-field-visible [application]
   (let [fields (get-in application [:application/form :form/fields])
         answers (into {} (map (juxt :field/id :field/value) fields))
-        fields-with-visibility (mapv (fn [field]
-                                       (assoc field :field/visibility (field-visible field answers)))
-                                     fields)]
+        fields-with-visible (mapv (fn [field]
+                                    (assoc field :field/visible (field-visibile? field answers)))
+                                  fields)]
     (-> application
-        (assoc-in [:application/form :form/fields] fields-with-visibility))))
+        (assoc-in [:application/form :form/fields] fields-with-visible))))
 
 (defn enrich-with-injections [application {:keys [blacklisted?
                                                   get-form-template get-catalogue-item get-license
@@ -550,7 +550,7 @@
   (-> application
       enrich-answers
       (update :application/form enrich-form get-form-template)
-      enrich-field-visibility ; uses enriched form fields
+      enrich-field-visible ; uses enriched form fields
       set-application-description
       (update :application/resources enrich-resources get-catalogue-item)
       (update :application/licenses enrich-licenses get-license)

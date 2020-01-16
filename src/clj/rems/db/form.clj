@@ -60,9 +60,9 @@
                fields))
 
 (defn- normalize-field-values [field]
-  (let [visible-type (get-in field [:field/visible :visible/type] :always)]
-    (if (= :always visible-type)
-      (dissoc field :field/visible)
+  (let [visibility-type (get-in field [:field/visibility :visibility/type] :always)]
+    (if (= :always visibility-type)
+      (dissoc field :field/visibility)
       field)))
 
 (defn- normalize-fields-values [fields]

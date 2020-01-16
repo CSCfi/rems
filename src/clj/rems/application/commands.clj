@@ -238,9 +238,7 @@
     (unbundlable-catalogue-items catalogue-item-ids injections)))
 
 (defn- validation-error [application {:keys [validate-fields]}]
-  (let [errors (->> (getx-in application [:application/form :form/fields])
-                    (filter :field/visibility)
-                    validate-fields)]
+  (let [errors (validate-fields (getx-in application [:application/form :form/fields]))]
     (when (seq errors)
       {:errors errors})))
 

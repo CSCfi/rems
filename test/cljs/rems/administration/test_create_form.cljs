@@ -304,17 +304,17 @@
                                                                      :fi "fi placeholder"}}))]
 
         (testing "default"
-          (is (nil? (get-in (build-request (assoc-in form [:form/fields 1 :field/visible] {:visible/type :always}) languages)
-                            [:form/fields 1 :field/visible]))
+          (is (nil? (get-in (build-request (assoc-in form [:form/fields 1 :field/visibility] {:visibility/type :always}) languages)
+                            [:form/fields 1 :field/visibility]))
               "always is the default so nothing needs to be included")
-          (is (= {:visible/type :only-if
-                  :visible/field nil
-                  :visible/value nil}
+          (is (= {:visibility/type :only-if
+                  :visibility/field nil
+                  :visibility/value nil}
                  (getx-in (build-request (assoc-in form
-                                                   [:form/fields 1 :field/visible]
-                                                   {:visible/type :only-if})
+                                                   [:form/fields 1 :field/visibility]
+                                                   {:visibility/type :only-if})
                                          languages)
-                          [:form/fields 1 :field/visible]))
+                          [:form/fields 1 :field/visibility]))
               "missing data is nil"))
 
         (testing "correct data"
@@ -325,14 +325,14 @@
                   :field/max-length 12
                   :field/placeholder {:en "en placeholder"
                                       :fi "fi placeholder"}
-                  :field/visible {:visible/type :only-if
-                                  :visible/field {:field/id 0}
-                                  :visible/value "yes"}}
+                  :field/visibility {:visibility/type :only-if
+                                     :visibility/field {:field/id 0}
+                                     :visibility/value "yes"}}
                  (getx-in (build-request (assoc-in form
-                                                   [:form/fields 1 :field/visible]
-                                                   {:visible/type :only-if
-                                                    :visible/field {:field/id 0}
-                                                    :visible/value "yes"})
+                                                   [:form/fields 1 :field/visibility]
+                                                   {:visibility/type :only-if
+                                                    :visibility/field {:field/id 0}
+                                                    :visibility/value "yes"})
                                          languages)
                           [:form/fields 1]))))))))
 
@@ -472,44 +472,44 @@
                                                  :field/placeholder {:en "en placeholder"
                                                                      :fi "fi placeholder"}}))
             validate-visible (fn [visible]
-                               (validate-form (assoc-in form [:form/fields 1 :field/visible] visible) languages))]
+                               (validate-form (assoc-in form [:form/fields 1 :field/visibility] visible) languages))]
 
         (testing "invalid type"
-          (is (= (getx-in (validate-visible {:visible/type nil})
-                          [:form/fields 1 :field/visible :visible/type])
+          (is (= (getx-in (validate-visible {:visibility/type nil})
+                          [:form/fields 1 :field/visibility :visibility/type])
                  :t.form.validation/required))
-          (is (= (getx-in (validate-visible {:visible/type :does-not-exist})
-                          [:form/fields 1 :field/visible :visible/type])
+          (is (= (getx-in (validate-visible {:visibility/type :does-not-exist})
+                          [:form/fields 1 :field/visibility :visibility/type])
                  :t.form.validation/invalid-value)))
 
         (testing "invalid field"
-          (is (= (getx-in (validate-visible {:visible/type :only-if})
-                          [:form/fields 1 :field/visible :visible/field])
-                 (getx-in (validate-visible {:visible/type :only-if
-                                             :visible/field nil})
-                          [:form/fields 1 :field/visible :visible/field])
+          (is (= (getx-in (validate-visible {:visibility/type :only-if})
+                          [:form/fields 1 :field/visibility :visibility/field])
+                 (getx-in (validate-visible {:visibility/type :only-if
+                                             :visibility/field nil})
+                          [:form/fields 1 :field/visibility :visibility/field])
                  :t.form.validation/required))
-          (is (= (getx-in (validate-visible {:visible/type :only-if
-                                             :visible/field {}})
-                          [:form/fields 1 :field/visible :visible/field])
+          (is (= (getx-in (validate-visible {:visibility/type :only-if
+                                             :visibility/field {}})
+                          [:form/fields 1 :field/visibility :visibility/field])
                  :t.form.validation/invalid-value)))
 
         (testing "invalid value"
-          (is (= (getx-in (validate-visible {:visible/type :only-if
-                                             :visible/field {:field/id 0}})
-                          [:form/fields 1 :field/visible :visible/value])
+          (is (= (getx-in (validate-visible {:visibility/type :only-if
+                                             :visibility/field {:field/id 0}})
+                          [:form/fields 1 :field/visibility :visibility/value])
                  :t.form.validation/required))
-          (is (= (getx-in (validate-visible {:visible/type :only-if
-                                             :visible/field {:field/id 0}
-                                             :visible/value "does-not-exist"})
-                          [:form/fields 1 :field/visible :visible/value])
+          (is (= (getx-in (validate-visible {:visibility/type :only-if
+                                             :visibility/field {:field/id 0}
+                                             :visibility/value "does-not-exist"})
+                          [:form/fields 1 :field/visibility :visibility/value])
                  :t.form.validation/invalid-value)))
 
         (testing "correct data"
-          (is (empty? (validate-visible {:visible/type :always})))
-          (is (empty? (validate-visible {:visible/type :only-if
-                                         :visible/field {:field/id 0}
-                                         :visible/value ["yes"]}))))))))
+          (is (empty? (validate-visible {:visibility/type :always})))
+          (is (empty? (validate-visible {:visibility/type :only-if
+                                         :visibility/field {:field/id 0}
+                                         :visibility/value ["yes"]}))))))))
 
 (deftest build-localized-string-test
   (let [languages [:en :fi]]

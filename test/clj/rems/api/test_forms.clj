@@ -10,8 +10,8 @@
   api-fixture)
 
 (defn- fixup-field-visible-type [field]
-  (if (get-in field [:field/visible :visible/type])
-    (update-in field [:field/visible :visible/type] keyword)
+  (if (get-in field [:field/visibility :visibility/type])
+    (update-in field [:field/visibility :visibility/type] keyword)
     field))
 
 (defn fixup-field-to-match-command [field]
@@ -307,13 +307,13 @@
                                {:field/type :text
                                 :field/title localized
                                 :field/optional false
-                                :field/visible {:visible/type :always}}
+                                :field/visibility {:visibility/type :always}}
                                {:field/type :text
                                 :field/title localized
                                 :field/optional false
-                                :field/visible {:visible/type :only-if
-                                                :visible/field {:field/id 1}
-                                                :visible/value ["c"]}}
+                                :field/visibility {:visibility/type :only-if
+                                                :visibility/field {:field/id 1}
+                                                :visibility/value ["c"]}}
                                {:field/type :multiselect
                                 :field/title localized
                                 :field/optional false
@@ -324,9 +324,9 @@
                                {:field/type :text
                                 :field/title localized
                                 :field/optional false
-                                :field/visible {:visible/type :only-if
-                                                :visible/field {:field/id 4}
-                                                :visible/value ["c" "d"]}}]}]
+                                :field/visibility {:visibility/type :only-if
+                                                :visibility/field {:field/id 4}
+                                                :visibility/value ["c" "d"]}}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)
@@ -342,7 +342,7 @@
                          read-ok-body)]
             (is (= (select-keys command [:form/organization :form/title])
                    (select-keys form [:form/organization :form/title])))
-            (is (= (update-in (:form/fields command) [1] dissoc :field/visible) ; always visible field is not saved as it's the default
+            (is (= (update-in (:form/fields command) [1] dissoc :field/visibility) ; always visible field is not saved as it's the default
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test

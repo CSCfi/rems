@@ -229,12 +229,12 @@
                 :type-option "Option list"
                 :type-text "Text field"
                 :type-texta "Text area"
-                :type-visible "Visible"
-                :visible {:always "Always"
-                          :field "Field"
-                          :has-value "Has value"
-                          :hidden "Hidden"
-                          :only-if "Only if"}}
+                :type-visibility "Visible"
+                :visibility {:always "Always"
+                             :field "Field"
+                             :has-value "Has value"
+                             :hidden "Hidden"
+                             :only-if "Only if"}}
   :create-license {:external-link "External link"
                    :inline-text "Inline text"
                    :license-attachment "Attachment"
