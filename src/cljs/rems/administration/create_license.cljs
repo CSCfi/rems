@@ -52,6 +52,7 @@
 (defn build-request [form languages]
   (let [license-type (:licensetype form)
         request {:licensetype license-type
+                 :organization (or (:organization form) "")
                  :localizations (into {} (map (fn [[lang data]]
                                                 [lang (build-localization data license-type)])
                                               (:localizations form)))}]
@@ -107,6 +108,10 @@
 
 (defn- language-heading [language]
   [:h3 (str/upper-case (name language))])
+
+(defn- license-organization-field []
+  [text-field context {:keys [:organization]
+                       :label (text :t.administration/organization)}])
 
 (defn- license-title-field [language]
   [text-field context {:keys [:localizations language :title]
@@ -208,6 +213,7 @@
       {:id "create-license"
        :title (text :t.administration/create-license)
        :always [:div
+                [license-organization-field]
                 [license-type-radio-group]
                 (for [language languages]
                   [:div {:key language}

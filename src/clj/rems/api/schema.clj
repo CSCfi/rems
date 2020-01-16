@@ -45,6 +45,7 @@
 (s/defschema License
   {:id s/Int
    :licensetype (s/enum "text" "link" "attachment")
+   :organization s/Str
    :enabled s/Bool
    :archived s/Bool
    :localizations {s/Keyword {:title s/Str

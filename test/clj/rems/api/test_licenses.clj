@@ -28,6 +28,7 @@
 
     (testing "create linked license"
       (let [command {:licensetype "link"
+                     :organization "org"
                      :localizations {:en {:title "en title"
                                           :textcontent "http://example.com/license/en"
                                           :attachment-id nil}
@@ -53,6 +54,7 @@
 
     (testing "create inline license"
       (let [command {:licensetype "text"
+                     :organization "org"
                      :localizations {:en {:title "en title"
                                           :textcontent "en text"
                                           :attachment-id nil}
@@ -114,6 +116,7 @@
                               read-ok-body
                               :id)
             command {:licensetype "text"
+                     :organization "org"
                      :localizations {:en {:title "en title"
                                           :textcontent "en text"
                                           :attachment-id attachment-id}
@@ -167,6 +170,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/licenses/create")
                          (json-body {:licensetype "text"
+                                     :organization "org"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]
@@ -184,6 +188,7 @@
       (let [response (-> (request :post "/api/licenses/create")
                          (authenticate "42" "alice")
                          (json-body {:licensetype "text"
+                                     :organization "org"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]

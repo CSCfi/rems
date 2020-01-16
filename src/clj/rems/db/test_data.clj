@@ -120,9 +120,10 @@
       (roles/add-role! user role))))
 
 (defn create-license! [{:keys [actor]
-                        :license/keys [type title link text attachment-id]
+                        :license/keys [type title link organization text attachment-id]
                         :as command}]
   (let [result (licenses/create-license! {:licensetype (name (or type :text))
+                                          :organization (or organization "")
                                           :localizations
                                           (transpose-localizations {:title title
                                                                     :textcontent (merge link text)
@@ -131,7 +132,8 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-attachment-license! [{:keys [actor]}]
+(defn create-attachment-license! [{:keys [actor]
+                                   :license/keys [organization]}]
   (let [fi-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
                                                            :filename "fi.txt"
                                                            :type "text/plain"
@@ -142,6 +144,7 @@
                                                            :data (.getBytes "License in English.")}))]
     (create-license! {:actor actor
                       :license/type :attachment
+                      :license/organization organization
                       :license/title {:fi "Liitelisenssi" :en "Attachment license"}
                       :license/text {:fi "fi" :en "en"}
                       :license/attachment-id {:fi fi-attachment :en en-attachment}})))
@@ -252,9 +255,11 @@
                           :form/title "Archived form, should not be seen by applicants"})]
     (form/set-form-archived! {:id id :archived true})))
 
-(defn- create-disabled-license! [owner]
-  (let [id (create-license! {:actor owner
+(defn- create-disabled-license! [{:keys [actor]
+                                  :license/keys [organization]}]
+  (let [id (create-license! {:actor actor
                              :license/type "link"
+                             :license/organization organization
                              :license/title {:en "Disabled license"
                                              :fi "Käytöstä poistettu lisenssi"}
                              :license/link {:en "http://disabled"
@@ -592,12 +597,14 @@
     ;; attach both kinds of licenses to all workflows
     (let [link (create-license! {:actor owner
                                  :license/type :link
+                                 :license/organization "nbn"
                                  :license/title {:en "CC Attribution 4.0"
                                                  :fi "CC Nimeä 4.0"}
                                  :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
                                                 :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"}})
           text (create-license! {:actor owner
                                  :license/type :text
+                                 :license/organization "nbn"
                                  :license/title {:en "General Terms of Use"
                                                  :fi "Yleiset käyttöehdot"}
                                  :license/text {:en (apply str (repeat 10 "License text in English. "))
@@ -784,6 +791,7 @@
         form (form/get-form-template form-id)
         license-id (create-license! {:actor owner
                                      :license/type :text
+                                     :license/organization "perf"
                                      :license/title {:en "Performance License"
                                                      :fi "Suorituskykylisenssi"}
                                      :license/text {:en "Be fast."
@@ -857,6 +865,7 @@
                                 :license-ids []})
         license1 (create-license! {:actor (+fake-users+ :owner)
                                    :license/type :link
+                                   :license/organization "nbn"
                                    :license/title {:en "Test license"
                                                    :fi "Testilisenssi"}
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
@@ -867,11 +876,13 @@
                                 :license-ids [license1]})
         extra-license (create-license! {:actor (+fake-users+ :owner)
                                         :license/type :link
+                                        :license/organization "nbn"
                                         :license/title {:en "Extra license"
                                                         :fi "Ylimääräinen lisenssi"}
                                         :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                        :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
-        attachment-license (create-attachment-license! {:actor (+fake-users+ :owner)})
+        attachment-license (create-attachment-license! {:actor (+fake-users+ :owner)
+                                                        :license/organization "nbn"})
         res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
                                                   :organization "nbn"
                                                   :actor (+fake-users+ :owner)
@@ -879,7 +890,8 @@
         form (create-all-field-types-example-form! +fake-users+)
         _ (create-archived-form!)
         workflows (create-workflows! +fake-users+)]
-    (create-disabled-license! (+fake-users+ :owner))
+    (create-disabled-license! {:actor (+fake-users+ :owner)
+                               :license/organization "nbn"})
     (create-catalogue-item! {:title {:en "Master workflow"
                                      :fi "Master-työvuo"}
                              :infourl {:en "http://www.google.com"
@@ -949,18 +961,21 @@
                                   :actor (users :owner)})
           license1 (create-license! {:actor (users :owner)
                                      :license/type :link
+                                     :license/organization "nbn"
                                      :license/title {:en "Demo license"
                                                      :fi "Demolisenssi"}
                                      :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                     :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
-          attachment-license (create-attachment-license! {:actor (users :owner)})
+          attachment-license (create-attachment-license! {:actor (users :owner)
+                                                          :license/organization "nbn"})
           res2 (create-resource! {:resource-ext-id "Extra Data"
                                   :organization "nbn"
                                   :actor (users :owner)
                                   :license-ids [license1 attachment-license]})
           form (create-all-field-types-example-form! users)
           workflows (create-workflows! users)]
-      (create-disabled-license! (users :owner))
+      (create-disabled-license! {:actor (users :owner)
+                                 :license/organization "nbn"})
       (let [dynamic (create-catalogue-item! {:title {:en "Dynamic workflow"
                                                      :fi "Dynaaminen työvuo"}
                                              :resource-id res1

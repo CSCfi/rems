@@ -16,6 +16,7 @@
       (is (= {:wfid 123
               :resid 456
               :form 789
+              :organization ""
               :localizations {:en {:title "en title"
                                    :infourl "hello"}
                               :fi {:title "fi title"
