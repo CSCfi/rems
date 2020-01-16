@@ -28,6 +28,7 @@
                    (json-body {:form form-id
                                :resid res-id
                                :wfid wf-id
+                               :organization "orgg"
                                :archived true
                                :localizations {}})
                    handler
@@ -43,8 +44,9 @@
                 :workflow-name "workflow name"
                 :form-name "form name"
                 :resource-name "resource ext id"
+                :organization "orgg"
                 :localizations {}}
-               (select-keys data [:id :workflow-name :form-name :resource-name :localizations])))))
+               (select-keys data [:id :organization :workflow-name :form-name :resource-name :localizations])))))
     (testing "not found"
       (let [response (-> (request :get "/api/catalogue-items/777777777")
                          (authenticate api-key user-id)
