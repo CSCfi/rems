@@ -634,7 +634,7 @@
  (fn [db _]
    (::preview db {})))
 
-(defn- field-visibility? [field values]
+(defn- field-visible? [field values]
   (let [visibility (:field/visibility field)]
     (or (nil? visibility)
         (= :always (:visibility/type visibility))
@@ -654,7 +654,7 @@
                        [fields/field (assoc field
                                             :on-change #(rf/dispatch [::set-field-value (:field/id field) %])
                                             :field/value (get-in preview [(:field/id field)]))]
-                       (when-not (field-visibility? field preview)
+                       (when-not (field-visible? field preview)
                          [:div {:style {:position :absolute
                                         :top 0
                                         :left 0
