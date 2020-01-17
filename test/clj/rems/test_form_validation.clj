@@ -91,20 +91,25 @@
            (validate-fields [{:field/id 1
                               :field/type :email
                               :field/optional false
+                              :field/visible true
                               :field/value ""}
                              {:field/id 2
                               :field/type :email
                               :field/optional false
+                              :field/visible true
                               :field/value "invalid.email"}
                              {:field/id 3
                               :field/type :email
                               :field/optional false
+                              :field/visible true
                               :field/value "valid.email@example.com"}
                              {:field/id 4
                               :field/type :email
                               :field/optional true
+                              :field/visible true
                               :field/value ""}
                              {:field/id 5
                               :field/type :email
                               :field/optional true
+                              :field/visible true
                               :field/value "invalid.email"}])))))
