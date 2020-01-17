@@ -312,11 +312,12 @@
        (js/parseInt (.-marginBottom style)))))
 
 (defn set-visibility-ratio [frame element ratio]
-  (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
-        element-height (true-height element)
-        top-margin (/ (.-offsetHeight frame) 4)
-        position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
-    (.scrollTo frame 0 position)))
+  (when (and element frame)
+    (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
+          element-height (true-height element)
+          top-margin (/ (.-offsetHeight frame) 4)
+          position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
+      (.scrollTo frame 0 position))))
 
 (defn first-partially-visibility-edit-field []
   (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field:not(.new-form-field)"))
