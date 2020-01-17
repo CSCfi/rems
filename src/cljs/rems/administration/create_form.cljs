@@ -405,12 +405,14 @@
   (filter #(contains? {:option :multiselect} (:field/type %))
           (:form/fields form)))
 
-(defn- form-field-values [form field]
-  (case (:field/type field)
-    :option (map (fn [o] {:value (:key o)
-                          :title (:label o)})
-                 (get-in field [:field/options]))
-    []))
+(defn- form-field-values [form field-index]
+  (let [field (get-in form [:form/fields field-index])]
+    (case (:field/type field)
+      :option (let [options (get-in form [:form/fields field-index :field/options])]
+                (map (fn [o] {:value (:key o)
+                              :title (:label o)})
+                     options))
+      [])))
 
 (rf/reg-event-db
  ::form-field-visibility-type
@@ -484,7 +486,7 @@
              :on-change #(rf/dispatch [::form-field-visibility-value field-index [(.. % -target -value)]])
              :value (or (first visibility-value) "")}
             ^{:key "not-selected"} [:option ""]
-            (doall (for [value (form-field-values form visibility-field)]
+            (doall (for [value (form-field-values form (:field/id visibility-field))]
                      ^{:key (str field-index "-" (:value value))}
                      [:option {:value (:value value)} (get-in value [:title lang])]))]
            [:div.invalid-feedback
