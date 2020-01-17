@@ -111,6 +111,7 @@
                    :invited-member "Kutsuttu jäsen"
                    :member "Jäsen"
                    :name "Nimi"
+                   :organization "Organisaatio"
                    :username "Käyttäjätunnus"}
   :applications {:all-applications "Kaikki hakemukset"
                  :applicant "Hakija"
