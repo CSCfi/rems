@@ -6,21 +6,28 @@
 
 ;; TODO could pass through additional (configurable?) attributes
 (defn format-user [u]
-  {:userid (:eppn u)
-   :name (or (:commonName u)
-             (:displayName u)) ;; some shibboleth idps don't send commonName
-   :email (:mail u)})
+  (merge {:userid (:eppn u)
+          :name (or (:commonName u)
+                    (:displayName u)) ;; some shibboleth idps don't send commonName
+          :email (:mail u)}
+         (select-keys u [:organization])))
 
 (defn unformat-user
   "Inverse of format-user: take in API-style attributes and output db-style attributes"
   [u]
-  {:eppn (:userid u)
-   :commonName (:name u)
-   :mail (:email u)})
+  (merge {:eppn (:userid u)
+          :commonName (:name u)
+          :mail (:email u)}
+         (select-keys u [:organization])))
 
 (deftest test-format-unformat
   (let [api-user {:userid "foo" :name "bar" :email "a@b"}
         db-user {:eppn "foo" :commonName "bar" :mail "a@b"}]
+    (is (= api-user (format-user db-user)))
+    (is (= db-user (unformat-user api-user)))
+    (is (= api-user (format-user (unformat-user api-user)))))
+  (let [api-user {:userid "foo" :name "bar" :email "a@b" :organization "org"}
+        db-user {:eppn "foo" :commonName "bar" :mail "a@b" :organization "org"}]
     (is (= api-user (format-user db-user)))
     (is (= db-user (unformat-user api-user)))
     (is (= api-user (format-user (unformat-user api-user))))))
