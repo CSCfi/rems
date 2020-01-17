@@ -42,6 +42,7 @@
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
+            [rems.settings :refer [settings-page missing-email-warning]]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
             [rems.util :refer [navigate! fetch parse-int replace-url! set-location!]]
@@ -228,6 +229,7 @@
    :new-application new-application-page
    :applications applications-page
    :extra-pages extra-pages
+   :settings settings-page
    :rems.actions/accept-invitation accept-invitation-page
    :rems.administration/applications admin-applications-page
    :rems.administration/blacklist blacklist-page
@@ -291,7 +293,9 @@
                          {:class (str "page-" (name page-id))
                           :id "main-content"}
                          (if-let [content (pages page-id)]
-                           [content]
+                           [:<>
+                            [missing-email-warning]
+                            [content]]
                            (do ; implementation error
                              (println "Unknown page-id" page-id)
                              (rf/dispatch [:set-active-page :not-found])
@@ -446,6 +450,10 @@
 (secretary/defroute "/extra-pages/:page-id" [page-id]
   (rf/dispatch [:rems.extra-pages/enter-page page-id])
   (rf/dispatch [:set-active-page :extra-pages]))
+
+(secretary/defroute "/settings" []
+  (rf/dispatch [:rems.settings/enter-page])
+  (rf/dispatch [:set-active-page :settings]))
 
 (secretary/defroute "/unauthorized" []
   (rf/dispatch [:set-active-page :unauthorized]))

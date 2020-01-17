@@ -8,14 +8,8 @@
             [schema.coerce :as coerce]
             [schema.core :as s]))
 
-(def ^:private fields-coercer
-  (coerce/coercer [FieldTemplate] coerce/string-coercion-matcher))
-
-(defn- coerce-fields [fields]
-  (let [result (fields-coercer fields)]
-    (if (schema.utils/error? result)
-      (throw (ex-info "Failed to coerce fields" {:fields fields :error result}))
-      result)))
+(def ^:private coerce-fields
+  (coerce/coercer! [FieldTemplate] coerce/string-coercion-matcher))
 
 (defn- deserialize-fields [fields-json]
   (coerce-fields (json/parse-string fields-json)))
@@ -68,11 +62,14 @@
 (defn- normalize-fields-values [fields]
   (map normalize-field-values fields))
 
+(def ^:private validate-fields
+  (s/validator [FieldTemplate]))
+
 (defn- serialize-fields [form]
   (->> (:form/fields form)
        (generate-field-ids)
-       (s/validate [FieldTemplate])
        (normalize-fields-values)
+       (validate-fields)
        (json/generate-string)))
 
 (defn create-form! [user-id form]

@@ -7,7 +7,7 @@
 -- - :workflow workflow id to fetch items for
 -- - :form form id to fetch items for
 -- - :archived true if archived items should be included
-SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
+SELECT ci.id, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived, ci.organization
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
@@ -63,8 +63,8 @@ WHERE id = :id;
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(formid, resid, wfid, enabled, archived)
-VALUES (:form, :resid, :wfid,
+(formid, resid, wfid, organization, enabled, archived)
+VALUES (:form, :resid, :wfid, :organization,
 --~ (if (contains? params :enabled) ":enabled" "true")
 ,
 --~ (if (contains? params :archived) ":archived" "false")
@@ -467,17 +467,29 @@ FROM application_event
 WHERE id > :id
 ORDER BY id ASC;
 
+-- :name get-latest-application-event :? :1
+SELECT id, eventdata::TEXT
+FROM application_event
+ORDER BY id DESC
+LIMIT 1;
+
 -- :name add-application-event! :insert
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb);
 
--- :name add-api-key! :insert
-INSERT INTO api_key (apiKey, comment)
-VALUES (:apikey, :comment)
-ON CONFLICT DO NOTHING;
+-- :name upsert-api-key! :insert
+INSERT INTO api_key (apiKey, comment, permittedRoles)
+VALUES (
+:apikey,
+:comment,
+:permittedroles::jsonb
+)
+ON CONFLICT (apiKey)
+DO UPDATE
+SET (apiKey, comment, permittedRoles) = (:apikey, :comment, :permittedroles::jsonb);
 
 -- :name get-api-key :? :1
-SELECT apiKey FROM api_key
+SELECT apiKey, permittedRoles::TEXT FROM api_key
 WHERE apiKey = :apikey;
 
 -- :name get-application-by-invitation-token :? :1

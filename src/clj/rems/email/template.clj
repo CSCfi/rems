@@ -137,17 +137,17 @@
                           :t.email.application-resubmitted/subject
                           :t.email.application-resubmitted/message)))
 
-(defmethod event-to-emails :application.event/comment-requested [event application]
-  (emails-to-recipients (:application/commenters event)
+(defmethod event-to-emails :application.event/review-requested [event application]
+  (emails-to-recipients (:application/reviewers event)
                         event application
-                        :t.email.comment-requested/subject
-                        :t.email.comment-requested/message))
+                        :t.email.review-requested/subject
+                        :t.email.review-requested/message))
 
-(defmethod event-to-emails :application.event/commented [event application]
+(defmethod event-to-emails :application.event/reviewed [event application]
   (emails-to-recipients (handlers application)
                         event application
-                        :t.email.commented/subject
-                        :t.email.commented/message))
+                        :t.email.reviewed/subject
+                        :t.email.reviewed/message))
 
 (defmethod event-to-emails :application.event/remarked [event application]
   (emails-to-recipients (handlers application)
@@ -208,5 +208,22 @@
            :subject (text :t.email.handler-reminder/subject)
            :body (text-format :t.email.handler-reminder/message
                               (application-util/get-member-name handler)
+                              list
+                              (str (:public-url env) "actions"))})))))
+
+(defn reviewer-reminder-email [lang reviewer applications]
+  (with-language lang
+    (fn []
+      (when (not (empty? applications))
+        (let [list (->> applications
+                        (map (fn [application]
+                               (text-format :t.email.reviewer-reminder/application
+                                            (format-application-for-email application)
+                                            (application-util/get-member-name (:application/applicant application)))))
+                        (str/join "\n"))]
+          {:to-user (:userid reviewer)
+           :subject (text :t.email.reviewer-reminder/subject)
+           :body (text-format :t.email.reviewer-reminder/message
+                              (application-util/get-member-name reviewer)
                               list
                               (str (:public-url env) "actions"))})))))

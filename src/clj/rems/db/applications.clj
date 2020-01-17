@@ -1,7 +1,6 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clj-time.core :as time]
-            [clojure.core.cache :as cache]
+  (:require [clojure.core.cache.wrapped :as cache]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
@@ -24,7 +23,7 @@
             [rems.db.workflow :as workflow]
             [rems.permissions :as permissions]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [atom? getx]])
+            [rems.util :refer [atom? getx conj-set]])
   (:import [org.joda.time Duration]))
 
 ;;; Creating applications
@@ -60,43 +59,45 @@
 (defn get-application-by-invitation-token [invitation-token]
   (:id (db/get-application-by-invitation-token {:token invitation-token})))
 
-;;; Fetching applications (for API) (incl. caching)
+;;; Fetching applications (for API)
+
+(def ^:private form-template-cache (cache/ttl-cache-factory {}))
+(def ^:private catalogue-item-cache (cache/ttl-cache-factory {}))
+(def ^:private license-cache (cache/ttl-cache-factory {}))
+(def ^:private user-cache (cache/ttl-cache-factory {}))
+(def ^:private users-with-role-cache (cache/ttl-cache-factory {}))
+(def ^:private workflow-cache (cache/ttl-cache-factory {}))
+(def ^:private blacklist-cache (cache/ttl-cache-factory {}))
+
+(defn empty-injections-cache! []
+  (swap! form-template-cache empty)
+  (swap! catalogue-item-cache empty)
+  (swap! license-cache empty)
+  (swap! user-cache empty)
+  (swap! users-with-role-cache empty)
+  (swap! workflow-cache empty)
+  (swap! blacklist-cache empty))
 
 (def ^:private fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
-   :get-form-template form/get-form-template
-   :get-catalogue-item catalogue/get-localized-catalogue-item
+   :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
+   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % catalogue/get-localized-catalogue-item)
    :get-config (fn [] env)
-   :get-current-time time/now
-   :get-license licenses/get-license
-   :get-user users/get-user
-   :get-users-with-role users/get-users-with-role
-   :get-workflow workflow/get-workflow
-   :blacklisted? blacklist/blacklisted?})
-
-;; short-lived cache to speed up pollers which get the application
-;; repeatedly for each event instead of building their own projection
-(mount/defstate application-cache
-  :start (atom (cache/ttl-cache-factory {} :ttl 10000)))
-
-;; TODO combine with reload-cache!?
-(defn- reset-application-cache! []
-  (swap! application-cache empty))
+   :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
+   :get-user #(cache/lookup-or-miss user-cache % users/get-user)
+   :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
+   :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
+   :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
+                                                                  (blacklist/blacklisted? userid resource)))})
 
 (defn get-unrestricted-application
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (events/get-application-events application-id)
-        cache-key [application-id (count events)]
-        build-app (fn [_] (model/build-application-view events fetcher-injections))]
+  (let [events (events/get-application-events application-id)]
     (if (empty? events)
       nil ; application not found
-      ;; TODO: this caching could be removed by refactoring the pollers to build their own projection
-      (if (atom? application-cache) ; guard against not started cache
-        (-> (swap! application-cache cache/through-cache cache-key build-app)
-            (getx cache-key))
-        (build-app nil)))))
+      (model/build-application-view events fetcher-injections))))
 
 (defn get-application
   "Returns the part of application state which the specified user
@@ -178,6 +179,25 @@
             "user-2" #{:foo}}
            (group-roles-by-user apps)))))
 
+(defn- group-users-by-role [apps]
+  (->> apps
+       (mapcat (fn [app]
+                 (for [[user roles] (:rems.permissions/user-roles app)
+                       role roles]
+                   [user role])))
+       (reduce (fn [users-by-role [user role]]
+                 (update users-by-role role conj-set user))
+               {})))
+
+(deftest test-group-users-by-role
+  (let [apps [(-> {:application/id 1}
+                  (permissions/give-role-to-users :foo ["user-1" "user-2"]))
+              (-> {:application/id 2}
+                  (permissions/give-role-to-users :bar ["user-1"]))]]
+    (is (= {:foo #{"user-1" "user-2"}
+            :bar #{"user-1"}}
+           (group-users-by-role apps)))))
+
 (defn refresh-all-applications-cache! []
   (events-cache/refresh!
    all-applications-cache
@@ -197,7 +217,8 @@
        {::raw-apps raw-apps
         ::enriched-apps enriched-apps
         ::apps-by-user (group-apps-by-user (vals enriched-apps))
-        ::roles-by-user (group-roles-by-user (vals enriched-apps))}))))
+        ::roles-by-user (group-roles-by-user (vals enriched-apps))
+        ::users-by-role (group-users-by-role (vals enriched-apps))}))))
 
 (defn get-all-unrestricted-applications []
   (-> (refresh-all-applications-cache!)
@@ -214,6 +235,11 @@
       (get-in [::roles-by-user user-id])
       (set)))
 
+(defn get-users-with-role [role]
+  (-> (refresh-all-applications-cache!)
+      (get-in [::users-by-role role])
+      (set)))
+
 (defn- my-application? [application]
   (some #{:applicant :member} (:application/roles application)))
 
@@ -227,8 +253,8 @@
     (csv/applications-to-csv filtered-applications user-id)))
 
 (defn reload-cache! []
+  (empty-injections-cache!)
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
-  (reset-application-cache!)
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!))
 

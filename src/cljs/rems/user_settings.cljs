@@ -17,9 +17,13 @@
 
 
 (defn get-language [db]
-  (or (get-language-cookie)
-      (get-in db [:user-settings :language])
-      (:default-language db)))
+  (let [available-languages (set (:languages (:config db)))
+        validate (fn [language]
+                   (when (contains? available-languages language)
+                     language))]
+    (or (validate (get-language-cookie))
+        (validate (get-in db [:user-settings :language]))
+        (:default-language db))))
 
 (rf/reg-sub
  :language
@@ -41,34 +45,37 @@
       (when (str/includes? (.-href element) "screen.css")
         (set! (.-href element) localized-css)))))
 
-(defn update-language [language]
+(defn update-document-language [language]
   (set! (.. js/document -documentElement -lang) (name language))
-  (set-language-cookie! language)
   (update-css language))
 
 (rf/reg-event-fx
  ::set-language
  (fn [{:keys [db]} [_ language]]
-   (update-language language)
+   (set-language-cookie! language)
+   (update-document-language language)
    {:db (assoc-in db [:user-settings :language] language)
-    :dispatch [::save-user-settings!]}))
+    :dispatch [::save-user-language!]}))
 
 (rf/reg-event-fx
- :check-if-should-save-settings!
+ :check-if-should-save-language!
  (fn [{:keys [db]} _]
-   (let [current-language (get-language db)
+   (let [cookie-language (get-language-cookie)
          settings-language (get-in db [:user-settings :language])]
-     ;; user can change language before login
-     ;; so we should sometimes save the language
-     ;; to the profile after login
-     (when (and current-language (not= current-language settings-language))
-       {:dispatch [::save-user-settings!]}))))
+     ;; user can change the language before login, so we should persist
+     ;; the change to the user settings after login
+     (when (and cookie-language (not= cookie-language settings-language))
+       {:dispatch [::save-user-language!]}))))
 
 (rf/reg-event-fx
  :loaded-user-settings
  (fn [{:keys [db]} [_ user-settings]]
-   {:db (assoc db :user-settings user-settings)
-    :dispatch [:check-if-should-save-settings!]}))
+   (let [first-time? (not (:user-settings db))]
+     (update-document-language (:language user-settings))
+     {:db (assoc db :user-settings user-settings)
+      :dispatch-n (concat
+                   (when first-time? ; to avoid an infinite loop if the settings fail to save (e.g. unsupported language in cookies)
+                     [[:check-if-should-save-language!]]))})))
 
 (defn fetch-user-settings! []
   (fetch "/api/user-settings"
@@ -76,13 +83,12 @@
           :error-handler (flash-message/default-error-handler :top "Fetch user settings")}))
 
 (rf/reg-event-fx
- ::save-user-settings!
+ ::save-user-language!
  (fn [{:keys [db]} [_]]
-   (let [user-id (get-in db [:identity :user :userid])
-         new-settings (assoc (:user-settings db)
-                             :language (get-language db))]
+   (let [user-id (get-in db [:identity :user :userid])]
      (when user-id
        (put! "/api/user-settings"
-             {:params new-settings
+             {:params {:language (get-language db)}
+              :handler fetch-user-settings!
               :error-handler (flash-message/default-error-handler :top "Update user settings")}))
-     {:db (assoc db :user-settings new-settings)})))
+     {})))

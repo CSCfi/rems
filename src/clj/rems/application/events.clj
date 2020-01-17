@@ -26,17 +26,16 @@
   (assoc EventBase
          :event/type (s/enum :application.event/closed)
          :application/comment s/Str))
-;; TODO Commented/CommentRequested could be renamed to Reviewed/ReviewRequested to be in line with the UI
-(s/defschema CommentedEvent
+(s/defschema ReviewedEvent
   (assoc EventBase
-         :event/type (s/enum :application.event/commented)
+         :event/type (s/enum :application.event/reviewed)
          :application/request-id s/Uuid
          :application/comment s/Str))
-(s/defschema CommentRequestedEvent
+(s/defschema ReviewRequestedEvent
   (assoc EventBase
-         :event/type (s/enum :application.event/comment-requested)
+         :event/type (s/enum :application.event/review-requested)
          :application/request-id s/Uuid
-         :application/commenters [s/Str]
+         :application/reviewers [s/Str]
          :application/comment s/Str))
 (s/defschema CopiedFromEvent
   (assoc EventBase
@@ -147,8 +146,8 @@
 (def event-schemas
   {:application.event/approved ApprovedEvent
    :application.event/closed ClosedEvent
-   :application.event/comment-requested CommentRequestedEvent
-   :application.event/commented CommentedEvent
+   :application.event/review-requested ReviewRequestedEvent
+   :application.event/reviewed ReviewedEvent
    :application.event/copied-from CopiedFromEvent
    :application.event/copied-to CopiedToEvent
    :application.event/created CreatedEvent
@@ -173,10 +172,14 @@
 (s/defschema Event
   (apply r/dispatch-on :event/type (flatten (seq event-schemas))))
 
+(def ^:private validate-event-schema
+  (s/validator Event))
+
 (defn validate-event [event]
-  (assert-ex (contains? event-schemas (:event/type event)) {:error {:event/type ::unknown-type}
-                                                            :value event})
-  (s/validate Event event))
+  (assert-ex (contains? event-schemas (:event/type event))
+             {:error {:event/type ::unknown-type}
+              :value event})
+  (validate-event-schema event))
 
 (defn validate-events [events]
   (doseq [event events]

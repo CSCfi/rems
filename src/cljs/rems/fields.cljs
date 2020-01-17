@@ -64,7 +64,7 @@
   editor-component - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
   (let [id (:field/id opts)
-        title (localized (:field/title opts))
+        title (linkify (localized (:field/title opts)))
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
@@ -114,6 +114,11 @@
          ;;      don't need the feature of hiding this div with CSS when it has no content.
          :style {:display "block"}}
         (text-format (:type validation) title)])]))
+
+(defn- non-field-wrapper [opts children]
+  [:div.form-group
+   {:id (str "container-" (id-to-name (:field/id opts)))}
+   children])
 
 (defn- event-value [event]
   (.. event -target -value))
@@ -209,10 +214,8 @@
               (localized label)]))]))
 
 (defn label [opts]
-  (let [title (:field/title opts)]
-    [:div.form-group
-     {:id (str "container-" (id-to-name (:field/id opts)))}
-     [:label (localized title)]]))
+  (let [title (localized (:field/title opts))]
+    [non-field-wrapper opts [:label title]]))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [id (:field/id opts)
@@ -304,9 +307,9 @@
       (when success
         [success-symbol])]]))
 
-(defn header-field [field]
-  (let [title (localized (:field/title field))]
-    [:h3 title]))
+(defn header-field [opts]
+  (let [title (localized (:field/title opts))]
+    [non-field-wrapper opts [:h3 title]]))
 
 (defn unsupported-field
   [f]
@@ -321,6 +324,7 @@
       :attachment [attachment-field f]
       :date [date-field f]
       :description [text-field f]
+      :email [text-field f]
       :header [header-field f]
       :label [label f]
       :multiselect [multiselect-field f]

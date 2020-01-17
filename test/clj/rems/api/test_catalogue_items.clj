@@ -28,6 +28,7 @@
                    (json-body {:form form-id
                                :resid res-id
                                :wfid wf-id
+                               :organization "orgg"
                                :archived true
                                :localizations {}})
                    handler
@@ -43,8 +44,9 @@
                 :workflow-name "workflow name"
                 :form-name "form name"
                 :resource-name "resource ext id"
+                :organization "orgg"
                 :localizations {}}
-               (select-keys data [:id :workflow-name :form-name :resource-name :localizations])))))
+               (select-keys data [:id :organization :workflow-name :form-name :resource-name :localizations])))))
     (testing "not found"
       (let [response (-> (request :get "/api/catalogue-items/777777777")
                          (authenticate api-key user-id)
@@ -143,7 +145,7 @@
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create with wrong API-Key"
-    (is (= "unauthorized"
+    (is (= "Invalid anti-forgery token"
            (-> (request :post (str "/api/catalogue-items/create"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:form 1
@@ -161,7 +163,7 @@
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "edit with wrong API-Key"
-    (is (= "unauthorized"
+    (is (= "Invalid anti-forgery token"
            (-> (request :put (str "/api/catalogue-items/edit"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:id 1

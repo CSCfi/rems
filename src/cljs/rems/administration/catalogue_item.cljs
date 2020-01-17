@@ -45,7 +45,8 @@
    [collapsible/component
     {:id "catalogue-item"
      :title [:span (get-localized-title catalogue-item language)]
-     :always (into [:div]
+     :always (into [:div
+                    [inline-info-field (text :t.administration/organization) (:organization catalogue-item)]]
                    (concat
                     (for [[langcode localization] (:localizations catalogue-item)]
                       (let [suffix (str " (" (str/upper-case (name langcode)) ")")]

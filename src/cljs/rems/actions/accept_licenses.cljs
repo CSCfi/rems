@@ -1,6 +1,6 @@
 (ns rems.actions.accept-licenses
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [button-wrapper]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))

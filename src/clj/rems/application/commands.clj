@@ -2,7 +2,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [rems.application-util :as application-util]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx getx-in assert-ex try-catch-ex]]
+            [rems.util :refer [getx getx-in assert-ex try-catch-ex update-present]]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import [java.util UUID]
@@ -47,9 +47,6 @@
 (s/defschema CloseCommand
   (assoc CommandBase
          :comment s/Str))
-(s/defschema CommentCommand
-  (assoc CommandBase
-         :comment s/Str))
 (s/defschema CopyAsNewCommand
   CommandBase)
 (s/defschema CreateCommand
@@ -73,16 +70,18 @@
   (assoc CommandBase
          :member {:userid UserId}
          :comment s/Str))
-;; TODO RequestComment/Comment could be renamed to RequestReview/Review to be in line with the UI
-(s/defschema RequestCommentCommand
+(s/defschema RequestReviewCommand
   (assoc CommandBase
-         :commenters [UserId]
+         :reviewers [UserId]
          :comment s/Str))
 (s/defschema RequestDecisionCommand
   (assoc CommandBase
          :deciders [UserId]
          :comment s/Str))
 (s/defschema ReturnCommand
+  (assoc CommandBase
+         :comment s/Str))
+(s/defschema ReviewCommand
   (assoc CommandBase
          :comment s/Str))
 (s/defschema RevokeCommand
@@ -110,7 +109,6 @@
    :application.command/assign-external-id AssignExternalIdCommand
    :application.command/change-resources ChangeResourcesCommand
    :application.command/close CloseCommand
-   :application.command/comment CommentCommand
    :application.command/copy-as-new CopyAsNewCommand
    :application.command/create CreateCommand
    :application.command/decide DecideCommand
@@ -118,22 +116,30 @@
    :application.command/reject RejectCommand
    :application.command/remark RemarkCommand
    :application.command/remove-member RemoveMemberCommand
-   :application.command/request-comment RequestCommentCommand
    :application.command/request-decision RequestDecisionCommand
+   :application.command/request-review RequestReviewCommand
    :application.command/return ReturnCommand
+   :application.command/review ReviewCommand
    :application.command/revoke RevokeCommand
    :application.command/save-draft SaveDraftCommand
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand})
 
+(def command-names
+  (keys command-schemas))
+
 (s/defschema Command
   (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
          CommandInternal))
 
+(def ^:private validate-command-schema
+  (s/validator Command))
+
 (defn- validate-command [cmd]
-  (assert-ex (contains? command-schemas (:type cmd)) {:error {:type ::unknown-type}
-                                                      :value cmd})
-  (s/validate Command cmd))
+  (assert-ex (contains? command-schemas (:type cmd))
+             {:error {:type ::unknown-type}
+              :value cmd})
+  (validate-command-schema cmd))
 
 (deftest test-validate-command
   (testing "check specific command schema"
@@ -162,7 +168,7 @@
   (fn [cmd _application _injections] (:type cmd)))
 
 (deftest test-all-command-types-handled
-  (is (= (set (keys command-schemas))
+  (is (= (set command-names)
          (set (keys (methods command-handler))))))
 
 (defn- must-not-be-empty [cmd key]
@@ -382,25 +388,25 @@
              :application/decision (:decision cmd)
              :application/comment (:comment cmd)}))))
 
-(defmethod command-handler :application.command/request-comment
+(defmethod command-handler :application.command/request-review
   [cmd _application injections]
-  (or (must-not-be-empty cmd :commenters)
-      (invalid-users-errors (:commenters cmd) injections)
-      (ok {:event/type :application.event/comment-requested
+  (or (must-not-be-empty cmd :reviewers)
+      (invalid-users-errors (:reviewers cmd) injections)
+      (ok {:event/type :application.event/review-requested
            :application/request-id (UUID/randomUUID)
-           :application/commenters (:commenters cmd)
+           :application/reviewers (:reviewers cmd)
            :application/comment (:comment cmd)})))
 
-(defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (get application :rems.application.model/latest-comment-request-by-user)
+(defn- actor-is-not-reviewer-error [application cmd]
+  (when-not (contains? (get application :rems.application.model/latest-review-request-by-user)
                        (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
-(defmethod command-handler :application.command/comment
+(defmethod command-handler :application.command/review
   [cmd application _injections]
-  (or (actor-is-not-commenter-error application cmd)
-      (let [last-request-for-actor (get-in application [:rems.application.model/latest-comment-request-by-user (:actor cmd)])]
-        (ok {:event/type :application.event/commented
+  (or (actor-is-not-reviewer-error application cmd)
+      (let [last-request-for-actor (get-in application [:rems.application.model/latest-review-request-by-user (:actor cmd)])]
+        (ok {:event/type :application.event/reviewed
              ;; Currently we want to tie all comments to the latest request.
              ;; In the future this might change so that commenters can freely continue to comment
              ;; on any request they have gotten.
@@ -516,23 +522,22 @@
       (assoc :event/time (:time cmd)
              :event/actor (:actor cmd))))
 
-(defn- enrich-result [result cmd]
-  (if (:events result)
-    (update result :events (fn [events]
-                             (mapv #(add-common-event-fields-from-command % cmd) events)))
-    result))
+(defn- finalize-events [result cmd]
+  (update-present result :events (fn [events]
+                                   (mapv #(add-common-event-fields-from-command % cmd) events))))
 
-(defn ^:dynamic postprocess-command-result-for-tests [result _cmd _application]
-  result)
-
-(defn handle-command [cmd application injections]
-  (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
+(defn- forbidden-error [application cmd]
   (let [permissions (if application
                       (permissions/user-permissions application (:actor cmd))
                       #{:application.command/create})]
-    (if (contains? permissions (:type cmd))
-      (-> (command-handler cmd application injections)
-          (enrich-result cmd)
-          (postprocess-command-result-for-tests cmd application))
-      {:errors (or (:errors (command-handler cmd application injections)) ; prefer more specific error
-                   [{:type :forbidden}])})))
+    (when-not (contains? permissions (:type cmd))
+      {:errors [{:type :forbidden}]})))
+
+(defn handle-command [cmd application injections]
+  (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
+  (let [result (-> cmd
+                   (command-handler application injections)
+                   (finalize-events cmd))]
+    (or (when (:errors result) result) ;; prefer more specific errors
+        (forbidden-error application cmd)
+        result)))

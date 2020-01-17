@@ -46,6 +46,30 @@ lein figwheel
 
 Point your browser to <http://localhost:3000>
 
+### Running the application with Docker
+
+Build the image and initialize the database:
+
+    lein uberjar
+    docker-compose build
+    docker-compose up -d db
+    docker-compose run --rm app migrate
+    docker-compose run --rm app test-data
+
+Start the application:
+
+    docker-compose up -d
+
+Point your browser to <http://localhost:3000>
+
+Shutdown:
+
+    docker-compose stop
+
+Shutdown and remove all data:
+
+    docker-compose down
+
 ### Running tests
 
 To run unit tests:

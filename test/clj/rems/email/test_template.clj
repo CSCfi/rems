@@ -39,9 +39,6 @@
 (def ^:private get-config
   (constantly {}))
 
-(def ^:private get-current-time
-  (constantly (DateTime. 3000)))
-
 (def ^:private get-workflow
   {5 {:workflow {:handlers [{:userid "handler"
                              :name "Hannah Handler"
@@ -100,7 +97,6 @@
                                                         :get-workflow get-workflow
                                                         :get-catalogue-item get-catalogue-item
                                                         :get-config get-config
-                                                        :get-current-time get-current-time
                                                         :get-form-template get-form-template
                                                         :get-license get-license
                                                         :get-user get-user
@@ -156,30 +152,30 @@
                   :application/member {:name "Some Body" :email "somebody@example.com"}
                   :invitation/token "abc"}))))
 
-(deftest test-commenting
+(deftest test-reviewing
   (let [request {:application/id 7
-                 :event/type :application.event/comment-requested
+                 :event/type :application.event/review-requested
                  :event/actor "handler"
                  :application/request-id "r1"
-                 :application/commenters ["commenter1" "commenter2"]}
+                 :application/reviewers ["reviewer1" "reviewer2"]}
         requested-events (conj base-events request)]
-    (testing "comment-request"
+    (testing "review-request"
       (let [mails (emails base-events request)]
-        (is (= #{"commenter1" "commenter2"} (email-recipients mails)))
-        (is (= {:to-user "commenter1"
+        (is (= #{"reviewer1" "reviewer2"} (email-recipients mails)))
+        (is (= {:to-user "reviewer1"
                 :subject "(2001/3, \"Application title\") Review request"
-                :body "Dear commenter1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
-               (email-to "commenter1" mails)))))
-    (testing "commented"
+                :body "Dear reviewer1,\n\nHannah Handler has requested your review on application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
+               (email-to "reviewer1" mails)))))
+    (testing "reviewed"
       (let [mails (emails requested-events {:application/id 7
-                                            :event/type :application.event/commented
-                                            :event/actor "commenter2"
+                                            :event/type :application.event/reviewed
+                                            :event/actor "reviewer2"
                                             :application/request-id "r1"
                                             :application/comment "this is a comment"})]
         (is (= #{"assistant" "handler"} (email-recipients mails)))
         (is (= {:to-user "assistant"
                 :subject "(2001/3, \"Application title\") Application has been reviewed"
-                :body "Dear Amber Assistant,\n\ncommenter2 has reviewed the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
+                :body "Dear Amber Assistant,\n\nreviewer2 has reviewed the application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can review the application at http://example.com/application/7"}
                (email-to "assistant" mails)))))))
 
 (deftest test-remarked
@@ -389,6 +385,38 @@
               {:userid "handler"
                :name "Hanna Handler"
                :email "handler@example.com"}
+              [{:application/id 1
+                :application/external-id "2001/3"
+                :application/description "Application title 1"
+                :application/applicant {:userid "alice"
+                                        :email "alice@example.com"
+                                        :name "Alice Applicant"}}
+               {:application/id 2
+                :application/external-id "2001/5"
+                :application/description "Application title 2"
+                :application/applicant {:userid "arnold"
+                                        :email "arnold@example.com"
+                                        :name "Arnold Applicant"}}]))))))
+
+(deftest test-reviewer-reminder-email
+  (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")]
+    (testing "no applications"
+      (is (empty? (template/reviewer-reminder-email
+                   :en
+                   {:userid "reviewer"
+                    :name "Rene Reviewer"
+                    :email "reviewer@example.com"}
+                   []))))
+
+    (testing "some applications"
+      (is (= {:to-user "reviewer"
+              :subject "Applications pending review"
+              :body "Dear Rene Reviewer,\n\nThe following applications are waiting for a review from you:\n\n2001/3, \"Application title 1\", submitted by Alice Applicant\n2001/5, \"Application title 2\", submitted by Arnold Applicant\n\nYou can view the applications at http://example.com/actions"}
+             (template/reviewer-reminder-email
+              :en
+              {:userid "reviewer"
+               :name "Rene Reviewer"
+               :email "reviewer@example.com"}
               [{:application/id 1
                 :application/external-id "2001/3"
                 :application/description "Application title 1"

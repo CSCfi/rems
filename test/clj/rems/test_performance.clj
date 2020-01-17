@@ -79,20 +79,9 @@
     (println "cache size" (mm/measure applications/all-applications-cache))))
 
 (defn benchmark-get-application []
-  (let [test-get-application #(applications/get-application "developer" 12)
-        no-cache (fn []
-                   (mount/stop #'applications/application-cache))
-        cached (fn []
-                 (mount/stop #'applications/application-cache)
-                 (mount/start #'applications/application-cache)
-                 (test-get-application))]
-    (run-benchmarks [{:name "get-application, no cache"
-                      :benchmark test-get-application
-                      :setup no-cache}
-                     {:name "get-application, cached"
-                      :benchmark test-get-application
-                      :setup cached}])
-    (println "cache size" (mm/measure applications/application-cache))))
+  (let [test-get-application #(applications/get-application "developer" 12)]
+    (run-benchmarks [{:name "get-application"
+                      :benchmark test-get-application}])))
 
 (comment
   ;; Note: If clj-memory-meter throws InaccessibleObjectException on Java 9+,

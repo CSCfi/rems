@@ -34,12 +34,12 @@
                   (session-backend))]
     [(api-key-backend) backend]))
 
-(defn- wrap-uses-api-key [handler]
+(defn- wrap-uses-valid-api-key [handler]
   (fn [request]
-    (handler (assoc request :uses-api-key? (some? (get-api-key request))))))
+    (handler (assoc request :uses-valid-api-key? (api-key/valid? (get-api-key request))))))
 
 (defn wrap-auth [handler]
-  (wrap-uses-api-key
+  (wrap-uses-valid-api-key
    (apply wrap-authentication handler (auth-backends))))
 
 (defn- login-url []

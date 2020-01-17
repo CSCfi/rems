@@ -1,0 +1,6 @@
+/.git/
+/browsertest-errors/
+/log/
+/node_modules/
+/target/
+!/target/uberjar/rems.jar

@@ -11,6 +11,11 @@ Changes since v2.6
 ### Breaking changes
 - Removed support for LDAP authentication
 - `/api/workflows/create` API: the `type` parameter's allowed value was changed from `dynamic` to `workflow/dynamic`
+- `/api/applications/comment` API renamed to `/api/applications/review`
+- `:application.event/commented` event renamed to `:application.event/reviewed`
+- `/api/applications/request-comment` API renamed to `/api/applications/request-review` and its `commenters` parameter renamed to `reviewers`
+- `:application.event/comment-requested` event renamed to `:application.event/review-requested` and its `:application/commenters` field renamed to `:application/reviewers`
+- `/api/applications/commenters` API renamed to `/api/applications/reviewers`
 
 ### Additions
 - Catalogue item form can be changed for one or more items at a time.
@@ -19,9 +24,19 @@ Changes since v2.6
   the same as before. See #837
 - Applications can be exported as CSV in admin menu (#1857)
 - Added a configuration option for setting a maximum number of days for handling a new application (#1861)
-- Reminder email about open applications to all handlers. The emails can
-  be sent by calling `/api/email/send-handler-reminder` on a cron schedule
-  or similar. The API requires an API key. (#1611)
+  - Applications that are close to or past the deadline are highlighted on the Actions page
+- Added reminder emails. The emails can be sent by calling one of the following
+  APIs on a cron schedule or similar. The APIs require an API key. (#1611, #1860)
+  - `/api/email/send-handler-reminder` sends email about open applications to all handlers.
+  - `/api/email/send-reviewer-reminder` sends email about applications with open review requests to reviewers.
+  - `/api/email/send-reminders` sends all of the above emails.
+- Allow users to change their email address, in case the identity provider
+  doesn't provide an email address or the users want to use a different one (#1884)
+- Healthcheck api `/api/health` (#1902)
+- Add form field of type 'email', which is validated as an email address (#1894)
+- Support www links in form field titles (#1864)
+- Have a set of permitted roles for API keys (#1662)
+- A `user-owner` role that can only create and edit users
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
@@ -42,6 +57,7 @@ Changes since v2.6
 - POSTing entitlements to entitlement-target is now retried (#1784)
 - [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
 - "Assign external id" command for setting the id of an application (#1858)
+- Configuration `:disable-commands` for disabling commands (#1891)
 - Display on the actions page the handlers who are handling an application (#1795)
 
 ## v2.6 "Kalevalantie" 2018-11-12

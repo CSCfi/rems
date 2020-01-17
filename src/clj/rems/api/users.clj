@@ -17,8 +17,8 @@
     :tags ["users"]
 
     (POST "/create" []
-      :summary "Create user"
-      :roles #{:owner}
+      :summary "Create or update user"
+      :roles #{:owner :user-owner}
       :body [command CreateUserCommand]
       :return SuccessResponse
       (create-user command)

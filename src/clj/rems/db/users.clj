@@ -7,7 +7,8 @@
 ;; TODO could pass through additional (configurable?) attributes
 (defn format-user [u]
   {:userid (:eppn u)
-   :name (:commonName u)
+   :name (or (:commonName u)
+             (:displayName u)) ;; some shibboleth idps don't send commonName
    :email (:mail u)})
 
 (defn unformat-user
@@ -25,11 +26,13 @@
     (is (= api-user (format-user (unformat-user api-user))))))
 
 (defn- invalid-user? [u]
-  (or (str/blank? (:eppn u))
-      (str/blank? (:commonName u))))
+  (let [user (format-user u)]
+    (or (str/blank? (:userid user))
+        (str/blank? (:name user)))))
 
 (defn add-user! [user userattrs]
-  (assert (and userattrs user) "User or user attributes missing!")
+  (assert user)
+  (assert userattrs)
   (db/add-user! {:user user :userattrs (json/generate-string userattrs)}))
 
 (defn add-user-if-logged-in! [user userattrs]
@@ -58,7 +61,7 @@
 ;; XXX: Removing invalid users is not done consistently. It seems that
 ;;   only the following API calls are affected:
 ;;
-;;     /applications/commenters
+;;     /applications/reviewers
 ;;     /applications/members
 ;;     /applications/deciders
 ;;     /workflows/actors
@@ -73,7 +76,7 @@
 
 (def get-applicants get-users)
 
-(def get-commenters get-users)
+(def get-reviewers get-users)
 
 (def get-deciders get-users)
 

@@ -125,13 +125,11 @@
                  :empty "No applications."
                  :events {:approved "%1 approved the application."
                           :closed "%1 closed the application."
-                          :comment-requested "%1 requested a review from %2."
-                          :commented "%1 reviewed the application."
                           :copied-from "%1 copied the application from an old application."
                           :copied-to "%1 copied the application to a new application."
                           :created "%1 created a new application."
-                          :decision-requested "%1 requested a decision from %2."
                           :decided "%1 filed a decision for the application."
+                          :decision-requested "%1 requested a decision from %2."
                           :draft-saved "%1 saved the application as a draft."
                           :external-id-assigned "%1 assigned an external id %2."
                           :licenses-accepted "%1 accepted the terms of use."
@@ -145,6 +143,8 @@
                           :remarked "%1 added a remark."
                           :resources-changed "%1 changed the resources. New resources: %2."
                           :returned "%1 requested changes to the application."
+                          :review-requested "%1 requested a review from %2."
+                          :reviewed "%1 reviewed the application."
                           :revoked "%1 revoked the entitlement."
                           :submitted "%1 submitted the application for review."
                           :unknown "Unknown"}
@@ -223,6 +223,7 @@
                 :type-attachment "Attachment"
                 :type-date "Date field"
                 :type-description "Application title"
+                :type-email "Email address"
                 :type-header "Header"
                 :type-label "Label"
                 :type-multiselect "Multi-select list"
@@ -281,10 +282,6 @@
                                     :message "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can review the application at %6"}
           :application-submitted {:subject "(%3) A new application has been submitted"
                                   :message "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can review the application at %6"}
-          :comment-requested {:subject "(%3) Review request"
-                              :message "Dear %1,\n\n%2 has requested your review on application %3, submitted by %4.\n\nYou can review the application at %6"}
-          :commented {:subject "(%3) Application has been reviewed"
-                      :message "Dear %1,\n\n%2 has reviewed the application %3, submitted by %4.\n\nYou can review the application at %6"}
           :decided {:subject "(%3) Application decision notification"
                     :message "Dear %1,\n\n%2 has filed a decision on application %3, submitted by %4.\n\nYou can review the application at %6"}
           :decision-requested {:subject "(%3) Decision request"
@@ -299,7 +296,14 @@
                            :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
           :regards "\n\nKind regards,\n\nREMS\n"
           :remarked {:subject "(%3) Application has been commented"
-                     :message "Dear %1,\n\n%2 has commented on the application %3, submitted by %4.\n\nYou can review the application at %6"}}
+                     :message "Dear %1,\n\n%2 has commented on the application %3, submitted by %4.\n\nYou can review the application at %6"}
+          :review-requested {:subject "(%3) Review request"
+                             :message "Dear %1,\n\n%2 has requested your review on application %3, submitted by %4.\n\nYou can review the application at %6"}
+          :reviewed {:subject "(%3) Application has been reviewed"
+                     :message "Dear %1,\n\n%2 has reviewed the application %3, submitted by %4.\n\nYou can review the application at %6"}
+          :reviewer-reminder {:application "%1, submitted by %2"
+                              :message "Dear %1,\n\nThe following applications are waiting for a review from you:\n\n%2\n\nYou can view the applications at %3"
+                              :subject "Applications pending review"}}
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"
@@ -332,7 +336,8 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
-         :validation {:invalid-user "Invalid user."
+         :validation {:invalid-email "Invalid email address."
+                      :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
                       :required "Field \"%1\" is required."
                       :toolong "Text in field \"%1\" too long."}}
@@ -356,6 +361,7 @@
                :change-language "Change language to %1"
                :home "Home"
                :logout "Sign out"
+               :settings "Settings"
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "This page was not found."}
@@ -374,6 +380,11 @@
            :example-searches "Example searches"
            :learn-more "Learn more"
            :search "Search"}
+  :settings {:idp-email "Email address from identity provider"
+             :no-email "(no email address)"
+             :notification-email "Use another email address for notifications"
+             :save "Save"
+             :warning-about-missing-email [:<> "You will need to " [:a {:href "/settings"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
           :all-rows-selected "All rows selected"

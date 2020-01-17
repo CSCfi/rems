@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-forms
   (:require [clojure.test :refer :all]
+            [rems.api.schema :as schema]
             [rems.api.testing :refer :all]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
@@ -119,12 +120,22 @@
                                  {:field/type :label
                                   :field/title localized
                                   :field/optional true}
+                                 {:field/type :header
+                                  :field/title localized
+                                  :field/optional true}
+                                 {:field/type :email
+                                  :field/title localized
+                                  :field/optional true}
                                  {:field/type :date
                                   :field/title localized
                                   :field/optional true}
                                  {:field/type :attachment
                                   :field/title localized
                                   :field/optional false}]}]
+    (is (= (:vs (:field/type schema/FieldTemplate))
+           (set (map :field/type (:form/fields form-spec))))
+        "a new field has been added to schema but not to this test")
+
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)

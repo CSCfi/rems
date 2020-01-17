@@ -93,8 +93,8 @@
 (def ^:private event-types
   {:application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
-   :application.event/comment-requested :t.applications.events/comment-requested
-   :application.event/commented :t.applications.events/commented
+   :application.event/review-requested :t.applications.events/review-requested
+   :application.event/reviewed :t.applications.events/reviewed
    :application.event/copied-from :t.applications.events/copied-from
    :application.event/copied-to :t.applications.events/copied-to
    :application.event/created :t.applications.events/created
@@ -131,9 +131,9 @@
      (get event-types event-type :t.applications.events/unknown)
      (application-util/get-member-name (:event/actor-attributes event))
      (case event-type
-       :application.event/comment-requested
+       :application.event/review-requested
        (str/join ", " (mapv application-util/get-member-name
-                            (:application/commenters event)))
+                            (:application/reviewers event)))
 
        :application.event/decision-requested
        (str/join ", " (mapv application-util/get-member-name

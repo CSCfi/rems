@@ -99,6 +99,7 @@
  (fn [[catalogue language] _]
    (map (fn [item]
           {:key (:id item)
+           :organization {:value (:organization item)}
            :name {:value (get-localized-title item language)
                   :sort-value [(get-localized-title item language)
                                (- (time-coerce/to-long (:start item)))]} ; secondary sort by created, reverse
@@ -137,7 +138,9 @@
 
 (defn- catalogue-list []
   (let [catalogue-table {:id ::catalogue
-                         :columns [{:key :name
+                         :columns [{:key :organization
+                                    :title (text :t.administration/organization)}
+                                   {:key :name
                                     :title (text :t.catalogue/header)}
                                    {:key :resource
                                     :title (text :t.administration/resource)}

@@ -158,14 +158,25 @@
       set
       (disj "")))
 
+(def ^:private link-regex #"(?:http://|https://|www\.\w).*?(?=[^a-zA-Z0-9_/]*(?: |$))")
+
 (defn linkify
   "Given a string, return a vector that, when concatenated, forms the
-  original string, except that all whitespace-separated substrings that
-  resemble a link have been changed to hiccup links."
+  original string, except that all substrings that resemble a link have
+  been changed to hiccup links."
   [s]
-  (let [link? (fn [s] (re-matches #"^http[s]?://.*" s))]
-    (map #(if (link? %) [:a {:href %} %] %)
-         (interpose " " (str/split s " ")))))
+  (when s
+    (let [splitted (-> s
+                       (str/replace link-regex #(str "\t" %1 "\t"))
+                       (str/split "\t"))
+          link? (fn [s] (re-matches link-regex s))
+          text-to-url (fn [s] (if (re-matches #"^(http://|https://).*" s)
+                                s
+                                (str "http://" s)))]
+      (map #(if (link? %)
+              [:a {:target :_blank :href (text-to-url %)} %]
+              %)
+           splitted))))
 
 (defn focus-input-field [id]
   (fn [event]

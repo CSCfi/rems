@@ -1,6 +1,7 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
   (:require [rems.application.events :as events]
+            [rems.application.commands :as commands]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -32,6 +33,7 @@
    (s/optional-key :form-name) s/Str
    :resid s/Str
    :resource-id s/Int
+   :organization s/Str
    (s/optional-key :resource-name) s/Str
    :start DateTime
    :end (s/maybe DateTime)
@@ -135,7 +137,7 @@
 
 (s/defschema FieldTemplate
   {:field/id s/Int
-   :field/type (s/enum :attachment :date :description :header :label :multiselect :option :text :texta)
+   :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
    :field/optional s/Bool
@@ -188,6 +190,9 @@
   (assoc UserWithAttributes
          (s/optional-key :handler/active?) s/Bool))
 
+(s/defschema Permissions
+  #{(apply s/enum (conj commands/command-names :see-everything))})
+
 (s/defschema Application
   {:application/id s/Int
    :application/external-id s/Str
@@ -202,7 +207,7 @@
    :application/created DateTime
    :application/modified DateTime
    (s/optional-key :application/first-submitted) DateTime
-   (s/optional-key :application/past-deadline) s/Bool
+   (s/optional-key :application/deadline) DateTime
    (s/optional-key :application/copied-from) {:application/id s/Int
                                               :application/external-id s/Str}
    (s/optional-key :application/copied-to) [{:application/id s/Int
@@ -225,7 +230,7 @@
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) [Handler]}
    :application/roles #{s/Keyword}
-   :application/permissions #{s/Keyword}
+   :application/permissions Permissions
    :application/attachments [ApplicationAttachment]})
 
 (s/defschema ApplicationOverview

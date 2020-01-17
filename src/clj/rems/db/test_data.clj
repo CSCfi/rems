@@ -4,12 +4,14 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [medley.core :refer [map-vals]]
+            [rems.api.schema :as schema]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.command :as command]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.application.approver-bot :as approver-bot]
+            [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -177,7 +179,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id infourl]
+(defn create-catalogue-item! [{:keys [title resource-id form-id workflow-id infourl organization]
                                :as command}]
   (let [localizations (into {}
                             (for [lang (set (concat (keys title) (keys infourl)))]
@@ -186,6 +188,7 @@
         result (catalogue/create-catalogue-item!
                 {:resid (or resource-id (create-resource! {}))
                  :form (or form-id (create-form! {}))
+                 :organization (or organization "")
                  :wfid (or workflow-id (create-workflow! {}))
                  :localizations (or localizations {})})]
     (assert (:success result) {:command command :result result})
@@ -258,6 +261,102 @@
                                             :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
+(def ^:private all-field-types-example
+  [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
+                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
+    :field/optional false
+    :field/type :label}
+
+   {:field/title {:en "Application title field"
+                  :fi "Hakemuksen otsikko -kenttä"}
+    :field/optional false
+    :field/type :description}
+
+   {:field/title {:en "Text field"
+                  :fi "Tekstikenttä"}
+    :field/optional false
+    :field/type :text
+    :field/placeholder {:en "Placeholder text"
+                        :fi "Täyteteksti"}}
+
+   {:field/title {:en "Text area"
+                  :fi "Tekstialue"}
+    :field/optional false
+    :field/type :texta
+    :field/placeholder {:en "Placeholder text"
+                        :fi "Täyteteksti"}}
+
+   {:field/title {:en "Header"
+                  :fi "Otsikko"}
+    :field/type :header
+    :field/optional false}
+
+   {:field/title {:en "Date field"
+                  :fi "Päivämääräkenttä"}
+    :field/optional true
+    :field/type :date}
+
+   {:field/title {:en "Email field"
+                  :fi "Sähköpostikenttä"}
+    :field/optional true
+    :field/type :email}
+
+   {:field/title {:en "Attachment"
+                  :fi "Liitetiedosto"}
+    :field/optional true
+    :field/type :attachment}
+
+   {:field/title {:en "Option list"
+                  :fi "Valintalista"}
+    :field/optional true
+    :field/type :option
+    :field/options [{:key "Option1"
+                     :label {:en "First option"
+                             :fi "Ensimmäinen vaihtoehto"}}
+                    {:key "Option2"
+                     :label {:en "Second option"
+                             :fi "Toinen vaihtoehto"}}
+                    {:key "Option3"
+                     :label {:en "Third option"
+                             :fi "Kolmas vaihtoehto"}}]}
+
+   {:field/title {:en "Multi-select list"
+                  :fi "Monivalintalista"}
+    :field/optional true
+    :field/type :multiselect
+    :field/options [{:key "Option1"
+                     :label {:en "First option"
+                             :fi "Ensimmäinen vaihtoehto"}}
+                    {:key "Option2"
+                     :label {:en "Second option"
+                             :fi "Toinen vaihtoehto"}}
+                    {:key "Option3"
+                     :label {:en "Third option"
+                             :fi "Kolmas vaihtoehto"}}]}
+
+   {:field/title {:en "The following field types can have a max length."
+                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."}
+    :field/optional false
+    :field/type :label}
+
+   ;; fields which support maxlength
+   {:field/title {:en "Text field with max length"
+                  :fi "Tekstikenttä pituusrajalla"}
+    :field/optional true
+    :field/type :text
+    :field/max-length 10}
+
+   {:field/title {:en "Text area with max length"
+                  :fi "Tekstialue pituusrajalla"}
+    :field/optional true
+    :field/type :texta
+    :field/max-length 100}])
+
+(deftest test-all-field-types-example
+  (is (= (:vs (:field/type schema/FieldTemplate))
+         (set (map :field/type all-field-types-example)))
+      "a new field has been added to schema but not to this test data"))
+
 (defn- create-all-field-types-example-form!
   "Creates a bilingual form with all supported field types. Returns the form ID."
   [users]
@@ -265,90 +364,7 @@
    {:actor (users :owner)
     :form/organization "nbn"
     :form/title "Example form with all field types"
-    :form/fields [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
-                                 :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
-                   :field/optional false
-                   :field/type :label}
-
-                  {:field/title {:en "Application title field"
-                                 :fi "Hakemuksen otsikko -kenttä"}
-                   :field/optional false
-                   :field/type :description}
-
-                  {:field/title {:en "Text field"
-                                 :fi "Tekstikenttä"}
-                   :field/optional false
-                   :field/type :text
-                   :field/placeholder {:en "Placeholder text"
-                                       :fi "Täyteteksti"}}
-
-                  {:field/title {:en "Text area"
-                                 :fi "Tekstialue"}
-                   :field/optional false
-                   :field/type :texta
-                   :field/placeholder {:en "Placeholder text"
-                                       :fi "Täyteteksti"}}
-
-                  {:field/title {:en "Header"
-                                 :fi "Otsikko"}
-                   :field/type :header
-                   :field/optional false}
-
-                  {:field/title {:en "Date field"
-                                 :fi "Päivämääräkenttä"}
-                   :field/optional true
-                   :field/type :date}
-
-                  {:field/title {:en "Attachment"
-                                 :fi "Liitetiedosto"}
-                   :field/optional true
-                   :field/type :attachment}
-
-                  {:field/title {:en "Option list"
-                                 :fi "Valintalista"}
-                   :field/optional true
-                   :field/type :option
-                   :field/options [{:key "Option1"
-                                    :label {:en "First option"
-                                            :fi "Ensimmäinen vaihtoehto"}}
-                                   {:key "Option2"
-                                    :label {:en "Second option"
-                                            :fi "Toinen vaihtoehto"}}
-                                   {:key "Option3"
-                                    :label {:en "Third option"
-                                            :fi "Kolmas vaihtoehto"}}]}
-
-                  {:field/title {:en "Multi-select list"
-                                 :fi "Monivalintalista"}
-                   :field/optional true
-                   :field/type :multiselect
-                   :field/options [{:key "Option1"
-                                    :label {:en "First option"
-                                            :fi "Ensimmäinen vaihtoehto"}}
-                                   {:key "Option2"
-                                    :label {:en "Second option"
-                                            :fi "Toinen vaihtoehto"}}
-                                   {:key "Option3"
-                                    :label {:en "Third option"
-                                            :fi "Kolmas vaihtoehto"}}]}
-
-                  {:field/title {:en "The following field types can have a max length."
-                                 :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."}
-                   :field/optional false
-                   :field/type :label}
-
-                  ;; fields which support maxlength
-                  {:field/title {:en "Text field with max length"
-                                 :fi "Tekstikenttä pituusrajalla"}
-                   :field/optional true
-                   :field/type :text
-                   :field/max-length 10}
-
-                  {:field/title {:en "Text area with max length"
-                                 :fi "Tekstialue pituusrajalla"}
-                   :field/optional true
-                   :field/type :texta
-                   :field/max-length 100}]}))
+    :form/fields all-field-types-example}))
 
 (defn create-thl-demo-form!
   [users]
@@ -647,12 +663,12 @@
       (command! {:type :application.command/submit
                  :application-id app-id
                  :actor applicant})
-      (command! {:type :application.command/request-comment
+      (command! {:type :application.command/request-review
                  :application-id app-id
                  :actor approver
-                 :commenters [reviewer]
+                 :reviewers [reviewer]
                  :comment "please have a look"})
-      (command! {:type :application.command/comment
+      (command! {:type :application.command/review
                  :application-id app-id
                  :actor reviewer
                  :comment "looking good"})
@@ -683,12 +699,12 @@
       (command! {:type :application.command/submit
                  :application-id app-id
                  :actor applicant})
-      (command! {:type :application.command/request-comment
+      (command! {:type :application.command/request-review
                  :application-id app-id
                  :actor approver
-                 :commenters [reviewer]
+                 :reviewers [reviewer]
                  :comment "please have a look"})
-      (command! {:type :application.command/comment
+      (command! {:type :application.command/review
                  :application-id app-id
                  :actor reviewer
                  :comment "looking good"})
@@ -701,14 +717,14 @@
                  :actor approver
                  :comment "Research project complete, closing."}))
 
-    (let [app-id (create-draft! applicant [catid] "waiting for comment")]
+    (let [app-id (create-draft! applicant [catid] "waiting for review")]
       (command! {:type :application.command/submit
                  :application-id app-id
                  :actor applicant})
-      (command! {:type :application.command/request-comment
+      (command! {:type :application.command/request-review
                  :application-id app-id
                  :actor approver
-                 :commenters [reviewer]
+                 :reviewers [reviewer]
                  :comment ""}))
 
     (let [app-id (create-draft! applicant [catid] "waiting for decision")]
@@ -781,6 +797,7 @@
                                                                   :fi (str "Suorituskykytestiresurssi " n)}
                                                           :resource-id resource-id
                                                           :form-id form-id
+                                                          :organization "perf"
                                                           :workflow-id workflow-id}))))))
         user-ids (vec (in-parallel
                        (for [n (range-1 user-count)]
@@ -831,7 +848,8 @@
 
 (defn create-test-data! []
   (assert-no-existing-data!)
-  (db/add-api-key! {:apikey 42 :comment "test data"})
+  (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
+  (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
   (create-test-users-and-roles!)
   (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                 :organization "nbn"
@@ -868,6 +886,7 @@
                                        :fi "http://www.google.fi"}
                              :resource-id res1
                              :form-id form
+                             :organization "nbn"
                              :workflow-id (:master workflows)})
     (create-catalogue-item! {:title {:en "Decider workflow"
                                      :fi "Päättäjätyövuo"}
@@ -875,6 +894,7 @@
                                        :fi "http://www.google.fi"}
                              :resource-id res1
                              :form-id form
+                             :organization "nbn"
                              :workflow-id (:decider workflows)})
     (let [catid (create-catalogue-item! {:title {:en "Default workflow"
                                                  :fi "Oletustyövuo"}
@@ -882,24 +902,28 @@
                                                    :fi "http://www.google.fi"}
                                          :resource-id res1
                                          :form-id form
+                                         :organization "nbn"
                                          :workflow-id (:default workflows)})]
       (create-applications! catid +fake-users+))
     (create-catalogue-item! {:title {:en "Dynamic workflow with extra license"
                                      :fi "Dynaaminen työvuo ylimääräisellä lisenssillä"}
                              :resource-id res-with-extra-license
                              :form-id form
+                             :organization "nbn"
                              :workflow-id (:default workflows)})
     (let [thlform (create-thl-demo-form! +fake-users+)
           thl-catid (create-catalogue-item! {:title {:en "THL catalogue item"
                                                      :fi "THL katalogi-itemi"}
                                              :resource-id res1
                                              :form-id thlform
+                                             :organiztion "thl"
                                              :workflow-id (:default workflows)})]
       (create-member-applications! thl-catid (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
     (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
                                                             :fi "Dynaaminen työvuo (pois käytöstä)"}
                                                     :resource-id res1
                                                     :form-id form
+                                                    :organization "nbn"
                                                     :workflow-id (:default workflows)})]
       (create-disabled-applications! dynamic-disabled
                                      (+fake-users+ :applicant2)
@@ -909,6 +933,7 @@
                                                            :fi "Dynaaminen työvuo (vanhentunut)"}
                                                    :resource-id res1
                                                    :form-id form
+                                                   :organization "nbn"
                                                    :workflow-id (:default workflows)})]
       (db/set-catalogue-item-endt! {:id dynamic-expired :end (time/now)}))))
 
@@ -917,7 +942,7 @@
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
-    (db/add-api-key! {:apikey 55 :comment "Finna"})
+    (api-key/add-api-key! 55 "Finna" api-key/+all-roles+)
     (create-users-and-roles! users user-data)
     (let [res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                   :organization "nbn"
@@ -940,6 +965,7 @@
                                                      :fi "Dynaaminen työvuo"}
                                              :resource-id res1
                                              :form-id form
+                                             :organization "nbn"
                                              :workflow-id (:default workflows)})]
         (create-applications! dynamic users))
       (let [thlform (create-thl-demo-form! users)
@@ -947,12 +973,14 @@
                                                        :fi "THL katalogi-itemi"}
                                                :resource-id res1
                                                :form-id thlform
+                                               :organization "thl"
                                                :workflow-id (:default workflows)})]
         (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
       (let [dynamic-disabled (create-catalogue-item! {:title {:en "Dynamic workflow (disabled)"
                                                               :fi "Dynaaminen työvuo (pois käytöstä)"}
                                                       :resource-id res1
                                                       :form-id form
+                                                      :organization "nbn"
                                                       :workflow-id (:default workflows)})]
         (create-disabled-applications! dynamic-disabled
                                        (users :applicant2)

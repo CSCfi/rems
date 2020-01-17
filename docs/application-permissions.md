@@ -4,14 +4,14 @@
     <tr>
         <th>State \ Role</th>
         <th>applicant</th>
-        <th>commenter</th>
         <th>decider</th>
         <th>everyone‑else</th>
         <th>handler</th>
         <th>member</th>
-        <th>past‑commenter</th>
         <th>past‑decider</th>
+        <th>past‑reviewer</th>
         <th>reporter</th>
+        <th>reviewer</th>
     </tr>
     <tr>
         <th valign="top">approved</th>
@@ -21,12 +21,6 @@
             <div>copy‑as‑new</div>
             <div>remove‑member</div>
             <div>uninvite‑member</div>
-        </td>
-        <td valign="top">
-            <!-- role: commenter -->
-            <div>see‑everything</div>
-            <div>comment</div>
-            <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
@@ -56,12 +50,12 @@
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
-            <!-- role: past-commenter -->
+            <!-- role: past-decider -->
             <div>see‑everything</div>
             <div>remark</div>
         </td>
         <td valign="top">
-            <!-- role: past-decider -->
+            <!-- role: past-reviewer -->
             <div>see‑everything</div>
             <div>remark</div>
         </td>
@@ -69,16 +63,18 @@
             <!-- role: reporter -->
             <div>see‑everything</div>
         </td>
+        <td valign="top">
+            <!-- role: reviewer -->
+            <div>see‑everything</div>
+            <div>remark</div>
+            <div>review</div>
+        </td>
     </tr>
     <tr>
         <th valign="top">closed</th>
         <td valign="top">
             <!-- role: applicant -->
             <div>copy‑as‑new</div>
-        </td>
-        <td valign="top">
-            <!-- role: commenter -->
-            <div>see‑everything</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
@@ -97,15 +93,19 @@
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
-            <!-- role: past-commenter -->
-            <div>see‑everything</div>
-        </td>
-        <td valign="top">
             <!-- role: past-decider -->
             <div>see‑everything</div>
         </td>
         <td valign="top">
+            <!-- role: past-reviewer -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
             <!-- role: reporter -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
+            <!-- role: reviewer -->
             <div>see‑everything</div>
         </td>
     </tr>
@@ -124,9 +124,6 @@
             <div>uninvite‑member</div>
         </td>
         <td valign="top">
-            <!-- role: commenter -->
-        </td>
-        <td valign="top">
             <!-- role: decider -->
         </td>
         <td valign="top">
@@ -142,14 +139,17 @@
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
-            <!-- role: past-commenter -->
+            <!-- role: past-decider -->
         </td>
         <td valign="top">
-            <!-- role: past-decider -->
+            <!-- role: past-reviewer -->
         </td>
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
+        </td>
+        <td valign="top">
+            <!-- role: reviewer -->
         </td>
     </tr>
     <tr>
@@ -157,10 +157,6 @@
         <td valign="top">
             <!-- role: applicant -->
             <div>copy‑as‑new</div>
-        </td>
-        <td valign="top">
-            <!-- role: commenter -->
-            <div>see‑everything</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
@@ -179,15 +175,19 @@
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
-            <!-- role: past-commenter -->
-            <div>see‑everything</div>
-        </td>
-        <td valign="top">
             <!-- role: past-decider -->
             <div>see‑everything</div>
         </td>
         <td valign="top">
+            <!-- role: past-reviewer -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
             <!-- role: reporter -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
+            <!-- role: reviewer -->
             <div>see‑everything</div>
         </td>
     </tr>
@@ -206,12 +206,6 @@
             <div>uninvite‑member</div>
         </td>
         <td valign="top">
-            <!-- role: commenter -->
-            <div>see‑everything</div>
-            <div>comment</div>
-            <div>remark</div>
-        </td>
-        <td valign="top">
             <!-- role: decider -->
             <div>see‑everything</div>
             <div>decide</div>
@@ -232,7 +226,7 @@
             <div>invite‑member</div>
             <div>remark</div>
             <div>remove‑member</div>
-            <div>request‑comment</div>
+            <div>request‑review</div>
             <div>uninvite‑member</div>
         </td>
         <td valign="top">
@@ -241,12 +235,12 @@
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
-            <!-- role: past-commenter -->
+            <!-- role: past-decider -->
             <div>see‑everything</div>
             <div>remark</div>
         </td>
         <td valign="top">
-            <!-- role: past-decider -->
+            <!-- role: past-reviewer -->
             <div>see‑everything</div>
             <div>remark</div>
         </td>
@@ -254,16 +248,18 @@
             <!-- role: reporter -->
             <div>see‑everything</div>
         </td>
+        <td valign="top">
+            <!-- role: reviewer -->
+            <div>see‑everything</div>
+            <div>remark</div>
+            <div>review</div>
+        </td>
     </tr>
     <tr>
         <th valign="top">revoked</th>
         <td valign="top">
             <!-- role: applicant -->
             <div>copy‑as‑new</div>
-        </td>
-        <td valign="top">
-            <!-- role: commenter -->
-            <div>see‑everything</div>
         </td>
         <td valign="top">
             <!-- role: decider -->
@@ -282,15 +278,19 @@
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
-            <!-- role: past-commenter -->
-            <div>see‑everything</div>
-        </td>
-        <td valign="top">
             <!-- role: past-decider -->
             <div>see‑everything</div>
         </td>
         <td valign="top">
+            <!-- role: past-reviewer -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
             <!-- role: reporter -->
+            <div>see‑everything</div>
+        </td>
+        <td valign="top">
+            <!-- role: reviewer -->
             <div>see‑everything</div>
         </td>
     </tr>
@@ -304,12 +304,6 @@
             <div>uninvite‑member</div>
         </td>
         <td valign="top">
-            <!-- role: commenter -->
-            <div>see‑everything</div>
-            <div>comment</div>
-            <div>remark</div>
-        </td>
-        <td valign="top">
             <!-- role: decider -->
             <div>see‑everything</div>
             <div>approve</div>
@@ -334,8 +328,8 @@
             <div>reject</div>
             <div>remark</div>
             <div>remove‑member</div>
-            <div>request‑comment</div>
             <div>request‑decision</div>
+            <div>request‑review</div>
             <div>return</div>
             <div>uninvite‑member</div>
         </td>
@@ -345,18 +339,24 @@
             <div>copy‑as‑new</div>
         </td>
         <td valign="top">
-            <!-- role: past-commenter -->
+            <!-- role: past-decider -->
             <div>see‑everything</div>
             <div>remark</div>
         </td>
         <td valign="top">
-            <!-- role: past-decider -->
+            <!-- role: past-reviewer -->
             <div>see‑everything</div>
             <div>remark</div>
         </td>
         <td valign="top">
             <!-- role: reporter -->
             <div>see‑everything</div>
+        </td>
+        <td valign="top">
+            <!-- role: reviewer -->
+            <div>see‑everything</div>
+            <div>remark</div>
+            <div>review</div>
         </td>
     </tr>
 </table>

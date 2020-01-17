@@ -39,9 +39,10 @@
 - member (of an application): additional members can be added to an application by the applicant or the handler
   - members can not edit the application
   - they will receive entitlements once the application is approved and they have accepted the licenses
+- reporter: a role that can view all applications
 - user: somebody who is logged in to REMS. They can either be an applicant, a handler or somebody who
   responds to requests from handlers
-- reporter: a role that can view all applications
+- user-owner: a role that can create & update user details
 - owner: a role that can create and edit resources, workflows, catalogue items, etc.
 
 ## Events

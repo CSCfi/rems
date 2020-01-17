@@ -37,11 +37,11 @@
 (s/defschema Applicant
   UserWithAttributes)
 
-(s/defschema Commenter
+(s/defschema Reviewer
   UserWithAttributes)
 
-(s/defschema Commenters
-  [Commenter])
+(s/defschema Reviewers
+  [Reviewer])
 
 (s/defschema Decider
   UserWithAttributes)
@@ -163,11 +163,11 @@
       :return CopyAsNewResponse
       (ok (api-command :application.command/copy-as-new request)))
 
-    (GET "/commenters" []
-      :summary "Available third party commenters"
+    (GET "/reviewers" []
+      :summary "Available reviewers"
       :roles #{:handler}
-      :return Commenters
-      (ok (users/get-commenters)))
+      :return Reviewers
+      (ok (users/get-reviewers)))
 
     (GET "/export" []
       :summary "Export all submitted applications of a given form as CSV"
@@ -222,17 +222,15 @@
     (command-endpoint :application.command/assign-external-id commands/AssignExternalIdCommand)
     (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
-    (command-endpoint :application.command/comment commands/CommentCommand
-                      "This corresponds to the \"Review\" operation in the UI.")
     (command-endpoint :application.command/decide commands/DecideCommand)
     (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
     (command-endpoint :application.command/reject commands/RejectCommand)
     (command-endpoint :application.command/remark commands/RemarkCommand)
     (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
-    (command-endpoint :application.command/request-comment commands/RequestCommentCommand
-                      "This corresponds to the \"Request review\" operation in the UI.")
     (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
+    (command-endpoint :application.command/request-review commands/RequestReviewCommand)
     (command-endpoint :application.command/return commands/ReturnCommand)
+    (command-endpoint :application.command/review commands/ReviewCommand)
     (command-endpoint :application.command/revoke commands/RevokeCommand)
     (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
     (command-endpoint :application.command/submit commands/SubmitCommand)

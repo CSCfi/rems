@@ -36,8 +36,20 @@
 (defn generate-handler-reminder-emails! []
   (doseq [email (->> (workflow/get-handlers)
                      (map (fn [handler]
-                            (let [lang (:language (user-settings/get-user-settings (:userid handler)))]
-                              (template/handler-reminder-email lang handler (todos/get-todos (:userid handler))))))
+                            (let [lang (:language (user-settings/get-user-settings (:userid handler)))
+                                  apps (todos/get-todos (:userid handler))]
+                              (template/handler-reminder-email lang handler apps))))
+                     (remove nil?))]
+    (enqueue-email! email)))
+
+(defn generate-reviewer-reminder-emails! []
+  (doseq [email (->> (applications/get-users-with-role :reviewer)
+                     (map users/get-user)
+                     (map (fn [reviewer]
+                            (let [lang (:language (user-settings/get-user-settings (:userid reviewer)))
+                                  apps (->> (todos/get-todos (:userid reviewer))
+                                            (map #(= :waiting-for-your-review (:application/todo %))))]
+                              (template/reviewer-reminder-email lang reviewer apps))))
                      (remove nil?))]
     (enqueue-email! email)))
 
@@ -74,9 +86,8 @@
         email (assoc email-spec
                      :from (:mail-from env)
                      :to (or (:to email-spec)
-                             (:email
-                              (users/get-user
-                               (:to-user email-spec)))))
+                             (:notification-email (user-settings/get-user-settings (:to-user email-spec)))
+                             (:email (users/get-user (:to-user email-spec)))))
         to-error (validate-address (:to email))]
     (when (:to email)
       (log/info "sending email:" (pr-str email))

@@ -43,6 +43,7 @@
        :resid "urn:11"
        :wfid 50
        :formid 40
+       :organization "org"
        :localizations {:en {:id 10
                             :langcode :en
                             :title "en title"
@@ -61,6 +62,7 @@
        :resid "urn:21"
        :wfid 50
        :formid 40
+       :organization "org"
        :localizations {:en {:id 20
                             :langcode :en
                             :title "en title"
@@ -79,6 +81,7 @@
        :resid "urn:31"
        :wfid 50
        :formid 40
+       :organization "org"
        :localizations {:en {:id 20
                             :langcode :en
                             :title "en title"
@@ -95,9 +98,6 @@
 
 (def ^:private get-config
   (constantly {:application-deadline-days 1}))
-
-(def ^:private get-current-time
-  (constantly (DateTime. 4000)))
 
 (def ^:private get-license
   {30 {:id 30
@@ -151,9 +151,9 @@
   {"applicant" {:userid "applicant"
                 :email "applicant@example.com"
                 :name "Applicant"}
-   "commenter" {:userid "commenter"
-                :email "commenter@example.com"
-                :name "Commenter"}
+   "reviewer" {:userid "reviewer"
+               :email "reviewer@example.com"
+               :name "Reviewer"}
    "decider" {:userid "decider"
               :email "decider@example.com"
               :name "Decider"}
@@ -196,7 +196,6 @@
                  :get-form-template get-form-template
                  :get-catalogue-item get-catalogue-item
                  :get-config get-config
-                 :get-current-time get-current-time
                  :get-license get-license
                  :get-user get-user
                  :get-users-with-role get-users-with-role
@@ -784,28 +783,28 @@
                                        :application/todo nil})]
       (is (= expected-application (recreate expected-application))))))
 
-(deftest test-application-view-commenting
-  (testing "> comment requested"
+(deftest test-application-view-reviewing
+  (testing "> review requested"
     (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
-          new-event {:event/type :application.event/comment-requested
+          new-event {:event/type :application.event/review-requested
                      :event/time (DateTime. 4000)
                      :event/actor "handler"
                      :application/id 1
                      :application/request-id request-id
-                     :application/commenters ["commenter"]
+                     :application/reviewers ["reviewer"]
                      :application/comment "please comment"}
           events (conj (:application/events submitted-application) new-event)
           expected-application (deep-merge submitted-application
                                            {:application/last-activity (DateTime. 4000)
                                             :application/events events
                                             :application/todo :waiting-for-review
-                                            :rems.application.model/latest-comment-request-by-user {"commenter" request-id}})]
+                                            ::model/latest-review-request-by-user {"reviewer" request-id}})]
       (is (= expected-application (recreate expected-application)))
 
-      (testing "> commented"
-        (let [new-event {:event/type :application.event/commented
+      (testing "> reviewed"
+        (let [new-event {:event/type :application.event/reviewed
                          :event/time (DateTime. 5000)
-                         :event/actor "commenter"
+                         :event/actor "reviewer"
                          :application/id 1
                          :application/request-id request-id
                          :application/comment "looks good"}
@@ -814,7 +813,7 @@
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
                                            :application/todo :no-pending-requests
-                                           :rems.application.model/latest-comment-request-by-user {}})]
+                                           ::model/latest-review-request-by-user {}})]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-deciding
@@ -939,7 +938,7 @@
           :application/modified (DateTime. 2000)
           :application/first-submitted (DateTime. 3000)
           :application/last-activity (DateTime. 4000)
-          :application/past-deadline false
+          :application/deadline (.plusDays (DateTime. 3000) 1)
           :application/applicant {:userid "applicant"
                                   :email "applicant@example.com"
                                   :name "Applicant"}
@@ -1035,6 +1034,7 @@
                                 :application/comment "looks good"
                                 :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}}]
           :rems.permissions/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
+          :rems.permissions/role-permissions nil
           :application/description "foo"
           :application/form {:form/id 40
                              :form/title "form title"
@@ -1108,26 +1108,26 @@
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
             :application/id 1
             :application/deciders [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                   {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
+                                   {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
            (model/enrich-event {:event/type :application.event/decision-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
                                 :application/id 1
-                                :application/deciders ["decider" "commenter"]}
+                                :application/deciders ["decider" "reviewer"]}
                                get-user get-catalogue-item))))
-  (testing "comment-requested"
-    (is (= {:event/type :application.event/comment-requested
+  (testing "review-requested"
+    (is (= {:event/type :application.event/review-requested
             :event/time (DateTime. 1)
             :event/actor "handler"
             :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}
             :application/id 1
-            :application/commenters [{:userid "decider" :email "decider@example.com" :name "Decider"}
-                                     {:userid "commenter" :email "commenter@example.com" :name "Commenter"}]}
-           (model/enrich-event {:event/type :application.event/comment-requested
+            :application/reviewers [{:userid "decider" :email "decider@example.com" :name "Decider"}
+                                    {:userid "reviewer" :email "reviewer@example.com" :name "Reviewer"}]}
+           (model/enrich-event {:event/type :application.event/review-requested
                                 :event/time (DateTime. 1)
                                 :event/actor "handler"
                                 :application/id 1
-                                :application/commenters ["decider" "commenter"]}
+                                :application/reviewers ["decider" "reviewer"]}
                                get-user get-catalogue-item))))
   (testing "member-added"
     (is (= {:event/type :application.event/member-added
@@ -1194,43 +1194,24 @@
            (-> (model/enrich-workflow-handlers application get-workflow)
                (select-keys [:application/workflow]))))))
 
-(deftest test-enrich-past-deadline
+(deftest test-enrich-deadline
   (testing "non-submitted application"
     (is (= {:application/created (DateTime. 3000)}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)}
-                                       (constantly
-                                        {:application-deadline-days 1})
-                                       (constantly
-                                        (DateTime. 4000))))))
-  (testing "submitted application, not past deadline"
+           (model/enrich-deadline {:application/created (DateTime. 3000)}
+                                  (constantly {:application-deadline-days 1})))))
+  (testing "submitted application, deadline"
     (is (= {:application/created (DateTime. 3000)
             :application/first-submitted (DateTime. 4000)
-            :application/past-deadline false}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)
-                                        :application/first-submitted (DateTime. 4000)}
-                                       (constantly
-                                        {:application-deadline-days 1})
-                                       (constantly
-                                        (DateTime. 5000))))))
-  (testing "submitted application, past deadline"
-    (is (= {:application/created (DateTime. 3000)
-            :application/first-submitted (DateTime. 4000)
-            :application/past-deadline true}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)
-                                        :application/first-submitted (DateTime. 4000)}
-                                       (constantly
-                                        {:application-deadline-days 1})
-                                       (constantly
-                                        (.plusDays (DateTime. 5000) 1))))))
+            :application/deadline (.plusDays (DateTime. 4000) 2)}
+           (model/enrich-deadline {:application/created (DateTime. 3000)
+                                   :application/first-submitted (DateTime. 4000)}
+                                  (constantly {:application-deadline-days 2})))))
   (testing "submitted application, deadline not in use"
     (is (= {:application/created (DateTime. 3000)
             :application/first-submitted (DateTime. 4000)}
-           (model/enrich-past-deadline {:application/created (DateTime. 3000)
-                                        :application/first-submitted (DateTime. 4000)}
-                                       (constantly
-                                        {:application-deadline-days nil})
-                                       (constantly
-                                        (.plusDays (DateTime. 5000) 1)))))))
+           (model/enrich-deadline {:application/created (DateTime. 3000)
+                                   :application/first-submitted (DateTime. 4000)}
+                                  (constantly {:application-deadline-days nil}))))))
 
 (deftest test-enrich-field-visible
   (let [application {:application/form {:form/fields [{:field/id 1
@@ -1273,7 +1254,7 @@
 
     (let [all-events [{:event/type :application.event/created}
                       {:event/type :application.event/submitted}
-                      {:event/type :application.event/comment-requested}
+                      {:event/type :application.event/review-requested}
                       {:event/type :application.event/remarked
                        :application/public true}
                       {:event/type :application.event/remarked
@@ -1326,9 +1307,9 @@
                      (:application/invited-members application))))))))
 
     (testing "personalized waiting for your review"
-      (let [application (model/application-view application {:event/type :application.event/comment-requested
+      (let [application (model/application-view application {:event/type :application.event/review-requested
                                                              :event/actor "handler"
-                                                             :application/commenters ["reviewer1"]})]
+                                                             :application/reviewers ["reviewer1"]})]
         (is (= :waiting-for-review
                (:application/todo (model/apply-user-permissions application "handler")))
             "as seen by handler")
