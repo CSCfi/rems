@@ -42,7 +42,7 @@
    "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler"}
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
-   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
+   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organization "frank"}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
    approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}})
