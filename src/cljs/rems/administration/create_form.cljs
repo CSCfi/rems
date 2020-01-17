@@ -457,10 +457,10 @@
            :on-change #(rf/dispatch [::form-field-visibility-field field-index (get-in form [:form/fields (js/parseInt (.. % -target -value))])])
            :value (or (:field/id visibility-field) "")}
           ^{:key "not-selected"} [:option ""]
-          (doall(for [field (form-fields-that-can-be-used-in-visibility form)]
-                  ^{:key (str field-index "-" (:field/id field))}
-                  [:option {:value (:field/id field)}
-                   (text-format :t.create-form/field-n (inc (:field/id field)) (localized-field-title field lang))]))]
+          (doall (for [field (form-fields-that-can-be-used-in-visibility form)]
+                   ^{:key (str field-index "-" (:field/id field))}
+                   [:option {:value (:field/id field)}
+                    (text-format :t.create-form/field-n (inc (:field/id field)) (localized-field-title field lang))]))]
          [:div.invalid-feedback
           (when error-field (text-format error-field label-field))]]
         (when (:field/id visibility-field)
