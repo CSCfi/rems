@@ -101,6 +101,7 @@
 
 (def ^:private get-license
   {30 {:id 30
+       :organization "org"
        :licensetype "link"
        :localizations {:en {:title "en title"
                             :textcontent "http://en-license-link"}
@@ -109,6 +110,7 @@
        :enabled true
        :archived false}
    31 {:id 31
+       :organization "org"
        :licensetype "text"
        :localizations {:en {:title "en title"
                             :textcontent "en license text"}
@@ -117,6 +119,7 @@
        :enabled true
        :archived false}
    32 {:id 32
+       :organization "org"
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -127,6 +130,7 @@
        :enabled true
        :archived false}
    33 {:id 33
+       :organization "org"
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -137,6 +141,7 @@
        :enabled true
        :archived false}
    34 {:id 34
+       :organization "org"
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"

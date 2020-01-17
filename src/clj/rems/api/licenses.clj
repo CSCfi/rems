@@ -26,6 +26,8 @@
 
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")
+   ;; TODO make unoptional for consistency with other endpoints?
+   (s/optional-key :organization) s/Str
    :localizations LicenseLocalizations})
 
 (s/defschema AttachmentMetadata

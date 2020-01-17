@@ -9,9 +9,10 @@
             [rems.db.workflow :as workflow])
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
-(defn create-license! [{:keys [licensetype localizations]} user-id]
+(defn create-license! [{:keys [licensetype organization localizations]} user-id]
   (let [license (db/create-license! {:owneruserid user-id
                                      :modifieruserid user-id
+                                     :organization (or organization "")
                                      :type licensetype})
         licid (:id license)]
     (doseq [[langcode localization] localizations]

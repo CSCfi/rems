@@ -78,6 +78,7 @@
           {:key (:id license)
            :title {:value (get-localized-title license language)}
            :type {:value (:licensetype license)}
+           :organization {:value (:organization license)}
            :active (let [checked? (status-flags/active? license)]
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]
@@ -91,7 +92,9 @@
 
 (defn- licenses-list []
   (let [licenses-table {:id ::licenses
-                        :columns [{:key :title
+                        :columns [{:key :organization
+                                   :title (text :t.administration/organization)}
+                                  {:key :title
                                    :title (text :t.administration/licenses)}
                                   {:key :type
                                    :title (text :t.administration/type)}

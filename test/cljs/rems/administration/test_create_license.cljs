@@ -37,6 +37,7 @@
         languages [:en :fi]]
     (testing "linked license"
       (is (= {:licensetype "link"
+              :organization ""
               :localizations {:en {:title "en title"
                                    :textcontent "en link"
                                    :attachment-id 1}
@@ -47,6 +48,7 @@
                             languages))))
     (testing "inline license"
       (is (= {:licensetype "text"
+              :organization ""
               :localizations {:en {:title "en title"
                                    :textcontent "en text"
                                    :attachment-id 1}
@@ -58,6 +60,7 @@
 
     (testing "attachment license"
       (is (= {:licensetype "attachment"
+              :organization ""
               :localizations {:en {:title "en title"
                                    :textcontent "something.pdf"
                                    :attachment-id 1}

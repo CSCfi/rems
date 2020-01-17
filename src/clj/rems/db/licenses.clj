@@ -6,6 +6,7 @@
 (defn- format-license [license]
   {:id (:id license)
    :licensetype (:type license)
+   :organization (:organization license)
    :enabled (:enabled license)
    :archived (:archived license)})
 

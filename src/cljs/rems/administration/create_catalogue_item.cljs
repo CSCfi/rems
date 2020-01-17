@@ -64,17 +64,16 @@
     str))
 
 (defn build-request [form languages]
-  (let [request (merge {:wfid (:workflow-id form)
-                        :resid (:resource-id form)
-                        :form (:form-id form)
-                        :localizations (into {}
-                                             (for [lang languages]
-                                               [lang {:title (trim-when-string (get-in form [:title lang]))
-                                                      :infourl (-> (get-in form [:infourl lang])
-                                                                   empty-string-to-nil
-                                                                   trim-when-string)}]))}
-                       (when (not (empty? (:organization form)))
-                         {:organization (:organization form)}))]
+  (let [request {:wfid (:workflow-id form)
+                 :resid (:resource-id form)
+                 :form (:form-id form)
+                 :organization (or (:organization form) "")
+                 :localizations (into {}
+                                      (for [lang languages]
+                                        [lang {:title (trim-when-string (get-in form [:title lang]))
+                                               :infourl (-> (get-in form [:infourl lang])
+                                                            empty-string-to-nil
+                                                            trim-when-string)}]))}]
     (when (valid-request? request languages)
       request)))
 
