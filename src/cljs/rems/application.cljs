@@ -553,7 +553,7 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        other-attributes (dissoc attributes :name :userid :email)
+        other-attributes (dissoc attributes :name :userid :email :organization)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))]
@@ -570,7 +570,9 @@
                        (when user-id
                          [info-field (text :t.applicant-info/username) user-id {:inline? true}])
                        (when-let [mail (:email attributes)]
-                         [info-field (text :t.applicant-info/email) mail {:inline? true}])]
+                         [info-field (text :t.applicant-info/email) mail {:inline? true}])
+                       (when-let [organization (:organization attributes)]
+                         [info-field (text :t.applicant-info/organization) organization {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
       :footer (let [element-id (str element-id "-remove-member")]
