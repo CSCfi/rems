@@ -323,8 +323,8 @@
                                 :field/title localized
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
-                                                :visibility/field {:field/id 1}
-                                                :visibility/value ["c"]}}
+                                                   :visibility/field {:field/id 1}
+                                                   :visibility/value ["c"]}}
                                {:field/type :multiselect
                                 :field/title localized
                                 :field/optional false
@@ -336,8 +336,8 @@
                                 :field/title localized
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
-                                                :visibility/field {:field/id 4}
-                                                :visibility/value ["c" "d"]}}]}]
+                                                   :visibility/field {:field/id 4}
+                                                   :visibility/value ["c" "d"]}}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)
