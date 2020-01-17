@@ -15,12 +15,18 @@
     (update-in field [:field/visibility :visibility/type] keyword)
     field))
 
+(defn fixup-field-id-to-generated [field] ; TODO: remove when generation is removed from backend
+  (if (get-in field [:field/visibility :visibility/field :field/id])
+    (update-in field [:field/visibility :visibility/field :field/id] dec)
+    field))
+
 (defn fixup-field-to-match-command [field]
   (-> field
       (dissoc :field/id)
       ;; XXX: these tests use the JSON API, so keywords are not maintained
       (update :field/type keyword)
-      fixup-field-visible-type))
+      fixup-field-visible-type
+      fixup-field-id-to-generated))
 
 (deftest forms-api-test
   (let [api-key "42"
@@ -323,7 +329,7 @@
                                 :field/title localized
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
-                                                   :visibility/field {:field/id 1}
+                                                   :visibility/field {:field/id 0}
                                                    :visibility/value ["c"]}}
                                {:field/type :multiselect
                                 :field/title localized
@@ -336,7 +342,7 @@
                                 :field/title localized
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
-                                                   :visibility/field {:field/id 4}
+                                                   :visibility/field {:field/id 3}
                                                    :visibility/value ["c" "d"]}}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")

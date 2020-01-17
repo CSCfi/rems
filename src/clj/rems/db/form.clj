@@ -48,9 +48,19 @@
   (or (form-in-use-error form-id)
       {:success true}))
 
-(defn- generate-field-ids [fields]
+;; TODO: is this really good or should we rather use what client generates?
+(defn- generate-field-ids
+  "Generate ids for fields.
+
+  Fields in the UI are 0-based while creating and we generate them
+  in `generate-field-ids` as 1-based. If one field refers to another
+  then we must fix the reference."
+  [fields]
   (map-indexed (fn [index field]
-                 (assoc field :field/id (inc index)))
+                 (let [new-field (assoc field :field/id (inc index))]
+                   (if (get-in new-field [:field/visibility :visibility/field :field/id])
+                     (update-in new-field [:field/visibility :visibility/field :field/id] inc)
+                     new-field)))
                fields))
 
 (defn- normalize-field-values [field]
