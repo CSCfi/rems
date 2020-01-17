@@ -41,11 +41,23 @@
 (defn- allocate-stable-ids [form]
   (update form :form/fields (partial mapv #(assoc % :field/stable-id (generate-stable-id)))))
 
+;; TODO: remove when ids are not generated in backend
+(defn- fix-field-references
+  [form]
+  (update form
+          :form/fields
+          (partial mapv
+                   #(if (get-in % [:field/visibility :visibility/field :field/id])
+                      (update-in % [:field/visibility :visibility/field :field/id] dec)
+                      %))))
+
 (rf/reg-event-db
  ::fetch-form-result
  (fn [db [_ form]]
    (-> db
-       (assoc ::form (allocate-stable-ids form))
+       (assoc ::form (-> form
+                         allocate-stable-ids
+                         fix-field-references))
        (dissoc ::loading-form?))))
 
 ;;;; form state
