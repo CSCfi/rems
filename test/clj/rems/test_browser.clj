@@ -200,42 +200,81 @@
   (with-postmortem *driver* {:dir reporting-dir}
     (login-as "alice")
 
-    (go-to-catalogue)
-    (add-to-cart "THL catalogue item")
-    (apply-for-resource "THL catalogue item")
+    (testing "create application"
+      (go-to-catalogue)
+      (add-to-cart "THL catalogue item")
+      (apply-for-resource "THL catalogue item")
 
-    (fill-form-field "Application title" "Test name")
-    (fill-form-field "1. Research project full title" "Test")
-    (select-option "2. This is an amendment of a previous approved application" "y")
-    (fill-form-field "3. Study PIs (name, titile, affiliation, email)" "Test")
-    (set-date "5. Research project start date" "2050-01-01")
-    (set-date "6. Research project end date" "2050-12-31")
-    (fill-form-field "7. Describe in detail the aims of the study and analysis plan" "Test")
-    (fill-form-field "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank." "Test")
-    (fill-form-field "10. Place/plces of research, including place of sample and/or data analysis." "Test")
-    (fill-form-field "11. Description of other research group members and their role in the applied project." "Test")
-    (fill-form-field "12. Specify selection criteria of study participants (if applicable)" "Test")
-    (fill-form-field "13. Specify requested phenotype data" "Test")
-    (select-option "16. Are biological samples requested?" "n")
-    (fill-form-field "17. What study results will be returned to THL Biobank (if any)?" "Test")
-    (fill-form-field "18. Ethical aspects of the project" "Test")
-    (fill-form-field "19. Project keywords (max 5)" "Test")
-    (fill-form-field "20. Planned publications (max 3)" "Test")
-    (fill-form-field "21. Funding information" "Test")
-    (fill-form-field "22. Invoice address" "Test")
-    (check-box "disease_prevention")
+      (fill-form-field "Application title" "Test name")
+      (fill-form-field "1. Research project full title" "Test")
+      (select-option "2. This is an amendment of a previous approved application" "y")
+      (fill-form-field "3. Study PIs (name, titile, affiliation, email)" "Test3")
+      (set-date "5. Research project start date" "2050-01-01")
+      (set-date "6. Research project end date" "2050-12-31")
+      (fill-form-field "7. Describe in detail the aims of the study and analysis plan" "Test7")
+      (fill-form-field "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank." "Test9")
+      (fill-form-field "10. Place/plces of research, including place of sample and/or data analysis." "Test10")
+      (fill-form-field "11. Description of other research group members and their role in the applied project." "Test11")
+      (fill-form-field "12. Specify selection criteria of study participants (if applicable)" "Test12")
+      (fill-form-field "13. Specify requested phenotype data" "Test13")
+      (select-option "16. Are biological samples requested?" "n")
+      (fill-form-field "17. What study results will be returned to THL Biobank (if any)?" "Test17")
+      (fill-form-field "18. Ethical aspects of the project" "Test18")
+      (fill-form-field "19. Project keywords (max 5)" "Test19")
+      (fill-form-field "20. Planned publications (max 3)" "Test20")
+      (fill-form-field "21. Funding information" "Test21")
+      (fill-form-field "22. Invoice address" "Test22")
+      (check-box "disease_prevention")
 
-    (accept-licenses)
-    (send-application)
-    (is (= "Applied" (get-element-text *driver* :application-state)))
+      (accept-licenses)
+      (send-application)
+      (is (= "Applied" (get-element-text *driver* :application-state))))
 
     (let [application-id (get-application-id)]
-      (go-to-applications)
-      (let [summary (get-application-summary application-id)]
-        (is (= "THL catalogue item" (:resource summary)))
-        (is (= "Applied" (:state summary)))
-        ;; don't bother trying to predict the external id:
-        (is (.contains (:description summary) "Test name"))))))
+      (testing "see application on applications page"
+        (go-to-applications)
+        (let [summary (get-application-summary application-id)]
+          (is (= "THL catalogue item" (:resource summary)))
+          (is (= "Applied" (:state summary)))
+          ;; don't bother trying to predict the external id:
+          (is (.contains (:description summary) "Test name"))))
+      (testing "fetch application from API"
+        (let [application (:body
+                           (http/get (str +test-url+ "/api/applications/" application-id)
+                                     {:as :json
+                                      :headers {"x-rems-api-key" "42"
+                                                "x-rems-user-id" "handler"}}))]
+          (clojure.pprint/pprint application)
+          (testing "applicant information"
+            (is (= "alice" (get-in application [:application/applicant :userid])))
+            (is (= (set (map :license/id (:application/licenses application)))
+                   (set (get-in application [:application/accepted-licenses :alice])))))
+          (testing "form fields"
+            (is (= "Test name" (:application/description application)))
+            (is (= ["Test name"
+                    "Test"
+                    "true"
+                    "" ;; optional empty field
+                    "Test3"
+                    "" ;; optional
+                    "2050-01-01"
+                    "2050-12-31"
+                    "Test7"
+                    "" ;; optional
+                    "Test9" "Test10" "Test11" "Test12" "Test13"
+                    "" ;; optional
+                    "false"
+                    "" ;; optional
+                    "Test17"
+                    "" ;; optional
+                    "Test18" "Test19" "Test20" "Test21" "Test22"
+                    "" ;; optional
+                    "disease_prevention"
+                    "" ;; optional
+                    ""] ;; optional
+                   (for [field (get-in application [:application/form :form/fields])]
+                     ;; TODO could test other fields here too, e.g. title
+                     (:field/value field))))))))))
 
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}
