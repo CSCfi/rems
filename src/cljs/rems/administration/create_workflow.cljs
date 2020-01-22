@@ -8,6 +8,7 @@
             [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
@@ -15,13 +16,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ workflow-id]]
-   {:db (assoc db
-               ::workflow-id workflow-id
-               ::loading-workflow? (not (nil? workflow-id))
-               ::actors nil
-               ::form {:type :workflow/default})
-    ::fetch-actors nil
-    ::fetch-workflow workflow-id}))
+   (let [roles (get-in db [:identity :roles])
+         organization (get-in db [:identity :user :organization])]
+     {:db (assoc db
+                 ::workflow-id workflow-id
+                 ::loading-workflow? (not (nil? workflow-id))
+                 ::actors nil
+                 ::form (merge {:type :workflow/default}
+                               (when (roles/disallow-setting-organization? roles)
+                                 {:organization organization})))
+      ::fetch-actors nil
+      ::fetch-workflow workflow-id})))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
 (rf/reg-sub ::editing? (fn [db _] (not (nil? (::workflow-id db)))))
@@ -142,10 +147,13 @@
 (def ^:private handlers-dropdown-id "handlers-dropdown")
 
 (defn- workflow-organization-field []
-  [text-field context {:keys [:organization]
-                       :readonly @(rf/subscribe [::editing?])
-                       :label (text :t.administration/organization)
-                       :placeholder (text :t.administration/organization-placeholder)}])
+  ;; TODO: Allow editing the organization of an existing workflow?
+  (let [readonly (or @(rf/subscribe [::editing?])
+                     (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity]))))]
+    [text-field context {:keys [:organization]
+                         :readonly readonly
+                         :label (text :t.administration/organization)
+                         :placeholder (text :t.administration/organization-placeholder)}]))
 
 (defn- workflow-title-field []
   [text-field context {:keys [:title]

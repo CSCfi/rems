@@ -10,6 +10,7 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
             [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys trim-when-string visibility-ratio focus-input-field]]))
@@ -17,12 +18,16 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ form-id edit-form?]]
-   {:db (assoc db
-               ::form {:form/fields []}
-               ::form-errors nil
-               ::form-id form-id
-               ::edit-form? edit-form?)
-    :dispatch-n [[::fetch-form form-id]]}))
+   (let [roles (get-in db [:identity :roles])
+         organization (get-in db [:identity :user :organization])]
+     {:db (assoc db
+                 ::form (merge {:form/fields []}
+                               (when (roles/disallow-setting-organization? roles)
+                                 {:form/organization organization}))
+                 ::form-errors nil
+                 ::form-id form-id
+                 ::edit-form? edit-form?)
+      :dispatch-n [[::fetch-form form-id]]})))
 
 (rf/reg-event-fx
  ::fetch-form
@@ -292,9 +297,11 @@
    :update-form ::set-form-field})
 
 (defn- form-organization-field []
-  [text-field context {:keys [:form/organization]
-                       :label (text :t.administration/organization)
-                       :placeholder (text :t.administration/organization-placeholder)}])
+  (let [readonly (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity])))]
+    [text-field context {:keys [:form/organization]
+                         :label (text :t.administration/organization)
+                         :placeholder (text :t.administration/organization-placeholder)
+                         :readonly readonly}]))
 
 (defn- form-title-field []
   [text-field context {:keys [:form/title]

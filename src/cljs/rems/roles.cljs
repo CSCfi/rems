@@ -20,6 +20,9 @@
 (defn show-admin-edit-buttons? [roles]
   (some #{:organization-owner :owner} roles))
 
+(defn disallow-setting-organization? [roles]
+  (some #{:organization-owner} roles))
+
 (defn when [predicate & body]
   (clojure.core/when (predicate (:roles @(rf/subscribe [:identity])))
     (into [:<>] body)))
