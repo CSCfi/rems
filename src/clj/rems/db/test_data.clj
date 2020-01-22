@@ -28,6 +28,7 @@
    :applicant2 "malice"
    :approver1 "developer"
    :approver2 "handler"
+   :organization-owner "organization-owner"
    :owner "owner"
    :reporter "reporter"
    :reviewer "carl"
@@ -43,10 +44,12 @@
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organization "frank"}
+   "organization-owner" {:eppn "organization-owner" :mail "organization-owner@example.com" :commonName "Organization Owner" :organization "organization"}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
    approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}})
 
+;; TODO: Add organization-owner to +demo-users+, as well as +oidc-users+.
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
    :applicant2 "RDapplicant2@funet.fi"
@@ -246,6 +249,7 @@
 (defn create-test-users-and-roles! []
   ;; users provided by the fake login
   (create-users-and-roles! +fake-users+ +fake-user-data+)
+  (roles/add-role! (+fake-users+ :organization-owner) :organization-owner)
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
 

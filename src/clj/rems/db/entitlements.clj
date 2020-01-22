@@ -30,7 +30,7 @@
 
 (defn get-entitlements-for-api [user-or-nil resource-or-nil expired?]
   (mapv entitlement-to-api
-        (db/get-entitlements {:user (if (has-roles? :handler :owner :reporter)
+        (db/get-entitlements {:user (if (has-roles? :handler :owner :organization-owner :reporter)
                                       user-or-nil
                                       (getx-user-id))
                               :resource-ext-id resource-or-nil

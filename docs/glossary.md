@@ -44,6 +44,7 @@
   responds to requests from handlers
 - user-owner: a role that can create & update user details
 - owner: a role that can create and edit resources, workflows, catalogue items, etc.
+- organization-owner: like owner, but can only create and edit items belonging to the user's organization
 
 ## Events
 
