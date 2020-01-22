@@ -123,7 +123,8 @@
   [:span
    (text :t.search/example-searches)
    ": "
-   (->> ["supercalifra*" "+egg +bacon -spam" "id:\"2019/12\"" "applicant:\"alice@example.com\""]
+   (->> ["supercalifra*" "+egg +bacon -spam" "id:\"2019/12\"" "applicant:\"alice@example.com\""
+         "resource:\"urn:fi:abcd\""]
         (map (fn [example] [:tt.example-search example]))
         (interpose ", ")
         (into [:<>]))
