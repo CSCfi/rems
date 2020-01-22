@@ -4,7 +4,7 @@
 
 (def +all-roles+ #{:applicant :decider :handler :logged-in
                    :owner :past-reviewer :reporter :reviewer
-                   :user-owner})
+                   :user-owner :organization-owner})
 
 (defn valid? [key]
   (not (nil? (db/get-api-key {:apikey key}))))

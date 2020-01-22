@@ -15,10 +15,10 @@
   (some #{:handler :reviewer :decider :past-reviewer :past-decider} roles))
 
 (defn show-admin-pages? [roles]
-  (some #{:owner :handler} roles))
+  (some #{:organization-owner :owner :handler} roles))
 
 (defn show-admin-edit-buttons? [roles]
-  (some #{:owner} roles))
+  (some #{:organization-owner :owner} roles))
 
 (defn when [predicate & body]
   (clojure.core/when (predicate (:roles @(rf/subscribe [:identity])))
