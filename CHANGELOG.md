@@ -44,6 +44,7 @@ Changes since v2.6
 - Form editor: add new field between fields (#1812)
 - Entitlements appear immediately instead of after a delay (#1784)
 - Show version information in console instead of the page footer (#1785)
+- Searching applications by resource external id now possible (#1919)
 
 ### Fixes
 - More robust email resending (#1750)

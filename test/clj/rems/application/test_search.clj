@@ -58,13 +58,17 @@
       (is (= #{app-id} (search/find-applications "title:Supercalifragilisticexpialidocious")) "title field")))
 
   (testing "find by resource"
-    (let [cat-id (test-data/create-catalogue-item! {:title {:en "Spam"
+    (let [resource (test-data/create-resource! {:resource-ext-id "urn:fi:abcd"})
+          cat-id (test-data/create-catalogue-item! {:resource-id resource
+                                                    :title {:en "Spam"
                                                             :fi "Nötkötti"}})
           app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                  :actor "alice"})]
       (is (= #{app-id} (search/find-applications "Spam")) "en title, any field")
       (is (= #{app-id} (search/find-applications "resource:Spam")) "en title")
-      (is (= #{app-id} (search/find-applications "resource:Nötkötti")) "fi title")))
+      (is (= #{app-id} (search/find-applications "resource:Nötkötti")) "fi title")
+      (is (= #{app-id} (search/find-applications "\"urn:fi:abcd\"")) "external id, any field")
+      (is (= #{app-id} (search/find-applications "resource:\"urn:fi:abcd\"")) "external id, resource field")))
 
   (testing "find by state"
     (let [app-id (test-data/create-application! {:actor "alice"})]
