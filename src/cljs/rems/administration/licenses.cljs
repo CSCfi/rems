@@ -95,7 +95,7 @@
                         :columns [{:key :organization
                                    :title (text :t.administration/organization)}
                                   {:key :title
-                                   :title (text :t.administration/licenses)}
+                                   :title (text :t.administration/license-name)}
                                   {:key :type
                                    :title (text :t.administration/type)}
                                   {:key :active

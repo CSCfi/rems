@@ -87,6 +87,7 @@
                    :forms "Forms"
                    :license "License"
                    :license-field "License \"%1\""
+                   :license-name "License name"
                    :licenses "Licenses"
                    :no-licenses "No licenses"
                    :organization "Organization"
