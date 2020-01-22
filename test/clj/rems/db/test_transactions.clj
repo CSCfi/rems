@@ -58,7 +58,7 @@
         ;; Currently we only test that commands are not executed concurrently
         ;; for a single application. To guarantee that, we could add an app version
         ;; column to the events table with constraint `UNIQUE (appId, appVersion)`.
-        observed-app-version-marker 999
+        observed-app-version-marker "999"
         old-handle-command commands/handle-command
         mark-observed-app-version (fn [result application]
                                     (if (and (not (:errors result))

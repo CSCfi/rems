@@ -49,7 +49,7 @@
 
 (def ^:private get-form-template
   (constantly {:form/id 40
-               :form/fields [{:field/id 1
+               :form/fields [{:field/id "1"
                               :field/title {:en "en title" :fi "fi title"}
                               :field/optional false
                               :field/type :description}]}))
@@ -124,7 +124,7 @@
                       :workflow/type :workflow/default}
                      {:application/id 7
                       :event/type :application.event/draft-saved
-                      :application/field-values {1 "Application title"}}])
+                      :application/field-values {"1" "Application title"}}])
 
 (def submit-event {:application/id 7
                    :event/type :application.event/submitted

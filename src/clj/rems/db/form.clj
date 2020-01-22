@@ -1,12 +1,13 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
-            [medley.core :refer [map-keys]]
+            [medley.core :refer [filter-vals find-first map-keys]]
             [rems.api.schema :refer [FieldTemplate]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import rems.InvalidRequestException))
 
 (def ^:private coerce-fields
   (coerce/coercer! [FieldTemplate] coerce/string-coercion-matcher))
@@ -34,6 +35,10 @@
     (when row
       (parse-db-row row))))
 
+(comment
+  (db/get-form-template {:id 1})
+  (get-form-template 1))
+
 (defn- catalogue-items-for-form [id]
   (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
        (map #(select-keys % [:id :title :localizations]))))
@@ -48,16 +53,72 @@
   (or (form-in-use-error form-id)
       {:success true}))
 
+(defn- next-free-id [already-used-ids]
+  (find-first #(not (contains? (set already-used-ids) %))
+              (map #(str "fld" %) (iterate inc 1))))
+
+(deftest test-next-free-id
+  (is (= "fld1" (next-free-id [])))
+  (is (= "fld2" (next-free-id ["fld1"])))
+  (is (= "fld3" (next-free-id ["fld1" "fld2"])))
+  (is (= "fld2" (next-free-id ["fld1" "fld3"])))
+  (is (= "fld1" (next-free-id ["abc"]))))
+
 (defn- generate-field-ids [fields]
-  (map-indexed (fn [index field]
-                 (assoc field :field/id (inc index)))
-               fields))
+  (let [generated-ids (map #(str "fld" %) (iterate inc 1))
+        default-ids (for [id (->> generated-ids
+                                  (remove (set (map :field/id fields))))]
+                      {:field/id id})]
+    (mapv merge default-ids fields)))
+
+(deftest test-generate-field-ids
+  (is (= [] (generate-field-ids [])))
+  (is (= [{:field/id "fld1"} {:field/id "fld2"}] (generate-field-ids [{} {}])))
+  (is (= [{:field/id "abc"}] (generate-field-ids [{:field/id "abc"}])))
+  (is (= [{:field/id "abc"} {:field/id "fld2"}] (generate-field-ids [{:field/id "abc"} {}])))
+  (is (= [{:field/id "fld2"} {:field/id "fld3"}] (generate-field-ids [{:field/id "fld2"} {}])))
+  (is (= [{:field/id "fld2"} {:field/id "fld1"}] (generate-field-ids [{} {:field/id "fld1"}])))
+  (is (= [{:field/id "fld2"} {:field/id "fld4"} {:field/id "fld3"}] (generate-field-ids [{:field/id "fld2"} {} {:field/id "fld3"}]))))
+
+(defn validate-given-ids [fields]
+  (let [fields-with-given-ids (filter #(contains? % :field/id) fields)
+        id-counts (frequencies (map :field/id fields-with-given-ids))
+        duplicates (keys (filter-vals #(< 1 %) id-counts))]
+    (when (some empty? (map :field/id fields-with-given-ids))
+      (throw (InvalidRequestException. "")))
+    (when (seq duplicates)
+      (throw (InvalidRequestException. (pr-str duplicates))))
+    fields))
+
+(deftest test-validate-given-ids
+  (testing "when no fields or ids are given"
+    (is (= [] (validate-given-ids [])))
+    (is (= [{}] (validate-given-ids [{}])))
+    (is (= [{} {}] (validate-given-ids [{} {}])))
+    (is (= [{:foo 42} {:bar 42}] (validate-given-ids [{:foo 42} {:bar 42}]))))
+  (testing "empty id is not valid"
+    (is (thrown? InvalidRequestException
+                 (validate-given-ids [{:field/id ""}])))
+    (is (thrown? InvalidRequestException
+                 (validate-given-ids [{:field/id nil}]))))
+  (testing "when distinct ids are given"
+    (is (= [{:field/id "abc"}] (validate-given-ids [{:field/id "abc"}])))
+    (is (= [{:field/id "abc"}
+            {:field/id "xyz" :foo 42}]
+           (validate-given-ids [{:field/id "abc"}
+                                {:field/id "xyz" :foo 42}]))))
+  (testing "when duplicates are given"
+    (is (thrown? InvalidRequestException
+                 (validate-given-ids [{:field/id "abc"}
+                                      {:field/id "xyz"}
+                                      {:field/id "abc"}])))))
 
 (def ^:private validate-fields
   (s/validator [FieldTemplate]))
 
 (defn- serialize-fields [form]
   (->> (:form/fields form)
+       (validate-given-ids)
        (generate-field-ids)
        (validate-fields)
        (json/generate-string)))

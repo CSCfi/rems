@@ -137,8 +137,10 @@
 
 (def not-neg? (partial <= 0))
 
+(def FieldId s/Str)
+
 (s/defschema FieldTemplate
-  {:field/id s/Int
+  {:field/id FieldId
    :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
@@ -148,7 +150,9 @@
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))})
 
 (s/defschema NewFieldTemplate
-  (dissoc FieldTemplate :field/id))
+  (-> FieldTemplate
+      (dissoc :field/id)
+      (assoc (s/optional-key :field/id) FieldId)))
 
 (s/defschema Field
   (assoc FieldTemplate

@@ -12,6 +12,9 @@
    (for [form (form/get-form-templates filters)]
      (select-keys form [:form/id :form/organization :form/title :enabled :archived]))))
 
+(comment
+  (form/get-form-templates {}))
+
 (s/defschema CreateFormCommand
   {:form/organization s/Str
    :form/title s/Str
