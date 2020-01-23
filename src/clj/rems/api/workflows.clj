@@ -23,7 +23,8 @@
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool
-   :id s/Int})
+   (s/optional-key :id) s/Int
+   (s/optional-key :errors) [s/Any]})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableActor UserWithAttributes)
@@ -44,7 +45,7 @@
 
     (POST "/create" []
       :summary "Create workflow"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
       (ok (workflow/create-workflow! (assoc command :user-id (getx-user-id)))))

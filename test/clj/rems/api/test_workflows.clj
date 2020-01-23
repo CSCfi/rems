@@ -17,7 +17,7 @@
 
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
-  {:organization "abc"
+  {:organization "test-organization"
    :title "workflow title"
    :workflow {:type "workflow/default"
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
@@ -56,44 +56,49 @@
                          handler)]
         (is (response-is-not-found? response)))))
 
-  (testing "create default workflow"
-    (let [body (-> (request :post "/api/workflows/create")
-                   (json-body {:organization "abc"
-                               :title "workflow title"
-                               :type :workflow/default
-                               :handlers ["handler" "carl"]})
-                   (authenticate "42" "owner")
-                   handler
-                   assert-response-is-ok
-                   read-body)
-          id (:id body)]
-      (is (< 0 id))
-      (sync-with-database-time)
-      (testing "and fetch"
-        (is (= expected
-               (fetch "42" "owner" id))))))
+  (let [create-workflow (fn [user-id organization type]
+                          (-> (request :post "/api/workflows/create")
+                              (json-body {:organization organization
+                                          :title "workflow title"
+                                          :type type
+                                          :handlers ["handler" "carl"]})
+                              (authenticate "42" user-id)
+                              handler
+                              assert-response-is-ok
+                              read-body))]
+    (testing "create default workflow"
+      (let [body (create-workflow "owner" "test-organization" :workflow/default)
+            id (:id body)]
+        (is (< 0 id))
+        (sync-with-database-time)
+        (testing "and fetch"
+          (is (= expected
+                 (fetch "42" "owner" id))))))
 
-  (testing "create decider workflow"
-    (let [body (-> (request :post "/api/workflows/create")
-                   (json-body {:organization "abc"
-                               :title "workflow title"
-                               :type :workflow/decider
-                               :handlers ["handler" "carl"]})
-                   (authenticate "42" "owner")
-                   handler
-                   assert-response-is-ok
-                   read-body)
-          id (:id body)]
-      (is (< 0 id))
-      (sync-with-database-time)
-      (testing "and fetch"
-        (is (= (assoc-in expected [:workflow :type] "workflow/decider")
-               (fetch "42" "owner" id)))))))
+    (testing "create decider workflow"
+      (let [body (create-workflow "owner" "test-organization" :workflow/decider)
+            id (:id body)]
+        (is (< 0 id))
+        (sync-with-database-time)
+        (testing "and fetch"
+          (is (= (assoc-in expected [:workflow :type] "workflow/decider")
+                 (fetch "42" "owner" id))))))
+
+    (testing "create as organization owner"
+      (testing "with correct organization"
+        (let [body (create-workflow "organization-owner" "organization" :workflow/default)
+              id (:id body)]
+          (is (< 0 id))
+          (is (:success body))))
+
+      (testing "with incorrect organization"
+        (let [body (create-workflow "organization-owner" "not organization" :workflow/default)]
+          (is (not (:success body))))))))
 
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-workflow! {:organization "abc"
+        wfid (test-data/create-workflow! {:organization "test-organization"
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
@@ -144,7 +149,7 @@
 (deftest workflows-edit-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-workflow! {:organization "abc"
+        wfid (test-data/create-workflow! {:organization "test-organization"
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
@@ -219,7 +224,7 @@
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:organization "abc"
+                         (json-body {:organization "test-organization"
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval
@@ -237,7 +242,7 @@
         (is (= "forbidden" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:organization "abc"
+                         (json-body {:organization "test-organization"
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval

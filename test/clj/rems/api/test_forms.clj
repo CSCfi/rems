@@ -43,30 +43,29 @@
         (is (= 404 (:status response)))))
 
     (testing "create"
-      (let [command {:form/organization "abc"
+      (let [command {:form/organization "test-organization"
                      :form/title (str "form title " (UUID/randomUUID))
                      :form/fields [{:field/title {:en "en title"
                                                   :fi "fi title"}
                                     :field/optional true
                                     :field/type :text
                                     :field/placeholder {:en "en placeholder"
-                                                        :fi "fi placeholder"}}]}]
+                                                        :fi "fi placeholder"}}]}
+            create-form (fn [user-id command]
+                          (-> (request :post "/api/forms/create")
+                              (authenticate api-key user-id)
+                              (json-body command)
+                              handler))]
 
         (testing "invalid create"
           ;; TODO: silence the logging for this expected error
           (let [command-with-invalid-max-length (assoc-in command [:form/fields 0 :field/max-length] -1)
-                response (-> (request :post "/api/forms/create")
-                             (authenticate api-key user-id)
-                             (json-body command-with-invalid-max-length)
-                             handler)]
+                response (create-form "owner" command-with-invalid-max-length)]
             (is (= 400 (:status response))
                 "can't send negative max length")))
 
         (testing "valid create"
-          (let [id (-> (request :post "/api/forms/create")
-                       (authenticate api-key user-id)
-                       (json-body command)
-                       handler
+          (let [id (-> (create-form "owner" command)
                        read-ok-body
                        :id)]
             (is id)
@@ -79,13 +78,24 @@
                   (is (= (select-keys command [:form/organization :form/title])
                          (select-keys form-template [:form/organization :form/title])))
                   (is (= (:form/fields command)
-                         (mapv fixup-field-to-match-command (:form/fields form-template)))))))))))))
+                         (mapv fixup-field-to-match-command (:form/fields form-template)))))))))
+
+        (testing "create as organization owner"
+          (testing "with correct organization"
+            (let [body (-> (create-form "organization-owner" (assoc command :form/organization "organization"))
+                           read-ok-body)]
+              (is (:id body))))
+
+          (testing "with incorrect organization"
+            (let [body (-> (create-form "organization-owner" (assoc command :form/organization "not organization"))
+                           read-ok-body)]
+              (is (not (:success body))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
         user-id "owner"
         localized {:en "en" :fi "fi"}
-        form-spec {:form/organization "abc"
+        form-spec {:form/organization "test-organization"
                    :form/title "all field types test"
                    :form/fields [{:field/type :text
                                   :field/title localized
@@ -153,7 +163,7 @@
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:form/organization "abc"
+                    (json-body {:form/organization "test-organization"
                                 :form/title "form editable test"
                                 :form/fields []})
                     handler
@@ -184,7 +194,7 @@
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:form/organization "abc"
+                    (json-body {:form/organization "test-organization"
                                 :form/title "form edit test"
                                 :form/fields []})
                     handler
@@ -195,7 +205,7 @@
                      (authenticate api-key user-id)
                      handler
                      read-ok-body)]
-        (is (= (:form/organization form) "abc")))
+        (is (= (:form/organization form) "test-organization")))
       (let [response (-> (request :put "/api/forms/edit")
                          (authenticate api-key user-id)
                          (json-body {:form/id form-id
@@ -216,7 +226,7 @@
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:form/organization "abc"
+                    (json-body {:form/organization "test-organization"
                                 :form/title "form update test"
                                 :form/fields []})
                     handler
@@ -270,7 +280,7 @@
   (let [api-key "42"
         user-id "owner"]
     (testing "create"
-      (let [command {:form/organization "abc"
+      (let [command {:form/organization "test-organization"
                      :form/title (str "form title " (UUID/randomUUID))
                      :form/fields [{:field/title {:en "en title"
                                                   :fi "fi title"}
@@ -324,7 +334,7 @@
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
-                         (json-body {:form/organization "abc"
+                         (json-body {:form/organization "test-organization"
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]
@@ -342,7 +352,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
                          (authenticate "42" "alice")
-                         (json-body {:form/organization "abc"
+                         (json-body {:form/organization "test-organization"
                                      :form/title "the title"
                                      :form/fields []})
                          handler)]

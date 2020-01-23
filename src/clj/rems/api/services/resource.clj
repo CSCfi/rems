@@ -1,5 +1,6 @@
 (ns rems.api.services.resource
-  (:require [rems.db.catalogue :as catalogue]
+  (:require [rems.api.services.util :as util]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource])
@@ -14,15 +15,16 @@
 
 (defn create-resource! [{:keys [resid organization licenses]} user-id]
   (try
-    (let [id (:id (db/create-resource! {:resid resid
-                                        :organization organization
-                                        :owneruserid user-id
-                                        :modifieruserid user-id}))]
-      (doseq [licid licenses]
-        (db/create-resource-license! {:resid id
-                                      :licid licid}))
-      {:success true
-       :id id})
+    (or (util/forbidden-organization? user-id organization)
+        (let [id (:id (db/create-resource! {:resid resid
+                                            :organization organization
+                                            :owneruserid user-id
+                                            :modifieruserid user-id}))]
+          (doseq [licid licenses]
+            (db/create-resource-license! {:resid id
+                                          :licid licid}))
+          {:success true
+           :id id}))
     (catch Exception e
       (if (duplicate-resid? e)
         {:success false

@@ -54,7 +54,7 @@
 
     (POST "/create" []
       :summary "Create resource"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
       (ok (resource/create-resource! command (getx-user-id))))

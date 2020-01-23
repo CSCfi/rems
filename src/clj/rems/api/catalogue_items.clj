@@ -5,6 +5,7 @@
             [rems.api.services.catalogue :as catalogue]
             [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
             [rems.db.core :as db]
+            [rems.util :refer [getx-user-id]]
             [ring.swagger.json-schema :as rjs]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -43,7 +44,8 @@
 
 (s/defschema CreateCatalogueItemResponse
   {:success s/Bool
-   :id s/Int})
+   (s/optional-key :id) s/Int
+   (s/optional-key :errors) [s/Any]})
 
 (s/defschema ChangeFormCommand
   {:form (describe s/Int "new form id")})
@@ -98,10 +100,10 @@
 
     (POST "/create" []
       :summary "Create a new catalogue item"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (ok (catalogue/create-catalogue-item! command)))
+      (ok (catalogue/create-catalogue-item! command (getx-user-id))))
 
     (PUT "/edit" []
       :summary "Edit a catalogue item"

@@ -74,6 +74,7 @@
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
+                            :forbidden-organization "Organisaatio on kielletty tältä käyttäjältä."
                             :form-archived "Lomake on arkistoitu:"
                             :form-in-use "Lomake on käytössä:"
                             :license-archived "Lisenssi on arkistoitu:"

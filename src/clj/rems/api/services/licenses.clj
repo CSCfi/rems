@@ -1,6 +1,7 @@
 (ns rems.api.services.licenses
   "Serving licenses for API."
-  (:require [rems.common-util :refer [distinct-by]]
+  (:require [rems.api.services.util :as util]
+            [rems.common-util :refer [distinct-by]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]
@@ -10,19 +11,20 @@
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
 (defn create-license! [{:keys [licensetype organization localizations]} user-id]
-  (let [license (db/create-license! {:owneruserid user-id
-                                     :modifieruserid user-id
-                                     :organization (or organization "")
-                                     :type licensetype})
-        licid (:id license)]
-    (doseq [[langcode localization] localizations]
-      (db/create-license-localization! {:licid licid
-                                        :langcode (name langcode)
-                                        :title (:title localization)
-                                        :textcontent (:textcontent localization)
-                                        :attachmentId (:attachment-id localization)}))
-    {:success (not (nil? licid))
-     :id licid}))
+  (or (util/forbidden-organization? user-id organization)
+      (let [license (db/create-license! {:owneruserid user-id
+                                         :modifieruserid user-id
+                                         :organization (or organization "")
+                                         :type licensetype})
+            licid (:id license)]
+        (doseq [[langcode localization] localizations]
+          (db/create-license-localization! {:licid licid
+                                            :langcode (name langcode)
+                                            :title (:title localization)
+                                            :textcontent (:textcontent localization)
+                                            :attachmentId (:attachment-id localization)}))
+        {:success (not (nil? licid))
+         :id licid})))
 
 (defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
   (attachments/check-attachment-content-type content-type)

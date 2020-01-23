@@ -35,7 +35,8 @@
 
 (s/defschema CreateLicenseResponse
   {:success s/Bool
-   :id s/Int})
+   (s/optional-key :id) s/Int
+   (s/optional-key :errors) [s/Any]})
 
 (def licenses-api
   (context "/licenses" []
@@ -59,7 +60,7 @@
 
     (POST "/create" []
       :summary "Create license"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
       (ok (licenses/create-license! command (getx-user-id))))
