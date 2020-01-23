@@ -122,16 +122,21 @@
     (doseq [role roles]
       (roles/add-role! user role))))
 
+(defn- create-and-return-owner! []
+  (do (create-user! (get +fake-user-data+ "owner") :owner)
+      "owner"))
+
 (defn create-license! [{:keys [actor]
                         :license/keys [type title link organization text attachment-id]
                         :as command}]
-  (let [result (licenses/create-license! {:licensetype (name (or type :text))
+  (let [actor (or actor (create-and-return-owner!))
+        result (licenses/create-license! {:licensetype (name (or type :text))
                                           :organization (or organization "")
                                           :localizations
                                           (transpose-localizations {:title title
                                                                     :textcontent (merge link text)
                                                                     :attachment-id attachment-id})}
-                                         (or actor "owner"))]
+                                         actor)]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -155,7 +160,8 @@
 (defn create-form! [{:keys [actor]
                      :form/keys [organization title fields]
                      :as command}]
-  (let [result (form/create-form! (or actor "owner")
+  (let [actor (or actor (create-and-return-owner!))
+        result (form/create-form! actor
                                   {:form/organization (or organization "abc")
                                    :form/title (or title "")
                                    :form/fields (or fields [])})]
@@ -164,17 +170,19 @@
 
 (defn create-resource! [{:keys [actor organization resource-ext-id license-ids]
                          :as command}]
-  (let [result (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
+  (let [actor (or actor (create-and-return-owner!))
+        result (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
                                            :organization (or organization "abc")
                                            :licenses (or license-ids [])}
-                                          (or actor "owner"))]
+                                          actor)]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
 (defn create-workflow! [{:keys [actor organization title type handlers]
                          :as command}]
-  (let [result (workflow/create-workflow!
-                {:user-id (or actor "owner")
+  (let [actor (or actor (create-and-return-owner!))
+        result (workflow/create-workflow!
+                {:user-id actor
                  :organization (or organization "abc")
                  :title (or title "")
                  :type (or type :workflow/master)
@@ -187,7 +195,8 @@
 
 (defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization]
                                :as command}]
-  (let [localizations (into {}
+  (let [actor (or actor (create-and-return-owner!))
+        localizations (into {}
                             (for [lang (set (concat (keys title) (keys infourl)))]
                               [lang {:title (get title lang)
                                      :infourl (get infourl lang)}]))
@@ -197,7 +206,7 @@
                  :organization (or organization "")
                  :wfid (or workflow-id (create-workflow! {}))
                  :localizations (or localizations {})}
-                (or actor "owner"))]
+                actor)]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
