@@ -103,8 +103,10 @@ jobs:
       - run: lein uberjar
       - store_artifacts:
           path: target/uberjar/rems.jar
-      - run: docker build --pull --tag rems .
-        # TODO: push the docker image to a repository
+      - run: docker build --pull --tag docker-registry.rahti.csc.fi/rems/rems:circle --tag docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD) .
+      - run: docker login -p $rahtitoken -u unused docker-registry.rahti.csc.fi
+      - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle
+      - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD)
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
