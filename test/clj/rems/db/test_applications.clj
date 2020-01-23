@@ -20,8 +20,6 @@
   rollback-db-fixture
   test-data-fixture)
 
-
-
 (deftest test-event-serialization
   (testing "round trip serialization"
     (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)

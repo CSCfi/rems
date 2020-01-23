@@ -1,7 +1,8 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
-            [medley.core :refer [filter-vals find-first map-keys]]
+            [medley.core :refer [filter-vals map-keys]]
             [rems.api.schema :refer [FieldTemplate]]
+            [rems.common.form :refer [assign-field-ids]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -35,10 +36,6 @@
     (when row
       (parse-db-row row))))
 
-(comment
-  (db/get-form-template {:id 1})
-  (get-form-template 1))
-
 (defn- catalogue-items-for-form [id]
   (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
        (map #(select-keys % [:id :title :localizations]))))
@@ -52,33 +49,6 @@
 (defn form-editable [form-id]
   (or (form-in-use-error form-id)
       {:success true}))
-
-(defn- next-free-id [already-used-ids]
-  (find-first #(not (contains? (set already-used-ids) %))
-              (map #(str "fld" %) (iterate inc 1))))
-
-(deftest test-next-free-id
-  (is (= "fld1" (next-free-id [])))
-  (is (= "fld2" (next-free-id ["fld1"])))
-  (is (= "fld3" (next-free-id ["fld1" "fld2"])))
-  (is (= "fld2" (next-free-id ["fld1" "fld3"])))
-  (is (= "fld1" (next-free-id ["abc"]))))
-
-(defn- generate-field-ids [fields]
-  (let [generated-ids (map #(str "fld" %) (iterate inc 1))
-        default-ids (for [id (->> generated-ids
-                                  (remove (set (map :field/id fields))))]
-                      {:field/id id})]
-    (mapv merge default-ids fields)))
-
-(deftest test-generate-field-ids
-  (is (= [] (generate-field-ids [])))
-  (is (= [{:field/id "fld1"} {:field/id "fld2"}] (generate-field-ids [{} {}])))
-  (is (= [{:field/id "abc"}] (generate-field-ids [{:field/id "abc"}])))
-  (is (= [{:field/id "abc"} {:field/id "fld2"}] (generate-field-ids [{:field/id "abc"} {}])))
-  (is (= [{:field/id "fld2"} {:field/id "fld3"}] (generate-field-ids [{:field/id "fld2"} {}])))
-  (is (= [{:field/id "fld2"} {:field/id "fld1"}] (generate-field-ids [{} {:field/id "fld1"}])))
-  (is (= [{:field/id "fld2"} {:field/id "fld4"} {:field/id "fld3"}] (generate-field-ids [{:field/id "fld2"} {} {:field/id "fld3"}]))))
 
 (defn validate-given-ids [fields]
   (let [fields-with-given-ids (filter #(contains? % :field/id) fields)
@@ -119,7 +89,7 @@
 (defn- serialize-fields [form]
   (->> (:form/fields form)
        (validate-given-ids)
-       (generate-field-ids)
+       (assign-field-ids)
        (validate-fields)
        (json/generate-string)))
 

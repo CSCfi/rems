@@ -904,23 +904,23 @@
                             :application/permissions #{:application.command/accept-licenses}
                             :application/state :application.state/draft
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id 1
+                            :application/form {:form/fields [{:field/id "fld1"
                                                               :field/type :text
                                                               :field/title {:en "Field 1"}
                                                               :field/placeholder {:en "placeholder 1"}}
-                                                             {:field/id 2
+                                                             {:field/id "fld2"
                                                               :field/type :label
                                                               :title "Please input your wishes below."}
-                                                             {:field/id 3
+                                                             {:field/id "fld3"
                                                               :field/type :texta
                                                               :field/optional true
                                                               :field/title {:en "Field 2"}
                                                               :field/placeholder {:en "placeholder 2"}}
-                                                             {:field/id 4
+                                                             {:field/id "fld4"
                                                               :field/type :unsupported
                                                               :field/title {:en "Field 3"}
                                                               :field/placeholder {:en "placeholder 3"}}
-                                                             {:field/id 5
+                                                             {:field/id "fld5"
                                                               :field/type :date
                                                               :field/title {:en "Field 4"}}]}
                             :application/licenses [{:license/id 4
@@ -931,7 +931,7 @@
                                                     :license/type :link
                                                     :license/title {:en "Link to license"}
                                                     :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
-              :edit-application {:field-values {1 "abc"}
+              :edit-application {:field-values {"fld1" "abc"}
                                  :show-diff {}
                                  :validation-errors nil
                                  :accepted-licenses {"applicant" #{5}}}
@@ -941,7 +941,7 @@
              {:application {:application/id 17
                             :application/state :application.state/submitted
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id 1
+                            :application/form {:form/fields [{:field/id "fld1"
                                                               :field/type :text
                                                               :field/title {:en "Field 1"}
                                                               :field/placeholder {:en "placeholder 1"}}]}
@@ -949,7 +949,7 @@
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
                                                     :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 "abc"}
+              :edit-application {:field-values {"fld1" "abc"}
                                  :accepted-licenses #{4}}}])
    (example "application, approved"
             [render-application
@@ -959,7 +959,7 @@
                                                     :email "email@example.com"
                                                     :additional "additional field"}
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id 1
+                            :application/form {:form/fields [{:field/id "fld1"
                                                               :field/type :text
                                                               :field/title {:en "Field 1"}
                                                               :field/placeholder {:en "placeholder 1"}}]}
@@ -967,7 +967,7 @@
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
                                                     :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 "abc"}
+              :edit-application {:field-values {"fld1" "abc"}
                                  :accepted-licenses #{4}}}])
 
    (component-info application-copy-notice)

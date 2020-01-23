@@ -9,7 +9,7 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn id-to-name [id]
-  (str "field" id))
+  (str "field-" id))
 
 (defn- diff [value previous-value]
   (let [dmp (js/diff_match_patch.)
