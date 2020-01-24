@@ -1,5 +1,6 @@
 (ns rems.api.services.catalogue
-  (:require [rems.common-util :refer [index-by]]
+  (:require [rems.api.services.util :as util]
+            [rems.common-util :refer [index-by]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
@@ -16,21 +17,22 @@
      :licenses (licenses/get-licenses {:wfid wfid
                                        :items [id]})}))
 
-(defn create-catalogue-item! [{:keys [localizations] :as command}]
-  ;; TODO make :organization unoptional?
-  (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
-                                                  (select-keys command [:form :resid :wfid :enabled :archived :organization]))))
-        loc-ids
-        (doall
-         (for [[langcode localization] localizations]
-           (:id (db/upsert-catalogue-item-localization! {:id id
-                                                         :langcode (name langcode)
-                                                         :title (:title localization)
-                                                         :infourl (:infourl localization)}))))]
-    ;; Reset cache so that next call to get localizations will get these ones.
-    (catalogue/reset-cache!)
-    {:success (not (some nil? (cons id loc-ids)))
-     :id id}))
+(defn create-catalogue-item! [{:keys [localizations organization] :as command} user-id]
+  (or (util/forbidden-organization? user-id organization)
+      ;; TODO make :organization unoptional?
+      (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
+                                                      (select-keys command [:form :resid :wfid :enabled :archived :organization]))))
+            loc-ids
+            (doall
+             (for [[langcode localization] localizations]
+               (:id (db/upsert-catalogue-item-localization! {:id id
+                                                             :langcode (name langcode)
+                                                             :title (:title localization)
+                                                             :infourl (:infourl localization)}))))]
+        ;; Reset cache so that next call to get localizations will get these ones.
+        (catalogue/reset-cache!)
+        {:success (not (some nil? (cons id loc-ids)))
+         :id id})))
 
 (defn edit-catalogue-item! [{:keys [id localizations] :as command}]
   (doseq [[langcode localization] localizations]

@@ -22,7 +22,8 @@
 
 (s/defschema CreateFormResponse
   {:success s/Bool
-   :id s/Int})
+   (s/optional-key :id) s/Int
+   (s/optional-key :errors) [s/Any]})
 
 (def forms-api
   (context "/forms" []
@@ -39,7 +40,7 @@
 
     (POST "/create" []
       :summary "Create form"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command CreateFormCommand]
       :return CreateFormResponse
       (ok (form/create-form! (getx-user-id) command)))

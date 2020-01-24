@@ -73,6 +73,7 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Resource already exists in the organization."
+                            :forbidden-organization "Organization is forbidden from the current user."
                             :form-archived "Form has been archived:"
                             :form-in-use "Form in use:"
                             :license-archived "License has been archived:"

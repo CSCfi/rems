@@ -23,36 +23,51 @@
                    read-body)
           item (first data)]
       (is (str/starts-with? (:resid item) "urn:")))
-    (let [data (-> (request :post "/api/catalogue-items/create")
-                   (authenticate api-key "owner")
-                   (json-body {:form form-id
-                               :resid res-id
-                               :wfid wf-id
-                               :organization "orgg"
-                               :archived true
-                               :localizations {}})
-                   handler
-                   read-body)
-          id (:id data)]
-      (is (:success data))
-      (is (number? id))
-      (let [data (-> (request :get (str "/api/catalogue-items/" id))
-                     (authenticate api-key user-id)
-                     handler
-                     read-body)]
-        (is (= {:id id
-                :workflow-name "workflow name"
-                :form-name "form name"
-                :resource-name "resource ext id"
-                :organization "orgg"
-                :localizations {}}
-               (select-keys data [:id :organization :workflow-name :form-name :resource-name :localizations])))))
-    (testing "not found"
-      (let [response (-> (request :get "/api/catalogue-items/777777777")
-                         (authenticate api-key user-id)
-                         handler)]
-        (is (response-is-not-found? response))
-        (is (= "application/json" (get-in response [:headers "Content-Type"])))))))
+    (let [create-catalogue-item (fn [user-id organization]
+                                  (-> (request :post "/api/catalogue-items/create")
+                                      (authenticate api-key user-id)
+                                      (json-body {:form form-id
+                                                  :resid res-id
+                                                  :wfid wf-id
+                                                  :organization organization
+                                                  :archived true
+                                                  :localizations {}})
+                                      handler
+                                      read-body))]
+        (testing "create as owner"
+          (let [data (create-catalogue-item "owner" "test-organization")
+                id (:id data)]
+            (is (:success data))
+            (is (number? id))
+            (testing "and fetch"
+              (let [data (-> (request :get (str "/api/catalogue-items/" id))
+                             (authenticate api-key user-id)
+                             handler
+                             read-body)]
+                (is (= {:id id
+                        :workflow-name "workflow name"
+                        :form-name "form name"
+                        :resource-name "resource ext id"
+                        :organization "test-organization"
+                        :localizations {}}
+                       (select-keys data [:id :organization :workflow-name :form-name :resource-name :localizations])))))
+            (testing "and fetch non-existing item"
+              (let [response (-> (request :get "/api/catalogue-items/777777777")
+                                 (authenticate api-key user-id)
+                                 handler)]
+                (is (response-is-not-found? response))
+                (is (= "application/json" (get-in response [:headers "Content-Type"])))))))
+
+        (testing "create as organization owner"
+          (testing "with correct organization"
+            (let [data (create-catalogue-item "organization-owner" "organization")
+                  id (:id data)]
+              (is (:success data))
+              (is (number? id))))
+
+          (testing "with incorrect organization"
+            (let [data (create-catalogue-item "organization-owner" "not organization")]
+              (is (not (:success data)))))))))
 
 (deftest catalogue-items-edit-test
   (let [api-key "42"

@@ -91,46 +91,50 @@
             (is (contains? app-ids enabled-id))
             (is (not (contains? app-ids disabled-id)))
             (is (contains? app-ids archived-id))))))
-    (testing "create"
-      (let [licid 1
-            resid "RESOURCE-API-TEST"
-            result (-> (request :post "/api/resources/create")
-                       (authenticate api-key user-id)
-                       (json-body {:resid resid
-                                   :organization "TEST-ORGANIZATION"
-                                   :licenses [licid]})
-                       handler
-                       read-ok-body)
-            id (:id result)]
-        (is (true? (:success result)))
-        (is id)
-        (testing "and fetch"
-          (let [resource (-> (request :get (str "/api/resources/" id))
-                             (authenticate api-key user-id)
-                             handler
-                             assert-response-is-ok
-                             read-body)]
-            (is resource)
-            (is (= [licid] (map :id (:licenses resource))))))
-        (testing "duplicate resource ID is not allowed within one organization"
-          (let [result (-> (request :post "/api/resources/create")
-                           (authenticate api-key user-id)
-                           (json-body {:resid resid
-                                       :organization "TEST-ORGANIZATION"
-                                       :licenses [licid]})
-                           handler
-                           read-ok-body)]
-            (is (false? (:success result)))
-            (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result)))))
-        (testing "duplicate resource ID is allowed between organizations"
-          (let [result (-> (request :post "/api/resources/create")
-                           (authenticate api-key user-id)
-                           (json-body {:resid resid
-                                       :organization "TEST-ORGANIZATION2"
-                                       :licenses [licid]})
-                           handler
-                           read-ok-body)]
-            (is (true? (:success result)))))))))
+    (let [licid 1
+          resid "resource-api-test"
+          create-resource (fn [user-id organization]
+                            (-> (request :post "/api/resources/create")
+                                (authenticate api-key user-id)
+                                (json-body {:resid resid
+                                            :organization organization
+                                            :licenses [licid]})
+                                handler
+                                read-ok-body))]
+      (testing "create as owner"
+        (let [result (create-resource "owner" "test-organization")
+              id (:id result)]
+          (is (true? (:success result)))
+          (is id)
+
+          (testing "and fetch"
+            (let [resource (-> (request :get (str "/api/resources/" id))
+                               (authenticate api-key user-id)
+                               handler
+                               assert-response-is-ok
+                               read-body)]
+              (is resource)
+              (is (= [licid] (map :id (:licenses resource))))))
+
+          (testing "duplicate resource ID is not allowed within one organization"
+            (let [result (create-resource "owner" "test-organization")]
+              (is (false? (:success result)))
+              (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result)))))
+
+          (testing "duplicate resource ID is allowed between organizations"
+            (let [result (create-resource "owner" "test-organization2")]
+              (is (true? (:success result)))))))
+
+      (testing "create as organization owner"
+        (testing "with correct organization"
+          (let [result (create-resource "organization-owner" "organization")
+                id (:id result)]
+            (is (true? (:success result)))
+            (is id)))
+
+        (testing "with incorrect organization"
+          (let [result (create-resource "organization-owner" "not organization")]
+            (is (false? (:success result)))))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"
