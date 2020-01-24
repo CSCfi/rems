@@ -269,7 +269,7 @@
 
 (defn autoscroll []
   (when-let [edit-field (first-partially-visible-edit-field)]
-    (let [id (.-id edit-field)
+    (let [id (last (str/split (.-id edit-field) #"-"))
           preview-frame (.querySelector js/document "#preview-form .collapse-content")
           preview-field (-> js/document
                             (.getElementById (str "container-field-" id)))
