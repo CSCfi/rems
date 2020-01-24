@@ -26,6 +26,7 @@
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
             [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
+            [rems.common.form :refer [field-visible?]]
             [rems.common-util :refer [index-by]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -349,7 +350,8 @@
       :always
       [:div
        (into [:div]
-             (for [fld (get-in application [:application/form :form/fields])]
+             (for [fld (get-in application [:application/form :form/fields])
+                   :when (field-visible? fld field-values)]
                [fields/field (assoc fld
                                     :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
