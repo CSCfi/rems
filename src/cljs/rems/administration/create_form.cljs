@@ -432,7 +432,7 @@
         visibility-type (:visibility/type visibility)
         visibility-field (:visibility/field visibility)
         visibility-value (:visibility/value visibility)]
-    [:<>
+    [:div {:class (when (= :only-if visibility-type) "form-field-visibility")}
      [:div.form-group.field {:id (str "container-field" field-index)}
       [:label {:for id-type} label-type]
       " "
