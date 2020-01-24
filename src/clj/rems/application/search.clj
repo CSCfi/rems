@@ -55,7 +55,9 @@
    :title (:application/description app)
    :resource (->> (:application/resources app)
                   (mapcat (fn [resource]
-                            (vals (:catalogue-item/title resource))))
+                            (remove empty?
+                                    (conj (vals (:catalogue-item/title resource))
+                                          (:resource/ext-id resource)))))
                   (str/join " "))
    :state (->> (:languages env)
                (map (fn [lang]

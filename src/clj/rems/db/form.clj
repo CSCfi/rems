@@ -1,12 +1,14 @@
 (ns rems.db.form
   (:require [clojure.test :refer :all]
-            [medley.core :refer [map-keys]]
+            [medley.core :refer [filter-vals map-keys]]
             [rems.api.schema :refer [FieldTemplate]]
+            [rems.common.form :refer [assign-field-ids]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import rems.InvalidRequestException))
 
 (def ^:private coerce-fields
   (coerce/coercer! [FieldTemplate] coerce/string-coercion-matcher))
@@ -48,20 +50,38 @@
   (or (form-in-use-error form-id)
       {:success true}))
 
-;; TODO: is this really good or should we rather use what client generates?
-(defn- generate-field-ids
-  "Generate ids for fields.
+(defn validate-given-ids [fields]
+  (let [fields-with-given-ids (filter #(contains? % :field/id) fields)
+        id-counts (frequencies (map :field/id fields-with-given-ids))
+        duplicates (keys (filter-vals #(< 1 %) id-counts))]
+    (when (some empty? (map :field/id fields-with-given-ids))
+      (throw (InvalidRequestException. "")))
+    (when (seq duplicates)
+      (throw (InvalidRequestException. (pr-str duplicates))))
+    fields))
 
-  Fields in the UI are 0-based while creating and we generate them
-  in `generate-field-ids` as 1-based. If one field refers to another
-  then we must fix the reference."
-  [fields]
-  (map-indexed (fn [index field]
-                 (let [new-field (assoc field :field/id (inc index))]
-                   (if (get-in new-field [:field/visibility :visibility/field :field/id])
-                     (update-in new-field [:field/visibility :visibility/field :field/id] inc)
-                     new-field)))
-               fields))
+(deftest test-validate-given-ids
+  (testing "when no fields or ids are given"
+    (is (= [] (validate-given-ids [])))
+    (is (= [{}] (validate-given-ids [{}])))
+    (is (= [{} {}] (validate-given-ids [{} {}])))
+    (is (= [{:foo 42} {:bar 42}] (validate-given-ids [{:foo 42} {:bar 42}]))))
+  (testing "empty id is not valid"
+    (is (thrown? InvalidRequestException
+                 (validate-given-ids [{:field/id ""}])))
+    (is (thrown? InvalidRequestException
+                 (validate-given-ids [{:field/id nil}]))))
+  (testing "when distinct ids are given"
+    (is (= [{:field/id "abc"}] (validate-given-ids [{:field/id "abc"}])))
+    (is (= [{:field/id "abc"}
+            {:field/id "xyz" :foo 42}]
+           (validate-given-ids [{:field/id "abc"}
+                                {:field/id "xyz" :foo 42}]))))
+  (testing "when duplicates are given"
+    (is (thrown? InvalidRequestException
+                 (validate-given-ids [{:field/id "abc"}
+                                      {:field/id "xyz"}
+                                      {:field/id "abc"}])))))
 
 (defn- normalize-field-values [field]
   (let [visibility-type (get-in field [:field/visibility :visibility/type] :always)]
@@ -77,8 +97,8 @@
 
 (defn- serialize-fields [form]
   (->> (:form/fields form)
-       (generate-field-ids)
-       (normalize-fields-values)
+       (validate-given-ids)
+       (assign-field-ids)
        (validate-fields)
        (json/generate-string)))
 

@@ -34,11 +34,19 @@
    {:modules [(JodaModule.)]
     :decode-key-fn str->keyword-or-number}))
 
+(def mapper*
+  (j/object-mapper
+   {:modules [(JodaModule.)]
+    :decode-key-fn keyword}))
+
 (defn generate-string [obj]
   (j/write-value-as-string obj mapper))
 
 (defn parse-string [json]
   (j/read-value json mapper))
+
+(defn parse-string* [json]
+  (j/read-value json mapper*))
 
 (deftest test-muuntaja
   (let [format "application/json"]

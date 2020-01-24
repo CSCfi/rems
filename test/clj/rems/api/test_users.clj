@@ -37,7 +37,23 @@
           assert-response-is-ok)
       (is (= {:userid "david"
               :email "new email"
-              :name "new name"} (users/get-user userid))))))
+              :name "new name"} (users/get-user userid)))))
+
+  (testing "create user with organization, without email"
+    (let [userid "user-with-org"]
+      (is (= nil (:name (users/get-user userid))))
+      (-> (request :post (str "/api/users/create"))
+          (json-body {:userid userid
+                      :name "User Org"
+                      :email nil
+                      :organization "org"})
+          (authenticate "42" "owner")
+          handler
+          assert-response-is-ok)
+      (is (= {:userid userid
+              :email nil
+              :name "User Org"
+              :organization "org"} (users/get-user userid))))))
 
 (deftest users-api-security-test
   (testing "without authentication"

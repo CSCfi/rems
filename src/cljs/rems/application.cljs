@@ -553,7 +553,7 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        other-attributes (dissoc attributes :name :userid :email)
+        other-attributes (dissoc attributes :name :userid :email :organization)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))]
@@ -570,7 +570,9 @@
                        (when user-id
                          [info-field (text :t.applicant-info/username) user-id {:inline? true}])
                        (when-let [mail (:email attributes)]
-                         [info-field (text :t.applicant-info/email) mail {:inline? true}])]
+                         [info-field (text :t.applicant-info/email) mail {:inline? true}])
+                       (when-let [organization (:organization attributes)]
+                         [info-field (text :t.applicant-info/organization) organization {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
       :footer (let [element-id (str element-id "-remove-member")]
@@ -902,23 +904,23 @@
                             :application/permissions #{:application.command/accept-licenses}
                             :application/state :application.state/draft
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id 1
+                            :application/form {:form/fields [{:field/id "fld1"
                                                               :field/type :text
                                                               :field/title {:en "Field 1"}
                                                               :field/placeholder {:en "placeholder 1"}}
-                                                             {:field/id 2
+                                                             {:field/id "fld2"
                                                               :field/type :label
                                                               :title "Please input your wishes below."}
-                                                             {:field/id 3
+                                                             {:field/id "fld3"
                                                               :field/type :texta
                                                               :field/optional true
                                                               :field/title {:en "Field 2"}
                                                               :field/placeholder {:en "placeholder 2"}}
-                                                             {:field/id 4
+                                                             {:field/id "fld4"
                                                               :field/type :unsupported
                                                               :field/title {:en "Field 3"}
                                                               :field/placeholder {:en "placeholder 3"}}
-                                                             {:field/id 5
+                                                             {:field/id "fld5"
                                                               :field/type :date
                                                               :field/title {:en "Field 4"}}]}
                             :application/licenses [{:license/id 4
@@ -929,7 +931,7 @@
                                                     :license/type :link
                                                     :license/title {:en "Link to license"}
                                                     :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
-              :edit-application {:field-values {1 "abc"}
+              :edit-application {:field-values {"fld1" "abc"}
                                  :show-diff {}
                                  :validation-errors nil
                                  :accepted-licenses {"applicant" #{5}}}
@@ -939,7 +941,7 @@
              {:application {:application/id 17
                             :application/state :application.state/submitted
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id 1
+                            :application/form {:form/fields [{:field/id "fld1"
                                                               :field/type :text
                                                               :field/title {:en "Field 1"}
                                                               :field/placeholder {:en "placeholder 1"}}]}
@@ -947,7 +949,7 @@
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
                                                     :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 "abc"}
+              :edit-application {:field-values {"fld1" "abc"}
                                  :accepted-licenses #{4}}}])
    (example "application, approved"
             [render-application
@@ -957,7 +959,7 @@
                                                     :email "email@example.com"
                                                     :additional "additional field"}
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id 1
+                            :application/form {:form/fields [{:field/id "fld1"
                                                               :field/type :text
                                                               :field/title {:en "Field 1"}
                                                               :field/placeholder {:en "placeholder 1"}}]}
@@ -965,7 +967,7 @@
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
                                                     :license/text {:en lipsum}}]}
-              :edit-application {:field-values {1 "abc"}
+              :edit-application {:field-values {"fld1" "abc"}
                                  :accepted-licenses #{4}}}])
 
    (component-info application-copy-notice)

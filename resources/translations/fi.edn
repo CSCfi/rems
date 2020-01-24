@@ -87,6 +87,7 @@
                    :forms "Lomakkeet"
                    :license "Lisenssi"
                    :license-field "Lisenssi \"%1\""
+                   :license-name "Lisenssin nimi"
                    :licenses "Lisenssit"
                    :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
@@ -111,6 +112,7 @@
                    :invited-member "Kutsuttu jäsen"
                    :member "Jäsen"
                    :name "Nimi"
+                   :organization "Organisaatio"
                    :username "Käyttäjätunnus"}
   :applications {:all-applications "Kaikki hakemukset"
                  :applicant "Hakija"

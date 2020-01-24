@@ -50,33 +50,33 @@
                                  :field/value ""}]))))
 
   (testing "error: field required"
-    (is (= [{:type :t.form.validation/required :field-id 2}
-            {:type :t.form.validation/required :field-id 3}
-            {:type :t.form.validation/required :field-id 4}]
-           (validate-fields [{:field/id 1
+    (is (= [{:type :t.form.validation/required :field-id "2"}
+            {:type :t.form.validation/required :field-id "3"}
+            {:type :t.form.validation/required :field-id "4"}]
+           (validate-fields [{:field/id "1"
                               :field/optional true
                               :field/visible true
                               :field/value nil}
-                             {:field/id 2
+                             {:field/id "2"
                               :field/optional false
                               :field/visible true
                               :field/value nil}
-                             {:field/id 3
+                             {:field/id "3"
                               :field/optional false
                               :field/visible true
                               :field/value ""}
-                             {:field/id 4
+                             {:field/id "4"
                               :field/optional false
                               :field/visible true
                               :field/value "    "}]))))
 
   (testing "error: field input too long"
-    (is (= [{:type :t.form.validation/toolong :field-id 2}]
-           (validate-fields [{:field/id 1
+    (is (= [{:type :t.form.validation/toolong :field-id "2"}]
+           (validate-fields [{:field/id "1"
                               :field/max-length 5
                               :field/visible true
                               :field/value "abcde"}
-                             {:field/id 2
+                             {:field/id "2"
                               :field/max-length 5
                               :field/visible true
                               :field/value "abcdef"}]))))
@@ -85,30 +85,30 @@
 
 
   (testing "error: field input invalid email address"
-    (is (= [{:type :t.form.validation/required :field-id 1}
-            {:type :t.form.validation/invalid-email :field-id 2}
-            {:type :t.form.validation/invalid-email :field-id 5}]
-           (validate-fields [{:field/id 1
+    (is (= [{:type :t.form.validation/required :field-id "1"}
+            {:type :t.form.validation/invalid-email :field-id "2"}
+            {:type :t.form.validation/invalid-email :field-id "5"}]
+           (validate-fields [{:field/id "1"
                               :field/type :email
                               :field/optional false
                               :field/visible true
                               :field/value ""}
-                             {:field/id 2
+                             {:field/id "2"
                               :field/type :email
                               :field/optional false
                               :field/visible true
                               :field/value "invalid.email"}
-                             {:field/id 3
+                             {:field/id "3"
                               :field/type :email
                               :field/optional false
                               :field/visible true
                               :field/value "valid.email@example.com"}
-                             {:field/id 4
+                             {:field/id "4"
                               :field/type :email
                               :field/optional true
                               :field/visible true
                               :field/value ""}
-                             {:field/id 5
+                             {:field/id "5"
                               :field/type :email
                               :field/optional true
                               :field/visible true

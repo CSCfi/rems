@@ -323,7 +323,7 @@
                         (on-change))}]]))
 
 (defn- table-header [table]
-  (let [sorting @(rf/subscribe [::sorting (:id table)])]
+  (let [sorting @(rf/subscribe [::sorting table])]
     (into [:tr (when (:selectable? table) [selection-toggle-all table])]
           (for [column (:columns table)]
             [:th

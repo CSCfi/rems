@@ -66,15 +66,37 @@
 
         (testing "invalid create"
           ;; TODO: silence the logging for this expected error
-          (let [command-with-invalid-max-length (assoc-in command [:form/fields 0 :field/max-length] -1)
-                response (-> (request :post "/api/forms/create")
-                             (authenticate api-key user-id)
-                             (json-body command-with-invalid-max-length)
-                             handler)]
-            (is (= 400 (:status response))
-                "can't send negative max length")))
+          (testing "negative max length"
+            (let [command-with-invalid-max-length (assoc-in command [:form/fields 0 :field/max-length] -1)
+                  response (-> (request :post "/api/forms/create")
+                               (authenticate api-key user-id)
+                               (json-body command-with-invalid-max-length)
+                               handler)]
+              (is (= 400 (:status response)))))
+          (testing "duplicate field ids"
+            (let [command-with-duplicated-field-ids {:form/organization "abc"
+                                                     :form/title (str "form title " (UUID/randomUUID))
+                                                     :form/fields [{:field/id "abc"
+                                                                    :field/title {:en "en title"
+                                                                                  :fi "fi title"}
+                                                                    :field/optional true
+                                                                    :field/type :text
+                                                                    :field/placeholder {:en "en placeholder"
+                                                                                        :fi "fi placeholder"}}
+                                                                   {:field/id "abc"
+                                                                    :field/title {:en "en title"
+                                                                                  :fi "fi title"}
+                                                                    :field/optional true
+                                                                    :field/type :text
+                                                                    :field/placeholder {:en "en placeholder"
+                                                                                        :fi "fi placeholder"}}]}
+                  response (-> (request :post "/api/forms/create")
+                               (authenticate api-key user-id)
+                               (json-body command-with-duplicated-field-ids)
+                               handler)]
+              (is (= 400 (:status response))))))
 
-        (testing "valid create"
+        (testing "valid create without field id"
           (let [id (-> (request :post "/api/forms/create")
                        (authenticate api-key user-id)
                        (json-body command)
@@ -91,7 +113,28 @@
                   (is (= (select-keys command [:form/organization :form/title])
                          (select-keys form-template [:form/organization :form/title])))
                   (is (= (:form/fields command)
-                         (mapv fixup-field-to-match-command (:form/fields form-template)))))))))))))
+                         (mapv fixup-field-to-match-command (:form/fields form-template)))))))))
+        (testing "valid create with given field id"
+          (let [command-with-given-field-id (assoc-in command [:form/fields 0 :field/id] "abc")
+                id (-> (request :post "/api/forms/create")
+                       (authenticate api-key user-id)
+                       (json-body command-with-given-field-id)
+                       handler
+                       read-ok-body
+                       :id)]
+            (is id)
+            (testing "and fetch"
+              (let [form-template (-> (request :get (str "/api/forms/" id))
+                                      (authenticate api-key user-id)
+                                      handler
+                                      read-ok-body)]
+                (testing "result matches input"
+                  (is (= (select-keys command-with-given-field-id [:form/organization :form/title])
+                         (select-keys form-template [:form/organization :form/title])))
+                  (is (= (mapv #(dissoc % :field/id) (:form/fields command-with-given-field-id))
+                         (mapv fixup-field-to-match-command (:form/fields form-template))))
+                  (is (= (get-in command-with-given-field-id [:form/fields 0 :field/id]) ; field/id "not" in previous comparison
+                         (get-in form-template [:form/fields 0 :field/id]))))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"

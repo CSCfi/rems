@@ -12,6 +12,7 @@
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
+(def FieldId s/Str)
 
 (s/defschema CommandInternal
   {:type s/Keyword
@@ -90,7 +91,7 @@
 (s/defschema SaveDraftCommand
   (assoc CommandBase
          ;; {s/Int s/Str} is what we want, but that isn't nicely representable as JSON
-         :field-values [{:field s/Int
+         :field-values [{:field FieldId
                          :value s/Str}]))
 (s/defschema SubmitCommand
   CommandBase)

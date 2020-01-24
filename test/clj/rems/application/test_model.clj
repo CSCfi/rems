@@ -20,14 +20,14 @@
   {40 {:form/id 40
        :form/organization "org"
        :form/title "form title"
-       :form/fields [{:field/id 41
+       :form/fields [{:field/id "41"
                       :field/title {:en "en title" :fi "fi title"}
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                       :field/optional false
                       :field/options []
                       :field/max-length 100
                       :field/type :description}
-                     {:field/id 42
+                     {:field/id "42"
                       :field/title {:en "en title" :fi "fi title"}
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                       :field/optional false
@@ -101,6 +101,7 @@
 
 (def ^:private get-license
   {30 {:id 30
+       :organization "org"
        :licensetype "link"
        :localizations {:en {:title "en title"
                             :textcontent "http://en-license-link"}
@@ -109,6 +110,7 @@
        :enabled true
        :archived false}
    31 {:id 31
+       :organization "org"
        :licensetype "text"
        :localizations {:en {:title "en title"
                             :textcontent "en license text"}
@@ -117,6 +119,7 @@
        :enabled true
        :archived false}
    32 {:id 32
+       :organization "org"
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -127,6 +130,7 @@
        :enabled true
        :archived false}
    33 {:id 33
+       :organization "org"
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -137,6 +141,7 @@
        :enabled true
        :archived false}
    34 {:id 34
+       :organization "org"
        :licensetype "attachment"
        :localizations {:en {:title "en title"
                             :textcontent "en filename"
@@ -425,15 +430,15 @@
                   :event/time (DateTime. 2000)
                   :event/actor "applicant"
                   :application/id 1
-                  :application/field-values {41 "foo"
-                                             42 "bar"}})
+                  :application/field-values {"41" "foo"
+                                             "42" "bar"}})
 
 (def saved-application (merge created-application
                               {:application/modified (DateTime. 2000)
                                :application/last-activity (DateTime. 2000)
                                :application/events [created-event saved-event]
                                :application/accepted-licenses {}
-                               :rems.application.model/draft-answers {41 "foo", 42 "bar"}}))
+                               :rems.application.model/draft-answers {"41" "foo", "42" "bar"}}))
 
 (deftest test-application-view-saved
   (is (= saved-application (recreate saved-application))))
@@ -465,7 +470,7 @@
                                        :application/first-submitted (DateTime. 3000)
                                        :application/state :application.state/submitted
                                        :application/todo :new-application
-                                       :rems.application.model/submitted-answers {41 "foo" 42 "bar"}
+                                       :rems.application.model/submitted-answers {"41" "foo" "42" "bar"}
                                        :rems.application.model/previous-submitted-answers nil})))
 
 (deftest test-application-view-submitted
@@ -534,7 +539,7 @@
                                        :application/events events
                                        :application/copied-from {:application/id 42
                                                                  :application/external-id "2019/42"}
-                                       :rems.application.model/submitted-answers {41 "foo", 42 "bar"}})]
+                                       :rems.application.model/submitted-answers {"41" "foo", "42" "bar"}})]
       (is (= expected-application (recreate expected-application)))))
 
   (testing "copied to"
@@ -574,7 +579,7 @@
                                        :application/events events
                                        :application/state :application.state/returned
                                        :application/todo nil
-                                       :rems.application.model/draft-answers {41 "foo" 42 "bar"}})]
+                                       :rems.application.model/draft-answers {"41" "foo" "42" "bar"}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> draft saved x2"
@@ -583,20 +588,20 @@
                            :event/actor "applicant"
                            :application/id 1
                            ;; non-submitted versions should not show up as the previous value
-                           :application/field-values {41 "intermediate draft"
-                                                      42 "intermediate draft"}}
+                           :application/field-values {"41" "intermediate draft"
+                                                      "42" "intermediate draft"}}
               new-event-2 {:event/type :application.event/draft-saved
                            :event/time (DateTime. 6000)
                            :event/actor "applicant"
                            :application/id 1
-                           :application/field-values {41 "new foo"
-                                                      42 "new bar"}}
+                           :application/field-values {"41" "new foo"
+                                                      "42" "new bar"}}
               events (conj events new-event-1 new-event-2)
               expected-application (deep-merge expected-application
                                                {:application/modified (DateTime. 6000)
                                                 :application/last-activity (DateTime. 6000)
                                                 :application/events events
-                                                :rems.application.model/draft-answers {41 "new foo" 42 "new bar"}})]
+                                                :rems.application.model/draft-answers {"41" "new foo" "42" "new bar"}})]
           (is (= expected-application (recreate expected-application)))
 
           (testing "> resubmitted"
@@ -611,8 +616,8 @@
                                                    :application/events events
                                                    :application/state :application.state/submitted
                                                    :application/todo :resubmitted-application
-                                                   :rems.application.model/submitted-answers {41 "new foo" 42 "new bar"}
-                                                   :rems.application.model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
+                                                   :rems.application.model/submitted-answers {"41" "new foo" "42" "new bar"}
+                                                   :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar"}}))]
               (is (= expected-application (recreate expected-application)))))))
 
       (testing "> resubmitted (no draft saved)"
@@ -629,8 +634,8 @@
                                                :application/todo :resubmitted-application
                                                ;; when there was no draft-saved event, the current and
                                                ;; previous submitted answers must be the same
-                                               :rems.application.model/submitted-answers {41 "foo" 42 "bar"}
-                                               :rems.application.model/previous-submitted-answers {41 "foo" 42 "bar"}}))]
+                                               :rems.application.model/submitted-answers {"41" "foo" "42" "bar"}
+                                               :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar"}}))]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-resources-changed
@@ -1014,7 +1019,7 @@
                                 :application/id 1
                                 :event/time (DateTime. 2000)
                                 :event/actor "applicant"
-                                :application/field-values {41 "foo" 42 "bar"}
+                                :application/field-values {"41" "foo" "42" "bar"}
                                 :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
                                {:event/type :application.event/licenses-accepted
                                 :application/id 1
@@ -1038,7 +1043,7 @@
           :application/description "foo"
           :application/form {:form/id 40
                              :form/title "form title"
-                             :form/fields [{:field/id 41
+                             :form/fields [{:field/id "41"
                                             :field/value "foo"
                                             :field/type :description
                                             :field/title {:en "en title" :fi "fi title"}
@@ -1047,7 +1052,7 @@
                                             :field/options []
                                             :field/max-length 100
                                             :field/visible true}
-                                           {:field/id 42
+                                           {:field/id "42"
                                             :field/value "bar"
                                             :field/type :text
                                             :field/title {:en "en title" :fi "fi title"}
@@ -1158,23 +1163,23 @@
 
 (deftest test-enrich-answers
   (testing "draft"
-    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "a"}
-                                             {:field/id 2 :field/value "b"}]}}
-           (model/enrich-answers {:rems.application.model/draft-answers {1 "a" 2 "b"}}))))
+    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "a"}
+                                             {:field/id "2" :field/value "b"}]}}
+           (model/enrich-answers {:rems.application.model/draft-answers {"1" "a" "2" "b"}}))))
   (testing "submitted"
-    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "a"}
-                                             {:field/id 2 :field/value "b"}]}}
-           (model/enrich-answers {:rems.application.model/submitted-answers {1 "a" 2 "b"}}))))
+    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "a"}
+                                             {:field/id "2" :field/value "b"}]}}
+           (model/enrich-answers {:rems.application.model/submitted-answers {"1" "a" "2" "b"}}))))
   (testing "returned"
-    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "aa" :field/previous-value "a"}
-                                             {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
-           (model/enrich-answers {:rems.application.model/submitted-answers {1 "a" 2 "b"}
-                                  :rems.application.model/draft-answers {1 "aa" 2 "bb"}}))))
+    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "aa" :field/previous-value "a"}
+                                             {:field/id "2" :field/value "bb" :field/previous-value "b"}]}}
+           (model/enrich-answers {:rems.application.model/submitted-answers {"1" "a" "2" "b"}
+                                  :rems.application.model/draft-answers {"1" "aa" "2" "bb"}}))))
   (testing "resubmitted"
-    (is (= {:application/form {:form/fields [{:field/id 1 :field/value "aa" :field/previous-value "a"}
-                                             {:field/id 2 :field/value "bb" :field/previous-value "b"}]}}
-           (model/enrich-answers {:rems.application.model/previous-submitted-answers {1 "a" 2 "b"}
-                                  :rems.application.model/submitted-answers {1 "aa" 2 "bb"}})))))
+    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "aa" :field/previous-value "a"}
+                                             {:field/id "2" :field/value "bb" :field/previous-value "b"}]}}
+           (model/enrich-answers {:rems.application.model/previous-submitted-answers {"1" "a" "2" "b"}
+                                  :rems.application.model/submitted-answers {"1" "aa" "2" "bb"}})))))
 
 (deftest test-enrich-active-handlers
   (let [application {:application/workflow {:workflow/id 1}

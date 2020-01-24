@@ -13,7 +13,8 @@
 (s/defschema UserWithAttributes
   {:userid UserId
    :name (s/maybe s/Str)
-   :email (s/maybe s/Str)})
+   :email (s/maybe s/Str)
+   (s/optional-key :organization) (s/maybe s/Str)})
 
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
@@ -45,6 +46,7 @@
 (s/defschema License
   {:id s/Int
    :licensetype (s/enum "text" "link" "attachment")
+   :organization s/Str
    :enabled s/Bool
    :archived s/Bool
    :localizations {s/Keyword {:title s/Str
@@ -135,8 +137,10 @@
 
 (def not-neg? (partial <= 0))
 
+(def FieldId s/Str)
+
 (s/defschema FieldTemplate
-  {:field/id s/Int
+  {:field/id FieldId
    :field/type (s/enum :attachment :date :description :email :header :label :multiselect :option :text :texta)
    :field/title LocalizedString
    (s/optional-key :field/placeholder) LocalizedString
@@ -149,7 +153,9 @@
                                        (s/optional-key :visibility/value) [s/Str]}})
 
 (s/defschema NewFieldTemplate
-  (dissoc FieldTemplate :field/id))
+  (-> FieldTemplate
+      (dissoc :field/id)
+      (assoc (s/optional-key :field/id) FieldId)))
 
 (s/defschema Field
   (assoc FieldTemplate

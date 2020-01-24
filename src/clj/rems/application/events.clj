@@ -7,6 +7,7 @@
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
+(def FieldId s/Str)
 
 (s/defschema EventBase
   {(s/optional-key :event/id) s/Int
@@ -76,7 +77,7 @@
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
-         :application/field-values {s/Int s/Str}))
+         :application/field-values {FieldId s/Str}))
 (s/defschema ExternalIdAssignedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/external-id-assigned)

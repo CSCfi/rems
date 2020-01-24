@@ -12,23 +12,41 @@
   (users/add-user! "user1" {:eppn "whatever"
                             :commonName "What Ever"
                             :some-attr "some value"})
+  (users/add-user! "user-with-org" {:eppn "user-with-org"
+                                    :commonName "User Org"
+                                    :mail "user@org"
+                                    :organization "org"})
 
   (testing "get-raw-user-attributes"
     (is (= {:eppn "whatever"
             :commonName "What Ever"
             :some-attr "some value"}
-           (#'users/get-raw-user-attributes "user1"))))
+           (#'users/get-raw-user-attributes "user1")))
+    (is (= {:eppn "user-with-org"
+            :commonName "User Org"
+            :mail "user@org"
+            :organization "org"}
+           (#'users/get-raw-user-attributes "user-with-org"))))
 
   (testing "get-user"
     (is (= {:userid "user1"
             :name "What Ever"
             :email nil}
-           (users/get-user "user1"))))
+           (users/get-user "user1")))
+    (is (= {:userid "user-with-org"
+            :name "User Org"
+            :email "user@org"
+            :organization "org"}
+           (users/get-user "user-with-org"))))
 
   (testing "get-all-users"
     (is (= [{:eppn "whatever"
              :commonName "What Ever"
-             :some-attr "some value"}]
+             :some-attr "some value"}
+            {:eppn "user-with-org"
+             :commonName "User Org"
+             :mail "user@org"
+             :organization "org"}]
            (#'users/get-all-users))))
 
   (testing "get-users-with-role"
