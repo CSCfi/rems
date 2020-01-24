@@ -1227,7 +1227,7 @@
                                                        :field/title "Hidden field"
                                                        :field/visibility {:visibility/type :only-if
                                                                           :visibility/field {:field/id 1}
-                                                                          :visibility/value ["yes"]}}]}}
+                                                                          :visibility/values ["yes"]}}]}}
         visible-fields (fn [application]
                          (->> (get-in (model/enrich-field-visible application) [:application/form :form/fields])
                               (filter :field/visible)

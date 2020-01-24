@@ -168,7 +168,7 @@
              (when (= type :only-if)
                {:field/visibility {:visibility/type type
                                    :visibility/field (when (:field/id field) {:field/id (:field/id field)})
-                                   :visibility/value value}})))))
+                                   :visibility/values value}})))))
 
 (defn build-request [form languages]
   {:form/organization (trim-when-string (:form/organization form))
@@ -216,10 +216,10 @@
         {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
         (if-not (-> visibility :visibility/field :field/id)
           {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
-          (if-not (empty? (:visibility/value visibility))
-            (when-not (some (field-option-keys referred-field) (:visibility/value visibility))
-              {:field/visibility {:visibility/value :t.form.validation/invalid-value}})
-            {:field/visibility {:visibility/value :t.form.validation/required}})))
+          (if-not (empty? (:visibility/values visibility))
+            (when-not (some (field-option-keys referred-field) (:visibility/values visibility))
+              {:field/visibility {:visibility/values :t.form.validation/invalid-value}})
+            {:field/visibility {:visibility/values :t.form.validation/required}})))
       {:field/visibility {:visibility/field :t.form.validation/required}})
     {:field/visibility {:visibility/field :t.form.validation/required}}))
 
@@ -411,7 +411,7 @@
 (rf/reg-event-db
  ::form-field-visibility-value
  (fn [db [_ field-index visibility-value]]
-   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/value] visibility-value)))
+   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/values] visibility-value)))
 
 (defn- form-field-visibility
   "Component for specifying form field visibility rules"
@@ -420,7 +420,7 @@
         form-errors @(rf/subscribe [::form-errors])
         error-type (get-in form-errors [:form/fields field-index :field/visibility :visibility/type])
         error-field (get-in form-errors [:form/fields field-index :field/visibility :visibility/field])
-        error-value (get-in form-errors [:form/fields field-index :field/visibility :visibility/value])
+        error-value (get-in form-errors [:form/fields field-index :field/visibility :visibility/values])
         lang @(rf/subscribe [:language])
         id-type (str "fields-" field-index "-visibility-type")
         id-field (str "fields-" field-index "-visibility-field")
@@ -431,7 +431,7 @@
         visibility (get-in form [:form/fields field-index :field/visibility])
         visibility-type (:visibility/type visibility)
         visibility-field (:visibility/field visibility)
-        visibility-value (:visibility/value visibility)]
+        visibility-value (:visibility/values visibility)]
     [:div {:class (when (= :only-if visibility-type) "form-field-visibility")}
      [:div.form-group.field {:id (str "container-field" field-index)}
       [:label {:for id-type} label-type]
@@ -552,9 +552,9 @@
             (when (-> field-errors :field/visibility :visibility/field)
               [(format-validation-link (str "fields-" field-index "-visibility-field")
                                        (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/field) (text :t.create-form.visibility/field))))])
-            (when (-> field-errors :field/visibility :visibility/value)
+            (when (-> field-errors :field/visibility :visibility/values)
               [(format-validation-link (str "fields-" field-index "-visibility-value")
-                                       (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/value) (text :t.create-form.visibility/has-value))))])
+                                       (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/values) (text :t.create-form.visibility/has-value))))])
             (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
               [:li (text-format :t.create-form/option-n (inc option-id))
                [:ul

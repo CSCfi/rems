@@ -309,7 +309,7 @@
               "always is the default so nothing needs to be included")
           (is (= {:visibility/type :only-if
                   :visibility/field nil
-                  :visibility/value nil}
+                  :visibility/values nil}
                  (getx-in (build-request (assoc-in form
                                                    [:form/fields 1 :field/visibility]
                                                    {:visibility/type :only-if})
@@ -327,12 +327,12 @@
                                       :fi "fi placeholder"}
                   :field/visibility {:visibility/type :only-if
                                      :visibility/field {:field/id 0}
-                                     :visibility/value "yes"}}
+                                     :visibility/values "yes"}}
                  (getx-in (build-request (assoc-in form
                                                    [:form/fields 1 :field/visibility]
                                                    {:visibility/type :only-if
                                                     :visibility/field {:field/id 0}
-                                                    :visibility/value "yes"})
+                                                    :visibility/values "yes"})
                                          languages)
                           [:form/fields 1]))))))))
 
@@ -498,19 +498,19 @@
         (testing "invalid value"
           (is (= (getx-in (validate-visible {:visibility/type :only-if
                                              :visibility/field {:field/id 0}})
-                          [:form/fields 1 :field/visibility :visibility/value])
+                          [:form/fields 1 :field/visibility :visibility/values])
                  :t.form.validation/required))
           (is (= (getx-in (validate-visible {:visibility/type :only-if
                                              :visibility/field {:field/id 0}
-                                             :visibility/value "does-not-exist"})
-                          [:form/fields 1 :field/visibility :visibility/value])
+                                             :visibility/values "does-not-exist"})
+                          [:form/fields 1 :field/visibility :visibility/values])
                  :t.form.validation/invalid-value)))
 
         (testing "correct data"
           (is (empty? (validate-visible {:visibility/type :always})))
           (is (empty? (validate-visible {:visibility/type :only-if
                                          :visibility/field {:field/id 0}
-                                         :visibility/value ["yes"]}))))))))
+                                         :visibility/values ["yes"]}))))))))
 
 (deftest build-localized-string-test
   (let [languages [:en :fi]]

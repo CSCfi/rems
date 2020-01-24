@@ -368,7 +368,7 @@
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
                                                    :visibility/field {:field/id "fld1"}
-                                                   :visibility/value ["c"]}}
+                                                   :visibility/values ["c"]}}
                                {:field/id "fld3"
                                 :field/type :multiselect
                                 :field/title localized
@@ -382,7 +382,7 @@
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
                                                    :visibility/field {:field/id "fld3"}
-                                                   :visibility/value ["c" "d"]}}]}]
+                                                   :visibility/values ["c" "d"]}}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
                         (authenticate api-key user-id)
@@ -415,7 +415,7 @@
                      :field/optional false
                      :field/visibility {:visibility/type "only-if"
                                         :visibility/field {:field/id "fld1"}
-                                        :visibility/value ["c"]}}
+                                        :visibility/values ["c"]}}
                     {:field/id "fld3"
                      :field/type "multiselect"
                      :field/title {:fi "fi" :en "en"}
@@ -430,7 +430,7 @@
                      :field/optional false
                      :field/visibility {:visibility/type "only-if"
                                         :visibility/field {:field/id "fld3"}
-                                        :visibility/value ["c" "d"]}}]
+                                        :visibility/values ["c" "d"]}}]
                    (:form/fields form)))))))))
 
 (deftest forms-api-filtering-test

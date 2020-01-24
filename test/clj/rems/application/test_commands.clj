@@ -45,7 +45,7 @@
                                               :field/optional false
                                               :field/visibility {:visibility/type :only-if
                                                                  :visibility/field {:field/id "1"}
-                                                                 :visibility/value ["foo"]}}]}})
+                                                                 :visibility/values ["foo"]}}]}})
 
 (defn- dummy-get-catalogue-item [id]
   {:enabled true :archived false :expired false
