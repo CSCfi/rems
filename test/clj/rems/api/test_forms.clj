@@ -15,18 +15,12 @@
     (update-in field [:field/visibility :visibility/type] keyword)
     field))
 
-(defn fixup-field-id-to-generated [field] ; TODO: remove when generation is removed from backend
-  (if (get-in field [:field/visibility :visibility/field :field/id])
-    (update-in field [:field/visibility :visibility/field :field/id] dec)
-    field))
-
-(defn fixup-field-to-match-command [field]
+(defn- fixup-field-to-match-command [field]
   (-> field
       (dissoc :field/id)
       ;; XXX: these tests use the JSON API, so keywords are not maintained
       (update :field/type keyword)
-      fixup-field-visible-type
-      fixup-field-id-to-generated))
+      fixup-field-visible-type))
 
 (deftest forms-api-test
   (let [api-key "42"
@@ -358,7 +352,8 @@
         localized {:en "en" :fi "fi"}
         command {:form/organization "abc"
                  :form/title "text fields that depend on a field"
-                 :form/fields [{:field/type :option
+                 :form/fields [{:field/id "fld1"
+                                :field/type :option
                                 :field/title localized
                                 :field/optional false
                                 :field/options [{:key "a" :label localized}
@@ -372,9 +367,10 @@
                                 :field/title localized
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
-                                                   :visibility/field {:field/id 0}
+                                                   :visibility/field {:field/id "fld1"}
                                                    :visibility/value ["c"]}}
-                               {:field/type :multiselect
+                               {:field/id "fld3"
+                                :field/type :multiselect
                                 :field/title localized
                                 :field/optional false
                                 :field/options [{:key "a" :label localized}
@@ -385,7 +381,7 @@
                                 :field/title localized
                                 :field/optional false
                                 :field/visibility {:visibility/type :only-if
-                                                   :visibility/field {:field/id 3}
+                                                   :visibility/field {:field/id "fld3"}
                                                    :visibility/value ["c" "d"]}}]}]
     (testing "creating"
       (let [form-id (-> (request :post "/api/forms/create")
@@ -402,8 +398,40 @@
                          read-ok-body)]
             (is (= (select-keys command [:form/organization :form/title])
                    (select-keys form [:form/organization :form/title])))
-            (is (= (update-in (:form/fields command) [1] dissoc :field/visibility) ; always visible field is not saved as it's the default
-                   (mapv fixup-field-to-match-command (:form/fields form))))))))))
+            (is (= [{:field/id "fld1"
+                     :field/type "option"
+                     :field/title {:fi "fi" :en "en"}
+                     :field/optional false
+                     :field/options [{:key "a" :label {:fi "fi" :en "en"}}
+                                     {:key "b" :label {:fi "fi" :en "en"}}
+                                     {:key "c" :label {:fi "fi" :en "en"}}]}
+                    {:field/id "fld4"
+                     :field/type "text"
+                     :field/title {:fi "fi" :en "en"}
+                     :field/optional false}
+                    {:field/id "fld5"
+                     :field/type "text"
+                     :field/title {:fi "fi" :en "en"}
+                     :field/optional false
+                     :field/visibility {:visibility/type "only-if"
+                                        :visibility/field {:field/id "fld1"}
+                                        :visibility/value ["c"]}}
+                    {:field/id "fld3"
+                     :field/type "multiselect"
+                     :field/title {:fi "fi" :en "en"}
+                     :field/optional false
+                     :field/options [{:key "a" :label {:fi "fi" :en "en"}}
+                                     {:key "b" :label {:fi "fi" :en "en"}}
+                                     {:key "c" :label {:fi "fi" :en "en"}}
+                                     {:key "d" :label {:fi "fi" :en "en"}}]}
+                    {:field/id "fld7"
+                     :field/type "text"
+                     :field/title {:fi "fi" :en "en"}
+                     :field/optional false
+                     :field/visibility {:visibility/type "only-if"
+                                        :visibility/field {:field/id "fld3"}
+                                        :visibility/value ["c" "d"]}}]
+                   (:form/fields form)))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:archived true})

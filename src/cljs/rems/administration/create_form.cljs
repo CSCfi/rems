@@ -1,6 +1,7 @@
 (ns rems.administration.create-form
   (:require [clojure.string :as str]
             [goog.string :refer [parseInt]]
+            [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
@@ -166,7 +167,7 @@
            (let [{:visibility/keys [type field value]} (:field/visibility field)]
              (when (= type :only-if)
                {:field/visibility {:visibility/type type
-                                   :visibility/field (when (:field/id field) (select-keys field [:field/id]))
+                                   :visibility/field (when (:field/id field) {:field/id (:field/id field)})
                                    :visibility/value value}})))))
 
 (defn build-request [form languages]
@@ -210,7 +211,7 @@
 
 (defn- validate-only-if-field [field visibility fields]
   (if (-> visibility :visibility/field)
-    (if-let [referred-field (-> visibility :visibility/field :field/id fields)]
+    (if-let [referred-field (find-first (comp #{(get-in visibility [:visibility/field :field/id])} :field/id) fields)]
       (if-not  (supports-options? referred-field)
         {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
         (if-not (-> visibility :visibility/field :field/id)
@@ -294,7 +295,7 @@
        (js/parseInt (.-marginBottom style)))))
 
 (defn set-visibility-ratio [frame element ratio]
-  (when (and element frame)
+  (when (and frame element)
     (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
           element-height (true-height element)
           top-margin (/ (.-offsetHeight frame) 4)
@@ -309,9 +310,9 @@
 (defn autoscroll []
   (when-let [edit-field (first-partially-visible-edit-field)]
     (let [id (last (str/split (.-id edit-field) #"-"))
-          preview-frame (.querySelector js/document "#preview-form .collapse-content")
+          preview-frame (.querySelector js/document "#preview-form-contents")
           preview-field (-> js/document
-                            (.getElementById (str "container-field-" id)))
+                            (.getElementById (str "field-preview-" id)))
           ratio (visibility-ratio edit-field)]
       (set-visibility-ratio preview-frame preview-field ratio))))
 
@@ -388,10 +389,10 @@
   (filter #(contains? {:option :multiselect} (:field/type %))
           (:form/fields form)))
 
-(defn- form-field-values [form field-index]
-  (let [field (get-in form [:form/fields field-index])]
+(defn- form-field-values [form field-id]
+  (let [field (find-first (comp #{field-id} :field/id) (:form/fields form))]
     (case (:field/type field)
-      :option (let [options (get-in form [:form/fields field-index :field/options])]
+      :option (let [options (:field/options field)]
                 (map (fn [o] {:value (:key o)
                               :title (:label o)})
                      options))
@@ -451,13 +452,13 @@
          [:select.form-control
           {:id id-field
            :class (when error-field "is-invalid")
-           :on-change #(rf/dispatch [::form-field-visibility-field field-index (get-in form [:form/fields (js/parseInt (.. % -target -value))])])
+           :on-change #(rf/dispatch [::form-field-visibility-field field-index {:field/id (.. % -target -value)}])
            :value (or (:field/id visibility-field) "")}
           ^{:key "not-selected"} [:option ""]
           (doall (for [field (form-fields-that-can-be-used-in-visibility form)]
                    ^{:key (str field-index "-" (:field/id field))}
                    [:option {:value (:field/id field)}
-                    (text-format :t.create-form/field-n (inc (:field/id field)) (localized-field-title field lang))]))]
+                    (text-format :t.create-form/field-n (inc (:field/index field)) (localized-field-title field lang))]))]
          [:div.invalid-feedback
           (when error-field (text-format error-field label-field))]]
         (when (:field/id visibility-field)
@@ -529,7 +530,8 @@
         content]])
 
 (defn- format-field-validation [field field-errors]
-  (let [field-index (:field/index field)]
+  (let [field-index (:field/index field)
+        lang @(rf/subscribe [:language])]
     [:li (text-format :t.create-form/field-n (inc field-index) (localized-field-title field lang))
      (into [:ul]
            (concat
@@ -647,7 +649,7 @@
       :title (text :t.administration/preview)
       :always (into [:div#preview-form-contents]
                     (for [field (:form/fields form)]
-                      [:div.field-container {:id (str "field-container" (:field/id field))}
+                      [:div.field-preview {:id (str "field-preview-" (:field/id field))}
                        [fields/field (assoc field
                                             :on-change #(rf/dispatch [::set-field-value (:field/id field) %])
                                             :field/value (get-in preview [(:field/id field)]))]

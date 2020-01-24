@@ -36,15 +36,15 @@
 (def ^:private dummy-workflows {1 {:workflow {:handlers [{:userid handler-user-id
                                                           :name "user"
                                                           :email "user@example.com"}]}}})
-(def ^:private dummy-forms {1 {:form/fields [{:field/id 1
+(def ^:private dummy-forms {1 {:form/fields [{:field/id "1"
                                               :field/optional true
                                               :field/type :options
                                               :field/options [{:key "foo" :label "Foo"}
                                                               {:key "bar" :label "Bar"}]}
-                                             {:field/id 2
+                                             {:field/id "2"
                                               :field/optional false
-                                              :field/visibility {                                                                 :visibility/type :only-if
-                                                                 :visibility/field {:field/id 1}
+                                              :field/visibility {:visibility/type :only-if
+                                                                 :visibility/field {:field/id "1"}
                                                                  :visibility/value ["foo"]}}]}})
 
 (defn- dummy-get-catalogue-item [id]
@@ -556,7 +556,7 @@
                    (ok-command submit-command injections)))))
       (testing "1st field is given, 2nd field is required and visible but empty"
         (is (= {:errors [{:type :t.form.validation/required
-                          :field-id 2}]}
+                          :field-id "2"}]}
                (-> application
                    (apply-events [(assoc-in draft-saved-event [:application/field-values "2"] "")])
                    (fail-command submit-command injections)))))

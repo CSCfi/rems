@@ -99,6 +99,7 @@
   (->> (:form/fields form)
        (validate-given-ids)
        (assign-field-ids)
+       (normalize-fields-values)
        (validate-fields)
        (json/generate-string)))
 

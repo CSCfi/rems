@@ -638,8 +638,7 @@
     [:legend {:font-size "inherit"}]]
    [:#application-fields
     [:.application-field-label {:font-weight "bold"}]]
-   [:.field-container {:position :relative
-                       :margin-left (u/rem 1)}]
+
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
 
@@ -673,12 +672,14 @@
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
                     :top "100px"}
-    [:.collapse-content {:overflow-y :scroll
-                         :overflow-x :hidden
-                         :margin-left 0
-                         ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
-                         :max-height "calc(100vh - 220px)"}]]
+    [:.collapse-content {:margin-left 0}]
+    [:#preview-form-contents {:overflow-y :scroll
+                              :overflow-x :hidden
+                              ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
+                              :max-height "calc(100vh - 220px)"}]]
 
+   [:.field-preview {:position :relative
+                     :margin-left (u/rem 1)}]
    [:.full {:width "100%"}]
    [:.intro {:margin-bottom (u/rem 2)}]
    [:.rectangle {:width (u/px 50)

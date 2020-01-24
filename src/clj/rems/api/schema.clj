@@ -149,7 +149,7 @@
                                      :label LocalizedString}]
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
    (s/optional-key :field/visibility) {:visibility/type (s/enum :always :only-if)
-                                       (s/optional-key :visibility/field) {:field/id s/Int}
+                                       (s/optional-key :visibility/field) {:field/id FieldId}
                                        (s/optional-key :visibility/value) [s/Str]}})
 
 (s/defschema NewFieldTemplate
