@@ -4,6 +4,7 @@
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
+            [rems.common.form :refer [field-visible?]]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
@@ -501,36 +502,6 @@
              (.plusDays (:application/first-submitted application)
                         days))
       application)))
-
-;; TODO: move to cljc, combine with others
-(defn- field-visible? [field answers]
-  (let [visibility (:field/visibility field)]
-    (or (nil? visibility)
-        (= :always (:visibility/type visibility))
-        (and (= :only-if (:visibility/type visibility))
-             (contains? (set (:visibility/value visibility))
-                        (get answers (:field/id (:visibility/field visibility))))))))
-
-(deftest test-field-visible?
-  (is (true? (field-visible? nil nil)))
-  (is (true? (field-visible? {:field/visibility {:visibility/type :always}}
-                             nil)))
-  (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
-                                                  :visibility/field {:field/id "1"}
-                                                  :visibility/value ["yes"]}}
-                              nil)))
-  (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
-                                                  :visibility/field {:field/id "1"}
-                                                  :visibility/value ["yes"]}}
-                              {"1" "no"})))
-  (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
-                                                 :visibility/field {:field/id "1"}
-                                                 :visibility/value ["yes"]}}
-                             {"1" "yes"})))
-  (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
-                                                 :visibility/field {:field/id "1"}
-                                                 :visibility/value ["yes" "definitely"]}}
-                             {"1" "definitely"}))))
 
 (defn enrich-field-visible [application]
   (let [fields (get-in application [:application/form :form/fields])

@@ -8,7 +8,7 @@
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
-            [rems.common.form :refer [generate-field-id]]
+            [rems.common.form :refer [field-visible? generate-field-id]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
@@ -632,14 +632,6 @@
  ::preview
  (fn [db _]
    (::preview db {})))
-
-(defn- field-visible? [field values]
-  (let [visibility (:field/visibility field)]
-    (or (nil? visibility)
-        (= :always (:visibility/type visibility))
-        (and (= :only-if (:visibility/type visibility))
-             (contains? (set (:visibility/value visibility))
-                        (get values (:field/id (:visibility/field visibility))))))))
 
 (defn form-preview [form]
   (let [preview @(rf/subscribe [::preview])
