@@ -179,8 +179,8 @@
   [:button.btn.btn-secondary.button-min-width
    {:type :button
     :on-click (fn [_event]
-                (when-some [comment (js/prompt (text :t.administration/comment))]
-                  (rf/dispatch [::remove-from-blacklist resource user comment])))}
+                ;; TODO add form & field for comment
+                (rf/dispatch [::remove-from-blacklist resource user ""]))}
    (text :t.administration/remove)])
 
 (defn- format-rows [rows]
