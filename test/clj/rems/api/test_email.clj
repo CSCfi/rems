@@ -36,7 +36,8 @@
                        read-ok-body)]
           (is (= "OK" body))
           (is (= [{:subject "Applications in progress", :to-user "developer"}
-                  {:subject "Applications in progress", :to-user "handler"}]
+                  {:subject "Applications in progress", :to-user "handler"}
+                  {:subject "Applications in progress", :to-user "rejecter-bot"}]
                  (->> @outbox-emails
                       (map #(select-keys (:outbox/email %) [:subject :to-user]))
                       (sort-by :to-user))))))))
@@ -86,7 +87,8 @@
           (is (= "OK" body))
           (is (= [{:subject "Applications pending review", :to-user "carl"}
                   {:subject "Applications in progress", :to-user "developer"}
-                  {:subject "Applications in progress", :to-user "handler"}]
+                  {:subject "Applications in progress", :to-user "handler"}
+                  {:subject "Applications in progress", :to-user "rejecter-bot"}]
                  (->> @outbox-emails
                       (map #(select-keys (:outbox/email %) [:subject :to-user]))
                       (sort-by :to-user))))))))
