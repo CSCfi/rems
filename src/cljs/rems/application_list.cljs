@@ -205,8 +205,19 @@
        :application/applicant {:userid "bob"
                                :name "Bob Tester"}
        :application/created "1971-02-03T23:59:00.000Z"
-       :application/last-activity "2017-01-01T01:01:01:001Z"}
+       :application/last-activity "2017-01-01T01:01:01:001Z"
+       :application/first-submitted (time/date-time 1971 03 04)
+       :application/deadline (time/date-time 1972 01 01)} ;; already expired
       {:application/id 3
+       :application/resources [{:catalogue-item/title {:en "Item 1"}}]
+       :application/state :application.state/submitted
+       :application/applicant {:userid "bob"
+                               :name "Bob Tester"}
+       :application/created "1971-02-03T23:59:00.000Z"
+       :application/last-activity "2017-01-01T01:01:01:001Z"
+       :application/first-submitted (time/date-time 1971 03 04)
+       :application/deadline (time/date-time 2022)} ;; should be "almost expired"
+      {:application/id 4
        :application/resources [{:catalogue-item/title {:en "Item 2"}}
                                {:catalogue-item/title {:en "Item 5"}}]
        :application/state :application.state/approved
@@ -214,14 +225,14 @@
                                :name "Charlie Tester"}
        :application/created "1980-01-01T01:01:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
-      {:application/id 4
+      {:application/id 5
        :application/resources [{:catalogue-item/title {:en "Item 2"}}]
        :application/state :application.state/rejected
        :application/applicant {:userid "david"
                                :name "David Newuser"}
        :application/created "1972-12-12T12:12:00.000Z"
        :application/last-activity "2017-01-01T01:01:01:001Z"}
-      {:application/id 5
+      {:application/id 6
        :application/resources [{:catalogue-item/title {:en "Item 2"}}]
        :application/state :application.state/closed
        :application/applicant {:userid "ernie"
