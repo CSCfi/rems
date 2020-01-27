@@ -11,6 +11,7 @@
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.application.approver-bot :as approver-bot]
+            [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -23,6 +24,14 @@
 
 ;;; test data definitions
 
+(def +bot-users+
+  {:approver-bot approver-bot/bot-userid
+   :rejecter-bot rejecter-bot/bot-userid})
+
+(def +bot-user-data+
+  {approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}
+   rejecter-bot/bot-userid {:eppn rejecter-bot/bot-userid :commonName "Rejecter Bot"}})
+
 (def +fake-users+
   {:applicant1 "alice"
    :applicant2 "malice"
@@ -33,8 +42,7 @@
    :reporter "reporter"
    :reviewer "carl"
    :roleless1 "elsa"
-   :roleless2 "frank"
-   :approver-bot approver-bot/bot-userid})
+   :roleless2 "frank"})
 
 (def +fake-user-data+
   {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
@@ -46,8 +54,7 @@
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organization "frank"}
    "organization-owner" {:eppn "organization-owner" :mail "organization-owner@example.com" :commonName "Organization Owner" :organization "organization"}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
-   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}
-   approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}})
+   "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
 
 ;; TODO: Add organization-owner to +demo-users+, as well as +oidc-users+.
 (def +demo-users+
@@ -57,8 +64,7 @@
    :approver2 "RDapprover2@funet.fi"
    :reviewer "RDreview@funet.fi"
    :owner "RDowner@funet.fi"
-   :reporter "RDdomainreporter@funet.fi"
-   :approver-bot approver-bot/bot-userid})
+   :reporter "RDdomainreporter@funet.fi"})
 
 (def +demo-user-data+
   {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
@@ -67,8 +73,7 @@
    "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
-   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}
-   approver-bot/bot-userid {:eppn approver-bot/bot-userid :commonName "Approver Bot"}})
+   "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
 
 (def +oidc-users+
   {:applicant1 "WHFS36UEZD6TNURJ76WYLSVDCUUENOOF"
@@ -263,6 +268,10 @@
   (roles/add-role! (+fake-users+ :organization-owner) :organization-owner)
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
+
+(defn create-bots! []
+  (doseq [attr (vals +bot-user-data+)]
+    (create-user! attr)))
 
 (defn- create-archived-form! []
   (let [id (create-form! {:actor (+fake-users+ :owner)
@@ -592,22 +601,29 @@
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
         approver2 (users :approver2)
+        approver-bot (users :approver-bot)
+        rejecter-bot (users :rejecter-bot)
         owner (users :owner)
+        handlers [approver1 approver2 rejecter-bot]
         default (create-workflow! {:actor owner
                                    :organization "nbn"
                                    :title "Default workflow"
                                    :type :workflow/default
-                                   :handlers [approver1 approver2]})
+                                   :handlers handlers})
         decider (create-workflow! {:actor owner
                                    :organization "nbn"
                                    :title "Decider workflow"
                                    :type :workflow/decider
-                                   :handlers [approver1 approver2]})
+                                   :handlers handlers})
         master (create-workflow! {:actor owner
                                   :organization "nbn"
                                   :title "Master workflow"
                                   :type :workflow/master
-                                  :handlers [approver1 approver2]})]
+                                  :handlers handlers})
+        auto-approve (create-workflow! {:actor owner
+                                        :organization "nbn"
+                                        :title "Auto-approve workflow"
+                                        :handlers [approver-bot rejecter-bot]})]
 
     ;; attach both kinds of licenses to all workflows
     (let [link (create-license! {:actor owner
@@ -625,12 +641,13 @@
                                  :license/text {:en (apply str (repeat 10 "License text in English. "))
                                                 :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))}})]
       (doseq [licid [link text]]
-        (doseq [wfid [default decider master]]
+        (doseq [wfid [default decider master auto-approve]]
           (db/create-workflow-license! {:wfid wfid :licid licid}))))
 
     {:default default
      :decider decider
-     :master master}))
+     :master master
+     :auto-approve auto-approve}))
 
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
@@ -875,6 +892,7 @@
   (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
   (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
   (create-test-users-and-roles!)
+  (create-bots!)
   (let [owner (+fake-users+ :owner)
         res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                 :organization "nbn"
@@ -906,7 +924,7 @@
                                                   :license-ids [extra-license attachment-license]})
         form (create-all-field-types-example-form! +fake-users+)
         _ (create-archived-form!)
-        workflows (create-workflows! +fake-users+)]
+        workflows (create-workflows! (merge +fake-users+ +bot-users+))]
     (create-disabled-license! {:actor owner
                                :license/organization "nbn"})
     (create-catalogue-item! {:actor owner
@@ -938,12 +956,20 @@
                                          :workflow-id (:default workflows)})]
       (create-applications! catid +fake-users+))
     (create-catalogue-item! {:actor owner
-                             :title {:en "Dynamic workflow with extra license"
-                                     :fi "Dynaaminen työvuo ylimääräisellä lisenssillä"}
+                             :title {:en "Default workflow with extra license"
+                                     :fi "Oletustyövuo ylimääräisellä lisenssillä"}
                              :resource-id res-with-extra-license
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:default workflows)})
+    (create-catalogue-item! {:title {:en "Auto-approve workflow"
+                                     :fi "Työvuo automaattisella hyväksynnällä"}
+                             :infourl {:en "http://www.google.com"
+                                       :fi "http://www.google.fi"}
+                             :resource-id res1
+                             :form-id form
+                             :organization "nbn"
+                             :workflow-id (:auto-approve workflows)})
     (let [thlform (create-thl-demo-form! +fake-users+)
           thl-catid (create-catalogue-item! {:actor owner
                                              :title {:en "THL catalogue item"
@@ -953,25 +979,25 @@
                                              :organiztion "thl"
                                              :workflow-id (:default workflows)})]
       (create-member-applications! thl-catid (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
-    (let [dynamic-disabled (create-catalogue-item! {:actor owner
-                                                    :title {:en "Dynamic workflow (disabled)"
-                                                            :fi "Dynaaminen työvuo (pois käytöstä)"}
+    (let [default-disabled (create-catalogue-item! {:actor owner
+                                                    :title {:en "Default workflow (disabled)"
+                                                            :fi "Oletustyövuo (pois käytöstä)"}
                                                     :resource-id res1
                                                     :form-id form
                                                     :organization "nbn"
                                                     :workflow-id (:default workflows)})]
-      (create-disabled-applications! dynamic-disabled
+      (create-disabled-applications! default-disabled
                                      (+fake-users+ :applicant2)
                                      (+fake-users+ :approver1))
-      (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false}))
-    (let [dynamic-expired (create-catalogue-item! {:actor owner
-                                                   :title {:en "Dynamic workflow (expired)"
-                                                           :fi "Dynaaminen työvuo (vanhentunut)"}
+      (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
+    (let [default-expired (create-catalogue-item! {:actor owner
+                                                   :title {:en "Default workflow (expired)"
+                                                           :fi "Oletustyövuo (vanhentunut)"}
                                                    :resource-id res1
                                                    :form-id form
                                                    :organization "nbn"
                                                    :workflow-id (:default workflows)})]
-      (db/set-catalogue-item-endt! {:id dynamic-expired :end (time/now)}))))
+      (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))))
 
 (defn create-demo-data! []
   (assert-no-existing-data!)
@@ -980,6 +1006,7 @@
                             [+demo-users+ +demo-user-data+])]
     (api-key/add-api-key! 55 "Finna" api-key/+all-roles+)
     (create-users-and-roles! users user-data)
+    (create-bots!)
     (let [owner (users :owner)
           res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                   :organization "nbn"
@@ -998,17 +1025,17 @@
                                   :actor owner
                                   :license-ids [license1 attachment-license]})
           form (create-all-field-types-example-form! users)
-          workflows (create-workflows! users)]
+          workflows (create-workflows! (merge users +bot-users+))]
       (create-disabled-license! {:actor owner
                                  :license/organization "nbn"})
-      (let [dynamic (create-catalogue-item! {:actor owner
-                                             :title {:en "Dynamic workflow"
-                                                     :fi "Dynaaminen työvuo"}
+      (let [default (create-catalogue-item! {:actor owner
+                                             :title {:en "Default workflow"
+                                                     :fi "Oletustyövuo"}
                                              :resource-id res1
                                              :form-id form
                                              :organization "nbn"
                                              :workflow-id (:default workflows)})]
-        (create-applications! dynamic users))
+        (create-applications! default users))
       (let [thlform (create-thl-demo-form! users)
             thl-catid (create-catalogue-item! {:actor owner
                                                :title {:en "THL catalogue item"
@@ -1018,14 +1045,14 @@
                                                :organization "thl"
                                                :workflow-id (:default workflows)})]
         (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
-      (let [dynamic-disabled (create-catalogue-item! {:actor owner
-                                                      :title {:en "Dynamic workflow (disabled)"
-                                                              :fi "Dynaaminen työvuo (pois käytöstä)"}
+      (let [default-disabled (create-catalogue-item! {:actor owner
+                                                      :title {:en "Default workflow (disabled)"
+                                                              :fi "Oletustyövuo (pois käytöstä)"}
                                                       :resource-id res1
                                                       :form-id form
                                                       :organization "nbn"
                                                       :workflow-id (:default workflows)})]
-        (create-disabled-applications! dynamic-disabled
+        (create-disabled-applications! default-disabled
                                        (users :applicant2)
                                        (users :approver1))
-        (db/set-catalogue-item-enabled! {:id dynamic-disabled :enabled false})))))
+        (db/set-catalogue-item-enabled! {:id default-disabled :enabled false})))))
