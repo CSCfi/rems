@@ -28,7 +28,7 @@
     (or (nil? visibility)
         (= :always (:visibility/type visibility))
         (and (= :only-if (:visibility/type visibility))
-             (contains? (set (:visibility/value visibility))
+             (contains? (set (:visibility/values visibility))
                         (get values (:field/id (:visibility/field visibility))))))))
 
 (deftest test-field-visible?
@@ -37,18 +37,18 @@
                              nil)))
   (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
                                                   :visibility/field {:field/id "1"}
-                                                  :visibility/value ["yes"]}}
+                                                  :visibility/values ["yes"]}}
                               nil)))
   (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
                                                   :visibility/field {:field/id "1"}
-                                                  :visibility/value ["yes"]}}
+                                                  :visibility/values ["yes"]}}
                               {"1" "no"})))
   (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
                                                  :visibility/field {:field/id "1"}
-                                                 :visibility/value ["yes"]}}
+                                                 :visibility/values ["yes"]}}
                              {"1" "yes"})))
   (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
                                                  :visibility/field {:field/id "1"}
-                                                 :visibility/value ["yes" "definitely"]}}
+                                                 :visibility/values ["yes" "definitely"]}}
                              {"1" "definitely"}))))
 

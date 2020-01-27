@@ -164,11 +164,9 @@
                              {:key key
                               :label (build-localized-string label languages)})})
          (when (supports-visibility? field)
-           (let [{:visibility/keys [type field value]} (:field/visibility field)]
-             (when (= type :only-if)
-               {:field/visibility {:visibility/type type
-                                   :visibility/field (when (:field/id field) {:field/id (:field/id field)})
-                                   :visibility/values value}})))))
+           (when (= :only-if (get-in field [:field/visibility :visibility/type]))
+             {:field/visibility (select-keys (:field/visibility field)
+                                             [:visibility/type :visibility/field :visibility/values])}))))
 
 (defn build-request [form languages]
   {:form/organization (trim-when-string (:form/organization form))

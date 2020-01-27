@@ -1219,22 +1219,22 @@
                                   (constantly {:application-deadline-days nil}))))))
 
 (deftest test-enrich-field-visible
-  (let [application {:application/form {:form/fields [{:field/id 1
+  (let [application {:application/form {:form/fields [{:field/id "fld1"
                                                        :field/title "Option"
                                                        :field/options [{:key "no" :label "No"}
                                                                        {:key "yes" :label "Yes"}]}
-                                                      {:field/id 2
+                                                      {:field/id "fld2"
                                                        :field/title "Hidden field"
                                                        :field/visibility {:visibility/type :only-if
-                                                                          :visibility/field {:field/id 1}
+                                                                          :visibility/field {:field/id "fld1"}
                                                                           :visibility/values ["yes"]}}]}}
         visible-fields (fn [application]
                          (->> (get-in (model/enrich-field-visible application) [:application/form :form/fields])
                               (filter :field/visible)
                               (map :field/id)))]
-    (is (= [1] (visible-fields application)) "no answer should not make field visible")
-    (is (= [1] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
-    (is (= [1 2] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
+    (is (= ["fld1"] (visible-fields application)) "no answer should not make field visible")
+    (is (= ["fld1"] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
+    (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created

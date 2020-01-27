@@ -285,7 +285,7 @@
 
     (testing "visibility"
       (let [form (-> form
-                     (assoc-in [:form/fields 0 :field/id] 0)
+                     (assoc-in [:form/fields 0 :field/id] "fld1")
                      (assoc-in [:form/fields 0 :field/type] :option)
                      (assoc-in [:form/fields 0 :field/options] [{:key "yes"
                                                                  :label {:en "en yes"
@@ -293,8 +293,7 @@
                                                                 {:key "no"
                                                                  :label {:en "en no"
                                                                          :fi "fi no"}}])
-                     (assoc-in [:form/fields 1] {:field/id 1
-                                                 :field/stable-id "stable9999"
+                     (assoc-in [:form/fields 1] {:field/id "fld2"
                                                  :field/title {:en "en title additional"
                                                                :fi "fi title additional"}
                                                  :field/optional false
@@ -307,18 +306,17 @@
           (is (nil? (get-in (build-request (assoc-in form [:form/fields 1 :field/visibility] {:visibility/type :always}) languages)
                             [:form/fields 1 :field/visibility]))
               "always is the default so nothing needs to be included")
-          (is (= {:visibility/type :only-if
-                  :visibility/field nil
-                  :visibility/values nil}
+          (is (= {:visibility/type :only-if}
                  (getx-in (build-request (assoc-in form
                                                    [:form/fields 1 :field/visibility]
                                                    {:visibility/type :only-if})
                                          languages)
                           [:form/fields 1 :field/visibility]))
-              "missing data is nil"))
+              "missing data is not present"))
 
         (testing "correct data"
-          (is (= {:field/title {:en "en title additional"
+          (is (= {:field/id "fld2"
+                  :field/title {:en "en title additional"
                                 :fi "fi title additional"}
                   :field/optional false
                   :field/type :text
@@ -326,13 +324,13 @@
                   :field/placeholder {:en "en placeholder"
                                       :fi "fi placeholder"}
                   :field/visibility {:visibility/type :only-if
-                                     :visibility/field {:field/id 0}
-                                     :visibility/values "yes"}}
+                                     :visibility/field {:field/id "fld1"}
+                                     :visibility/values ["yes"]}}
                  (getx-in (build-request (assoc-in form
                                                    [:form/fields 1 :field/visibility]
                                                    {:visibility/type :only-if
-                                                    :visibility/field {:field/id 0}
-                                                    :visibility/values "yes"})
+                                                    :visibility/field {:field/id "fld1"}
+                                                    :visibility/values ["yes"]})
                                          languages)
                           [:form/fields 1]))))))))
 
@@ -455,7 +453,7 @@
 
     (testing "visible"
       (let [form (-> form
-                     (assoc-in [:form/fields 0 :field/id] 0)
+                     (assoc-in [:form/fields 0 :field/id] "fld1")
                      (assoc-in [:form/fields 0 :field/type] :option)
                      (assoc-in [:form/fields 0 :field/options] [{:key "yes"
                                                                  :label {:en "en yes"
@@ -463,8 +461,7 @@
                                                                 {:key "no"
                                                                  :label {:en "en no"
                                                                          :fi "fi no"}}])
-                     (assoc-in [:form/fields 1] {:field/id 1
-                                                 :field/stable-id "stable9999"
+                     (assoc-in [:form/fields 1] {:field/id "fld2"
                                                  :field/title {:en "en title additional"
                                                                :fi "fi title additional"}
                                                  :field/optional false
@@ -489,19 +486,18 @@
                  (getx-in (validate-visible {:visibility/type :only-if
                                              :visibility/field nil})
                           [:form/fields 1 :field/visibility :visibility/field])
-                 :t.form.validation/required))
-          (is (= (getx-in (validate-visible {:visibility/type :only-if
+                 (getx-in (validate-visible {:visibility/type :only-if
                                              :visibility/field {}})
                           [:form/fields 1 :field/visibility :visibility/field])
-                 :t.form.validation/invalid-value)))
+                 :t.form.validation/required)))
 
         (testing "invalid value"
           (is (= (getx-in (validate-visible {:visibility/type :only-if
-                                             :visibility/field {:field/id 0}})
+                                             :visibility/field {:field/id "fld1"}})
                           [:form/fields 1 :field/visibility :visibility/values])
                  :t.form.validation/required))
           (is (= (getx-in (validate-visible {:visibility/type :only-if
-                                             :visibility/field {:field/id 0}
+                                             :visibility/field {:field/id "fld1"}
                                              :visibility/values "does-not-exist"})
                           [:form/fields 1 :field/visibility :visibility/values])
                  :t.form.validation/invalid-value)))
@@ -509,7 +505,7 @@
         (testing "correct data"
           (is (empty? (validate-visible {:visibility/type :always})))
           (is (empty? (validate-visible {:visibility/type :only-if
-                                         :visibility/field {:field/id 0}
+                                         :visibility/field {:field/id "fld1"}
                                          :visibility/values ["yes"]}))))))))
 
 (deftest build-localized-string-test
