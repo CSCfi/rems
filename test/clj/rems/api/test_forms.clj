@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-forms
   (:require [clojure.test :refer :all]
+            [medley.core :refer [dissoc-in]]
             [rems.api.schema :as schema]
             [rems.api.testing :refer :all]
             [rems.handler :refer [handler]]
@@ -390,54 +391,72 @@
                                                    :visibility/field {:field/id "fld3"}
                                                    :visibility/values ["c" "d"]}}]}]
     (testing "creating"
-      (let [form-id (-> (request :post "/api/forms/create")
-                        (authenticate api-key user-id)
-                        (json-body command)
-                        handler
-                        read-ok-body
-                        :id)]
-        (is form-id)
-        (testing "and fetching"
-          (let [form (-> (request :get (str "/api/forms/" form-id))
-                         (authenticate api-key user-id)
-                         handler
-                         read-ok-body)]
-            (is (= (select-keys command [:form/organization :form/title])
-                   (select-keys form [:form/organization :form/title])))
-            (is (= [{:field/id "fld1"
-                     :field/type "option"
-                     :field/title {:fi "fi" :en "en"}
-                     :field/optional false
-                     :field/options [{:key "a" :label {:fi "fi" :en "en"}}
-                                     {:key "b" :label {:fi "fi" :en "en"}}
-                                     {:key "c" :label {:fi "fi" :en "en"}}]}
-                    {:field/id "fld4"
-                     :field/type "text"
-                     :field/title {:fi "fi" :en "en"}
-                     :field/optional false}
-                    {:field/id "fld5"
-                     :field/type "text"
-                     :field/title {:fi "fi" :en "en"}
-                     :field/optional false
-                     :field/visibility {:visibility/type "only-if"
-                                        :visibility/field {:field/id "fld1"}
-                                        :visibility/values ["c"]}}
-                    {:field/id "fld3"
-                     :field/type "multiselect"
-                     :field/title {:fi "fi" :en "en"}
-                     :field/optional false
-                     :field/options [{:key "a" :label {:fi "fi" :en "en"}}
-                                     {:key "b" :label {:fi "fi" :en "en"}}
-                                     {:key "c" :label {:fi "fi" :en "en"}}
-                                     {:key "d" :label {:fi "fi" :en "en"}}]}
-                    {:field/id "fld7"
-                     :field/type "text"
-                     :field/title {:fi "fi" :en "en"}
-                     :field/optional false
-                     :field/visibility {:visibility/type "only-if"
-                                        :visibility/field {:field/id "fld3"}
-                                        :visibility/values ["c" "d"]}}]
-                   (:form/fields form)))))))))
+      (testing "invalid request"
+        (letfn [(fail-request [command]
+                  (let [response (-> (request :post "/api/forms/create")
+                                     (authenticate api-key user-id)
+                                     (json-body command)
+                                     handler)]
+                    (or (= 400 (:status response))
+                        (not (get-in response [:body :success])))))]
+          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/type] nil)) "missing field")
+          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/type] :doesnotexist)) "invalid type")
+          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/field] nil)) "missing field")
+          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {})) "missing value")
+          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {:field/id "doesnotexist"})) "referred field does not exist")
+          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/values] nil)) "missing value")
+          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] "c")) "invalid value type")
+          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "doesnotexist" "d"])) "referred value does not exist")
+          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "c"])) "duplicate value")))
+      (testing "valid request"
+        (let [form-id (-> (request :post "/api/forms/create")
+                          (authenticate api-key user-id)
+                          (json-body command)
+                          handler
+                          read-ok-body
+                          :id)]
+          (is form-id)
+          (testing "and fetching"
+            (let [form (-> (request :get (str "/api/forms/" form-id))
+                           (authenticate api-key user-id)
+                           handler
+                           read-ok-body)]
+              (is (= (select-keys command [:form/organization :form/title])
+                     (select-keys form [:form/organization :form/title])))
+              (is (= [{:field/id "fld1"
+                       :field/type "option"
+                       :field/title {:fi "fi" :en "en"}
+                       :field/optional false
+                       :field/options [{:key "a" :label {:fi "fi" :en "en"}}
+                                       {:key "b" :label {:fi "fi" :en "en"}}
+                                       {:key "c" :label {:fi "fi" :en "en"}}]}
+                      {:field/id "fld4"
+                       :field/type "text"
+                       :field/title {:fi "fi" :en "en"}
+                       :field/optional false}
+                      {:field/id "fld5"
+                       :field/type "text"
+                       :field/title {:fi "fi" :en "en"}
+                       :field/optional false
+                       :field/visibility {:visibility/type "only-if"
+                                          :visibility/field {:field/id "fld1"}
+                                          :visibility/values ["c"]}}
+                      {:field/id "fld3"
+                       :field/type "multiselect"
+                       :field/title {:fi "fi" :en "en"}
+                       :field/optional false
+                       :field/options [{:key "a" :label {:fi "fi" :en "en"}}
+                                       {:key "b" :label {:fi "fi" :en "en"}}
+                                       {:key "c" :label {:fi "fi" :en "en"}}
+                                       {:key "d" :label {:fi "fi" :en "en"}}]}
+                      {:field/id "fld7"
+                       :field/type "text"
+                       :field/title {:fi "fi" :en "en"}
+                       :field/optional false
+                       :field/visibility {:visibility/type "only-if"
+                                          :visibility/field {:field/id "fld3"}
+                                          :visibility/values ["c" "d"]}}]
+                     (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms" {:archived true})
