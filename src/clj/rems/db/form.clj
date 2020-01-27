@@ -55,7 +55,7 @@
         id-counts (frequencies (map :field/id fields-with-given-ids))
         duplicates (keys (filter-vals #(< 1 %) id-counts))]
     (when (some empty? (map :field/id fields-with-given-ids))
-      (throw (InvalidRequestException. "")))
+      (throw (InvalidRequestException. "field id must not be empty")))
     (when (seq duplicates)
       (throw (InvalidRequestException. (pr-str duplicates))))
     fields))
