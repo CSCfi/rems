@@ -543,7 +543,7 @@
               :application/id app-id}
              (ok-command application submit-command injections))))
 
-    (testing "cannot submit when required fields are empty"
+    (testing "required fields"
       (testing "1st field is optional and empty, 2nd field is required but invisible"
         (is (= {:event/type :application.event/submitted
                 :event/time test-time
