@@ -489,7 +489,11 @@
                  (getx-in (validate-visible {:visibility/type :only-if
                                              :visibility/field {}})
                           [:form/fields 1 :field/visibility :visibility/field])
-                 :t.form.validation/required)))
+                 :t.form.validation/required))
+          (is (= (getx-in (validate-visible {:visibility/type :only-if
+                                             :visibility/field {:field/id "does-not-exist"}})
+                          [:form/fields 1 :field/visibility :visibility/field])
+                 :t.form.validation/invalid-value)))
 
         (testing "invalid value"
           (is (= (getx-in (validate-visible {:visibility/type :only-if
@@ -498,7 +502,11 @@
                  :t.form.validation/required))
           (is (= (getx-in (validate-visible {:visibility/type :only-if
                                              :visibility/field {:field/id "fld1"}
-                                             :visibility/values "does-not-exist"})
+                                             :visibility/values ["does-not-exist"]})
+                          [:form/fields 1 :field/visibility :visibility/values])
+                 (getx-in (validate-visible {:visibility/type :only-if
+                                             :visibility/field {:field/id "fld1"}
+                                             :visibility/values ["yes" "does-not-exist"]})
                           [:form/fields 1 :field/visibility :visibility/values])
                  :t.form.validation/invalid-value)))
 

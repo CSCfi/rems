@@ -208,18 +208,19 @@
   (set (map :key (:field/options field))))
 
 (defn- validate-only-if-field [field visibility fields]
-  (let [referred-field (find-first (comp #{(get-in visibility [:visibility/field :field/id])} :field/id) fields)]
+  (let [referred-id (get-in visibility [:visibility/field :field/id])
+        referred-field (find-first (comp #{referred-id} :field/id) fields)]
     (cond
       (not (:visibility/field visibility))
       {:field/visibility {:visibility/field :t.form.validation/required}}
 
-      (not referred-field)
+      (empty? referred-id)
       {:field/visibility {:visibility/field :t.form.validation/required}}
 
-      (not (supports-options? referred-field))
+      (not referred-field)
       {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
 
-      (not (visibility :visibility/field :field/id))
+      (not (supports-options? referred-field))
       {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
 
       (empty? (:visibility/values visibility))
