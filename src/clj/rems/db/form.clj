@@ -50,7 +50,9 @@
   (or (form-in-use-error form-id)
       {:success true}))
 
-(defn validate-given-ids [fields]
+(defn validate-given-ids
+  "Check that `:field/id` values are distinct, not empty (or not given)."
+  [fields]
   (let [fields-with-given-ids (filter #(contains? % :field/id) fields)
         id-counts (frequencies (map :field/id fields-with-given-ids))
         duplicates (keys (filter-vals #(< 1 %) id-counts))]
