@@ -140,3 +140,20 @@
   (is (= [[:a] [:b]] (recursive-keys {:a [1] :b "foo"})))
   (is (= [[:a :b] [:a :c] [:a :d :e] [:a :d :f]]
          (recursive-keys {:a {:b 1 :c nil :d {:e "foo" :f [3]}}}))))
+
+(defn parse-int [s]
+  #?(:clj (try
+            (when s
+              (java.lang.Integer/parseInt s))
+            (catch NumberFormatException e
+              nil))
+     :cljs (let [x (js/parseInt s)]
+             (when-not (js/isNaN x)
+               x))))
+
+
+(deftest test-parse-int
+  (is (= nil (parse-int nil)))
+  (is (= nil (parse-int "")))
+  (is (= nil (parse-int "a")))
+  (is (= 7 (parse-int "7"))))

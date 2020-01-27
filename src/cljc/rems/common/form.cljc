@@ -1,6 +1,8 @@
 (ns rems.common.form
-  (:require  [clojure.test :refer [deftest is]]
-             [medley.core :refer [find-first]]))
+  (:require  [clojure.string :as str]
+             [clojure.test :refer [deftest is]]
+             [medley.core :refer [find-first]]
+             [rems.common-util :refer [parse-int]]))
 
 (defn- generate-field-ids
   "Generate a set of unique field ids taking into account what have been given already.

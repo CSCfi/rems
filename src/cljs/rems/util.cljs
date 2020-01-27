@@ -129,10 +129,6 @@
                    opts
                    {:error-handler (wrap-default-error-handler (:error-handler opts))})))
 
-(defn parse-int [string]
-  (let [parsed (parseInt string)]
-    (when-not (js/isNaN parsed) parsed)))
-
 ;; String manipulation
 
 (defn trim-when-string [s]
