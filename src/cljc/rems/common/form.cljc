@@ -2,16 +2,26 @@
   (:require  [clojure.test :refer [deftest is]]
              [medley.core :refer [find-first]]))
 
-(defn- generate-field-ids [fields]
+(defn- generate-field-ids
+  "Generate a set of unique field ids taking into account what have been given already.
+
+  Returns in the format [{:field/id \"fld1\"} ...], same as the fields."
+  [fields]
   (let [generated-ids (map #(str "fld" %) (iterate inc 1))
         default-ids (for [id (->> generated-ids
                                   (remove (set (map :field/id fields))))]
                       {:field/id id})]
     default-ids))
 
-(def generate-field-id (comp first generate-field-ids))
+(def generate-field-id
+  "Generate a single unique field id taking into account what have been given already.
 
-(defn assign-field-ids [fields]
+  Returns in the format [{:field/id \"fld1\"} ...], same as the fields."
+  (comp first generate-field-ids))
+
+(defn assign-field-ids
+  "Go through the given fields and assign each a unique `:field/id` if it's missing."
+  [fields]
   (mapv merge (generate-field-ids fields) fields))
 
 (deftest test-assign-field-ids
