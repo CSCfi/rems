@@ -208,18 +208,25 @@
   (set (map :key (:field/options field))))
 
 (defn- validate-only-if-field [field visibility fields]
-  (if (-> visibility :visibility/field)
-    (if-let [referred-field (find-first (comp #{(get-in visibility [:visibility/field :field/id])} :field/id) fields)]
-      (if-not  (supports-options? referred-field)
-        {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
-        (if-not (-> visibility :visibility/field :field/id)
-          {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
-          (if-not (empty? (:visibility/values visibility))
-            (when-not (some (field-option-keys referred-field) (:visibility/values visibility))
-              {:field/visibility {:visibility/values :t.form.validation/invalid-value}})
-            {:field/visibility {:visibility/values :t.form.validation/required}})))
-      {:field/visibility {:visibility/field :t.form.validation/required}})
-    {:field/visibility {:visibility/field :t.form.validation/required}}))
+  (let [referred-field (find-first (comp #{(get-in visibility [:visibility/field :field/id])} :field/id) fields)]
+    (cond
+      (not (:visibility/field visibility))
+      {:field/visibility {:visibility/field :t.form.validation/required}}
+
+      (not referred-field)
+      {:field/visibility {:visibility/field :t.form.validation/required}}
+
+      (not (supports-options? referred-field))
+      {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
+
+      (not (visibility :visibility/field :field/id))
+      {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
+
+      (empty? (:visibility/values visibility))
+      {:field/visibility {:visibility/values :t.form.validation/required}}
+
+      (some #(not (contains? (field-option-keys referred-field) %)) (:visibility/values visibility))
+      {:field/visibility {:visibility/values :t.form.validation/invalid-value}})))
 
 (defn- validate-visibility [field fields]
   (when-let [visibility (:field/visibility field)]
