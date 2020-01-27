@@ -83,13 +83,12 @@
 ;; TODO Do we support form licenses?
 
 (defn form-page []
-  (let [form (rf/subscribe [::form])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      [:div
-       [administration/navigator]
-       [document-title (text :t.administration/form)]
-       [flash-message/component :top]
-       (if @loading?
-         [spinner/big]
-         [form-view @form])])))
+  (let [form @(rf/subscribe [::form])
+        loading? @(rf/subscribe [::loading?])]
+    [:div
+     [administration/navigator]
+     [document-title (text :t.administration/form)]
+     [flash-message/component :top]
+     (if loading?
+       [spinner/big]
+       [form-view form])]))

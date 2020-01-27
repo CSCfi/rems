@@ -29,6 +29,7 @@
 
 (defn validate-fields [fields]
   (->> (sort-by :field/id fields)
+       (filter :field/visible)
        (map validate-field)
        (remove nil?)
        (seq)))

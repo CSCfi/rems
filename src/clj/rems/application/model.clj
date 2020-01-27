@@ -4,6 +4,7 @@
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
+            [rems.common.form :refer [field-visible?]]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
 
@@ -502,6 +503,15 @@
                         days))
       application)))
 
+(defn enrich-field-visible [application]
+  (let [fields (get-in application [:application/form :form/fields])
+        answers (into {} (map (juxt :field/id :field/value) fields))
+        fields-with-visible (mapv (fn [field]
+                                    (assoc field :field/visible (field-visible? field answers)))
+                                  fields)]
+    (-> application
+        (assoc-in [:application/form :form/fields] fields-with-visible))))
+
 (defn- enrich-disable-commands [application get-config]
   (permissions/blacklist application
                          (permissions/compile-rules
@@ -516,6 +526,7 @@
   (-> application
       enrich-answers
       (update :application/form enrich-form get-form-template)
+      enrich-field-visible ; uses enriched form fields and answers
       set-application-description
       (update :application/resources enrich-resources get-catalogue-item)
       (update :application/licenses enrich-licenses get-license)

@@ -213,7 +213,7 @@
                           :workflow-selection "Workflow"}
   :create-form {:add-form-field "Add field"
                 :add-option "Add option"
-                :field-n "Field %1"
+                :field-n "Field %1: %2"
                 :field-title "Field title"
                 :field-type "Field type"
                 :maxlength "Maximum length in characters (optional)"
@@ -232,7 +232,13 @@
                 :type-multiselect "Multi-select list"
                 :type-option "Option list"
                 :type-text "Text field"
-                :type-texta "Text area"}
+                :type-texta "Text area"
+                :type-visibility "Visible"
+                :visibility {:always "Always"
+                             :field "Field"
+                             :has-value "Has value"
+                             :hidden "Hidden"
+                             :only-if "Only if"}}
   :create-license {:external-link "External link"
                    :inline-text "Inline text"
                    :license-attachment "Attachment"

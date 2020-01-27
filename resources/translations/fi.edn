@@ -211,7 +211,7 @@
                           :workflow-selection "Työvuo"}
   :create-form {:add-form-field "Lisää kenttä"
                 :add-option "Lisää vaihtoehto"
-                :field-n "Kenttä %1"
+                :field-n "Kenttä %1: %2"
                 :field-title "Kentän otsikko"
                 :field-type "Kentän tyyppi"
                 :maxlength "Enimmäispituus merkkeinä (ei pakollinen)"
@@ -230,7 +230,13 @@
                 :type-multiselect "Monivalintalista"
                 :type-option "Valintalista"
                 :type-text "Tekstikenttä"
-                :type-texta "Tekstialue"}
+                :type-texta "Tekstialue"
+                :type-visibility "Näkyvissä"
+                :visibility {:always "Aina"
+                             :field "Kentällä"
+                             :has-value "On arvo"
+                             :hidden "Piilossa"
+                             :only-if "Vain jos"}}
   :create-license {:external-link "Linkki"
                    :inline-text "Teksti"
                    :license-attachment "Liite"

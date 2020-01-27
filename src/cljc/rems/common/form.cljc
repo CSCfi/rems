@@ -32,3 +32,33 @@
   (is (= [{:field/id "fld2"} {:field/id "fld3"}] (assign-field-ids [{:field/id "fld2"} {}])))
   (is (= [{:field/id "fld2"} {:field/id "fld1"}] (assign-field-ids [{} {:field/id "fld1"}])))
   (is (= [{:field/id "fld2"} {:field/id "fld4"} {:field/id "fld3"}] (assign-field-ids [{:field/id "fld2"} {} {:field/id "fld3"}]))))
+
+(defn field-visible? [field values]
+  (let [visibility (:field/visibility field)]
+    (or (nil? visibility)
+        (= :always (:visibility/type visibility))
+        (and (= :only-if (:visibility/type visibility))
+             (contains? (set (:visibility/values visibility))
+                        (get values (:field/id (:visibility/field visibility))))))))
+
+(deftest test-field-visible?
+  (is (true? (field-visible? nil nil)))
+  (is (true? (field-visible? {:field/visibility {:visibility/type :always}}
+                             nil)))
+  (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                  :visibility/field {:field/id "1"}
+                                                  :visibility/values ["yes"]}}
+                              nil)))
+  (is (false? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                  :visibility/field {:field/id "1"}
+                                                  :visibility/values ["yes"]}}
+                              {"1" "no"})))
+  (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                 :visibility/field {:field/id "1"}
+                                                 :visibility/values ["yes"]}}
+                             {"1" "yes"})))
+  (is (true? (field-visible? {:field/visibility {:visibility/type :only-if
+                                                 :visibility/field {:field/id "1"}
+                                                 :visibility/values ["yes" "definitely"]}}
+                             {"1" "definitely"}))))
+

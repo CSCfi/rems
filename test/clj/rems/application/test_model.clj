@@ -1050,7 +1050,8 @@
                                             :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                                             :field/optional false
                                             :field/options []
-                                            :field/max-length 100}
+                                            :field/max-length 100
+                                            :field/visible true}
                                            {:field/id "42"
                                             :field/value "bar"
                                             :field/type :text
@@ -1058,7 +1059,8 @@
                                             :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                                             :field/optional false
                                             :field/options []
-                                            :field/max-length 100}]}
+                                            :field/max-length 100
+                                            :field/visible true}]}
           :application/attachments []
           :application/workflow {:workflow/id 50
                                  :workflow/type :workflow/master
@@ -1215,6 +1217,24 @@
            (model/enrich-deadline {:application/created (DateTime. 3000)
                                    :application/first-submitted (DateTime. 4000)}
                                   (constantly {:application-deadline-days nil}))))))
+
+(deftest test-enrich-field-visible
+  (let [application {:application/form {:form/fields [{:field/id "fld1"
+                                                       :field/title "Option"
+                                                       :field/options [{:key "no" :label "No"}
+                                                                       {:key "yes" :label "Yes"}]}
+                                                      {:field/id "fld2"
+                                                       :field/title "Hidden field"
+                                                       :field/visibility {:visibility/type :only-if
+                                                                          :visibility/field {:field/id "fld1"}
+                                                                          :visibility/values ["yes"]}}]}}
+        visible-fields (fn [application]
+                         (->> (get-in (model/enrich-field-visible application) [:application/form :form/fields])
+                              (filter :field/visible)
+                              (map :field/id)))]
+    (is (= ["fld1"] (visible-fields application)) "no answer should not make field visible")
+    (is (= ["fld1"] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
+    (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
