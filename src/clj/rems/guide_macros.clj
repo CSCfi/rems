@@ -2,25 +2,14 @@
   "Utilities for component guide."
   (:require [clojure.pprint :refer [code-dispatch write]]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is]]))
-
-(defn- normalize-file-path
-  "The file path may contain local filesystem parts that we want to remove
-  so that we can use the path to refer to e.g. project GitHub."
-  [path]
-  (str/replace (subs path (str/index-of path "src"))
-               "\\" "/"))
-
-(deftest normalize-file-path-test
-  (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))
-  (is (= "src/foo/bar.clj" (normalize-file-path "C:\\Users\\john\\rems\\src\\foo/bar.clj"))))
+            [rems.common-util :as common-util]))
 
 (defmacro namespace-info [ns-symbol]
   (let [ns (find-ns ns-symbol)
         name (str (ns-name ns))
         meta (meta ns)
         meta (assoc meta
-                    :file (normalize-file-path (:file meta))
+                    :file (common-util/normalize-file-path (:file meta))
                     :doc (-> &env :ns :doc))]
     `(rems.guide-functions/render-namespace-info
       ~name
@@ -30,6 +19,11 @@
   (meta (find-ns 'rems.guide-macros)))
 
 (defmacro component-info [component]
+  ;; TODO we'd like to use normalize-file-path on the component
+  ;; metadata at compile time, just like we do for namespaces above.
+  ;; However it seems that there's no way to get the metadata at
+  ;; compile time (e.g. resolve and ns-resolve return nil). Thus we
+  ;; normalize the path at runtime in rems.guide-functions/link-to-source.
   `(let [m# (meta (var ~component))]
      (rems.guide-functions/render-component-info
       (:name m#)
