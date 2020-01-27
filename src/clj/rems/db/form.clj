@@ -83,14 +83,14 @@
                                       {:field/id "xyz"}
                                       {:field/id "abc"}])))))
 
-(defn- normalize-field-values [field]
+(defn- normalize-field-definition [field]
   (let [visibility-type (get-in field [:field/visibility :visibility/type] :always)]
     (if (= :always visibility-type)
       (dissoc field :field/visibility)
       field)))
 
-(defn- normalize-fields-values [fields]
-  (map normalize-field-values fields))
+(defn- normalize-field-definitions [fields]
+  (map normalize-field-definition fields))
 
 (def ^:private validate-fields
   (s/validator [FieldTemplate]))
@@ -99,7 +99,7 @@
   (->> (:form/fields form)
        (validate-given-ids)
        (assign-field-ids)
-       (normalize-fields-values)
+       (normalize-field-definitions)
        (validate-fields)
        (json/generate-string)))
 
