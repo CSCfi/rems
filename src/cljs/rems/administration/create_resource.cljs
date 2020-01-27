@@ -7,6 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
             [rems.util :refer [navigate! fetch post! trim-when-string]]))
@@ -14,10 +15,14 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db
-               ::form {:licenses #{}}
-               ::loading? true)
-    ::fetch-licenses nil}))
+   (let [roles (get-in db [:identity :roles])
+         organization (get-in db [:identity :user :organization])]
+     {:db (assoc db
+                 ::form (merge {:licenses #{}}
+                               (when (roles/disallow-setting-organization? roles)
+                                 {:organization organization}))
+                 ::loading? true)
+      ::fetch-licenses nil})))
 
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
@@ -83,9 +88,11 @@
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
 (defn- resource-organization-field []
-  [text-field context {:keys [:organization]
-                       :label (text :t.administration/organization)
-                       :placeholder (text :t.administration/organization-placeholder)}])
+  (let [readonly (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity])))]
+    [text-field context {:keys [:organization]
+                         :label (text :t.administration/organization)
+                         :readonly readonly
+                         :placeholder (text :t.administration/organization-placeholder)}]))
 
 (defn- resource-id-field []
   [text-field context {:keys [:resid]

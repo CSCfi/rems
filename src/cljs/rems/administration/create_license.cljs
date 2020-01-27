@@ -6,14 +6,18 @@
             [rems.atoms :as atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! post! trim-when-string]]))
 
 (rf/reg-event-db
  ::enter-page
  (fn [db _]
-   (dissoc db ::form)))
-
+   (let [roles (get-in db [:identity :roles])
+         organization (get-in db [:identity :user :organization])]
+     (assoc db
+            ::form (when (roles/disallow-setting-organization? roles)
+                     {:organization organization})))))
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
 
@@ -110,8 +114,10 @@
   [:h3 (str/upper-case (name language))])
 
 (defn- license-organization-field []
-  [text-field context {:keys [:organization]
-                       :label (text :t.administration/organization)}])
+  (let [readonly (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity])))]
+    [text-field context {:keys [:organization]
+                         :label (text :t.administration/organization)
+                         :readonly readonly}]))
 
 (defn- license-title-field [language]
   [text-field context {:keys [:localizations language :title]

@@ -9,6 +9,7 @@
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
@@ -22,15 +23,19 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ catalogue-item-id]]
-   {:db (-> (dissoc db ::form)
-            (assoc ::catalogue-item-id catalogue-item-id
-                   ::loading-catalogue-item? (not (nil? catalogue-item-id))
-                   ::loading? true
-                   ::loading-progress 0))
-    ::fetch-catalogue-item catalogue-item-id
-    ::fetch-workflows nil
-    ::fetch-resources nil
-    ::fetch-forms nil}))
+   (let [roles (get-in db [:identity :roles])
+         organization (get-in db [:identity :user :organization])]
+     {:db (assoc db
+                 ::form (when (roles/disallow-setting-organization? roles)
+                          {:organization organization})
+                 ::catalogue-item-id catalogue-item-id
+                 ::loading-catalogue-item? (not (nil? catalogue-item-id))
+                 ::loading? true
+                 ::loading-progress 0)
+      ::fetch-catalogue-item catalogue-item-id
+      ::fetch-workflows nil
+      ::fetch-resources nil
+      ::fetch-forms nil})))
 
 (rf/reg-sub ::catalogue-item (fn [db _] (::catalogue-item db)))
 (rf/reg-sub ::editing? (fn [db _] (not (nil? (::catalogue-item-id db)))))
@@ -194,9 +199,12 @@
 (def ^:private form-dropdown-id "form-dropdown")
 
 (defn- catalogue-item-organization-field []
-  [text-field context {:keys [:organization]
-                       :label (text :t.administration/organization)
-                       :readonly @(rf/subscribe [::editing?])}])
+  ;; TODO: Allow editing the organization of an existing catalogue item?
+  (let [readonly (or @(rf/subscribe [::editing?])
+                     (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity]))))]
+    [text-field context {:keys [:organization]
+                         :label (text :t.administration/organization)
+                         :readonly readonly}]))
 
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]

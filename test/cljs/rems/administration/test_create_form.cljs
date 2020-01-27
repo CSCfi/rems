@@ -2,6 +2,7 @@
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-localized-string validate-form]]
+            [rems.identity :refer [set-roles!]]
             [rems.testing :refer [isolate-re-frame-state stub-re-frame-effect]]
             [rems.util :refer [getx-in]]))
 
@@ -19,6 +20,7 @@
   (rf/dispatch-sync [:rems.administration.create-form/enter-page]))
 
 (deftest add-form-field-test
+  (set-roles! [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form])]
     (testing "adds fields"
       (reset-form)
@@ -48,6 +50,7 @@
           "after"))))
 
 (deftest remove-form-field-test
+  (set-roles! [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form])]
     (testing "removes fields"
       (reset-form)
@@ -84,6 +87,7 @@
           "after"))))
 
 (deftest move-form-field-up-test
+  (set-roles! [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form])]
     (testing "moves fields up"
       (reset-form)
@@ -125,6 +129,7 @@
             "after move 3")))))
 
 (deftest move-form-field-down-test
+  (set-roles! [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form])]
     (testing "moves fields down"
       (reset-form)
