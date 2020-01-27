@@ -3,6 +3,7 @@
             [medley.core :refer [filter-vals map-keys]]
             [rems.api.schema :refer [FieldTemplate]]
             [rems.common.form :refer [assign-field-ids]]
+            [rems.api.services.util :as util]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -96,18 +97,22 @@
        (json/generate-string)))
 
 (defn create-form! [user-id form]
-  (let [form-id (:id (db/save-form-template! {:organization (:form/organization form)
-                                              :title (:form/title form)
-                                              :user user-id
-                                              :fields (serialize-fields form)}))]
-    {:success (not (nil? form-id))
-     :id form-id}))
+  (let [organization (:form/organization form)]
+    (or (util/forbidden-organization? user-id organization)
+        (let [form-id (:id (db/save-form-template! {:organization organization
+                                                    :title (:form/title form)
+                                                    :user user-id
+                                                    :fields (serialize-fields form)}))]
+          {:success (not (nil? form-id))
+           :id form-id}))))
 
 (defn edit-form! [user-id form]
-  (let [form-id (:form/id form)]
-    (or (form-in-use-error form-id)
+  (let [form-id (:form/id form)
+        organization (:form/organization form)]
+    (or (util/forbidden-organization? user-id organization)
+        (form-in-use-error form-id)
         (do (db/edit-form-template! {:id form-id
-                                     :organization (:form/organization form)
+                                     :organization organization
                                      :title (:form/title form)
                                      :user user-id
                                      :fields (serialize-fields form)})

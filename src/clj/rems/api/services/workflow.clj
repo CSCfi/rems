@@ -1,15 +1,28 @@
 (ns rems.api.services.workflow
-  (:require [rems.db.applications :as applications]
+  (:require [rems.api.services.util :as util]
+            [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
-            [rems.json :as json]))
+            [rems.json :as json]
+            [schema.core :as s]))
 
-(defn create-workflow! [workflow]
-  (let [id (workflow/create-workflow! workflow)]
-    {:id id
-     :success (not (nil? id))}))
+(def ^:private validate-workflow-body
+  (s/validator workflow/WorkflowBody))
+
+(defn create-workflow! [{:keys [user-id organization type title handlers]}]
+  (or (util/forbidden-organization? user-id organization)
+      (let [body {:type type
+                  :handlers handlers}
+            id (:id (db/create-workflow! {:organization organization,
+                                          :owneruserid user-id,
+                                          :modifieruserid user-id,
+                                          :title title,
+                                          :workflow (json/generate-string
+                                                     (validate-workflow-body body))}))]
+        {:success (not (nil? id))
+         :id id})))
 
 (defn- unrich-workflow [workflow]
   ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)

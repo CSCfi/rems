@@ -17,7 +17,14 @@
 
 (deftest licenses-api-test
   (let [api-key "42"
-        user-id "owner"]
+        user-id "owner"
+        create-license (fn [user-id command]
+                         (-> (request :post "/api/licenses/create")
+                             (authenticate api-key user-id)
+                             (json-body command)
+                             handler
+                             assert-response-is-ok
+                             read-body))]
     (testing "get all"
       (let [data (-> (request :get "/api/licenses")
                      (authenticate api-key user-id)
@@ -28,46 +35,48 @@
 
     (testing "create linked license"
       (let [command {:licensetype "link"
-                     :organization "org"
+                     :organization "test-organization"
                      :localizations {:en {:title "en title"
                                           :textcontent "http://example.com/license/en"
                                           :attachment-id nil}
                                      :fi {:title "fi title"
                                           :textcontent "http://example.com/license/fi"
-                                          :attachment-id nil}}}
-            id (-> (request :post "/api/licenses/create")
-                   (authenticate api-key user-id)
-                   (json-body command)
-                   handler
-                   assert-response-is-ok
-                   read-body
-                   :id)]
-        (is id)
-        (testing "and fetch"
-          (let [license (-> (request :get (str "/api/licenses/" id))
-                            (authenticate api-key user-id)
-                            handler
-                            assert-response-is-ok
-                            read-body)]
-            (is license)
-            (is (= command (select-keys license (keys command))))))))
+                                          :attachment-id nil}}}]
+        (testing "as owner"
+          (let [id (:id (create-license "owner" command))]
+            (is id)
+            (testing "and fetch"
+              (let [license (-> (request :get (str "/api/licenses/" id))
+                                (authenticate api-key user-id)
+                                handler
+                                assert-response-is-ok
+                                read-body)]
+                (is license)
+                (is (= command (select-keys license (keys command))))))))
+
+        (testing "as organization owner"
+          (testing "with correct organization"
+            (let [body (create-license "organization-owner" (assoc command :organization "organization"))]
+              (is (:id body))
+              (is (:success body))))
+
+          (testing "with correct organization"
+            (let [body (create-license "organization-owner" (assoc command :organization "not organization"))]
+              (is (not (:success body))))))))
 
     (testing "create inline license"
       (let [command {:licensetype "text"
-                     :organization "org"
+                     :organization "test-organization"
                      :localizations {:en {:title "en title"
                                           :textcontent "en text"
                                           :attachment-id nil}
                                      :fi {:title "fi title"
                                           :textcontent "fi text"
                                           :attachment-id nil}}}
-            id (-> (request :post "/api/licenses/create")
-                   (authenticate api-key user-id)
-                   (json-body command)
-                   handler
-                   read-ok-body
-                   :id)]
+            body (create-license user-id command)
+            id (:id body)]
         (is id)
+        (is (:success body))
         (testing "and fetch"
           (let [license (-> (request :get (str "/api/licenses/" id))
                             (authenticate api-key user-id)
@@ -116,7 +125,7 @@
                               read-ok-body
                               :id)
             command {:licensetype "text"
-                     :organization "org"
+                     :organization "test-organization"
                      :localizations {:en {:title "en title"
                                           :textcontent "en text"
                                           :attachment-id attachment-id}
@@ -170,7 +179,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/licenses/create")
                          (json-body {:licensetype "text"
-                                     :organization "org"
+                                     :organization "test-organization"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]
@@ -188,7 +197,7 @@
       (let [response (-> (request :post "/api/licenses/create")
                          (authenticate "42" "alice")
                          (json-body {:licensetype "text"
-                                     :organization "org"
+                                     :organization "test-organization"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]

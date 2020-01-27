@@ -39,7 +39,7 @@
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
-   "/administration/applications"
+   "/administration/reports"
    (text :t.administration/cancel)])
 
 (defn- export-button [form-id]

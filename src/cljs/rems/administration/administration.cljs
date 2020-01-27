@@ -25,7 +25,7 @@
    [navbar/nav-link "/administration/forms" (text :t.administration/forms)]
    [navbar/nav-link "/administration/workflows" (text :t.administration/workflows)]
    [navbar/nav-link "/administration/licenses" (text :t.administration/licenses)]
-   [navbar/nav-link "/administration/applications" (text :t.administration/applications)]
+   [navbar/nav-link "/administration/reports" (text :t.administration/reports)]
    [navbar/nav-link "/administration/blacklist" (text :t.administration/blacklist)]])
 
 (defn guide []

@@ -1,5 +1,5 @@
-(ns rems.administration.applications
-  "Admin page for applications."
+(ns rems.administration.reports
+  "Admin page for reports."
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.atoms :as atoms]
@@ -13,15 +13,15 @@
 
 (defn- export-applications-button []
   [atoms/link {:class "btn btn-primary"}
-   "/administration/applications/export"
+   "/administration/reports/export-applications"
    (text :t.administration/export-applications)])
 
-(defn admin-applications []
+(defn reports []
   [export-applications-button])
 
-(defn admin-applications-page []
+(defn reports-page []
   [:div
    [administration/navigator]
-   [atoms/document-title (text :t.administration/applications)]
+   [atoms/document-title (text :t.administration/reports)]
    [flash-message/component :top]
-   [admin-applications]])
+   [reports]])

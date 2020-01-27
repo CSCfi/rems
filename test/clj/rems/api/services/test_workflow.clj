@@ -7,16 +7,18 @@
 (use-fixtures :once test-db-fixture caches-fixture)
 (use-fixtures :each rollback-db-fixture)
 
-(deftest test-create-workflow
+(defn- create-users []
   (test-data/create-user! {:eppn "user1" :commonName "User 1" :mail "user1@example.com"})
-  (test-data/create-user! {:eppn "user2" :commonName "User 2" :mail "user2@example.com"})
+  (test-data/create-user! {:eppn "user2" :commonName "User 2" :mail "user2@example.com"}))
+
+(deftest test-create-workflow
+  (create-users)
 
   (testing "default workflow"
-    (let [wf-id (:id (workflow/create-workflow! {:user-id "creator"
-                                                 :organization "org"
-                                                 :type :workflow/default
-                                                 :title "the title"
-                                                 :handlers ["user1" "user2"]}))]
+    (let [wf-id (test-data/create-workflow! {:organization "org"
+                                             :type :workflow/default
+                                             :title "the title"
+                                             :handlers ["user1" "user2"]})]
       (is (= {:id wf-id
               :organization "org"
               :title "the title"
@@ -24,18 +26,17 @@
                          :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                     {:userid "user2" :name "User 2" :email "user2@example.com"}]}
               :licenses []
-              :owneruserid "creator"
-              :modifieruserid "creator"
+              :owneruserid "owner"
+              :modifieruserid "owner"
               :enabled true
               :archived false}
              (workflow/get-workflow wf-id)))))
 
   (testing "decider workflow"
-    (let [wf-id (:id (workflow/create-workflow! {:user-id "creator"
-                                                 :organization "org"
-                                                 :type :workflow/decider
-                                                 :title "the title"
-                                                 :handlers ["user1" "user2"]}))]
+    (let [wf-id (test-data/create-workflow! {:organization "org"
+                                             :type :workflow/decider
+                                             :title "the title"
+                                             :handlers ["user1" "user2"]})]
       (is (= {:id wf-id
               :organization "org"
               :title "the title"
@@ -43,18 +44,17 @@
                          :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                     {:userid "user2" :name "User 2" :email "user2@example.com"}]}
               :licenses []
-              :owneruserid "creator"
-              :modifieruserid "creator"
+              :owneruserid "owner"
+              :modifieruserid "owner"
               :enabled true
               :archived false}
              (workflow/get-workflow wf-id)))))
 
   (testing "master workflow"
-    (let [wf-id (:id (workflow/create-workflow! {:user-id "creator"
-                                                 :organization "org"
-                                                 :type :workflow/master
-                                                 :title "the title"
-                                                 :handlers ["user1" "user2"]}))]
+    (let [wf-id (test-data/create-workflow! {:organization "org"
+                                             :type :workflow/master
+                                             :title "the title"
+                                             :handlers ["user1" "user2"]})]
       (is (= {:id wf-id
               :organization "org"
               :title "the title"
@@ -62,22 +62,20 @@
                          :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
                                     {:userid "user2" :name "User 2" :email "user2@example.com"}]}
               :licenses []
-              :owneruserid "creator"
-              :modifieruserid "creator"
+              :owneruserid "owner"
+              :modifieruserid "owner"
               :enabled true
               :archived false}
              (workflow/get-workflow wf-id))))))
 
 (deftest test-edit-workflow
-  (test-data/create-user! {:eppn "user1" :commonName "User 1" :mail "user1@example.com"})
-  (test-data/create-user! {:eppn "user2" :commonName "User 2" :mail "user2@example.com"})
+  (create-users)
 
   (testing "change title"
-    (let [wf-id (:id (workflow/create-workflow! {:user-id "creator"
-                                                 :organization "org"
-                                                 :type :workflow/master
-                                                 :title "original title"
-                                                 :handlers ["user1"]}))]
+    (let [wf-id (test-data/create-workflow! {:organization "org"
+                                             :type :workflow/master
+                                             :title "original title"
+                                             :handlers ["user1"]})]
       (workflow/edit-workflow! {:id wf-id
                                 :title "changed title"})
       (is (= {:id wf-id
@@ -88,11 +86,10 @@
                  (select-keys [:id :title :workflow]))))))
 
   (testing "change handlers"
-    (let [wf-id (:id (workflow/create-workflow! {:user-id "creator"
-                                                 :organization "org"
-                                                 :type :workflow/master
-                                                 :title "original title"
-                                                 :handlers ["user1"]}))]
+    (let [wf-id (test-data/create-workflow! {:organization "org"
+                                             :type :workflow/master
+                                             :title "original title"
+                                             :handlers ["user1"]})]
       (workflow/edit-workflow! {:id wf-id
                                 :handlers ["user2"]})
       (is (= {:id wf-id
@@ -109,18 +106,16 @@
 
 (deftest test-get-handlers
   (let [simplify #(map :userid %)
-        wf1 (:id (workflow/create-workflow! {:user-id "owner"
-                                             :organization ""
-                                             :type :workflow/default
-                                             :title "workflow2"
-                                             :handlers ["handler1"
-                                                        "handler2"]}))
-        wf2 (:id (workflow/create-workflow! {:user-id "owner"
-                                             :organization ""
-                                             :type :workflow/default
-                                             :title "workflow2"
-                                             :handlers ["handler2"
-                                                        "handler3"]}))]
+        wf1 (test-data/create-workflow! {:organization ""
+                                         :type :workflow/default
+                                         :title "workflow2"
+                                         :handlers ["handler1"
+                                                    "handler2"]})
+        wf2 (test-data/create-workflow! {:organization ""
+                                         :type :workflow/default
+                                         :title "workflow2"
+                                         :handlers ["handler2"
+                                                    "handler3"]})]
 
     (testing "returns distinct handlers from all workflows"
       (is (= ["handler1" "handler2" "handler3"]
