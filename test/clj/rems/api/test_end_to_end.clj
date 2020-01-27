@@ -110,7 +110,7 @@
             (testing "fill in application"
               (assert-success
                (api-call :post "/api/applications/save-draft" {:application-id application-id
-                                                               :field-values [{:field 1
+                                                               :field-values [{:field "fld1"
                                                                                :value "e2e test contents"}]}
                          api-key applicant-id)))
 

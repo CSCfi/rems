@@ -16,6 +16,7 @@ Changes since v2.6
 - `/api/applications/request-comment` API renamed to `/api/applications/request-review` and its `commenters` parameter renamed to `reviewers`
 - `:application.event/comment-requested` event renamed to `:application.event/review-requested` and its `:application/commenters` field renamed to `:application/reviewers`
 - `/api/applications/commenters` API renamed to `/api/applications/reviewers`
+- field/id is now a string. This considers creating forms and the form API, but also form users may have the assumption of integers.
 
 ### Additions
 - Catalogue item form can be changed for one or more items at a time.

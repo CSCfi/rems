@@ -7,6 +7,7 @@
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
+            [rems.common.form :refer [generate-field-id]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
@@ -38,19 +39,11 @@
              :error-handler (flash-message/default-error-handler :top "Fetch form")})
      {:db (assoc db ::loading-form? true)})))
 
-(defn- generate-stable-id []
-  (str (gensym "field")))
-
-;; :field/id is the index of the field (just like in the /api/forms/:form-id schema)
-;; :field/stable-id stays constant when moving the field
-(defn- allocate-stable-ids [form]
-  (update form :form/fields (partial mapv #(assoc % :field/stable-id (generate-stable-id)))))
-
 (rf/reg-event-db
  ::fetch-form-result
  (fn [db [_ form]]
    (-> db
-       (assoc ::form (allocate-stable-ids form))
+       (assoc ::form form)
        (dissoc ::loading-form?))))
 
 ;;;; form state
@@ -64,6 +57,7 @@
 (defn- track-moved-field-editor! [id index button-selector]
   (when-some [element (js/document.getElementById (field-editor-id id))]
     (let [before (.getBoundingClientRect element)]
+      ;; NB: the element exists already but we wait for it to reappear with the new index
       (focus/on-element-appear (field-editor-selector id index)
                                (fn [element]
                                  (let [after (.getBoundingClientRect element)]
@@ -79,7 +73,7 @@
 
 (rf/reg-sub ::form (fn [db _]
                      (-> (::form db)
-                         (update :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/id i)) %))))))
+                         (update :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/index i)) %))))))
 (rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
 (rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
 (rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
@@ -88,10 +82,9 @@
 (rf/reg-event-db
  ::add-form-field
  (fn [db [_ & [index]]]
-   (let [stable-id (generate-stable-id)
-         new-item {:field/stable-id stable-id
-                   :field/type :text}]
-     (focus-field-editor! stable-id)
+   (let [new-item (merge (generate-field-id (get-in db [::form :form/fields]))
+                         {:field/type :text})]
+     (focus-field-editor! (:field/id new-item))
      (update-in db [::form :form/fields] items/add new-item index))))
 
 (rf/reg-event-db
@@ -102,7 +95,7 @@
 (rf/reg-event-db
  ::move-form-field-up
  (fn [db [_ field-index]]
-   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/id])
                               (dec field-index)
                               ".move-up")
    (update-in db [::form :form/fields] items/move-up field-index)))
@@ -110,7 +103,7 @@
 (rf/reg-event-db
  ::move-form-field-down
  (fn [db [_ field-index]]
-   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/stable-id])
+   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/id])
                               (inc field-index)
                               ".move-down")
    (update-in db [::form :form/fields] items/move-down field-index)))
@@ -154,7 +147,8 @@
              [language (trim-when-string (get lstr language ""))])))
 
 (defn- build-request-field [field languages]
-  (merge {:field/title (build-localized-string (:field/title field) languages)
+  (merge {:field/id (:field/id field)
+          :field/title (build-localized-string (:field/title field) languages)
           :field/type (:field/type field)
           :field/optional (if (supports-optional? field)
                             (boolean (:field/optional field))
@@ -266,11 +260,12 @@
        (js/parseInt (.-marginBottom style)))))
 
 (defn set-visibility-ratio [frame element ratio]
-  (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
-        element-height (true-height element)
-        top-margin (/ (.-offsetHeight frame) 4)
-        position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
-    (.scrollTo frame 0 position)))
+  (when (and element frame)
+    (let [element-top (- (.-offsetTop element) (.-offsetTop frame))
+          element-height (true-height element)
+          top-margin (/ (.-offsetHeight frame) 4)
+          position (+ element-top element-height (* -1 ratio element-height) (- top-margin))]
+      (.scrollTo frame 0 position))))
 
 (defn first-partially-visible-edit-field []
   (let [fields (array-seq (.querySelectorAll js/document "#create-form .form-field:not(.new-form-field)"))
@@ -279,10 +274,10 @@
 
 (defn autoscroll []
   (when-let [edit-field (first-partially-visible-edit-field)]
-    (let [index (.getAttribute edit-field "data-field-index")
+    (let [id (last (str/split (.-id edit-field) #"-"))
           preview-frame (.querySelector js/document "#preview-form .collapse-content")
           preview-field (-> js/document
-                            (.getElementById (str "container-field" index)))
+                            (.getElementById (str "container-field-" id)))
           ratio (visibility-ratio edit-field)]
       (set-visibility-ratio preview-frame preview-field ratio))))
 
@@ -411,7 +406,7 @@
         content]])
 
 (defn- format-field-validation [field field-errors]
-  (let [field-index (:field/id field)]
+  (let [field-index (:field/index field)]
     [:li (text-format :t.create-form/field-n (inc field-index))
      (into [:ul]
            (concat
@@ -465,9 +460,9 @@
          [:div.form-field.new-form-field
           [add-form-field-button 0]]]
 
-        (for [{index :field/id :as field} fields]
+        (for [{index :field/index :as field} fields]
           [:<>
-           [:div.form-field {:id (field-editor-id (:field/stable-id field))
+           [:div.form-field {:id (field-editor-id (:field/id field))
                              :key index
                              :data-field-index index}
             [:div.form-field-header

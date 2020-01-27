@@ -218,24 +218,24 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
-              :application/field-values {1 "foo" 2 "bar"}}
+              :application/field-values {"1" "foo" "2" "bar"}}
              (ok-command application
                          {:type :application.command/save-draft
                           :actor applicant-user-id
-                          :field-values [{:field 1 :value "foo"}
-                                         {:field 2 :value "bar"}]}))))
+                          :field-values [{:field "1" :value "foo"}
+                                         {:field "2" :value "bar"}]}))))
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/save-draft
                             :actor "non-applicant"
-                            :field-values [{:field 1 :value "foo"}
-                                           {:field 2 :value "bar"}]})
+                            :field-values [{:field "1" :value "foo"}
+                                           {:field "2" :value "bar"}]})
              (fail-command application
                            {:type :application.command/save-draft
                             :actor handler-user-id
-                            :field-values [{:field 1 :value "foo"}
-                                           {:field 2 :value "bar"}]}))))
+                            :field-values [{:field "1" :value "foo"}
+                                           {:field "2" :value "bar"}]}))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -246,7 +246,7 @@
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
-                              :field-values [{:field 1 :value "updated"}]})))))
+                              :field-values [{:field "1" :value "updated"}]})))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -262,11 +262,11 @@
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id
-                :application/field-values {1 "updated"}}
+                :application/field-values {"1" "updated"}}
                (ok-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values [{:field 1 :value "updated"}]})))))))
+                            :field-values [{:field "1" :value "updated"}]})))))))
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
@@ -510,8 +510,8 @@
                            :event/time test-time
                            :event/actor applicant-user-id
                            :application/id app-id
-                           :application/field-values {41 "foo"
-                                                      42 "bar"}}
+                           :application/field-values {"41" "foo"
+                                                      "42" "bar"}}
         licenses-accepted-event {:event/type :application.event/licenses-accepted
                                  :event/time test-time
                                  :event/actor applicant-user-id
@@ -535,9 +535,9 @@
 
     (testing "cannot submit when required fields are empty"
       (is (= {:errors [{:type :t.form.validation/required
-                        :field-id 41}]}
+                        :field-id "41"}]}
              (-> application
-                 (apply-events [(assoc-in draft-saved-event [:application/field-values 41] "")])
+                 (apply-events [(assoc-in draft-saved-event [:application/field-values "41"] "")])
                  (fail-command submit-command injections)))))
 
     (testing "cannot submit if catalogue item is disabled"
@@ -1371,7 +1371,7 @@
                                         :event/time test-time
                                         :event/actor applicant-user-id
                                         :application/id old-app-id
-                                        :application/field-values {1 "foo" 2 "bar"}}])]
+                                        :application/field-values {"1" "foo" "2" "bar"}}])]
     (testing "creates a new application with the same form answers"
       (is (= [{:event/type :application.event/created
                :event/time test-time
@@ -1390,7 +1390,7 @@
                :event/time test-time
                :event/actor applicant-user-id
                :application/id new-app-id
-               :application/field-values {1 "foo" 2 "bar"}}
+               :application/field-values {"1" "foo" "2" "bar"}}
               {:event/type :application.event/copied-from
                :event/time test-time
                :event/actor applicant-user-id
