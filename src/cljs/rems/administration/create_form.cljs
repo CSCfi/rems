@@ -237,17 +237,19 @@
       nil {:field/visibility {:visibility/type :t.form.validation/required}}
       {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
 
-(defn- validate-field [field index languages fields]
-  {index (merge (validate-text-field field :field/type)
-                (validate-localized-text-field field :field/title languages)
-                (when (supports-placeholder? field)
-                  (validate-optional-localized-field field :field/placeholder languages))
-                (when (supports-max-length? field)
-                  (validate-max-length (:field/max-length field)))
-                (when (supports-options? field)
-                  (validate-options (:field/options field) languages))
-                (when (supports-visibility? field)
-                  (validate-visibility field fields)))})
+(defn validate-fields [fields languages]
+  (letfn [(validate-field [index field]
+            {index (merge (validate-text-field field :field/type)
+                          (validate-localized-text-field field :field/title languages)
+                          (when (supports-placeholder? field)
+                            (validate-optional-localized-field field :field/placeholder languages))
+                          (when (supports-max-length? field)
+                            (validate-max-length (:field/max-length field)))
+                          (when (supports-options? field)
+                            (validate-options (:field/options field) languages))
+                          (when (supports-visibility? field)
+                            (validate-visibility field fields)))})]
+    (apply merge (map-indexed validate-field fields))))
 
 (defn- nil-if-empty [m]
   (when-not (empty? m)
@@ -256,7 +258,7 @@
 (defn validate-form [form languages]
   (-> (merge (validate-text-field form :form/organization)
              (validate-text-field form :form/title)
-             {:form/fields (apply merge (mapv #(validate-field %1 %2 languages (:form/fields form)) (:form/fields form) (range)))})
+             {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
 
