@@ -387,7 +387,7 @@
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :label)
                      (assoc-in [:form/fields 0 :field/placeholder :fi] ""))]
-        (is (empty? (validate-form form)))))
+        (is (empty? (validate-form form languages)))))
 
     (testing "option fields"
       (let [form (-> form
@@ -412,7 +412,7 @@
           (let [form (-> form
                          (assoc-in [:form/fields 0 :field/options 0 :key] "")
                          (assoc-in [:form/fields 0 :field/type] :texta))]
-            (is (empty? (validate-form form)))))
+            (is (empty? (validate-form form languages)))))
 
         (testing "missing option label"
           (let [empty-label (validate-form (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
