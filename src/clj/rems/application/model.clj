@@ -266,6 +266,7 @@
     {:permission :application.command/save-draft}
     {:permission :application.command/submit}
     {:permission :application.command/uninvite-member}
+    {:role :handler :permission :application.command/close}
     {:role :decider :permission :application.command/approve}
     {:role :decider :permission :application.command/reject}]))
 

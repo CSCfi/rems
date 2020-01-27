@@ -525,12 +525,33 @@
       (is (= {:success true}
              (send-command applicant {:type :application.command/submit
                                       :application-id app-id}))))
+    (testing "handler's commands"
+      (is (= #{"application.command/add-licenses"
+               "application.command/add-member"
+               "application.command/assign-external-id"
+               "application.command/change-resources"
+               "application.command/close"
+               "application.command/invite-member"
+               "application.command/remark"
+               "application.command/remove-member"
+               "application.command/request-decision"
+               "application.command/request-review"
+               "application.command/return"
+               "application.command/uninvite-member"
+               "see-everything"}
+             (set (:application/permissions (get-application app-id handler))))))
     (testing "request decision"
       (is (= {:success true}
              (send-command handler {:type :application.command/request-decision
                                     :application-id app-id
                                     :deciders [decider]
                                     :comment ""}))))
+    (testing "decider's commands"
+      (is (= #{"application.command/approve"
+               "application.command/reject"
+               "application.command/remark"
+               "see-everything"}
+             (set (:application/permissions (get-application app-id decider))))))
     (testing "approve"
       (is (= {:success true}
              (send-command decider {:type :application.command/approve
