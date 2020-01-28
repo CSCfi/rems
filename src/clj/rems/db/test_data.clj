@@ -887,22 +887,16 @@
   (assert (empty? (db/get-catalogue-items {}))
           "You have existing catalogue items, refusing to continue. An empty database is needed."))
 
-(defn create-test-data! []
-  (assert-no-existing-data!)
-  (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
-  (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
-  (create-test-users-and-roles!)
-  (create-bots!)
-  (let [owner (+fake-users+ :owner)
+(defn- create-items! [users]
+  (let [owner (users :owner)
         res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
                                 :organization "nbn"
-                                :actor owner
-                                :license-ids []})
+                                :actor owner})
         license1 (create-license! {:actor owner
                                    :license/type :link
                                    :license/organization "nbn"
-                                   :license/title {:en "Test license"
-                                                   :fi "Testilisenssi"}
+                                   :license/title {:en "Demo license"
+                                                   :fi "Demolisenssi"}
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                   :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
         res2 (create-resource! {:resource-ext-id "Extra Data"
@@ -922,9 +916,9 @@
                                                   :organization "nbn"
                                                   :actor owner
                                                   :license-ids [extra-license attachment-license]})
-        form (create-all-field-types-example-form! +fake-users+)
-        _ (create-archived-form!)
-        workflows (create-workflows! (merge +fake-users+ +bot-users+))]
+        form (create-all-field-types-example-form! users)
+        workflows (create-workflows! (merge users +bot-users+))]
+    (create-archived-form!)
     (create-disabled-license! {:actor owner
                                :license/organization "nbn"})
     (create-catalogue-item! {:actor owner
@@ -954,7 +948,7 @@
                                          :form-id form
                                          :organization "nbn"
                                          :workflow-id (:default workflows)})]
-      (create-applications! catid +fake-users+))
+      (create-applications! catid users))
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
                                      :fi "Oletustyövuo ylimääräisellä lisenssillä"}
@@ -970,15 +964,15 @@
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:auto-approve workflows)})
-    (let [thlform (create-thl-demo-form! +fake-users+)
+    (let [thlform (create-thl-demo-form! users)
           thl-catid (create-catalogue-item! {:actor owner
                                              :title {:en "THL catalogue item"
                                                      :fi "THL katalogi-itemi"}
                                              :resource-id res1
                                              :form-id thlform
-                                             :organiztion "thl"
+                                             :organization "thl"
                                              :workflow-id (:default workflows)})]
-      (create-member-applications! thl-catid (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
+      (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"
                                                             :fi "Oletustyövuo (pois käytöstä)"}
@@ -987,8 +981,8 @@
                                                     :organization "nbn"
                                                     :workflow-id (:default workflows)})]
       (create-disabled-applications! default-disabled
-                                     (+fake-users+ :applicant2)
-                                     (+fake-users+ :approver1))
+                                     (users :applicant2)
+                                     (users :approver1))
       (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
     (let [default-expired (create-catalogue-item! {:actor owner
                                                    :title {:en "Default workflow (expired)"
@@ -999,6 +993,14 @@
                                                    :workflow-id (:default workflows)})]
       (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))))
 
+(defn create-test-data! []
+  (assert-no-existing-data!)
+  (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
+  (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
+  (create-test-users-and-roles!)
+  (create-bots!)
+  (create-items! +fake-users+))
+
 (defn create-demo-data! []
   (assert-no-existing-data!)
   (let [[users user-data] (case (:authentication rems.config/env)
@@ -1007,52 +1009,4 @@
     (api-key/add-api-key! 55 "Finna" api-key/+all-roles+)
     (create-users-and-roles! users user-data)
     (create-bots!)
-    (let [owner (users :owner)
-          res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                  :organization "nbn"
-                                  :actor owner})
-          license1 (create-license! {:actor owner
-                                     :license/type :link
-                                     :license/organization "nbn"
-                                     :license/title {:en "Demo license"
-                                                     :fi "Demolisenssi"}
-                                     :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
-          attachment-license (create-attachment-license! {:actor owner
-                                                          :license/organization "nbn"})
-          res2 (create-resource! {:resource-ext-id "Extra Data"
-                                  :organization "nbn"
-                                  :actor owner
-                                  :license-ids [license1 attachment-license]})
-          form (create-all-field-types-example-form! users)
-          workflows (create-workflows! (merge users +bot-users+))]
-      (create-disabled-license! {:actor owner
-                                 :license/organization "nbn"})
-      (let [default (create-catalogue-item! {:actor owner
-                                             :title {:en "Default workflow"
-                                                     :fi "Oletustyövuo"}
-                                             :resource-id res1
-                                             :form-id form
-                                             :organization "nbn"
-                                             :workflow-id (:default workflows)})]
-        (create-applications! default users))
-      (let [thlform (create-thl-demo-form! users)
-            thl-catid (create-catalogue-item! {:actor owner
-                                               :title {:en "THL catalogue item"
-                                                       :fi "THL katalogi-itemi"}
-                                               :resource-id res1
-                                               :form-id thlform
-                                               :organization "thl"
-                                               :workflow-id (:default workflows)})]
-        (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
-      (let [default-disabled (create-catalogue-item! {:actor owner
-                                                      :title {:en "Default workflow (disabled)"
-                                                              :fi "Oletustyövuo (pois käytöstä)"}
-                                                      :resource-id res1
-                                                      :form-id form
-                                                      :organization "nbn"
-                                                      :workflow-id (:default workflows)})]
-        (create-disabled-applications! default-disabled
-                                       (users :applicant2)
-                                       (users :approver1))
-        (db/set-catalogue-item-enabled! {:id default-disabled :enabled false})))))
+    (create-items! users)))
