@@ -45,7 +45,8 @@
   (testing "find by title"
     (let [form-id (test-data/create-form! {:form/fields [{:field/id "abc"
                                                           :field/type :description
-                                                          :field/title {:en "Title"}
+                                                          :field/title {:en "Title"
+                                                                        :fi "Titteli"}
                                                           :field/optional false}]})
           cat-id (test-data/create-catalogue-item! {:form-id form-id})
           app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
@@ -102,7 +103,8 @@
 
   (testing "find by form content"
     (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
-                                                          :field/title {:en "Text field"}
+                                                          :field/title {:en "Text field"
+                                                                        :fi "Tekstikenttä"}
                                                           :field/optional false}]})
           cat-id (test-data/create-catalogue-item! {:form-id form-id})
           app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
@@ -117,7 +119,8 @@
 
   (testing "updating applications"
     (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
-                                                          :field/title {:en "Text field"}
+                                                          :field/title {:en "Text field"
+                                                                        :fi "Tekstikenttä"}
                                                           :field/optional false}]})
           cat-id (test-data/create-catalogue-item! {:form-id form-id})
           app-id (test-data/create-application! {:catalogue-item-ids [cat-id]

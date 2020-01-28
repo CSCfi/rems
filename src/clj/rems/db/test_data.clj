@@ -178,7 +178,7 @@
   (let [actor (or actor (create-owner!))
         result (form/create-form! actor
                                   {:form/organization (or organization "abc")
-                                   :form/title (or title "")
+                                   :form/title (or title "ABC")
                                    :form/fields (or fields [])})]
     (assert (:success result) {:command command :result result})
     (:id result)))
