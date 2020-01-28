@@ -273,8 +273,8 @@
   (doseq [attr (vals +bot-user-data+)]
     (create-user! attr)))
 
-(defn- create-archived-form! []
-  (let [id (create-form! {:actor (+fake-users+ :owner)
+(defn- create-archived-form! [actor]
+  (let [id (create-form! {:actor actor
                           :form/organization "nbn"
                           :form/title "Archived form, should not be seen by applicants"})]
     (form/set-form-archived! {:id id :archived true})))
@@ -918,7 +918,7 @@
                                                   :license-ids [extra-license attachment-license]})
         form (create-all-field-types-example-form! users)
         workflows (create-workflows! (merge users +bot-users+))]
-    (create-archived-form!)
+    (create-archived-form! owner)
     (create-disabled-license! {:actor owner
                                :license/organization "nbn"})
     (create-catalogue-item! {:actor owner
