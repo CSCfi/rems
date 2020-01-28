@@ -60,13 +60,13 @@
 
         (testing "create as organization owner"
           (testing "with correct organization"
-            (let [data (create-catalogue-item "organization-owner" "organization")
+            (let [data (create-catalogue-item "organization-owner1" "organization1")
                   id (:id data)]
               (is (:success data))
               (is (number? id))))
 
           (testing "with incorrect organization"
-            (let [data (create-catalogue-item "organization-owner" "not organization")]
+            (let [data (create-catalogue-item "organization-owner1" "organization2")]
               (is (not (:success data)))))))))
 
 (deftest catalogue-items-edit-test

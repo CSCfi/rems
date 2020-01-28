@@ -127,12 +127,12 @@
                          (get-in form-template [:form/fields 0 :field/id]))))))))
         (testing "create as organization owner"
           (testing "with correct organization"
-            (let [body (-> (create-form "organization-owner" (assoc command :form/organization "organization"))
+            (let [body (-> (create-form "organization-owner1" (assoc command :form/organization "organization1"))
                            read-ok-body)]
               (is (:id body))))
 
           (testing "with incorrect organization"
-            (let [body (-> (create-form "organization-owner" (assoc command :form/organization "not organization"))
+            (let [body (-> (create-form "organization-owner1" (assoc command :form/organization "organization2"))
                            read-ok-body)]
               (is (not (:success body))))))))))
 
