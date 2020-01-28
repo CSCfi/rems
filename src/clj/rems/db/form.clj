@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [filter-vals map-keys]]
             [rems.api.schema :refer [FieldTemplate]]
-            [rems.common.form :refer [assign-field-ids]]
+            [rems.common.form :refer [assign-field-ids] :as common-form]
+            [rems.config :refer [env]]
             [rems.api.services.util :as util]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
@@ -106,9 +107,15 @@
        (validate-fields)
        (json/generate-string)))
 
+(defn- validation-error [form]
+  (when-let [error-map (common-form/validate-form form (:languages env))]
+    {:success false
+     :errors [error-map]}))
+
 (defn create-form! [user-id form]
   (let [organization (:form/organization form)]
     (or (util/forbidden-organization? user-id organization)
+        (validation-error form)
         (let [form-id (:id (db/save-form-template! {:organization organization
                                                     :title (:form/title form)
                                                     :user user-id
