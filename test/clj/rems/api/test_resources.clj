@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.test-resources
   (:require [clojure.test :refer :all]
             [rems.db.core :as db]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
@@ -91,7 +92,7 @@
             (is (contains? app-ids enabled-id))
             (is (not (contains? app-ids disabled-id)))
             (is (contains? app-ids archived-id))))))
-    (let [licid 1
+    (let [licid (test-data/create-license! {})
           resid "resource-api-test"
           create-resource (fn [user-id organization]
                             (-> (request :post "/api/resources/create")

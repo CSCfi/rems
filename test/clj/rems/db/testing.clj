@@ -1,6 +1,7 @@
 (ns rems.db.testing
   (:require [clj-time.core :as time]
             [clojure.java.jdbc :as jdbc]
+            [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
@@ -13,6 +14,10 @@
             [rems.locales])
   (:import [org.joda.time Duration ReadableInstant]))
 
+(defn reset-db-fixture [f]
+  (f)
+  (migrations/migrate ["reset"] {:database-url (:test-database-url env)}))
+
 (defn test-db-fixture [f]
   (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down
   (mount/start-with-args {:test true}
@@ -20,8 +25,8 @@
                          #'rems.locales/translations
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
-  (migrations/migrate ["reset"] {:database-url (:test-database-url env)})
   (rems.db.applications/empty-injections-cache!)
+  (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
   (f)
   (mount/stop))
 
