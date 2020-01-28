@@ -1,5 +1,6 @@
 (ns rems.common-util
-  (:require [clojure.test :refer [deftest is testing]]))
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
@@ -140,3 +141,14 @@
   (is (= [[:a] [:b]] (recursive-keys {:a [1] :b "foo"})))
   (is (= [[:a :b] [:a :c] [:a :d :e] [:a :d :f]]
          (recursive-keys {:a {:b 1 :c nil :d {:e "foo" :f [3]}}}))))
+
+(defn normalize-file-path
+  "A file path may contain local filesystem parts that we want to remove
+  so that we can use the path to refer to e.g. project GitHub."
+  [path]
+  (str/replace (subs path (str/index-of path "src"))
+               "\\" "/"))
+
+(deftest normalize-file-path-test
+  (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))
+  (is (= "src/foo/bar.clj" (normalize-file-path "C:\\Users\\john\\rems\\src\\foo/bar.clj"))))
