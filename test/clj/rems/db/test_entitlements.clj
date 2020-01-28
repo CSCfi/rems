@@ -138,12 +138,12 @@
             (entitlements/process-outbox!)
 
             (testing "db"
-              (is (= [[applicant "resource1"] [applicant "resource2"]]
-                     (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
+              (is (= #{[applicant "resource1"] [applicant "resource2"]}
+                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
             (testing "POST"
-              (is (= [{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
-                      {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}]
-                     (get-requests server)))))))
+              (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
+                       {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}}
+                     (set (get-requests server))))))))
 
       (testing "approved application, more accepted licenses generates more entitlements"
         (with-stub-server server
@@ -155,13 +155,13 @@
           (entitlements/process-outbox!)
 
           (testing "db"
-            (is (= [[applicant "resource1"] [applicant "resource2"]
-                    [member "resource1"] [member "resource2"]]
-                   (map (juxt :userid :resid) (db/get-entitlements {:application app-id})))))
+            (is (= #{[applicant "resource1"] [applicant "resource2"]
+                     [member "resource1"] [member "resource2"]}
+                   (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
           (testing "POST"
-            (is (= [{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                    {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
-                   (get-requests server))))))
+            (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                     {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
+                   (set (get-requests server)))))))
 
       (testing "removing a member ends entitlements"
         (with-stub-server server
@@ -174,12 +174,12 @@
           (entitlements/process-outbox!)
 
           (testing "db"
-            (is (= [[applicant "resource1"] [applicant "resource2"]]
-                   (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
+            (is (= #{[applicant "resource1"] [applicant "resource2"]}
+                   (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
           (testing "POST"
-            (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                    {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}]
-                   (get-requests server))))))
+            (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                     {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
+                   (set (get-requests server)))))))
 
       (testing "changing resources changes entitlements"
         (with-stub-server server
@@ -192,12 +192,12 @@
           (entitlements/process-outbox!)
 
           (testing "db"
-            (is (= [[applicant "resource1"] [applicant "resource3"]]
-                   (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true})))))
+            (is (= #{[applicant "resource1"] [applicant "resource3"]}
+                   (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
           (testing "POST"
-            (is (= [{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}
-                    {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}]
-                   (get-requests server))))))
+            (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}
+                     {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}}
+                   (set (get-requests server)))))))
 
       (testing "closed application should end entitlements"
         (with-stub-server server
@@ -211,9 +211,9 @@
           (testing "db"
             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
           (testing "POST"
-            (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
-                    {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}]
-                   (get-requests server)))))))
+            (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
+                     {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
+                   (set (get-requests server))))))))
 
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
       (test-data/command! {:type :application.command/accept-licenses
