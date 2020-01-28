@@ -1,6 +1,20 @@
 (ns rems.common-util
   (:require [clojure.test :refer [deftest is testing]]))
 
+;; TODO remove separate clj and cljs implementations of getx and getx-in
+(defn getx
+  "Like `get` but throws an exception if the key is not found."
+  [m k]
+  (let [e (get m k ::sentinel)]
+    (if-not (= e ::sentinel)
+      e
+      (throw (ex-info "Missing required key" {:map m :key k})))))
+
+(defn getx-in
+  "Like `get-in` but throws an exception if the key is not found."
+  [m ks]
+  (reduce getx m ks))
+
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
 
@@ -157,3 +171,20 @@
   (is (= nil (parse-int "")))
   (is (= nil (parse-int "a")))
   (is (= 7 (parse-int "7"))))
+
+(defn remove-empty-keys
+  "Given a map, recursively remove keys with empty map or nil values.
+
+  E.g., given {:a {:b {:c nil} :d {:e :f}}}, return {:a {:d {:e :f}}}."
+  [m]
+  (into {} (filter (fn [[_ v]] (not ((if (map? v) empty? nil?) v)))
+                   (mapv (fn [[k v]] [k (if (map? v)
+                                          (remove-empty-keys v)
+                                          v)])
+                         m))))
+
+(deftest test-remove-empty-keys
+  (is (= (remove-empty-keys {}) {}))
+  (is (= (remove-empty-keys {:a :b}) {:a :b}))
+  (is (= (remove-empty-keys {:a nil}) {}))
+  (is (= (remove-empty-keys {:a {:b {:c nil} :d {:e :f}}}) {:a {:d {:e :f}}})))
