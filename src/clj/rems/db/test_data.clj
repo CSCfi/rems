@@ -398,11 +398,11 @@
 
 (defn- create-all-field-types-example-form!
   "Creates a bilingual form with all supported field types. Returns the form ID."
-  [users]
+  [actor organization title]
   (create-form!
-   {:actor (users :owner)
-    :form/organization "nbn"
-    :form/title "Example form with all field types"
+   {:actor actor
+    :form/organization organization
+    :form/title title
     :form/fields all-field-types-example}))
 
 (defn create-thl-demo-form!
@@ -614,6 +614,7 @@
         approver-bot (users :approver-bot)
         rejecter-bot (users :rejecter-bot)
         owner (users :owner)
+        organization-owner1 (users :organization-owner1)
         handlers [approver1 approver2 rejecter-bot]
         default (create-workflow! {:actor owner
                                    :organization "nbn"
@@ -633,9 +634,14 @@
         auto-approve (create-workflow! {:actor owner
                                         :organization "nbn"
                                         :title "Auto-approve workflow"
-                                        :handlers [approver-bot rejecter-bot]})]
+                                        :handlers [approver-bot rejecter-bot]})
+        by-organization-owner (create-workflow! {:actor organization-owner1
+                                                 :organization "organization1"
+                                                 :title "Owned by organization owner"
+                                                 :type :workflow/default
+                                                 :handlers handlers})]
 
-    ;; attach both kinds of licenses to all workflows
+    ;; attach both kinds of licenses to all workflows created by owner
     (let [link (create-license! {:actor owner
                                  :license/type :link
                                  :license/organization "nbn"
@@ -657,7 +663,8 @@
     {:default default
      :decider decider
      :master master
-     :auto-approve auto-approve}))
+     :auto-approve auto-approve
+     :by-organization-owner by-organization-owner}))
 
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
@@ -899,9 +906,9 @@
 
 (defn- create-items! [users]
   (let [owner (users :owner)
-        res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                :organization "nbn"
-                                :actor owner})
+        organization-owner1 (users :organization-owner1)
+
+        ;; Create licenses
         license1 (create-license! {:actor owner
                                    :license/type :link
                                    :license/organization "nbn"
@@ -909,10 +916,6 @@
                                                    :fi "Demolisenssi"}
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                   :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
-        res2 (create-resource! {:resource-ext-id "Extra Data"
-                                :organization "nbn"
-                                :actor owner
-                                :license-ids [license1]})
         extra-license (create-license! {:actor owner
                                         :license/type :link
                                         :license/organization "nbn"
@@ -920,17 +923,44 @@
                                                         :fi "Ylimääräinen lisenssi"}
                                         :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                        :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+        license-organization-owner (create-license! {:actor organization-owner1
+                                                     :license/type :link
+                                                     :license/organization "organization1"
+                                                     :license/title {:en "License owned by organization owner"
+                                                                     :fi "Lisenssi, jonka omistaa organisaatio-omistaja"}
+                                                     :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+        _ (create-disabled-license! {:actor owner
+                                     :license/organization "nbn"})
         attachment-license (create-attachment-license! {:actor owner
                                                         :license/organization "nbn"})
+
+        ;; Create resources
+        res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
+                                :organization "nbn"
+                                :actor owner})
+        res2 (create-resource! {:resource-ext-id "Extra Data"
+                                :organization "nbn"
+                                :actor owner
+                                :license-ids [license1]})
+        res-organization-owner (create-resource! {:resource-ext-id "Owned by organization owner"
+                                                  :organization "organization1"
+                                                  :actor organization-owner1
+                                                  :license-ids [license-organization-owner]})
         res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
                                                   :organization "nbn"
                                                   :actor owner
                                                   :license-ids [extra-license attachment-license]})
-        form (create-all-field-types-example-form! users)
-        workflows (create-workflows! (merge users +bot-users+))]
+
+        workflows (create-workflows! (merge users +bot-users+))
+        _ (db/create-workflow-license! {:wfid (:by-organization-owner workflows)
+                                        :licid license-organization-owner})
+
+        form (create-all-field-types-example-form! owner "nbn" "Example form with all field types")
+        form-organization-owner (create-all-field-types-example-form! organization-owner1 "organization1" "Owned by organization owner")]
     (create-archived-form! owner)
-    (create-disabled-license! {:actor owner
-                               :license/organization "nbn"})
+
+    ;; Create catalogue items
     (create-catalogue-item! {:actor owner
                              :title {:en "Master workflow"
                                      :fi "Master-työvuo"}
@@ -1001,7 +1031,14 @@
                                                    :form-id form
                                                    :organization "nbn"
                                                    :workflow-id (:default workflows)})]
-      (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))))
+      (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
+    (create-catalogue-item! {:actor organization-owner1
+                             :title {:en "Owned by organization owner"
+                                     :fi "Organisaatio-omistajan omistama"}
+                             :resource-id res-organization-owner
+                             :form-id form-organization-owner
+                             :organization "organization1"
+                             :workflow-id (:organization-owner workflows)})))
 
 (defn create-test-data! []
   (assert-no-existing-data!)
