@@ -127,13 +127,13 @@
 
       (testing "create as organization owner"
         (testing "with correct organization"
-          (let [result (create-resource "organization-owner" "organization")
+          (let [result (create-resource "organization-owner1" "organization1")
                 id (:id result)]
             (is (true? (:success result)))
             (is id)))
 
         (testing "with incorrect organization"
-          (let [result (create-resource "organization-owner" "not organization")]
+          (let [result (create-resource "organization-owner1" "organization2")]
             (is (false? (:success result)))))))))
 
 (deftest resources-api-filtering-test

@@ -86,13 +86,13 @@
 
     (testing "create as organization owner"
       (testing "with correct organization"
-        (let [body (create-workflow "organization-owner" "organization" :workflow/default)
+        (let [body (create-workflow "organization-owner1" "organization1" :workflow/default)
               id (:id body)]
           (is (< 0 id))
           (is (:success body))))
 
       (testing "with incorrect organization"
-        (let [body (create-workflow "organization-owner" "not organization" :workflow/default)]
+        (let [body (create-workflow "organization-owner1" "organization2" :workflow/default)]
           (is (not (:success body))))))))
 
 (deftest workflows-enabled-archived-test
