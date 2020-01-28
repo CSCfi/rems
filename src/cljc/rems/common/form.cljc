@@ -106,11 +106,25 @@
 (def ^:private max-length-range [0 32767])
 
 (defn- validate-max-length [max-length]
-  (when-not (str/blank? max-length)
-    (let [parsed (parse-int max-length)]
-      (when (or (nil? parsed)
-                (not (<= (first max-length-range) parsed (second max-length-range))))
-        {:field/max-length :t.form.validation/invalid-value}))))
+  {:field/max-length
+   (cond (nil? max-length)
+         nil
+
+         (int? max-length)
+         (when-not (<= (first max-length-range) max-length (second max-length-range))
+           :t.form.validation/invalid-value)
+
+         (not (string? max-length))
+         :t.form.validation/invalid-value
+
+         (str/blank? max-length)
+         :t.form.validation/invalid-value
+
+         :else
+         (let [parsed (parse-int max-length)]
+           (when (or (nil? parsed)
+                     (not (<= (first max-length-range) parsed (second max-length-range))))
+             :t.form.validation/invalid-value)))})
 
 (defn- validate-option [option id languages]
   {id (merge (validate-text-field option :key)
