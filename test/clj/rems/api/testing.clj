@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [mount.core :as mount]
-            [rems.db.testing :refer [reset-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
+            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -20,7 +20,7 @@
 
 (def api-fixture
   (join-fixtures [test-db-fixture
-                  reset-db-fixture
+                  rollback-db-fixture
                   handler-fixture
                   search-index-fixture
                   caches-fixture

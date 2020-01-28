@@ -7,7 +7,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (defn- create-resource! [command api-key user-id]
@@ -102,6 +102,17 @@
                                             :licenses [licid]})
                                 handler
                                 read-ok-body))]
+      (testing "create as organization owner"
+        (testing "with correct organization"
+          (let [result (create-resource "organization-owner" "organization")
+                id (:id result)]
+            (is (true? (:success result)))
+            (is id)))
+
+        (testing "with incorrect organization"
+          (let [result (create-resource "organization-owner" "not organization")]
+            (is (false? (:success result))))))
+
       (testing "create as owner"
         (let [result (create-resource "owner" "test-organization")
               id (:id result)]
@@ -117,25 +128,16 @@
               (is resource)
               (is (= [licid] (map :id (:licenses resource))))))
 
+          (testing "duplicate resource ID is allowed between organizations"
+            (let [result (create-resource "owner" "test-organization2")]
+              (is (true? (:success result)))))
+
+          ;; duplicate id is an sql error which invalidates the
+          ;; transaction, so we need to have it last in the test
           (testing "duplicate resource ID is not allowed within one organization"
             (let [result (create-resource "owner" "test-organization")]
               (is (false? (:success result)))
-              (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result)))))
-
-          (testing "duplicate resource ID is allowed between organizations"
-            (let [result (create-resource "owner" "test-organization2")]
-              (is (true? (:success result)))))))
-
-      (testing "create as organization owner"
-        (testing "with correct organization"
-          (let [result (create-resource "organization-owner" "organization")
-                id (:id result)]
-            (is (true? (:success result)))
-            (is id)))
-
-        (testing "with incorrect organization"
-          (let [result (create-resource "organization-owner" "not organization")]
-            (is (false? (:success result)))))))))
+              (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result))))))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"

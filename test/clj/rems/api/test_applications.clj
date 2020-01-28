@@ -1,8 +1,6 @@
 (ns ^:integration rems.api.test-applications
-  (:require [clj-http.client :as http]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [luminus.http-server]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
             [rems.db.applications]
@@ -947,22 +945,3 @@
                           app-id)))
       (is (contains? (get-ids (get-handled-todos decider))
                      app-id)))))
-
-(deftest test-pdf-smoke
-  ;; need to spin up an actual http server so that something can serve
-  ;; the headless chrome that generates the pdf
-  (let [port 3093] ;; no way to automatically assign port with the ring jetty adapter
-    (with-redefs [rems.config/env (assoc rems.config/env
-                                         :public-url (str "http://localhost:" port "/"))]
-      (let [server (luminus.http-server/start {:handler handler :port port})]
-        (try
-          (let [response (http/get (str "http://localhost:" port "/api/applications/10/pdf")
-                                   {:throw-exceptions false
-                                    :headers {"x-rems-api-key" "42"
-                                              "x-rems-user-id" "reporter"}})]
-            (prn :RESPONSE response)
-            (is (= 200 (:status response)))
-            (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
-            (is (.startsWith (:body response) "%PDF-")))
-          (finally
-            (luminus.http-server/stop server)))))))
