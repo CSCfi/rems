@@ -17,7 +17,8 @@
       (select-keys [:enabled :archived])))
 
 (deftest catalogue-item-enabled-archived-test
-  (let [form-id (test-data/create-form! {})
+  (let [owner "owner"
+        form-id (test-data/create-form! {})
         lic-id (test-data/create-license! {})
         res-id (test-data/create-resource! {:license-ids [lic-id]})
         workflow-id (test-data/create-workflow! {})
@@ -31,11 +32,13 @@
                                                  :enabled %})
         archive-catalogue-item!
         #(catalogue/set-catalogue-item-archived! {:id item-id
-                                                  :archived %})
+                                                  :archived %}
+                                                 owner)
         archive-form! #(form/set-form-archived! {:id form-id
                                                  :archived %})
         archive-license! #(licenses/set-license-archived! {:id lic-id
-                                                           :archived %})
+                                                           :archived %}
+                                                          owner)
         archive-resource! #(resource/set-resource-archived! {:id res-id
                                                              :archived %})
         archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
@@ -77,7 +80,8 @@
       (enable-catalogue-item! true)
       (archive-catalogue-item! true)
       (catalogue/set-catalogue-item-enabled! {:id item-id2 :enabled false})
-      (catalogue/set-catalogue-item-archived! {:id item-id2 :archived false})
+      (catalogue/set-catalogue-item-archived! {:id item-id2 :archived false}
+                                              owner)
       (is (= {:enabled true
               :archived true}
              (status-flags item-id)))
@@ -135,14 +139,16 @@
     (is (= "Uusi nimi" (get-in new-item [:localizations :fi :title])))))
 
 (deftest test-get-localized-catalogue-items
-  (let [item-id (test-data/create-catalogue-item! {})]
+  (let [owner "owner"
+        item-id (test-data/create-catalogue-item! {})]
 
     (testing "find all"
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items)))))
 
     (testing "archived catalogue items"
       (catalogue/set-catalogue-item-archived! {:id item-id
-                                               :archived true})
+                                               :archived true}
+                                              owner)
       (is (= [] (map :id (catalogue/get-localized-catalogue-items))))
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items {:archived true}))))
       (is (= [] (map :id (catalogue/get-localized-catalogue-items {:archived false})))))))

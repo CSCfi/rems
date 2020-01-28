@@ -130,7 +130,32 @@
           (let [result (create-resource "organization-owner1" "organization1")
                 id (:id result)]
             (is (true? (:success result)))
-            (is id)))
+            (is id)
+
+            (testing "fetch using correct organization owner"
+              (let [resource (-> (request :get (str "/api/resources/" id))
+                                 (authenticate api-key "organization-owner1")
+                                 handler
+                                 assert-response-is-ok
+                                 read-body)]
+                (is resource)
+                (is (= [licid] (map :id (:licenses resource))))))
+
+            (testing "fetch using incorrect organization owner"
+              (let [response (-> (request :get (str "/api/resources/" id))
+                                 (authenticate api-key "organization-owner2")
+                                 handler)]
+                (is (response-is-forbidden? response))
+                (is (= "forbidden" (read-body response)))))
+
+            (testing "fetch using owner"
+              (let [resource (-> (request :get (str "/api/resources/" id))
+                                 (authenticate api-key "owner")
+                                 handler
+                                 assert-response-is-ok
+                                 read-body)]
+                (is resource)
+                (is (= [licid] (map :id (:licenses resource))))))))
 
         (testing "with incorrect organization"
           (let [result (create-resource "organization-owner1" "organization2")]

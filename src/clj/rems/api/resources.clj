@@ -3,6 +3,7 @@
             [rems.api.schema :refer :all]
             [rems.api.services.resource :as resource]
             [rems.api.util] ; required for route :roles
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -38,19 +39,21 @@
 
     (GET "/" []
       :summary "Get resources"
-      :roles #{:owner :handler}
+      :roles #{:owner :organization-owner :handler}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
       (ok (resource/get-resources (merge (when-not disabled {:enabled true})
-                                         (when-not archived {:archived false})))))
+                                         (when-not archived {:archived false}))
+                                  (getx-user-id))))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
-      :roles #{:owner :handler}
+      :roles #{:owner :organization-owner :handler}
       :path-params [resource-id :- (describe s/Int "resource id")]
       :return Resource
-      (ok (resource/get-resource resource-id)))
+      (ok (or (resource/get-resource resource-id (getx-user-id))
+              (throw-forbidden))))
 
     (POST "/create" []
       :summary "Create resource"

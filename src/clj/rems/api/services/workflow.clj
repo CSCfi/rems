@@ -12,7 +12,7 @@
   (s/validator workflow/WorkflowBody))
 
 (defn create-workflow! [{:keys [user-id organization type title handlers]}]
-  (or (util/forbidden-organization? user-id organization)
+  (or (util/forbidden-organization-error? user-id organization)
       (let [body {:type type
                   :handlers handlers}
             id (:id (db/create-workflow! {:organization organization,

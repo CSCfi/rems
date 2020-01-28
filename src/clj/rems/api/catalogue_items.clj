@@ -117,7 +117,7 @@
       :roles #{:owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (catalogue/set-catalogue-item-archived! command)))
+      (ok (catalogue/set-catalogue-item-archived! command (getx-user-id))))
 
     (PUT "/enabled" []
       :summary "Enable or disable catalogue item"

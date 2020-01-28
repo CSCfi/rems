@@ -9,16 +9,16 @@
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
 
-(defn- dependencies-for-catalogue-item [id]
+(defn- dependencies-for-catalogue-item [id user-id]
   (let [{:keys [formid wfid resource-id]} (catalogue/get-localized-catalogue-item id)]
     {:form (form/get-form-template formid)
-     :resource (resource/get-resource resource-id)
+     :resource (resource/get-resource resource-id user-id)
      :workflow (workflow/get-workflow wfid)
      :licenses (licenses/get-licenses {:wfid wfid
                                        :items [id]})}))
 
 (defn create-catalogue-item! [{:keys [localizations organization] :as command} user-id]
-  (or (util/forbidden-organization? user-id organization)
+  (or (util/forbidden-organization-error? user-id organization)
       ;; TODO make :organization unoptional?
       (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
                                                       (select-keys command [:form :resid :wfid :enabled :archived :organization]))))
@@ -49,8 +49,8 @@
   (db/set-catalogue-item-enabled! (select-keys command [:id :enabled]))
   {:success true})
 
-(defn set-catalogue-item-archived! [{:keys [id archived]}]
-  (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item id)
+(defn set-catalogue-item-archived! [{:keys [id archived]} user-id]
+  (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item id user-id)
         archived-licenses (filter :archived licenses)
         errors
         (remove

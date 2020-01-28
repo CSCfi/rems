@@ -1,5 +1,6 @@
 (ns rems.db.resource
-  (:require [rems.db.core :as db]
+  (:require [rems.api.services.util :as util]
+            [rems.db.core :as db]
             [rems.db.licenses :as licenses]))
 
 (defn- format-resource
@@ -12,14 +13,17 @@
    :enabled enabled
    :archived archived})
 
-(defn get-resource [id]
-  (-> {:id id}
-      db/get-resource
-      format-resource
-      (assoc :licenses (licenses/get-resource-licenses id))))
+(defn get-resource [id user-id]
+  (let [resource (-> {:id id}
+                     db/get-resource
+                     format-resource
+                     (assoc :licenses (licenses/get-resource-licenses id)))]
+    (when-not (util/forbidden-organization? user-id (:organization resource))
+      resource)))
 
-(defn get-resources [filters]
+(defn get-resources [filters user-id]
   (->> (db/get-resources)
+       (remove #(util/forbidden-organization? user-id (:organization %)))
        (db/apply-filters filters)
        (map format-resource)
        (map #(assoc % :licenses (licenses/get-resource-licenses (:id %))))))

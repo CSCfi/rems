@@ -11,7 +11,7 @@
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
 (defn create-license! [{:keys [licensetype organization localizations]} user-id]
-  (or (util/forbidden-organization? user-id organization)
+  (or (util/forbidden-organization-error? user-id organization)
       (let [license (db/create-license! {:owneruserid user-id
                                          :modifieruserid user-id
                                          :organization (or organization "")
@@ -57,11 +57,11 @@
         (when-let [attachment (get-license-attachment attachment-id)]
           attachment)))))
 
-(defn- get-license-usage [id]
+(defn- get-license-usage [id user-id]
   ;; these could be db joins
   (let [resources (->> (db/get-resources-for-license {:id id})
                        (map :resid)
-                       (map resource/get-resource)
+                       (map #(resource/get-resource % user-id))
                        (remove :archived)
                        (map #(select-keys % [:id :resid])))
         workflows (->> (db/get-workflows-for-license {:id id})
@@ -77,8 +77,8 @@
   (db/set-license-enabled! (select-keys command [:id :enabled]))
   {:success true})
 
-(defn set-license-archived! [{:keys [id archived]}]
-  (let [usage (get-license-usage id)]
+(defn set-license-archived! [{:keys [id archived]} user-id]
+  (let [usage (get-license-usage id user-id)]
     (if (and archived usage)
       {:success false
        :errors [(merge {:type :t.administration.errors/license-in-use}
