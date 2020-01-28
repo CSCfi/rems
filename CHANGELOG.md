@@ -47,6 +47,7 @@ Changes since v2.6
 - Show version information in console instead of the page footer (#1785)
 - Searching applications by resource external id now possible (#1919)
 - Handler can now close applications in the decider workflow (#1938)
+- Create form requests are validated
 
 ### Fixes
 - More robust email resending (#1750)
