@@ -13,17 +13,17 @@
    :enabled enabled
    :archived archived})
 
-(defn get-resource [id user-id]
+(defn get-resource [id]
   (let [resource (-> {:id id}
                      db/get-resource
                      format-resource
                      (assoc :licenses (licenses/get-resource-licenses id)))]
-    (when-not (util/forbidden-organization? user-id (:organization resource))
+    (when-not (util/forbidden-organization? (:organization resource))
       resource)))
 
-(defn get-resources [filters user-id]
+(defn get-resources [filters]
   (->> (db/get-resources)
-       (remove #(util/forbidden-organization? user-id (:organization %)))
+       (remove #(util/forbidden-organization? (:organization %)))
        (db/apply-filters filters)
        (map format-resource)
        (map #(assoc % :licenses (licenses/get-resource-licenses (:id %))))))

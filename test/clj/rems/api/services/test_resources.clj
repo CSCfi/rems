@@ -3,29 +3,30 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resources]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
+            [rems.testing-util :refer [with-user]]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
-(defn- status-flags [res-id user-id]
-  (-> (resources/get-resource res-id user-id)
-      (select-keys [:enabled :archived])))
+(defn- status-flags [res-id]
+  (with-user "owner"
+    (-> (resources/get-resource res-id)
+        (select-keys [:enabled :archived]))))
 
 (deftest resource-enabled-archived-test
-  (let [owner "owner"
-        lic-id (test-data/create-license! {})
+  (let [lic-id (test-data/create-license! {})
         res-id (test-data/create-resource! {:license-ids [lic-id]})
         res-id2 (test-data/create-resource! {})
 
-        archive-license! #(licenses/set-license-archived! {:id lic-id
-                                                           :archived %}
-                                                          owner)]
+        archive-license! #(with-user "owner"
+                            (licenses/set-license-archived! {:id lic-id
+                                                             :archived %}))]
 
     (testing "new resources are enabled and not archived"
       (is (= {:enabled true
               :archived false}
-             (status-flags res-id owner))))
+             (status-flags res-id))))
 
     ;; reset all to false for the following tests
     (resources/set-resource-enabled! {:id res-id
@@ -38,28 +39,28 @@
                                         :enabled true})
       (is (= {:enabled true
               :archived false}
-             (status-flags res-id owner))))
+             (status-flags res-id))))
 
     (testing "disable"
       (resources/set-resource-enabled! {:id res-id
                                         :enabled false})
       (is (= {:enabled false
               :archived false}
-             (status-flags res-id owner))))
+             (status-flags res-id))))
 
     (testing "archive"
       (resources/set-resource-archived! {:id res-id
                                          :archived true})
       (is (= {:enabled false
               :archived true}
-             (status-flags res-id owner))))
+             (status-flags res-id))))
 
     (testing "unarchive"
       (resources/set-resource-archived! {:id res-id
                                          :archived false})
       (is (= {:enabled false
               :archived false}
-             (status-flags res-id owner))))
+             (status-flags res-id))))
 
     (testing "cannot unarchive if license is archived"
       (resources/set-resource-archived! {:id res-id
@@ -82,7 +83,7 @@
                                          :archived false})
       (is (= {:enabled true
               :archived true}
-             (status-flags res-id owner)))
+             (status-flags res-id)))
       (is (= {:enabled false
               :archived false}
-             (status-flags res-id2 owner))))))
+             (status-flags res-id2))))))

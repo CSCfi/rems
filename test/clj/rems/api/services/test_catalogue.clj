@@ -7,7 +7,8 @@
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]))
+            [rems.db.testing :refer [caches-fixture rollback-db-fixture test-db-fixture]]
+            [rems.testing-util :refer [with-user]]))
 
 (use-fixtures :once test-db-fixture caches-fixture)
 (use-fixtures :each rollback-db-fixture)
@@ -27,18 +28,16 @@
                                                    :workflow-id workflow-id})
         item-id2 (test-data/create-catalogue-item! {})
 
-        enable-catalogue-item!
-        #(catalogue/set-catalogue-item-enabled! {:id item-id
-                                                 :enabled %})
-        archive-catalogue-item!
-        #(catalogue/set-catalogue-item-archived! {:id item-id
-                                                  :archived %}
-                                                 owner)
+        enable-catalogue-item! #(catalogue/set-catalogue-item-enabled! {:id item-id
+                                                                        :enabled %})
+        archive-catalogue-item! #(with-user owner
+                                   (catalogue/set-catalogue-item-archived! {:id item-id
+                                                                            :archived %}))
         archive-form! #(form/set-form-archived! {:id form-id
                                                  :archived %})
-        archive-license! #(licenses/set-license-archived! {:id lic-id
-                                                           :archived %}
-                                                          owner)
+        archive-license! #(with-user owner
+                            (licenses/set-license-archived! {:id lic-id
+                                                             :archived %}))
         archive-resource! #(resource/set-resource-archived! {:id res-id
                                                              :archived %})
         archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
@@ -80,8 +79,8 @@
       (enable-catalogue-item! true)
       (archive-catalogue-item! true)
       (catalogue/set-catalogue-item-enabled! {:id item-id2 :enabled false})
-      (catalogue/set-catalogue-item-archived! {:id item-id2 :archived false}
-                                              owner)
+      (with-user owner
+        (catalogue/set-catalogue-item-archived! {:id item-id2 :archived false}))
       (is (= {:enabled true
               :archived true}
              (status-flags item-id)))
@@ -146,9 +145,9 @@
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items)))))
 
     (testing "archived catalogue items"
-      (catalogue/set-catalogue-item-archived! {:id item-id
-                                               :archived true}
-                                              owner)
+      (with-user owner
+        (catalogue/set-catalogue-item-archived! {:id item-id
+                                                 :archived true}))
       (is (= [] (map :id (catalogue/get-localized-catalogue-items))))
       (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items {:archived true}))))
       (is (= [] (map :id (catalogue/get-localized-catalogue-items {:archived false})))))))

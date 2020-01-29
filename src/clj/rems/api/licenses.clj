@@ -70,7 +70,7 @@
       :roles #{:owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (licenses/set-license-archived! command (getx-user-id))))
+      (ok (licenses/set-license-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable license"

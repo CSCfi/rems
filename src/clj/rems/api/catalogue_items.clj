@@ -103,7 +103,7 @@
       :roles #{:owner :organization-owner}
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (ok (catalogue/create-catalogue-item! command (getx-user-id))))
+      (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/edit" []
       :summary "Edit a catalogue item"
@@ -117,7 +117,7 @@
       :roles #{:owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
-      (ok (catalogue/set-catalogue-item-archived! command (getx-user-id))))
+      (ok (catalogue/set-catalogue-item-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable catalogue item"

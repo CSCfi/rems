@@ -145,8 +145,7 @@
               (let [response (-> (request :get (str "/api/resources/" id))
                                  (authenticate api-key "organization-owner2")
                                  handler)]
-                (is (response-is-forbidden? response))
-                (is (= "forbidden" (read-body response)))))
+                (is (response-is-not-found? response))))
 
             (testing "fetch using owner"
               (let [resource (-> (request :get (str "/api/resources/" id))

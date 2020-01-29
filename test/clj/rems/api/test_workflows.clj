@@ -97,7 +97,7 @@
 
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
-        owner "owner"
+        user-id "owner"
         wfid (test-data/create-workflow! {:organization "test-organization"
                                           :title "workflow title"
                                           :type :workflow/default
@@ -105,20 +105,19 @@
         lic-id (test-data/create-license! {})
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
 
-        fetch #(fetch api-key owner wfid)
+        fetch #(fetch api-key user-id wfid)
         archive-license! #(licenses/set-license-archived! {:id lic-id
-                                                           :archived %}
-                                                          owner)
+                                                           :archived %})
         set-enabled! #(-> (request :put "/api/workflows/enabled")
                           (json-body {:id wfid
                                       :enabled %})
-                          (authenticate api-key owner)
+                          (authenticate api-key user-id)
                           handler
                           read-ok-body)
         set-archived! #(-> (request :put "/api/workflows/archived")
                            (json-body {:id wfid
                                        :archived %})
-                           (authenticate api-key owner)
+                           (authenticate api-key user-id)
                            handler
                            read-ok-body)]
     (sync-with-database-time)
@@ -149,15 +148,15 @@
 
 (deftest workflows-edit-test
   (let [api-key "42"
-        owner "owner"
+        user-id "owner"
         wfid (test-data/create-workflow! {:organization "test-organization"
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
-        fetch #(fetch api-key owner wfid)
+        fetch #(fetch api-key user-id wfid)
         edit! #(-> (request :put "/api/workflows/edit")
                    (json-body (merge {:id wfid} %))
-                   (authenticate api-key owner)
+                   (authenticate api-key user-id)
                    handler
                    read-ok-body)
 
