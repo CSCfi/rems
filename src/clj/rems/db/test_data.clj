@@ -18,6 +18,7 @@
             [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
+            [rems.testing-util :refer [with-user]]
             [ring.util.http-response :refer [bad-request!]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
@@ -37,7 +38,8 @@
    :applicant2 "malice"
    :approver1 "developer"
    :approver2 "handler"
-   :organization-owner "organization-owner"
+   :organization-owner1 "organization-owner1"
+   :organization-owner2 "organization-owner2"
    :owner "owner"
    :reporter "reporter"
    :reviewer "carl"
@@ -52,17 +54,19 @@
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
    "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organization "frank"}
-   "organization-owner" {:eppn "organization-owner" :mail "organization-owner@example.com" :commonName "Organization Owner" :organization "organization"}
+   "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1" :organization "organization1"}
+   "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organization "organization2"}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
 
-;; TODO: Add organization-owner to +demo-users+, as well as +oidc-users+.
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
    :applicant2 "RDapplicant2@funet.fi"
    :approver1 "RDapprover1@funet.fi"
    :approver2 "RDapprover2@funet.fi"
    :reviewer "RDreview@funet.fi"
+   :organization-owner1 "RDorganizationowner1@funet.fi"
+   :organization-owner2 "RDorganizationowner2@funet.fi"
    :owner "RDowner@funet.fi"
    :reporter "RDdomainreporter@funet.fi"})
 
@@ -73,6 +77,8 @@
    "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
+   "RDorganizationowner1@funet.fi" {:eppn "RDorganizationowner1@funet.fi" :mail "RDorganizationowner1.test@test_example.org" :commonName "RDorganizationowner1 REMSDEMO" :organization "organization1"}
+   "RDorganizationowner2@funet.fi" {:eppn "RDorganizationowner2@funet.fi" :mail "RDorganizationowner2.test@test_example.org" :commonName "RDorganizationowner2 REMSDEMO" :organization "organization2"}
    "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
 
 (def +oidc-users+
@@ -82,6 +88,8 @@
    :approver2 "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ"
    :reviewer "F3OJL757ACT4QXVXZZ4F7VG6HQGBEC4M"
    :reporter "JOBDHBMX4EFXQC5IPQVXPP4FFWJ6XQYL"
+   :organization-owner1 "W6OKPQGANG6QK54GRF7AOOGMZL7M6IVH"
+   :organization-owner2 "D4ZJM7XNXKGFQABRQILDI6EYHLJRLYSF"
    :owner "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4"})
 
 (def +oidc-user-data+
@@ -91,6 +99,8 @@
    "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ" {:eppn "7R3JYB32PL3EPVD34RWIAWDZSEOXW4OQ" :mail "RDapprover2@mailinator.com" :commonName "RDapprover2 REMSDEMO"}
    "F3OJL757ACT4QXVXZZ4F7VG6HQGBEC4M" {:eppn "F3OJL757ACT4QXVXZZ4F7VG6HQGBEC4M" :mail "RDreview@mailinator.com" :commonName "RDreview REMSDEMO"}
    "JOBDHBMX4EFXQC5IPQVXPP4FFWJ6XQYL" {:eppn "JOBDHBMX4EFXQC5IPQVXPP4FFWJ6XQYL" :mail "RDdomainreporter@mailinator.com" :commonName "RDdomainreporter REMSDEMO"}
+   "W6OKPQGANG6QK54GRF7AOOGMZL7M6IVH" {:eppn "W6OKPQGANG6QK54GRF7AOOGMZL7M6IVH" :mail "RDorganizationowner1@mailinator.com" :commonName "RDorganizationowner1 REMSDEMO" :organization "organization1"}
+   "D4ZJM7XNXKGFQABRQILDI6EYHLJRLYSF" {:eppn "D4ZJM7XNXKGFQABRQILDI6EYHLJRLYSF" :mail "RDorganizationowner2@mailinator.com" :commonName "RDorganizationowner2 REMSDEMO" :organization "organization2"}
    "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4" {:eppn "BACZQAPVWBDJ2OXLKT2WWW5LT5LV6YR4" :mail "RDowner@mailinator.com" :commonName "RDowner REMSDEMO"}})
 
 ;;; helpers for generating test data
@@ -136,13 +146,14 @@
                         :license/keys [type title link organization text attachment-id]
                         :as command}]
   (let [actor (or actor (create-owner!))
-        result (licenses/create-license! {:licensetype (name (or type :text))
-                                          :organization (or organization "")
-                                          :localizations
-                                          (transpose-localizations {:title title
-                                                                    :textcontent (merge link text)
-                                                                    :attachment-id attachment-id})}
-                                         actor)]
+        result (with-user actor
+                 (licenses/create-license! {:licensetype (name (or type :text))
+                                            :organization (or organization "")
+                                            :localizations
+                                            (transpose-localizations {:title title
+                                                                      :textcontent (merge link text)
+                                                                      :attachment-id attachment-id})}
+                                           actor))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -156,46 +167,50 @@
                                                            :filename "en.txt"
                                                            :type "text/plain"
                                                            :data (.getBytes "License in English.")}))]
-    (create-license! {:actor actor
-                      :license/type :attachment
-                      :license/organization organization
-                      :license/title {:fi "Liitelisenssi" :en "Attachment license"}
-                      :license/text {:fi "fi" :en "en"}
-                      :license/attachment-id {:fi fi-attachment :en en-attachment}})))
+    (with-user actor
+      (create-license! {:actor actor
+                        :license/type :attachment
+                        :license/organization organization
+                        :license/title {:fi "Liitelisenssi" :en "Attachment license"}
+                        :license/text {:fi "fi" :en "en"}
+                        :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
 
 (defn create-form! [{:keys [actor]
                      :form/keys [organization title fields]
                      :as command}]
   (let [actor (or actor (create-owner!))
-        result (form/create-form! actor
-                                  {:form/organization (or organization "abc")
-                                   :form/title (or title "")
-                                   :form/fields (or fields [])})]
+        result (with-user actor
+                 (form/create-form! actor
+                                    {:form/organization (or organization "abc")
+                                     :form/title (or title "")
+                                     :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
 (defn create-resource! [{:keys [actor organization resource-ext-id license-ids]
                          :as command}]
   (let [actor (or actor (create-owner!))
-        result (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                           :organization (or organization "abc")
-                                           :licenses (or license-ids [])}
-                                          actor)]
+        result (with-user actor
+                 (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
+                                             :organization (or organization "abc")
+                                             :licenses (or license-ids [])}
+                                            actor))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
 (defn create-workflow! [{:keys [actor organization title type handlers]
                          :as command}]
   (let [actor (or actor (create-owner!))
-        result (workflow/create-workflow!
-                {:user-id actor
-                 :organization (or organization "abc")
-                 :title (or title "")
-                 :type (or type :workflow/master)
-                 :handlers
-                 (or handlers
-                     (do (create-user! (get +fake-user-data+ "developer"))
-                         ["developer"]))})]
+        result (with-user actor
+                 (workflow/create-workflow!
+                  {:user-id actor
+                   :organization (or organization "abc")
+                   :title (or title "")
+                   :type (or type :workflow/master)
+                   :handlers
+                   (or handlers
+                       (do (create-user! (get +fake-user-data+ "developer"))
+                           ["developer"]))}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -206,13 +221,13 @@
                             (for [lang (set (concat (keys title) (keys infourl)))]
                               [lang {:title (get title lang)
                                      :infourl (get infourl lang)}]))
-        result (catalogue/create-catalogue-item!
-                {:resid (or resource-id (create-resource! {}))
-                 :form (or form-id (create-form! {}))
-                 :organization (or organization "")
-                 :wfid (or workflow-id (create-workflow! {}))
-                 :localizations (or localizations {})}
-                actor)]
+        result (with-user actor
+                 (catalogue/create-catalogue-item!
+                  {:resid (or resource-id (create-resource! {}))
+                   :form (or form-id (create-form! {}))
+                   :organization (or organization "")
+                   :wfid (or workflow-id (create-workflow! {}))
+                   :localizations (or localizations {})}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
 
@@ -260,12 +275,13 @@
   (doseq [attr (vals attrs)]
     (create-user! attr))
   (roles/add-role! (users :owner) :owner)
+  (roles/add-role! (users :organization-owner1) :organization-owner)
+  (roles/add-role! (users :organization-owner2) :organization-owner)
   (roles/add-role! (users :reporter) :reporter))
 
 (defn create-test-users-and-roles! []
   ;; users provided by the fake login
   (create-users-and-roles! +fake-users+ +fake-user-data+)
-  (roles/add-role! (+fake-users+ :organization-owner) :organization-owner)
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
 
@@ -273,8 +289,8 @@
   (doseq [attr (vals +bot-user-data+)]
     (create-user! attr)))
 
-(defn- create-archived-form! []
-  (let [id (create-form! {:actor (+fake-users+ :owner)
+(defn- create-archived-form! [actor]
+  (let [id (create-form! {:actor actor
                           :form/organization "nbn"
                           :form/title "Archived form, should not be seen by applicants"})]
     (form/set-form-archived! {:id id :archived true})))
@@ -388,11 +404,11 @@
 
 (defn- create-all-field-types-example-form!
   "Creates a bilingual form with all supported field types. Returns the form ID."
-  [users]
+  [actor organization title]
   (create-form!
-   {:actor (users :owner)
-    :form/organization "nbn"
-    :form/title "Example form with all field types"
+   {:actor actor
+    :form/organization organization
+    :form/title title
     :form/fields all-field-types-example}))
 
 (defn create-thl-demo-form!
@@ -604,6 +620,7 @@
         approver-bot (users :approver-bot)
         rejecter-bot (users :rejecter-bot)
         owner (users :owner)
+        organization-owner1 (users :organization-owner1)
         handlers [approver1 approver2 rejecter-bot]
         default (create-workflow! {:actor owner
                                    :organization "nbn"
@@ -623,9 +640,14 @@
         auto-approve (create-workflow! {:actor owner
                                         :organization "nbn"
                                         :title "Auto-approve workflow"
-                                        :handlers [approver-bot rejecter-bot]})]
+                                        :handlers [approver-bot rejecter-bot]})
+        by-organization-owner (create-workflow! {:actor organization-owner1
+                                                 :organization "organization1"
+                                                 :title "Owned by organization owner"
+                                                 :type :workflow/default
+                                                 :handlers handlers})]
 
-    ;; attach both kinds of licenses to all workflows
+    ;; attach both kinds of licenses to all workflows created by owner
     (let [link (create-license! {:actor owner
                                  :license/type :link
                                  :license/organization "nbn"
@@ -647,7 +669,8 @@
     {:default default
      :decider decider
      :master master
-     :auto-approve auto-approve}))
+     :auto-approve auto-approve
+     :by-organization-owner by-organization-owner}))
 
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
@@ -887,28 +910,18 @@
   (assert (empty? (db/get-catalogue-items {}))
           "You have existing catalogue items, refusing to continue. An empty database is needed."))
 
-(defn create-test-data! []
-  (assert-no-existing-data!)
-  (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
-  (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
-  (create-test-users-and-roles!)
-  (create-bots!)
-  (let [owner (+fake-users+ :owner)
-        res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                :organization "nbn"
-                                :actor owner
-                                :license-ids []})
+(defn- create-items! [users]
+  (let [owner (users :owner)
+        organization-owner1 (users :organization-owner1)
+
+        ;; Create licenses
         license1 (create-license! {:actor owner
                                    :license/type :link
                                    :license/organization "nbn"
-                                   :license/title {:en "Test license"
-                                                   :fi "Testilisenssi"}
+                                   :license/title {:en "Demo license"
+                                                   :fi "Demolisenssi"}
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                   :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
-        res2 (create-resource! {:resource-ext-id "Extra Data"
-                                :organization "nbn"
-                                :actor owner
-                                :license-ids [license1]})
         extra-license (create-license! {:actor owner
                                         :license/type :link
                                         :license/organization "nbn"
@@ -916,17 +929,44 @@
                                                         :fi "Ylimääräinen lisenssi"}
                                         :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                        :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+        license-organization-owner (create-license! {:actor organization-owner1
+                                                     :license/type :link
+                                                     :license/organization "organization1"
+                                                     :license/title {:en "License owned by organization owner"
+                                                                     :fi "Lisenssi, jonka omistaa organisaatio-omistaja"}
+                                                     :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
+                                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+        _ (create-disabled-license! {:actor owner
+                                     :license/organization "nbn"})
         attachment-license (create-attachment-license! {:actor owner
                                                         :license/organization "nbn"})
+
+        ;; Create resources
+        res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
+                                :organization "nbn"
+                                :actor owner})
+        res2 (create-resource! {:resource-ext-id "Extra Data"
+                                :organization "nbn"
+                                :actor owner
+                                :license-ids [license1]})
+        res-organization-owner (create-resource! {:resource-ext-id "Owned by organization owner"
+                                                  :organization "organization1"
+                                                  :actor organization-owner1
+                                                  :license-ids [license-organization-owner]})
         res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
                                                   :organization "nbn"
                                                   :actor owner
                                                   :license-ids [extra-license attachment-license]})
-        form (create-all-field-types-example-form! +fake-users+)
-        _ (create-archived-form!)
-        workflows (create-workflows! (merge +fake-users+ +bot-users+))]
-    (create-disabled-license! {:actor owner
-                               :license/organization "nbn"})
+
+        workflows (create-workflows! (merge users +bot-users+))
+        _ (db/create-workflow-license! {:wfid (:by-organization-owner workflows)
+                                        :licid license-organization-owner})
+
+        form (create-all-field-types-example-form! owner "nbn" "Example form with all field types")
+        form-organization-owner (create-all-field-types-example-form! organization-owner1 "organization1" "Owned by organization owner")]
+    (create-archived-form! owner)
+
+    ;; Create catalogue items
     (create-catalogue-item! {:actor owner
                              :title {:en "Master workflow"
                                      :fi "Master-työvuo"}
@@ -954,7 +994,7 @@
                                          :form-id form
                                          :organization "nbn"
                                          :workflow-id (:default workflows)})]
-      (create-applications! catid +fake-users+))
+      (create-applications! catid users))
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
                                      :fi "Oletustyövuo ylimääräisellä lisenssillä"}
@@ -970,15 +1010,15 @@
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:auto-approve workflows)})
-    (let [thlform (create-thl-demo-form! +fake-users+)
+    (let [thlform (create-thl-demo-form! users)
           thl-catid (create-catalogue-item! {:actor owner
                                              :title {:en "THL catalogue item"
                                                      :fi "THL katalogi-itemi"}
                                              :resource-id res1
                                              :form-id thlform
-                                             :organiztion "thl"
+                                             :organization "thl"
                                              :workflow-id (:default workflows)})]
-      (create-member-applications! thl-catid (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
+      (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"
                                                             :fi "Oletustyövuo (pois käytöstä)"}
@@ -987,8 +1027,8 @@
                                                     :organization "nbn"
                                                     :workflow-id (:default workflows)})]
       (create-disabled-applications! default-disabled
-                                     (+fake-users+ :applicant2)
-                                     (+fake-users+ :approver1))
+                                     (users :applicant2)
+                                     (users :approver1))
       (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
     (let [default-expired (create-catalogue-item! {:actor owner
                                                    :title {:en "Default workflow (expired)"
@@ -997,7 +1037,22 @@
                                                    :form-id form
                                                    :organization "nbn"
                                                    :workflow-id (:default workflows)})]
-      (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))))
+      (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
+    (create-catalogue-item! {:actor organization-owner1
+                             :title {:en "Owned by organization owner"
+                                     :fi "Organisaatio-omistajan omistama"}
+                             :resource-id res-organization-owner
+                             :form-id form-organization-owner
+                             :organization "organization1"
+                             :workflow-id (:organization-owner workflows)})))
+
+(defn create-test-data! []
+  (assert-no-existing-data!)
+  (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
+  (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
+  (create-test-users-and-roles!)
+  (create-bots!)
+  (create-items! +fake-users+))
 
 (defn create-demo-data! []
   (assert-no-existing-data!)
@@ -1007,52 +1062,4 @@
     (api-key/add-api-key! 55 "Finna" api-key/+all-roles+)
     (create-users-and-roles! users user-data)
     (create-bots!)
-    (let [owner (users :owner)
-          res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                  :organization "nbn"
-                                  :actor owner})
-          license1 (create-license! {:actor owner
-                                     :license/type :link
-                                     :license/organization "nbn"
-                                     :license/title {:en "Demo license"
-                                                     :fi "Demolisenssi"}
-                                     :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
-          attachment-license (create-attachment-license! {:actor owner
-                                                          :license/organization "nbn"})
-          res2 (create-resource! {:resource-ext-id "Extra Data"
-                                  :organization "nbn"
-                                  :actor owner
-                                  :license-ids [license1 attachment-license]})
-          form (create-all-field-types-example-form! users)
-          workflows (create-workflows! (merge users +bot-users+))]
-      (create-disabled-license! {:actor owner
-                                 :license/organization "nbn"})
-      (let [default (create-catalogue-item! {:actor owner
-                                             :title {:en "Default workflow"
-                                                     :fi "Oletustyövuo"}
-                                             :resource-id res1
-                                             :form-id form
-                                             :organization "nbn"
-                                             :workflow-id (:default workflows)})]
-        (create-applications! default users))
-      (let [thlform (create-thl-demo-form! users)
-            thl-catid (create-catalogue-item! {:actor owner
-                                               :title {:en "THL catalogue item"
-                                                       :fi "THL katalogi-itemi"}
-                                               :resource-id res1
-                                               :form-id thlform
-                                               :organization "thl"
-                                               :workflow-id (:default workflows)})]
-        (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
-      (let [default-disabled (create-catalogue-item! {:actor owner
-                                                      :title {:en "Default workflow (disabled)"
-                                                              :fi "Oletustyövuo (pois käytöstä)"}
-                                                      :resource-id res1
-                                                      :form-id form
-                                                      :organization "nbn"
-                                                      :workflow-id (:default workflows)})]
-        (create-disabled-applications! default-disabled
-                                       (users :applicant2)
-                                       (users :approver1))
-        (db/set-catalogue-item-enabled! {:id default-disabled :enabled false})))))
+    (create-items! users)))

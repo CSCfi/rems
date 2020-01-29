@@ -56,12 +56,12 @@
 
         (testing "as organization owner"
           (testing "with correct organization"
-            (let [body (create-license "organization-owner" (assoc command :organization "organization"))]
+            (let [body (create-license "organization-owner1" (assoc command :organization "organization1"))]
               (is (:id body))
               (is (:success body))))
 
           (testing "with correct organization"
-            (let [body (create-license "organization-owner" (assoc command :organization "not organization"))]
+            (let [body (create-license "organization-owner1" (assoc command :organization "organization2"))]
               (is (not (:success body))))))))
 
     (testing "create inline license"

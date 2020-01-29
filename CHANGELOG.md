@@ -46,6 +46,8 @@ Changes since v2.6
 - Entitlements appear immediately instead of after a delay (#1784)
 - Show version information in console instead of the page footer (#1785)
 - Searching applications by resource external id now possible (#1919)
+- Handler can now close applications in the decider workflow (#1938)
+- Applicant can now close drafts in the decider workflow (#1938)
 
 ### Fixes
 - More robust email resending (#1750)

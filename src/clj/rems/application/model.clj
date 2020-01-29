@@ -253,6 +253,7 @@
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
     {:permission :application.command/change-resources}
+    {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
     {:permission :application.command/create}
     {:permission :application.command/invite-member}

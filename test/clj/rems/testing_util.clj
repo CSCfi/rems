@@ -1,5 +1,8 @@
 (ns rems.testing-util
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [rems.context :as context]
+            [rems.db.roles :as roles]
+            [rems.db.users :as users])
   (:import (ch.qos.logback.classic Level Logger)
            (com.google.common.io MoreFiles RecursiveDeleteOption)
            (java.nio.file Files)
@@ -22,3 +25,8 @@
 (defn delete-recursively [dir]
   (MoreFiles/deleteRecursively (.toPath (io/file dir))
                                (into-array [RecursiveDeleteOption/ALLOW_INSECURE])))
+
+(defmacro with-user [user & body]
+  `(binding [context/*user* (users/get-user ~user)
+             context/*roles* (roles/get-roles ~user)]
+     ~@body))

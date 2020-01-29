@@ -3,22 +3,25 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resources]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]))
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
+            [rems.testing-util :refer [with-user]]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (defn- status-flags [res-id]
-  (-> (resources/get-resource res-id)
-      (select-keys [:enabled :archived])))
+  (with-user "owner"
+    (-> (resources/get-resource res-id)
+        (select-keys [:enabled :archived]))))
 
 (deftest resource-enabled-archived-test
   (let [lic-id (test-data/create-license! {})
         res-id (test-data/create-resource! {:license-ids [lic-id]})
         res-id2 (test-data/create-resource! {})
 
-        archive-license! #(licenses/set-license-archived! {:id lic-id
-                                                           :archived %})]
+        archive-license! #(with-user "owner"
+                            (licenses/set-license-archived! {:id lic-id
+                                                             :archived %}))]
 
     (testing "new resources are enabled and not archived"
       (is (= {:enabled true

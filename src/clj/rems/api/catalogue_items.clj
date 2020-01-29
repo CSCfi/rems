@@ -103,7 +103,7 @@
       :roles #{:owner :organization-owner}
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (ok (catalogue/create-catalogue-item! command (getx-user-id))))
+      (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/edit" []
       :summary "Edit a catalogue item"
