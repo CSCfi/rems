@@ -1,12 +1,13 @@
 (ns ^:integration rems.api.test-resources
   (:require [clojure.test :refer :all]
             [rems.db.core :as db]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (defn- create-resource! [command api-key user-id]
@@ -91,7 +92,7 @@
             (is (contains? app-ids enabled-id))
             (is (not (contains? app-ids disabled-id)))
             (is (contains? app-ids archived-id))))))
-    (let [licid 1
+    (let [licid (test-data/create-license! {})
           resid "resource-api-test"
           create-resource (fn [user-id organization]
                             (-> (request :post "/api/resources/create")
@@ -101,29 +102,6 @@
                                             :licenses [licid]})
                                 handler
                                 read-ok-body))]
-      (testing "create as owner"
-        (let [result (create-resource "owner" "test-organization")
-              id (:id result)]
-          (is (true? (:success result)))
-          (is id)
-
-          (testing "and fetch"
-            (let [resource (-> (request :get (str "/api/resources/" id))
-                               (authenticate api-key user-id)
-                               handler
-                               assert-response-is-ok
-                               read-body)]
-              (is resource)
-              (is (= [licid] (map :id (:licenses resource))))))
-
-          (testing "duplicate resource ID is not allowed within one organization"
-            (let [result (create-resource "owner" "test-organization")]
-              (is (false? (:success result)))
-              (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result)))))
-
-          (testing "duplicate resource ID is allowed between organizations"
-            (let [result (create-resource "owner" "test-organization2")]
-              (is (true? (:success result)))))))
 
       (testing "create as organization owner"
         (testing "with correct organization"
@@ -158,7 +136,33 @@
 
         (testing "with incorrect organization"
           (let [result (create-resource "organization-owner1" "organization2")]
-            (is (false? (:success result)))))))))
+            (is (false? (:success result))))))
+
+      (testing "create as owner"
+        (let [result (create-resource "owner" "test-organization")
+              id (:id result)]
+          (is (true? (:success result)))
+          (is id)
+
+          (testing "and fetch"
+            (let [resource (-> (request :get (str "/api/resources/" id))
+                               (authenticate api-key user-id)
+                               handler
+                               assert-response-is-ok
+                               read-body)]
+              (is resource)
+              (is (= [licid] (map :id (:licenses resource))))))
+
+          (testing "duplicate resource ID is allowed between organizations"
+            (let [result (create-resource "owner" "test-organization2")]
+              (is (true? (:success result)))))
+
+          ;; duplicate id is an sql error which invalidates the
+          ;; transaction, so we need to have it last in the test
+          (testing "duplicate resource ID is not allowed within one organization"
+            (let [result (create-resource "owner" "test-organization")]
+              (is (false? (:success result)))
+              (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result))))))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"
