@@ -30,7 +30,6 @@
                                      json/parse-string
                                      first
                                      :application/id)
-                  _ (prn :DBG application-id)
                   response (http/get (str "http://localhost:" port "/api/applications/" application-id "/pdf")
                                      {:throw-exceptions false
                                       :headers {"x-rems-api-key" "42"
