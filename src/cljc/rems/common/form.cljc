@@ -19,6 +19,9 @@
 (defn supports-options? [field]
   (contains? #{:option :multiselect} (:field/type field)))
 
+(defn supports-privacy? [field]
+  (not (contains? #{:label :header} (:field/type field))))
+
 (defn supports-visibility? [field]
   true) ; at the moment all field types
 

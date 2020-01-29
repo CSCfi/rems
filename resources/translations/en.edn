@@ -222,6 +222,8 @@
                 :option-n "Option %1"
                 :optional "Optional field"
                 :placeholder "Placeholder text (optional)"
+                :privacy {:private "Private"
+                          :public "Public"}
                 :title "Form name"
                 :type-attachment "Attachment"
                 :type-date "Date field"
@@ -231,6 +233,7 @@
                 :type-label "Label"
                 :type-multiselect "Multi-select list"
                 :type-option "Option list"
+                :type-privacy "Privacy"
                 :type-text "Text field"
                 :type-texta "Text area"
                 :type-visibility "Visible"

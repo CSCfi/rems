@@ -220,6 +220,8 @@
                 :option-n "Vaihtoehto %1"
                 :optional "Vapaaehtoinen kenttä"
                 :placeholder "Esimerkkiteksti (ei pakollinen)"
+                :privacy {:private "Salainen"
+                          :public "Julkinen"}
                 :title "Lomakkeen nimi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
@@ -229,6 +231,7 @@
                 :type-label "Lisätietokenttä"
                 :type-multiselect "Monivalintalista"
                 :type-option "Valintalista"
+                :type-privacy "Julkisuus"
                 :type-text "Tekstikenttä"
                 :type-texta "Tekstialue"
                 :type-visibility "Näkyvissä"
