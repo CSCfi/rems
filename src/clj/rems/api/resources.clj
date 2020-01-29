@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.services.resource :as resource]
-            [rems.api.util] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -38,7 +38,7 @@
 
     (GET "/" []
       :summary "Get resources"
-      :roles #{:owner :handler}
+      :roles #{:owner :organization-owner :handler}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled resources") false}
                      {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
@@ -47,10 +47,12 @@
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
-      :roles #{:owner :handler}
+      :roles #{:owner :organization-owner :handler}
       :path-params [resource-id :- (describe s/Int "resource id")]
       :return Resource
-      (ok (resource/get-resource resource-id)))
+      (if-let [resource (resource/get-resource resource-id)]
+        (ok resource)
+        (not-found-json-response)))
 
     (POST "/create" []
       :summary "Create resource"

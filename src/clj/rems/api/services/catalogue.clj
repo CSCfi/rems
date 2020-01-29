@@ -17,8 +17,8 @@
      :licenses (licenses/get-licenses {:wfid wfid
                                        :items [id]})}))
 
-(defn create-catalogue-item! [{:keys [localizations organization] :as command} user-id]
-  (or (util/forbidden-organization? user-id organization)
+(defn create-catalogue-item! [{:keys [localizations organization] :as command}]
+  (or (util/forbidden-organization-error organization)
       ;; TODO make :organization unoptional?
       (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
                                                       (select-keys command [:form :resid :wfid :enabled :archived :organization]))))
