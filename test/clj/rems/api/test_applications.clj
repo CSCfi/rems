@@ -521,10 +521,27 @@
         cat-id (test-data/create-catalogue-item! {:workflow-id wf-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})]
+    (testing "applicant's commands for draft"
+      (is (= #{"application.command/accept-licenses"
+               "application.command/change-resources"
+               "application.command/close"
+               "application.command/copy-as-new"
+               "application.command/invite-member"
+               "application.command/remove-member"
+               "application.command/save-draft"
+               "application.command/submit"
+               "application.command/uninvite-member"}
+             (set (:application/permissions (get-application app-id applicant))))))
     (testing "submit"
       (is (= {:success true}
              (send-command applicant {:type :application.command/submit
                                       :application-id app-id}))))
+    (testing "applicant's commands after submit"
+      (is (= #{"application.command/accept-licenses"
+               "application.command/copy-as-new"
+               "application.command/remove-member"
+               "application.command/uninvite-member"}
+             (set (:application/permissions (get-application app-id applicant))))))
     (testing "handler's commands"
       (is (= #{"application.command/add-licenses"
                "application.command/add-member"
