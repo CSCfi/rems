@@ -358,6 +358,68 @@
             (is (= (:form/fields command)
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
+(deftest forms-api-privacy-test
+  (let [api-key "42"
+        user-id "owner"
+        localized {:en "en" :fi "fi"}
+        command {:form/organization "abc"
+                 :form/title "form fields with privacy"
+                 :form/fields [{:field/id "header"
+                                :field/type :header
+                                :field/title localized
+                                :field/optional false}
+                               {:field/id "private"
+                                :field/type :text
+                                :field/title localized
+                                :field/optional false
+                                :field/privacy :private}
+                               {:field/id "public"
+                                :field/type :text
+                                :field/title localized
+                                :field/optional false
+                                :field/privacy :public}]}]
+    (testing "creating"
+      (testing "invalid request"
+        (letfn [(fail-request [command]
+                  (let [response (-> (request :post "/api/forms/create")
+                                     (authenticate api-key user-id)
+                                     (json-body command)
+                                     handler)]
+                    (or (= 400 (:status response))
+                        (not (get-in response [:body :success])))))]
+          (is (fail-request (assoc-in command [:form/fields 1 :field/privacy] nil)) "invalid value")
+          (is (fail-request (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)) "invalid value")
+          (is (fail-request (assoc-in command [:form/fields 0 :field/privacy] :private)) "privacy not supported")))
+      (testing "valid request"
+        (let [form-id (-> (request :post "/api/forms/create")
+                          (authenticate api-key user-id)
+                          (json-body command)
+                          handler
+                          read-ok-body
+                          :id)]
+          (is form-id)
+          (testing "and fetching"
+            (let [form (-> (request :get (str "/api/forms/" form-id))
+                           (authenticate api-key user-id)
+                           handler
+                           read-ok-body)]
+              (is (= (select-keys command [:form/organization :form/title])
+                     (select-keys form [:form/organization :form/title])))
+              (is (= [{:field/id "header"
+                       :field/type "header"
+                       :field/title localized
+                       :field/optional false}
+                      {:field/id "private"
+                       :field/type "text"
+                       :field/title localized
+                       :field/optional false
+                       :field/privacy "private"}
+                      {:field/id "public"
+                       :field/type "text"
+                       :field/title localized
+                       :field/optional false}]
+                     (:form/fields form))))))))))
+
 (deftest forms-api-visible-test
   (let [api-key "42"
         user-id "owner"
