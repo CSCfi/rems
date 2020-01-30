@@ -22,7 +22,7 @@
                    handler
                    read-body)
           item (first data)]
-      (is (str/starts-with? (:resid item) "urn:")))
+      (is (not (str/blank? (:resid item)))))
     (let [create-catalogue-item (fn [user-id organization]
                                   (-> (request :post "/api/catalogue-items/create")
                                       (authenticate api-key user-id)

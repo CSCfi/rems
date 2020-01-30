@@ -355,10 +355,11 @@
     :field/optional true
     :field/type :attachment}
 
-   {:field/title {:en "Option list"
-                  :fi "Valintalista"}
+   {:field/title {:en "Option list. Choose the first option to reveal a new field."
+                  :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."}
     :field/optional true
     :field/type :option
+    :field/id "option"
     :field/options [{:key "Option1"
                      :label {:en "First option"
                              :fi "Ensimmäinen vaihtoehto"}}
@@ -368,6 +369,14 @@
                     {:key "Option3"
                      :label {:en "Third option"
                              :fi "Kolmas vaihtoehto"}}]}
+
+   {:field/title {:en "Conditional field. Shown only if first option is selected above."
+                  :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."}
+    :field/optional false
+    :field/type :text
+    :field/visibility {:visibility/type :only-if
+                       :visibility/field {:field/id "option"}
+                       :visibility/values ["Option1"]}}
 
    {:field/title {:en "Multi-select list"
                   :fi "Monivalintalista"}
