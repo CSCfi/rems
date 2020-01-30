@@ -148,10 +148,15 @@
    (s/optional-key :field/options) [{:key s/Str
                                      :label LocalizedString}]
    (s/optional-key :field/max-length) (s/maybe (s/constrained s/Int not-neg?))
-   (s/optional-key :field/privacy) (s/enum :public :private)
-   (s/optional-key :field/visibility) {:visibility/type (s/enum :always :only-if)
-                                       (s/optional-key :visibility/field) {:field/id FieldId}
-                                       (s/optional-key :visibility/values) [s/Str]}})
+   (s/optional-key :field/privacy) (rjs/field
+                                    (s/enum :public :private)
+                                    {:description "Public by default"})
+   (s/optional-key :field/visibility) (rjs/field
+                                       {:visibility/type (s/enum :always :only-if)
+                                        (s/optional-key :visibility/field) {:field/id FieldId}
+                                        (s/optional-key :visibility/values) [s/Str]}
+                                       {:description "Always visible by default"})
+   })
 
 (s/defschema NewFieldTemplate
   (-> FieldTemplate
