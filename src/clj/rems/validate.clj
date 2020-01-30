@@ -4,6 +4,7 @@
             [clojure.tools.logging :as log]
             [rems.api.forms]
             [rems.application.events :as events]
+            [rems.common.form :as common-form]
             [rems.db.events :as events-db]
             [rems.db.form :as form]
             [schema.core :as s]))
@@ -13,7 +14,8 @@
 
 (defn validate-forms []
   (doseq [template (form/get-form-templates {})]
-    (validate-form-template template)))
+    (validate-form-template template)
+    (assert (nil? (common-form/validate-form-template template)))))
 
 (defn validate []
   (log/info "Validating data")
