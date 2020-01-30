@@ -20,7 +20,9 @@
   `:clearable?` should there be a clear selection button?
   `:on-change` called each time the value changes, one or seq"
   [{:keys [id class items item-key item-label item-selected? hide-selected? item-disabled? multi? clearable? on-change]
-    :or {hide-selected? multi?
+    :or {item-key identity
+         item-label identity
+         hide-selected? multi?
          item-selected? (constantly false)
          item-disabled? (constantly false)}}]
   ;; some of the callbacks may be keywords which aren't JS fns so we wrap them in anonymous fns

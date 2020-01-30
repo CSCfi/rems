@@ -1,5 +1,6 @@
 (ns rems.administration.create-catalogue-item
   (:require [clojure.string :as str]
+            [clojure.set :as set]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
@@ -15,10 +16,20 @@
             [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
 
 (defn- update-loading [db]
-  (let [progress (::loading-progress db)]
-    (if (<= 2 progress)
-      (dissoc db ::loading-progress ::loading?)
-      (assoc db ::loading-progress (inc progress)))))
+  (let [progress (::loading-progress db)
+        catalogue-item-id (::catalogue-item-id db)]
+    (cond
+      (<= progress 1)
+      {:db (assoc db ::loading-progress (inc progress))}
+
+      (nil? catalogue-item-id)
+      {:db (dissoc db ::loading-progress ::loading?)}
+
+      :else
+      {:db (-> db
+               (dissoc ::loading-progress)
+               (assoc ::loading-catalogue-item? true))
+       ::fetch-catalogue-item catalogue-item-id})))
 
 (rf/reg-event-fx
  ::enter-page
@@ -29,10 +40,8 @@
                  ::form (when (roles/disallow-setting-organization? roles)
                           {:organization organization})
                  ::catalogue-item-id catalogue-item-id
-                 ::loading-catalogue-item? (not (nil? catalogue-item-id))
                  ::loading? true
                  ::loading-progress 0)
-      ::fetch-catalogue-item catalogue-item-id
       ::fetch-workflows nil
       ::fetch-resources nil
       ::fetch-forms nil})))
@@ -44,34 +53,41 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-sub ::selected-workflow-id (fn [db _] (get-in db [::form :workflow-id])))
-(rf/reg-event-db ::set-selected-workflow-id (fn [db [_ workflow-id]] (assoc-in db [::form :workflow-id] workflow-id)))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
-(rf/reg-sub ::selected-resource-id (fn [db _] (get-in db [::form :resource-id])))
-(rf/reg-event-db ::set-selected-resource-id (fn [db [_ resource-id]] (assoc-in db [::form :resource-id] resource-id)))
+(rf/reg-sub ::selected-workflow (fn [db _] (get-in db [::form :workflow])))
+(rf/reg-event-db ::set-selected-workflow (fn [db [_ workflow]] (assoc-in db [::form :workflow] workflow)))
 
-(rf/reg-sub ::selected-form-id (fn [db _] (get-in db [::form :form-id])))
-(rf/reg-event-db ::set-selected-form-id (fn [db [_ form-id]] (assoc-in db [::form :form-id] form-id)))
+(rf/reg-sub ::selected-resource (fn [db _] (get-in db [::form :resource])))
+(rf/reg-event-db ::set-selected-resource (fn [db [_ resource]] (assoc-in db [::form :resource] resource)))
+
+(rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
+(rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
 
 (defn- valid-localization? [localization]
   (not (str/blank? (:title localization))))
 
-(defn- valid-request? [request languages]
-  (and (number? (:wfid request))
-       (number? (:resid request))
-       (number? (:form request))
-       (= (set languages)
-          (set (keys (:localizations request))))
-       (every? valid-localization? (vals (:localizations request)))))
+(defn- valid-request? [form request languages]
+  (let [selected-organization (:organization request)]
+    (and (= (get-in form [:workflow :organization]) selected-organization)
+         (= (get-in form [:resource :organization]) selected-organization)
+         (= (get-in form [:form :form/organization]) selected-organization)
+         (number? (:wfid request))
+         (number? (:resid request))
+         (number? (:form request))
+         (= (set languages)
+            (set (keys (:localizations request))))
+         (every? valid-localization? (vals (:localizations request))))))
 
 (defn- empty-string-to-nil [str]
   (when-not (str/blank? str)
     str))
 
 (defn build-request [form languages]
-  (let [request {:wfid (:workflow-id form)
-                 :resid (:resource-id form)
-                 :form (:form-id form)
+  (let [request {:wfid (get-in form [:workflow :id])
+                 :resid (get-in form [:resource :id])
+                 :form (get-in form [:form :form/id])
                  :organization (or (:organization form) "")
                  :localizations (into {}
                                       (for [lang languages]
@@ -79,7 +95,7 @@
                                                :infourl (-> (get-in form [:infourl lang])
                                                             empty-string-to-nil
                                                             trim-when-string)}]))}]
-    (when (valid-request? request languages)
+    (when (valid-request? form request languages)
       request)))
 
 (defn- page-title [editing?]
@@ -126,9 +142,9 @@
 
 (rf/reg-fx ::fetch-workflows fetch-workflows)
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::fetch-workflows-result
- (fn [db [_ workflows]]
+ (fn [{:keys [db]} [_ workflows]]
    (-> (assoc db ::workflows workflows)
        (update-loading))))
 
@@ -141,9 +157,9 @@
 
 (rf/reg-fx ::fetch-resources fetch-resources)
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::fetch-resources-result
- (fn [db [_ resources]]
+ (fn [{:keys [db]} [_ resources]]
    (-> (assoc db ::resources resources)
        (update-loading))))
 
@@ -157,9 +173,9 @@
 
 (rf/reg-fx ::fetch-forms fetch-forms)
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::fetch-forms-result
- (fn [db [_ forms]]
+ (fn [{:keys [db]} [_ forms]]
    (-> (assoc db ::forms forms)
        (update-loading))))
 
@@ -174,19 +190,23 @@
 (rf/reg-fx
  ::fetch-catalogue-item
  (fn [id]
-   (when id (fetch-catalogue-item id))))
+   (fetch-catalogue-item id)))
+
+(defn- item-by-id [items id-key id]
+  (first (filter #(= (id-key %) id) items)))
 
 (rf/reg-event-db
  ::fetch-catalogue-item-result
  (fn [db [_ {:keys [wfid resource-id formid localizations organization]}]]
    (-> db
-       (assoc ::form {:workflow-id wfid
-                      :resource-id resource-id
-                      :form-id formid
+       (assoc ::form {:workflow (item-by-id (::workflows db) :id wfid)
+                      :resource (item-by-id (::resources db) :id resource-id)
+                      :form (item-by-id (::forms db) :form/id formid)
                       :organization organization
                       :title (map-vals :title localizations)
                       :infourl (map-vals :infourl localizations)})
-       (dissoc ::loading-catalogue-item?))))
+       (dissoc ::loading-catalogue-item?
+               ::loading?))))
 
 ;;;; UI
 
@@ -194,17 +214,39 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
+(def ^:private organization-dropdown-id "organization-dropdown")
 (def ^:private workflow-dropdown-id "workflow-dropdown")
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
 
+(defn- list-organizations []
+  (let [workflows @(rf/subscribe [::workflows])
+        resources @(rf/subscribe [::resources])
+        forms @(rf/subscribe [::forms])
+        items-to-organizations (fn [items key]
+                                 (set (distinct (mapv key items))))]
+    (sort
+     (vec (set/intersection (items-to-organizations workflows :organization)
+                            (items-to-organizations resources :organization)
+                            (items-to-organizations forms :form/organization))))))
+
 (defn- catalogue-item-organization-field []
-  ;; TODO: Allow editing the organization of an existing catalogue item?
-  (let [readonly (or @(rf/subscribe [::editing?])
+  (let [organizations (list-organizations)
+        selected-organization @(rf/subscribe [::selected-organization])
+        item-selected? #(= % selected-organization)
+        readonly (or @(rf/subscribe [::editing?])
                      (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity]))))]
-    [text-field context {:keys [:organization]
-                         :label (text :t.administration/organization)
-                         :readonly readonly}]))
+    [:div.form-group
+     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
+     (if readonly
+       (let [organization (first (filter item-selected? organizations))]
+         [fields/readonly-field {:id organization-dropdown-id
+                                 :value organization}])
+       [dropdown/dropdown
+        {:id organization-dropdown-id
+         :items organizations
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
 (defn- catalogue-item-title-field [language]
   [text-field context {:keys [:title language]
@@ -219,61 +261,67 @@
                                    " (" (str/upper-case (name language)) ")")}])
 
 (defn- catalogue-item-workflow-field []
-  (let [workflows @(rf/subscribe [::workflows])
+  (let [organization @(rf/subscribe [::selected-organization])
+        workflows @(rf/subscribe [::workflows])
+        compatible-workflows (filter #(= organization (% :organization)) workflows)
         editing? @(rf/subscribe [::editing?])
-        selected-workflow-id @(rf/subscribe [::selected-workflow-id])
-        item-selected? #(= (:id %) selected-workflow-id)]
+        selected-workflow @(rf/subscribe [::selected-workflow])
+        item-selected? #(= (:id %) (:id selected-workflow))]
     [:div.form-group
      [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
      (if editing?
-       (let [workflow (first (filter item-selected? workflows))]
+       (let [workflow (item-by-id compatible-workflows :id (:id selected-workflow))]
          [fields/readonly-field {:id workflow-dropdown-id
                                  :value (:title workflow)}])
        [dropdown/dropdown
         {:id workflow-dropdown-id
-         :items workflows
+         :items compatible-workflows
          :item-key :id
          :item-label :title
          :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-workflow-id (:id %)])}])]))
+         :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
 
 (defn- catalogue-item-resource-field []
-  (let [resources @(rf/subscribe [::resources])
+  (let [organization @(rf/subscribe [::selected-organization])
+        resources @(rf/subscribe [::resources])
+        compatible-resources (filter #(= organization (% :organization)) resources)
         editing? @(rf/subscribe [::editing?])
-        selected-resource-id @(rf/subscribe [::selected-resource-id])
-        item-selected? #(= (:id %) selected-resource-id)]
+        selected-resource @(rf/subscribe [::selected-resource])
+        item-selected? #(= (:id %) (:id selected-resource))]
     [:div.form-group
      [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
      (if editing?
-       (let [resource (first (filter item-selected? resources))]
+       (let [resource (item-by-id compatible-resources :id (:id selected-resource))]
          [fields/readonly-field {:id resource-dropdown-id
                                  :value (:resid resource)}])
        [dropdown/dropdown
         {:id resource-dropdown-id
-         :items resources
+         :items compatible-resources
          :item-key :id
          :item-label :resid
          :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-resource-id (:id %)])}])]))
+         :on-change #(rf/dispatch [::set-selected-resource %])}])]))
 
 (defn- catalogue-item-form-field []
-  (let [forms @(rf/subscribe [::forms])
+  (let [organization @(rf/subscribe [::selected-organization])
+        forms @(rf/subscribe [::forms])
+        compatible-forms (filter #(= organization (% :form/organization)) forms)
         editing? @(rf/subscribe [::editing?])
-        selected-form-id @(rf/subscribe [::selected-form-id])
-        item-selected? #(= (:form/id %) selected-form-id)]
+        selected-form @(rf/subscribe [::selected-form])
+        item-selected? #(= (:form/id %) (:form/id selected-form))]
     [:div.form-group
      [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
      (if editing?
-       (let [form (first (filter item-selected? forms))]
+       (let [form (item-by-id compatible-forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
                                  :value (:form/title form)}])
        [dropdown/dropdown
         {:id form-dropdown-id
-         :items forms
+         :items compatible-forms
          :item-key :form/id
          :item-label :form/title
          :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-form-id (:form/id %)])}])]))
+         :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
