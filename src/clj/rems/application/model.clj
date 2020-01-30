@@ -1,6 +1,6 @@
 (ns rems.application.model
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [map-vals]]
+            [medley.core :refer [map-vals update-existing]]
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
@@ -580,9 +580,10 @@
   (if (or (= :public (:field/privacy field :public))
           (may-see-private-answers? roles))
     (assoc field :field/private false)
-    (assoc field
-           :field/value ""
-           :field/private true)))
+    (-> field
+        (assoc :field/private true)
+        (update-existing :field/value (fn [_] ""))
+        (update-existing :field/previous-value (fn [_] "")))))
 
 (defn apply-privacy [application roles]
   (update-in application
