@@ -16,20 +16,16 @@
             [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
 
 (defn- update-loading [db]
-  (let [progress (::loading-progress db)
-        catalogue-item-id (::catalogue-item-id db)]
-    (cond
-      (<= progress 1)
-      {:db (assoc db ::loading-progress (inc progress))}
+  (cond
+    (not (and (::resources db) (::workflows db) (::forms db)))
+    {:db db}
 
-      (nil? catalogue-item-id)
-      {:db (dissoc db ::loading-progress ::loading?)}
+    (::editing? db)
+    {:db (assoc db ::loading-catalogue-item? true)
+     ::fetch-catalogue-item (::catalogue-item-id db)}
 
-      :else
-      {:db (-> db
-               (dissoc ::loading-progress)
-               (assoc ::loading-catalogue-item? true))
-       ::fetch-catalogue-item catalogue-item-id})))
+    :else
+    {:db (dissoc db ::loading?)}))
 
 (rf/reg-event-fx
  ::enter-page
@@ -40,14 +36,14 @@
                  ::form (when (roles/disallow-setting-organization? roles)
                           {:organization organization})
                  ::catalogue-item-id catalogue-item-id
-                 ::loading? true
-                 ::loading-progress 0)
+                 ::editing? (not (nil? catalogue-item-id))
+                 ::loading? true)
       ::fetch-workflows nil
       ::fetch-resources nil
       ::fetch-forms nil})))
 
 (rf/reg-sub ::catalogue-item (fn [db _] (::catalogue-item db)))
-(rf/reg-sub ::editing? (fn [db _] (not (nil? (::catalogue-item-id db)))))
+(rf/reg-sub ::editing? (fn [db _] (::editing? db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
@@ -70,9 +66,10 @@
 
 (defn- valid-request? [form request languages]
   (let [selected-organization (:organization request)]
-    (and (= (get-in form [:workflow :organization]) selected-organization)
-         (= (get-in form [:resource :organization]) selected-organization)
-         (= (get-in form [:form :form/organization]) selected-organization)
+    (and (= (get-in form [:workflow :organization])
+            (get-in form [:resource :organization])
+            (get-in form [:form :form/organization])
+            selected-organization)
          (number? (:wfid request))
          (number? (:resid request))
          (number? (:form request))
@@ -269,10 +266,17 @@
         item-selected? #(= (:id %) (:id selected-workflow))]
     [:div.form-group
      [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
-     (if editing?
+     (cond
+       (nil? organization)
+       [fields/readonly-field {:id workflow-dropdown-id
+                               :value (text :t.administration/select-organization)}]
+
+       editing?
        (let [workflow (item-by-id compatible-workflows :id (:id selected-workflow))]
          [fields/readonly-field {:id workflow-dropdown-id
                                  :value (:title workflow)}])
+
+       :else
        [dropdown/dropdown
         {:id workflow-dropdown-id
          :items compatible-workflows
@@ -290,10 +294,17 @@
         item-selected? #(= (:id %) (:id selected-resource))]
     [:div.form-group
      [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
-     (if editing?
+     (cond
+       (nil? organization)
+       [fields/readonly-field {:id resource-dropdown-id
+                               :value (text :t.administration/select-organization)}]
+
+       editing?
        (let [resource (item-by-id compatible-resources :id (:id selected-resource))]
          [fields/readonly-field {:id resource-dropdown-id
                                  :value (:resid resource)}])
+
+       :else
        [dropdown/dropdown
         {:id resource-dropdown-id
          :items compatible-resources
@@ -311,10 +322,17 @@
         item-selected? #(= (:form/id %) (:form/id selected-form))]
     [:div.form-group
      [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
-     (if editing?
+     (cond
+       (nil? organization)
+       [fields/readonly-field {:id form-dropdown-id
+                               :value (text :t.administration/select-organization)}]
+
+       editing?
        (let [form (item-by-id compatible-forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
                                  :value (:form/title form)}])
+
+       :else
        [dropdown/dropdown
         {:id form-dropdown-id
          :items compatible-forms
