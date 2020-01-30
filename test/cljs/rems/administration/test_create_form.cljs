@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-localized-string]]
             [rems.identity :refer [set-roles!]]
-            [rems.testing :refer [isolate-re-frame-state stub-re-frame-effect]]
+            [rems.testing :refer [isolate-re-frame-state]]
             [rems.util :refer [getx-in]]))
 
 (use-fixtures
@@ -288,6 +288,16 @@
                                                         :fi "Pekonia"}}]}]}
                (build-request form languages)))))
 
+    (testing "privacy"
+      (is (nil? (get-in (build-request (assoc-in form [:form/fields 0 :field/privacy] :public) languages)
+                        [:form/fields 0 :field/privacy]))
+          "public is the default so nothing needs to be included")
+      (is (nil? (get-in (build-request (assoc-in form [:form/fields 0 :field/privacy] :does-not-exist) languages)
+                        [:form/fields 0 :field/privacy]))
+          "wrong data is not included")
+      (is (= :private
+             (getx-in (build-request (assoc-in form [:form/fields 0 :field/privacy] :private) languages)
+                      [:form/fields 0 :field/privacy]))))
     (testing "visibility"
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/id] "fld1")

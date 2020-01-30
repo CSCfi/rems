@@ -154,6 +154,9 @@
            {:field/options (for [{:keys [key label]} (:field/options field)]
                              {:key key
                               :label (build-localized-string label languages)})})
+         (when (common-form/supports-privacy? field)
+           (when (= :private (get-in field [:field/privacy]))
+             {:field/privacy (:field/privacy field)}))
          (when (common-form/supports-visibility? field)
            (when (= :only-if (get-in field [:field/visibility :visibility/type]))
              {:field/visibility (select-keys (:field/visibility field)
@@ -390,6 +393,34 @@
            [:div.invalid-feedback
             (when error-value (text-format error-value label-value))]])])]))
 
+(rf/reg-event-db
+ ::form-field-privacy
+ (fn [db [_ field-index privacy]]
+   (assoc-in db [::form :form/fields field-index :field/privacy] privacy)))
+
+(defn- form-field-privacy
+  "Component for specifying form field privacy rules.
+
+  Privacy concerns the reviewers as they can see only public fields."
+  [field-index]
+  (let [form @(rf/subscribe [::form])
+        form-errors @(rf/subscribe [::form-errors])
+        error (get-in form-errors [:form/fields field-index :field/privacy])
+        lang @(rf/subscribe [:language])
+        id (str "fields-" field-index "-privacy-type")
+        label (text :t.create-form/type-privacy)
+        privacy (get-in form [:form/fields field-index :field/privacy])]
+    [:div.form-group.field {:id (str "container-field" field-index)}
+     [:label {:for id} label]
+     " "
+     [:select.form-control
+      {:id id
+       :class (when error "is-invalid")
+       :on-change #(rf/dispatch [::form-field-privacy field-index (keyword (.. % -target -value))])
+       :value (or privacy "public")}
+      [:option {:value "public"} (text :t.create-form.privacy/public)]
+      [:option {:value "private"} (text :t.create-form.privacy/private)]]]))
+
 (defn- form-field-type-radio-group [field-index]
   [radio-button-group context {:id (str "radio-group-" field-index)
                                :keys [:form/fields field-index :field/type]
@@ -531,6 +562,8 @@
               [form-field-max-length-field index])
             (when (common-form/supports-options? field)
               [form-field-option-fields index])
+            (when (common-form/supports-privacy? field)
+              [form-field-privacy index])
             (when (common-form/supports-visibility? field)
               [form-field-visibility index])]
 

@@ -19,6 +19,9 @@
 (defn supports-options? [field]
   (contains? #{:option :multiselect} (:field/type field)))
 
+(defn supports-privacy? [field]
+  (not (contains? #{:label :header} (:field/type field))))
+
 (defn supports-visibility? [field]
   true) ; at the moment all field types
 
@@ -130,7 +133,12 @@
 (defn- field-option-keys [field]
   (set (map :key (:field/options field))))
 
-(defn- validate-only-if-field [field visibility fields]
+(defn- validate-privacy [field fields]
+  (let [privacy (get :field/privacy field :public)]
+    (when-not (contains? #{:public :private} privacy)
+      {:field/privacy {:privacy/type :t.form.validation/invalid-value}})))
+
+(defn- validate-only-if-visibility [visibility fields]
   (let [referred-id (get-in visibility [:visibility/field :field/id])
         referred-field (find-first (comp #{referred-id} :field/id) fields)]
     (cond
@@ -156,7 +164,7 @@
   (when-let [visibility (:field/visibility field)]
     (case (:visibility/type visibility)
       :always nil
-      :only-if (validate-only-if-field field visibility fields)
+      :only-if (validate-only-if-visibility visibility fields)
       nil {:field/visibility {:visibility/type :t.form.validation/required}}
       {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
 
@@ -170,6 +178,8 @@
                             (validate-max-length (:field/max-length field)))
                           (when (supports-options? field)
                             (validate-options (:field/options field) languages))
+                          (when (supports-privacy? field)
+                            (validate-privacy field fields))
                           (when (supports-visibility? field)
                             (validate-visibility field fields)))})]
     (apply merge (map-indexed validate-field fields))))

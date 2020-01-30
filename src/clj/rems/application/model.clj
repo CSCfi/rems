@@ -572,6 +572,23 @@
       (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
       (update :application/events (partial mapv #(dissoc % :invitation/token)))))
 
+(defn- may-see-private-answers? [roles]
+  (some #{:applicant :member :decider :past-decider :handler :reporter}
+        roles))
+
+(defn- apply-field-privacy [field roles]
+  (if (or (= :public (:field/privacy field :public))
+          (may-see-private-answers? roles))
+    (assoc field :field/private false)
+    (assoc field
+           :field/value ""
+           :field/private true)))
+
+(defn apply-privacy [application roles]
+  (update-in application
+             [:application/form :form/fields]
+             (partial mapv #(apply-field-privacy % roles))))
+
 (defn- hide-non-public-information [application]
   (-> application
       hide-invitation-tokens
@@ -601,6 +618,7 @@
             (hide-sensitive-information application))
           (personalize-todo user-id)
           (hide-non-public-information)
+          (apply-privacy roles)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))

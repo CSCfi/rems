@@ -351,7 +351,8 @@
       [:div
        (into [:div]
              (for [fld (get-in application [:application/form :form/fields])
-                   :when (field-visible? fld field-values)]
+                   :when (and (field-visible? fld field-values)
+                              (not (:field/private fld)))] ; private fields will have empty value anyway
                [fields/field (assoc fld
                                     :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
                                     :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])

@@ -88,10 +88,12 @@
                                       {:field/id "abc"}])))))
 
 (defn- normalize-field-definition [field]
-  (let [visibility-type (get-in field [:field/visibility :visibility/type] :always)]
-    (if (= :always visibility-type)
-      (dissoc field :field/visibility)
-      field)))
+  (cond-> field
+    (= :public (:field/privacy field))
+    (dissoc :field/privacy)
+
+    (= :always (get-in field [:field/visibility :visibility/type]))
+    (dissoc :field/visibility)))
 
 (defn- normalize-field-definitions [fields]
   (map normalize-field-definition fields))
