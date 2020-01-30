@@ -403,8 +403,6 @@
                            (authenticate api-key user-id)
                            handler
                            read-ok-body)]
-              (is (= (select-keys command [:form/organization :form/title])
-                     (select-keys form [:form/organization :form/title])))
               (is (= [{:field/id "header"
                        :field/type "header"
                        :field/title localized
