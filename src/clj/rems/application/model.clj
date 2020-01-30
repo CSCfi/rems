@@ -572,11 +572,14 @@
       (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
       (update :application/events (partial mapv #(dissoc % :invitation/token)))))
 
+(defn- may-see-private-answers? [roles]
+  (some #{:applicant :member :decider :past-decider :handler :reporter}
+        roles))
+
 (defn hide-answers-with-privacy [application roles]
   (let [fields (get-in application [:application/form :form/fields])
         fields-with-privacy (mapv (fn [field]
-                                    (if (or (some #{:applicant :member :decider :past-decider :handler :reporter}
-                                                  roles)
+                                    (if (or (may-see-private-answers? roles)
                                             (= :public (:field/privacy field :public)))
                                       (assoc field :field/private false)
                                       (assoc field
