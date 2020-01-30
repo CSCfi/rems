@@ -36,7 +36,7 @@
 
 (defn json->event [json]
   (when json
-    (coerce-event (json/parse-string* json))))
+    (coerce-event (json/parse-string json))))
 
 (defn event->json [event]
   (events/validate-event event)
