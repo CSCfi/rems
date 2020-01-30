@@ -479,10 +479,12 @@
 
 (deftest test-application-validation
   (let [user-id "alice"
-        form-id (test-data/create-form! {:form/fields [{:field/title {:en "req"}
+        form-id (test-data/create-form! {:form/fields [{:field/title {:en "req"
+                                                                      :fi "pak"}
                                                         :field/type :text
                                                         :field/optional false}
-                                                       {:field/title {:en "opt"}
+                                                       {:field/title {:en "opt"
+                                                                      :fi "val"}
                                                         :field/type :text
                                                         :field/optional true}]})
         [req-id opt-id] (->> (form/get-form-template form-id)
@@ -659,7 +661,8 @@
 (deftest test-application-api-attachments
   (let [api-key "42"
         user-id "alice"
-        form-id (test-data/create-form! {:form/fields [{:field/title {:en "some attachment"}
+        form-id (test-data/create-form! {:form/fields [{:field/title {:en "some attachment"
+                                                                      :fi "joku liite"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
         cat-id (test-data/create-catalogue-item! {:form-id form-id})

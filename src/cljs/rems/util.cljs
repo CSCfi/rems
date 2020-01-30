@@ -20,17 +20,6 @@
   [m ks]
   (reduce getx m ks))
 
-(defn remove-empty-keys
-  "Given a map, recursively remove keys with empty map or nil values.
-
-  E.g., given {:a {:b {:c nil} :d {:e :f}}}, return {:a {:d {:e :f}}}."
-  [m]
-  (into {} (filter (fn [[_ v]] (not ((if (map? v) empty? nil?) v)))
-                   (mapv (fn [[k v]] [k (if (map? v)
-                                          (remove-empty-keys v)
-                                          v)])
-                         m))))
-
 (defn replace-url!
   "Navigates to the given URL without adding a browser history entry."
   [url]
@@ -128,10 +117,6 @@
                     :response-format :transit}
                    opts
                    {:error-handler (wrap-default-error-handler (:error-handler opts))})))
-
-(defn parse-int [string]
-  (let [parsed (parseInt string)]
-    (when-not (js/isNaN parsed) parsed)))
 
 ;; String manipulation
 

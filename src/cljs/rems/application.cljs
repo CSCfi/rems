@@ -27,7 +27,7 @@
             [rems.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible?]]
-            [rems.common-util :refer [index-by]]
+            [rems.common-util :refer [index-by parse-int]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -36,7 +36,7 @@
             [rems.search :as search]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
-            [rems.util :refer [navigate! fetch parse-int post! focus-input-field focus-when-collapse-opened]])
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers

@@ -318,6 +318,7 @@
 (def ^:private field-defaults
   {:on-change (fn [_] nil)})
 
+;; TODO: check if this and common.form/field-types could be combined
 (defn field [field]
   (let [f (merge field-defaults field)]
     (case (:field/type f)

@@ -14,7 +14,8 @@
 
 - workflow: describes how an application is handled
   - the dynamic workflow is pretty much just a list of handler user ids
-- form: a form template that an applicant fills in when applying for a catalogue item
+- form: an instance of a form template that an applicant fills in when applying for a catalogue item
+- form template: the definition of a form including fields and their relationships
 - licenses: the applicant must accept a number of licenses when making an application
   - can be text, a link, or an attached file
   - can currently be attached to workflows, forms or catalogue items

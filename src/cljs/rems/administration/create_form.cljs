@@ -8,14 +8,15 @@
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
-            [rems.common.form :refer [field-visible? generate-field-id]]
+            [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
+            [rems.common-util :refer [parse-int]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [navigate! fetch put! post! normalize-option-key parse-int remove-empty-keys trim-when-string visibility-ratio focus-input-field]]))
+            [rems.util :refer [navigate! fetch put! post! normalize-option-key trim-when-string visibility-ratio focus-input-field]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -131,21 +132,6 @@
 
 ;;;; form submit
 
-(defn- supports-optional? [field]
-  (not (contains? #{:label :header} (:field/type field))))
-
-(defn- supports-placeholder? [field]
-  (contains? #{:text :texta :description} (:field/type field)))
-
-(defn- supports-max-length? [field]
-  (contains? #{:description :text :texta} (:field/type field)))
-
-(defn- supports-options? [field]
-  (contains? #{:option :multiselect} (:field/type field)))
-
-(defn- supports-visibility? [field]
-  true) ; at the moment all field types
-
 (defn- localized-field-title [field lang]
   (get-in field [:field/title lang]))
 
@@ -157,18 +143,18 @@
   (merge {:field/id (:field/id field)
           :field/title (build-localized-string (:field/title field) languages)
           :field/type (:field/type field)
-          :field/optional (if (supports-optional? field)
+          :field/optional (if (common-form/supports-optional? field)
                             (boolean (:field/optional field))
                             false)}
-         (when (supports-placeholder? field)
+         (when (common-form/supports-placeholder? field)
            {:field/placeholder (build-localized-string (:field/placeholder field) languages)})
-         (when (supports-max-length? field)
+         (when (common-form/supports-max-length? field)
            {:field/max-length (parse-int (:field/max-length field))})
-         (when (supports-options? field)
+         (when (common-form/supports-options? field)
            {:field/options (for [{:keys [key label]} (:field/options field)]
                              {:key key
                               :label (build-localized-string label languages)})})
-         (when (supports-visibility? field)
+         (when (common-form/supports-visibility? field)
            (when (= :only-if (get-in field [:field/visibility :visibility/type]))
              {:field/visibility (select-keys (:field/visibility field)
                                              [:visibility/type :visibility/field :visibility/values])}))))
@@ -180,93 +166,6 @@
 
 ;;;; form validation
 
-(defn- validate-text-field [m key]
-  (when (str/blank? (get m key))
-    {key :t.form.validation/required}))
-
-(defn- validate-localized-text-field [m key languages]
-  {key (apply merge (mapv #(validate-text-field (get m key) %) languages))})
-
-(defn- validate-optional-localized-field [m key languages]
-  (let [validated (mapv #(validate-text-field (get m key) %) languages)]
-    ;; partial translations are not allowed
-    (when (not-empty (remove identity validated))
-      {key (apply merge validated)})))
-
-(def ^:private max-length-range [0 32767])
-
-(defn- validate-max-length [max-length]
-  (when-not (str/blank? max-length)
-    (let [parsed (parse-int max-length)]
-      (when (or (nil? parsed)
-                (not (<= (first max-length-range) parsed (second max-length-range))))
-        {:field/max-length :t.form.validation/invalid-value}))))
-
-(defn- validate-option [option id languages]
-  {id (merge (validate-text-field option :key)
-             (validate-localized-text-field option :label languages))})
-
-(defn- validate-options [options languages]
-  {:field/options (apply merge (mapv #(validate-option %1 %2 languages) options (range)))})
-
-(defn- field-option-keys [field]
-  (set (map :key (:field/options field))))
-
-(defn- validate-only-if-field [field visibility fields]
-  (let [referred-id (get-in visibility [:visibility/field :field/id])
-        referred-field (find-first (comp #{referred-id} :field/id) fields)]
-    (cond
-      (not (:visibility/field visibility))
-      {:field/visibility {:visibility/field :t.form.validation/required}}
-
-      (empty? referred-id)
-      {:field/visibility {:visibility/field :t.form.validation/required}}
-
-      (not referred-field)
-      {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
-
-      (not (supports-options? referred-field))
-      {:field/visibility {:visibility/field :t.form.validation/invalid-value}}
-
-      (empty? (:visibility/values visibility))
-      {:field/visibility {:visibility/values :t.form.validation/required}}
-
-      (some #(not (contains? (field-option-keys referred-field) %)) (:visibility/values visibility))
-      {:field/visibility {:visibility/values :t.form.validation/invalid-value}})))
-
-(defn- validate-visibility [field fields]
-  (when-let [visibility (:field/visibility field)]
-    (case (:visibility/type visibility)
-      :always nil
-      :only-if (validate-only-if-field field visibility fields)
-      nil {:field/visibility {:visibility/type :t.form.validation/required}}
-      {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
-
-(defn validate-fields [fields languages]
-  (letfn [(validate-field [index field]
-            {index (merge (validate-text-field field :field/type)
-                          (validate-localized-text-field field :field/title languages)
-                          (when (supports-placeholder? field)
-                            (validate-optional-localized-field field :field/placeholder languages))
-                          (when (supports-max-length? field)
-                            (validate-max-length (:field/max-length field)))
-                          (when (supports-options? field)
-                            (validate-options (:field/options field) languages))
-                          (when (supports-visibility? field)
-                            (validate-visibility field fields)))})]
-    (apply merge (map-indexed validate-field fields))))
-
-(defn- nil-if-empty [m]
-  (when-not (empty? m)
-    m))
-
-(defn validate-form [form languages]
-  (-> (merge (validate-text-field form :form/organization)
-             (validate-text-field form :form/title)
-             {:form/fields (validate-fields (:form/fields form) languages)})
-      remove-empty-keys
-      nil-if-empty))
-
 (defn- page-title [edit-form?]
   (if edit-form?
     (text :t.administration/edit-form)
@@ -276,7 +175,7 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         form-errors (validate-form (::form db) (:languages db))
+         form-errors (validate-form-template (::form db) (:languages db))
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"
@@ -624,15 +523,15 @@
 
             [form-field-title-field index]
             [form-field-type-radio-group index]
-            (when (supports-optional? field)
+            (when (common-form/supports-optional? field)
               [form-field-optional-checkbox index])
-            (when (supports-placeholder? field)
+            (when (common-form/supports-placeholder? field)
               [form-field-placeholder-field index])
-            (when (supports-max-length? field)
+            (when (common-form/supports-max-length? field)
               [form-field-max-length-field index])
-            (when (supports-options? field)
+            (when (common-form/supports-options? field)
               [form-field-option-fields index])
-            (when (supports-visibility? field)
+            (when (common-form/supports-visibility? field)
               [form-field-visibility index])]
 
            [:div.form-field.new-form-field

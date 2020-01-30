@@ -28,6 +28,7 @@
       (with-redefs [rems.config/env (assoc rems.config/env
                                            :smtp-host "localhost"
                                            :smtp-port 25
+                                           :languages [:en]
                                            :mail-from "rems@rems.rems"
                                            :entitlements-target {:add (str (:uri entitlements-server) "/add")
                                                                  :remove (str (:uri entitlements-server) "/remove")})
@@ -253,7 +254,8 @@
              (api-call :post "/api/forms/create" {:form/organization "e2e"
                                                   :form/title "e2e"
                                                   :form/fields [{:field/type :text
-                                                                 :field/title {:en "text field"}
+                                                                 :field/title {:en "text field"
+                                                                               :fi "tekstikenttä"}
                                                                  :field/optional true}]}
                        api-key owner-id)))
           workflow-id

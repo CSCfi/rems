@@ -33,6 +33,7 @@
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
+            [rems.common-util :refer [parse-int]]
             [rems.config :as config]
             [rems.extra-pages :refer [extra-pages]]
             [rems.flash-message :as flash-message]
@@ -45,7 +46,7 @@
             [rems.settings :refer [settings-page missing-email-warning]]
             [rems.text :refer [text]]
             [rems.user-settings :refer [fetch-user-settings!]]
-            [rems.util :refer [navigate! fetch parse-int replace-url! set-location!]]
+            [rems.util :refer [navigate! fetch replace-url! set-location!]]
             [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.history.Html5History))
