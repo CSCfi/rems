@@ -133,6 +133,11 @@
 (defn- field-option-keys [field]
   (set (map :key (:field/options field))))
 
+(defn- validate-privacy [field fields]
+  (let [privacy (get :field/privacy field :public)]
+    (when-not (contains? #{:public :private} privacy)
+      {:field/privacy {:privacy/type :t.form.validation/invalid-value}})))
+
 (defn- validate-only-if-field [field visibility fields]
   (let [referred-id (get-in visibility [:visibility/field :field/id])
         referred-field (find-first (comp #{referred-id} :field/id) fields)]
@@ -173,6 +178,8 @@
                             (validate-max-length (:field/max-length field)))
                           (when (supports-options? field)
                             (validate-options (:field/options field) languages))
+                          (when (supports-privacy? field)
+                            (validate-privacy field fields))
                           (when (supports-visibility? field)
                             (validate-visibility field fields)))})]
     (apply merge (map-indexed validate-field fields))))
