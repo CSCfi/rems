@@ -1,14 +1,12 @@
 (ns rems.application.model
-  (:require [clojure.set :refer [intersection]]
-            [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.form :refer [field-visible?]]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx conj-vec]]
-            [clojure.set :as set]))
+            [rems.util :refer [getx conj-vec]]))
 
 ;;;; Application
 
@@ -577,10 +575,13 @@
 (defn hide-answers-with-privacy [application roles]
   (let [fields (get-in application [:application/form :form/fields])
         fields-with-privacy (mapv (fn [field]
-                                    (if (or (not (empty? (intersection #{:applicant :member :decider :past-decider :handler :reporter} roles)))
+                                    (if (or (some #{:applicant :member :decider :past-decider :handler :reporter}
+                                                  roles)
                                             (= :public (:field/privacy field :public)))
-                                      field
-                                      (assoc field :field/value "")))
+                                      (assoc field :field/private false)
+                                      (assoc field
+                                             :field/value ""
+                                             :field/private true)))
                                   fields)]
     (-> application
         (assoc-in [:application/form :form/fields] fields-with-privacy))))

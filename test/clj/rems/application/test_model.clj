@@ -1355,15 +1355,15 @@
             (-> application
                 (model/hide-answers-with-privacy (set roles))
                 (get-in [:application/form :form/fields])
-                (->> (mapv (juxt :field/value :field/privacy)))))]
+                (->> (mapv (juxt :field/value :field/privacy :field/private)))))]
 
     (doseq [application (map #(model/enrich-with-injections % injections) [submitted-application approved-application])]
       (doseq [role #{nil :reviewer :past-reviewer :owner :domain-owner}]
-        (is (= [["foo" nil] ["bar" nil] ["" :private]]
+        (is (= [["foo" nil false] ["bar" nil false] ["" :private true]]
                (answers application role))
             (str "role " role "should not see private answers")))
 
       (doseq [role #{:applicant :member :handler :reporter :decider :past-decider}]
-        (is (= [["foo" nil] ["bar" nil] ["private answer" :private]]
+        (is (= [["foo" nil false] ["bar" nil false] ["private answer" :private false]]
                (answers application role))
-            (str "role " role "should see private answers"))))))
+            (str "role " role "should not see private answers"))))))

@@ -162,6 +162,7 @@
   (assoc FieldTemplate
          :field/value s/Str
          :field/visible s/Bool
+         :field/private s/Bool
          (s/optional-key :field/previous-value) s/Str))
 
 (s/defschema FormTemplate
