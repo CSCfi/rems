@@ -645,11 +645,11 @@
                                         :organization "nbn"
                                         :title "Auto-approve workflow"
                                         :handlers [approver-bot rejecter-bot]})
-        by-organization-owner (create-workflow! {:actor organization-owner1
-                                                 :organization "organization1"
-                                                 :title "Owned by organization owner"
-                                                 :type :workflow/default
-                                                 :handlers handlers})]
+        organization-owner (create-workflow! {:actor organization-owner1
+                                              :organization "organization1"
+                                              :title "Owned by organization owner"
+                                              :type :workflow/default
+                                              :handlers handlers})]
 
     ;; attach both kinds of licenses to all workflows created by owner
     (let [link (create-license! {:actor owner
@@ -674,7 +674,7 @@
      :decider decider
      :master master
      :auto-approve auto-approve
-     :by-organization-owner by-organization-owner}))
+     :organization-owner organization-owner}))
 
 (defn- create-disabled-applications! [catid applicant approver]
   (create-draft! applicant [catid] "draft with disabled item")
@@ -970,7 +970,7 @@
                                                   :license-ids [extra-license attachment-license]})
 
         workflows (create-workflows! (merge users +bot-users+))
-        _ (db/create-workflow-license! {:wfid (:by-organization-owner workflows)
+        _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
                                         :licid license-organization-owner})
 
         form (create-all-field-types-example-form! owner "nbn" "Example form with all field types")
