@@ -8,7 +8,7 @@
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
-            [rems.common.form :refer [field-visible? generate-field-id validate-form] :as common-form]
+            [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
             [rems.common-util :refer [parse-int]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -175,7 +175,7 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         form-errors (validate-form (::form db) (:languages db))
+         form-errors (validate-form-template (::form db) (:languages db))
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"

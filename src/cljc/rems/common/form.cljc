@@ -184,14 +184,14 @@
   (when-not (empty? m)
     m))
 
-(defn validate-form [form languages]
+(defn validate-form-template [form languages]
   (-> (merge (validate-text-field form :form/organization)
              (validate-text-field form :form/title)
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
 
-(deftest validate-form-test
+(deftest validate-form-template-test
   (let [form {:form/organization "abc"
               :form/title "the title"
               :form/fields [{:field/id "fld1"
@@ -205,38 +205,38 @@
         languages [:en :fi]]
 
     (testing "valid form"
-      (is (empty? (validate-form form languages))))
+      (is (empty? (validate-form-template form languages))))
 
     (testing "missing organization"
-      (is (= (:form/organization (validate-form (assoc-in form [:form/organization] "") languages))
+      (is (= (:form/organization (validate-form-template (assoc-in form [:form/organization] "") languages))
              :t.form.validation/required)))
 
     (testing "missing title"
-      (is (= (:form/title (validate-form (assoc-in form [:form/title] "") languages))
+      (is (= (:form/title (validate-form-template (assoc-in form [:form/title] "") languages))
              :t.form.validation/required)))
 
     (testing "zero fields is ok"
-      (is (empty? (validate-form (assoc-in form [:form/fields] []) languages))))
+      (is (empty? (validate-form-template (assoc-in form [:form/fields] []) languages))))
 
     (testing "missing field title"
-      (let [nil-title (validate-form (assoc-in form [:form/fields 0 :field/title] nil) languages)]
-        (is (= (get-in (validate-form (assoc-in form [:form/fields 0 :field/title :en] "") languages)
+      (let [nil-title (validate-form-template (assoc-in form [:form/fields 0 :field/title] nil) languages)]
+        (is (= (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/title :en] "") languages)
                        [:form/fields 0 :field/title :en])
-               (get-in (validate-form (update-in form [:form/fields 0 :field/title] dissoc :en) languages)
+               (get-in (validate-form-template (update-in form [:form/fields 0 :field/title] dissoc :en) languages)
                        [:form/fields 0 :field/title :en])
                (get-in nil-title [:form/fields 0 :field/title :en])
                (get-in nil-title [:form/fields 0 :field/title :fi])
                :t.form.validation/required))))
 
     (testing "missing field type"
-      (is (= (get-in (validate-form (assoc-in form [:form/fields 0 :field/type] nil) languages)
+      (is (= (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/type] nil) languages)
                      [:form/fields 0 :field/type])
              :t.form.validation/required)))
 
     (testing "if you use a placeholder, you must fill in all the languages"
-      (is (= (get-in (validate-form (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder" :fi ""}) languages)
+      (is (= (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder" :fi ""}) languages)
                      [:form/fields 0 :field/placeholder :fi])
-             (get-in (validate-form (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder"}) languages)
+             (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder"}) languages)
                      [:form/fields 0 :field/placeholder :fi])
              :t.form.validation/required)))
 
@@ -244,7 +244,7 @@
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :label)
                      (assoc-in [:form/fields 0 :field/placeholder :fi] ""))]
-        (is (empty? (validate-form form languages)))))
+        (is (empty? (validate-form-template form languages)))))
 
     (testing "option fields"
       (let [form (-> form
@@ -256,12 +256,12 @@
                                                                  :label {:en "en no"
                                                                          :fi "fi no"}}]))]
         (testing "valid form"
-          (is (empty? (validate-form form languages))))
+          (is (empty? (validate-form-template form languages))))
 
         (testing "missing option key"
-          (is (= (get-in (validate-form (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
+          (is (= (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
                          [:form/fields 0 :field/options 0 :key])
-                 (get-in (validate-form (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages)
+                 (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages)
                          [:form/fields 0 :field/options 0 :key])
                  :t.form.validation/required)))
 
@@ -269,11 +269,11 @@
           (let [form (-> form
                          (assoc-in [:form/fields 0 :field/options 0 :key] "")
                          (assoc-in [:form/fields 0 :field/type] :texta))]
-            (is (empty? (validate-form form languages)))))
+            (is (empty? (validate-form-template form languages)))))
 
         (testing "missing option label"
-          (let [empty-label (validate-form (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
-                nil-label (validate-form (assoc-in form [:form/fields 0 :field/options 0 :label] nil) languages)]
+          (let [empty-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
+                nil-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] nil) languages)]
             (is (= (get-in empty-label [:form/fields 0 :field/options 0 :label :en])
                    (get-in empty-label [:form/fields 0 :field/options 0 :label :fi])
                    (get-in nil-label [:form/fields 0 :field/options 0 :label :en])
@@ -290,18 +290,18 @@
                                                                  :label {:en "Bacon"
                                                                          :fi "Pekonia"}}]))]
         (testing "valid form"
-          (is (empty? (validate-form form languages))))
+          (is (empty? (validate-form-template form languages))))
 
         (testing "missing option key"
-          (is (= (get-in (validate-form (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
+          (is (= (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
                          [:form/fields 0 :field/options 0 :key])
-                 (get-in (validate-form (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages)
+                 (get-in (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages)
                          [:form/fields 0 :field/options 0 :key])
                  :t.form.validation/required)))
 
         (testing "missing option label"
-          (let [empty-label (validate-form (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
-                nil-label (validate-form (assoc-in form [:form/fields 0 :field/options 0 :label] nil) languages)]
+          (let [empty-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
+                nil-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] nil) languages)]
             (is (= (get-in empty-label [:form/fields 0 :field/options 0 :label :en])
                    (get-in empty-label [:form/fields 0 :field/options 0 :label :fi])
                    (get-in nil-label [:form/fields 0 :field/options 0 :label :en])
@@ -327,7 +327,7 @@
                                                  :field/placeholder {:en "en placeholder"
                                                                      :fi "fi placeholder"}}))
             validate-visible (fn [visible]
-                               (validate-form (assoc-in form [:form/fields 1 :field/visibility] visible) languages))]
+                               (validate-form-template (assoc-in form [:form/fields 1 :field/visibility] visible) languages))]
 
         (testing "invalid type"
           (is (= (getx-in (validate-visible {:visibility/type nil})

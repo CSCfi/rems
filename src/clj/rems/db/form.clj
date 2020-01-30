@@ -108,7 +108,7 @@
        (json/generate-string)))
 
 (defn- validation-error [form]
-  (when-let [error-map (common-form/validate-form form (:languages env))]
+  (when-let [error-map (common-form/validate-form-template form (:languages env))]
     {:success false
      :errors [error-map]}))
 
