@@ -1,4 +1,7 @@
 (ns rems.common.form
+  "Common form utilities shared between UI and API.
+
+  Includes functions for both forms and form templates."
   (:require  [clojure.string :as str]
              [clojure.test :refer [deftest is testing]]
              [medley.core :refer [find-first]]
@@ -372,4 +375,3 @@
           (is (empty? (validate-visible {:visibility/type :only-if
                                          :visibility/field {:field/id "fld1"}
                                          :visibility/values ["yes"]}))))))))
-
