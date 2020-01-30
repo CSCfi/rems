@@ -88,7 +88,7 @@
   (let [request {:wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
                  :form (get-in form [:form :form/id])
-                 :organization (or (:organization form) "")
+                 :organization (:organization form)
                  :localizations (into {}
                                       (for [lang languages]
                                         [lang {:title (trim-when-string (get-in form [:title lang]))
