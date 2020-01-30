@@ -163,7 +163,7 @@
 
 (defn select-option [label option]
   (let [id (get-element-attr *driver* [:application-fields
-                                       {:tag :label, :fn/text label}]
+                                       {:tag :label, :fn/has-text label}]
                              :for)]
     (fill *driver* {:id id} option)))
 
@@ -212,7 +212,7 @@
       (set-date "Date field" "2050-01-02")
       (fill-form-field "Email field" "user@example.com")
       ;; leave attachment field empty
-      (select-option "Option list" "First option")
+      (select-option "Option list" "Second option")
       ;; pick two options for the multi-select field:
       (check-box "Option2")
       (check-box "Option3")
@@ -251,7 +251,8 @@
                     ["date" "2050-01-02"]
                     ["email" "user@example.com"]
                     ["attachment" ""]
-                    ["option" "Option1"]
+                    ["option" "Option2"]
+                    ["text" ""]
                     ["multiselect" "Option2 Option3"]
                     ["label" ""]
                     ["text" ""]
