@@ -138,7 +138,7 @@
     (when-not (contains? #{:public :private} privacy)
       {:field/privacy {:privacy/type :t.form.validation/invalid-value}})))
 
-(defn- validate-only-if-field [field visibility fields]
+(defn- validate-only-if-visibility [visibility fields]
   (let [referred-id (get-in visibility [:visibility/field :field/id])
         referred-field (find-first (comp #{referred-id} :field/id) fields)]
     (cond
@@ -164,7 +164,7 @@
   (when-let [visibility (:field/visibility field)]
     (case (:visibility/type visibility)
       :always nil
-      :only-if (validate-only-if-field field visibility fields)
+      :only-if (validate-only-if-visibility visibility fields)
       nil {:field/visibility {:visibility/type :t.form.validation/required}}
       {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
 
