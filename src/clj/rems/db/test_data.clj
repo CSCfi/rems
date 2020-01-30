@@ -231,8 +231,9 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-application! [{:keys [catalogue-item-ids actor]}]
-  (:application-id (command! {:type :application.command/create
+(defn create-application! [{:keys [catalogue-item-ids actor time]}]
+  (:application-id (command! {:time (or time (time/now))
+                              :type :application.command/create
                               :catalogue-item-ids (or catalogue-item-ids [(create-catalogue-item! {})])
                               :actor actor})))
 
@@ -259,13 +260,16 @@
                      :type :application.command/accept-licenses
                      :accepted-licenses (map :license/id (:application/licenses app))))))
 
-(defn create-draft! [actor catalogue-item-ids description]
-  (let [app-id (create-application! {:catalogue-item-ids catalogue-item-ids
+(defn create-draft! [actor catalogue-item-ids description & [time]]
+  (let [app-id (create-application! {:time time
+                                     :catalogue-item-ids catalogue-item-ids
                                      :actor actor})]
-    (fill-form! {:application-id app-id
+    (fill-form! {:time time
+                 :application-id app-id
                  :actor actor
                  :field-value description})
-    (accept-licenses! {:application-id app-id
+    (accept-licenses! {:time time
+                       :application-id app-id
                        :actor actor})
     app-id))
 
@@ -718,6 +722,13 @@
 
     (let [app-id (create-draft! applicant [catid] "applied")]
       (command! {:type :application.command/submit
+                 :application-id app-id
+                 :actor applicant}))
+
+    (let [time (time/minus (time/now) (time/days 7))
+          app-id (create-draft! applicant [catid] "old applied" time)]
+      (command! {:time time
+                 :type :application.command/submit
                  :application-id app-id
                  :actor applicant}))
 
