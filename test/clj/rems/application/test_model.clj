@@ -1350,10 +1350,10 @@
                (:application/todo (model/apply-user-permissions application "decider1")))
             "as seen by decider")))))
 
-(deftest test-hide-answers-with-privacy
+(deftest test-apply-privacy
   (letfn [(answers [application & roles]
             (-> application
-                (model/hide-answers-with-privacy (set roles))
+                (model/apply-privacy (set roles))
                 (get-in [:application/form :form/fields])
                 (->> (mapv (juxt :field/value :field/privacy :field/private)))))]
 

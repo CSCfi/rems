@@ -576,18 +576,18 @@
   (some #{:applicant :member :decider :past-decider :handler :reporter}
         roles))
 
-(defn hide-answers-with-privacy [application roles]
-  (let [fields (get-in application [:application/form :form/fields])
-        fields-with-privacy (mapv (fn [field]
-                                    (if (or (may-see-private-answers? roles)
-                                            (= :public (:field/privacy field :public)))
-                                      (assoc field :field/private false)
-                                      (assoc field
-                                             :field/value ""
-                                             :field/private true)))
-                                  fields)]
-    (-> application
-        (assoc-in [:application/form :form/fields] fields-with-privacy))))
+(defn- apply-field-privacy [field roles]
+  (if (or (= :public (:field/privacy field :public))
+          (may-see-private-answers? roles))
+    (assoc field :field/private false)
+    (assoc field
+           :field/value ""
+           :field/private true)))
+
+(defn apply-privacy [application roles]
+  (update-in application
+             [:application/form :form/fields]
+             (partial mapv #(apply-field-privacy % roles))))
 
 (defn- hide-non-public-information [application]
   (-> application
@@ -618,7 +618,7 @@
             (hide-sensitive-information application))
           (personalize-todo user-id)
           (hide-non-public-information)
-          (hide-answers-with-privacy roles)
+          (apply-privacy roles)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))
