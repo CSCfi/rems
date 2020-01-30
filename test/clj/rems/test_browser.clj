@@ -167,6 +167,10 @@
                              :for)]
     (fill *driver* {:id id} option)))
 
+(defn field-visible? [label]
+  (visible? *driver* [:application-fields
+                      {:tag :label :fn/has-text label}]))
+
 (defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked
   (scroll-and-click *driver* [{:css (str "input[value='" value "']")}]))
@@ -212,7 +216,11 @@
       (set-date "Date field" "2050-01-02")
       (fill-form-field "Email field" "user@example.com")
       ;; leave attachment field empty
-      (select-option "Option list" "Second option")
+      (is (not (field-visible? "Conditional field"))
+          "Conditional field is not visible before selecting option")
+      (select-option "Option list" "First option")
+      (wait-predicate #(field-visible? "Conditional field"))
+      (fill-form-field "Conditional field" "Conditional")
       ;; pick two options for the multi-select field:
       (check-box "Option2")
       (check-box "Option3")
@@ -251,8 +259,8 @@
                     ["date" "2050-01-02"]
                     ["email" "user@example.com"]
                     ["attachment" ""]
-                    ["option" "Option2"]
-                    ["text" ""]
+                    ["option" "Option1"]
+                    ["text" "Conditional"]
                     ["multiselect" "Option2 Option3"]
                     ["label" ""]
                     ["text" ""]
