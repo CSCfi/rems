@@ -33,7 +33,13 @@
                       :field/optional false
                       :field/options []
                       :field/max-length 100
-                      :field/type :text}]
+                      :field/type :text}
+                     {:field/id "43"
+                      :field/title {:en "en title" :fi "fi title"}
+                      :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                      :field/optional true
+                      :field/type :text
+                      :field/privacy :private}]
        :enabled true
        :archived false}})
 
@@ -431,14 +437,15 @@
                   :event/actor "applicant"
                   :application/id 1
                   :application/field-values {"41" "foo"
-                                             "42" "bar"}})
+                                             "42" "bar"
+                                             "43" "private answer"}})
 
 (def saved-application (merge created-application
                               {:application/modified (DateTime. 2000)
                                :application/last-activity (DateTime. 2000)
                                :application/events [created-event saved-event]
                                :application/accepted-licenses {}
-                               :rems.application.model/draft-answers {"41" "foo", "42" "bar"}}))
+                               :rems.application.model/draft-answers {"41" "foo", "42" "bar" "43" "private answer"}}))
 
 (deftest test-application-view-saved
   (is (= saved-application (recreate saved-application))))
@@ -470,7 +477,7 @@
                                        :application/first-submitted (DateTime. 3000)
                                        :application/state :application.state/submitted
                                        :application/todo :new-application
-                                       :rems.application.model/submitted-answers {"41" "foo" "42" "bar"}
+                                       :rems.application.model/submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}
                                        :rems.application.model/previous-submitted-answers nil})))
 
 (deftest test-application-view-submitted
@@ -539,7 +546,7 @@
                                        :application/events events
                                        :application/copied-from {:application/id 42
                                                                  :application/external-id "2019/42"}
-                                       :rems.application.model/submitted-answers {"41" "foo", "42" "bar"}})]
+                                       :rems.application.model/submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}})]
       (is (= expected-application (recreate expected-application)))))
 
   (testing "copied to"
@@ -579,7 +586,7 @@
                                        :application/events events
                                        :application/state :application.state/returned
                                        :application/todo nil
-                                       :rems.application.model/draft-answers {"41" "foo" "42" "bar"}})]
+                                       :rems.application.model/draft-answers {"41" "foo" "42" "bar" "43" "private answer"}})]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> draft saved x2"
@@ -589,19 +596,21 @@
                            :application/id 1
                            ;; non-submitted versions should not show up as the previous value
                            :application/field-values {"41" "intermediate draft"
-                                                      "42" "intermediate draft"}}
+                                                      "42" "intermediate draft"
+                                                      "43" "intermediate draft"}}
               new-event-2 {:event/type :application.event/draft-saved
                            :event/time (DateTime. 6000)
                            :event/actor "applicant"
                            :application/id 1
                            :application/field-values {"41" "new foo"
-                                                      "42" "new bar"}}
+                                                      "42" "new bar"
+                                                      "43" "new private answer"}}
               events (conj events new-event-1 new-event-2)
               expected-application (deep-merge expected-application
                                                {:application/modified (DateTime. 6000)
                                                 :application/last-activity (DateTime. 6000)
                                                 :application/events events
-                                                :rems.application.model/draft-answers {"41" "new foo" "42" "new bar"}})]
+                                                :rems.application.model/draft-answers {"41" "new foo" "42" "new bar" "43" "new private answer"}})]
           (is (= expected-application (recreate expected-application)))
 
           (testing "> resubmitted"
@@ -616,8 +625,8 @@
                                                    :application/events events
                                                    :application/state :application.state/submitted
                                                    :application/todo :resubmitted-application
-                                                   :rems.application.model/submitted-answers {"41" "new foo" "42" "new bar"}
-                                                   :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar"}}))]
+                                                   :rems.application.model/submitted-answers {"41" "new foo" "42" "new bar" "43" "new private answer"}
+                                                   :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}}))]
               (is (= expected-application (recreate expected-application)))))))
 
       (testing "> resubmitted (no draft saved)"
@@ -634,8 +643,8 @@
                                                :application/todo :resubmitted-application
                                                ;; when there was no draft-saved event, the current and
                                                ;; previous submitted answers must be the same
-                                               :rems.application.model/submitted-answers {"41" "foo" "42" "bar"}
-                                               :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar"}}))]
+                                               :rems.application.model/submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}
+                                               :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}}))]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-resources-changed
@@ -1019,7 +1028,7 @@
                                 :application/id 1
                                 :event/time (DateTime. 2000)
                                 :event/actor "applicant"
-                                :application/field-values {"41" "foo" "42" "bar"}
+                                :application/field-values {"41" "foo" "42" "bar" "43" "private answer"}
                                 :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
                                {:event/type :application.event/licenses-accepted
                                 :application/id 1
@@ -1060,6 +1069,14 @@
                                             :field/optional false
                                             :field/options []
                                             :field/max-length 100
+                                            :field/visible true}
+                                           {:field/id "43"
+                                            :field/value "private answer"
+                                            :field/type :text
+                                            :field/title {:en "en title" :fi "fi title"}
+                                            :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                            :field/optional true
+                                            :field/privacy :private
                                             :field/visible true}]}
           :application/attachments []
           :application/workflow {:workflow/id 50
@@ -1332,3 +1349,21 @@
         (is (= :waiting-for-your-decision
                (:application/todo (model/apply-user-permissions application "decider1")))
             "as seen by decider")))))
+
+(deftest test-hide-answers-with-privacy
+  (letfn [(answers [application & roles]
+            (-> application
+                (model/hide-answers-with-privacy (set roles))
+                (get-in [:application/form :form/fields])
+                (->> (mapv (juxt :field/value :field/privacy)))))]
+
+    (doseq [application (map #(model/enrich-with-injections % injections) [submitted-application approved-application])]
+      (doseq [role #{nil :reviewer :past-reviewer :owner :domain-owner}]
+        (is (= [["foo" nil] ["bar" nil] ["" :private]]
+               (answers application role))
+            (str "role " role "should not see private answers")))
+
+      (doseq [role #{:applicant :member :handler :reporter :decider :past-decider}]
+        (is (= [["foo" nil] ["bar" nil] ["private answer" :private]]
+               (answers application role))
+            (str "role " role "should see private answers"))))))

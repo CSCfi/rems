@@ -1,12 +1,14 @@
 (ns rems.application.model
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.set :refer [intersection]]
+            [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.form :refer [field-visible?]]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx conj-vec]]))
+            [rems.util :refer [getx conj-vec]]
+            [clojure.set :as set]))
 
 ;;;; Application
 
@@ -572,6 +574,17 @@
       (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
       (update :application/events (partial mapv #(dissoc % :invitation/token)))))
 
+(defn hide-answers-with-privacy [application roles]
+  (let [fields (get-in application [:application/form :form/fields])
+        fields-with-privacy (mapv (fn [field]
+                                    (if (or (not (empty? (intersection #{:applicant :member :decider :past-decider :handler :reporter} roles)))
+                                            (= :public (:field/privacy field :public)))
+                                      field
+                                      (assoc field :field/value "")))
+                                  fields)]
+    (-> application
+        (assoc-in [:application/form :form/fields] fields-with-privacy))))
+
 (defn- hide-non-public-information [application]
   (-> application
       hide-invitation-tokens
@@ -601,6 +614,7 @@
             (hide-sensitive-information application))
           (personalize-todo user-id)
           (hide-non-public-information)
+          (hide-answers-with-privacy roles)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))
