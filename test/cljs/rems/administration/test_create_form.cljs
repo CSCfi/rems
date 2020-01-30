@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-localized-string]]
             [rems.identity :refer [set-roles!]]
-            [rems.testing :refer [isolate-re-frame-state stub-re-frame-effect]]
+            [rems.testing :refer [isolate-re-frame-state]]
             [rems.util :refer [getx-in]]))
 
 (use-fixtures
