@@ -132,6 +132,10 @@ workflows:
       - war:
           requires:
             - build
+          filters:
+            branches:
+              only:
+                - master
       - ok:
           requires:
             - build
