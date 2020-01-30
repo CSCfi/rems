@@ -4,6 +4,8 @@
             [rems.api.schema :as schema]
             [rems.api.testing :refer :all]
             [rems.handler :refer [handler]]
+            [rems.db.core :as db]
+            [rems.db.test-data :as test-data]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
@@ -36,7 +38,8 @@
         (is (:form/id (first data)))))
 
     (testing "get one"
-      (let [data (-> (request :get "/api/forms/1")
+      (let [id (:id (first (db/get-form-templates {})))
+            data (-> (request :get (str "/api/forms/" id))
                      (authenticate api-key user-id)
                      handler
                      assert-response-is-ok
@@ -220,11 +223,13 @@
                         (authenticate api-key user-id)
                         handler
                         read-ok-body))))
-    (let [data (-> (request :post "/api/catalogue-items/create")
+    (let [resid (test-data/create-resource! {})
+          wfid (test-data/create-workflow! {})
+          data (-> (request :post "/api/catalogue-items/create")
                    (authenticate api-key user-id)
                    (json-body {:form form-id
-                               :resid 1
-                               :wfid 1
+                               :resid resid
+                               :wfid wfid
                                :archived false
                                :localizations {}})
                    handler

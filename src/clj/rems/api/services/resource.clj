@@ -15,7 +15,7 @@
 
 (defn create-resource! [{:keys [resid organization licenses]} user-id]
   (try
-    (or (util/forbidden-organization? user-id organization)
+    (or (util/forbidden-organization-error organization)
         (let [id (:id (db/create-resource! {:resid resid
                                             :organization organization
                                             :owneruserid user-id

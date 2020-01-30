@@ -35,29 +35,31 @@
                          :userid "user2"
                          :resource/ext-id "urn.fi/124"
                          :event/comment nil})
-  (is (= [{:event/id 1
-           :event/type :blacklist.event/add
-           :event/time (time/date-time 2019 1 2 8 0 0)
-           :event/actor "handler"
-           :userid "user1"
-           :resource/ext-id "urn.fi/123"
-           :event/comment nil}
-          {:event/id 2
-           :event/type :blacklist.event/remove
-           :event/time (time/date-time 2019 2 3 9 0 0)
-           :event/actor "handler"
-           :userid "user1"
-           :resource/ext-id "urn.fi/123"
-           :event/comment "it was ok"}]
-         (blacklist/get-events {:resource/ext-id "urn.fi/123"})))
-  (is (= [{:event/id 3
-           :event/type :blacklist.event/add
+
+  (let [events (blacklist/get-events {:resource/ext-id "urn.fi/123"})]
+    ;; event id sequence numbers aren't predictable since even
+    ;; rollbacked transactions consume id sequences
+    (is (distinct? (map :event/id events)))
+    (is (= [{:event/type :blacklist.event/add
+             :event/time (time/date-time 2019 1 2 8 0 0)
+             :event/actor "handler"
+             :userid "user1"
+             :resource/ext-id "urn.fi/123"
+             :event/comment nil}
+            {:event/type :blacklist.event/remove
+             :event/time (time/date-time 2019 2 3 9 0 0)
+             :event/actor "handler"
+             :userid "user1"
+             :resource/ext-id "urn.fi/123"
+             :event/comment "it was ok"}]
+           (map #(dissoc % :event/id) events))))
+  (is (= [{:event/type :blacklist.event/add
            :event/time (time/date-time 2019 1 1 1 0 0)
            :event/actor "handler"
            :userid "user2"
            :resource/ext-id "urn.fi/124"
            :event/comment nil}]
-         (blacklist/get-events {:userid "user2"})))
+         (mapv #(dissoc % :event/id) (blacklist/get-events {:userid "user2"}))))
   (is (not (blacklist/blacklisted? "user1" "urn.fi/123"))
       "user was added to blacklist, then removed")
   (is (not (blacklist/blacklisted? "user1" "urn.fi/124"))

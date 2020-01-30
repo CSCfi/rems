@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [mount.core :as mount]
-            [rems.db.testing :refer [test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
+            [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -14,14 +14,17 @@
    #'rems.handler/handler)
   ;; TODO: silence logging somehow?
   (f)
-  (mount/stop))
+  (mount/stop
+   #'rems.locales/translations
+   #'rems.handler/handler))
 
 (def api-fixture
   (join-fixtures [test-db-fixture
+                  rollback-db-fixture
+                  handler-fixture
                   search-index-fixture
                   caches-fixture
-                  test-data-fixture
-                  handler-fixture]))
+                  test-data-fixture]))
 
 (defn authenticate [request api-key user-id]
   (-> request

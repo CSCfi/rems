@@ -48,7 +48,7 @@
                                     [nil "val4"]]
                              :separator ","
                              :quote-strings? true))))
-  
+
   (testing "escape quotes inside strings when strings are quoted"
     (is (= "\"col1\",\"col2\"\n\"\\\"so called\\\" value\",\"val2\"\n\"val3\",\"val4\"\n"
            (csv/print-to-csv :column-names ["col1" "col2"]
@@ -94,7 +94,7 @@
 
     (testing "draft applications included when explicitly set"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"\",\"\"\n")
+                  app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"\",\"\"\n")
              (csv/applications-to-csv [(get-application)] "owner" :include-drafts true))))
 
     (test-data/fill-form! {:application-id app-id
@@ -103,7 +103,7 @@
 
     (testing "form filled out"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"test value\",\"\"\n")
+                  app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"test value\",\"\"\n")
              (csv/applications-to-csv [(get-application)] "owner" :include-drafts true))))
 
     (test-data/accept-licenses! {:application-id app-id
@@ -116,7 +116,7 @@
 
     (testing "submitted application"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  "1,\"" external-id "\",\"Alice Applicant\",\""
+                  app-id ",\"" external-id "\",\"Alice Applicant\",\""
                   (text/localize-time test-time)
                   "\",\"Applied\",\"Test resource\",\"test value\",\"\"\n")
              (csv/applications-to-csv [(get-application)] "owner"))))))

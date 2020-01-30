@@ -11,7 +11,7 @@
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
 (defn create-license! [{:keys [licensetype organization localizations]} user-id]
-  (or (util/forbidden-organization? user-id organization)
+  (or (util/forbidden-organization-error organization)
       (let [license (db/create-license! {:owneruserid user-id
                                          :modifieruserid user-id
                                          :organization (or organization "")

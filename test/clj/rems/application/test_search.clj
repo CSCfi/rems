@@ -3,10 +3,12 @@
             [rems.application.search :as search]
             [rems.db.applications :as applications]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [test-db-fixture search-index-fixture]]))
+            [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]))
 
-(use-fixtures :once (join-fixtures [test-db-fixture
-                                    search-index-fixture]))
+(use-fixtures :once
+  test-db-fixture
+  rollback-db-fixture
+  search-index-fixture)
 
 (deftest test-application-search
   ;; generate users with full names and emails

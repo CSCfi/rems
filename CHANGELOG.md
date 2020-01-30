@@ -48,6 +48,7 @@ Changes since v2.6
 - Searching applications by resource external id now possible (#1919)
 - Handler can now close applications in the decider workflow (#1938)
 - Create form API requests are validated
+- Applicant can now close drafts in the decider workflow (#1938)
 
 ### Fixes
 - More robust email resending (#1750)

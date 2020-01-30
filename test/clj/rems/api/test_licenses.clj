@@ -5,7 +5,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))

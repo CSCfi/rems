@@ -1,5 +1,6 @@
 (ns rems.common-util
-  (:require [clojure.test :refer [deftest is testing]]))
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]))
 
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
@@ -188,3 +189,14 @@
   (is (= (remove-empty-keys {:a :b}) {:a :b}))
   (is (= (remove-empty-keys {:a nil}) {}))
   (is (= (remove-empty-keys {:a {:b {:c nil} :d {:e :f}}}) {:a {:d {:e :f}}})))
+
+(defn normalize-file-path
+  "A file path may contain local filesystem parts that we want to remove
+  so that we can use the path to refer to e.g. project GitHub."
+  [path]
+  (str/replace (subs path (str/index-of path "src"))
+               "\\" "/"))
+
+(deftest normalize-file-path-test
+  (is (= "src/foo/bar.clj" (normalize-file-path "/home/john/rems/src/foo/bar.clj")))
+  (is (= "src/foo/bar.clj" (normalize-file-path "C:\\Users\\john\\rems\\src\\foo/bar.clj"))))

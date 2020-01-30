@@ -1,8 +1,6 @@
 (ns ^:integration rems.api.test-applications
-  (:require [clj-http.client :as http]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [luminus.http-server]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
             [rems.db.applications]
@@ -12,6 +10,7 @@
             [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [rems.json]
+            [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -444,10 +443,16 @@
            (:application/state (get-application application-id user-id))))))
 
 (deftest test-application-submit
-  (let [user-id "alice"
+  (let [owner "owner"
+        user-id "alice"
         form-id (test-data/create-form! {})
         cat-id (test-data/create-catalogue-item! {:form-id form-id})
-        app-id (test-data/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id] :actor user-id})
+        enable-catalogue-item! #(catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                                        :enabled %})
+        archive-catalogue-item! #(with-user owner
+                                   (catalogue/set-catalogue-item-archived! {:id cat-id
+                                                                            :archived %}))]
     (testing "submit with disabled catalogue item fails"
       (is (:success (catalogue/set-catalogue-item-enabled! {:id cat-id
                                                             :enabled false})))
@@ -457,20 +462,16 @@
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "submit with archived catalogue item fails"
-      (is (:success (catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                            :enabled true})))
-      (is (:success (catalogue/set-catalogue-item-archived! {:id cat-id
-                                                             :archived true})))
+      (is (:success (enable-catalogue-item! true)))
+      (is (:success (archive-catalogue-item! true)))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "t.actions.errors/disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "submit with normal catalogue item succeeds"
-      (is (:success (catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                            :enabled true})))
-      (is (:success (catalogue/set-catalogue-item-archived! {:id cat-id
-                                                             :archived false})))
+      (is (:success (enable-catalogue-item! true)))
+      (is (:success (archive-catalogue-item! false)))
       (rems.db.applications/reload-cache!)
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
@@ -523,10 +524,27 @@
         cat-id (test-data/create-catalogue-item! {:workflow-id wf-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})]
+    (testing "applicant's commands for draft"
+      (is (= #{"application.command/accept-licenses"
+               "application.command/change-resources"
+               "application.command/close"
+               "application.command/copy-as-new"
+               "application.command/invite-member"
+               "application.command/remove-member"
+               "application.command/save-draft"
+               "application.command/submit"
+               "application.command/uninvite-member"}
+             (set (:application/permissions (get-application app-id applicant))))))
     (testing "submit"
       (is (= {:success true}
              (send-command applicant {:type :application.command/submit
                                       :application-id app-id}))))
+    (testing "applicant's commands after submit"
+      (is (= #{"application.command/accept-licenses"
+               "application.command/copy-as-new"
+               "application.command/remove-member"
+               "application.command/uninvite-member"}
+             (set (:application/permissions (get-application app-id applicant))))))
     (testing "handler's commands"
       (is (= #{"application.command/add-licenses"
                "application.command/add-member"
@@ -971,22 +989,3 @@
                           app-id)))
       (is (contains? (get-ids (get-handled-todos decider))
                      app-id)))))
-
-(deftest test-pdf-smoke
-  ;; need to spin up an actual http server so that something can serve
-  ;; the headless chrome that generates the pdf
-  (let [port 3093] ;; no way to automatically assign port with the ring jetty adapter
-    (with-redefs [rems.config/env (assoc rems.config/env
-                                         :public-url (str "http://localhost:" port "/"))]
-      (let [server (luminus.http-server/start {:handler handler :port port})]
-        (try
-          (let [response (http/get (str "http://localhost:" port "/api/applications/10/pdf")
-                                   {:throw-exceptions false
-                                    :headers {"x-rems-api-key" "42"
-                                              "x-rems-user-id" "reporter"}})]
-            (prn :RESPONSE response)
-            (is (= 200 (:status response)))
-            (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
-            (is (.startsWith (:body response) "%PDF-")))
-          (finally
-            (luminus.http-server/stop server)))))))
