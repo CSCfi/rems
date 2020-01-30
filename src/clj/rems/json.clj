@@ -23,18 +23,7 @@
        (assoc-in [:formats "application/json" :encoder-opts :modules] [(JodaModule.)])
        (assoc-in [:formats "application/transit+json" :encoder-opts :handlers] {DateTime joda-time-writer}))))
 
-;; Sometimes we have ints as keys in clj maps, which are stringified in JSON
-(defn- str->keyword-or-number [str]
-  (if (numeric? str)
-    (parse-number str)
-    (keyword str)))
-
 (def mapper
-  (j/object-mapper
-   {:modules [(JodaModule.)]
-    :decode-key-fn str->keyword-or-number}))
-
-(def mapper*
   (j/object-mapper
    {:modules [(JodaModule.)]
     :decode-key-fn keyword}))
@@ -44,9 +33,6 @@
 
 (defn parse-string [json]
   (j/read-value json mapper))
-
-(defn parse-string* [json]
-  (j/read-value json mapper*))
 
 (deftest test-muuntaja
   (let [format "application/json"]
