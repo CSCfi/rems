@@ -38,6 +38,7 @@ Changes since v2.6
 - Support www links in form field titles (#1864)
 - Have a set of permitted roles for API keys (#1662)
 - A `user-owner` role that can only create and edit users
+- Fields can be defined public or private. The latter won't be shown to reviewers.
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
