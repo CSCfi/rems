@@ -573,20 +573,38 @@
                                                                 :application/external-id "2021/777"}]})]
       (is (= expected-application (recreate expected-application))))))
 
+(def submitted-returned-application
+  (let [returned-event {:event/type :application.event/returned
+                        :event/time (DateTime. 4000)
+                        :event/actor "handler"
+                        :application/id 1
+                        :application/comment "fix stuff"}]
+    (merge submitted-application
+           {:application/last-activity (DateTime. 4000)
+            :application/events [created-event saved-event licenses-accepted-event submitted-event returned-event]
+            :application/state :application.state/returned
+            :application/todo nil
+            :rems.application.model/draft-answers {"41" "foo" "42" "bar" "43" "private answer"}})))
+
+(def submitted-returned-resubmitted-application
+  (let [submitted-event {:event/type :application.event/submitted
+                         :event/time (DateTime. 7000)
+                         :event/actor "applicant"
+                         :application/id 1}
+        events (conj (:application/events submitted-returned-application) submitted-event)]
+    (-> submitted-returned-application
+        (dissoc :rems.application.model/draft-answers)
+        (merge {:application/last-activity (DateTime. 7000)
+                :application/events events
+                :application/state :application.state/submitted
+                :application/todo :resubmitted-application
+                :rems.application.model/submitted-answers {"41" "new foo" "42" "new bar" "43" "new private answer"}
+                :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}}))))
+
 (deftest test-application-view-returned-resubmitted
   (testing "> returned"
-    (let [new-event {:event/type :application.event/returned
-                     :event/time (DateTime. 4000)
-                     :event/actor "handler"
-                     :application/id 1
-                     :application/comment "fix stuff"}
-          events [created-event saved-event licenses-accepted-event submitted-event new-event]
-          expected-application (merge submitted-application
-                                      {:application/last-activity (DateTime. 4000)
-                                       :application/events events
-                                       :application/state :application.state/returned
-                                       :application/todo nil
-                                       :rems.application.model/draft-answers {"41" "foo" "42" "bar" "43" "private answer"}})]
+    (let [expected-application submitted-returned-application
+          events (:application/events expected-application)]
       (is (= expected-application (recreate expected-application)))
 
       (testing "> draft saved x2"
@@ -1353,17 +1371,31 @@
 (deftest test-apply-privacy
   (letfn [(answers [application & roles]
             (-> application
+                (model/enrich-with-injections injections)
                 (model/apply-privacy (set roles))
                 (get-in [:application/form :form/fields])
-                (->> (mapv (juxt :field/value :field/privacy :field/private)))))]
+                (->> (mapv (juxt :field/value
+                                 :field/previous-value
+                                 :field/privacy
+                                 :field/private)))))]
 
-    (doseq [application (map #(model/enrich-with-injections % injections) [submitted-application approved-application])]
-      (doseq [role #{nil :reviewer :past-reviewer :owner :domain-owner}]
-        (is (= [["foo" nil false] ["bar" nil false] ["" :private true]]
-               (answers application role))
-            (str "role " role "should not see private answers")))
+    (doseq [role #{nil :reviewer :past-reviewer :owner :domain-owner}]
+      (is (= [["foo" nil nil false] ["bar" nil nil false] ["" nil :private true]]
+             (answers submitted-application role))
+          (str "role " role " should not see private answers")))
 
-      (doseq [role #{:applicant :member :handler :reporter :decider :past-decider}]
-        (is (= [["foo" nil false] ["bar" nil false] ["private answer" :private false]]
-               (answers application role))
-            (str "role " role "should not see private answers"))))))
+    (doseq [role #{:applicant :member :handler :reporter :decider :past-decider}]
+      (is (= [["foo" nil nil false] ["bar" nil nil false] ["private answer" nil :private false]]
+             (answers submitted-application role))
+          (str "role " role " should not see private answers")))
+    (testing "previous value"
+      (is (= [["new foo" "foo" nil false]
+              ["new bar" "bar" nil false]
+              ["" "" :private true]]
+             (answers submitted-returned-resubmitted-application :reviewer))
+          "should not see previous answers")
+      (is (= [["new foo" "foo" nil false]
+              ["new bar" "bar" nil false]
+              ["new private answer" "private answer" :private false]]
+             (answers submitted-returned-resubmitted-application :handler))
+          "should see previous answers"))))
