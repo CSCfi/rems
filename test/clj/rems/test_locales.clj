@@ -25,9 +25,16 @@
 (defn loc-fi []
   (read-string (slurp (io/resource "translations/fi.edn"))))
 
+(defn loc-sv []
+  (read-string (slurp (io/resource "translations/sv.edn"))))
+
 (deftest test-all-languages-defined
   (is (= (recursive-keys (loc-en))
-         (recursive-keys (loc-fi)))))
+         (recursive-keys (loc-fi)))
+      "en matches fi")
+    (is (= (recursive-keys (loc-en))
+           (recursive-keys (loc-sv)))
+      "en matches sv"))
 
 (deftest test-extract-format-parameters
   (is (= #{} (locales/extract-format-parameters "hey you are 100% correct!")))
@@ -40,7 +47,14 @@
       (doseq [k (recursive-keys en)] ;; we check that keys match separately
         (testing k
           (is (= (locales/extract-format-parameters (getx-in en (vec k)))
-                 (locales/extract-format-parameters (getx-in fi (vec k))))))))))
+                 (locales/extract-format-parameters (getx-in fi (vec k)))))))))
+    (testing "[:en vs :sv]"
+    (let [en (loc-en)
+          sv (loc-sv)]
+      (doseq [k (recursive-keys en)]
+        (testing k
+          (is (= (locales/extract-format-parameters (getx-in en (vec k)))
+                 (locales/extract-format-parameters (getx-in sv (vec k))))))))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
@@ -57,7 +71,7 @@
 (deftest test-translation-keywords-in-use
   (let [keys-in-source (set (translation-keywords-in-use))]
     (assert (seq keys-in-source))
-    (doseq [lang [:en :fi]]
+    (doseq [lang [:en :fi :sv]]
       (testing lang
         (let [dictionary (->> (locales/load-translations {:languages [lang]
                                                           :translations-directory "translations/"})
