@@ -216,19 +216,8 @@
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
 
-(defn- list-organizations []
-  (let [workflows @(rf/subscribe [::workflows])
-        resources @(rf/subscribe [::resources])
-        forms @(rf/subscribe [::forms])
-        items-to-organizations (fn [items key]
-                                 (set (distinct (mapv key items))))]
-    (sort
-     (vec (set/intersection (items-to-organizations workflows :organization)
-                            (items-to-organizations resources :organization)
-                            (items-to-organizations forms :form/organization))))))
-
 (defn- catalogue-item-organization-field []
-  (let [organizations (list-organizations)
+  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
         selected-organization @(rf/subscribe [::selected-organization])
         item-selected? #(= % selected-organization)
         readonly (or @(rf/subscribe [::editing?])
