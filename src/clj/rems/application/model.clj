@@ -582,8 +582,8 @@
     (assoc field :field/private false)
     (-> field
         (assoc :field/private true)
-        (update-existing :field/value (fn [_] ""))
-        (update-existing :field/previous-value (fn [_] "")))))
+        (update-existing :field/value (constantly ""))
+        (update-existing :field/previous-value (constantly "")))))
 
 (defn apply-privacy [application roles]
   (update-in application
