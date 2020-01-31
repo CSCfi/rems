@@ -1,5 +1,6 @@
 (ns rems.db.workflow
-  (:require [rems.application.events :as events]
+  (:require [rems.api.services.util :as util]
+            [rems.application.events :as events]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
@@ -39,10 +40,12 @@
       (update-in [:workflow :handlers] #(mapv users/get-user %))))
 
 (defn get-workflow [id]
-  (when-let [wf (db/get-workflow {:wfid id})]
-    (enrich-and-format-workflow wf)))
+  (let [wf (db/get-workflow {:wfid id})]
+    (when (and wf (not (util/forbidden-organization? (:organization wf))))
+      (enrich-and-format-workflow wf))))
 
 (defn get-workflows [filters]
   (->> (db/get-workflows)
+       (remove #(util/forbidden-organization? (:organization %)))
        (map enrich-and-format-workflow)
        (db/apply-filters filters)))

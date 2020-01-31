@@ -89,7 +89,32 @@
         (let [body (create-workflow "organization-owner1" "organization1" :workflow/default)
               id (:id body)]
           (is (< 0 id))
-          (is (:success body))))
+          (is (:success body))
+
+          (testing "fetch using correct organization owner"
+            (let [resource (-> (request :get (str "/api/workflows/" id))
+                               (authenticate api-key "organization-owner1")
+                               handler
+                               assert-response-is-ok
+                               read-body)]
+              (is resource)
+              (is (= [licid] (map :id (:licenses resource))))))
+
+          (testing "fetch using incorrect organization owner"
+            (let [response (-> (request :get (str "/api/workflows/" id))
+                               (authenticate api-key "organization-owner2")
+                               handler)]
+              (is (response-is-forbidden? response))
+              (is (= "forbidden" (read-body response)))))
+
+          (testing "fetch using owner"
+            (let [resource (-> (request :get (str "/api/workflows/" id))
+                               (authenticate api-key "owner")
+                               handler
+                               assert-response-is-ok
+                               read-body)]
+              (is resource)
+              (is (= [licid] (map :id (:licenses resource))))))))
 
       (testing "with incorrect organization"
         (let [body (create-workflow "organization-owner1" "organization2" :workflow/default)]
