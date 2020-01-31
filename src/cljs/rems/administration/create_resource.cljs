@@ -93,12 +93,8 @@
 (def ^:private organization-dropdown-id "organization-dropdown")
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
-(defn- list-organizations []
-  (let [licenses @(rf/subscribe [::licenses])]
-    (sort (distinct (mapv :organization licenses)))))
-
 (defn- resource-organization-field []
-  (let [organizations (list-organizations)
+  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
         selected-organization @(rf/subscribe [::selected-organization])
         item-selected? #(= % selected-organization)
         readonly (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity])))]
@@ -128,12 +124,9 @@
         language @(rf/subscribe [:language])]
     [:div.form-group
      [:label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
-     (cond
-       (nil? organization)
+     (if (nil? organization)
        [fields/readonly-field {:id licenses-dropdown-id
                                :value (text :t.administration/select-organization)}]
-
-       :else
        [dropdown/dropdown
         {:id licenses-dropdown-id
          :items compatible-licenses
