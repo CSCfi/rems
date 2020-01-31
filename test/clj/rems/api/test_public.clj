@@ -17,3 +17,9 @@
                    read-body)
           languages (keys data)]
       (is (= [:en :fi] (sort languages))))))
+
+(deftest test-config-api-smoke
+  (let [config (-> (request :get "/api/config")
+                 handler
+                 read-ok-body)]
+    (is (true? (:dev config)))))

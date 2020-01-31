@@ -103,5 +103,8 @@
  ;; :disable-commands [:application.command/assign-external-id :application.command/change-resources]
  :disable-commands []
 
+ ;; List of allowed values for the organization field. Should contain at least one element.
+ :organizations ["default"]
+
  ;; Experimental features
  :enable-pdf-api false}

@@ -181,8 +181,8 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:form/organization (or organization "abc")
-                                     :form/title (or title "ABC")
+                                    {:form/organization (or organization "")
+                                     :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
@@ -192,7 +192,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization "abc")
+                                             :organization (or organization "")
                                              :licenses (or license-ids [])}
                                             actor))]
     (assert (:success result) {:command command :result result})
@@ -204,7 +204,7 @@
         result (with-user actor
                  (workflow/create-workflow!
                   {:user-id actor
-                   :organization (or organization "abc")
+                   :organization (or organization "")
                    :title (or title "")
                    :type (or type :workflow/master)
                    :handlers

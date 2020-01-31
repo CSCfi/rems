@@ -51,6 +51,8 @@
   (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
     (log/warn "Unrecognized values in :disable-commands : " (pr-str invalid-commands))
     (log/warn "Supported-values: " (pr-str commands/command-names)))
+  (assert (not (empty? (:organizations config)))
+          ":organizations can not be empty")
   config)
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn"
