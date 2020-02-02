@@ -7,6 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.config :as config]
             [rems.dropdown :as dropdown]
+            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
@@ -16,27 +17,45 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ workflow-id]]
-   (let [roles (get-in db [:identity :roles])
-         organization (get-in db [:identity :user :organization])]
+   (let [editing? (not (nil? workflow-id))
+         roles (get-in db [:identity :roles])
+         user-organization (get-in db [:identity :user :organization])
+         all-organizations (get-in db [:config :organizations])
+         organization (cond
+                        (roles/disallow-setting-organization? roles)
+                        user-organization
+
+                        (= (count all-organizations) 1)
+                        (first all-organizations)
+
+                        :else
+                        nil)]
      {:db (assoc db
                  ::workflow-id workflow-id
                  ::loading-workflow? (not (nil? workflow-id))
                  ::actors nil
+                 ::editing? editing?
                  ::form (merge {:type :workflow/default}
-                               (when (roles/disallow-setting-organization? roles)
-                                 {:organization organization})))
+                               (when organization
+                                 {:organization organization}))
+                 ::organization-read-only? (or editing?
+                                               (not (nil? organization))))
       ::fetch-actors nil
       ::fetch-workflow workflow-id})))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
-(rf/reg-sub ::editing? (fn [db _] (not (nil? (::workflow-id db)))))
+(rf/reg-sub ::editing? (fn [db _] (::editing? db)))
 (rf/reg-sub ::loading? (fn [db _] (or (::loading-workflow? db) (nil? (::actors db)))))
+(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 
 ;;; form state
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
 
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
+
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 ;;; fetching workflow
 
@@ -77,7 +96,7 @@
 
 (defn build-create-request [form]
   (let [request (merge
-                 {:organization (trim-when-string (:organization form))
+                 {:organization (:organization form)
                   :title (trim-when-string (:title form))
                   :type (:type form)}
                  (when (needs-handlers? (:type form))
@@ -145,15 +164,23 @@
    :update-form ::set-form-field})
 
 (def ^:private handlers-dropdown-id "handlers-dropdown")
+(def ^:private organization-dropdown-id "organization-dropdown")
 
 (defn- workflow-organization-field []
-  ;; TODO: Allow editing the organization of an existing workflow?
-  (let [readonly (or @(rf/subscribe [::editing?])
-                     (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity]))))]
-    [text-field context {:keys [:organization]
-                         :readonly readonly
-                         :label (text :t.administration/organization)
-                         :placeholder (text :t.administration/organization-placeholder)}]))
+  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
+        selected-organization @(rf/subscribe [::selected-organization])
+        item-selected? #(= % selected-organization)
+        readonly @(rf/subscribe [::organization-read-only?])]
+    [:div.form-group
+     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
+     (if readonly
+       [fields/readonly-field {:id organization-dropdown-id
+                               :value selected-organization}]
+       [dropdown/dropdown
+        {:id organization-dropdown-id
+         :items organizations
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
 (defn- workflow-title-field []
   [text-field context {:keys [:title]
@@ -197,6 +224,8 @@
 (defn workflow-type-description [description]
   [:div.alert.alert-info description])
 
+;; TODO: Eventually filter handlers by the selected organization when
+;;   we are sure that all the handlers have the organization information?
 (defn- workflow-handlers-field []
   (let [form @(rf/subscribe [::form])
         all-handlers @(rf/subscribe [::actors])
