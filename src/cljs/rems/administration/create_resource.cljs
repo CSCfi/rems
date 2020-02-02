@@ -17,15 +17,27 @@
  ::enter-page
  (fn [{:keys [db]}]
    (let [roles (get-in db [:identity :roles])
-         organization (get-in db [:identity :user :organization])]
+         user-organization (get-in db [:identity :user :organization])
+         all-organizations (get-in db [:config :organizations])
+         organization (cond
+                        (roles/disallow-setting-organization? roles)
+                        user-organization
+
+                        (= (count all-organizations) 1)
+                        (first all-organizations)
+
+                        :else
+                        nil)]
      {:db (assoc db
                  ::form (merge {:licenses []}
-                               (when (roles/disallow-setting-organization? roles)
+                               (when organization
                                  {:organization organization}))
+                 ::organization-read-only? (not (nil? organization))
                  ::loading? true)
       ::fetch-licenses nil})))
 
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 
 ;; form state
 
@@ -97,13 +109,12 @@
   (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
         selected-organization @(rf/subscribe [::selected-organization])
         item-selected? #(= % selected-organization)
-        readonly (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity])))]
+        readonly @(rf/subscribe [::organization-read-only?])]
     [:div.form-group
      [:label {:for organization-dropdown-id} (text :t.administration/organization)]
      (if readonly
-       (let [organization (first (filter item-selected? organizations))]
-         [fields/readonly-field {:id organization-dropdown-id
-                                 :value organization}])
+       [fields/readonly-field {:id organization-dropdown-id
+                               :value selected-organization}]
        [dropdown/dropdown
         {:id organization-dropdown-id
          :items organizations
