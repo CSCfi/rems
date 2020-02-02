@@ -10,6 +10,7 @@
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
             [rems.common-util :refer [parse-int]]
+            [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
@@ -22,14 +23,25 @@
  ::enter-page
  (fn [{:keys [db]} [_ form-id edit-form?]]
    (let [roles (get-in db [:identity :roles])
-         organization (get-in db [:identity :user :organization])]
+         user-organization (get-in db [:identity :user :organization])
+         all-organizations (get-in db [:config :organizations])
+         organization (cond
+                        (roles/disallow-setting-organization? roles)
+                        user-organization
+
+                        (= (count all-organizations) 1)
+                        (first all-organizations)
+
+                        :else
+                        nil)]
      {:db (assoc db
                  ::form (merge {:form/fields []}
-                               (when (roles/disallow-setting-organization? roles)
+                               (when organization
                                  {:form/organization organization}))
                  ::form-errors nil
                  ::form-id form-id
-                 ::edit-form? edit-form?)
+                 ::edit-form? edit-form?
+                 ::organization-read-only? (not (nil? organization)))
       :dispatch-n [[::fetch-form form-id]]})))
 
 (rf/reg-event-fx
@@ -79,7 +91,11 @@
 (rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
 (rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
 (rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
+(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
+
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :form/organization])))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :form/organization] organization)))
 
 (rf/reg-event-db
  ::add-form-field
@@ -163,7 +179,7 @@
                                              [:visibility/type :visibility/field :visibility/values])}))))
 
 (defn build-request [form languages]
-  {:form/organization (trim-when-string (:form/organization form))
+  {:form/organization (:form/organization form)
    :form/title (trim-when-string (:form/title form))
    :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
@@ -241,12 +257,23 @@
    :get-form-errors ::form-errors
    :update-form ::set-form-field})
 
+ (def ^:private organization-dropdown-id "organization-dropdown")
+
 (defn- form-organization-field []
-  (let [readonly (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity])))]
-    [text-field context {:keys [:form/organization]
-                         :label (text :t.administration/organization)
-                         :placeholder (text :t.administration/organization-placeholder)
-                         :readonly readonly}]))
+  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
+        selected-organization @(rf/subscribe [::selected-organization])
+        item-selected? #(= % selected-organization)
+        readonly @(rf/subscribe [::organization-read-only?])]
+    [:div.form-group
+     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
+     (if readonly
+       [fields/readonly-field {:id organization-dropdown-id
+                               :value selected-organization}]
+       [dropdown/dropdown
+        {:id organization-dropdown-id
+         :items organizations
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
 (defn- form-title-field []
   [text-field context {:keys [:form/title]

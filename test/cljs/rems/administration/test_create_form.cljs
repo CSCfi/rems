@@ -202,7 +202,7 @@
                              :field/max-length 12
                              :field/placeholder {:en "en placeholder"
                                                  :fi "fi placeholder"}}]}
-             (build-request (assoc form :form/organization " abc\t\n") languages))))
+             (build-request (assoc form :form/title " the title\t\n") languages))))
 
     (testing "zero fields"
       (is (= {:form/organization "abc"
