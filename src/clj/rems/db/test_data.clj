@@ -148,7 +148,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (licenses/create-license! {:licensetype (name (or type :text))
-                                            :organization (or organization "")
+                                            :organization (or organization "default")
                                             :localizations
                                             (transpose-localizations {:title title
                                                                       :textcontent (merge link text)
@@ -181,7 +181,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:form/organization (or organization "")
+                                    {:form/organization (or organization "default")
                                      :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
@@ -192,7 +192,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization "")
+                                             :organization (or organization "default")
                                              :licenses (or license-ids [])}
                                             actor))]
     (assert (:success result) {:command command :result result})
@@ -204,7 +204,7 @@
         result (with-user actor
                  (workflow/create-workflow!
                   {:user-id actor
-                   :organization (or organization "")
+                   :organization (or organization "default")
                    :title (or title "")
                    :type (or type :workflow/master)
                    :handlers
@@ -225,7 +225,7 @@
                  (catalogue/create-catalogue-item!
                   {:resid (or resource-id (create-resource! {}))
                    :form (or form-id (create-form! {}))
-                   :organization (or organization "")
+                   :organization (or organization "default")
                    :wfid (or workflow-id (create-workflow! {}))
                    :localizations (or localizations {})}))]
     (assert (:success result) {:command command :result result})
