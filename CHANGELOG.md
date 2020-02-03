@@ -6,7 +6,7 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.6
+Changes since v2.7
 
 ## v2.7 "Koivuviidantie" 2020-02-03
 
@@ -72,7 +72,7 @@ Changes since v2.6
 - More robust email resending (#1750)
 - Changes in workflow, catalogue item and blacklist now take effect without a delay (#1851)
 
-## v2.6 "Kalevalantie" 2018-11-12
+## v2.6 "Kalevalantie" 2019-11-12
 
 ### Breaking changes
 - `:application/external-id` has been made a non-optional field in the
