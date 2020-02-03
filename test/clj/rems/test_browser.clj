@@ -187,7 +187,7 @@
   (let [id (get-element-attr *driver* [{:css ".fields"}
                                        {:tag :label, :fn/has-text label}]
                              :for)]
-    (fill *driver* {:id id} option)))
+    (fill *driver* {:id id} (str option "\n"))))
 
 (defn field-visible? [label]
   (visible? *driver* [{:css ".fields"}
