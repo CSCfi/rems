@@ -103,6 +103,9 @@
 (defn click-navigation-menu [link-text]
   (scroll-and-click *driver* [:big-navbar {:tag :a, :fn/text link-text}]))
 
+(defn click-administration-menu [link-text]
+  (scroll-and-click *driver* [:administration-menu {:tag :a, :fn/text link-text}]))
+
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (wait-visible *driver* {:tag :h1, :fn/text "Catalogue"})
@@ -114,6 +117,13 @@
   (wait-visible *driver* {:tag :h1, :fn/text "Applications"})
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "applications-page.png")))
+
+(defn go-to-admin-resources []
+  (click-administration-menu "Resources")
+  (wait-visible *driver* {:tag :h1, :fn/text "Resources"})
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "administration-resources-page.png")))
+
 
 (defn change-language [language]
   (scroll-and-click *driver* [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
@@ -413,3 +423,33 @@
       (change-language :en)
       (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
     (is true))) ; avoid no assertions warning
+
+;; TODO: driver is passed to scroll-and-click, maybe create higher level overload with shorter name too
+
+(defn slurp-fields [selector]
+  (->> (for [row (query-all *driver* [selector {:fn/has-class :row}])
+             :let [k (get-element-text-el *driver* (child *driver* row {:tag :label}))
+                   v (get-element-text-el *driver* (child *driver* row {:css ".form-control"}))]]
+         [k v])
+       (into {})))
+
+(deftest test-create-resource
+  (with-postmortem *driver* {:dir reporting-dir}
+    (login-as "owner")
+    (go-to-admin-resources)
+    (scroll-and-click *driver* :create-resource)
+    (wait-visible *driver* {:tag :h1 :fn/text "Create resource"})
+    (select-option "Organization" "nbn")
+    (fill-form-field "Resource identifier" "browser-testing:1")
+    ;; TODO: choose license
+    (screenshot *driver* (io/file reporting-dir "about-to-create-resource.png"))
+    (scroll-and-click *driver* :save)
+    (wait-visible *driver* {:tag :h1 :fn/text "Resource"})
+    (wait-page-loaded)
+    (screenshot *driver* (io/file reporting-dir "created-resource.png"))
+    (is (str/includes? (get-element-text *driver* {:css ".alert-success"}) "Success"))
+    (is (= {"Organization" "nbn"
+            "Resource" "browser-testing:1"
+            "Active" ""}
+           (slurp-fields :resource)))))
+
