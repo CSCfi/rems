@@ -118,6 +118,12 @@
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "applications-page.png")))
 
+(defn go-to-admin-licenses []
+  (click-administration-menu "Licenses")
+  (wait-visible *driver* {:tag :h1, :fn/text "Licenses"})
+  (wait-page-loaded)
+  (screenshot *driver* (io/file reporting-dir "administration-licenses-page.png")))
+
 (defn go-to-admin-resources []
   (click-administration-menu "Resources")
   (wait-visible *driver* {:tag :h1, :fn/text "Resources"})
@@ -439,6 +445,34 @@
                    v (get-element-text-el *driver* (child *driver* row {:css ".form-control"}))]]
          [k (str/trim v)])
        (into {})))
+
+
+(deftest test-create-license
+  (with-postmortem *driver* {:dir reporting-dir}
+    (login-as "owner")
+    (go-to-admin-licenses)
+    (scroll-and-click *driver* :create-license)
+    (wait-visible *driver* {:tag :h1 :fn/text "Create license"})
+    (select-option "Organization" "nbn")
+    (scroll-and-click *driver* :licensetype-link)
+    (fill-form-field "License name" "Test License" {:index 1})
+    (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
+    (fill-form-field "License name" "Testilisenssi" {:index 2})
+    (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
+    (screenshot *driver* (io/file reporting-dir "about-to-create-license.png"))
+    (scroll-and-click *driver* :save)
+    (wait-visible *driver* {:tag :h1 :fn/text "License"})
+    (wait-page-loaded)
+    (screenshot *driver* (io/file reporting-dir "created-license.png"))
+    (is (str/includes? (get-element-text *driver* {:css ".alert-success"}) "Success"))
+    (is (= {"Organization" "nbn"
+            "Title (EN)" "Test License"
+            "Title (FI)" "Testilisenssi"
+            "Type" "link"
+            "External link (EN)" "https://www.csc.fi/home"
+            "External link (FI)" "https://www.csc.fi/etusivu"
+            "Active" ""}
+           (slurp-fields :license)))))
 
 (deftest test-create-resource
   (with-postmortem *driver* {:dir reporting-dir}

@@ -40,7 +40,7 @@
    [collapsible/component
     {:id "license"
      :title [:span (get-localized-title license language)]
-     :always (into [:div
+     :always (into [:div#license
                     [inline-info-field (text :t.administration/organization) (:organization license)]]
                    (concat
                     (for [[langcode localization] (:localizations license)]
