@@ -14,9 +14,9 @@
             [rems.standalone])
   (:import (java.net SocketException)))
 
-(def ^:private test-url (atom "http://localhost:3001/"))
+(defonce ^:private test-url (atom "http://localhost:3001/"))
 
-(def ^:dynamic *driver*)
+(defonce ^:dynamic *driver* nil)
 
 (def reporting-dir
   (doto (io/file "browsertest-errors")
