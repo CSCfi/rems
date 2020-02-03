@@ -437,7 +437,7 @@
   (->> (for [row (query-all *driver* [selector {:fn/has-class :row}])
              :let [k (get-element-text-el *driver* (child *driver* row {:tag :label}))
                    v (get-element-text-el *driver* (child *driver* row {:css ".form-control"}))]]
-         [k v])
+         [k (str/trim v)])
        (into {})))
 
 (deftest test-create-resource
