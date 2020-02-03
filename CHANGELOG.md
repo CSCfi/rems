@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.6
 
+## v2.7 "Koivuviidantie" 2020-02-03
+
 ### Breaking changes
 - Removed support for LDAP authentication
 - `/api/workflows/create` API: the `type` parameter's allowed value was changed from `dynamic` to `workflow/dynamic`
@@ -45,6 +47,15 @@ Changes since v2.6
 - Have a set of permitted roles for API keys (#1662)
 - A `user-owner` role that can only create and edit users
 - Fields can be defined public or private. The latter won't be shown to reviewers.
+- More columns for blacklist table, blacklist visible on resource administration page (#1724)
+- New "header" form field type (#1805)
+- Scrollbar and focus now track moved and created form fields in form editor (#1802 #1803)
+- Users can be added and removed from the blacklist in the resource admin page (#1706)
+- POSTing entitlements to entitlement-target is now retried (#1784)
+- [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
+- "Assign external id" command for setting the id of an application (#1858)
+- Configuration `:disable-commands` for disabling commands (#1891)
+- Display on the actions page the handlers who are handling an application (#1795)
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
@@ -60,17 +71,6 @@ Changes since v2.6
 ### Fixes
 - More robust email resending (#1750)
 - Changes in workflow, catalogue item and blacklist now take effect without a delay (#1851)
-
-### Additions
-- More columns for blacklist table, blacklist visible on resource administration page (#1724)
-- New "header" form field type (#1805)
-- Scrollbar and focus now track moved and created form fields in form editor (#1802 #1803)
-- Users can be added and removed from the blacklist in the resource admin page (#1706)
-- POSTing entitlements to entitlement-target is now retried (#1784)
-- [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
-- "Assign external id" command for setting the id of an application (#1858)
-- Configuration `:disable-commands` for disabling commands (#1891)
-- Display on the actions page the handlers who are handling an application (#1795)
 
 ## v2.6 "Kalevalantie" 2018-11-12
 
