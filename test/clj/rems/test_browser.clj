@@ -147,10 +147,17 @@
 
 ;;; application page
 
-(defn fill-form-field [label text]
-  (let [id (get-element-attr *driver* [{:css ".fields"}
-                                       {:tag :label, :fn/has-text label}]
-                             :for)]
+(defn fill-form-field
+  "Fills a form field named by `label` with `text`.
+
+  Optionally give `:index` when several items match. It starts from 1."
+  [label text & [opts]]
+  (assert (> (:index opts 1) 0) "indexing starts at 1") ; xpath uses 1, let's keep the convention though we don't use xpath here because it will likely not work
+
+  (let [el (nth (query-all *driver* [{:css ".fields"}
+                                     {:tag :label :fn/has-text label}])
+                (dec (:index opts 1)))
+        id (get-element-attr-el *driver* el :for)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (fill-human *driver* {:id id} text)))
 
