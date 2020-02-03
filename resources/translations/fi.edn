@@ -109,10 +109,11 @@
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
                    :applicants "Hakijat"
-                   :email "Sähköposti"
+                   :email "Sähköposti (tunnistautumispalvelusta)"
                    :invited-member "Kutsuttu jäsen"
                    :member "Jäsen"
                    :name "Nimi"
+                   :notification-email "Sähköposti (käyttäjän ilmoittama)"
                    :organization "Organisaatio"
                    :username "Käyttäjätunnus"}
   :applications {:all-applications "Kaikki hakemukset"
