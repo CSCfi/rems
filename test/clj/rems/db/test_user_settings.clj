@@ -71,7 +71,7 @@
   (testing "nil language"
     (is (= {} (user-settings/validate-new-settings {:language nil})))))
 
-(deftest test-notification-email
+(deftest test-validate-new-settings
   (testing "valid email"
     (is (= {:notification-email "somebody@example.com"}
            (user-settings/validate-new-settings {:notification-email "somebody@example.com"}))))
@@ -87,3 +87,34 @@
   (testing "nil email will clear the setting"
     (is (= {:notification-email nil}
            (user-settings/validate-new-settings {:notification-email nil})))))
+
+(deftest test-notification-email-visible
+  (users/add-user! "pekka" {:eppn "pekka" :commonName "Pekka" :mail "pekka@example.com"})
+  (testing "before setting notifcation email"
+    (testing "get-user returns email from user attributes"
+      (is (= {:userid "pekka"
+              :name "Pekka"
+              :email "pekka@example.com"}
+             (users/get-user "pekka"))))
+    (testing "get-users returns email from user attributes"
+      (is (= [{:userid "pekka"
+               :name "Pekka"
+               :email "pekka@example.com"}]
+             (users/get-users)))))
+  (user-settings/update-user-settings! "pekka" {:notification-email "foo@example.com"})
+  (testing "after setting notification email"
+    (testing "get-user-settings returns new email"
+      (is (= {:language :en :notification-email "foo@example.com"}
+             (user-settings/get-user-settings "pekka"))))
+    (testing "get-user returns both emails"
+      (is (= {:userid "pekka"
+              :name "Pekka"
+              :email "pekka@example.com"
+              :notification-email "foo@example.com"}
+             (users/get-user "pekka"))))
+    (testing "get-users returns both emails"
+      (is (= [{:userid "pekka"
+               :name "Pekka"
+               :email "pekka@example.com"
+               :notification-email "foo@example.com"}]
+             (users/get-users))))))

@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.db.core :as db]
+            [rems.db.user-settings :as user-settings]
             [rems.json :as json]))
 
 ;; TODO could pass through additional (configurable?) attributes
@@ -10,7 +11,7 @@
           :name (or (:commonName u)
                     (:displayName u)) ;; some shibboleth idps don't send commonName
           :email (:mail u)}
-         (select-keys u [:organization])))
+         (select-keys u [:organization :notification-email])))
 
 (defn unformat-user
   "Inverse of format-user: take in API-style attributes and output db-style attributes"
@@ -54,6 +55,14 @@
   (when-let [json (:userattrs (db/get-user-attributes {:user userid}))]
     (json/parse-string json)))
 
+(defn- user-attributes-from-settings [userid]
+  (when-let [notification-email (:notification-email (user-settings/get-user-settings userid))]
+    {:notification-email notification-email}))
+
+(defn- merge-user-settings [raw-attributes]
+  (merge raw-attributes
+         (user-attributes-from-settings (:eppn raw-attributes))))
+
 (defn user-exists? [userid]
   (some? (get-raw-user-attributes userid)))
 
@@ -61,6 +70,7 @@
   (->> (db/get-users)
        (map :userid)
        (map get-raw-user-attributes)
+       (map merge-user-settings)
        (doall)))
 
 ;; TODO Filter applicant, requesting user
@@ -93,10 +103,11 @@
        (doall)))
 
 (defn get-user
-  "Given a userid, returns a map with keys :userid, :email and :name."
+  "Given a userid, returns a map with keys :userid, :email, :name and optionally :notification-email"
   [userid]
   (-> userid
       get-raw-user-attributes
+      merge-user-settings
       format-user
       ;; in case user attributes were not found, return at least the userid
       (assoc :userid userid)))

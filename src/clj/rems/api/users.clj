@@ -7,7 +7,11 @@
             [schema.core :as s]))
 
 (s/defschema CreateUserCommand
-  UserWithAttributes)
+  ;; this is not just UserWithAttributes since that contains e.g. :notification-email
+  {:userid UserId
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)
+   (s/optional-key :organization) (s/maybe s/Str)})
 
 (defn create-user [user-data]
   (users/add-user! (:userid user-data) (users/unformat-user user-data)))

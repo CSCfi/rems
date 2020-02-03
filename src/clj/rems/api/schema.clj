@@ -14,7 +14,8 @@
   {:userid UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
-   (s/optional-key :organization) (s/maybe s/Str)})
+   (s/optional-key :organization) (s/maybe s/Str)
+   (s/optional-key :notification-email) (s/maybe s/Str)})
 
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
