@@ -91,7 +91,6 @@
                    :licenses "Lisenssit"
                    :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
-                   :organization-placeholder "testorganization.org"
                    :preview "Esikatselu"
                    :remove "Poista"
                    :reports "Raportit"

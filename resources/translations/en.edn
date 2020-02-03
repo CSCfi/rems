@@ -91,7 +91,6 @@
                    :licenses "Licenses"
                    :no-licenses "No licenses"
                    :organization "Organization"
-                   :organization-placeholder "testorganization.org"
                    :preview "Preview"
                    :remove "Remove"
                    :reports "Reports"
