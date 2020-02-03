@@ -14,12 +14,30 @@
             [rems.standalone])
   (:import (java.net SocketException)))
 
-(def ^:private +test-url+ "http://localhost:3001/")
+(def ^:private test-url (atom "http://localhost:3001/"))
 
 (def ^:dynamic *driver*)
 
-(def reporting-dir (doto (io/file "browsertest-errors")
-                     (.mkdirs)))
+(def reporting-dir
+  (doto (io/file "browsertest-errors")
+    (io/delete-file true)
+    (.mkdirs)))
+
+(defn development-driver
+  "Starts the driver for development use.
+
+  Opens a regular browser that can be commanded while creating or debugging tests."
+  []
+  (when *driver* (quit *driver*))
+  (def *driver* (boot-driver :chrome
+                             {:args ["--lang=en-US"]
+                              :prefs {"intl.accept_languages" "en-US"}}))
+  (delete-cookies *driver*) ; start with a clean slate
+  (reset! test-url "http://localhost:3000")
+  *driver*)
+
+(comment
+  (development-driver))
 
 (defn fixture-driver
   "Executes a test running a driver.
@@ -39,7 +57,7 @@
         (run)))))
 
 (defn smoke-test [f]
-  (let [response (http/get (str +test-url+ "js/app.js"))]
+  (let [response (http/get (str @test-url "js/app.js"))]
     (assert (= 200 (:status response))
             (str "Failed to load app.js: " response))
     (f)))
@@ -67,7 +85,7 @@
 (defn login-as [username]
   (doto *driver*
     (set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
-    (go +test-url+)
+    (go @test-url)
     (screenshot (io/file reporting-dir "landing-page.png"))
     (scroll-and-click {:css ".login-btn"})
     (screenshot (io/file reporting-dir "login-page.png"))
@@ -354,7 +372,7 @@
 
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}
-    (go *driver* (str +test-url+ "guide"))
+    (go *driver* (str @test-url "guide"))
     (wait-visible *driver* {:tag :h1 :fn/text "Component Guide"})
     ;; if there is a js exception, nothing renders, so let's check
     ;; that we have lots of examples in the dom:
@@ -363,7 +381,7 @@
 (deftest test-language-change
   (with-postmortem *driver* {:dir reporting-dir}
     (testing "default language is English"
-      (go *driver* +test-url+)
+      (go *driver* @test-url)
       (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
       (login-as "alice")
       (wait-visible *driver* {:tag :h1, :fn/text "Catalogue"})
