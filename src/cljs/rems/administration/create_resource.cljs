@@ -145,7 +145,7 @@
 
 (defn- save-resource-button [form]
   (let [request (build-request form)]
-    [:button.btn.btn-primary
+    [:button#save.btn.btn-primary
      {:type :button
       :on-click (fn []
                   (rf/dispatch [:rems.spa/user-triggered-navigation])
@@ -171,7 +171,7 @@
        :always [:div
                 (if loading?
                   [:div#resource-loader [spinner/big]]
-                  [:div#resource-editor
+                  [:div#resource-editor.fields
                    [resource-organization-field]
                    [resource-id-field]
                    [resource-licenses-field]

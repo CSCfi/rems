@@ -59,7 +59,8 @@
    {}))
 
 (defn- to-create-resource []
-  [atoms/link {:class "btn btn-primary"}
+  [atoms/link {:id "create-resource"
+               :class "btn btn-primary"}
    "/administration/resources/create"
    (text :t.administration/create-resource)])
 
