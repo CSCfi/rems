@@ -17,6 +17,12 @@ Changes since v2.6
 - `:application.event/comment-requested` event renamed to `:application.event/review-requested` and its `:application/commenters` field renamed to `:application/reviewers`
 - `/api/applications/commenters` API renamed to `/api/applications/reviewers`
 - field/id is now a string. This considers creating forms and the form API, but also form users may have the assumption of integers.
+- Better support for organizations (#1893). This is still work in progress. Implemented so far:
+  - Tracking of user organizations via the `:organization` attribute from the identity provider
+  - List of possible organizations configured with `:organizations` config option
+  - When creating a new resource/license/form/workflow/catalogue item there is an organization dropdown instead of a text field
+  - Organizations of catalogue item, resource, license, form workflow and catalogue item must match
+  - Additional `organization-owner` role that can only edit things belonging to their own organization
 
 ### Additions
 - Catalogue item form can be changed for one or more items at a time.
