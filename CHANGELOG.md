@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.6
 
+### Changes
+- Duplicate resource external ids are now allowed (#1988)
+
 ## v2.7 "Koivuviidantie" 2020-02-03
 
 ### Breaking changes

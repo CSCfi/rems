@@ -157,12 +157,9 @@
             (let [result (create-resource "owner" "test-organization2")]
               (is (true? (:success result)))))
 
-          ;; duplicate id is an sql error which invalidates the
-          ;; transaction, so we need to have it last in the test
-          (testing "duplicate resource ID is not allowed within one organization"
+          (testing "duplicate resource ID is allowed within one organization"
             (let [result (create-resource "owner" "test-organization")]
-              (is (false? (:success result)))
-              (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors result))))))))))
+              (is (true? (:success result))))))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"
