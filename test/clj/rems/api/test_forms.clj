@@ -27,6 +27,7 @@
 
 (deftest forms-api-test
   (let [api-key "42"
+        org-owner "organization-owner1"
         user-id "owner"]
 
     (testing "get all"
@@ -45,6 +46,23 @@
                      assert-response-is-ok
                      read-body)]
         (is (:form/id data))))
+
+    (testing "get all as organization owner"
+      (let [data (-> (request :get "/api/forms")
+                     (authenticate api-key org-owner)
+                     handler
+                     assert-response-is-ok
+                     read-body)
+            id (:form/id (first data))]
+        (is id)
+        (is (apply = (map :form/organization data)))
+        (testing "get one as organization owner"
+          (let [data (-> (request :get (str "/api/forms/" id))
+                     (authenticate api-key org-owner)
+                     handler
+                     assert-response-is-ok
+                     read-body)]
+            (is (= id (:form/id data)))))))
 
     (testing "not found"
       (let [response (-> (request :get "/api/forms/0")
