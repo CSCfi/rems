@@ -37,7 +37,7 @@ CSC updates all supported environments such as https://rems2demo.csc.fi which is
 
    - Move all changes from under `## Unreleased` to under the new release
 
-   - Leave changes under `## Unreleased` empty
+   - Leave `Changes since v[x.y]` text under `## Unreleased`
 
 3. Create a pull request for those changes
 
@@ -59,13 +59,17 @@ CSC updates all supported environments such as https://rems2demo.csc.fi which is
 
    https://github.com/CSCfi/rems/releases/tag/v2.6
 
-9. From "Edit tag", change the name of the tag to the release name,
+9. From "Edit tag", change the name of the tag to the release title,
    e.g., "Kalevalantie".
 
-10. Copy changes from CHANGELOG.md to "Description" field:
+10. Copy changes under the new release from CHANGELOG.md to "Description"
+    field:
 
     - Change lines starting with `###` to `##` for better formatting
 
-11. Upload rems.jar and rems.war from the directory target/uberjar/
+11. Press "Attach binaries" to upload rems.jar and rems.war from your
+    local directory target/uberjar/ under REMS repository.
 
-12. Save changes
+12. Press "Publish release".
+
+13. Save changes
