@@ -108,7 +108,7 @@
     (screenshot (io/file reporting-dir "logged-in.png"))))
 
 (defn logout []
-  (click *driver* :logout)
+  (scroll-and-click *driver* :logout)
   (wait-visible *driver* {:css ".login-component"}))
 
 (defn- wait-page-loaded []
