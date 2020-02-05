@@ -18,10 +18,14 @@
 (defonce ^:dynamic *driver* nil)
 (defonce ^:private test-mode (atom :test))
 
+(defn- delete-files [dir]
+  (doseq [file (.listFiles dir)]
+    (io/delete-file file true)))
+
 (def reporting-dir
   (doto (io/file "browsertest-errors")
-    (io/delete-file true)
-    (.mkdirs)))
+    (.mkdirs)
+    (delete-files)))
 
 (defn development-driver
   "Starts the driver for development use.
