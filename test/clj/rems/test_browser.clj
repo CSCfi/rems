@@ -15,8 +15,8 @@
   (:import (java.net SocketException)))
 
 (defonce ^:private test-url (atom "http://localhost:3001/"))
-
 (defonce ^:dynamic *driver* nil)
+(defonce ^:private test-mode (atom :test))
 
 (def reporting-dir
   (doto (io/file "browsertest-errors")
@@ -33,7 +33,8 @@
                              {:args ["--lang=en-US"]
                               :prefs {"intl.accept_languages" "en-US"}}))
   (delete-cookies *driver*) ; start with a clean slate
-  (reset! test-url "http://localhost:3000")
+  (reset! test-url "http://localhost:3000/")
+  (reset! test-mode :development)
   *driver*)
 
 (comment
@@ -43,18 +44,31 @@
   "Executes a test running a driver.
    Bounds a driver with the global *driver* variable."
   [f]
-  ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
-  (let [run #(with-chrome-headless {:args ["--lang=en-US"]
-                                    :prefs {"intl.accept_languages" "en-US"}}
-                                   driver
-               (binding [*driver* driver]
-                 (delete-cookies *driver*) ; start with a clean slate
-                 (f)))]
-    (try
-      (run)
-      (catch SocketException e
-        (log/warn e "WebDriver failed to start, retrying...")
-        (run)))))
+  (if (= :development @test-mode)
+    (f)
+    ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
+    (let [run #(with-chrome-headless {:args ["--lang=en-US"]
+                                      :prefs {"intl.accept_languages" "en-US"}}
+                 driver
+                 (binding [*driver* driver]
+                   (delete-cookies *driver*) ; start with a clean slate
+                   (f)))]
+      (try
+        (run)
+        (catch SocketException e
+          (log/warn e "WebDriver failed to start, retrying...")
+          (run))))))
+
+(defn fixture-standalone [f]
+  (if (= :development @test-mode)
+    (f)
+    (do
+      (mount/start)
+      (migrations/migrate ["migrate"] (select-keys rems.config/env [:database-url]))
+      (test-data/create-test-data!)
+      (f)
+      (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
+      (mount/stop))))
 
 (defn smoke-test [f]
   (let [response (http/get (str @test-url "js/app.js"))]
