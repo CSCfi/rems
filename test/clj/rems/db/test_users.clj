@@ -40,14 +40,14 @@
            (users/get-user "user-with-org"))))
 
   (testing "get-all-users"
-    (is (= [{:eppn "whatever"
-             :commonName "What Ever"
-             :some-attr "some value"}
-            {:eppn "user-with-org"
+    (is (= [{:eppn "user-with-org"
              :commonName "User Org"
              :mail "user@org"
-             :organization "org"}]
-           (#'users/get-all-users))))
+             :organization "org"}
+            {:eppn "whatever"
+             :commonName "What Ever"
+             :some-attr "some value"}]
+           (sort-by :eppn (#'users/get-all-users)))))
 
   (testing "get-users-with-role"
     (roles/add-role! "user1" :owner)

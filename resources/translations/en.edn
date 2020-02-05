@@ -108,10 +108,11 @@
                    :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
-                   :email "Email"
+                   :email "Email (from identity provider)"
                    :invited-member "Invited member"
                    :member "Member"
                    :name "Name"
+                   :notification-email "Email (set by user)"
                    :organization "Organization"
                    :username "Username"}
   :applications {:all-applications "All applications"
