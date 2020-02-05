@@ -130,7 +130,6 @@
   (wait-page-loaded)
   (screenshot *driver* (io/file reporting-dir "administration-resources-page.png")))
 
-
 (defn change-language [language]
   (scroll-and-click *driver* [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
@@ -447,9 +446,8 @@
        (into {})))
 
 
-(deftest test-create-license
+(defn test-create-license []
   (with-postmortem *driver* {:dir reporting-dir}
-    (login-as "owner")
     (go-to-admin-licenses)
     (scroll-and-click *driver* :create-license)
     (wait-visible *driver* {:tag :h1 :fn/text "Create license"})
@@ -474,15 +472,14 @@
             "Active" ""}
            (slurp-fields :license)))))
 
-(deftest test-create-resource
+(defn test-create-resource []
   (with-postmortem *driver* {:dir reporting-dir}
-    (login-as "owner")
     (go-to-admin-resources)
     (scroll-and-click *driver* :create-resource)
     (wait-visible *driver* {:tag :h1 :fn/text "Create resource"})
     (select-option "Organization" "nbn")
     (fill-form-field "Resource identifier" "browser-testing:1")
-    ;; TODO: choose license
+    (select-option "License" "Test License")
     (screenshot *driver* (io/file reporting-dir "about-to-create-resource.png"))
     (scroll-and-click *driver* :save)
     (wait-visible *driver* {:tag :h1 :fn/text "Resource"})
@@ -492,5 +489,16 @@
     (is (= {"Organization" "nbn"
             "Resource" "browser-testing:1"
             "Active" ""}
-           (slurp-fields :resource)))))
+           (slurp-fields :resource)))
+    (is (= "License \"Test License\"" (get-element-text *driver* [:licenses {:class :license-title}])))))
 
+(deftest test-create-catalogue-item
+  (with-postmortem *driver* {:dir reporting-dir}
+    (login-as "owner")
+    (testing "create license"
+      (test-create-license))
+    (testing "create resource"
+      (test-create-resource))
+    (testing "create form")
+    (testing "create workflow")
+    (testing "create catalogue item")))

@@ -81,7 +81,7 @@
 ;;      here the license text is only shown in the current language.
 (defn- license-view-compact [license language]
   (into [:div.form-item
-         [:h3 (text-format :t.administration/license-field (get-localized-title license language))]]
+         [:h3.license-title (text-format :t.administration/license-field (get-localized-title license language))]]
         (concat (for [[langcode localization] (:localizations license)]
                   [inline-info-field
                    (str (text :t.administration/title)
