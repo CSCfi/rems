@@ -1,7 +1,7 @@
 (ns rems.api.services.licenses
   "Serving licenses for API."
   (:require [rems.api.services.util :as util]
-            [rems.common-util :refer [distinct-by]]
+            [rems.common.util :refer [distinct-by]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]

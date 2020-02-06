@@ -33,7 +33,7 @@
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
-            [rems.common-util :refer [parse-int]]
+            [rems.common.util :refer [parse-int]]
             [rems.config :as config]
             [rems.extra-pages :refer [extra-pages]]
             [rems.flash-message :as flash-message]

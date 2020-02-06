@@ -3,7 +3,7 @@
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.common-util :refer [distinct-by]]
+            [rems.common.util :refer [distinct-by]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx]])

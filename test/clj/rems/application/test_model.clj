@@ -8,7 +8,7 @@
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.common-util :refer [deep-merge]]
+            [rems.common.util :refer [deep-merge]]
             [rems.permissions :as permissions]
             [schema.core :as s])
   (:import [java.util UUID]

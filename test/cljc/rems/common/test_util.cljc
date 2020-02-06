@@ -1,6 +1,6 @@
-(ns rems.test-common-util
+(ns rems.common.test-util
   (:require #?(:clj [clojure.test :refer :all])
-            [rems.common-util :refer :all]))
+            [rems.common.util :refer :all]))
 
 (deftest select-vals-test
   (is (= [] (select-vals nil nil)))

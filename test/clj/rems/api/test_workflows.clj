@@ -3,7 +3,7 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.services.workflow :as workflow]
             [rems.api.testing :refer :all]
-            [rems.common-util :refer [index-by]]
+            [rems.common.util :refer [index-by]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]

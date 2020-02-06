@@ -1,7 +1,7 @@
 (ns rems.guide-functions
   (:require [clojure.string :as str]
             [clojure.test :refer-macros [deftest is]]
-            [rems.common-util :as common-util]
+            [rems.common.util :as common-util]
             [rems.common.git :as git])
   (:require-macros [rems.read-gitlog :refer [read-current-version]]))
 

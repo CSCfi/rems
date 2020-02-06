@@ -5,7 +5,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging]
-            [rems.common-util :refer [recursive-keys]]
+            [rems.common.util :refer [recursive-keys]]
             [rems.locales :as locales]
             [rems.testing-util :refer [create-temp-dir delete-recursively]]
             [rems.util :refer [getx-in]]

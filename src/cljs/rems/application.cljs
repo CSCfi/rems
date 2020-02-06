@@ -27,7 +27,7 @@
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible?]]
-            [rems.common-util :refer [index-by parse-int]]
+            [rems.common.util :refer [index-by parse-int]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]

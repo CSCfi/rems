@@ -9,7 +9,7 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
-            [rems.common-util :refer [parse-int]]
+            [rems.common.util :refer [parse-int]]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
