@@ -104,6 +104,7 @@
  :disable-commands []
 
  ;; List of allowed values for the organization field. Should contain at least one element.
+ ;; See also docs/organizations.md
  :organizations ["default"]
 
  ;; Experimental features
