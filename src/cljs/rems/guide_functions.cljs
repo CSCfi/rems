@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer-macros [deftest is]]
             [rems.common-util :as common-util]
-            [rems.git :as git])
+            [rems.common.git :as git])
   (:require-macros [rems.read-gitlog :refer [read-current-version]]))
 
 (defn- remove-indentation [docstring]

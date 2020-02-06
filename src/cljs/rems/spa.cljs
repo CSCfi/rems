@@ -38,7 +38,7 @@
             [rems.extra-pages :refer [extra-pages]]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
-            [rems.git :as git]
+            [rems.common.git :as git]
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
