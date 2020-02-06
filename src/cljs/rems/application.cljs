@@ -24,7 +24,7 @@
             [rems.application-list :as application-list]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
-            [rems.catalogue-util :refer [urn-catalogue-item-link]]
+            [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible?]]
             [rems.common-util :refer [index-by parse-int]]
