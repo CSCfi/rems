@@ -7,8 +7,10 @@
 (defn forbidden-organization? [organization]
   (let [user-organization (:organization context/*user*)
         not-owner? (not (contains? context/*roles* :owner))
+        not-handler? (not (contains? context/*roles* :handler))
         incorrect-organization? (not= organization user-organization)]
     (and not-owner?
+         not-handler? ;; TODO: keeping old behaviour where handlers can see everything for now
          (or incorrect-organization?
              ;; XXX: Special case to forbid an organization owner with
              ;;   no organization defined from creating or accessing items with
