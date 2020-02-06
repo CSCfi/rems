@@ -19,9 +19,9 @@ the identity provider
 
 ## Restrictions on visibility
 
-Users without the `owner` role won't see items outside their own
-organization in the administration pages. In practice, this applies to
-`handler` and `organization-owner`.
+Users without the `owner` or `handler` roles won't see items outside
+their own organization in the administration pages. In practice, this
+means users with only the `organization-owner` role.
 
 ## Restrictions on creating things
 
