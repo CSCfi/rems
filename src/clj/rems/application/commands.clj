@@ -1,6 +1,6 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.permissions :as permissions]
             [rems.util :refer [getx getx-in assert-ex try-catch-ex update-present]]
             [schema-refined.core :as r]

@@ -1,6 +1,6 @@
 (ns rems.application.rejecter-bot
   (:require [clj-time.core :as time]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.db.applications :as applications]))
 
 (def bot-userid "rejecter-bot")

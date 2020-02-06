@@ -1,7 +1,7 @@
 (ns rems.application.model
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals update-existing]]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.form :refer [field-visible?]]

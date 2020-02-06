@@ -5,7 +5,7 @@
             [rems.application.approver-bot :as approver-bot]
             [rems.application.commands :as commands]
             [rems.application.rejecter-bot :as rejecter-bot]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]

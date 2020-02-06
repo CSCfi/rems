@@ -5,7 +5,7 @@
             [clojure.set :refer [union]]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]

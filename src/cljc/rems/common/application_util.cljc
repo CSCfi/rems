@@ -1,4 +1,4 @@
-(ns rems.application-util)
+(ns rems.common.application-util)
 
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))

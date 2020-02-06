@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.events :as events]

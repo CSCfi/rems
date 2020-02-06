@@ -4,7 +4,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.atoms :as atoms]
             [rems.guide-functions]
             [rems.spinner :as spinner]
