@@ -32,6 +32,14 @@
       (is (not (forbidden-organization? "")))
       (is (not (forbidden-organization? nil)))))
 
+  (testing "for handler, all organizations are permitted"
+    (binding [context/*user* {:organization "own organization"}
+              context/*roles* #{:handler}]
+      (is (not (forbidden-organization? "own organization")))
+      (is (not (forbidden-organization? "not own organization")))
+      (is (not (forbidden-organization? "")))
+      (is (not (forbidden-organization? nil)))))
+
   (testing "for owner who is also an organization owner, all organizations are permitted"
     (binding [context/*user* {:organization "own organization"}
               context/*roles* #{:owner :organization-owner}]
