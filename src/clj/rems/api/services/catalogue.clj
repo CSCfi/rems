@@ -1,6 +1,6 @@
 (ns rems.api.services.catalogue
   (:require [rems.api.services.util :as util]
-            [rems.common-util :refer [index-by]]
+            [rems.common.util :refer [index-by]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]

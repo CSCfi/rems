@@ -1,5 +1,5 @@
 (ns rems.api.services.attachment
-  (:require [rems.application-util :as application-util]
+  (:require [rems.common.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]

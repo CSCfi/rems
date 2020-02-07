@@ -1,4 +1,4 @@
-(ns rems.common-util
+(ns rems.common.util
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
 

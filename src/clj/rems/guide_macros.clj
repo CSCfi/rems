@@ -2,7 +2,7 @@
   "Utilities for component guide."
   (:require [clojure.pprint :refer [code-dispatch write]]
             [clojure.string :as str]
-            [rems.common-util :as common-util]))
+            [rems.common.util :as common-util]))
 
 (defmacro namespace-info [ns-symbol]
   (let [ns (find-ns ns-symbol)

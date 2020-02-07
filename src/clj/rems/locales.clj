@@ -5,7 +5,7 @@
             [clojure.tools.logging :as log]
             [medley.core :refer [deep-merge]]
             [mount.core :refer [defstate]]
-            [rems.common-util :refer [recursive-keys]]
+            [rems.common.util :refer [recursive-keys]]
             [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
 

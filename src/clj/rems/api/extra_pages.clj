@@ -4,7 +4,7 @@
             [rems.api.schema :refer :all]
             [rems.api.util :as api-util]
             [rems.config :refer [env]]
-            [rems.common-util :refer [index-by]]
+            [rems.common.util :refer [index-by]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (java.io FileNotFoundException)))
