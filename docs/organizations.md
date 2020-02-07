@@ -19,9 +19,12 @@ the identity provider
 
 ## Restrictions on visibility
 
-Users without the `owner` or `handler` roles won't see items outside
-their own organization in the administration pages. In practice, this
-means users with only the `organization-owner` role.
+The catalogue shows all catalogue items to all applicants regardless of organization.
+
+In the administration pages (and related APIs), users without the
+`owner` or `handler` roles won't see items outside their own
+organization. In practice, this means users with only the
+`organization-owner` role.
 
 ## Restrictions on creating things
 
@@ -35,5 +38,5 @@ same organization. This means:
 - catalogue item can only contain resource, form and workflow that are
   within the same organization
 
-These constraints are not currently enforced in the backend, only in
-the UI.
+These constraints are not currently enforced in the API, only in the
+UI.
