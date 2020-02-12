@@ -13,10 +13,10 @@
   (context "/permissions" []
     :tags ["permissions"]
 
-    (GET "/" []
+    (GET "/:user" []
       :summary "Returns user's permissions."
       :roles #{:logged-in}
-      :query-params [{user :- (describe s/Str "return permissions for this user (optional), ignored if the user doesn't have appropriate privileges") nil}
-                     {expired :- (describe s/Bool "whether to include expired permissions") false}]
+      :path-params [user :- (describe s/Str "return permissions for this user (optional), ignored if the user doesn't have appropriate privileges")]
+      :query-params [{expired :- (describe s/Bool "whether to include expired permissions") false}]
       :return GetPermissionsResponse
       (ok (entitlements/get-entitlements-for-permissions-api user nil expired)))))
