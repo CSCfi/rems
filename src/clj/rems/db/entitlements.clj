@@ -37,11 +37,11 @@
                               :is-active? (not expired?)})))
 
 (defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid]}]
-  {:type "ControlledAccessGrants"
-   :value (str "" resid)
-   :source "https://ga4gh.org/duri/no_org"
-   :by "rems"             ;; TODO Get approver from application events
-   :asserted 1568699331}) ;; TODO Real timestamp
+  {:ga4gh_visa_v1 {:type "ControlledAccessGrants"
+                   :value (str "" resid)
+                   :source "https://ga4gh.org/duri/no_org"
+                   :by "rems"             ;; TODO Get approver from application events
+                   :asserted 1568699331}}) ;; TODO Real timestamp
 
 (defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
   (mapv entitlement-to-permissions-api

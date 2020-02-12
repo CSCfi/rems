@@ -7,7 +7,7 @@
             [schema.core :as s]))
 
 (s/defschema GetPermissionsResponse
-  [Permission])
+  [Ga4ghVisa])
 
 (def permissions-api
   (context "/permissions" []
