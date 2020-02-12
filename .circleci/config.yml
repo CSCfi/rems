@@ -115,9 +115,8 @@ jobs:
       - restore_cache:
           keys:
             - v2-dependencies-{{ checksum "project.clj" }}
-      - run:
-        - >
-          NAME=$(curl -k -s \
+      - run: |
+          DEV_CONTAINER_NAME=$(curl -k -s \
             -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
             -H 'Accept: application/json' \
             https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods | \
@@ -126,7 +125,7 @@ jobs:
             -X DELETE \
             -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
             -H 'Accept: application/json' \
-            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods/${NAME} > /dev/null
+            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods/${DEV_CONTAINER_NAME}
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
