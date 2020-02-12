@@ -160,7 +160,7 @@ workflows:
           filters:
             branches:
               only:
-                - rahti-dev
+                - master
       - rahti:
           requires:
             - build
@@ -168,7 +168,7 @@ workflows:
           filters:
             branches:
               only:
-                - rahti-dev
+                - master
       - ok:
           requires:
             - build
