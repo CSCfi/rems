@@ -158,11 +158,11 @@ workflows:
       - dev:
           requires:
             - build
-          #  - war
+            - war
           filters:
             branches:
               only:
-                - rahti-dev
+                - master
       - ok:
           requires:
             - build
@@ -170,3 +170,4 @@ workflows:
             - test
             - doo
             - war
+            - dev
