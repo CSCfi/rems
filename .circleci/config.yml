@@ -154,7 +154,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - rahti-dev
       - rahti:
           requires:
             - build
