@@ -73,6 +73,13 @@
                     {:deprecate true
                      :description "DEPRECATED, will disappear"})}) ;; TODO
 
+(s/defschema Permission
+  {:type s/Str
+   :value s/Str
+   :source s/Str
+   :by s/Str
+   :asserted s/Int})
+
 (s/defschema EnabledCommand
   {:id s/Int
    :enabled s/Bool})
