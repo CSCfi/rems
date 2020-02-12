@@ -111,12 +111,6 @@ jobs:
       - restore_cache:
           keys:
             - v2-dependencies-{{ checksum "project.clj" }}
-      - run: |
-          war_job=$(curl -s https://circleci.com/api/v1.1/project/github/CSCfi/rems/tree/master \
-            | jq 'map(select(.workflows.job_name == "war"))[0].build_num // error("no build")')
-          urls=$(curl -s https://circleci.com/api/v1.1/project/github/CSCfi/rems/${war_job}/artifacts \
-            | jq -r '.[].url // error("no artifact")' | grep rems.jar)
-          curl -s --show-error --remote-name-all $urls
       - run: docker build --pull --tag docker-registry.rahti.csc.fi/rems/rems:circle --tag docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD) .
       - run: docker login -p $rahtitoken -u unused docker-registry.rahti.csc.fi
       - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle
