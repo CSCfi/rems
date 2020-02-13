@@ -81,3 +81,11 @@ The tasks should be
 4. privacy additions
    - hide private questions as well as answers
    - make sure form looks nice in the different cases where some parts are hidden
+5. bundling changes
+   - remove restriction on having the same form
+   - cart functionality
+   - change resources action
+6. application model changes
+   - allow multiple forms in the application model
+   - backwards compatible change and/or migrations
+   - decide whether to group field answers per form
