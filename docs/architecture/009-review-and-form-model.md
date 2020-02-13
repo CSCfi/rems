@@ -89,3 +89,5 @@ The tasks should be
    - allow multiple forms in the application model
    - backwards compatible change and/or migrations
    - decide whether to group field answers per form
+
+![](https://github.com/CSCfi/rems/blob/review-model/docs/review-and-form-model.svg)
