@@ -135,7 +135,7 @@ jobs:
       - run: |
           RELEASE=$(git tag -l --points-at HEAD | grep "v[0-9]\.[0-9]")
           if [ ! -z ${RELEASE} ] ; then
-            docker tag docker-registry.rahti.csc.fi/rems/rems:circle docker-registry.rahti.csc.fi/rems/rems:release
+            #docker tag docker-registry.rahti.csc.fi/rems/rems:circle docker-registry.rahti.csc.fi/rems/rems:release
             docker tag docker-registry.rahti.csc.fi/rems/rems:circle docker-registry.rahti.csc.fi/rems/rems:${RELEASE}
             docker push docker-registry.rahti.csc.fi/rems/rems:release
             docker push docker-registry.rahti.csc.fi/rems/rems:${RELEASE}
@@ -178,7 +178,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - rahti-dev
       - rahti:
           requires:
             - build
@@ -186,7 +186,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - rahti-dev
       - ok:
           requires:
             - build
