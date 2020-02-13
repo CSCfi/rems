@@ -122,7 +122,7 @@ jobs:
       - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle
       - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD)
       - run: |
-          DEV_CONTAINER_NAME=$(curl -k -s \
+          DEV_POD_NAME=$(curl -k -s \
             -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
             -H 'Accept: application/json' \
             https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods | \
@@ -131,8 +131,26 @@ jobs:
             -X DELETE \
             -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
             -H 'Accept: application/json' \
-            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods/${DEV_CONTAINER_NAME}
-
+            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods/${DEV_POD_NAME}
+      - run: |
+          RELEASE=$(git tag -l --points-at HEAD | grep "v[0-9]\.[0-9]")
+          if [ ! -z ${RELEASE} ] ; then
+            docker tag docker-registry.rahti.csc.fi/rems/rems:circle docker-registry.rahti.csc.fi/rems/rems:release
+            docker tag docker-registry.rahti.csc.fi/rems/rems:circle docker-registry.rahti.csc.fi/rems/rems:${RELEASE}
+            docker push docker-registry.rahti.csc.fi/rems/rems:release
+            docker push docker-registry.rahti.csc.fi/rems/rems:${RELEASE}
+      - run: |
+            DEMO_POD_NAME=$(curl -k -s \
+              -H "Authorization: Bearer $rahti_demo_pod_delete_token" \
+              -H 'Accept: application/json' \
+              https://rahti.csc.fi:8443/api/v1/namespaces/rems-demo/pods | \
+              jq '.items | .[].metadata.name' | grep rems-demo | tr -d \")
+            curl -k -s \
+              -X DELETE \
+              -H "Authorization: Bearer $rahti_demo_pod_delete_token" \
+              -H 'Accept: application/json' \
+              https://rahti.csc.fi:8443/api/v1/namespaces/rems-demo/pods/${DEMO_POD_NAME}
+          fi
   # pseudo job to post a single ok status to github after all the tests
   ok:
     executor: docker
