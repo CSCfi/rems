@@ -200,12 +200,12 @@ VALUES (nextval('catalogue_item_application_id_seq'))
 RETURNING id;
 
 -- :name add-entitlement! :!
-INSERT INTO entitlement (catAppId, userId, resId)
-VALUES (:application, :user, :resource);
+INSERT INTO entitlement (catAppId, userId, resId, approvedby)
+VALUES (:application, :user, :resource, :approvedby);
 
 -- :name end-entitlements! :!
 UPDATE entitlement
-SET endt = current_timestamp
+SET (endt, revokedby) = (current_timestamp, :revokedby)
 WHERE catAppId = :application
 /*~ (when (:user params) */
   AND entitlement.userId = :user

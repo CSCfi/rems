@@ -112,7 +112,8 @@
   (doseq [resource-id (sort resource-ids)]
     (db/add-entitlement! {:application application-id
                           :user user-id
-                          :resource resource-id})
+                          :resource resource-id
+                          :approvedby "rems"})    ;;TODO get approvedby as param
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
     (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
@@ -121,7 +122,8 @@
   (doseq [resource-id (sort resource-ids)]
     (db/end-entitlements! {:application application-id
                            :user user-id
-                           :resource resource-id})
+                           :resource resource-id
+                           :revokedby "rems"})    ;;TODO get revokedby as param
     (add-to-outbox! :remove (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
 (defn- get-entitlements-by-user [application-id]
@@ -168,9 +170,9 @@
     (when (seq members-to-update)
       (log/info "updating entitlements on application" application-id)
       (doseq [[userid resource-ids] entitlements-to-add]
-        (grant-entitlements! application-id userid resource-ids))
+        (grant-entitlements! application-id userid resource-ids))     ;;TODO get approvedby from event actor
       (doseq [[userid resource-ids] entitlements-to-remove]
-        (revoke-entitlements! application-id userid resource-ids)))))
+        (revoke-entitlements! application-id userid resource-ids))))) ;;TODO get revokedby from event actor
 
 (defn update-entitlements-for-event [event]
   ;; performance improvement: filter events which may affect entitlements
