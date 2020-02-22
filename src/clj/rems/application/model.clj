@@ -1,9 +1,9 @@
 (ns rems.application.model
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [map-vals update-existing]]
-            [rems.common.application-util :as application-util]
+            [medley.core :refer [find-first map-vals update-existing]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
+            [rems.common.application-util :as application-util]
             [rems.common.form :refer [field-visible?]]
             [rems.permissions :as permissions]
             [rems.util :refer [getx conj-vec]]))
@@ -373,8 +373,7 @@
 (defn- set-application-description [application]
   (let [fields (get-in application [:application/form :form/fields])
         description (->> fields
-                         (filter #(= :description (:field/type %)))
-                         first
+                         (find-first #(= :description (:field/type %)))
                          :field/value)]
     (assoc application :application/description (str description))))
 
