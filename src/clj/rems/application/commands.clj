@@ -191,7 +191,7 @@
     (not get-catalogue-item) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
     (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
-(defn- disabled-catalogue-items-error [application {:keys [get-catalogue-item]}]
+(defn- disabled-catalogue-items-error [application]
   (let [errors (for [item (:application/resources application)
                      :when (or (not (getx item :catalogue-item/enabled))
                                (getx item :catalogue-item/archived)
@@ -334,7 +334,7 @@
 (defmethod command-handler :application.command/submit
   [cmd application injections]
   (or (merge-with concat
-                  (disabled-catalogue-items-error application injections)
+                  (disabled-catalogue-items-error application)
                   (licenses-not-accepted-error application (:actor cmd))
                   (validation-error application injections))
       (ok {:event/type :application.event/submitted})))
@@ -360,7 +360,7 @@
        :application/comment (:comment cmd)}))
 
 (defmethod command-handler :application.command/revoke
-  [cmd application _injections]
+  [cmd _application _injections]
   (ok {:event/type :application.event/revoked
        :application/comment (:comment cmd)}))
 
@@ -421,7 +421,7 @@
        :application/public (:public cmd)}))
 
 (defmethod command-handler :application.command/add-licenses
-  [cmd _application injections]
+  [cmd _application _injections]
   (or (must-not-be-empty cmd :licenses)
       (ok {:event/type :application.event/licenses-added
            :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))
@@ -512,7 +512,7 @@
            :application/copied-to (select-keys created-event [:application/id :application/external-id])}])))))
 
 (defmethod command-handler :application.command/assign-external-id
-  [cmd application _injections]
+  [cmd _application _injections]
   (ok {:event/type :application.event/external-id-assigned
        :application/external-id (:external-id cmd)}))
 
