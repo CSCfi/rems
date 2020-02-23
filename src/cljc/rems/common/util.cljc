@@ -107,6 +107,32 @@
   [m ks & [default-value]]
   (vec (reduce #(conj %1 (get m %2 default-value)) [] ks)))
 
+(defn build-index
+  "Index the `coll` with given keys `ks` and map values with given `f`.
+
+  Results ia nested map, `(count ks)` levels deep, e.g.
+    (build-index [:a :b] :c [{:a 1 :b \"x\" :c :a} {:a 1 :b \"y\" :c :b}])
+      ==> {1 {\"x\" :a
+              \"y\" :b}}
+
+  In case of non-unique keys, `build-index` picks the first value, e.g.
+
+    (build-index [:a] identity [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
+      ==> {1 {:a 1 :b \"x\"}}"
+  [ks f coll]
+  (if (empty? ks)
+    (f (first coll))
+    (->> coll
+         (group-by (first ks))
+         (map (fn [[k v]] [k (build-index (rest ks) f v)]))
+         (into {}))))
+
+(deftest test-build-index
+  (is (= {1 {"x" :a "y" :b}}
+         (build-index [:a :b] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}])))
+  (is (= {1 {:a 1 :b "x" :c :a}}
+         (build-index [:a] identity [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}]))))
+
 (defn index-by
   "Index the collection coll with given keys `ks`.
   Result is a nested map, `(count ks)` levels deep, e.g.
@@ -120,12 +146,7 @@
     (index-by [:a] [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
       ==> {1 {:a 1 :b \"x\"}}"
   [ks coll]
-  (if (empty? ks)
-    (first coll)
-    (->> coll
-         (group-by (first ks))
-         (map (fn [[k v]] [k (index-by (rest ks) v)]))
-         (into {}))))
+  (build-index ks identity coll))
 
 (deftest test-index-by
   (is (= {1 {"x" {:a 1 :b "x"}
