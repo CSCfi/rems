@@ -120,6 +120,7 @@
   (dissoc application
           :application/events
           :application/form
+          :application/forms
           :application/licenses))
 
 (mount/defstate
@@ -249,7 +250,7 @@
 
 (defn export-applications-for-form-as-csv [user-id form-id]
   (let [applications (get-all-unrestricted-applications)
-        filtered-applications (filter #(= (:form/id (:application/form %)) form-id) applications)]
+        filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
     (csv/applications-to-csv filtered-applications user-id)))
 
 (defn reload-cache! []

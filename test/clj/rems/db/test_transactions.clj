@@ -64,7 +64,7 @@
         mark-observed-app-version (fn [result application]
                                     (if (and (not (:errors result))
                                              (= :application.event/draft-saved (:event/type (first (:events result)))))
-                                      (assoc-in result [:events 0 :application/field-values observed-app-version-marker]
+                                      (assoc-in result [:events 0 :application/field-values 0 observed-app-version-marker]
                                                 (str (count (:application/events application))))
                                       result))
         wrapped-handle-command (fn [cmd application injections]
@@ -159,7 +159,7 @@
                             (map str))
                        (->> events
                             (filter #(= :application.event/draft-saved (:event/type %)))
-                            (map #(get-in % [:application/field-values observed-app-version-marker]))))))))
+                            (map #(get-in % [:application/field-values 0 observed-app-version-marker]))))))))
 
           (testing "there are not gaps in event IDs"
             ;; There might still be gaps in the IDs if the transaction is rolled back

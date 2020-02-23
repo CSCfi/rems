@@ -69,19 +69,19 @@
   (concat (for [to-value (mapv :to-value application-columns)]
             (to-value application))
           (->> application
-               :application/form
-               :form/fields
+               :application/forms
+               (mapcat :form/fields)
                (mapv :field/value))))
 
 (defn- form-field-names [applications]
   (assert (apply = (->> applications
-                        (mapv :application/form)
+                        (mapcat :application/forms)
                         (mapv :form/id)))
           "All applications must have the same form id")
   (when (not (empty? applications))
     (->> (first applications)
-         :application/form
-         :form/fields
+         :application/forms
+         (mapcat :form/fields)
          (mapv :field/title)
          (mapv text/localized))))
 

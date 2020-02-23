@@ -8,6 +8,7 @@
             [etaoin.api :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.common.util :refer [getcat-in]]
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.standalone])
@@ -265,7 +266,7 @@
                     ["label" ""]
                     ["text" ""]
                     ["texta" ""]]
-                   (for [field (get-in application [:application/form :form/fields])]
+                   (for [field (getcat-in application [:application/forms :form/fields])]
                      ;; TODO could test other fields here too, e.g. title
                      [(:field/type field)
                       (:field/value field)])))))))))

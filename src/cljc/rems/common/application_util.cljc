@@ -1,4 +1,5 @@
-(ns rems.common.application-util)
+(ns rems.common.application-util
+  (:require [rems.common.util :refer [build-index]]))
 
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))
@@ -27,3 +28,11 @@
 
 (defn is-handler? [application user]
   (contains? (workflow-handlers application) user))
+
+(defn copy-field-values [application]
+  (->> (for [form (:application/forms application)
+             field (:form/fields form)]
+         {:form/id (:form/id form)
+          :field/id (:field/id field)
+          :field/value (:field/value field)})
+       (build-index [:form/id :field/id] :field/value)))

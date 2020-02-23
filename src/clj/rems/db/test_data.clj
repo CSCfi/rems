@@ -248,11 +248,13 @@
   (let [app (applications/get-application actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
-                     :field-values (->> (:form/fields (:application/form app))
-                                        (filter #(not (:field/optional %)))
-                                        (map (fn [field]
-                                               {:field (:field/id field)
-                                                :value (or field-value "x")})))))))
+                     :field-values (for [form (:application/forms app)
+                                         field (:form/fields form)
+                                         :when (not (:field/optional field))]
+                                     (merge (when (> (count (:application/forms app)) 1)
+                                              {:form (:form/id form)}) ; optional when one form
+                                            {:field (:field/id field)
+                                             :value (or field-value "x")}))))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
   (let [app (applications/get-application actor application-id)]

@@ -239,7 +239,10 @@
    :application/accepted-licenses (s/maybe {UserId #{s/Int}})
    :application/events [Event]
    :application/description s/Str
-   :application/form Form
+   :application/form (rjs/field Form
+                                {:deprecate true
+                                 :description "DEPRECATED: use forms instead"})
+   :application/forms [Form]
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) [Handler]}
@@ -249,6 +252,7 @@
 
 (s/defschema ApplicationOverview
   (dissoc Application
-          :application/form
           :application/events
+          :application/form
+          :application/forms
           :application/licenses))

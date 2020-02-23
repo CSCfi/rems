@@ -1,12 +1,13 @@
 (ns rems.application.model
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [find-first map-vals update-existing]]
+            [medley.core :refer [assoc-some find-first map-vals update-existing]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :as application-util]
             [rems.common.form :refer [field-visible?]]
+            [rems.common.util :refer [build-index getx getcat-in update-each update-in-each]]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx conj-vec]]))
+            [rems.util :refer [conj-vec]]))
 
 ;;;; Application
 
@@ -42,7 +43,8 @@
                                         (:application/licenses event))
              :application/accepted-licenses {}
              :application/events []
-             :application/form {:form/id (:form/id event)}
+             :application/form (select-keys (first (:application/forms event)) [:form/id]) ; TODO deprecate from API
+             :application/forms (mapv #(select-keys % [:form/id]) (:application/forms event))
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)})))
 
@@ -371,7 +373,7 @@
            :form/fields fields)))
 
 (defn- set-application-description [application]
-  (let [fields (get-in application [:application/form :form/fields])
+  (let [fields (getcat-in application [:application/forms :form/fields])
         description (->> fields
                          (find-first #(= :description (:field/type %)))
                          :field/value)]
@@ -476,6 +478,19 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
+(defn- enrich-form-answers [form current-answers previous-answers]
+  (let [form-id (:form/id form)
+        current-answers (get current-answers form-id)
+        previous-answers (get previous-answers form-id)
+        fields (for [field (:form/fields form)
+                     :let [field-id (:field/id field)
+                           current-value (get current-answers field-id)
+                           previous-value (get previous-answers field-id)]]
+                 (assoc-some field
+                             :field/value current-value
+                             :field/previous-value previous-value))]
+    (assoc form :form/fields fields)))
+
 (defn enrich-answers [application]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
@@ -484,15 +499,7 @@
         previous-answers (second answer-versions)]
     (-> application
         (dissoc ::draft-answers ::submitted-answers ::previous-submitted-answers)
-        (assoc-in [:application/form :form/fields] (merge-lists-by :field/id
-                                                                   (map (fn [[field-id value]]
-                                                                          {:field/id field-id
-                                                                           :field/previous-value value})
-                                                                        previous-answers)
-                                                                   (map (fn [[field-id value]]
-                                                                          {:field/id field-id
-                                                                           :field/value value})
-                                                                        current-answers))))))
+        (update-each :application/forms enrich-form-answers current-answers previous-answers))))
 
 (defn enrich-deadline [application get-config]
   (let [days ((get-config) :application-deadline-days)]
@@ -503,14 +510,13 @@
                         days))
       application)))
 
+(defn- enrich-form-fields-visible [form]
+  (let [answers (build-index [:field/id] :field/value (:form/fields form))
+        update-field-visible #(assoc % :field/visible (field-visible? % answers))]
+    (update-each form :form/fields update-field-visible)))
+
 (defn enrich-field-visible [application]
-  (let [fields (get-in application [:application/form :form/fields])
-        answers (into {} (map (juxt :field/id :field/value) fields))
-        fields-with-visible (mapv (fn [field]
-                                    (assoc field :field/visible (field-visible? field answers)))
-                                  fields)]
-    (-> application
-        (assoc-in [:application/form :form/fields] fields-with-visible))))
+  (update-each application :application/forms enrich-form-fields-visible))
 
 (defn- enrich-disable-commands [application get-config]
   (permissions/blacklist application
@@ -518,15 +524,24 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
-(defn enrich-with-injections [application {:keys [blacklisted?
-                                                  get-form-template get-catalogue-item get-license
-                                                  get-user get-users-with-role get-workflow
-                                                  get-attachments-for-application
-                                                  get-config]}]
+(defn- support-deprecated-form [application]
+  (assoc-some application :application/form (first (:application/forms application))))
+
+(defn enrich-with-injections
+  [application {:keys [blacklisted?
+                       get-form-template
+                       get-catalogue-item
+                       get-license
+                       get-user
+                       get-users-with-role
+                       get-workflow
+                       get-attachments-for-application
+                       get-config]
+                :as _injections}]
   (-> application
-      enrich-answers
-      (update :application/form enrich-form get-form-template)
-      enrich-field-visible ; uses enriched form fields and answers
+      (update-each :application/forms enrich-form get-form-template)
+      enrich-answers ; uses enriched form fields
+      enrich-field-visible ; uses enriched form fields
       set-application-description
       (update :application/resources enrich-resources get-catalogue-item)
       (update :application/licenses enrich-licenses get-license)
@@ -538,7 +553,8 @@
       (enrich-workflow-handlers get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
-      (enrich-disable-commands get-config)))
+      (enrich-disable-commands get-config)
+      (support-deprecated-form)))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
@@ -585,9 +601,9 @@
         (update-existing :field/previous-value (constantly "")))))
 
 (defn apply-privacy [application roles]
-  (update-in application
-             [:application/form :form/fields]
-             (partial mapv #(apply-field-privacy % roles))))
+  (-> application
+      (update-in-each [:application/form :form/fields] apply-field-privacy roles) ; TODO: remove support for deprecated form
+      (update-in-each [:application/forms :form/fields] apply-field-privacy roles)))
 
 (defn- hide-non-public-information [application]
   (-> application

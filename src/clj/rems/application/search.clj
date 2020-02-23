@@ -4,6 +4,7 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
+            [rems.common.util :refer [getcat-in]]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.events :as events]
@@ -70,10 +71,8 @@
                        #(text/localize-todo (:application/todo app)))))
               (cons (str (:application/todo app)))
               (str/join " "))
-   :form (->> (:form/fields (:application/form app))
-              (map (fn [field]
-                     ;; TODO: filter out checkboxes, attachments etc?
-                     (:field/value field)))
+   :form (->> (getcat-in app [:application/forms :form/fields])
+              (map :field/value) ;; TODO: filter out checkboxes, attachments etc?
               (str/join " "))})
 
 (defn- index-application! [^IndexWriter writer app]

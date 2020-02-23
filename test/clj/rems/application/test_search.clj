@@ -104,7 +104,8 @@
       (is (= #{app-id} (search/find-applications "todo:\"waiting-for-review\"")) "keyword todo, any field")))
 
   (testing "find by form content"
-    (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
+    (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
+                                                          :field/type :text
                                                           :field/title {:en "Text field"
                                                                         :fi "Tekstikenttä"}
                                                           :field/optional false}]})
@@ -120,7 +121,8 @@
       (is (= #{app-id} (search/find-applications "form:scratch")) "form field")))
 
   (testing "updating applications"
-    (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
+    (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
+                                                          :field/type :text
                                                           :field/title {:en "Text field"
                                                                         :fi "Tekstikenttä"}
                                                           :field/optional false}]})

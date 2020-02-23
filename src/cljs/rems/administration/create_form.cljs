@@ -617,7 +617,7 @@
                     (for [field (:form/fields form)]
                       [:div.field-preview {:id (str "field-preview-" (:field/id field))}
                        [fields/field (assoc field
-                                            :on-change #(rf/dispatch [::set-field-value (:field/id field) %])
+                                            :on-change #(rf/dispatch [::set-field-value (:form/id form) (:field/id field) %])
                                             :field/value (get-in preview [(:field/id field)]))]
                        (when-not (field-visible? field preview)
                          [:div {:style {:position :absolute
