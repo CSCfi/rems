@@ -176,6 +176,12 @@
   (when-not (seq (get cmd key))
     {:errors [{:type :must-not-be-empty :key key}]}))
 
+(defmacro missing-injections [& injections]
+  (let [injection-names (map (comp keyword str) injections)]
+    `(let [named-injections# (zipmap (list ~@injection-names) (list ~@injections))
+           missing-injections-names# (keys (medley.core/filter-vals nil? named-injections#))]
+       (assert (empty? missing-injections-names#) {:missing-injections missing-injections-names#}))))
+
 (defn- invalid-user-error [user-id {:keys [valid-user?]}]
   (cond
     (not valid-user?) {:errors [{:type :missing-injection :injection :valid-user?}]}
@@ -186,7 +192,7 @@
   [user-ids injections]
   (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
-(defn- invalid-catalogue-item-error [catalogue-item-id {:keys [get-catalogue-item]}]
+(defn- invalid-catalogue-item-error [catalogue-item-id get-catalogue-item]
   (cond
     (not get-catalogue-item) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
     (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
@@ -206,8 +212,8 @@
 
 (defn- invalid-catalogue-items
   "Checks the given catalogue items for validity and merges the errors"
-  [catalogue-item-ids injections]
-  (apply merge-with into (keep #(invalid-catalogue-item-error % injections) catalogue-item-ids)))
+  [catalogue-item-ids get-catalogue-item]
+  (apply merge-with into (keep #(invalid-catalogue-item-error % get-catalogue-item) catalogue-item-ids)))
 
 (defn- changes-original-workflow
   "Checks that the given catalogue items are compatible with the original application from where the workflow is from. Applicant can't do it."
@@ -270,14 +276,14 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
-(defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
+(defn- build-resources-list [catalogue-item-ids get-catalogue-item]
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
        (mapv (fn [catalogue-item]
                {:catalogue-item/id (:id catalogue-item)
                 :resource/ext-id (:resid catalogue-item)}))))
 
-(defn- build-licenses-list [catalogue-item-ids {:keys [get-catalogue-item-licenses]}]
+(defn- build-licenses-list [catalogue-item-ids get-catalogue-item-licenses]
   (->> catalogue-item-ids
        (mapcat get-catalogue-item-licenses)
        distinct
@@ -285,10 +291,11 @@
                {:license/id (:id license)}))))
 
 (defn- application-created-event! [{:keys [catalogue-item-ids time actor] :as cmd}
-                                   {:keys [allocate-application-ids! get-catalogue-item get-workflow]
+                                   {:keys [allocate-application-ids! get-catalogue-item get-catalogue-item-licenses get-workflow]
                                     :as injections}]
   (or (must-not-be-empty cmd :catalogue-item-ids)
-      (invalid-catalogue-items catalogue-item-ids injections)
+      (missing-injections allocate-application-ids! get-catalogue-item get-catalogue-item-licenses get-workflow)
+      (invalid-catalogue-items catalogue-item-ids get-catalogue-item)
       (unbundlable-catalogue-items catalogue-item-ids injections)
       (let [items (map get-catalogue-item catalogue-item-ids)
             form-id (:formid (first items))
@@ -300,9 +307,9 @@
                  :event/actor actor
                  :application/id (:application/id ids)
                  :application/external-id (:application/external-id ids)
-                 :application/resources (build-resources-list catalogue-item-ids injections)
-                 :application/licenses (build-licenses-list catalogue-item-ids injections)
-                 :form/id form-id
+                 :application/resources (build-resources-list catalogue-item-ids get-catalogue-item)
+                 :application/licenses (build-licenses-list catalogue-item-ids get-catalogue-item-licenses)
+                 :application/forms (mapv (fn [form-id] {:form/id form-id}) form-ids)
                  :workflow/id workflow-id
                  :workflow/type workflow-type}})))
 
@@ -428,15 +435,17 @@
            :application/comment (:comment cmd)})))
 
 (defmethod command-handler :application.command/change-resources
-  [cmd application injections]
+  [cmd application {:keys [get-catalogue-item
+                           get-catalogue-item-licenses]
+                    :as injections}]
   (or (must-not-be-empty cmd :catalogue-item-ids)
-      (invalid-catalogue-items (:catalogue-item-ids cmd) injections)
+      (missing-injections get-catalogue-item get-catalogue-item-licenses)
+      (invalid-catalogue-items (:catalogue-item-ids cmd) get-catalogue-item)
       (unbundlable-catalogue-items-for-actor application (:catalogue-item-ids cmd) (:actor cmd) injections)
-      (changes-original-form application (:catalogue-item-ids cmd) (:actor cmd) injections)
       (changes-original-workflow application (:catalogue-item-ids cmd) (:actor cmd) injections)
       (ok (merge {:event/type :application.event/resources-changed
-                  :application/resources (build-resources-list (:catalogue-item-ids cmd) injections)
-                  :application/licenses (build-licenses-list (:catalogue-item-ids cmd) injections)}
+                  :application/resources (build-resources-list (:catalogue-item-ids cmd) get-catalogue-item)
+                  :application/licenses (build-licenses-list (:catalogue-item-ids cmd) get-catalogue-item-licenses)}
                  (when (:comment cmd)
                    {:application/comment (:comment cmd)})))))
 
