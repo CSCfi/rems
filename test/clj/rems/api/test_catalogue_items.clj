@@ -127,7 +127,6 @@
                                (authenticate api-key user)
                                handler
                                read-ok-body)]
-                  (prn data)
                   (is (= id (:id data)))
                   (is (= {:title "En title"
                           :infourl nil}
