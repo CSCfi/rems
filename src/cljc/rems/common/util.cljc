@@ -1,6 +1,7 @@
 (ns rems.common.util
   (:require [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]))
+            [clojure.test :refer [deftest is testing]]
+            [medley.core :refer [update-existing]]))
 
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
@@ -33,6 +34,68 @@
          (getcat-in {:foo {:bar [{:baz [1 2 3]}
                                  {:baz [4 5 6]}]}}
                     [:foo :bar :baz]))))
+
+(defn update-each
+  "Updates each item in a nested map or collection structure with `f`, item and `args`.
+
+  Like `clojure.core/update` except
+  - maps `f` for each item in collections
+  - maps `f` regularly for `clojure.core/map?`
+  - only updates if key exists."
+  [m k f & args]
+  (update-existing m k (fn [coll]
+                         (mapv #(apply f % args)
+                               coll))))
+
+(deftest test-update-each
+  (is (= nil (update-each nil :foo str)))
+  (is (= {} (update-each {} :coll str)) "only existing keys are mapped")
+  (is (= {:coll ["0" "1" "2"]}
+         (update-each {:coll (range 3)}
+                      :coll
+                      str)))
+  (is (= {:coll [2 3 4]}
+         (update-each {:coll (range 3)}
+                      :coll
+                      + 2))))
+
+(defn update-in-each
+  "Updates each item in a nested map or collection structure with `f`, item and `args`.
+
+  Like `clojure.core/update-in` except
+  - maps `f` for each item in collections
+  - maps `f` regularly for `clojure.core/map?`
+  - only updates if key exists."
+  [m ks f & args]
+  (if (empty? ks)
+    (apply f m args)
+    (if (map? (get m (first ks)))
+      (update-existing m (first ks) #(apply update-in-each % (rest ks) f args))
+      (update-each m (first ks) #(apply update-in-each % (rest ks) f args)))))
+
+(deftest test-update-in-each
+  (is (= nil (update-in-each nil [:foo] str)))
+  (is (= {} (update-in-each {} [:coll] str)) "only existing keys are mapped")
+  (is (= {:coll ["0" "1" "2"]}
+         (update-in-each {:coll (range 3)}
+                         [:coll]
+                         str)))
+  (is (= {:coll [{:range ["0" "1" "2"]}
+                 {:range ["0" "1"]}]}
+         (update-in-each {:coll [{:range (range 3)}
+                                 {:range (range 2)}]}
+                         [:coll :range]
+                         str)))
+  (is (= {:coll [{:map {:map [{:range ["0" "1" "2"]}
+                              {:range ["0" "1"]}]}}]}
+         (update-in-each {:coll [{:map {:map [{:range (range 3)}
+                                              {:range (range 2)}]}}]}
+                         [:coll :map :map :range]
+                         str)))
+  (is (= {:coll [3 4 5]}
+         (update-in-each {:coll (range 3)}
+                         [:coll]
+                         + 1 2))))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
