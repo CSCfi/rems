@@ -16,6 +16,24 @@
   [m ks]
   (reduce getx m ks))
 
+(defn getcat-in
+  "Select a seq of values from a nested structure.
+
+  Like `clojure.core/get-in` and `clojure.core/mapcat` combined."
+  [m ks]
+  (if (empty? ks)
+    [m]
+    (let [n (get m (first ks))]
+      (if (map? n)
+        (getcat-in n (rest ks))
+        (mapcat #(getcat-in % (rest ks)) n)))))
+
+(deftest test-getcat-in
+  (is (= [1 2 3 4 5 6]
+         (getcat-in {:foo {:bar [{:baz [1 2 3]}
+                                 {:baz [4 5 6]}]}}
+                    [:foo :bar :baz]))))
+
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
 
