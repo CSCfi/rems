@@ -14,9 +14,9 @@
 (deftest catalogue-items-api-test
   (let [api-key "42"
         user-id "alice"
-        form-id (test-data/create-form! {:form/title "form name"})
-        wf-id (test-data/create-workflow! {:title "workflow name"})
-        res-id (test-data/create-resource! {:resource-ext-id "resource ext id"})]
+        form-id (test-data/create-form! {:form/title "form name" :form/organization "organization1"})
+        wf-id (test-data/create-workflow! {:title "workflow name" :organization "organization1"})
+        res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization "organization1"})]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
                    handler
@@ -35,7 +35,7 @@
                                       handler
                                       read-body))]
         (testing "create as owner"
-          (let [data (create-catalogue-item "owner" "test-organization")
+          (let [data (create-catalogue-item "owner" "organization1")
                 id (:id data)]
             (is (:success data))
             (is (number? id))
@@ -48,7 +48,7 @@
                         :workflow-name "workflow name"
                         :form-name "form name"
                         :resource-name "resource ext id"
-                        :organization "test-organization"
+                        :organization "organization1"
                         :localizations {}}
                        (select-keys data [:id :organization :workflow-name :form-name :resource-name :localizations])))))
             (testing "and fetch non-existing item"
@@ -58,6 +58,13 @@
                 (is (response-is-not-found? response))
                 (is (= "application/json" (get-in response [:headers "Content-Type"])))))))
 
+        (testing "create with mismatched organization"
+          (let [data (create-catalogue-item "owner" "nbn")]
+            (is (not (:success data)))
+            (is (= [{:type "t.administration.errors/organization-mismatch"
+                     :form form-id :resource res-id :workflow wf-id}]
+                   (:errors data)))))
+
         (testing "create as organization owner"
           (testing "with correct organization"
             (let [data (create-catalogue-item "organization-owner1" "organization1")
@@ -66,7 +73,7 @@
               (is (number? id))))
 
           (testing "with incorrect organization"
-            (let [data (create-catalogue-item "organization-owner1" "organization2")]
+            (let [data (create-catalogue-item "organization-owner2" "organization1")]
               (is (not (:success data)))))))))
 
 (deftest catalogue-items-edit-test
@@ -82,6 +89,7 @@
                        (json-body {:form form-id
                                    :resid res-id
                                    :wfid wf-id
+                                   :organization "default"
                                    :localizations {:en {:title "En title"}
                                                    :sv {:title "Sv title"
                                                         :infourl "http://info.se"}}})

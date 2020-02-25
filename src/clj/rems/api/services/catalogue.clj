@@ -17,8 +17,21 @@
      :licenses (licenses/get-licenses {:wfid wfid
                                        :items [id]})}))
 
+(defn- organization-mismatch-error [{:keys [organization form resid wfid]}]
+  (let [mismatches (merge (when (not= organization (:form/organization (form/get-form-template form)))
+                            {:form form})
+                          (when (not= organization (:organization (resource/get-resource resid)))
+                            {:resource resid})
+                          (when (not= organization (:organization (workflow/get-workflow wfid)))
+                            {:workflow wfid}))]
+    (when (not (empty? mismatches))
+      {:success false
+       :errors [(merge {:type :t.administration.errors/organization-mismatch}
+                       mismatches)]})))
+
 (defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (or (util/forbidden-organization-error organization)
+      (organization-mismatch-error command)
       ;; TODO make :organization unoptional?
       (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
                                                       (select-keys command [:form :resid :wfid :enabled :archived :organization]))))

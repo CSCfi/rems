@@ -8,6 +8,10 @@ have notable changes.
 
 Changes since v2.7
 
+### Breaking changes
+- Betters support for organizations (#1893)
+  - Backend checks that organizations of resource, workflow and form match when creating a catalogue item
+
 ### Changes
 - Duplicate resource external ids are now allowed (#1988)
 
