@@ -62,7 +62,9 @@
           (let [data (create-catalogue-item "owner" "nbn")]
             (is (not (:success data)))
             (is (= [{:type "t.administration.errors/organization-mismatch"
-                     :form form-id :resource res-id :workflow wf-id}]
+                     :form {:id form-id :organization "organization1"}
+                     :resource {:id res-id :organization "organization1"}
+                     :workflow {:id wf-id :organization "organization1"}}]
                    (:errors data)))))
 
         (testing "create as organization owner"

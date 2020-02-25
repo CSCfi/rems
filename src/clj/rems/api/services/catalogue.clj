@@ -18,13 +18,15 @@
                                        :items [id]})}))
 
 (defn- organization-mismatch-error [{:keys [organization form resid wfid]}]
-  (let [mismatches (merge (when (not= organization (:form/organization (form/get-form-template form)))
-                            {:form form})
-                          (when (not= organization (:organization (resource/get-resource resid)))
-                            {:resource resid})
-                          (when (not= organization (:organization (workflow/get-workflow wfid)))
-                            {:workflow wfid}))]
-    (when (not (empty? mismatches))
+  (let [form-org (:form/organization (form/get-form-template form))
+        res-org (:organization (resource/get-resource resid))
+        wf-org (:organization (workflow/get-workflow wfid))]
+    (when-let [mismatches (merge (when (not= organization form-org)
+                                   {:form {:id form :organization form-org}})
+                                 (when (not= organization res-org)
+                                   {:resource {:id resid :organization res-org}})
+                                 (when (not= organization wf-org)
+                                   {:workflow {:id wfid :organization wf-org}}))]
       {:success false
        :errors [(merge {:type :t.administration.errors/organization-mismatch}
                        mismatches)]})))
