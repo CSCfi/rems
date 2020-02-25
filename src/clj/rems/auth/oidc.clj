@@ -44,7 +44,8 @@
     ; name - non-unique name
     ; locale – could be used to set preferred lang on first login
     ; email – non-unique (!) email
-    (log/info "logged in" oidc-data)
+    (when (:debug-authentication env)
+      (log/info "logged in" oidc-data))
     (-> (redirect "/") ; TODO Could redirect with state param
         (assoc :session (:session request))
         (assoc-in [:session :identity] {:eppn (:sub oidc-data)

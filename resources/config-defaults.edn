@@ -22,6 +22,9 @@
  ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :oidc
  :authentication :shibboleth
 
+ ;; Log additional details about authentication
+ :debug-authentication false
+
  ;; For :shibboleth authentication
  :alternative-login-url nil ;; link to this login url in addition to /Shibboleth.sso/Login
 
