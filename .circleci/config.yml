@@ -104,19 +104,16 @@ jobs:
       - store_artifacts:
           path: target/uberjar/rems.jar
       - persist_to_workspace:
-          root: target/uberjar
+          root: .
           paths:
-            - rems.jar
+            - target/uberjar/rems.jar
 
   rahti:
     <<: *defaults
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v2-dependencies-{{ checksum "project.clj" }}
       - attach_workspace:
-          at: target/uberjar
+          at: .
       - run: docker build --pull --tag docker-registry.rahti.csc.fi/rems/rems:circle --tag docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD) .
       - run: docker login -p $rahtitoken -u unused docker-registry.rahti.csc.fi
       - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle
@@ -160,7 +157,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - rahti-dev
       - rahti:
           requires:
             - build
@@ -168,7 +165,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - rahti-dev
       - ok:
           requires:
             - build
