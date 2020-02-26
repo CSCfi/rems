@@ -16,7 +16,8 @@
             [rems.json :as json]
             [rems.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
-            [rems.util :refer [getx-user-id]]))
+            [rems.util :refer [getx-user-id]])
+  (:import [org.joda.time DateTime]))
 
 ;; TODO move Entitlement schema here from rems.api?
 
@@ -41,7 +42,7 @@
                    :value (str "" resid)
                    :source "https://ga4gh.org/duri/no_org"
                    :by "rems"             ;; TODO Get approver from application events
-                   :asserted 1568699331}}) ;; TODO Real timestamp
+                   :asserted (.getMillis ^DateTime start)}})
 
 (defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
   (mapv entitlement-to-permissions-api

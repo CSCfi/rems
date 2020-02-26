@@ -20,14 +20,14 @@
           data (-> (request :get "/api/permissions/alice")
                    (authenticate api-key "developer")
                    handler
-                   read-ok-body)]
+                   read-ok-body)
+          result (first data)]
       (is (= 1 (count data)))
       (is (= {:ga4gh_visa_v1
               {:type     "ControlledAccessGrants",
                :value    "urn:nbn:fi:lb-201403262",
                :source   "https://ga4gh.org/duri/no_org",
-               :by       "rems",
-               :asserted 1568699331
-               }}
-             (first data))))))
+               :by       "rems"}}
+             (update-in result [:ga4gh_visa_v1] dissoc :asserted))))))  ;;TODO: add test for type of asserted
+
 
