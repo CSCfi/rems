@@ -171,7 +171,7 @@
     (when (seq members-to-update)
       (log/info "updating entitlements on application" application-id)
       (doseq [[userid resource-ids] entitlements-to-add]
-        (grant-entitlements! application-id userid resource-ids actor))     ;;TODO get approvedby from event actor
+        (grant-entitlements! application-id userid resource-ids actor)) 
       (doseq [[userid resource-ids] entitlements-to-remove]
         (revoke-entitlements! application-id userid resource-ids))))) ;;TODO get revokedby from event actor
 
@@ -185,4 +185,4 @@
                      :application.event/revoked}
                    (:event/type event))
     (let [application (applications/get-unrestricted-application (:application/id event))]
-      (update-entitlements-for-application application (:application.event/actor event)))))
+      (update-entitlements-for-application application (:event/actor event)))))
