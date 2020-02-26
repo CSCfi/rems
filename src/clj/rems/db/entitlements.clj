@@ -37,11 +37,11 @@
                               :resource-ext-id resource-or-nil
                               :is-active? (not expired?)})))
 
-(defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid]}]
+(defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
   {:ga4gh_visa_v1 {:type "ControlledAccessGrants"
                    :value (str "" resid)
                    :source "https://ga4gh.org/duri/no_org"
-                   :by "rems"             ;; TODO Get approver from application events
+                   :by (str "" approvedby)
                    :asserted (.getMillis ^DateTime start)}})
 
 (defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
@@ -108,13 +108,13 @@
                 :outbox/entitlement-post {:action action
                                           :entitlements entitlements}}))
 
-(defn- grant-entitlements! [application-id user-id resource-ids]
+(defn- grant-entitlements! [application-id user-id resource-ids actor]
   (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids)
   (doseq [resource-id (sort resource-ids)]
     (db/add-entitlement! {:application application-id
                           :user user-id
                           :resource resource-id
-                          :approvedby "rems"})    ;;TODO get approvedby as param
+                          :approvedby actor})
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
     (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
@@ -138,7 +138,7 @@
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
   then we end the entitlement and call the REST callback."
-  [application]
+  [application actor]
   (let [application-id (:application/id application)
         current-members (set (map :userid (application-util/applicant-and-members application)))
         past-members (set (map :userid (:application/past-members application)))
@@ -171,7 +171,7 @@
     (when (seq members-to-update)
       (log/info "updating entitlements on application" application-id)
       (doseq [[userid resource-ids] entitlements-to-add]
-        (grant-entitlements! application-id userid resource-ids))     ;;TODO get approvedby from event actor
+        (grant-entitlements! application-id userid resource-ids actor))     ;;TODO get approvedby from event actor
       (doseq [[userid resource-ids] entitlements-to-remove]
         (revoke-entitlements! application-id userid resource-ids))))) ;;TODO get revokedby from event actor
 
@@ -185,4 +185,4 @@
                      :application.event/revoked}
                    (:event/type event))
     (let [application (applications/get-unrestricted-application (:application/id event))]
-      (update-entitlements-for-application application))))
+      (update-entitlements-for-application application (:application.event/actor event)))))
