@@ -77,17 +77,20 @@
               (str/join " "))})
 
 (defn- index-application! [^IndexWriter writer app]
-  (log/info "Indexing application" (:application/id app))
-  (let [doc (Document.)
-        app-id (str (:application/id app))
-        terms (index-terms-for-application app)]
-    ;; metadata
-    (.add doc (StringField. app-id-field app-id Field$Store/YES))
-    ;; searchable fields
-    (doseq [[k v] terms]
-      (.add doc (TextField. (name k) v Field$Store/NO)))
-    (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
-    (.updateDocument writer (Term. app-id-field app-id) doc)))
+  (let [app-id (str (:application/id app))]
+    (log/debug "Indexing application" app-id)
+    (try
+      (let [doc (Document.)
+            terms (index-terms-for-application app)]
+        ;; metadata
+        (.add doc (StringField. app-id-field app-id Field$Store/YES))
+        ;; searchable fields
+        (doseq [[k v] terms]
+          (.add doc (TextField. (name k) v Field$Store/NO)))
+        (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
+        (.updateDocument writer (Term. app-id-field app-id) doc))
+      (catch Throwable t
+        (throw (Error. (str "Error indexing application " app-id) t))))))
 
 (defn refresh! []
   (locking index-lock
@@ -96,8 +99,11 @@
       (when-not (empty? events)
         (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                        (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
-          (doseq [app-id (distinct (map :application/id events))]
-            (index-application! writer (applications/get-unrestricted-application app-id))))
+          (let [app-ids (distinct (map :application/id events))]
+            (log/info "Start indexing" (count app-ids) "applications...")
+            (doseq [app-id app-ids]
+              (index-application! writer (applications/get-unrestricted-application app-id)))
+            (log/info "Finished indexing" (count app-ids) "applications")))
         (.maybeRefresh searcher-manager)
         (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
 
