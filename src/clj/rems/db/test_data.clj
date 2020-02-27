@@ -312,66 +312,81 @@
 
 (def ^:private all-field-types-example
   [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
-                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
+                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
+                  :sv "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"} ;; TODO translate
     :field/optional false
     :field/type :label}
 
    {:field/title {:en "Application title field"
-                  :fi "Hakemuksen otsikko -kenttä"}
+                  :fi "Hakemuksen otsikko -kenttä"
+                  :sv "Hakemuksen otsikko -kenttä"} ;; TODO translate
     :field/optional false
     :field/type :description}
 
    {:field/title {:en "Text field"
-                  :fi "Tekstikenttä"}
+                  :fi "Tekstikenttä"
+                  :sv "Tekstikenttä"} ;; TODO translate
     :field/optional false
     :field/type :text
     :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"}}
+                        :fi "Täyteteksti"
+                        :sv "Täyteteksti"}} ;; TODO translate
 
    {:field/title {:en "Text area"
-                  :fi "Tekstialue"}
+                  :fi "Tekstialue"
+                  :sv "Tekstialue"} ;; TODO translate
     :field/optional false
     :field/type :texta
     :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"}}
+                        :fi "Täyteteksti"
+                        :sv "Täyteteksti"}} ;; TODO translate
 
    {:field/title {:en "Header"
-                  :fi "Otsikko"}
+                  :fi "Otsikko"
+                  :sv "Otsikko"} ;; TODO translate
     :field/type :header
     :field/optional false}
 
    {:field/title {:en "Date field"
-                  :fi "Päivämääräkenttä"}
+                  :fi "Päivämääräkenttä"
+                  :sv "Päivämääräkenttä"} ;; TODO translate
     :field/optional true
     :field/type :date}
 
    {:field/title {:en "Email field"
-                  :fi "Sähköpostikenttä"}
+                  :fi "Sähköpostikenttä"
+                  :sv "Sähköpostikenttä"} ;; TODO translate
     :field/optional true
     :field/type :email}
 
    {:field/title {:en "Attachment"
-                  :fi "Liitetiedosto"}
+                  :fi "Liitetiedosto"
+                  :sv "Liitetiedosto"} ;; TODO translate
     :field/optional true
     :field/type :attachment}
 
    {:field/title {:en "Option list. Choose the first option to reveal a new field."
-                  :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."}
+                  :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
+                  :sv "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."} ;; TODO translate
     :field/optional true
     :field/type :option
     :field/id "option"
     :field/options [{:key "Option1"
                      :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"}}
+                             :fi "Ensimmäinen vaihtoehto"
+                             :sv "Ensimmäinen vaihtoehto"}} ;; TODO translate
                     {:key "Option2"
                      :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"}}
+                             :fi "Toinen vaihtoehto"
+                             :sv "Toinen vaihtoehto"}} ;; TODO translate
                     {:key "Option3"
                      :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"}}]}
+                             :fi "Kolmas vaihtoehto"
+                             :sv "Kolmas vaihtoehto"}}]} ;; TODO translate
 
    {:field/title {:en "Conditional field. Shown only if first option is selected above."
-                  :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."}
+                  :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
+                  :sv "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."} ;; TODO translate
     :field/optional false
     :field/type :text
     :field/visibility {:visibility/type :only-if
@@ -379,33 +394,40 @@
                        :visibility/values ["Option1"]}}
 
    {:field/title {:en "Multi-select list"
-                  :fi "Monivalintalista"}
+                  :fi "Monivalintalista"
+                  :sv "Monivalintalista"} ;; TODO translate
     :field/optional true
     :field/type :multiselect
     :field/options [{:key "Option1"
                      :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"}}
+                             :fi "Ensimmäinen vaihtoehto"
+                             :sv "Ensimmäinen vaihtoehto"}} ;; TODO translate
                     {:key "Option2"
                      :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"}}
+                             :fi "Toinen vaihtoehto"
+                             :sv "Toinen vaihtoehto"}} ;; TODO translate
                     {:key "Option3"
                      :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"}}]}
+                             :fi "Kolmas vaihtoehto"
+                             :sv "Kolmas vaihtoehto"}}]} ;; TODO translate
 
    {:field/title {:en "The following field types can have a max length."
-                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."}
+                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
+                  :sv "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."} ;; TODO translate
     :field/optional false
     :field/type :label}
 
    ;; fields which support maxlength
    {:field/title {:en "Text field with max length"
-                  :fi "Tekstikenttä pituusrajalla"}
+                  :fi "Tekstikenttä pituusrajalla"
+                  :sv "Tekstikenttä pituusrajalla"} ;; TODO translate
     :field/optional true
     :field/type :text
     :field/max-length 10}
 
    {:field/title {:en "Text area with max length"
-                  :fi "Tekstialue pituusrajalla"}
+                  :fi "Tekstialue pituusrajalla"
+                  :sv "Tekstialue pituusrajalla"} ;; TODO translate
     :field/optional true
     :field/type :texta
     :field/max-length 100}])
