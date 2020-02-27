@@ -157,7 +157,6 @@
                                 [lambdaisland/kaocha "0.0-590"]
                                 [etaoin "0.3.6"]
                                 [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
-                                [org.clojure/core.rrb-vector "0.1.1"] ;; the version doo pulls in is broken on fresh cljs
                                 [re-frisk "0.5.4.1"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.7"]]
