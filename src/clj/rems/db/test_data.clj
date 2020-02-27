@@ -453,199 +453,253 @@
     :form/organization "nbn"
     :form/title "THL form"
     :form/fields [{:field/title {:en "Application title"
-                                 :fi "Hakemuksen otsikko"}
+                                 :fi "Hakemuksen otsikko"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :description
                    :field/placeholder {:en "Study of.."
-                                       :fi "Tutkimus aiheesta.."}}
+                                       :fi "Tutkimus aiheesta.."
+                                       :sv "TODO"}}
                   {:field/title {:en "1. Research project full title"
-                                 :fi "1. Tutkimusprojektin täysi nimi"}
+                                 :fi "1. Tutkimusprojektin täysi nimi"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "2. This is an amendment of a previous approved application"
-                                 :fi "2. Hakemus täydentää edellistä hakemusta"}
+                                 :fi "2. Hakemus täydentää edellistä hakemusta"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :option
                    :field/options [{:key "false"
                                     :label {:en "no"
-                                            :fi "ei"}}
+                                            :fi "ei"
+                                            :sv "TODO"}}
                                    {:key "true"
                                     :label {:en "yes"
-                                            :fi "kyllä"}}]}
+                                            :fi "kyllä"
+                                            :sv "TODO"}}]}
                   {:field/title {:en "If yes, what were the previous project permit code/s?"
-                                 :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"}
+                                 :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :text}
                   {:field/title {:en "3. Study PIs (name, titile, affiliation, email)"
-                                 :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"}
+                                 :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "4. Contact person for application if different than applicant (name, email)"
-                                 :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"}
+                                 :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "5. Research project start date"
-                                 :fi "5. Projektin aloituspäivä"}
+                                 :fi "5. Projektin aloituspäivä"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :date}
                   {:field/title {:en "6. Research project end date"
-                                 :fi "6. Projektin lopetuspäivä"}
+                                 :fi "6. Projektin lopetuspäivä"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :date}
                   {:field/title {:en "7. Describe in detail the aims of the study and analysis plan"
-                                 :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                                 :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "8. If this is an amendment, please describe briefly what is new"
-                                 :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."}
+                                 :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
-                                 :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                                 :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
-                                       :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
+                                       :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "10. Place/plces of research, including place of sample and/or data analysis."
-                                 :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."}
+                                 :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."
+                                 :sv "TODO"}
                    :field/placeholder {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
-                                       :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."}
+                                       :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "11. Description of other research group members and their role in the applied project."
-                                 :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
+                                 :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."
+                                 :sv "TODO"}
                    :field/placeholder {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
-                                       :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
+                                       :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "12. Specify selection criteria of study participants (if applicable)"
-                                 :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"}
+                                 :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
-                                       :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."}
+                                       :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)"
-                                 :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"}
+                                 :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
-                                       :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."}
+                                       :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "14. Specify requested genomics or other omics data (if applicable)"
-                                 :fi "14. Kuvaile tarvittava genomiikkadata."}
+                                 :fi "14. Kuvaile tarvittava genomiikkadata."
+                                 :sv "TODO"}
                    :field/placeholder {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
-                                       :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
+                                       :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"
+                                       :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "16. Are biological samples requested?"
-                                 :fi "16. Pyydetäänkö biologisia näytteitä?"}
+                                 :fi "16. Pyydetäänkö biologisia näytteitä?"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :option
                    :field/options [{:key "false"
                                     :label {:en "no"
-                                            :fi "ei"}}
+                                            :fi "ei"
+                                            :sv "TODO"}}
                                    {:key "true"
                                     :label {:en "yes"
-                                            :fi "kyllä"}}]}
+                                            :fi "kyllä"
+                                            :sv "TODO"}}]}
                   {:field/title {:en "The type and amount of biological samples requested"
-                                 :fi "Biologisten näytteiden tyypit ja määrät."}
+                                 :fi "Biologisten näytteiden tyypit ja määrät."
+                                 :sv "TODO"}
                    :field/placeholder {:en "Type and amount of samples and any additional specific criteria."
-                                       :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."}
+                                       :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."
+                                       :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "17. What study results will be returned to THL Biobank (if any)?"
-                                 :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"}
+                                 :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
-                                       :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"}
+                                       :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "Expected date for return of study results"
-                                 :fi "Odotettu tutkimustuloksien palautuspäivämäärä"}
+                                 :fi "Odotettu tutkimustuloksien palautuspäivämäärä"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :date}
                   {:field/title {:en "18. Ethical aspects of the project"
-                                 :fi "18. Tutkimuksen eettiset puolet"}
+                                 :fi "18. Tutkimuksen eettiset puolet"
+                                 :sv "TODO"}
                    :field/placeholder {:en "If you have any documents from an ethical board, please provide them as an attachment."
-                                       :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."}
+                                       :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "19. Project keywords (max 5)"
-                                 :fi "19. Projektin avainsanat (maks. 5)"}
+                                 :fi "19. Projektin avainsanat (maks. 5)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "List a few keywords that are related to this research project (please separate with comma)"
-                                       :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."}
+                                       :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "20. Planned publications (max 3)"
-                                 :fi "20. Suunnitellut julkaisut (maks. 3)"}
+                                 :fi "20. Suunnitellut julkaisut (maks. 3)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Planned publication titles / research topics"
-                                       :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"}
+                                       :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "21. Funding information"
-                                 :fi "21. Rahoitus"}
+                                 :fi "21. Rahoitus"
+                                 :sv "TODO"}
                    :field/placeholder {:en "List all funding sources which will be used for this research project."
-                                       :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"}
+                                       :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)"
-                                 :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"}
+                                 :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Electronic invoice address when possible + invoicing reference"
-                                       :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."}
+                                       :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "23. Other information"
-                                 :fi "23. Muuta"}
+                                 :fi "23. Muuta"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Any other relevant information for the application"
-                                       :fi "Muuta hakemukseen liittyvää oleellista tietoa"}
+                                       :fi "Muuta hakemukseen liittyvää oleellista tietoa"
+                                       :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "THL Biobank's registered area/s of operation to which the research project complies:"
-                                 :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"}
+                                 :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :multiselect
                    :field/options [{:key "population_health"
                                     :label {:en "Promoting the population's health"
-                                            :fi "Edistää kansanterveytttä"}}
+                                            :fi "Edistää kansanterveytttä"
+                                            :sv "TODO"}}
                                    {:key "disease_mechanisms"
                                     :label {:en "Identifying factors involved in disease mechanisms"
-                                            :fi "Tunnistaa tautien mekanismeja"}}
+                                            :fi "Tunnistaa tautien mekanismeja"
+                                            :sv "TODO"}}
                                    {:key "disease_prevention"
                                     :label {:en "Disease prevention"
-                                            :fi "Estää tautien leviämistä"}}
+                                            :fi "Estää tautien leviämistä"
+                                            :sv "TODO"}}
                                    {:key "health_product_development"
                                     :label {:en "Developing products that promote the welfare and health of the population"
-                                            :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."}}
+                                            :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."
+                                            :sv "TODO"}}
                                    {:key "treatment_development"
                                     :label {:en "Developing products and treatments for diseases"
-                                            :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"}}
+                                            :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"
+                                            :sv "TODO"}}
                                    {:key "other"
                                     :label {:en "Other"
-                                            :fi "Muuta"}}]}
+                                            :fi "Muuta"
+                                            :sv "TODO"}}]}
                   {:field/title {:en "Other, specify"
-                                 :fi "Muuta, tarkenna"}
+                                 :fi "Muuta, tarkenna"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "Data management plan (pdf)"
-                                 :fi "Datanhallintasuunnitelma (pdf)"}
+                                 :fi "Datanhallintasuunnitelma (pdf)"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :attachment}]}))
 
@@ -873,18 +927,22 @@
                   :form/organization "perf"
                   :form/title "Performance tests"
                   :form/fields [{:field/title {:en "Project name"
-                                               :fi "Projektin nimi"}
+                                               :fi "Projektin nimi"
+                                               :sv "Projektin nimi"} ;; TODO translate
                                  :field/optional false
                                  :field/type :description
                                  :field/placeholder {:en "Project"
-                                                     :fi "Projekti"}}
+                                                     :fi "Projekti"
+                                                     :sv "Projekti"}} ;; TODO translate
 
                                 {:field/title {:en "Project description"
-                                               :fi "Projektin kuvaus"}
+                                               :fi "Projektin kuvaus"
+                                               :sv "Projektin kuvaus"} ;; TODO translate
                                  :field/optional false
                                  :field/type :texta
                                  :field/placeholder {:en "The purpose of the project is to..."
-                                                     :fi "Projektin tarkoitus on..."}}]})
+                                                     :fi "Projektin tarkoitus on..."
+                                                     :sv "Projektin tarkoitus on..."}}]}) ;; TODO translate
         form (form/get-form-template form-id)
         license-id (create-license! {:actor owner
                                      :license/type :text
