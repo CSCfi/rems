@@ -160,11 +160,11 @@
 (defn create-attachment-license! [{:keys [actor]
                                    :license/keys [organization]}]
   (let [fi-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
-                                                           :filename "fi.txt"
+                                                           :filename "license-fi.txt"
                                                            :type "text/plain"
                                                            :data (.getBytes "Suomenkielinen lisenssi.")}))
         en-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
-                                                           :filename "en.txt"
+                                                           :filename "license-en.txt"
                                                            :type "text/plain"
                                                            :data (.getBytes "License in English.")}))]
     (with-user actor
