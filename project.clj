@@ -9,9 +9,6 @@
                  [clj-pdf "2.4.0"]
                  [clj-time "0.15.2"]
                  [cljs-ajax "0.8.0"]
-                 [cljsjs/react "16.12.0-2"] ; overrides the old version used by Reagent
-                 [cljsjs/react-dom "16.12.0-2"]
-                 [cljsjs/react-dom-server "16.12.0-2"]
                  [cljsjs/react-select "2.4.4-0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
