@@ -72,8 +72,7 @@
                    :edit-workflow "Föranda arbetsflöde"
                    :enable "Ota käyttöön" ;; TODO
                    :end "Slut"
-                   :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa." ;; TODO
-                            :forbidden-organization "Organisaatio on kielletty tältä käyttäjältä."
+                   :errors {:forbidden-organization "Organisaatio on kielletty tältä käyttäjältä."
                             :form-archived "Lomake on arkistoitu:"
                             :form-in-use "Lomake on käytössä:"
                             :license-archived "Lisenssi on arkistoitu:"
@@ -91,7 +90,6 @@
                    :licenses "Licenser"
                    :no-licenses "Inga licenser"
                    :organization "Organisation"
-                   :organization-placeholder "testorganisation.org"
                    :preview "Förhandsvisning"
                    :remove "Radera"
                    :reports "Rapporter"
@@ -110,10 +108,11 @@
                    :workflows "Arbetsflöden"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
-                   :email "E-postaddress"
+                   :email "E-postaddress (från autentisering)"
                    :invited-member "Inbjuden medlem"
                    :member "Medlem"
                    :name "Namn"
+                   :notification-email "E-postaddress (från sökande)"
                    :organization "Organisation"
                    :username "Användarnamn"}
   :applications {:all-applications "Alla ansökaningar"
