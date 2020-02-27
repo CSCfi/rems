@@ -686,6 +686,7 @@
                              (authenticate api-key user-id)
                              handler
                              assert-response-is-ok)]
+            (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
             (is (= (slurp testfile) (slurp (:body response))))))
         (testing "and retrieving it as non-applicant"
           (let [response (-> (read-request id)
