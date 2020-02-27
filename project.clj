@@ -63,7 +63,7 @@
                  [prismatic/schema-generators "0.1.3"]
                  [px0/beautify-web "0.1.1"]
                  [re-frame "0.10.8"]
-                 [reagent "0.9.0-rc1"] ; includes React 16.9 support https://github.com/reagent-project/reagent/pull/443
+                 [reagent "0.9.1"]
                  [reagent-utils "0.3.3"]
                  [ring-cors "0.1.13"]
                  [ring-middleware-format "0.7.4"]
@@ -158,7 +158,7 @@
                                 [criterium "0.4.5"]
                                 [doo "0.1.11"]
                                 [lambdaisland/kaocha "0.0-590"]
-                                [org.clojars.luontola/etaoin "0.3.5-patch1"] ; patched to fix https://github.com/igrishaev/etaoin/issues/212
+                                [etaoin "0.3.6"]
                                 [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
                                 [org.clojure/core.rrb-vector "0.0.14"] ;; the version doo pulls in is broken on fresh cljs
                                 [re-frisk "0.5.4.1"]
