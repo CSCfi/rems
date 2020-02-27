@@ -20,7 +20,7 @@
                  [compojure "1.6.1"]
                  [conman "0.8.4"]
                  [cprop "0.1.16"]
-                 [funcool/promesa "5.1.0"] ; version 3.0.0 is broken with JavaScript Promises https://github.com/funcool/promesa/issues/71
+                 [funcool/promesa "5.1.0"]
                  [garden "1.3.9"]
                  [haka-buddy "0.2.3" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
