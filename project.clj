@@ -49,7 +49,7 @@
                  [org.clojure/tools.cli "1.0.194"]
                  [org.clojure/tools.logging "0.6.0"]
                  [org.postgresql/postgresql "42.2.10"]
-                 [org.webjars.bower/tether "2.0.0-beta.5"]
+                 [org.webjars.bower/tether "1.4.4"]
                  [org.webjars.npm/better-dateinput-polyfill "3.0.0"]
                  [org.webjars.npm/better-dom "4.0.0"]
                  [org.webjars.npm/diff-match-patch "1.0.4"]
