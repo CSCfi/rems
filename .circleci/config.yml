@@ -103,8 +103,32 @@ jobs:
       - run: lein uberjar
       - store_artifacts:
           path: target/uberjar/rems.jar
-      - run: docker build --pull --tag rems .
-        # TODO: push the docker image to a repository
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/uberjar/rems.jar
+
+  rahti:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker build --pull --tag docker-registry.rahti.csc.fi/rems/rems:circle --tag docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD) .
+      - run: docker login -p $rahtitoken -u unused docker-registry.rahti.csc.fi
+      - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle
+      - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD)
+      - run: |
+          DEV_CONTAINER_NAME=$(curl -k -s \
+            -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
+            -H 'Accept: application/json' \
+            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods | \
+            jq '.items | .[].metadata.name' | grep rems-dev | tr -d \")
+          curl -k -s \
+            -X DELETE \
+            -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
+            -H 'Accept: application/json' \
+            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods/${DEV_CONTAINER_NAME}
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
@@ -130,6 +154,18 @@ workflows:
       - war:
           requires:
             - build
+          filters:
+            branches:
+              only:
+                - master
+      - rahti:
+          requires:
+            - build
+            - war
+          filters:
+            branches:
+              only:
+                - master
       - ok:
           requires:
             - build
@@ -137,3 +173,4 @@ workflows:
             - test
             - doo
             - war
+            - rahti

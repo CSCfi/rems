@@ -1,7 +1,7 @@
 (ns rems.api.services.licenses
   "Serving licenses for API."
   (:require [rems.api.services.util :as util]
-            [rems.common-util :refer [distinct-by]]
+            [rems.common.util :refer [distinct-by]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
             [rems.db.core :as db]
@@ -91,11 +91,14 @@
 (defn get-license
   "Get a single license by id"
   [id]
-  (licenses/get-license id))
+  (when-let [license (licenses/get-license id)]
+    (when (not (util/forbidden-organization? (:organization license)))
+      license)))
 
 (defn get-all-licenses
   "Get all licenses.
 
    filters is a map of key-value pairs that must be present in the licenses"
   [filters]
-  (licenses/get-all-licenses filters))
+  (->> (licenses/get-all-licenses filters)
+       (remove #(util/forbidden-organization? (:organization %)))))

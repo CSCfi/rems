@@ -3,7 +3,7 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.services.workflow :as workflow]
             [rems.api.testing :refer :all]
-            [rems.common-util :refer [index-by]]
+            [rems.common.util :refer [index-by]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
@@ -89,7 +89,31 @@
         (let [body (create-workflow "organization-owner1" "organization1" :workflow/default)
               id (:id body)]
           (is (< 0 id))
-          (is (:success body))))
+          (is (:success body))
+
+          (testing "fetch using correct organization owner"
+            (let [workflow (-> (request :get (str "/api/workflows/" id))
+                               (authenticate "42" "organization-owner1")
+                               handler
+                               assert-response-is-ok
+                               read-body)]
+              (is workflow)
+              (is (= ["handler" "carl"] (mapv :userid (get-in workflow [:workflow :handlers]))))))
+
+          (testing "fetch using incorrect organization owner"
+            (let [response (-> (request :get (str "/api/workflows/" id))
+                               (authenticate "42" "organization-owner2")
+                               handler)]
+              (is (response-is-not-found? response))))
+          ;; TODO test listing api
+          (testing "fetch using owner"
+            (let [workflow (-> (request :get (str "/api/workflows/" id))
+                               (authenticate "42" "owner")
+                               handler
+                               assert-response-is-ok
+                               read-body)]
+              (is workflow)
+              (is (= ["handler" "carl"] (mapv :userid (get-in workflow [:workflow :handlers]))))))))
 
       (testing "with incorrect organization"
         (let [body (create-workflow "organization-owner1" "organization2" :workflow/default)]

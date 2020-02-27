@@ -22,12 +22,12 @@
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
-            [rems.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
+            [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
-            [rems.catalogue-util :refer [urn-catalogue-item-link]]
+            [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible?]]
-            [rems.common-util :refer [index-by parse-int]]
+            [rems.common.util :refer [index-by parse-int]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -556,7 +556,7 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        other-attributes (dissoc attributes :name :userid :email :organization)
+        other-attributes (dissoc attributes :name :userid :email :organization :notification-email)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))]
@@ -572,6 +572,8 @@
       :collapse (into [:div
                        (when user-id
                          [info-field (text :t.applicant-info/username) user-id {:inline? true}])
+                       (when-let [mail (:notification-email attributes)]
+                         [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
                        (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])
                        (when-let [organization (:organization attributes)]
@@ -790,6 +792,7 @@
                           :attributes {:userid "developer@uu.id"
                                        :email "developer@uu.id"
                                        :name "Deve Loper"
+                                       :notification-email "notification@example.com"
                                        :organization "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42

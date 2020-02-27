@@ -1,4 +1,4 @@
-(ns rems.catalogue-util
+(ns rems.common.catalogue-util
   (:require [clojure.string :as str]))
 
 (defn urn? [resid]

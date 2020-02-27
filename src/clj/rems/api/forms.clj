@@ -1,5 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.services.util :as services-util]
             [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate SuccessResponse]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.db.form :as form]
@@ -9,7 +10,8 @@
 
 (defn- get-form-templates [filters]
   (doall
-   (for [form (form/get-form-templates filters)]
+   (for [form (form/get-form-templates filters)
+         :when (not (services-util/forbidden-organization? (:form/organization form)))]
      (select-keys form [:form/id :form/organization :form/title :enabled :archived]))))
 
 (s/defschema CreateFormCommand
@@ -31,7 +33,7 @@
 
     (GET "/" []
       :summary "Get forms"
-      :roles #{:owner :handler}
+      :roles #{:owner :organization-owner :handler}
       :query-params [{disabled :- (describe s/Bool "whether to include disabled forms") false}
                      {archived :- (describe s/Bool "whether to include archived forms") false}]
       :return [FormTemplateOverview]
@@ -47,11 +49,12 @@
 
     (GET "/:form-id" []
       :summary "Get form by id"
-      :roles #{:owner :handler}
+      :roles #{:owner :organization-owner :handler}
       :path-params [form-id :- (describe s/Int "form-id")]
       :return FormTemplate
       (let [form (form/get-form-template form-id)]
-        (if form
+        (if (and form
+                 (not (services-util/forbidden-organization? (:form/organization form))))
           (ok form)
           (not-found-json-response))))
 

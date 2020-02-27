@@ -30,14 +30,27 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ catalogue-item-id]]
-   (let [roles (get-in db [:identity :roles])
-         organization (get-in db [:identity :user :organization])]
+   (let [editing? (not (nil? catalogue-item-id))
+         roles (get-in db [:identity :roles])
+         user-organization (get-in db [:identity :user :organization])
+         all-organizations (get-in db [:config :organizations])
+         organization (cond
+                        (roles/disallow-setting-organization? roles)
+                        user-organization
+
+                        (= (count all-organizations) 1)
+                        (first all-organizations)
+
+                        :else
+                        nil)]
      {:db (assoc db
-                 ::form (when (roles/disallow-setting-organization? roles)
+                 ::form (when organization
                           {:organization organization})
                  ::catalogue-item-id catalogue-item-id
-                 ::editing? (not (nil? catalogue-item-id))
-                 ::loading? true)
+                 ::editing? editing?
+                 ::loading? true
+                 ::organization-read-only? (or editing?
+                                               (not (nil? organization))))
       ::fetch-workflows nil
       ::fetch-resources nil
       ::fetch-forms nil})))
@@ -45,7 +58,7 @@
 (rf/reg-sub ::catalogue-item (fn [db _] (::catalogue-item db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
-
+(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
@@ -216,29 +229,16 @@
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
 
-(defn- list-organizations []
-  (let [workflows @(rf/subscribe [::workflows])
-        resources @(rf/subscribe [::resources])
-        forms @(rf/subscribe [::forms])
-        items-to-organizations (fn [items key]
-                                 (set (distinct (mapv key items))))]
-    (sort
-     (vec (set/intersection (items-to-organizations workflows :organization)
-                            (items-to-organizations resources :organization)
-                            (items-to-organizations forms :form/organization))))))
-
 (defn- catalogue-item-organization-field []
-  (let [organizations (list-organizations)
+  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
         selected-organization @(rf/subscribe [::selected-organization])
         item-selected? #(= % selected-organization)
-        readonly (or @(rf/subscribe [::editing?])
-                     (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity]))))]
+        readonly @(rf/subscribe [::organization-read-only?])]
     [:div.form-group
      [:label {:for organization-dropdown-id} (text :t.administration/organization)]
      (if readonly
-       (let [organization (first (filter item-selected? organizations))]
-         [fields/readonly-field {:id organization-dropdown-id
-                                 :value organization}])
+       [fields/readonly-field {:id organization-dropdown-id
+                               :value selected-organization}]
        [dropdown/dropdown
         {:id organization-dropdown-id
          :items organizations

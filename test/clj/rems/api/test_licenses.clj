@@ -18,6 +18,7 @@
 (deftest licenses-api-test
   (let [api-key "42"
         user-id "owner"
+        org-owner "organization-owner1"
         create-license (fn [user-id command]
                          (-> (request :post "/api/licenses/create")
                              (authenticate api-key user-id)
@@ -30,8 +31,33 @@
                      (authenticate api-key user-id)
                      handler
                      assert-response-is-ok
-                     read-body)]
-        (is (:id (first data)))))
+                     read-body)
+            id (:id (first data))]
+        (is id)
+        (testing "get one"
+          (let [data (-> (request :get (str "/api/licenses/" id))
+                         (authenticate api-key user-id)
+                         handler
+                         assert-response-is-ok
+                         read-body)]
+            (is (= id (:id data)))))))
+
+    (testing "get all as organization owner"
+      (let [data (-> (request :get "/api/licenses")
+                     (authenticate api-key org-owner)
+                     handler
+                     assert-response-is-ok
+                     read-body)
+            id (:id (first data))]
+        (is id)
+        (is (apply = (map :organization data)))
+        (testing "get one as organization owner"
+          (let [data (-> (request :get (str "/api/licenses/" id))
+                         (authenticate api-key org-owner)
+                         handler
+                         assert-response-is-ok
+                         read-body)]
+            (is (= id (:id data)))))))
 
     (testing "create linked license"
       (let [command {:licensetype "link"

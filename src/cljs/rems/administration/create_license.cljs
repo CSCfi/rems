@@ -5,6 +5,8 @@
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
             [rems.atoms :as atoms :refer [file-download document-title]]
             [rems.collapsible :as collapsible]
+            [rems.dropdown :as dropdown]
+            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.text :refer [text]]
@@ -14,17 +16,32 @@
  ::enter-page
  (fn [db _]
    (let [roles (get-in db [:identity :roles])
-         organization (get-in db [:identity :user :organization])]
+         user-organization (get-in db [:identity :user :organization])
+         all-organizations (get-in db [:config :organizations])
+         organization (cond
+                        (roles/disallow-setting-organization? roles)
+                        user-organization
+
+                        (= (count all-organizations) 1)
+                        (first all-organizations)
+
+                        :else
+                        nil)]
      (assoc db
-            ::form (when (roles/disallow-setting-organization? roles)
-                     {:organization organization})))))
+            ::form (when organization
+                     {:organization organization})
+            ::organization-read-only? (not (nil? organization))))))
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 
 (rf/reg-event-db
  ::set-form-field
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
+
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 
 (def license-type-link "link")
@@ -48,7 +65,8 @@
        (not (str/blank? (:textcontent data)))))
 
 (defn- valid-request? [request languages]
-  (and (not (str/blank? (:licensetype request)))
+  (and (not (str/blank? (:organization request)))
+       (not (str/blank? (:licensetype request)))
        (= (set languages)
           (set (keys (:localizations request))))
        (every? valid-localization? (vals (:localizations request)))))
@@ -56,7 +74,7 @@
 (defn build-request [form languages]
   (let [license-type (:licensetype form)
         request {:licensetype license-type
-                 :organization (or (:organization form) "")
+                 :organization (:organization form)
                  :localizations (into {} (map (fn [[lang data]]
                                                 [lang (build-localization data license-type)])
                                               (:localizations form)))}]
@@ -110,14 +128,26 @@
 (def ^:private context {:get-form ::form
                         :update-form ::set-form-field})
 
+(def ^:private organization-dropdown-id "organization-dropdown")
+
 (defn- language-heading [language]
   [:h3 (str/upper-case (name language))])
 
 (defn- license-organization-field []
-  (let [readonly (roles/disallow-setting-organization? (:roles @(rf/subscribe [:identity])))]
-    [text-field context {:keys [:organization]
-                         :label (text :t.administration/organization)
-                         :readonly readonly}]))
+  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
+        selected-organization @(rf/subscribe [::selected-organization])
+        item-selected? #(= % selected-organization)
+        readonly @(rf/subscribe [::organization-read-only?])]
+    [:div.form-group
+     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
+     (if readonly
+       [fields/readonly-field {:id organization-dropdown-id
+                               :value selected-organization}]
+       [dropdown/dropdown
+        {:id organization-dropdown-id
+         :items organizations
+         :item-selected? item-selected?
+         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
 (defn- license-title-field [language]
   [text-field context {:keys [:localizations language :title]

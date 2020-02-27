@@ -1,6 +1,6 @@
 (ns rems.email.template
   (:require [clojure.string :as str]
-            [rems.application-util :as application-util]
+            [rems.common.application-util :as application-util]
             [rems.application.model]
             [rems.config :refer [env]]
             [rems.context :as context]

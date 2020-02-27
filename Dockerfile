@@ -1,10 +1,10 @@
 FROM openjdk:11-jre-slim
 
-RUN adduser --system --home /app app
-WORKDIR /app
-USER app
+RUN mkdir /rems
+WORKDIR /rems
 
-ENTRYPOINT ["java", "--illegal-access=deny", "-Drems.config=config.edn", "-jar", "rems.jar"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
-COPY empty-config.edn /app/config.edn
-COPY target/uberjar/rems.jar /app/rems.jar
+COPY empty-config.edn /rems/config/config.edn
+COPY target/uberjar/rems.jar /rems/rems.jar
+COPY docker-entrypoint.sh /rems/docker-entrypoint.sh

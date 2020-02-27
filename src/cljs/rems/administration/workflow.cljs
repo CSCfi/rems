@@ -7,7 +7,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [attachment-link external-link info-field readonly-checkbox enrich-user document-title]]
             [rems.collapsible :as collapsible]
-            [rems.common-util :refer [andstr]]
+            [rems.common.util :refer [andstr]]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]

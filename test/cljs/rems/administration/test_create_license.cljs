@@ -24,6 +24,7 @@
 
 (deftest build-request-test
   (let [form {:licensetype "link"
+              :organization "default"
               :localizations {:en {:title "en title"
                                    :link "en link"
                                    :text "en text"
@@ -37,7 +38,7 @@
         languages [:en :fi]]
     (testing "linked license"
       (is (= {:licensetype "link"
-              :organization ""
+              :organization "default"
               :localizations {:en {:title "en title"
                                    :textcontent "en link"
                                    :attachment-id 1}
@@ -48,7 +49,7 @@
                             languages))))
     (testing "inline license"
       (is (= {:licensetype "text"
-              :organization ""
+              :organization "default"
               :localizations {:en {:title "en title"
                                    :textcontent "en text"
                                    :attachment-id 1}
@@ -60,7 +61,7 @@
 
     (testing "attachment license"
       (is (= {:licensetype "attachment"
-              :organization ""
+              :organization "default"
               :localizations {:en {:title "en title"
                                    :textcontent "something.pdf"
                                    :attachment-id 1}
@@ -69,6 +70,9 @@
                                    :attachment-id 2}}}
              (build-request (assoc-in form [:licensetype] "attachment")
                             languages))))
+    (testing "missing organization"
+      (is (nil? (build-request (assoc-in form [:organization] nil)
+                               languages))))
     (testing "missing license type"
       (is (nil? (build-request (assoc-in form [:licensetype] nil)
                                languages))))

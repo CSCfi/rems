@@ -1,5 +1,5 @@
 (ns rems.db.attachments
-  (:require [rems.application-util :refer [form-fields-editable?]]
+  (:require [rems.common.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])

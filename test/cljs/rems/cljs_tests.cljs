@@ -7,6 +7,8 @@
             rems.administration.test-create-workflow
             rems.administration.test-items
             rems.common.form
+            rems.common.util
+            rems.common.test-util
             rems.flash-message
             rems.test-fields
             rems.test-table
@@ -19,6 +21,8 @@
            'rems.administration.test-create-workflow
            'rems.administration.test-items
            'rems.common.form
+           'rems.common.util
+           'rems.common.test-util
            'rems.flash-message
            'rems.test-fields
            'rems.test-table

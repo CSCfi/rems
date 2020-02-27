@@ -1,10 +1,10 @@
 (ns rems.catalogue
   (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
-            [rems.application-util :refer [form-fields-editable?]]
+            [rems.common.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
-            [rems.catalogue-util :refer [urn-catalogue-item-link]]
+            [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.flash-message :as flash-message]
             [rems.guide-functions]
             [rems.roles :as roles]

@@ -2,7 +2,7 @@
   #?(:clj (:require [clj-time.core :as time]
                     [clj-time.format :as format]
                     [clojure.string :as str]
-                    [rems.application-util :as application-util]
+                    [rems.common.application-util :as application-util]
                     [rems.context :as context]
                     [rems.locales :as locales]
                     [taoensso.tempura :refer [tr]])
@@ -10,7 +10,7 @@
                      [cljs-time.format :as format]
                      [clojure.string :as str]
                      [re-frame.core :as rf]
-                     [rems.application-util :as application-util]
+                     [rems.common.application-util :as application-util]
                      [taoensso.tempura :refer [tr]])))
 
 (defn with-language [lang f]

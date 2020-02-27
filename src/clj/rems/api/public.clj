@@ -25,7 +25,8 @@
    :extra-pages [ExtraPage]
    :languages [s/Keyword]
    :default-language s/Keyword
-   :dev s/Bool})
+   :dev s/Bool
+   :organizations [s/Str]})
 
 (def translations-api
   (context "/translations" []
@@ -52,7 +53,14 @@
     (GET "/" []
       :summary "Get configuration that is relevant to UI"
       :return GetConfigResponse
-      (ok (select-keys env [:authentication :alternative-login-url :application-id-column :extra-pages :languages :default-language :dev])))
+      (ok (select-keys env [:alternative-login-url
+                            :application-id-column
+                            :authentication
+                            :default-language
+                            :dev
+                            :extra-pages
+                            :languages
+                            :organizations])))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"

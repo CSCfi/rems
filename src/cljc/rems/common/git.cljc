@@ -1,4 +1,4 @@
-(ns rems.git)
+(ns rems.common.git)
 
 (def +repo-url+ "https://github.com/CSCfi/rems/")
 (def +commits-url+ (str +repo-url+ "commits/"))

@@ -2,7 +2,7 @@
   "Implements both a blacklist component and the blacklist-page"
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.application-util]
+            [rems.common.application-util]
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
@@ -192,10 +192,10 @@
           comment :blacklist/comment} rows]
      {:key (str "blacklist-" resource (:userid user))
       :resource {:value (:resource/ext-id resource)}
-      :user {:value (rems.application-util/get-member-name user)}
+      :user {:value (rems.common.application-util/get-member-name user)}
       :userid {:value (:userid user)}
       :email {:value (:email user)}
-      :added-by {:value (rems.application-util/get-member-name added-by)}
+      :added-by {:value (rems.common.application-util/get-member-name added-by)}
       :added-at {:value added-at :display-value (localize-time added-at)}
       :comment {:value comment}
       :commands {:td [:td.commands

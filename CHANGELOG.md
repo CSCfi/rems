@@ -6,7 +6,15 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.6
+Changes since v2.7
+
+### Changes
+- Duplicate resource external ids are now allowed (#1988)
+
+### Additions
+- Applicant/member notification email address is now shown to handler (#1983)
+
+## v2.7 "Koivuviidantie" 2020-02-03
 
 ### Breaking changes
 - Removed support for LDAP authentication
@@ -17,6 +25,12 @@ Changes since v2.6
 - `:application.event/comment-requested` event renamed to `:application.event/review-requested` and its `:application/commenters` field renamed to `:application/reviewers`
 - `/api/applications/commenters` API renamed to `/api/applications/reviewers`
 - field/id is now a string. This considers creating forms and the form API, but also form users may have the assumption of integers.
+- Better support for organizations (#1893). This is still work in progress. Implemented so far:
+  - Tracking of user organizations via the `:organization` attribute from the identity provider
+  - List of possible organizations configured with `:organizations` config option
+  - When creating a new resource/license/form/workflow/catalogue item there is an organization dropdown instead of a text field
+  - Organizations of catalogue item, resource, license, form workflow and catalogue item must match
+  - Additional `organization-owner` role that can only edit things belonging to their own organization
 
 ### Additions
 - Catalogue item form can be changed for one or more items at a time.
@@ -39,6 +53,15 @@ Changes since v2.6
 - Have a set of permitted roles for API keys (#1662)
 - A `user-owner` role that can only create and edit users
 - Fields can be defined public or private. The latter won't be shown to reviewers.
+- More columns for blacklist table, blacklist visible on resource administration page (#1724)
+- New "header" form field type (#1805)
+- Scrollbar and focus now track moved and created form fields in form editor (#1802 #1803)
+- Users can be added and removed from the blacklist in the resource admin page (#1706)
+- POSTing entitlements to entitlement-target is now retried (#1784)
+- [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
+- "Assign external id" command for setting the id of an application (#1858)
+- Configuration `:disable-commands` for disabling commands (#1891)
+- Display on the actions page the handlers who are handling an application (#1795)
 
 ### Enhancements
 - Application search tips hidden behind question mark icon (#1767)
@@ -55,18 +78,7 @@ Changes since v2.6
 - More robust email resending (#1750)
 - Changes in workflow, catalogue item and blacklist now take effect without a delay (#1851)
 
-### Additions
-- More columns for blacklist table, blacklist visible on resource administration page (#1724)
-- New "header" form field type (#1805)
-- Scrollbar and focus now track moved and created form fields in form editor (#1802 #1803)
-- Users can be added and removed from the blacklist in the resource admin page (#1706)
-- POSTing entitlements to entitlement-target is now retried (#1784)
-- [Rejecter bot](docs/bots.md), which rejects applications where a member is blacklisted for a resource (#1771)
-- "Assign external id" command for setting the id of an application (#1858)
-- Configuration `:disable-commands` for disabling commands (#1891)
-- Display on the actions page the handlers who are handling an application (#1795)
-
-## v2.6 "Kalevalantie" 2018-11-12
+## v2.6 "Kalevalantie" 2019-11-12
 
 ### Breaking changes
 - `:application/external-id` has been made a non-optional field in the
