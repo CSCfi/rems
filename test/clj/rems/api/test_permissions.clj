@@ -28,6 +28,7 @@
                :value    "urn:nbn:fi:lb-201403262",
                :source   "https://ga4gh.org/duri/no_org",
                :by       "developer"}}
-             (update-in result [:ga4gh_visa_v1] dissoc :asserted))))))  ;;TODO: add test for type of asserted
+             (update-in result [:ga4gh_visa_v1] dissoc :asserted)))
+      (is (= true (instance? Long (:asserted (:ga4gh_visa_v1 result))))))))
 
 
