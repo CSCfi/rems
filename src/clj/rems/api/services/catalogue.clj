@@ -49,45 +49,55 @@
         {:success (not (some nil? (cons id loc-ids)))
          :id id})))
 
-(defn edit-catalogue-item! [{:keys [id localizations] :as command}]
-  (doseq [[langcode localization] localizations]
-    (db/upsert-catalogue-item-localization!
-     (merge {:id id
-             :langcode (name langcode)}
-            (select-keys localization [:title :infourl]))))
-  ;; Reset cache so that next call to get localizations will get these ones.
-  (catalogue/reset-cache!)
-  (applications/reload-cache!)
-  {:success true})
-
-(defn set-catalogue-item-enabled! [command]
-  (db/set-catalogue-item-enabled! (select-keys command [:id :enabled]))
-  {:success true})
-
-(defn set-catalogue-item-archived! [{:keys [id archived]}]
-  (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item id)
-        archived-licenses (filter :archived licenses)
-        errors
-        (remove
-         nil?
-         [(when (:archived form)
-            {:type :t.administration.errors/form-archived :forms [form]})
-          (when (:archived resource)
-            {:type :t.administration.errors/resource-archived :resources [resource]})
-          (when (:archived workflow)
-            {:type :t.administration.errors/workflow-archived :workflows [workflow]})
-          (when (not (empty? archived-licenses))
-            {:type :t.administration.errors/license-archived :licenses archived-licenses})])]
-    (if (and (not archived)
-             (not (empty? errors)))
-      {:success false
-       :errors errors}
-      (do (db/set-catalogue-item-archived! {:id id
-                                            :archived archived})
-          {:success true}))))
-
 (def get-localized-catalogue-items catalogue/get-localized-catalogue-items)
 (def get-localized-catalogue-item catalogue/get-localized-catalogue-item)
+
+(defn- editing-forbidden-error [id]
+  (-> id
+      get-localized-catalogue-item
+      :organization
+      util/forbidden-organization-error))
+
+(defn edit-catalogue-item! [{:keys [id localizations] :as command}]
+  (or (editing-forbidden-error id)
+      (do
+        (doseq [[langcode localization] localizations]
+          (db/upsert-catalogue-item-localization!
+           (merge {:id id
+                   :langcode (name langcode)}
+                  (select-keys localization [:title :infourl]))))
+        ;; Reset cache so that next call to get localizations will get these ones.
+        (catalogue/reset-cache!)
+        (applications/reload-cache!)
+        {:success true})))
+
+(defn set-catalogue-item-enabled! [{:keys [id enabled]}]
+  (or (editing-forbidden-error id)
+      (do (db/set-catalogue-item-enabled! {:id id :enabled enabled})
+          {:success true})))
+
+(defn set-catalogue-item-archived! [{:keys [id archived]}]
+  (or (editing-forbidden-error id)
+      (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item id)
+            archived-licenses (filter :archived licenses)
+            errors
+            (remove
+             nil?
+             [(when (:archived form)
+                {:type :t.administration.errors/form-archived :forms [form]})
+              (when (:archived resource)
+                {:type :t.administration.errors/resource-archived :resources [resource]})
+              (when (:archived workflow)
+                {:type :t.administration.errors/workflow-archived :workflows [workflow]})
+              (when (not (empty? archived-licenses))
+                {:type :t.administration.errors/license-archived :licenses archived-licenses})])]
+        (if (and (not archived)
+                 (not (empty? errors)))
+          {:success false
+           :errors errors}
+          (do (db/set-catalogue-item-archived! {:id id
+                                                :archived archived})
+              {:success true})))))
 
 (defn change-form!
   "Changes the form of a catalogue item.
@@ -95,28 +105,29 @@
   Since we don't want to modify the old item we must create
   a new item that is the copy of the old item except for the changed form."
   [item form-id]
-  (if (= (:formid item) form-id)
-    {:success true :catalogue-item-id (:id item)}
-    ;; create a new item with the new form
-    (let [new-item (db/create-catalogue-item! {:enabled true
-                                               :archived false
-                                               :form form-id
-                                               :organization (:organization item)
-                                               :resid (:resource-id item)
-                                               :wfid (:wfid item)})]
+  (or (util/forbidden-organization-error (:organization item))
+      (if (= (:formid item) form-id)
+        {:success true :catalogue-item-id (:id item)}
+        ;; create a new item with the new form
+        (let [new-item (db/create-catalogue-item! {:enabled true
+                                                   :archived false
+                                                   :form form-id
+                                                   :organization (:organization item)
+                                                   :resid (:resource-id item)
+                                                   :wfid (:wfid item)})]
 
-      ;; copy localizations
-      (doseq [[langcode localization] (:localizations item)]
-        (db/upsert-catalogue-item-localization! {:id (:id new-item)
-                                                 :langcode (name langcode)
-                                                 :title (:title localization)
-                                                 :infourl (:infourl localization)}))
-      ;; Reset cache so that next call to get localizations will get these ones.
-      (catalogue/reset-cache!)
+          ;; copy localizations
+          (doseq [[langcode localization] (:localizations item)]
+            (db/upsert-catalogue-item-localization! {:id (:id new-item)
+                                                     :langcode (name langcode)
+                                                     :title (:title localization)
+                                                     :infourl (:infourl localization)}))
+          ;; Reset cache so that next call to get localizations will get these ones.
+          (catalogue/reset-cache!)
 
-      ;; end the old catalogue item
-      (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
-      (db/set-catalogue-item-archived! {:id (:id item) :archived true})
-      (db/set-catalogue-item-endt! {:id (:id item) :end (:start new-item)})
+          ;; end the old catalogue item
+          (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
+          (db/set-catalogue-item-archived! {:id (:id item) :archived true})
+          (db/set-catalogue-item-endt! {:id (:id item) :end (:start new-item)})
 
-      {:success true :catalogue-item-id (:id new-item)})))
+          {:success true :catalogue-item-id (:id new-item)}))))

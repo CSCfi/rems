@@ -18,6 +18,7 @@
              ;;   organizations to be able to remove this.
              (and (nil? organization) (nil? user-organization))))))
 
+;; TODO should we use throw-forbidden instead?
 (defn forbidden-organization-error [organization]
   (when (forbidden-organization? organization)
     {:success false

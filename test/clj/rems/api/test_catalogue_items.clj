@@ -82,16 +82,16 @@
   (let [api-key "42"
         owner "owner"
         user "alice"
-        form-id (test-data/create-form! {})
-        wf-id (test-data/create-workflow! {})
-        res-id (test-data/create-resource! {})]
+        form-id (test-data/create-form! {:form/organization "organization1"})
+        wf-id (test-data/create-workflow! {:organization "organization1"})
+        res-id (test-data/create-resource! {:organization "organization1"})]
     (testing "create"
       (let [create (-> (request :post "/api/catalogue-items/create")
                        (authenticate api-key owner)
                        (json-body {:form form-id
                                    :resid res-id
                                    :wfid wf-id
-                                   :organization "default"
+                                   :organization "organization1"
                                    :localizations {:en {:title "En title"}
                                                    :sv {:title "Sv title"
                                                         :infourl "http://info.se"}}})
@@ -117,7 +117,7 @@
               (is (= {:title "Sv title"
                       :infourl "http://info.se"}
                      (dissoc (get-in data [:localizations :sv]) :id :langcode)))))
-          (testing "... and edit"
+          (testing "... and edit (as owner)"
             (let [response (-> (request :put "/api/catalogue-items/edit")
                                (authenticate api-key owner)
                                (json-body {:id id
@@ -147,7 +147,44 @@
                          (dissoc (get-in data [:localizations :sv]) :id :langcode)))
                   (is (= {:title "Fi title"
                           :infourl "http://info.fi"}
-                         (dissoc (get-in data [:localizations :fi]) :id :langcode))))))))))))
+                         (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))
+          (testing "... and edit (as organization owner)"
+            (let [response (-> (request :put "/api/catalogue-items/edit")
+                               (authenticate api-key "organization-owner1")
+                               (json-body {:id id
+                                           :localizations {:sv {:title "Sv title 2"
+                                                                :infourl nil}
+                                                           :fi {:title "Fi title 2"
+                                                                :infourl "http://info.fi"}}})
+                               handler
+                               read-ok-body)]
+              (is (:success response) (pr-str response))))
+          (testing "... and edit (as organization owner for another organization)"
+            (let [response (-> (request :put "/api/catalogue-items/edit")
+                               (authenticate api-key "organization-owner2")
+                               (json-body {:id id
+                                           :localizations {:sv {:title "Sv title 2"
+                                                                :infourl nil}
+                                                           :fi {:title "Fi title 2"
+                                                                :infourl "http://info.fi"}}})
+                               handler
+                               read-ok-body)]
+              (is (= {:success false
+                      :errors [{:type "t.administration.errors/forbidden-organization"}]}
+                     response)))))))
+
+    ;; last because it invalidates the transaction currently
+    ;; TODO this shouldn't be a 500
+    (testing "edit nonexisting"
+      (let [response (-> (request :put "/api/catalogue-items/edit")
+                         (authenticate api-key owner)
+                         (json-body {:id 999999999
+                                     :localizations {:sv {:title "Sv title 2"
+                                                          :infourl nil}
+                                                     :fi {:title "Fi title"
+                                                          :infourl "http://info.fi"}}})
+                         handler)]
+        (is (= 500 (:status response)))))))
 
 
 (deftest catalogue-items-api-security-test
@@ -198,11 +235,14 @@
 
 (deftest change-form-test
   (let [api-key "42"
-        resource-id (test-data/create-resource! {})
-        old-form-id (test-data/create-form! {:form/title "old form"})
-        new-form-id (test-data/create-form! {:form/title "new form"})
+        resource-id (test-data/create-resource! {:organization "organization1"})
+        old-form-id (test-data/create-form! {:form/title "old form"
+                                             :form/organization "organization1"})
+        new-form-id (test-data/create-form! {:form/title "new form"
+                                             :form/organization "organization1"})
         old-catalogue-item-id (test-data/create-catalogue-item!
-                               {:title {:en "change-form-test catalogue item en"
+                               {:organization "organization1"
+                                :title {:en "change-form-test catalogue item en"
                                         :fi "change-form-test catalogue item fi"}
                                 :resource-id resource-id
                                 :form-id old-form-id})]
@@ -239,4 +279,22 @@
           (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))
 
-        (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))))
+        (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))
+    ;; TODO test that can't change to form that's in a different organization
+    (testing "can change form as organization owner"
+      (is (true? (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                     (authenticate api-key "organization-owner1")
+                     (json-body {:form new-form-id})
+                     handler
+                     read-ok-body
+                     :success))))
+    (testing "can change form as owner of different organization"
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/forbidden-organization"}]}
+             (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                 (authenticate api-key "organization-owner2")
+                 (json-body {:form new-form-id})
+                 handler
+                 read-ok-body))))))
+
+;; TODO: test enabling/archiving as organization owner

@@ -448,14 +448,14 @@
         form-id (test-data/create-form! {})
         cat-id (test-data/create-catalogue-item! {:form-id form-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id] :actor user-id})
-        enable-catalogue-item! #(catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                                        :enabled %})
+        enable-catalogue-item! #(with-user owner
+                                  (catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                                          :enabled %}))
         archive-catalogue-item! #(with-user owner
                                    (catalogue/set-catalogue-item-archived! {:id cat-id
                                                                             :archived %}))]
     (testing "submit with disabled catalogue item fails"
-      (is (:success (catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                            :enabled false})))
+      (is (:success (enable-catalogue-item! false)))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "t.actions.errors/disabled-catalogue-item" :catalogue-item-id cat-id}]}
