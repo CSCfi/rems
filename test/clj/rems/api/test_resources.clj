@@ -92,22 +92,23 @@
             (is (contains? app-ids enabled-id))
             (is (not (contains? app-ids disabled-id)))
             (is (contains? app-ids archived-id))))))
-    (let [licid (test-data/create-license! {})
+    (let [licid-org1 (test-data/create-license! {:license/organization "organization1"})
+          licid-org2 (test-data/create-license! {:license/organization "organization2"})
           resid "resource-api-test"
-          create-resource (fn [user-id organization]
+          create-resource (fn [user-id organization & licenses]
                             (-> (request :post "/api/resources/create")
                                 (authenticate api-key user-id)
                                 (json-body {:resid resid
                                             :organization organization
-                                            :licenses [licid]})
+                                            :licenses licenses})
                                 handler
                                 read-ok-body))]
 
       (testing "create as organization owner"
         (testing "with correct organization"
-          (let [result (create-resource "organization-owner1" "organization1")
+          (let [result (create-resource "organization-owner1" "organization1" licid-org1)
                 id (:id result)]
-            (is (true? (:success result)))
+            (is (true? (:success result)) (pr-str result))
             (is id)
 
             (testing "fetch using correct organization owner"
@@ -117,7 +118,7 @@
                                  assert-response-is-ok
                                  read-body)]
                 (is resource)
-                (is (= [licid] (map :id (:licenses resource))))))
+                (is (= [licid-org1] (map :id (:licenses resource))))))
 
             (testing "fetch using incorrect organization owner"
               (let [response (-> (request :get (str "/api/resources/" id))
@@ -132,14 +133,19 @@
                                  assert-response-is-ok
                                  read-body)]
                 (is resource)
-                (is (= [licid] (map :id (:licenses resource))))))))
+                (is (= [licid-org1] (map :id (:licenses resource))))))))
 
         (testing "with incorrect organization"
-          (let [result (create-resource "organization-owner1" "organization2")]
-            (is (false? (:success result))))))
+          (let [result (create-resource "organization-owner1" "organization2" licid-org2)]
+            (is (false? (:success result)))))
+
+        (testing "with mismatched organizations"
+          (let [result (create-resource "organization-owner1" "organization1" licid-org2)]
+            (is (false? (:success result)))
+            (is (= ["t.administration.errors/organization-mismatch"] (map :type (:errors result)))))))
 
       (testing "create as owner"
-        (let [result (create-resource "owner" "test-organization")
+        (let [result (create-resource "owner" "organization1" licid-org1)
               id (:id result)]
           (is (true? (:success result)))
           (is id)
@@ -151,15 +157,19 @@
                                assert-response-is-ok
                                read-body)]
               (is resource)
-              (is (= [licid] (map :id (:licenses resource))))))
+              (is (= [licid-org1] (map :id (:licenses resource))))))
 
           (testing "duplicate resource ID is allowed between organizations"
             (let [result (create-resource "owner" "test-organization2")]
               (is (true? (:success result)))))
 
           (testing "duplicate resource ID is allowed within one organization"
-            (let [result (create-resource "owner" "test-organization")]
-              (is (true? (:success result))))))))))
+            (let [result (create-resource "owner" "organization1")]
+              (is (true? (:success result))))))
+        (testing "with mismatched organizations"
+          (let [result (create-resource "owner" "organization1" licid-org1 licid-org2)]
+            (is (false? (:success result)))
+            (is (= ["t.administration.errors/organization-mismatch"] (map :type (:errors result))))))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"
