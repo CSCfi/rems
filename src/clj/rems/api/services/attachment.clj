@@ -3,11 +3,12 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
-            [ring.util.http-response :refer [ok content-type]])
+            [ring.util.http-response :refer [ok content-type header]])
   (:import [java.io ByteArrayInputStream]))
 
 (defn download [attachment]
   (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
+      (header "Content-Disposition" (str "attachment;filename=" (pr-str (:attachment/filename attachment))))
       (content-type (:attachment/type attachment))))
 
 (defn get-application-attachment [user-id attachment-id]

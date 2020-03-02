@@ -14,6 +14,9 @@ Changes since v2.7
 ### Additions
 - Applicant/member notification email address is now shown to handler (#1983)
 
+### Fixes
+- Filenames are now retained when downloading attachments (#2019)
+
 ## v2.7 "Koivuviidantie" 2020-02-03
 
 ### Breaking changes

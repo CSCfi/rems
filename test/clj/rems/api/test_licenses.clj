@@ -127,6 +127,7 @@
                                       (authenticate api-key user-id)
                                       handler
                                       assert-response-is-ok))]
+            (is (= "attachment;filename=\"test.txt\"" (get-in response-file [:headers "Content-Disposition"])))
             (is (= (slurp testfile) (slurp (:body response-file))))))
 
         (testing "and delete it"
