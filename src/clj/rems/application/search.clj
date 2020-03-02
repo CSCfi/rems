@@ -34,7 +34,7 @@
              (when (.exists (.toFile index-dir))
                (MoreFiles/deleteDirectoryContents index-dir (into-array [RecursiveDeleteOption/ALLOW_INSECURE])))
              (let [directory (NIOFSDirectory. index-dir)]
-               ;; create new empty index by creating and closing an indexwriter, otehrwise SearcherManager will fail
+               ;; create a new empty index by creating and closing an IndexWriter, otehrwise SearcherManager will fail
                (.close (IndexWriter. directory (IndexWriterConfig. analyzer)))
                (atom {::directory directory
                       ::searcher-manager (SearcherManager. directory (SearcherFactory.))
