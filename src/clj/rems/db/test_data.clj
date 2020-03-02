@@ -160,11 +160,11 @@
 (defn create-attachment-license! [{:keys [actor]
                                    :license/keys [organization]}]
   (let [fi-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
-                                                           :filename "fi.txt"
+                                                           :filename "license-fi.txt"
                                                            :type "text/plain"
                                                            :data (.getBytes "Suomenkielinen lisenssi.")}))
         en-attachment (:id (db/create-license-attachment! {:user (or actor "owner")
-                                                           :filename "en.txt"
+                                                           :filename "license-en.txt"
                                                            :type "text/plain"
                                                            :data (.getBytes "License in English.")}))]
     (with-user actor
@@ -223,10 +223,10 @@
                                      :infourl (get infourl lang)}]))
         result (with-user actor
                  (catalogue/create-catalogue-item!
-                  {:resid (or resource-id (create-resource! {}))
-                   :form (or form-id (create-form! {}))
+                  {:resid (or resource-id (create-resource! {:organization organization}))
+                   :form (or form-id (create-form! {:form/organization organization}))
                    :organization (or organization "default")
-                   :wfid (or workflow-id (create-workflow! {}))
+                   :wfid (or workflow-id (create-workflow! {:organization organization}))
                    :localizations (or localizations {})}))]
     (assert (:success result) {:command command :result result})
     (:id result)))
@@ -430,7 +430,7 @@
   [users]
   (create-form!
    {:actor (users :owner)
-    :form/organization "nbn"
+    :form/organization "thl"
     :form/title "THL form"
     :form/fields [{:field/title {:en "Application title"
                                  :fi "Hakemuksen otsikko"}
@@ -1032,14 +1032,22 @@
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:auto-approve workflows)})
-    (let [thlform (create-thl-demo-form! users)
+    (let [thl-res (create-resource! {:resource-ext-id "thl"
+                                     :organization "thl"
+                                     :actor owner})
+          thlform (create-thl-demo-form! users)
+          thl-wf (create-workflow! {:actor owner
+                                    :organization "thl"
+                                    :title "THL workflow"
+                                    :type :workflow/default
+                                    :handlers [(:approver1 users) (:approver2 users)]})
           thl-catid (create-catalogue-item! {:actor owner
                                              :title {:en "THL catalogue item"
                                                      :fi "THL katalogi-itemi"}
-                                             :resource-id res1
+                                             :resource-id thl-res
                                              :form-id thlform
                                              :organization "thl"
-                                             :workflow-id (:default workflows)})]
+                                             :workflow-id thl-wf})]
       (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"

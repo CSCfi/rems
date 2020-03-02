@@ -9,7 +9,9 @@
             [rems.db.applications :as applications]
             [rems.db.events :as events]
             [rems.text :as text])
-  (:import [org.apache.lucene.analysis Analyzer]
+  (:import [com.google.common.io MoreFiles RecursiveDeleteOption]
+           [java.nio.file Files]
+           [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode Term]
@@ -27,14 +29,17 @@
 (def ^:private index-lock (Object.))
 
 (mount/defstate ^Directory search-index
-  :start (let [directory (NIOFSDirectory. (.toPath (io/file (:search-index-path env))))]
+  :start (let [index-dir (.toPath (io/file (:search-index-path env)))]
            (locking index-lock
-             (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
-                                                            (.setOpenMode IndexWriterConfig$OpenMode/CREATE)))]
-               (.deleteAll writer)))
-           (atom {::directory directory
-                  ::searcher-manager (SearcherManager. directory (SearcherFactory.))
-                  ::last-processed-event-id 0}))
+             ;; delete old index
+             (when (.exists (.toFile index-dir))
+               (MoreFiles/deleteDirectoryContents index-dir (into-array [RecursiveDeleteOption/ALLOW_INSECURE])))
+             (let [directory (NIOFSDirectory. index-dir)]
+               ;; create a new empty index by creating and closing an IndexWriter, otehrwise SearcherManager will fail
+               (.close (IndexWriter. directory (IndexWriterConfig. analyzer)))
+               (atom {::directory directory
+                      ::searcher-manager (SearcherManager. directory (SearcherFactory.))
+                      ::last-processed-event-id 0}))))
   :stop (do
           (.close ^SearcherManager (::searcher-manager @search-index))
           (.close ^Directory (::directory @search-index))))
@@ -76,17 +81,20 @@
               (str/join " "))})
 
 (defn- index-application! [^IndexWriter writer app]
-  (log/info "Indexing application" (:application/id app))
-  (let [doc (Document.)
-        app-id (str (:application/id app))
-        terms (index-terms-for-application app)]
-    ;; metadata
-    (.add doc (StringField. app-id-field app-id Field$Store/YES))
-    ;; searchable fields
-    (doseq [[k v] terms]
-      (.add doc (TextField. (name k) v Field$Store/NO)))
-    (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
-    (.updateDocument writer (Term. app-id-field app-id) doc)))
+  (let [app-id (str (:application/id app))]
+    (log/debug "Indexing application" app-id)
+    (try
+      (let [doc (Document.)
+            terms (index-terms-for-application app)]
+        ;; metadata
+        (.add doc (StringField. app-id-field app-id Field$Store/YES))
+        ;; searchable fields
+        (doseq [[k v] terms]
+          (.add doc (TextField. (name k) v Field$Store/NO)))
+        (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
+        (.updateDocument writer (Term. app-id-field app-id) doc))
+      (catch Throwable t
+        (throw (Error. (str "Error indexing application " app-id) t))))))
 
 (defn refresh! []
   (locking index-lock
@@ -95,8 +103,11 @@
       (when-not (empty? events)
         (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                        (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
-          (doseq [app-id (distinct (map :application/id events))]
-            (index-application! writer (applications/get-unrestricted-application app-id))))
+          (let [app-ids (distinct (map :application/id events))]
+            (log/info "Start indexing" (count app-ids) "applications...")
+            (doseq [app-id app-ids]
+              (index-application! writer (applications/get-unrestricted-application app-id)))
+            (log/info "Finished indexing" (count app-ids) "applications")))
         (.maybeRefresh searcher-manager)
         (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
 

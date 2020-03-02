@@ -8,11 +8,18 @@ have notable changes.
 
 Changes since v2.7
 
+### Breaking changes
+- Betters support for organizations (#1893)
+  - Backend checks that organizations of resource, workflow and form match when creating a catalogue item
+
 ### Changes
 - Duplicate resource external ids are now allowed (#1988)
 
 ### Additions
 - Applicant/member notification email address is now shown to handler (#1983)
+
+### Fixes
+- Filenames are now retained when downloading attachments (#2019)
 
 ## v2.7 "Koivuviidantie" 2020-02-03
 

@@ -1,5 +1,6 @@
 (ns rems.auth.oidc
   (:require [clj-http.client :as http]
+            [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
             [rems.config :refer [env oidc-configuration]]
             [rems.json :as json]
@@ -43,6 +44,8 @@
     ; name - non-unique name
     ; locale – could be used to set preferred lang on first login
     ; email – non-unique (!) email
+    (when (:log-authentication-details env)
+      (log/info "logged in" oidc-data))
     (-> (redirect "/") ; TODO Could redirect with state param
         (assoc :session (:session request))
         (assoc-in [:session :identity] {:eppn (:sub oidc-data)
