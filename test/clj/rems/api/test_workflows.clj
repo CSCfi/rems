@@ -184,7 +184,8 @@
                    handler
                    read-ok-body)
 
-        cat-id (test-data/create-catalogue-item! {:workflow-id wfid})
+        cat-id (test-data/create-catalogue-item! {:organization "test-organization"
+                                                  :workflow-id wfid})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor "tester"})
         application->handler-user-ids

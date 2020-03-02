@@ -241,17 +241,19 @@
                         (authenticate api-key user-id)
                         handler
                         read-ok-body))))
-    (let [resid (test-data/create-resource! {})
-          wfid (test-data/create-workflow! {})
+    (let [resid (test-data/create-resource! {:organization "test-organization"})
+          wfid (test-data/create-workflow! {:organization "test-organization"})
           data (-> (request :post "/api/catalogue-items/create")
                    (authenticate api-key user-id)
                    (json-body {:form form-id
                                :resid resid
                                :wfid wfid
                                :archived false
+                               :organization "test-organization"
                                :localizations {}})
                    handler
                    read-body)]
+      (is (:success data))
       (testing "Form is non-editable after in use by a catalogue item"
         (is (not (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
                                (authenticate api-key user-id)

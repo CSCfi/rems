@@ -86,6 +86,7 @@
                    (api-call :post "/api/catalogue-items/create" {:resid resource-id
                                                                   :form form-id
                                                                   :wfid workflow-id
+                                                                  :organization "e2e"
                                                                   :localizations {:en {:title "e2e catalogue item"}}}
                              api-key owner-id)))
 
@@ -271,7 +272,8 @@
           catalogue-item-id
           (testing "create catalogue item"
             (extract-id
-             (api-call :post "/api/catalogue-items/create" {:resid resource-id
+             (api-call :post "/api/catalogue-items/create" {:organization "e2e"
+                                                            :resid resource-id
                                                             :form form-id
                                                             :wfid workflow-id
                                                             :localizations {:en {:title "e2e catalogue item"}}}
