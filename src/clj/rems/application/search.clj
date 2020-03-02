@@ -9,6 +9,7 @@
             [rems.db.events :as events]
             [rems.text :as text])
   (:import [com.google.common.io MoreFiles RecursiveDeleteOption]
+           [java.nio.file Files]
            [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
@@ -30,7 +31,8 @@
   :start (let [index-dir (.toPath (io/file (:search-index-path env)))]
            (locking index-lock
              ;; delete old index
-             (MoreFiles/deleteDirectoryContents index-dir (into-array [RecursiveDeleteOption/ALLOW_INSECURE]))
+             (when (.exists (.toFile index-dir))
+               (MoreFiles/deleteDirectoryContents index-dir (into-array [RecursiveDeleteOption/ALLOW_INSECURE])))
              (let [directory (NIOFSDirectory. index-dir)]
                ;; create new empty index by creating and closing an indexwriter, otehrwise SearcherManager will fail
                (.close (IndexWriter. directory (IndexWriterConfig. analyzer)))
