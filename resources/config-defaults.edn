@@ -23,7 +23,7 @@
  :authentication :shibboleth
 
  ;; Log additional details about authentication
- :debug-authentication false
+ :log-authentication-details false
 
  ;; For :shibboleth authentication
  :alternative-login-url nil ;; link to this login url in addition to /Shibboleth.sso/Login

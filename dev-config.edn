@@ -5,7 +5,7 @@
  :search-index-path "target/search-index-dev"
  :theme-path "example-theme/theme.edn"
  :authentication :fake-shibboleth
- :debug-authentication true
+ :log-authentication-details true
  ; when shibboleth is removed, we can use oidc exclusively
  ;; Open ID Connect settings
  ; These allow login to http://localhost:3000/oidc-callback only
