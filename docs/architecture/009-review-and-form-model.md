@@ -16,6 +16,8 @@ There exist at least six possibilities to solve this.
 
 The reviewer is part of some reviewer organization and receives a review request from the handler.
 
+Repeating fields would be a new feature, a field that repeats per some criteria. Either the user can add rows themselves, or a field is repeated once per reviewing organization.
+
 1. Require the handler to copy-paste the relevant data from private fields to each reviewer in a review request (status quo).
    Application contains form fields of one form.
 2. Model each reviewer organization as a catalogue item with extra fields.
@@ -25,11 +27,11 @@ The reviewer is part of some reviewer organization and receives a review request
    Application contains form fields from all forms of all catalogue items.
    Review request is sent with certain catalogue items selected and it controls which fields are shown to the reviewer.
 4. Model each reviewer organization as a catalogue item with the same form.
-   Model private fields as repeating fields that are repeated once per catalogue item in the application.
+   Model private fields, which need a separate answer for each reviewer organization, as repeating fields that are repeated once per catalogue item in the application.
    Application contains form fields of one form.
    Review request is sent with certain catalogue items selected and it controls which (repeated) fields are shown to the reviewer.
 5. Add a field type to the model where you can add multiple answers. E.g. click plus to add row.
-   Model private fields as repeating fields that are repeated once per each answer to the multiple answer field.
+   Model private fields, which need a separate answer for each reviewer organization, as repeating fields that are repeated once per each answer to the multiple answer field.
    Application contains form fields of one form.
    Review request is sent with certain repeated field answers selected and it controls which fields are shown to the reviewer.
 6. Model each reviewer organization as a REMS organization with a separate catalogue item with a separate form.
@@ -91,5 +93,11 @@ The tasks should be
    - allow multiple forms in the application model
    - backwards compatible change and/or migrations
    - decide whether to group field answers per form
+7. mixed organization catalogue items
+   - catalogue item can be mixed organization, i.e. workflow, form and resource can be from different organizations
+   - the owner and organization owner can create any combination
+   - workflow decides which organization handlers do the processing
+   - to match this, also a resource can refer to a license from another organization
+   - owners and organization owners can see all forms, resources and workflows but organization owner can only edit the ones that are in their organization
 
 ![](https://github.com/CSCfi/rems/blob/review-model/docs/review-and-form-model.svg)
