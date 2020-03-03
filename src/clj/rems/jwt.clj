@@ -1,5 +1,6 @@
 (ns rems.jwt
-  (:require [clojure.data.json :as json]
+  (:require [buddy.sign.jwt :as buddy-jwt]
+            [clojure.data.json :as json]
             [mount.core :as mount]
             [rems.config :refer [oidc-configuration]])
   (:import [com.auth0.jwk JwkProviderBuilder JwkProvider]
@@ -24,6 +25,10 @@
   (-> (Base64/getUrlDecoder)
       (.decode base64-str)
       (String. StandardCharsets/UTF_8)))
+
+;;TODO: use key files, see https://funcool.github.io/buddy-sign/latest/#digital-signature-algorithms
+(defn sign [claims secret]
+  (buddy-jwt/sign claims secret))
 
 (defn validate [^String jwt issuer audience now]
   (let [public-key (fetch-public-key jwt)
