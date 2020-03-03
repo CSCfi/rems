@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.7
+Changes since v2.8
+
+## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
 ### Breaking changes
 - Betters support for organizations (#1893)
@@ -17,6 +19,7 @@ Changes since v2.7
 
 ### Additions
 - Applicant/member notification email address is now shown to handler (#1983)
+- Allow Excel and OpenOffice files as attachments (#2023)
 
 ### Fixes
 - Filenames are now retained when downloading attachments (#2019)
