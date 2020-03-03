@@ -145,10 +145,9 @@
             (is (response-is-forbidden? response))
             (is (= "no access to organization \"organization2\"" (read-body response)))))
 
-        (testing "with mismatched organizations"
+        (testing "with license from other organization"
           (let [result (create-resource "organization-owner1" "organization1" licid-org2)]
-            (is (false? (:success result)))
-            (is (= ["t.administration.errors/organization-mismatch"] (map :type (:errors result)))))))
+            (is (true? (:success result))))))
 
       (testing "create as owner"
         (let [result (create-resource "owner" "organization1" licid-org1)
@@ -174,8 +173,7 @@
               (is (true? (:success result))))))
         (testing "with mismatched organizations"
           (let [result (create-resource "owner" "organization1" licid-org1 licid-org2)]
-            (is (false? (:success result)))
-            (is (= ["t.administration.errors/organization-mismatch"] (map :type (:errors result))))))))))
+            (is (true? (:success result)))))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"

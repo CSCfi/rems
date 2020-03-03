@@ -76,7 +76,6 @@
                             :form-in-use "Lomake on käytössä:"
                             :license-archived "Lisenssi on arkistoitu:"
                             :license-in-use "Lisenssi on käytössä:"
-                            :organization-mismatch "Organisaatiot eroavat"
                             :resource-archived "Resurssi on arkistoitu:"
                             :resource-in-use "Resurssi on käytössä:"
                             :workflow-archived "Työvuo on arkistoitu:"
