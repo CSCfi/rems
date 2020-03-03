@@ -303,4 +303,53 @@
         (is (response-is-forbidden? response))
         (is (= "no access to organization \"organization1\"" (read-body response)))))))
 
-;; TODO: test enabling/archiving as organization owner
+(deftest test-enable-archive
+  (let [api-key "42"
+        res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization "organization1"})
+        id (test-data/create-catalogue-item!
+            {:organization "organization1"
+             :title {:en "en"
+                     :fi "fi"}
+             :resource-id res-id})
+        fetch #(api-call :get (str "/api/catalogue-items/" id)
+                         nil
+                         api-key "owner")]
+    (doseq [user ["owner" "organization-owner1"]]
+      (testing user
+        (testing "disable"
+          (is (:success (api-call :put "/api/catalogue-items/enabled"
+                                  {:id id
+                                   :enabled false}
+                                  api-key user)))
+          (is (false? (:enabled (fetch)))))
+        (testing "enable"
+          (is (:success (api-call :put "/api/catalogue-items/enabled"
+                                  {:id id
+                                   :enabled true}
+                                  api-key user)))
+          (is (true? (:enabled (fetch)))))
+        (testing "archive"
+          (is (:success (api-call :put "/api/catalogue-items/archived"
+                                  {:id id
+                                   :archived true}
+                                  api-key user)))
+          (is (true? (:archived (fetch)))))
+        (testing "unarchive"
+          (is (:success (api-call :put "/api/catalogue-items/archived"
+                                  {:id id
+                                   :archived false}
+                                  api-key user)))
+          (is (false? (:archived (fetch)))))))
+    (testing "incorrect organization owner can't"
+      (testing "enable"
+        (let [response (-> (request :put "/api/catalogue-items/enabled")
+                           (authenticate api-key "organization-owner2")
+                           (json-body {:id id :enabled true})
+                           handler)]
+          (is (response-is-forbidden? response))))
+      (testing "archive"
+        (let [response (-> (request :put "/api/catalogue-items/archived")
+                           (authenticate api-key "organization-owner2")
+                           (json-body {:id id :archived true})
+                           handler)]
+          (is (response-is-forbidden? response)))))))
