@@ -16,8 +16,8 @@
                :licenses (vec mismatches)}]}))
 
 (defn create-resource! [{:keys [resid organization licenses] :as command} user-id]
-  (or (util/forbidden-organization-error organization)
-      (organization-mismatch-error command)
+  (util/check-allowed-organization! organization)
+  (or (organization-mismatch-error command)
       (let [id (:id (db/create-resource! {:resid resid
                                           :organization organization
                                           :owneruserid user-id

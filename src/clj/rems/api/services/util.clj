@@ -19,8 +19,7 @@
              ;;   organizations to be able to remove this.
              (and (nil? organization) (nil? user-organization))))))
 
-;; TODO refactor callsites now that this doesn't return
-(defn forbidden-organization-error [organization]
+(defn check-allowed-organization! [organization]
   (when (forbidden-organization? organization)
     (throw-forbidden (str "no access to organization " (pr-str organization)))))
 

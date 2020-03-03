@@ -12,17 +12,17 @@
   (s/validator workflow/WorkflowBody))
 
 (defn create-workflow! [{:keys [user-id organization type title handlers]}]
-  (or (util/forbidden-organization-error organization)
-      (let [body {:type type
-                  :handlers handlers}
-            id (:id (db/create-workflow! {:organization organization,
-                                          :owneruserid user-id,
-                                          :modifieruserid user-id,
-                                          :title title,
-                                          :workflow (json/generate-string
-                                                     (validate-workflow-body body))}))]
-        {:success (not (nil? id))
-         :id id})))
+  (util/check-allowed-organization! organization)
+  (let [body {:type type
+              :handlers handlers}
+        id (:id (db/create-workflow! {:organization organization,
+                                      :owneruserid user-id,
+                                      :modifieruserid user-id,
+                                      :title title,
+                                      :workflow (json/generate-string
+                                                 (validate-workflow-body body))}))]
+    {:success (not (nil? id))
+     :id id}))
 
 (defn- unrich-workflow [workflow]
   ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)
