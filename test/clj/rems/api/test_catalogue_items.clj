@@ -15,7 +15,8 @@
   (let [api-key "42"
         user-id "alice"
         form-id (test-data/create-form! {:form/title "form name" :form/organization "organization1"})
-        wf-id (test-data/create-workflow! {:title "workflow name" :organization "organization1"})
+        ;; can create catalogue items with mixed organizations:
+        wf-id (test-data/create-workflow! {:title "workflow name" :organization "abc"})
         res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization "organization1"})]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
@@ -57,15 +58,6 @@
                                  handler)]
                 (is (response-is-not-found? response))
                 (is (= "application/json" (get-in response [:headers "Content-Type"])))))))
-
-        (testing "create with mismatched organization"
-          (let [data (create-catalogue-item "owner" "nbn")]
-            (is (not (:success data)))
-            (is (= [{:type "t.administration.errors/organization-mismatch"
-                     :form {:id form-id :organization "organization1"}
-                     :resource {:id res-id :organization "organization1"}
-                     :workflow {:id wf-id :organization "organization1"}}]
-                   (:errors data)))))
 
         (testing "create as organization owner"
           (testing "with correct organization"
@@ -276,18 +268,15 @@
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))
 
         (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))
-    (testing "can't change to form that's in another organization"
-      (let [wrong-form-id (test-data/create-form! {:form/title "wrong organization"
+    (testing "can change to form that's in another organization"
+      (let [form-id (test-data/create-form! {:form/title "wrong organization"
                                                    :form/organization "organization2"})
             response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                          (authenticate api-key "owner")
-                         (json-body {:form wrong-form-id})
+                         (json-body {:form form-id})
                          handler
                          read-ok-body)]
-        (is (=  {:success false
-                 :errors [{:type "t.administration.errors/organization-mismatch"
-                           :form {:id wrong-form-id :organization "organization2"}}]}
-                response))))
+        (is (true? (:success response)))))
     (testing "can change form as organization owner"
       (is (true? (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                      (authenticate api-key "organization-owner1")

@@ -17,23 +17,8 @@
      :licenses (licenses/get-licenses {:wfid wfid
                                        :items [id]})}))
 
-(defn- organization-mismatch-error [{:keys [organization form resid wfid]}]
-  (let [form-org (:form/organization (form/get-form-template form))
-        res-org (:organization (resource/get-resource resid))
-        wf-org (:organization (workflow/get-workflow wfid))]
-    (when-let [mismatches (merge (when (not= organization form-org)
-                                   {:form {:id form :organization form-org}})
-                                 (when (not= organization res-org)
-                                   {:resource {:id resid :organization res-org}})
-                                 (when (not= organization wf-org)
-                                   {:workflow {:id wfid :organization wf-org}}))]
-      {:success false
-       :errors [(merge {:type :t.administration.errors/organization-mismatch}
-                       mismatches)]})))
-
 (defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (or (util/forbidden-organization-error organization)
-      (organization-mismatch-error command)
       ;; TODO make :organization unoptional?
       (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
                                                       (select-keys command [:form :resid :wfid :enabled :archived :organization]))))
@@ -107,10 +92,6 @@
   [item form-id]
   (let [form-organization (:form/organization (form/get-form-template form-id))]
     (or (util/forbidden-organization-error (:organization item))
-        (when (not= (:organization item) form-organization)
-          {:success false
-           :errors [{:type :t.administration.errors/organization-mismatch
-                     :form {:id form-id :organization form-organization}}]})
         (if (= (:formid item) form-id)
           {:success true :catalogue-item-id (:id item)}
           ;; create a new item with the new form
