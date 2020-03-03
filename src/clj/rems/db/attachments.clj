@@ -10,15 +10,15 @@
    .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
   [content-type]
   (when-not (or (#{"application/pdf"
-                   "application/msword"
-                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                   "application/vnd.oasis.opendocument.text"
-                   "application/vnd.ms-powerpoint"
-                   "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                   "application/vnd.oasis.opendocument.presentation"
-                   "application/vnd.ms-excel"
-                   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                   "application/vnd.oasis.opendocument.spreadsheet"
+                   "application/msword" ;; .doc
+                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ;; .docx
+                   "application/vnd.oasis.opendocument.text" ;; .odt
+                   "application/vnd.ms-powerpoint" ;; .ppt
+                   "application/vnd.openxmlformats-officedocument.presentationml.presentation" ;; .pptx
+                   "application/vnd.oasis.opendocument.presentation" ;; .odp
+                   "application/vnd.ms-excel" ;; .xls
+                   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ;; .xlsx
+                   "application/vnd.oasis.opendocument.spreadsheet" ;; .ods
                    "text/plain"}
                  content-type)
                 (.startsWith content-type "image/"))
