@@ -111,7 +111,9 @@
       :roles #{:owner :organization-owner}
       :body [command EditCatalogueItemCommand]
       :return SuccessResponse
-      (ok (catalogue/edit-catalogue-item! command)))
+      (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
+        (not-found-json-response)
+        (ok (catalogue/edit-catalogue-item! command))))
 
     (PUT "/archived" []
       :summary "Archive or unarchive catalogue item"

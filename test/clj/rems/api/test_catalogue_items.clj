@@ -171,18 +171,16 @@
               (is (response-is-forbidden? response))
               (is (= "no access to organization \"organization1\"" (read-body response))))))))
 
-    ;; last because it invalidates the transaction currently
-    ;; TODO this shouldn't be a 500
     (testing "edit nonexisting"
-        (let [response (-> (request :put "/api/catalogue-items/edit")
-                           (authenticate api-key owner)
-                           (json-body {:id 999999999
-                                       :localizations {:sv {:title "Sv title 2"
-                                                            :infourl nil}
-                                                       :fi {:title "Fi title"
-                                                            :infourl "http://info.fi"}}})
-                           handler)]
-          (is (= 500 (:status response)))))))
+      (let [response (-> (request :put "/api/catalogue-items/edit")
+                         (authenticate api-key owner)
+                         (json-body {:id 999999999
+                                     :localizations {:sv {:title "Sv title 2"
+                                                          :infourl nil}
+                                                     :fi {:title "Fi title"
+                                                          :infourl "http://info.fi"}}})
+                         handler)]
+        (is (response-is-not-found? response))))))
 
 
 (deftest catalogue-items-api-security-test
