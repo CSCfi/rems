@@ -8,7 +8,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (deftest catalogue-items-api-test
@@ -167,24 +167,22 @@
                                                                 :infourl nil}
                                                            :fi {:title "Fi title 2"
                                                                 :infourl "http://info.fi"}}})
-                               handler
-                               read-ok-body)]
-              (is (= {:success false
-                      :errors [{:type "t.administration.errors/forbidden-organization"}]}
-                     response)))))))
+                               handler)]
+              (is (response-is-forbidden? response))
+              (is (= "no access to organization \"organization1\"" (read-body response))))))))
 
     ;; last because it invalidates the transaction currently
     ;; TODO this shouldn't be a 500
     (testing "edit nonexisting"
-      (let [response (-> (request :put "/api/catalogue-items/edit")
-                         (authenticate api-key owner)
-                         (json-body {:id 999999999
-                                     :localizations {:sv {:title "Sv title 2"
-                                                          :infourl nil}
-                                                     :fi {:title "Fi title"
-                                                          :infourl "http://info.fi"}}})
-                         handler)]
-        (is (= 500 (:status response)))))))
+        (let [response (-> (request :put "/api/catalogue-items/edit")
+                           (authenticate api-key owner)
+                           (json-body {:id 999999999
+                                       :localizations {:sv {:title "Sv title 2"
+                                                            :infourl nil}
+                                                       :fi {:title "Fi title"
+                                                            :infourl "http://info.fi"}}})
+                           handler)]
+          (is (= 500 (:status response)))))))
 
 
 (deftest catalogue-items-api-security-test
@@ -299,13 +297,12 @@
                      handler
                      read-ok-body
                      :success))))
-    (testing "can change form as owner of different organization"
-      (is (= {:success false
-              :errors [{:type "t.administration.errors/forbidden-organization"}]}
-             (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
-                 (authenticate api-key "organization-owner2")
-                 (json-body {:form new-form-id})
-                 handler
-                 read-ok-body))))))
+    (testing "can't change form as owner of different organization"
+      (let [response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                         (authenticate api-key "organization-owner2")
+                         (json-body {:form new-form-id})
+                         handler)]
+        (is (response-is-forbidden? response))
+        (is (= "no access to organization \"organization1\"" (read-body response)))))))
 
 ;; TODO: test enabling/archiving as organization owner

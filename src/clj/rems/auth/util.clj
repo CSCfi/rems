@@ -8,5 +8,7 @@
 
 (defn throw-forbidden
   "Helper for throwing `ForbiddenException`."
-  []
-  (throw (ForbiddenException.)))
+  ([]
+   (throw (ForbiddenException.)))
+  ([msg]
+   (throw (ForbiddenException. msg))))
