@@ -105,29 +105,34 @@
   Since we don't want to modify the old item we must create
   a new item that is the copy of the old item except for the changed form."
   [item form-id]
-  (or (util/forbidden-organization-error (:organization item))
-      (if (= (:formid item) form-id)
-        {:success true :catalogue-item-id (:id item)}
-        ;; create a new item with the new form
-        (let [new-item (db/create-catalogue-item! {:enabled true
-                                                   :archived false
-                                                   :form form-id
-                                                   :organization (:organization item)
-                                                   :resid (:resource-id item)
-                                                   :wfid (:wfid item)})]
+  (let [form-organization (:form/organization (form/get-form-template form-id))]
+    (or (util/forbidden-organization-error (:organization item))
+        (when (not= (:organization item) form-organization)
+          {:success false
+           :errors [{:type :t.administration.errors/organization-mismatch
+                     :form {:id form-id :organization form-organization}}]})
+        (if (= (:formid item) form-id)
+          {:success true :catalogue-item-id (:id item)}
+          ;; create a new item with the new form
+          (let [new-item (db/create-catalogue-item! {:enabled true
+                                                     :archived false
+                                                     :form form-id
+                                                     :organization (:organization item)
+                                                     :resid (:resource-id item)
+                                                     :wfid (:wfid item)})]
 
-          ;; copy localizations
-          (doseq [[langcode localization] (:localizations item)]
-            (db/upsert-catalogue-item-localization! {:id (:id new-item)
-                                                     :langcode (name langcode)
-                                                     :title (:title localization)
-                                                     :infourl (:infourl localization)}))
-          ;; Reset cache so that next call to get localizations will get these ones.
-          (catalogue/reset-cache!)
+            ;; copy localizations
+            (doseq [[langcode localization] (:localizations item)]
+              (db/upsert-catalogue-item-localization! {:id (:id new-item)
+                                                       :langcode (name langcode)
+                                                       :title (:title localization)
+                                                       :infourl (:infourl localization)}))
+            ;; Reset cache so that next call to get localizations will get these ones.
+            (catalogue/reset-cache!)
 
-          ;; end the old catalogue item
-          (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
-          (db/set-catalogue-item-archived! {:id (:id item) :archived true})
-          (db/set-catalogue-item-endt! {:id (:id item) :end (:start new-item)})
+            ;; end the old catalogue item
+            (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
+            (db/set-catalogue-item-archived! {:id (:id item) :archived true})
+            (db/set-catalogue-item-endt! {:id (:id item) :end (:start new-item)})
 
-          {:success true :catalogue-item-id (:id new-item)}))))
+            {:success true :catalogue-item-id (:id new-item)})))))

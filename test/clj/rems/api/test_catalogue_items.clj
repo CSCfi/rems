@@ -280,7 +280,18 @@
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))
 
         (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))
-    ;; TODO test that can't change to form that's in a different organization
+    (testing "can't change to form that's in another organization"
+      (let [wrong-form-id (test-data/create-form! {:form/title "wrong organization"
+                                                   :form/organization "organization2"})
+            response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                         (authenticate api-key "owner")
+                         (json-body {:form wrong-form-id})
+                         handler
+                         read-ok-body)]
+        (is (=  {:success false
+                 :errors [{:type "t.administration.errors/organization-mismatch"
+                           :form {:id wrong-form-id :organization "organization2"}}]}
+                response))))
     (testing "can change form as organization owner"
       (is (true? (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                      (authenticate api-key "organization-owner1")
