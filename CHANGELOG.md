@@ -17,6 +17,7 @@ Changes since v2.7
 
 ### Additions
 - Applicant/member notification email address is now shown to handler (#1983)
+- Allow Excel and OpenOffice files as attachments (#2023)
 
 ### Fixes
 - Filenames are now retained when downloading attachments (#2019)
