@@ -12,10 +12,13 @@
   (when-not (or (#{"application/pdf"
                    "application/msword"
                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                   "application/vnd.oasis.opendocument.text"
                    "application/vnd.ms-powerpoint"
                    "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                   "application/vnd.oasis.opendocument.presentation"
                    "application/vnd.ms-excel"
                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                   "application/vnd.oasis.opendocument.spreadsheet"
                    "text/plain"}
                  content-type)
                 (.startsWith content-type "image/"))
