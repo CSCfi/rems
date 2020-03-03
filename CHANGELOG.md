@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.7
+Changes since v2.8
+
+## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
 ### Breaking changes
 - Betters support for organizations (#1893)
