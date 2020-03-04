@@ -86,9 +86,13 @@
               (is (:id body))
               (is (:success body))))
 
-          (testing "with correct organization"
-            (let [body (create-license "organization-owner1" (assoc command :organization "organization2"))]
-              (is (not (:success body))))))))
+          (testing "with incorrect organization"
+            (let [response (-> (request :post "/api/licenses/create")
+                               (authenticate api-key "organization-owner1")
+                               (json-body (assoc command :organization "organization2"))
+                               handler)]
+              (is (response-is-forbidden? response))
+              (is (= "no access to organization \"organization2\"" (read-body response))))))))
 
     (testing "create inline license"
       (let [command {:licensetype "text"

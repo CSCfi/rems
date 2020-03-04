@@ -6,27 +6,17 @@
             [rems.db.resource :as resource])
   (:import (org.postgresql.util PSQLException)))
 
-(defn- organization-mismatch-error [{:keys [organization licenses]}]
-  (when-let [mismatches (seq (for [licid licenses
-                                   :let [org (:organization (licenses/get-license licid))]
-                                   :when (not= org organization)]
-                               {:id licid :organization org}))]
-    {:success false
-     :errors [{:type :t.administration.errors/organization-mismatch
-               :licenses (vec mismatches)}]}))
-
 (defn create-resource! [{:keys [resid organization licenses] :as command} user-id]
-  (or (util/forbidden-organization-error organization)
-      (organization-mismatch-error command)
-      (let [id (:id (db/create-resource! {:resid resid
-                                          :organization organization
-                                          :owneruserid user-id
-                                          :modifieruserid user-id}))]
-        (doseq [licid licenses]
-          (db/create-resource-license! {:resid id
-                                        :licid licid}))
-        {:success true
-         :id id})))
+  (util/check-allowed-organization! organization)
+  (let [id (:id (db/create-resource! {:resid resid
+                                      :organization organization
+                                      :owneruserid user-id
+                                      :modifieruserid user-id}))]
+    (doseq [licid licenses]
+      (db/create-resource-license! {:resid id
+                                    :licid licid}))
+    {:success true
+     :id id}))
 
 (defn set-resource-enabled! [command]
   (db/set-resource-enabled! (select-keys command [:id :enabled]))

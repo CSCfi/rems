@@ -154,9 +154,12 @@
               (is (:id body))))
 
           (testing "with incorrect organization"
-            (let [body (-> (create-form "organization-owner1" (assoc command :form/organization "organization2"))
-                           read-ok-body)]
-              (is (not (:success body))))))))))
+            (let [response (-> (request :post "/api/forms/create")
+                               (authenticate api-key "organization-owner1")
+                               (json-body (assoc command :form/organization "organization2"))
+                               handler)]
+              (is (response-is-forbidden? response))
+              (is (= "no access to organization \"organization2\"" (read-body response))))))))))
 
 (deftest forms-api-all-field-types-test
   (let [api-key "42"

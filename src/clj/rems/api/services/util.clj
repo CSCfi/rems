@@ -1,5 +1,6 @@
 (ns rems.api.services.util
   (:require [clojure.test :refer [deftest is testing]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.db.roles :as roles]
             [rems.db.users :as users]))
@@ -18,10 +19,9 @@
              ;;   organizations to be able to remove this.
              (and (nil? organization) (nil? user-organization))))))
 
-(defn forbidden-organization-error [organization]
+(defn check-allowed-organization! [organization]
   (when (forbidden-organization? organization)
-    {:success false
-     :errors [{:type :t.administration.errors/forbidden-organization}]}))
+    (throw-forbidden (str "no access to organization " (pr-str organization)))))
 
 (deftest test-forbidden-organization?
   (testing "for owner, all organizations are permitted"

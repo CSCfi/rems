@@ -116,19 +116,19 @@
 
 (defn create-form! [user-id form]
   (let [organization (:form/organization form)]
-    (or (util/forbidden-organization-error organization)
-        (let [form-id (:id (db/save-form-template! {:organization organization
-                                                    :title (:form/title form)
-                                                    :user user-id
-                                                    :fields (serialize-fields form)}))]
-          {:success (not (nil? form-id))
-           :id form-id}))))
+    (util/check-allowed-organization! organization)
+    (let [form-id (:id (db/save-form-template! {:organization organization
+                                                :title (:form/title form)
+                                                :user user-id
+                                                :fields (serialize-fields form)}))]
+      {:success (not (nil? form-id))
+       :id form-id})))
 
 (defn edit-form! [user-id form]
   (let [form-id (:form/id form)
         organization (:form/organization form)]
-    (or (util/forbidden-organization-error organization)
-        (form-in-use-error form-id)
+    (util/check-allowed-organization! organization)
+    (or (form-in-use-error form-id)
         (do (db/edit-form-template! {:id form-id
                                      :organization organization
                                      :title (:form/title form)

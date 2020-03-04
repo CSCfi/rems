@@ -116,8 +116,15 @@
               (is (= ["handler" "carl"] (mapv :userid (get-in workflow [:workflow :handlers]))))))))
 
       (testing "with incorrect organization"
-        (let [body (create-workflow "organization-owner1" "organization2" :workflow/default)]
-          (is (not (:success body))))))))
+        (let [response (-> (request :post "/api/workflows/create")
+                              (json-body {:organization "organization2"
+                                          :title "workflow title"
+                                          :type :workflow/default
+                                          :handlers ["handler" "carl"]})
+                              (authenticate "42" "organization-owner1")
+                              handler)]
+          (is (response-is-forbidden? response))
+          (is (= "no access to organization \"organization2\"" (read-body response))))))))
 
 (deftest workflows-enabled-archived-test
   (let [api-key "42"

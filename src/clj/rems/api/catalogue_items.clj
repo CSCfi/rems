@@ -52,7 +52,8 @@
 
 (s/defschema ChangeFormResponse
   {:success s/Bool
-   :catalogue-item-id s/Int})
+   (s/optional-key :catalogue-item-id) s/Int
+   (s/optional-key :errors) [s/Any]})
 
 ;; TODO use declarative roles everywhere
 (def catalogue-items-api
@@ -78,7 +79,7 @@
 
     (POST "/:item-id/change-form" []
       :summary "Change catalogue item form. Creates a copy and ends the old."
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :path-params [item-id :- (describe s/Int "catalogue item")]
       :body [command ChangeFormCommand]
       :responses {200 {:schema ChangeFormResponse}
@@ -107,21 +108,23 @@
 
     (PUT "/edit" []
       :summary "Edit a catalogue item"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EditCatalogueItemCommand]
       :return SuccessResponse
-      (ok (catalogue/edit-catalogue-item! command)))
+      (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
+        (not-found-json-response)
+        (ok (catalogue/edit-catalogue-item! command))))
 
     (PUT "/archived" []
       :summary "Archive or unarchive catalogue item"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (catalogue/set-catalogue-item-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable catalogue item"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (catalogue/set-catalogue-item-enabled! command)))))

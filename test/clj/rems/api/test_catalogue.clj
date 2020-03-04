@@ -15,9 +15,8 @@
     (let [data (-> (request :get "/api/catalogue/")
                    (authenticate api-key user-id)
                    handler
-                   read-body)
-          item (first data)]
-      (is (str/starts-with? (:resid item) "urn:")))))
+                   read-ok-body)]
+      (is (some #(str/starts-with? (:resid %) "urn:") data)))))
 
 (deftest catalogue-api-security-test
   (testing "listing without authentication"

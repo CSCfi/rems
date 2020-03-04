@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.8
 
+### Changes
+- Removed requirement for organizations to match when creating catalogue item or resource (#1893). This reverts the only breaking change in 2.8.
+
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
 ### Breaking changes
