@@ -60,28 +60,28 @@
 
     (GET "/:form-id/editable" []
       :summary "Check if the form is editable"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :path-params [form-id :- (describe s/Int "form-id")]
       :return SuccessResponse
       (ok (form/form-editable form-id)))
 
     (PUT "/edit" []
       :summary "Edit form"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EditFormCommand]
       :return SuccessResponse
       (ok (form/edit-form! (getx-user-id) command)))
 
     (PUT "/archived" []
       :summary "Archive or unarchive form"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (form/set-form-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable form"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (form/set-form-enabled! command)))))

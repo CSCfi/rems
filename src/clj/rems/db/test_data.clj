@@ -294,10 +294,11 @@
     (create-user! attr)))
 
 (defn- create-archived-form! [actor]
-  (let [id (create-form! {:actor actor
-                          :form/organization "nbn"
-                          :form/title "Archived form, should not be seen by applicants"})]
-    (form/set-form-archived! {:id id :archived true})))
+  (with-user actor
+    (let [id (create-form! {:actor actor
+                            :form/organization "nbn"
+                            :form/title "Archived form, should not be seen by applicants"})]
+      (form/set-form-archived! {:id id :archived true}))))
 
 (defn- create-disabled-license! [{:keys [actor]
                                   :license/keys [organization]}]
