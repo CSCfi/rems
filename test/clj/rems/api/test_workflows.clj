@@ -140,8 +140,9 @@
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
 
         fetch #(fetch api-key user-id wfid)
-        archive-license! #(licenses/set-license-archived! {:id lic-id
-                                                           :archived %})
+        archive-license! #(with-user user-id
+                            (licenses/set-license-archived! {:id lic-id
+                                                             :archived %}))
         set-enabled! #(-> (request :put "/api/workflows/enabled")
                           (json-body {:id wfid
                                       :enabled %1})
