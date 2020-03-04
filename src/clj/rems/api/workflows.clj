@@ -52,30 +52,28 @@
 
     (PUT "/edit" []
       :summary "Edit workflow title and handlers"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EditWorkflowCommand]
       :return SuccessResponse
       (ok (workflow/edit-workflow! command)))
 
-    ;; TODO /archived /enabled /actors for workflow owner
-
     (PUT "/archived" []
       :summary "Archive or unarchive workflow"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (workflow/set-workflow-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable workflow"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (workflow/set-workflow-enabled! command)))
 
     (GET "/actors" []
       :summary "List of available actors"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :return AvailableActors
       (ok (workflow/get-available-actors)))
 
