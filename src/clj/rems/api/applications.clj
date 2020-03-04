@@ -117,7 +117,7 @@
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (applications/get-my-applications (getx-user-id))
                (filter-with-search query))))))
 
@@ -129,7 +129,7 @@
       :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (applications/get-all-applications (getx-user-id))
                (filter-with-search query))))
 
@@ -137,7 +137,7 @@
       :summary "Get all applications that the current user needs to act on."
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-todos (getx-user-id))
                (filter-with-search query))))
 
@@ -145,7 +145,7 @@
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-handled-todos (getx-user-id))
                (filter-with-search query))))
 
