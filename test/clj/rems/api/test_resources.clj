@@ -31,78 +31,20 @@
       handler
       read-ok-body))
 
-(deftest resources-api-test
+(deftest resources-api-create-test
   (let [api-key "42"
-        user-id "owner"]
-    (testing "get all"
-      (testing "returns stuff"
-        (let [data (-> (request :get "/api/resources")
-                       (authenticate api-key user-id)
-                       handler
-                       read-ok-body)]
-          (is (:id (first data)))))
-      (let [enabled-id (:id (create-resource! {:resid "enabled"
-                                               :organization "abc"
-                                               :licenses []}
-                                              api-key user-id))
-            _ (resource-enabled! {:id enabled-id :enabled true}
-                                 api-key user-id)
-            _ (resource-archived! {:id enabled-id :archived false}
-                                  api-key user-id)
-            disabled-id (:id (create-resource! {:resid "disabled"
-                                                :organization "abc"
-                                                :licenses []}
-                                               api-key user-id))
-            _ (resource-enabled! {:id disabled-id :enabled false}
-                                 api-key user-id)
-            _ (resource-archived! {:id disabled-id :archived false}
-                                  api-key user-id)
-            archived-id (:id (create-resource! {:resid "archived"
-                                                :organization "abc"
-                                                :licenses []}
-                                               api-key user-id))
-            _ (resource-enabled! {:id archived-id :enabled true}
-                                 api-key user-id)
-            _ (resource-archived! {:id archived-id :archived true}
-                                  api-key user-id)]
-        (testing "hides disabled and archived by default"
-          (let [data (-> (request :get "/api/resources")
-                         (authenticate api-key user-id)
-                         handler
-                         read-ok-body)
-                app-ids (set (map :id data))]
-            (is (contains? app-ids enabled-id))
-            (is (not (contains? app-ids disabled-id)))
-            (is (not (contains? app-ids archived-id)))))
-        (testing "includes disabled when requested"
-          (let [data (-> (request :get "/api/resources?disabled=true")
-                         (authenticate api-key user-id)
-                         handler
-                         read-ok-body)
-                app-ids (set (map :id data))]
-            (is (contains? app-ids enabled-id))
-            (is (contains? app-ids disabled-id))
-            (is (not (contains? app-ids archived-id)))))
-        (testing "includes archived when requested"
-          (let [data (-> (request :get "/api/resources?archived=true")
-                         (authenticate api-key user-id)
-                         handler
-                         read-ok-body)
-                app-ids (set (map :id data))]
-            (is (contains? app-ids enabled-id))
-            (is (not (contains? app-ids disabled-id)))
-            (is (contains? app-ids archived-id))))))
-    (let [licid-org1 (test-data/create-license! {:license/organization "organization1"})
-          licid-org2 (test-data/create-license! {:license/organization "organization2"})
-          resid "resource-api-test"
-          create-resource (fn [user-id organization & licenses]
-                            (-> (request :post "/api/resources/create")
-                                (authenticate api-key user-id)
-                                (json-body {:resid resid
-                                            :organization organization
-                                            :licenses licenses})
-                                handler
-                                read-ok-body))]
+        user-id "owner"
+        licid-org1 (test-data/create-license! {:license/organization "organization1"})
+        licid-org2 (test-data/create-license! {:license/organization "organization2"})
+        resid "resource-api-test"
+        create-resource (fn [user-id organization & licenses]
+                          (-> (request :post "/api/resources/create")
+                              (authenticate api-key user-id)
+                              (json-body {:resid resid
+                                          :organization organization
+                                          :licenses licenses})
+                              handler
+                              read-ok-body))]
 
       (testing "create as organization owner"
         (testing "with correct organization"
@@ -173,31 +115,62 @@
               (is (true? (:success result))))))
         (testing "with mismatched organizations"
           (let [result (create-resource "owner" "organization1" licid-org1 licid-org2)]
-            (is (true? (:success result)))))))))
+            (is (true? (:success result))))))))
 
 (deftest resources-api-filtering-test
   (let [api-key "42"
         user-id "owner"
-        resources (-> (request :get "/api/resources")
-                      (authenticate api-key user-id)
-                      handler
-                      read-ok-body)
-        disabled-id (:id (first resources))
+        enabled-id (:id (create-resource! {:resid "enabled"
+                                           :organization "abc"
+                                           :licenses []}
+                                          api-key user-id))
+        _ (resource-enabled! {:id enabled-id :enabled true}
+                             api-key user-id)
+        _ (resource-archived! {:id enabled-id :archived false}
+                              api-key user-id)
+        disabled-id (:id (create-resource! {:resid "disabled"
+                                            :organization "abc"
+                                            :licenses []}
+                                           api-key user-id))
         _ (resource-enabled! {:id disabled-id :enabled false}
                              api-key user-id)
-        unfiltered (-> (request :get "/api/resources" {:disabled true})
-                       (authenticate api-key user-id)
-                       handler
-                       read-ok-body)
-        filtered (-> (request :get "/api/resources")
+        _ (resource-archived! {:id disabled-id :archived false}
+                              api-key user-id)
+        archived-id (:id (create-resource! {:resid "archived"
+                                            :organization "abc"
+                                            :licenses []}
+                                           api-key user-id))
+        _ (resource-enabled! {:id archived-id :enabled true}
+                             api-key user-id)
+        _ (resource-archived! {:id archived-id :archived true}
+                              api-key user-id)]
+    (testing "hides disabled and archived by default"
+      (let [data (-> (request :get "/api/resources")
                      (authenticate api-key user-id)
                      handler
-                     read-ok-body)]
-    (is (coll-is-not-empty? unfiltered))
-    (is (coll-is-not-empty? filtered))
-    (is (not (every? :enabled unfiltered)))
-    (is (every? :enabled filtered))
-    (is (< (count filtered) (count unfiltered)))))
+                     read-ok-body)
+            app-ids (set (map :id data))]
+        (is (contains? app-ids enabled-id))
+        (is (not (contains? app-ids disabled-id)))
+        (is (not (contains? app-ids archived-id)))))
+    (testing "includes disabled when requested"
+      (let [data (-> (request :get "/api/resources?disabled=true")
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)
+            app-ids (set (map :id data))]
+        (is (contains? app-ids enabled-id))
+        (is (contains? app-ids disabled-id))
+        (is (not (contains? app-ids archived-id)))))
+    (testing "includes archived when requested"
+      (let [data (-> (request :get "/api/resources?archived=true")
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)
+            app-ids (set (map :id data))]
+        (is (contains? app-ids enabled-id))
+        (is (not (contains? app-ids disabled-id)))
+        (is (contains? app-ids archived-id))))))
 
 (deftest resources-api-security-test
   (testing "without authentication"
