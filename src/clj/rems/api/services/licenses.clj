@@ -93,14 +93,11 @@
 (defn get-license
   "Get a single license by id"
   [id]
-  (when-let [license (licenses/get-license id)]
-    (when (not (util/forbidden-organization? (:organization license)))
-      license)))
+  (licenses/get-license id))
 
 (defn get-all-licenses
   "Get all licenses.
 
    filters is a map of key-value pairs that must be present in the licenses"
   [filters]
-  (->> (licenses/get-all-licenses filters)
-       (remove #(util/forbidden-organization? (:organization %)))))
+  (licenses/get-all-licenses filters))
