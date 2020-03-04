@@ -15,75 +15,77 @@
         (select-keys [:enabled :archived]))))
 
 (deftest resource-enabled-archived-test
-  (let [lic-id (test-data/create-license! {})
-        res-id (test-data/create-resource! {:license-ids [lic-id]})
-        res-id2 (test-data/create-resource! {})
+  (test-data/create-user! {:eppn "owner"} :owner)
+  (with-user "owner"
+    (let [lic-id (test-data/create-license! {})
+          res-id (test-data/create-resource! {:license-ids [lic-id]})
+          res-id2 (test-data/create-resource! {})
 
-        archive-license! #(with-user "owner"
-                            (licenses/set-license-archived! {:id lic-id
-                                                             :archived %}))]
+          archive-license! #(with-user "owner"
+                              (licenses/set-license-archived! {:id lic-id
+                                                               :archived %}))]
 
-    (testing "new resources are enabled and not archived"
-      (is (= {:enabled true
-              :archived false}
-             (status-flags res-id))))
+      (testing "new resources are enabled and not archived"
+        (is (= {:enabled true
+                :archived false}
+               (status-flags res-id))))
 
-    ;; reset all to false for the following tests
-    (resources/set-resource-enabled! {:id res-id
-                                      :enabled false})
-    (resources/set-resource-archived! {:id res-id
-                                       :archived false})
-
-    (testing "enable"
-      (resources/set-resource-enabled! {:id res-id
-                                        :enabled true})
-      (is (= {:enabled true
-              :archived false}
-             (status-flags res-id))))
-
-    (testing "disable"
+      ;; reset all to false for the following tests
       (resources/set-resource-enabled! {:id res-id
                                         :enabled false})
-      (is (= {:enabled false
-              :archived false}
-             (status-flags res-id))))
-
-    (testing "archive"
-      (resources/set-resource-archived! {:id res-id
-                                         :archived true})
-      (is (= {:enabled false
-              :archived true}
-             (status-flags res-id))))
-
-    (testing "unarchive"
       (resources/set-resource-archived! {:id res-id
                                          :archived false})
-      (is (= {:enabled false
-              :archived false}
-             (status-flags res-id))))
 
-    (testing "cannot unarchive if license is archived"
-      (resources/set-resource-archived! {:id res-id
-                                         :archived true})
-      (archive-license! true)
-      (is (not (:success (resources/set-resource-archived! {:id res-id
-                                                            :archived false}))))
-      (archive-license! false)
-      (is (:success (resources/set-resource-archived! {:id res-id
-                                                       :archived false}))))
+      (testing "enable"
+        (resources/set-resource-enabled! {:id res-id
+                                          :enabled true})
+        (is (= {:enabled true
+                :archived false}
+               (status-flags res-id))))
 
-    (testing "does not affect unrelated resources"
-      (resources/set-resource-enabled! {:id res-id
-                                        :enabled true})
-      (resources/set-resource-archived! {:id res-id
-                                         :archived true})
-      (resources/set-resource-enabled! {:id res-id2
-                                        :enabled false})
-      (resources/set-resource-archived! {:id res-id2
-                                         :archived false})
-      (is (= {:enabled true
-              :archived true}
-             (status-flags res-id)))
-      (is (= {:enabled false
-              :archived false}
-             (status-flags res-id2))))))
+      (testing "disable"
+        (resources/set-resource-enabled! {:id res-id
+                                          :enabled false})
+        (is (= {:enabled false
+                :archived false}
+               (status-flags res-id))))
+
+      (testing "archive"
+        (resources/set-resource-archived! {:id res-id
+                                           :archived true})
+        (is (= {:enabled false
+                :archived true}
+               (status-flags res-id))))
+
+      (testing "unarchive"
+        (resources/set-resource-archived! {:id res-id
+                                           :archived false})
+        (is (= {:enabled false
+                :archived false}
+               (status-flags res-id))))
+
+      (testing "cannot unarchive if license is archived"
+        (resources/set-resource-archived! {:id res-id
+                                           :archived true})
+        (archive-license! true)
+        (is (not (:success (resources/set-resource-archived! {:id res-id
+                                                              :archived false}))))
+        (archive-license! false)
+        (is (:success (resources/set-resource-archived! {:id res-id
+                                                         :archived false}))))
+
+      (testing "does not affect unrelated resources"
+        (resources/set-resource-enabled! {:id res-id
+                                          :enabled true})
+        (resources/set-resource-archived! {:id res-id
+                                           :archived true})
+        (resources/set-resource-enabled! {:id res-id2
+                                          :enabled false})
+        (resources/set-resource-archived! {:id res-id2
+                                           :archived false})
+        (is (= {:enabled true
+                :archived true}
+               (status-flags res-id)))
+        (is (= {:enabled false
+                :archived false}
+               (status-flags res-id2)))))))

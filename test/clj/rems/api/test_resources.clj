@@ -117,6 +117,49 @@
           (let [result (create-resource "owner" "organization1" licid-org1 licid-org2)]
             (is (true? (:success result))))))))
 
+(deftest resources-api-enable-archive-test
+  (let [api-key "42"
+        id (:id (create-resource! {:resid "enable-archive-test"
+                                   :organization "organization1"
+                                   :licenses []}
+                                  api-key "owner"))]
+    (is (number? id))
+    (doseq [user-id ["owner" "organization-owner1"]]
+      (testing user-id
+        (testing "disable"
+          (is (:success (api-call :put "/api/resources/enabled"
+                                  {:id id :enabled false}
+                                  api-key user-id)))
+          (testing "archive"
+            (is (:success (api-call :put "/api/resources/archived"
+                                    {:id id :archived true}
+                                    api-key user-id))))
+          (testing "fetch"
+            (let [res (api-call :get (str "/api/resources/" id) {} api-key user-id)]
+              (is (false? (:enabled res)))
+              (is (true? (:archived res)))))
+          (testing "unarchive"
+            (is (:success (api-call :put "/api/resources/archived"
+                                    {:id id :archived false}
+                                    api-key user-id))))
+          (testing "enable"
+            (is (:success (api-call :put "/api/resources/enabled"
+                                    {:id id :enabled true}
+                                    api-key user-id))))
+          (testing "fetch again"
+            (let [res (api-call :get (str "/api/resources/" id) {} api-key user-id)]
+              (is (true? (:enabled res)))
+              (is (false? (:archived res))))))))
+    (testing "as owner of different organization"
+      (testing "disable"
+        (is (response-is-forbidden? (api-response :put "/api/resources/enabled"
+                                                  {:id id :enabled false}
+                                                  api-key "organization-owner2"))))
+      (testing "archive"
+        (is (response-is-forbidden? (api-response :put "/api/resources/archived"
+                                                  {:id id :archived true}
+                                                  api-key "organization-owner2")))))))
+
 (deftest resources-api-filtering-test
   (let [api-key "42"
         user-id "owner"
