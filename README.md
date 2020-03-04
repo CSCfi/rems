@@ -37,4 +37,9 @@ You can follow the progress of the project on the [GitHub project board](https:/
 
 ## Documentation
 
+The REMS API is documented using
+[OpenAPI aka Swagger](https://swagger.io/docs/specification/about/).
+You can check out the API docs using
+[the swagger-ui of the public demo instance](https://rems-demo.rahtiapp.fi/swagger-ui).
+
 Documentation can be found under the [docs](./docs) folder.
