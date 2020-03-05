@@ -1,5 +1,6 @@
 (ns rems.common.util
-  (:require [clojure.string :as str]
+  (:require [medley.core :refer [map-vals]]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
 
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
@@ -26,6 +27,36 @@
   [m ks & [default-value]]
   (vec (reduce #(conj %1 (get m %2 default-value)) [] ks)))
 
+(defn build-index
+  "Index the `coll` with given keys `ks` and map values with given `f`.
+
+  Results is nested map, `(count ks)` levels deep, e.g.
+    (build-index [:a :b] :c [{:a 1 :b \"x\" :c :a} {:a 1 :b \"y\" :c :b}])
+      ==> {1 {\"x\" :a
+              \"y\" :b}}
+
+  In case of non-unique keys, `build-index` picks the first value, e.g.
+
+    (build-index [:a] identity [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
+      ==> {1 {:a 1 :b \"x\"}}"
+  [ks f coll]
+  (if-let [[k & ks] (seq ks)]
+    (->> coll
+         (group-by k)
+         (map-vals #(build-index ks f %)))
+    (f (first coll))))
+
+(deftest test-build-index
+  (is (= {:a 1} (build-index [] identity [{:a 1} {:b 2}])))
+  (is (= {1 {"x" :a "y" :b}}
+         (build-index [:a :b] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}])))
+  (is (= {1 {:a 1 :b "x" :c :a}}
+         (build-index [:a] identity [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}]))))
+
+(comment
+  (if-let [[k & ks] []]
+    (list k ks)))
+
 (defn index-by
   "Index the collection coll with given keys `ks`.
   Result is a nested map, `(count ks)` levels deep, e.g.
@@ -39,12 +70,7 @@
     (index-by [:a] [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
       ==> {1 {:a 1 :b \"x\"}}"
   [ks coll]
-  (if (empty? ks)
-    (first coll)
-    (->> coll
-         (group-by (first ks))
-         (map (fn [[k v]] [k (index-by (rest ks) v)]))
-         (into {}))))
+  (build-index ks identity coll))
 
 (deftest test-index-by
   (is (= {1 {"x" {:a 1 :b "x"}

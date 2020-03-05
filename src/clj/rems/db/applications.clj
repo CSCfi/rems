@@ -116,7 +116,7 @@
     (update applications app-id model/application-view event)
     applications))
 
-(defn- exclude-unnecessary-keys-from-overview [application]
+(defn- ->ApplicationOverview [application]
   (dissoc application
           :application/events
           :application/form
@@ -228,7 +228,7 @@
 (defn get-all-applications [user-id]
   (-> (refresh-all-applications-cache!)
       (get-in [::apps-by-user user-id])
-      (->> (map exclude-unnecessary-keys-from-overview))))
+      (->> (map ->ApplicationOverview))))
 
 (defn get-all-application-roles [user-id]
   (-> (refresh-all-applications-cache!)
