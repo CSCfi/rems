@@ -1,6 +1,8 @@
 [![CircleCI](https://circleci.com/gh/CSCfi/rems.svg?style=svg)](https://circleci.com/gh/CSCfi/rems)
 
 commit 1
+commit 2
+
 
 # Resource Entitlement Management System
 
