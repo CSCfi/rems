@@ -137,6 +137,7 @@ jobs:
       - image: alpine
     steps:
       - run: 'true'
+
 workflows:
   version: 2
   build-test-and-deploy:
@@ -145,16 +146,27 @@ workflows:
       - without-db:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/
       - test:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/
       - doo:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/
       - war:
           requires:
             - build
           filters:
+            tags:
+              only: /.*/
             branches:
               only:
                 - master
@@ -163,6 +175,8 @@ workflows:
             - build
             - war
           filters:
+            tags:
+              only: /.*/
             branches:
               only:
                 - master
@@ -174,3 +188,6 @@ workflows:
             - doo
             - war
             - rahti
+          filters:
+            tags:
+              only: /.*/
