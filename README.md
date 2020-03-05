@@ -1,5 +1,7 @@
 [![CircleCI](https://circleci.com/gh/CSCfi/rems.svg?style=svg)](https://circleci.com/gh/CSCfi/rems)
 
+commit 1
+
 # Resource Entitlement Management System
 
 Resource Entitlement Management System (REMS) is a tool for managing access rights to resources, such as research datasets.
