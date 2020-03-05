@@ -34,29 +34,6 @@
       (select-keys (keys expected))))
 
 (deftest workflows-api-test
-  (testing "list"
-    (let [data (-> (request :get "/api/workflows")
-                   (authenticate "42" "owner")
-                   handler
-                   assert-response-is-ok
-                   read-body)]
-      (is (coll-is-not-empty? data))))
-
-  (let [id (test-data/create-workflow! {})]
-    (testing "get by id"
-      (let [data (-> (request :get (str "/api/workflows/" id))
-                     (authenticate "42" "owner")
-                     handler
-                     assert-response-is-ok
-                     read-body)]
-        (is (= id (:id data)))))
-
-    (testing "id not found"
-      (let [response (-> (request :get (str "/api/workflows/" 666))
-                         (authenticate "42" "owner")
-                         handler)]
-        (is (response-is-not-found? response)))))
-
   (let [create-workflow (fn [user-id organization type]
                           (-> (request :post "/api/workflows/create")
                               (json-body {:organization organization
@@ -67,67 +44,60 @@
                               handler
                               assert-response-is-ok
                               read-body))]
-    (testing "create default workflow"
-      (let [body (create-workflow "owner" "organization1" :workflow/default)
-            id (:id body)]
-        (is (< 0 id))
-        (sync-with-database-time)
-        (testing "and fetch"
-          (is (= expected
-                 (fetch "42" "owner" id))))))
+    (doseq [user-id ["owner" "organization-owner1"]]
+      (testing user-id
+        (testing "list"
+          (let [data (-> (request :get "/api/workflows")
+                         (authenticate "42" user-id)
+                         handler
+                         assert-response-is-ok
+                         read-body)]
+            (is (coll-is-not-empty? data))))
 
-    (testing "create decider workflow in different organization"
-      (let [body (create-workflow "owner" "organization2" :workflow/decider)
-            id (:id body)]
-        (is (< 0 id))
-        (sync-with-database-time)
-        (testing "and fetch"
-          (is (= (-> expected
-                     (assoc :organization "organization2")
-                     (assoc-in [:workflow :type] "workflow/decider"))
-                 (fetch "42" "owner" id))))))
+        (let [id (test-data/create-workflow! {})]
+          (testing "get by id"
+            (let [data (-> (request :get (str "/api/workflows/" id))
+                           (authenticate "42" user-id)
+                           handler
+                           assert-response-is-ok
+                           read-body)]
+              (is (= id (:id data)))))
 
-    (testing "create as organization owner"
-      (testing "with correct organization"
-        (let [body (create-workflow "organization-owner1" "organization1" :workflow/default)
-              id (:id body)]
-          (is (< 0 id))
-          (is (:success body))
-
-          (testing "fetch using correct organization owner"
-            (let [workflow (-> (request :get (str "/api/workflows/" id))
-                               (authenticate "42" "organization-owner1")
-                               handler
-                               assert-response-is-ok
-                               read-body)]
-              (is workflow)
-              (is (= ["handler" "carl"] (mapv :userid (get-in workflow [:workflow :handlers]))))))
-
-          (testing "fetch using incorrect organization owner"
-            (let [response (-> (request :get (str "/api/workflows/" id))
-                               (authenticate "42" "organization-owner2")
+          (testing "id not found"
+            (let [response (-> (request :get (str "/api/workflows/" 666))
+                               (authenticate "42" user-id)
                                handler)]
-              (is (response-is-not-found? response))))
-          ;; TODO test listing api
-          (testing "fetch using owner"
-            (let [workflow (-> (request :get (str "/api/workflows/" id))
-                               (authenticate "42" "owner")
-                               handler
-                               assert-response-is-ok
-                               read-body)]
-              (is workflow)
-              (is (= ["handler" "carl"] (mapv :userid (get-in workflow [:workflow :handlers]))))))))
+              (is (response-is-not-found? response)))))
 
-      (testing "with incorrect organization"
-        (let [response (-> (request :post "/api/workflows/create")
-                              (json-body {:organization "organization2"
-                                          :title "workflow title"
-                                          :type :workflow/default
-                                          :handlers ["handler" "carl"]})
-                              (authenticate "42" "organization-owner1")
-                              handler)]
-          (is (response-is-forbidden? response))
-          (is (= "no access to organization \"organization2\"" (read-body response))))))))
+        (testing "create default workflow"
+          (let [body (create-workflow user-id "organization1" :workflow/default)
+                id (:id body)]
+            (is (< 0 id))
+            (sync-with-database-time)
+            (testing "and fetch"
+              (is (= expected
+                     (fetch "42" user-id id))))))
+
+        (testing "create decider workflow"
+          (let [body (create-workflow user-id "organization1" :workflow/decider)
+                id (:id body)]
+            (is (< 0 id))
+            (sync-with-database-time)
+            (testing "and fetch"
+              (is (= (-> expected
+                         (assoc-in [:workflow :type] "workflow/decider"))
+                     (fetch "42" user-id id))))))))
+
+    (testing "create as organization-owner with incorrect organization"
+      (let [response (-> (request :post "/api/workflows/create")
+                         (json-body {:organization "organization2"
+                                     :title "workflow title"
+                                     :type :workflow/default
+                                     :handlers ["handler" "carl"]})
+                         (authenticate "42" "organization-owner1")
+                         handler)]
+        (is (response-is-forbidden? response))
+        (is (= "no access to organization \"organization2\"" (read-body response)))))))
 
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
