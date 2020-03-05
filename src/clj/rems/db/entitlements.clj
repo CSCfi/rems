@@ -14,6 +14,7 @@
             [rems.db.outbox :as outbox]
             [rems.db.users :as users]
             [rems.json :as json]
+            [rems.jwt :as jwt]
             [rems.roles :refer [has-roles?]]
             [rems.scheduler :as scheduler]
             [rems.util :refer [getx-user-id]])
@@ -38,19 +39,19 @@
                               :is-active? (not expired?)})))
 
 (defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
-  {:ga4gh_visa_v1 {:type "ControlledAccessGrants"
+  (jwt/sign {:type "ControlledAccessGrants"
                    :value (str "" resid)
                    :source "https://ga4gh.org/duri/no_org"
                    :by (str "" approvedby)
-                   :asserted (.getMillis ^DateTime start)}})
+                   :asserted (.getMillis ^DateTime start)} "secret")) ;;TODO use key/real secret here
 
 (defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
-  (mapv entitlement-to-permissions-api
+  {:ga4gh_visa_v1 (reduce conj [] (mapv entitlement-to-permissions-api
         (db/get-entitlements {:user (if (has-roles? :handler :owner :organization-owner :reporter)
                                       user-or-nil
                                       (getx-user-id))
                               :resource-ext-id resource-or-nil
-                              :is-active? (not expired?)})))
+                              :is-active? (not expired?)})))})
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"

@@ -81,7 +81,7 @@
    :asserted s/Int})
 
 (s/defschema Ga4ghVisa
-  {:ga4gh_visa_v1 Permission})
+  {:ga4gh_visa_v1 [s/Str]})
 
 (s/defschema EnabledCommand
   {:id s/Int
