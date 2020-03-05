@@ -30,7 +30,7 @@
 (defn build-index
   "Index the `coll` with given keys `ks` and map values with given `f`.
 
-  Results ia nested map, `(count ks)` levels deep, e.g.
+  Results is nested map, `(count ks)` levels deep, e.g.
     (build-index [:a :b] :c [{:a 1 :b \"x\" :c :a} {:a 1 :b \"y\" :c :b}])
       ==> {1 {\"x\" :a
               \"y\" :b}}
