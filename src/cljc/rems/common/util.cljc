@@ -1,5 +1,6 @@
 (ns rems.common.util
-  (:require [clojure.string :as str]
+  (:require [medley.core :refer [map-vals]]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
 
 ;; TODO remove separate clj and cljs implementations of getx and getx-in
@@ -39,18 +40,22 @@
     (build-index [:a] identity [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
       ==> {1 {:a 1 :b \"x\"}}"
   [ks f coll]
-  (if (empty? ks)
-    (f (first coll))
+  (if-let [[k & ks] (seq ks)]
     (->> coll
-         (group-by (first ks))
-         (map (fn [[k v]] [k (build-index (rest ks) f v)]))
-         (into {}))))
+         (group-by k)
+         (map-vals #(build-index ks f %)))
+    (f (first coll))))
 
 (deftest test-build-index
+  (is (= {:a 1} (build-index [] identity [{:a 1} {:b 2}])))
   (is (= {1 {"x" :a "y" :b}}
          (build-index [:a :b] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}])))
   (is (= {1 {:a 1 :b "x" :c :a}}
          (build-index [:a] identity [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}]))))
+
+(comment
+  (if-let [[k & ks] []]
+    (list k ks)))
 
 (defn index-by
   "Index the collection coll with given keys `ks`.
