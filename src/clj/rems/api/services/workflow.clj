@@ -34,14 +34,16 @@
   (let [workflow (unrich-workflow (workflow/get-workflow id))
         workflow-body (cond-> (:workflow workflow)
                         handlers (assoc :handlers handlers))]
+    (util/check-allowed-organization! (:organization workflow))
     (db/edit-workflow! {:id id
                         :title title
                         :workflow (json/generate-string workflow-body)}))
   (applications/reload-cache!)
   {:success true})
 
-(defn set-workflow-enabled! [command]
-  (db/set-workflow-enabled! (select-keys command [:id :enabled]))
+(defn set-workflow-enabled! [{:keys [id enabled]}]
+  (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
+  (db/set-workflow-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-workflow-archived! [{:keys [id archived]}]
@@ -51,6 +53,7 @@
         (->> (catalogue/get-localized-catalogue-items {:workflow id
                                                        :archived false})
              (map #(select-keys % [:id :title :localizations])))]
+    (util/check-allowed-organization! (:organization workflow))
     (cond
       (and archived (seq catalogue-items))
       {:success false

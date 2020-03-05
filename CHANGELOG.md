@@ -10,6 +10,7 @@ Changes since v2.8
 
 ### Changes
 - Removed requirement for organizations to match when creating catalogue item or resource (#1893). This reverts the only breaking change in 2.8.
+- Allow organization owners to edit resources, forms and workflows (#1893)
 
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 

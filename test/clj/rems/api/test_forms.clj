@@ -233,17 +233,23 @@
         user-id "owner"
         form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
-                    (json-body {:form/organization "test-organization"
+                    (json-body {:form/organization "organization1"
                                 :form/title "form editable test"
                                 :form/fields []})
                     handler
                     read-ok-body
                     :id)]
     (testing "New form is editable"
-      (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
-                        (authenticate api-key user-id)
-                        handler
-                        read-ok-body))))
+      (testing "as owner"
+        (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
+                          (authenticate api-key user-id)
+                          handler
+                          read-ok-body))))
+      (testing "as organization owner"
+        (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
+                          (authenticate api-key "organization-owner1")
+                          handler
+                          read-ok-body)))))
     (let [resid (test-data/create-resource! {:organization "test-organization"})
           wfid (test-data/create-workflow! {:organization "test-organization"})
           data (-> (request :post "/api/catalogue-items/create")
@@ -266,89 +272,92 @@
 (deftest form-edit-test
   (let [api-key "42"
         user-id "owner"
-        form-id (-> (request :post "/api/forms/create")
-                    (authenticate api-key user-id)
-                    (json-body {:form/organization "test-organization"
+        form-id (:id (api-call :post "/api/forms/create"
+                               {:form/organization "organization1"
                                 :form/title "form edit test"
-                                :form/fields []})
-                    handler
-                    read-ok-body
-                    :id)]
-    (testing "form content before editing"
-      (let [form (-> (request :get (str "/api/forms/" form-id))
-                     (authenticate api-key user-id)
-                     handler
-                     read-ok-body)]
-        (is (= (:form/organization form) "test-organization")))
-      (let [response (-> (request :put "/api/forms/edit")
-                         (authenticate api-key user-id)
-                         (json-body {:form/id form-id
-                                     :form/organization "def"
-                                     :form/title "form edit test"
-                                     :form/fields []})
-                         handler
-                         read-ok-body)]
-        (testing "form content after editing"
-          (let [form (-> (request :get (str "/api/forms/" form-id))
-                         (authenticate api-key user-id)
-                         handler
-                         read-ok-body)]
-            (is (= (:form/organization form) "def"))))))))
+                                :form/fields []}
+                               api-key user-id))]
+    (testing "organization owner"
+      (testing "can edit title in own organization"
+        (is (true? (:success (api-call :put "/api/forms/edit"
+                                       {:form/id form-id
+                                        :form/organization "organization1"
+                                        :form/title "changed title"
+                                        :form/fields []}
+                                       api-key "organization-owner1"))))
+        (is (= "changed title"
+               (:form/title (api-call :get (str "/api/forms/" form-id) {} api-key "organization-owner1")))))
+      (testing "can't edit title in another organization"
+        (is (response-is-forbidden? (api-response :put "/api/forms/edit"
+                                                  {:form/id form-id
+                                                   :form/organization "organization1"
+                                                   :form/title "changed title more"
+                                                   :form/fields []}
+                                                  api-key "organization-owner2"))))
+      (testing "can't change organization"
+        (is (response-is-forbidden? (api-response :put "/api/forms/edit"
+                                                  {:form/id form-id
+                                                   :form/organization "organization2"
+                                                   :form/title "changed title"
+                                                   :form/fields []}
+                                                  api-key "organization-owner1")))))
+    (testing "owner can change title and organization"
+      (is (true? (:success (api-call :put "/api/forms/edit"
+                                     {:form/id form-id
+                                      :form/organization "abc"
+                                      :form/title "I am owner"
+                                      :form/fields []}
+                                     api-key user-id))))
+      (let [form (api-call :get (str "/api/forms/" form-id) {} api-key user-id)]
+        (is (= "abc" (:form/organization form)))
+        (is (= "I am owner" (:form/title form)))))))
 
 (deftest form-enabled-archived-test
   (let [api-key "42"
-        user-id "owner"
         form-id (-> (request :post "/api/forms/create")
-                    (authenticate api-key user-id)
-                    (json-body {:form/organization "test-organization"
+                    (authenticate api-key "owner")
+                    (json-body {:form/organization "organization1"
                                 :form/title "form update test"
                                 :form/fields []})
                     handler
                     read-ok-body
                     :id)]
     (is (not (nil? form-id)))
-    (testing "disable"
-      (is (:success (-> (request :put "/api/forms/enabled")
-                        (authenticate api-key user-id)
-                        (json-body {:id form-id
-                                    :enabled false})
-                        handler
-                        read-ok-body))))
-    (testing "archive"
-      (is (:success (-> (request :put "/api/forms/archived")
-                        (authenticate api-key user-id)
-                        (json-body {:id form-id
-                                    :archived true})
-                        handler
-                        read-ok-body))))
-    (testing "fetch"
-      (let [form (-> (request :get (str "/api/forms/" form-id))
-                     (authenticate api-key user-id)
-                     handler
-                     read-ok-body)]
-        (is (false? (:enabled form)))
-        (is (true? (:archived form)))))
-    (testing "unarchive"
-      (is (:success (-> (request :put "/api/forms/archived")
-                        (authenticate api-key user-id)
-                        (json-body {:id form-id
-                                    :archived false})
-                        handler
-                        read-ok-body))))
-    (testing "enable"
-      (is (:success (-> (request :put "/api/forms/enabled")
-                        (authenticate api-key user-id)
-                        (json-body {:id form-id
-                                    :enabled true})
-                        handler
-                        read-ok-body))))
-    (testing "fetch again"
-      (let [form (-> (request :get (str "/api/forms/" form-id))
-                     (authenticate api-key user-id)
-                     handler
-                     read-ok-body)]
-        (is (true? (:enabled form)))
-        (is (false? (:archived form)))))))
+    (doseq [user-id ["owner" "organization-owner1"]]
+      (testing user-id
+        (testing "disable"
+          (is (:success (api-call :put "/api/forms/enabled"
+                                  {:id form-id :enabled false}
+                                  api-key user-id)))
+          (testing "archive"
+            (is (:success (api-call :put "/api/forms/archived"
+                                    {:id form-id :archived true}
+                                    api-key user-id))))
+          (testing "fetch"
+            (let [form (api-call :get (str "/api/forms/" form-id) {} api-key user-id)]
+              (is (false? (:enabled form)))
+              (is (true? (:archived form)))))
+          (testing "unarchive"
+            (is (:success (api-call :put "/api/forms/archived"
+                                    {:id form-id :archived false}
+                                    api-key user-id))))
+          (testing "enable"
+            (is (:success (api-call :put "/api/forms/enabled"
+                                    {:id form-id :enabled true}
+                                    api-key user-id))))
+          (testing "fetch again"
+            (let [form (api-call :get (str "/api/forms/" form-id) {} api-key user-id)]
+              (is (true? (:enabled form)))
+              (is (false? (:archived form))))))))
+    (testing "as owner of different organization"
+      (testing "disable"
+        (is (response-is-forbidden? (api-response :put "/api/forms/enabled"
+                                                  {:id form-id :enabled false}
+                                                  api-key "organization-owner2"))))
+      (testing "archive"
+        (is (response-is-forbidden? (api-response :put "/api/forms/archived"
+                                                  {:id form-id :archived true}
+                                                  api-key "organization-owner2")))))))
 
 (deftest option-form-item-test
   (let [api-key "42"

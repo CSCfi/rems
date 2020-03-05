@@ -34,15 +34,18 @@
         archive-catalogue-item! #(with-user owner
                                    (catalogue/set-catalogue-item-archived! {:id item-id
                                                                             :archived %}))
-        archive-form! #(form/set-form-archived! {:id form-id
-                                                 :archived %})
+        archive-form! #(with-user owner
+                         (form/set-form-archived! {:id form-id
+                                                   :archived %}))
         archive-license! #(with-user owner
                             (licenses/set-license-archived! {:id lic-id
                                                              :archived %}))
-        archive-resource! #(resource/set-resource-archived! {:id res-id
-                                                             :archived %})
-        archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
-                                                             :archived %})]
+        archive-resource! #(with-user owner
+                             (resource/set-resource-archived! {:id res-id
+                                                               :archived %}))
+        archive-workflow! #(with-user owner
+                             (workflow/set-workflow-archived! {:id workflow-id
+                                                               :archived %}))]
     (testing "new catalogue items are enabled and not archived"
       (is (= {:enabled true
               :archived false}
