@@ -78,17 +78,13 @@
   (not (str/blank? (:title localization))))
 
 (defn- valid-request? [form request languages]
-  (let [selected-organization (:organization request)]
-    (and (= (get-in form [:workflow :organization])
-            (get-in form [:resource :organization])
-            (get-in form [:form :form/organization])
-            selected-organization)
-         (number? (:wfid request))
-         (number? (:resid request))
-         (number? (:form request))
-         (= (set languages)
-            (set (keys (:localizations request))))
-         (every? valid-localization? (vals (:localizations request))))))
+  (and (string? (:organization request))
+       (number? (:wfid request))
+       (number? (:resid request))
+       (number? (:form request))
+       (= (set languages)
+          (set (keys (:localizations request))))
+       (every? valid-localization? (vals (:localizations request)))))
 
 (defn- empty-string-to-nil [str]
   (when-not (str/blank? str)
@@ -258,86 +254,68 @@
                                    " (" (str/upper-case (name language)) ")")}])
 
 (defn- catalogue-item-workflow-field []
-  (let [organization @(rf/subscribe [::selected-organization])
-        workflows @(rf/subscribe [::workflows])
-        compatible-workflows (filter #(= organization (% :organization)) workflows)
+  (let [workflows @(rf/subscribe [::workflows])
         editing? @(rf/subscribe [::editing?])
         selected-workflow @(rf/subscribe [::selected-workflow])
         item-selected? #(= (:id %) (:id selected-workflow))]
     [:div.form-group
      [:label {:for workflow-dropdown-id} (text :t.create-catalogue-item/workflow-selection)]
-     (cond
-       (nil? organization)
-       [fields/readonly-field {:id workflow-dropdown-id
-                               :value (text :t.administration/select-organization)}]
-
-       editing?
-       (let [workflow (item-by-id compatible-workflows :id (:id selected-workflow))]
+     (if editing?
+       (let [workflow (item-by-id workflows :id (:id selected-workflow))]
          [fields/readonly-field {:id workflow-dropdown-id
                                  :value (:title workflow)}])
-
-       :else
        [dropdown/dropdown
         {:id workflow-dropdown-id
-         :items compatible-workflows
+         :items workflows
          :item-key :id
-         :item-label :title
+         :item-label #(str (:title %)
+                           " (org: "
+                           (:organization %)
+                           ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
 
 (defn- catalogue-item-resource-field []
-  (let [organization @(rf/subscribe [::selected-organization])
-        resources @(rf/subscribe [::resources])
-        compatible-resources (filter #(= organization (% :organization)) resources)
+  (let [resources @(rf/subscribe [::resources])
         editing? @(rf/subscribe [::editing?])
         selected-resource @(rf/subscribe [::selected-resource])
         item-selected? #(= (:id %) (:id selected-resource))]
     [:div.form-group
      [:label {:for resource-dropdown-id} (text :t.create-catalogue-item/resource-selection)]
-     (cond
-       (nil? organization)
-       [fields/readonly-field {:id resource-dropdown-id
-                               :value (text :t.administration/select-organization)}]
-
-       editing?
-       (let [resource (item-by-id compatible-resources :id (:id selected-resource))]
+     (if editing?
+       (let [resource (item-by-id resources :id (:id selected-resource))]
          [fields/readonly-field {:id resource-dropdown-id
                                  :value (:resid resource)}])
-
-       :else
        [dropdown/dropdown
         {:id resource-dropdown-id
-         :items compatible-resources
+         :items resources
          :item-key :id
-         :item-label :resid
+         :item-label #(str (:resid %)
+                           " (org: "
+                           (:organization %)
+                           ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
 
 (defn- catalogue-item-form-field []
-  (let [organization @(rf/subscribe [::selected-organization])
-        forms @(rf/subscribe [::forms])
-        compatible-forms (filter #(= organization (% :form/organization)) forms)
+  (let [forms @(rf/subscribe [::forms])
         editing? @(rf/subscribe [::editing?])
         selected-form @(rf/subscribe [::selected-form])
         item-selected? #(= (:form/id %) (:form/id selected-form))]
     [:div.form-group
      [:label {:for form-dropdown-id} (text :t.create-catalogue-item/form-selection)]
-     (cond
-       (nil? organization)
-       [fields/readonly-field {:id form-dropdown-id
-                               :value (text :t.administration/select-organization)}]
-
-       editing?
-       (let [form (item-by-id compatible-forms :form/id (:form/id selected-form))]
+     (if editing?
+       (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
                                  :value (:form/title form)}])
-
-       :else
        [dropdown/dropdown
         {:id form-dropdown-id
-         :items compatible-forms
+         :items forms
          :item-key :form/id
-         :item-label :form/title
+         :item-label #(str (:form/title %)
+                           " (org: "
+                           (:form/organization %)
+                           ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
