@@ -37,51 +37,45 @@
         org-owner "organization-owner1"
         licid-org1 (test-data/create-license! {:license/organization "organization1"})
         licid-org2 (test-data/create-license! {:license/organization "organization2"})
-        resid "resource-api-test"
-        create-resource (fn [user-id organization & licenses]
-                          (-> (request :post "/api/resources/create")
-                              (authenticate api-key user-id)
-                              (json-body {:resid resid
-                                          :organization organization
-                                          :licenses licenses})
-                              handler
-                              read-ok-body))]
+        resid "resource-api-test"]
 
     (doseq [user-id [owner org-owner]]
       (testing "create"
-        (let [result (create-resource user-id "organization1" licid-org1)
+        (let [result (api-call :post "/api/resources/create"
+                               {:resid resid :organization "organization1" :licenses [licid-org1]}
+                               api-key user-id)
               id (:id result)]
           (is (true? (:success result)))
           (is id)
 
           (testing "and fetch"
-            (let [resource (-> (request :get (str "/api/resources/" id))
-                               (authenticate api-key user-id)
-                               handler
-                               assert-response-is-ok
-                               read-body)]
+            (let [resource (api-call :get (str "/api/resources/" id) nil
+                                     api-key user-id)]
               (is resource)
               (is (= [licid-org1] (map :id (:licenses resource))))))
 
           (testing "duplicate resource ID is allowed between organizations"
             ;; need to create as owner to have access to other org
-            (let [result (create-resource owner "test-organization2")]
+            (let [result (api-call :post "/api/resources/create"
+                                   {:resid resid :organization "test-organization2" :licenses []}
+                                   api-key owner)]
               (is (true? (:success result)))))
 
           (testing "duplicate resource ID is allowed within one organization"
-            (let [result (create-resource user-id "organization1")]
+            (let [result (api-call :post "/api/resources/create"
+                                   {:resid resid :organization "organization1" :licenses []}
+                                   api-key user-id)]
               (is (true? (:success result))))))
         (testing "with mismatched organizations"
-          (let [result (create-resource user-id "organization1" licid-org1 licid-org2)]
+          (let [result (api-call :post "/api/resources/create"
+                                 {:resid resid :organization "organization1" :licenses [licid-org1 licid-org2]}
+                                 api-key user-id)]
             (is (true? (:success result)))))))
 
     (testing "create as organization-owner with incorrect organization"
-      (let [response (-> (request :post "/api/resources/create")
-                         (authenticate api-key org-owner)
-                         (json-body {:resid resid
-                                     :organization "organization2"
-                                     :licenses [licid-org2]})
-                         handler)]
+      (let [response (api-response :post "/api/resources/create"
+                                   {:resid resid :organization "organization2" :licenses [licid-org1 licid-org2]}
+                                   api-key "organization-owner1")]
         (is (response-is-forbidden? response))
         (is (= "no access to organization \"organization2\"" (read-body response)))))))
 
