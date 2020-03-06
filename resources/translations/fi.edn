@@ -95,7 +95,6 @@
                    :resource "Resurssi"
                    :resources "Resurssit"
                    :save "Tallenna"
-                   :select-organization "Valitse organisaatio."
                    :start "Alku"
                    :title "Nimi"
                    :type "Tyyppi"

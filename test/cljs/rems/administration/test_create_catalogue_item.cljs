@@ -32,6 +32,11 @@
                                languages)))
       (is (nil? (build-request (assoc-in form [:title :fi] "")
                                languages))))
+
+    (testing "missing organization"
+      (is (nil? (build-request (dissoc form :organization)
+                               languages))))
+
     (testing "missing workflow"
       (is (nil? (build-request (assoc form :workflow nil)
                                languages))))
@@ -40,28 +45,4 @@
                                languages))))
     (testing "missing form"
       (is (nil? (build-request (assoc form :form nil)
-                               languages))))
-
-    (testing "incorrect workflow organization"
-      (is (nil? (build-request (assoc-in form [:workflow :organization] "organization2")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:workflow :organization] "")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:workflow :organization] nil)
-                               languages))))
-
-    (testing "incorrect resource organization"
-      (is (nil? (build-request (assoc-in form [:resource :organization] "organization2")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:resource :organization] "")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:resource :organization] nil)
-                               languages))))
-
-    (testing "incorrect form organization"
-      (is (nil? (build-request (assoc-in form [:form :form/organization] "organization2")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:form :form/organization] "")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:form :form/organization] nil)
                                languages))))))

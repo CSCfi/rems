@@ -95,7 +95,6 @@
                    :resource "Resource"
                    :resources "Resources"
                    :save "Save"
-                   :select-organization "Please select organization."
                    :start "Start"
                    :title "Title"
                    :type "Type"
