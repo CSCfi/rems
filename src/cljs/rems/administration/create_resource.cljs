@@ -135,7 +135,10 @@
       {:id licenses-dropdown-id
        :items licenses
        :item-key :id
-       :item-label #(get-localized-title % language)
+       :item-label #(str (get-localized-title % language)
+                         " (org: "
+                         (:organization %)
+                         ")")
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change #(rf/dispatch [::set-licenses %])}]]))

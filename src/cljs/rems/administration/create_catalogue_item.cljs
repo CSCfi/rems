@@ -268,7 +268,10 @@
         {:id workflow-dropdown-id
          :items workflows
          :item-key :id
-         :item-label :title
+         :item-label #(str (:title %)
+                           " (org: "
+                           (:organization %)
+                           ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
 
@@ -287,7 +290,10 @@
         {:id resource-dropdown-id
          :items resources
          :item-key :id
-         :item-label :resid
+         :item-label #(str (:resid %)
+                           " (org: "
+                           (:organization %)
+                           ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
 
@@ -306,7 +312,10 @@
         {:id form-dropdown-id
          :items forms
          :item-key :form/id
-         :item-label :form/title
+         :item-label #(str (:form/title %)
+                           " (org: "
+                           (:form/organization %)
+                           ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-form %])}])]))
 
