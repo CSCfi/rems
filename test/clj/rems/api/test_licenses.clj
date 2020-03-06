@@ -41,7 +41,7 @@
       (testing user
         (testing "get all"
           (let [data (-> (request :get "/api/licenses")
-                         (authenticate api-key owner)
+                         (authenticate api-key user)
                          handler
                          assert-response-is-ok
                          read-body)
@@ -49,7 +49,7 @@
             (is id)
             (testing "get one"
               (let [data (-> (request :get (str "/api/licenses/" id))
-                             (authenticate api-key owner)
+                             (authenticate api-key user)
                              handler
                              assert-response-is-ok
                              read-body)]
