@@ -49,7 +49,7 @@
 
     (doseq [user-id [owner org-owner]]
       (testing "create"
-        (let [result (create-resource "owner" "organization1" licid-org1)
+        (let [result (create-resource user-id "organization1" licid-org1)
               id (:id result)]
           (is (true? (:success result)))
           (is id)
@@ -64,14 +64,15 @@
               (is (= [licid-org1] (map :id (:licenses resource))))))
 
           (testing "duplicate resource ID is allowed between organizations"
-            (let [result (create-resource "owner" "test-organization2")]
+            ;; need to create as owner to have access to other org
+            (let [result (create-resource owner "test-organization2")]
               (is (true? (:success result)))))
 
           (testing "duplicate resource ID is allowed within one organization"
-            (let [result (create-resource "owner" "organization1")]
+            (let [result (create-resource user-id "organization1")]
               (is (true? (:success result))))))
         (testing "with mismatched organizations"
-          (let [result (create-resource "owner" "organization1" licid-org1 licid-org2)]
+          (let [result (create-resource user-id "organization1" licid-org1 licid-org2)]
             (is (true? (:success result)))))))
 
     (testing "create as organization-owner with incorrect organization"
