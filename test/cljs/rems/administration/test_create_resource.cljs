@@ -24,14 +24,4 @@
       (is (nil? (build-request (assoc form :organization "")))))
 
     (testing "missing resource id"
-      (is (nil? (build-request (assoc form :resid "")))))
-
-    (testing "incorrect organization"
-      (is (nil? (build-request (assoc form :licenses [{:id 123
-                                                       :organization "organization2"}])))))
-
-    (testing "incorrect organization in one of several licenses"
-      (is (nil? (build-request (assoc form :licenses [{:id 123
-                                                       :organization "organization1"}
-                                                      {:id 124
-                                                       :organization "organization2"}])))))))
+      (is (nil? (build-request (assoc form :resid "")))))))
