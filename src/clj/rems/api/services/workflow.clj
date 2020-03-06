@@ -72,13 +72,10 @@
         {:success true}))))
 
 (defn get-workflow [id]
-  (when-let [wf (workflow/get-workflow id)]
-    (when (not (util/forbidden-organization? (:organization wf)))
-      wf)))
+  (workflow/get-workflow id))
 
 (defn get-workflows [filters]
-  (->> (workflow/get-workflows filters)
-       (remove #(util/forbidden-organization? (:organization %)))))
+  (workflow/get-workflows filters))
 
 (defn get-available-actors [] (users/get-users))
 

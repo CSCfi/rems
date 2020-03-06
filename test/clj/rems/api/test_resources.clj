@@ -33,7 +33,8 @@
 
 (deftest resources-api-create-test
   (let [api-key "42"
-        user-id "owner"
+        owner "owner"
+        org-owner "organization-owner1"
         licid-org1 (test-data/create-license! {:license/organization "organization1"})
         licid-org2 (test-data/create-license! {:license/organization "organization2"})
         resid "resource-api-test"
@@ -46,52 +47,8 @@
                               handler
                               read-ok-body))]
 
-      (testing "create as organization owner"
-        (testing "with correct organization"
-          (let [result (create-resource "organization-owner1" "organization1" licid-org1)
-                id (:id result)]
-            (is (true? (:success result)) (pr-str result))
-            (is id)
-
-            (testing "fetch using correct organization owner"
-              (let [resource (-> (request :get (str "/api/resources/" id))
-                                 (authenticate api-key "organization-owner1")
-                                 handler
-                                 assert-response-is-ok
-                                 read-body)]
-                (is resource)
-                (is (= [licid-org1] (map :id (:licenses resource))))))
-
-            (testing "fetch using incorrect organization owner"
-              (let [response (-> (request :get (str "/api/resources/" id))
-                                 (authenticate api-key "organization-owner2")
-                                 handler)]
-                (is (response-is-not-found? response))))
-
-            (testing "fetch using owner"
-              (let [resource (-> (request :get (str "/api/resources/" id))
-                                 (authenticate api-key "owner")
-                                 handler
-                                 assert-response-is-ok
-                                 read-body)]
-                (is resource)
-                (is (= [licid-org1] (map :id (:licenses resource))))))))
-
-        (testing "with incorrect organization"
-          (let [response (-> (request :post "/api/resources/create")
-                             (authenticate api-key "organization-owner1")
-                             (json-body {:resid resid
-                                         :organization "organization2"
-                                         :licenses [licid-org2]})
-                             handler)]
-            (is (response-is-forbidden? response))
-            (is (= "no access to organization \"organization2\"" (read-body response)))))
-
-        (testing "with license from other organization"
-          (let [result (create-resource "organization-owner1" "organization1" licid-org2)]
-            (is (true? (:success result))))))
-
-      (testing "create as owner"
+    (doseq [user-id [owner org-owner]]
+      (testing "create"
         (let [result (create-resource "owner" "organization1" licid-org1)
               id (:id result)]
           (is (true? (:success result)))
@@ -115,7 +72,17 @@
               (is (true? (:success result))))))
         (testing "with mismatched organizations"
           (let [result (create-resource "owner" "organization1" licid-org1 licid-org2)]
-            (is (true? (:success result))))))))
+            (is (true? (:success result)))))))
+
+    (testing "create as organization-owner with incorrect organization"
+      (let [response (-> (request :post "/api/resources/create")
+                         (authenticate api-key org-owner)
+                         (json-body {:resid resid
+                                     :organization "organization2"
+                                     :licenses [licid-org2]})
+                         handler)]
+        (is (response-is-forbidden? response))
+        (is (= "no access to organization \"organization2\"" (read-body response)))))))
 
 (deftest resources-api-enable-archive-test
   (let [api-key "42"

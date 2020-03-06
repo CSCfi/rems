@@ -10,8 +10,7 @@
 
 (defn- get-form-templates [filters]
   (doall
-   (for [form (form/get-form-templates filters)
-         :when (not (services-util/forbidden-organization? (:form/organization form)))]
+   (for [form (form/get-form-templates filters)]
      (select-keys form [:form/id :form/organization :form/title :enabled :archived]))))
 
 (s/defschema CreateFormCommand
@@ -53,8 +52,7 @@
       :path-params [form-id :- (describe s/Int "form-id")]
       :return FormTemplate
       (let [form (form/get-form-template form-id)]
-        (if (and form
-                 (not (services-util/forbidden-organization? (:form/organization form))))
+        (if form
           (ok form)
           (not-found-json-response))))
 

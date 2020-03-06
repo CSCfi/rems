@@ -26,38 +26,6 @@
                              handler
                              assert-response-is-ok
                              read-body))]
-    (testing "get all"
-      (let [data (-> (request :get "/api/licenses")
-                     (authenticate api-key owner)
-                     handler
-                     assert-response-is-ok
-                     read-body)
-            id (:id (first data))]
-        (is id)
-        (testing "get one"
-          (let [data (-> (request :get (str "/api/licenses/" id))
-                         (authenticate api-key owner)
-                         handler
-                         assert-response-is-ok
-                         read-body)]
-            (is (= id (:id data)))))))
-
-    (testing "get all as organization owner"
-      (let [data (-> (request :get "/api/licenses")
-                     (authenticate api-key org-owner)
-                     handler
-                     assert-response-is-ok
-                     read-body)
-            id (:id (first data))]
-        (is id)
-        (is (apply = (map :organization data)))
-        (testing "get one as organization owner"
-          (let [data (-> (request :get (str "/api/licenses/" id))
-                         (authenticate api-key org-owner)
-                         handler
-                         assert-response-is-ok
-                         read-body)]
-            (is (= id (:id data)))))))
 
     (testing "can't create license as organization owner with incorrect organization"
       (is (response-is-forbidden? (api-response :post "/api/licenses/create"
@@ -71,6 +39,22 @@
 
     (doseq [user [org-owner owner]]
       (testing user
+        (testing "get all"
+          (let [data (-> (request :get "/api/licenses")
+                         (authenticate api-key owner)
+                         handler
+                         assert-response-is-ok
+                         read-body)
+                id (:id (first data))]
+            (is id)
+            (testing "get one"
+              (let [data (-> (request :get (str "/api/licenses/" id))
+                             (authenticate api-key owner)
+                             handler
+                             assert-response-is-ok
+                             read-body)]
+                (is (= id (:id data)))))))
+
         (testing "create link license"
           (let [command {:licensetype "link"
                          :organization "organization1"
