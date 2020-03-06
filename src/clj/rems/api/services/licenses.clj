@@ -73,11 +73,13 @@
       {:resources resources
        :workflows workflows})))
 
-(defn set-license-enabled! [command]
-  (db/set-license-enabled! (select-keys command [:id :enabled]))
+(defn set-license-enabled! [{:keys [id enabled]}]
+  (util/check-allowed-organization! (:organization (licenses/get-license id)))
+  (db/set-license-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-license-archived! [{:keys [id archived]}]
+  (util/check-allowed-organization! (:organization (licenses/get-license id)))
   (let [usage (get-license-usage id)]
     (if (and archived usage)
       {:success false
