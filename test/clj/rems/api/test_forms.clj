@@ -37,45 +37,34 @@
                                 :field/optional true
                                 :field/type :text
                                 :field/placeholder {:en "en placeholder"
-                                                    :fi "fi placeholder"}}]}
-        create-form (fn [user-id command]
-                      (-> (request :post "/api/forms/create")
-                          (authenticate api-key user-id)
-                          (json-body command)
-                          handler))]
+                                                    :fi "fi placeholder"}}]}]
 
     (doseq [user-id [owner org-owner]]
       (testing user-id
         (testing "get all"
-          (let [data (-> (request :get "/api/forms")
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)]
+          (let [data (api-call :get "/api/forms" nil
+                               api-key user-id)]
             (is (:form/id (first data)))))
 
         (testing "get one"
           (let [id (:id (first (db/get-form-templates {})))
-                data (-> (request :get (str "/api/forms/" id))
-                         (authenticate api-key user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)]
+                data (api-call :get (str "/api/forms/" id) nil
+                               api-key user-id)]
             (is (:form/id data))))
 
         (testing "not found"
-          (let [response (-> (request :get "/api/forms/0")
-                             (authenticate api-key user-id)
-                             handler)]
+          (let [response (api-response :get "/api/forms/0" nil
+                                       api-key user-id)]
             (is (= 404 (:status response)))))
 
         (testing "create"
           (testing "invalid create"
             ;; TODO: silence the logging for this expected error
             (testing "negative max length"
-              (let [command-with-invalid-max-length (assoc-in command [:form/fields 0 :field/max-length] -1)
-                    response (create-form "owner" command-with-invalid-max-length)]
-                (is (= 400 (:status response)))))
+              (let [command-with-invalid-max-length (assoc-in command [:form/fields 0 :field/max-length] -1)]
+                (is (response-is-bad-request? (api-response :post "/api/forms/create"
+                                                            command-with-invalid-max-length
+                                                            api-key user-id)))))
             (testing "duplicate field ids"
               (let [command-with-duplicated-field-ids {:form/organization "organization1"
                                                        :form/title (str "form title " (UUID/randomUUID))
@@ -92,23 +81,19 @@
                                                                       :field/optional true
                                                                       :field/type :text
                                                                       :field/placeholder {:en "en placeholder"
-                                                                                          :fi "fi placeholder"}}]}
-                    response (-> (request :post "/api/forms/create")
-                                 (authenticate api-key user-id)
-                                 (json-body command-with-duplicated-field-ids)
-                                 handler)]
-                (is (= 400 (:status response))))))
+                                                                                          :fi "fi placeholder"}}]}]
+                (is (response-is-bad-request? (api-response :post "/api/forms/create"
+                                                            command-with-duplicated-field-ids
+                                                            api-key user-id))))))
 
           (testing "valid create without field id"
-            (let [id (-> (create-form "owner" command)
-                         read-ok-body
-                         :id)]
+            (let [id (:id (api-call :post "/api/forms/create"
+                                       command
+                                       api-key user-id))]
               (is id)
               (testing "and fetch"
-                (let [form-template (-> (request :get (str "/api/forms/" id))
-                                        (authenticate api-key user-id)
-                                        handler
-                                        read-ok-body)]
+                (let [form-template (api-call :get (str "/api/forms/" id) nil
+                                              api-key user-id)]
                   (testing "result matches input"
                     (is (= (select-keys command [:form/organization :form/title])
                            (select-keys form-template [:form/organization :form/title])))
@@ -116,15 +101,13 @@
                            (mapv fixup-field-to-match-command (:form/fields form-template)))))))))
           (testing "valid create with given field id"
             (let [command-with-given-field-id (assoc-in command [:form/fields 0 :field/id] "abc")
-                  id (-> (create-form "owner" command-with-given-field-id)
-                         read-ok-body
-                         :id)]
+                  id (:id (api-call :post "/api/forms/create"
+                                    command-with-given-field-id
+                                    api-key user-id))]
               (is id)
               (testing "and fetch"
-                (let [form-template (-> (request :get (str "/api/forms/" id))
-                                        (authenticate api-key user-id)
-                                        handler
-                                        read-ok-body)]
+                (let [form-template (api-call :get (str "/api/forms/" id) nil
+                                              api-key user-id)]
                   (testing "result matches input"
                     (is (= (select-keys command-with-given-field-id [:form/organization :form/title])
                            (select-keys form-template [:form/organization :form/title])))
@@ -133,10 +116,9 @@
                     (is (= (get-in command-with-given-field-id [:form/fields 0 :field/id]) ; field/id "not" in previous comparison
                            (get-in form-template [:form/fields 0 :field/id])))))))))))
     (testing "create as organization owner with incorrect organization"
-      (let [response (-> (request :post "/api/forms/create")
-                         (authenticate api-key "organization-owner1")
-                         (json-body (assoc command :form/organization "organization2"))
-                         handler)]
+      (let [response (api-response :post "/api/forms/create"
+                                   (assoc command :form/organization "organization2")
+                                   api-key "organization-owner1")]
         (is (response-is-forbidden? response))
         (is (= "no access to organization \"organization2\"" (read-body response)))))))
 

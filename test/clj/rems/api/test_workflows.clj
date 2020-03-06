@@ -35,39 +35,28 @@
 
 (deftest workflows-api-test
   (let [create-workflow (fn [user-id organization type]
-                          (-> (request :post "/api/workflows/create")
-                              (json-body {:organization organization
-                                          :title "workflow title"
-                                          :type type
-                                          :handlers ["handler" "carl"]})
-                              (authenticate "42" user-id)
-                              handler
-                              assert-response-is-ok
-                              read-body))]
+                          (api-call :post "/api/workflows/create"
+                                    {:organization organization
+                                     :title "workflow title"
+                                     :type type
+                                     :handlers ["handler" "carl"]}
+                                    "42" user-id))]
     (doseq [user-id ["owner" "organization-owner1"]]
       (testing user-id
         (testing "list"
-          (let [data (-> (request :get "/api/workflows")
-                         (authenticate "42" user-id)
-                         handler
-                         assert-response-is-ok
-                         read-body)]
+          (let [data (api-call :get "/api/workflows" nil
+                               "42" user-id)]
             (is (coll-is-not-empty? data))))
 
         (let [id (test-data/create-workflow! {})]
           (testing "get by id"
-            (let [data (-> (request :get (str "/api/workflows/" id))
-                           (authenticate "42" user-id)
-                           handler
-                           assert-response-is-ok
-                           read-body)]
+            (let [data (api-call :get (str "/api/workflows/" id) nil
+                                 "42" user-id)]
               (is (= id (:id data)))))
 
           (testing "id not found"
-            (let [response (-> (request :get (str "/api/workflows/" 666))
-                               (authenticate "42" user-id)
-                               handler)]
-              (is (response-is-not-found? response)))))
+            (is (response-is-not-found? (api-response :get (str "/api/workflows/" 666) nil
+                                                      "42" user-id)))))
 
         (testing "create default workflow"
           (let [body (create-workflow user-id "organization1" :workflow/default)
@@ -89,13 +78,12 @@
                      (fetch "42" user-id id))))))))
 
     (testing "create as organization-owner with incorrect organization"
-      (let [response (-> (request :post "/api/workflows/create")
-                         (json-body {:organization "organization2"
-                                     :title "workflow title"
-                                     :type :workflow/default
-                                     :handlers ["handler" "carl"]})
-                         (authenticate "42" "organization-owner1")
-                         handler)]
+      (let [response (api-response :post "/api/workflows/create"
+                                   {:organization "organization2"
+                                    :title "workflow title"
+                                    :type :workflow/default
+                                    :handlers ["handler" "carl"]}
+                                   "42" "organization-owner1")]
         (is (response-is-forbidden? response))
         (is (= "no access to organization \"organization2\"" (read-body response)))))))
 
@@ -113,18 +101,14 @@
         archive-license! #(with-user user-id
                             (licenses/set-license-archived! {:id lic-id
                                                              :archived %}))
-        set-enabled! #(-> (request :put "/api/workflows/enabled")
-                          (json-body {:id wfid
-                                      :enabled %1})
-                          (authenticate api-key %2)
-                          handler
-                          read-ok-body)
-        set-archived! #(-> (request :put "/api/workflows/archived")
-                           (json-body {:id wfid
-                                       :archived %1})
-                           (authenticate api-key %2)
-                           handler
-                           read-ok-body)]
+        set-enabled! #(api-call :put "/api/workflows/enabled"
+                                {:id wfid
+                                 :enabled %1}
+                                api-key %2)
+        set-archived! #(api-call :put "/api/workflows/archived"
+                                 {:id wfid
+                                  :archived %1}
+                                 api-key %2)]
     (sync-with-database-time)
     (testing "before changes"
       (is (= expected (fetch))))
@@ -159,14 +143,12 @@
                     :archived true)
              (fetch))))
     (testing "as owner of different organization"
-      (is (response-is-forbidden? (-> (request :put "/api/workflows/enabled")
-                                      (json-body {:id wfid :enabled true})
-                                      (authenticate api-key "organization-owner2")
-                                      handler)))
-      (is (response-is-forbidden? (-> (request :put "/api/workflows/archived")
-                                      (json-body {:id wfid :archived false})
-                                      (authenticate api-key "organization-owner2")
-                                      handler))))))
+      (is (response-is-forbidden? (api-response :put "/api/workflows/enabled"
+                                                {:id wfid :enabled true}
+                                                api-key "organization-owner2")))
+      (is (response-is-forbidden? (api-response :put "/api/workflows/archived"
+                                                {:id wfid :archived false}
+                                                api-key "organization-owner2"))))))
 
 (deftest workflows-edit-test
   (let [api-key "42"

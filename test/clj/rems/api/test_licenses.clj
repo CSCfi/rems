@@ -18,14 +18,7 @@
 (deftest licenses-api-test
   (let [api-key "42"
         owner "owner"
-        org-owner "organization-owner1"
-        create-license (fn [user-id command]
-                         (-> (request :post "/api/licenses/create")
-                             (authenticate api-key user-id)
-                             (json-body command)
-                             handler
-                             assert-response-is-ok
-                             read-body))]
+        org-owner "organization-owner1"]
 
     (testing "can't create license as organization owner with incorrect organization"
       (is (response-is-forbidden? (api-response :post "/api/licenses/create"
@@ -40,19 +33,13 @@
     (doseq [user [org-owner owner]]
       (testing user
         (testing "get all"
-          (let [data (-> (request :get "/api/licenses")
-                         (authenticate api-key owner)
-                         handler
-                         assert-response-is-ok
-                         read-body)
+          (let [data (api-call :get "/api/licenses" nil
+                               api-key user)
                 id (:id (first data))]
             (is id)
             (testing "get one"
-              (let [data (-> (request :get (str "/api/licenses/" id))
-                             (authenticate api-key owner)
-                             handler
-                             assert-response-is-ok
-                             read-body)]
+              (let [data (api-call :get (str "/api/licenses/" id) nil
+                                   api-key user)]
                 (is (= id (:id data)))))))
 
         (testing "create link license"
@@ -64,14 +51,12 @@
                                          :fi {:title "fi title"
                                               :textcontent "http://example.com/license/fi"
                                               :attachment-id nil}}}
-                id (:id (create-license user command))]
+                id (:id (api-call :post "/api/licenses/create" command
+                                  api-key user))]
               (is id)
               (testing "and fetch"
-                (let [license (-> (request :get (str "/api/licenses/" id))
-                                  (authenticate api-key user)
-                                  handler
-                                  assert-response-is-ok
-                                  read-body)]
+                (let [license (api-call :get (str "/api/licenses/" id) nil
+                                        api-key user)]
                   (is license)
                   (is (= command (select-keys license (keys command))))))))
 
@@ -84,15 +69,14 @@
                                          :fi {:title "fi title"
                                               :textcontent "fi text"
                                               :attachment-id nil}}}
-                body (create-license user command)
+                body (api-call :post "/api/licenses/create" command
+                               api-key user)
                 id (:id body)]
             (is id)
             (is (:success body))
             (testing "and fetch"
-              (let [license (-> (request :get (str "/api/licenses/" id))
-                                (authenticate api-key user)
-                                handler
-                                read-ok-body)]
+              (let [license (api-call :get (str "/api/licenses/" id) nil
+                                        api-key user)]
                 (is license)
                 (is (= command (select-keys license (keys command))))))))
 
@@ -109,25 +93,20 @@
               (is (some? id)))
 
             (testing "and test that it can be accessed using GET"
-              (let [response-file (is (-> (request :get (str "/api/licenses/attachments/" id))
-                                          (authenticate api-key user)
-                                          handler
+              (let [response-file (is (-> (api-response :get (str "/api/licenses/attachments/" id) nil
+                                                        api-key user)
                                           assert-response-is-ok))]
                 (is (= "attachment;filename=\"test.txt\"" (get-in response-file [:headers "Content-Disposition"])))
                 (is (= (slurp testfile) (slurp (:body response-file))))))
 
             (testing "and delete it"
-              (-> (request :post (str "/api/licenses/remove_attachment?attachment-id=" id))
-                  (json-body {:attachment-id id})
-                  (authenticate api-key user)
-                  handler
-                  assert-response-is-ok))
+              (api-call :post (str "/api/licenses/remove_attachment?attachment-id=" id)
+                        {:attachment-id id}
+                        api-key user))
 
             (testing "and check it's not found after deletion"
-              (let [response (is (-> (request :get (str "/api/licenses/attachments/" id))
-                                     (authenticate api-key user)
-                                     handler))]
-                (is (response-is-not-found? response))))))
+              (is (response-is-not-found? (api-response :get (str "/api/licenses/attachments/" id) nil
+                                                        api-key user))))))
 
         (testing "create attachment license"
           (let [attachment-id (-> (request :post (str "/api/licenses/add_attachment"))
@@ -145,29 +124,22 @@
                                          :fi {:title "fi title"
                                               :textcontent "fi text"
                                               :attachment-id attachment-id}}}
-                license-id (-> (request :post "/api/licenses/create")
-                               (authenticate api-key user)
-                               (json-body command)
-                               handler
-                               read-ok-body
-                               :id)]
+                license-id (:id (api-call :post "/api/licenses/create" command
+                                          api-key user))]
 
             (testing "and fetch"
-              (let [license (-> (request :get (str "/api/licenses/" license-id))
-                                (authenticate api-key user)
-                                handler
-                                read-ok-body)]
+              (let [license (api-call :get (str "/api/licenses/" license-id) nil
+                                      api-key user)]
                 (is license)
                 (is (= command (select-keys license (keys command))))))
 
             ;; this test case invalidates the transaction, so we only run it very last
             (when (= user owner)
               (testing "and fail when trying to remove the attachment of the created license"
-                (-> (request :post (str "/api/licenses/remove_attachment?attachment-id=" attachment-id))
-                    (json-body {:attachment-id attachment-id})
-                    (authenticate api-key user)
-                    handler
-                    assert-response-is-server-error?)))))))))
+                (is (response-is-server-error?
+                     (api-response :post (str "/api/licenses/remove_attachment?attachment-id=" attachment-id)
+                                   {:attachment-id attachment-id}
+                                   api-key user)))))))))))
 
 (deftest licenses-api-enable-archive-test
   (let [api-key "42"
