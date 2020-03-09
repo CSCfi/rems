@@ -1,5 +1,6 @@
 (ns rems.api.services.attachment
-  (:require [rems.common.application-util :as application-util]
+  (:require [clojure.set :as set]
+            [rems.common.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
@@ -11,11 +12,27 @@
       (header "Content-Disposition" (str "attachment;filename=" (pr-str (:attachment/filename attachment))))
       (content-type (:attachment/type attachment))))
 
+
+(defn- attachment-visible? [application attachment-id]
+  (let [from-events (mapcat :event/attachments (:application/events application))
+        from-fields (for [field (get-in application [:application/form :form/fields])
+                          :when (= :attachment (:field/type field))
+                          value [(:field/value field) (:field/previous-value field)]
+                          :when value]
+                      (Integer/parseInt value))]
+    (contains? (set (concat from-events from-fields))
+               attachment-id)))
+
+;; TODO refactor
 (defn get-application-attachment [user-id attachment-id]
   (let [attachment (attachments/get-attachment attachment-id)]
     (when attachment
       ;; check that the user is allowed to read the application (may throw ForbiddenException)
-      (applications/get-application user-id (:application/id attachment)))
+      (let [app (applications/get-application user-id (:application/id attachment))]
+        ;; and further check that the attachment is visible
+        (when-not (or (= user-id (:attachment/user attachment))
+                      (attachment-visible? app attachment-id))
+          (throw-forbidden))))
     attachment))
 
 (defn add-application-attachment [user-id application-id file]
