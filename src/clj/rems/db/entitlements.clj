@@ -61,13 +61,17 @@
   (let [ents (db/get-entitlements)]
     (csv/entitlements-to-csv ents)))
 
+(defn- get-entitlements-payload [entitlements action]
+  (when (not= action :ga4gh)
+    (for [e entitlements]
+      {:application (:catappid e)
+       :resource (:resid e)
+       :user (:userid e)
+       :mail (:mail e)})))
+
 (defn- post-entitlements! [{:keys [entitlements action] :as params}]
   (when-let [target (get-in env [:entitlements-target action])]
-    (let [payload (for [e entitlements]
-                    {:application (:catappid e)
-                     :resource (:resid e)
-                     :user (:userid e)
-                     :mail (:mail e)})
+    (let [payload (get-entitlements-payload entitlements action)
           json-payload (json/generate-string payload)]
       (log/infof "Posting entitlements to %s:" target payload)
       (let [response (try
