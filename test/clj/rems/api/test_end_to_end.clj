@@ -112,7 +112,8 @@
             (testing "fill in application"
               (assert-success
                (api-call :post "/api/applications/save-draft" {:application-id application-id
-                                                               :field-values [{:field "fld1"
+                                                               :field-values [{:form form-id
+                                                                               :field "fld1"
                                                                                :value "e2e test contents"}]}
                          api-key applicant-id)))
 
@@ -150,7 +151,7 @@
                 (is (contains? todos [application-id "new-application"])))
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key handler-id)]
-                (is (= "e2e test contents" (get-in application [:application/form :form/fields 0 :field/value])))
+                (is (= "e2e test contents" (get-in application [:application/forms 0 :form/fields 0 :field/value])))
                 (is (= [license-id] (get-in application [:application/accepted-licenses (keyword applicant-id)]))
                     application)))
 

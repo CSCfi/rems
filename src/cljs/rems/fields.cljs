@@ -8,8 +8,8 @@
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn id-to-name [id]
-  (str "field-" id))
+(defn ids-to-name [form-id field-id]
+  (str "form-" form-id "-field-" field-id))
 
 (defn- diff [value previous-value]
   (let [dmp (js/diff_match_patch.)
@@ -48,7 +48,7 @@
 (defn field-wrapper
   "Common parts of a form field.
 
-  :field/id - number (required), field id
+  :field/id - number (required), field field-id
   :field/title - string (required), field title to show to the user
   :field/max-length - maximum number of characters (optional)
   :field/optional - boolean, true if the field is not required
@@ -63,7 +63,8 @@
 
   editor-component - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
-  (let [id (:field/id opts)
+  (let [form-id (:form/id opts)
+        field-id (:field/id opts)
         title (linkify (localized (:field/title opts)))
         optional (:field/optional opts)
         value (:field/value opts)
@@ -74,18 +75,18 @@
        :fieldset.form-group.field
        :div.form-group.field)
      (merge
-      {:id (str "container-" (id-to-name id))}
+      {:id (str "container-" (ids-to-name form-id field-id))}
       (when fieldset
         {:tab-index -1
          :aria-required (not optional)
          :aria-invalid (when validation true)
          :aria-describedby (when validation
-                             (str (id-to-name id) "-error"))}))
+                             (str (ids-to-name form-id field-id) "-error"))}))
      [(if fieldset
         :legend.application-field-label
         :label.application-field-label)
       (when (not fieldset)
-        {:for (id-to-name id)})
+        {:for (ids-to-name form-id field-id)})
       title " "
       (when max-length
         (text-format :t.form/maxlength (str max-length)))
@@ -95,19 +96,19 @@
         (text :t.form/required))]
      (when (and previous-value
                 (not= value previous-value))
-       [toggle-diff-button id diff on-toggle-diff])
+       [toggle-diff-button field-id diff on-toggle-diff])
      (cond
        diff (or diff-component
-                [diff-field {:id (id-to-name id)
+                [diff-field {:id (ids-to-name form-id field-id)
                              :value value
                              :previous-value previous-value}])
        readonly (or readonly-component
-                    [readonly-field {:id (id-to-name id)
+                    [readonly-field {:id (ids-to-name form-id field-id)
                                      :value value}])
        :else editor-component)
      (when validation
        [:div.invalid-feedback
-        {:id (str (id-to-name id) "-error")
+        {:id (str (ids-to-name form-id field-id) "-error")
          ;; XXX: Bootstrap's has "display: none" on .invalid-feedback by default
          ;;      and overrides that for example when there is a sibling .form-control.is-invalid,
          ;;      but that doesn't work with checkbox groups nor attachments, and we anyways
@@ -117,7 +118,7 @@
 
 (defn- non-field-wrapper [opts children]
   [:div.form-group
-   {:id (str "container-" (id-to-name (:field/id opts)))}
+   {:id (str "container-" (ids-to-name (:form/id opts) (:field/id opts)))}
    children])
 
 (defn- event-value [event]
@@ -125,20 +126,21 @@
 
 (defn text-field
   [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
+  (let [form-id (:form/id opts)
+        field-id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [:input.form-control {:type "text"
-                           :id (id-to-name id)
-                           :name (id-to-name id)
+                           :id (ids-to-name form-id field-id)
+                           :name (ids-to-name form-id field-id)
                            :placeholder placeholder
                            :required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
-                                               (str (id-to-name id) "-error"))
+                                               (str (ids-to-name form-id field-id) "-error"))
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :defaultValue value
@@ -146,19 +148,20 @@
 
 (defn texta-field
   [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
+  (let [form-id (:form/id opts)
+        field-id (:field/id opts)
         placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
-     [textarea {:id (id-to-name id)
-                :name (id-to-name id)
+     [textarea {:id (ids-to-name form-id field-id)
+                :name (ids-to-name form-id field-id)
                 :placeholder placeholder
                 :required (not optional)
                 :aria-invalid (when validation true)
                 :aria-describedby (when validation
-                                    (str (id-to-name id) "-error"))
+                                    (str (ids-to-name form-id field-id) "-error"))
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :value value
@@ -166,20 +169,21 @@
 
 (defn date-field
   [{:keys [min max validation on-change] :as opts}]
-  (let [id (:field/id opts)
+  (let [form-id (:form/id opts)
+        field-id (:field/id opts)
         value (:field/value opts)
         optional (:field/optional opts)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [field-wrapper opts
      [:input.form-control {:type "date"
-                           :id (id-to-name id)
-                           :name (id-to-name id)
+                           :id (ids-to-name form-id field-id)
+                           :name (ids-to-name form-id field-id)
                            :class (when validation "is-invalid")
                            :defaultValue value
                            :required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
-                                               (str (id-to-name id) "-error"))
+                                               (str (ids-to-name form-id field-id) "-error"))
                            :min min
                            :max max
                            :on-change (comp on-change event-value)}]]))
@@ -192,21 +196,22 @@
     (localized label)))
 
 (defn option-field [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
+  (let [form-id (:form/id opts)
+        field-id (:field/id opts)
         value (:field/value opts)
         options (:field/options opts)
         optional (:field/optional opts)]
     [field-wrapper
-     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
+     (assoc opts :readonly-component [readonly-field {:id (ids-to-name form-id field-id)
                                                       :value (option-label value options)}])
-     (into [:select.form-control {:id (id-to-name id)
-                                  :name (id-to-name id)
+     (into [:select.form-control {:id (ids-to-name form-id field-id)
+                                  :name (ids-to-name form-id field-id)
                                   :class (when validation "is-invalid")
                                   :defaultValue value
                                   :required (not optional)
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
-                                                      (str (id-to-name id) "-error"))
+                                                      (str (ids-to-name form-id field-id) "-error"))
                                   :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
@@ -218,21 +223,22 @@
     [non-field-wrapper opts [:label title]]))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
-  (let [id (:field/id opts)
+  (let [form-id (:form/id opts)
+        field-id (:field/id opts)
         value (:field/value opts)
         options (:field/options opts)
         selected-keys (decode-option-keys value)]
     [field-wrapper
      (assoc opts
             :fieldset true
-            :readonly-component [readonly-field {:id (id-to-name id)
+            :readonly-component [readonly-field {:id (ids-to-name form-id field-id)
                                                  :value (->> options
                                                              (filter #(contains? selected-keys (:key %)))
                                                              (map #(localized (:label %)))
                                                              (str/join ", "))}])
      (into [:div]
            (for [{:keys [key label]} options]
-             (let [option-id (str (id-to-name id) "-" key)
+             (let [option-id (str (ids-to-name form-id field-id) "-" key)
                    on-change (fn [event]
                                (let [checked (.. event -target -checked)
                                      selected-keys (if checked
@@ -251,12 +257,13 @@
                  (localized label)]])))]))
 
 (defn attachment-field
-  [{:keys [validation app-id on-change on-set-attachment on-remove-attachment success] :as opts}]
-  (let [id (:field/id opts)
+  [{:keys [validation on-change on-set-attachment on-remove-attachment success] :as opts}]
+  (let [form-id (:form/id opts)
+        field-id (:field/id opts)
         title (localized (:field/title opts))
         value (:field/value opts)
         filename (get-in opts [:field/attachment :attachment/filename])
-        upload-field-id (str (id-to-name id) "-input")
+        upload-field-id (str (ids-to-name form-id field-id) "-input")
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document upload-field-id))))
         link (fn [attachment-id filename]
                (when-not (empty? attachment-id)
@@ -280,7 +287,7 @@
                                               (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
                       [:button.btn.btn-outline-secondary
-                       {:id (id-to-name id)
+                       {:id (ids-to-name form-id field-id)
                         :type :button
                         :on-click click-upload}
                        (text :t.form/upload)]]

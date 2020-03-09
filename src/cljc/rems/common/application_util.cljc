@@ -1,4 +1,5 @@
-(ns rems.common.application-util)
+(ns rems.common.application-util
+  (:require [rems.common.util :refer [build-index]]))
 
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))

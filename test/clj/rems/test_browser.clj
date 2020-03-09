@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
+            [com.rpl.specter :refer [select ALL]]
             [etaoin.api :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
@@ -265,7 +266,7 @@
                     ["label" ""]
                     ["text" ""]
                     ["texta" ""]]
-                   (for [field (get-in application [:application/form :form/fields])]
+                   (for [field (select [:application/forms ALL :form/fields] application)]
                      ;; TODO could test other fields here too, e.g. title
                      [(:field/type field)
                       (:field/value field)])))))))))

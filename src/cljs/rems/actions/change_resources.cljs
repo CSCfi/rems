@@ -58,15 +58,13 @@
                   :text (text :t.actions/change-resources)
                   :on-click #(rf/dispatch [::open-form initial-resources])}])
 
-(defn compatible-item? [item original-workflow-id original-form-id]
-  (and (= original-workflow-id (:wfid item))
-       (= original-form-id (:formid item))))
+(defn compatible-item? [item original-workflow-id]
+  (= original-workflow-id (:wfid item)))
 
 (defn change-resources-view
   [{:keys [application initial-resources selected-resources full-catalogue catalogue comment can-comment? language on-set-comment on-set-resources on-send]}]
-  (let [original-form-id (get-in application [:application/form :form/id])
-        original-workflow-id (get-in application [:application/workflow :workflow/id])
-        compatible-first-sort-fn #(if (compatible-item? % original-workflow-id original-form-id) -1 1)
+  (let [original-workflow-id (get-in application [:application/workflow :workflow/id])
+        compatible-first-sort-fn #(if (compatible-item? % original-workflow-id) -1 1)
         sorted-selected-catalogue (->> catalogue
                                        (sort-by #(get-localized-title % language))
                                        (sort-by compatible-first-sort-fn))]

@@ -19,6 +19,7 @@
                  [com.auth0/jwks-rsa "0.11.0"]
                  [com.draines/postal "2.0.3"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.10.2"]
+                 [com.rpl/specter "1.1.3"]
                  [com.taoensso/tempura "1.2.1"]
                  [compojure "1.6.1"]
                  [conman "0.8.4"]

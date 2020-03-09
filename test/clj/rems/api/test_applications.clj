@@ -498,18 +498,18 @@
       (is (= {:success true}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
-                                    :field-values [{:field opt-id :value "opt"}]}))))
+                                    :field-values [{:form form-id :field opt-id :value "opt"}]}))))
     (testing "can't submit without required field"
       (is (= {:success false
-              :errors [{:field-id req-id, :type "t.form.validation/required"}]}
+              :errors [{:form-id form-id :field-id req-id, :type "t.form.validation/required"}]}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "set value of required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
-                                    :field-values [{:field opt-id :value "opt"}
-                                                   {:field req-id :value "req"}]}))))
+                                    :field-values [{:form form-id :field opt-id :value "opt"}
+                                                   {:form form-id :field req-id :value "req"}]}))))
     (testing "can submit with required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
