@@ -23,17 +23,21 @@
     (contains? (set (concat from-events from-fields))
                attachment-id)))
 
-;; TODO refactor
 (defn get-application-attachment [user-id attachment-id]
   (let [attachment (attachments/get-attachment attachment-id)]
-    (when attachment
-      ;; check that the user is allowed to read the application (may throw ForbiddenException)
-      (let [app (applications/get-application user-id (:application/id attachment))]
-        ;; and further check that the attachment is visible
-        (when-not (or (= user-id (:attachment/user attachment))
-                      (attachment-visible? app attachment-id))
-          (throw-forbidden))))
-    attachment))
+    (cond
+      (nil? attachment)
+      nil
+
+      (= user-id (:attachment/user attachment))
+      attachment
+
+      (attachment-visible? (applications/get-application user-id (:application/id attachment))
+                           attachment-id)
+      attachment
+
+      :else
+      (throw-forbidden))))
 
 (defn add-application-attachment [user-id application-id file]
   (let [application (applications/get-application user-id application-id)]
