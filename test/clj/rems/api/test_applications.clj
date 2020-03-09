@@ -859,33 +859,36 @@
     (testing "handler approves with attachment"
       (let [attachment-id (add-attachment handler-id)]
         (is (number? attachment-id))
-        (testing ", attaches it to a private remark"
-          (is (= {:success true} (send-command handler-id
-                                               {:type :application.command/approve
-                                                :application-id application-id
-                                                :comment "see attachment"
-                                                :attachments [attachment-id]}))))))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/approve
+                                              :application-id application-id
+                                              :comment "see attachment"
+                                              :attachments [attachment-id]})))))
 
-    (testing "handler closes with attachment"
-      (let [attachment-id (add-attachment handler-id)]
-        (is (number? attachment-id))
-        (testing ", attaches it to a private remark"
-          (is (= {:success true} (send-command handler-id
-                                               {:type :application.command/close
-                                                :application-id application-id
-                                                :comment "see attachment"
-                                                :attachments [attachment-id]}))))))
+    (testing "handler closes with two attachments"
+      (let [id1 (add-attachment handler-id)
+            id2 (add-attachment handler-id)]
+        (is (number? id1))
+        (is (number? id2))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/close
+                                              :application-id application-id
+                                              :comment "see attachment"
+                                              :attachments [id1 id2]})))))
 
-    (testing "applicant can see the two new attachments"
+    (testing "applicant can see the three new attachments"
       (let [app (get-application application-id applicant-id)
             [close-event approve-event] (reverse (:application/events app))
-            [close-id] (:event/attachments close-event)
+            [close-id1 close-id2] (:event/attachments close-event)
             [approve-id] (:event/attachments approve-event)]
         (is (= "application.event/closed" (:event/type close-event)))
         (is (= "application.event/approved" (:event/type approve-event)))
-        (is (number? close-id))
+        (is (number? close-id1))
+        (is (number? close-id2))
         (is (number? approve-id))
-        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" close-id) nil
+        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" close-id1) nil
+                                             api-key handler-id))
+        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" close-id2) nil
                                              api-key handler-id))
         (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" approve-id) nil
                                              api-key handler-id))))))
