@@ -42,12 +42,6 @@
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)))
 
-;; TODO move somewhere else?
-(defn attachment-for? [application-id attachment-id]
-  (let [attachment (attachments/get-attachment attachment-id)]
-    (and attachment
-         (= (:application/id attachment) application-id))))
-
 (def ^:private command-injections
   {:valid-user? users/user-exists?
    :validate-fields form-validation/validate-fields
@@ -56,7 +50,7 @@
    :get-catalogue-item-licenses applications/get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
    :allocate-application-ids! applications/allocate-application-ids!
-   :attachment-for? attachment-for?})
+   :get-attachment-metadata attachments/get-attachment-metadata})
 
 (defn command! [cmd]
   ;; Use locks to prevent multiple commands being executed in parallel.

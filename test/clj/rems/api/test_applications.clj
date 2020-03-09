@@ -810,6 +810,15 @@
     (testing "reviewer uploads an attachment"
       (let [attachment-id (add-attachment reviewer-id)]
         (is (number? attachment-id))
+        (testing ", handler can't use the attachment"
+          (is (= {:success false
+                  :errors [{:type "invalid-attachments" :attachments [attachment-id]}]}
+                 (send-command handler-id
+                               {:type :application.command/remark
+                                :public false
+                                :application-id application-id
+                                :comment "see attachment"
+                                :attachments [attachment-id]}))))
         (testing ", attaches it to a review"
           (is (= {:success true} (send-command reviewer-id
                                                {:type :application.command/review

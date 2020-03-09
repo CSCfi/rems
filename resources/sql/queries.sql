@@ -253,6 +253,10 @@ VALUES
 SELECT appid, filename, modifierUserId, type, data FROM attachment
 WHERE id = :id;
 
+-- :name get-attachment-metadata :? :1
+SELECT id, appid, filename, modifierUserId, type FROM attachment
+WHERE id = :id;
+
 -- :name get-attachments-for-application :? :*
 SELECT id, filename, type, modifierUserId FROM attachment
 WHERE appid = :application-id;

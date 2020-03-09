@@ -262,15 +262,18 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
-(defn- invalid-attachments-error [application injections cmd]
+(defn- invalid-attachments-error [injections cmd]
   (let [invalid-ids (for [id (:attachments cmd)
-                          :when (not ((:attachment-for? injections) (:application/id application) id))]
+                          :let [attachment ((:get-attachment-metadata injections) id)]
+                          :when (or (nil? attachment)
+                                    (not= (:attachment/user attachment) (:actor cmd))
+                                    (not= (:application/id attachment) (:application-id cmd)))]
                       id)]
     (when (seq invalid-ids)
       {:errors [{:type :invalid-attachments :attachments invalid-ids}]})))
 
-(defn- add-comment-and-attachments [cmd application injections event]
-  (or (invalid-attachments-error application injections cmd)
+(defn- add-comment-and-attachments [cmd injections event]
+  (or (invalid-attachments-error injections cmd)
       (ok (assoc event
                  :application/comment (:comment cmd)
                  :event/attachments (vec (:attachments cmd))))))
@@ -346,34 +349,34 @@
 
 (defmethod command-handler :application.command/approve
   [cmd application injections]
-  (add-comment-and-attachments cmd application injections
+  (add-comment-and-attachments cmd injections
                                {:event/type :application.event/approved}))
 
 (defmethod command-handler :application.command/reject
   [cmd application injections]
-  (add-comment-and-attachments cmd application injections
+  (add-comment-and-attachments cmd injections
                                {:event/type :application.event/rejected}))
 
 (defmethod command-handler :application.command/return
   [cmd application injections]
-  (add-comment-and-attachments cmd application injections
+  (add-comment-and-attachments cmd injections
                                {:event/type :application.event/returned}))
 
 (defmethod command-handler :application.command/close
   [cmd application injections]
-  (add-comment-and-attachments cmd application injections
+  (add-comment-and-attachments cmd injections
                                {:event/type :application.event/closed}))
 
 (defmethod command-handler :application.command/revoke
   [cmd application injections]
-  (add-comment-and-attachments cmd application injections
+  (add-comment-and-attachments cmd injections
                                {:event/type :application.event/revoked}))
 
 (defmethod command-handler :application.command/request-decision
   [cmd application injections]
   (or (must-not-be-empty cmd :deciders)
       (invalid-users-errors (:deciders cmd) injections)
-      (add-comment-and-attachments cmd application injections
+      (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/decision-requested
                                     :application/request-id (UUID/randomUUID)
                                     :application/deciders (:deciders cmd)})))
@@ -389,7 +392,7 @@
       (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
       (let [last-request-for-actor (get-in application [:rems.application.model/latest-decision-request-by-user (:actor cmd)])]
-        (add-comment-and-attachments cmd application injections
+        (add-comment-and-attachments cmd injections
                                      {:event/type :application.event/decided
                                       :application/request-id last-request-for-actor
                                       :application/decision (:decision cmd)}))))
@@ -398,7 +401,7 @@
   [cmd application injections]
   (or (must-not-be-empty cmd :reviewers)
       (invalid-users-errors (:reviewers cmd) injections)
-      (add-comment-and-attachments cmd application injections
+      (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/review-requested
                                     :application/request-id (UUID/randomUUID)
                                     :application/reviewers (:reviewers cmd)})))
@@ -412,7 +415,7 @@
   [cmd application injections]
   (or (actor-is-not-reviewer-error application cmd)
       (let [last-request-for-actor (get-in application [:rems.application.model/latest-review-request-by-user (:actor cmd)])]
-        (add-comment-and-attachments cmd application injections
+        (add-comment-and-attachments cmd injections
                                      {:event/type :application.event/reviewed
                                       ;; Currently we want to tie all comments to the latest request.
                                       ;; In the future this might change so that commenters can freely continue to comment
@@ -421,14 +424,14 @@
 
 (defmethod command-handler :application.command/remark
   [cmd application injections]
-  (add-comment-and-attachments cmd application injections
+  (add-comment-and-attachments cmd injections
                                {:event/type :application.event/remarked
                                 :application/public (:public cmd)}))
 
 (defmethod command-handler :application.command/add-licenses
   [cmd application injections]
   (or (must-not-be-empty cmd :licenses)
-      (add-comment-and-attachments cmd application injections
+      (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/licenses-added
                                     :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))})))
 
@@ -474,7 +477,7 @@
         {:errors [{:type :cannot-remove-applicant}]})
       (when-not (member? (:userid (:member cmd)) application)
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      (add-comment-and-attachments cmd application injections
+      (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/member-removed
                                     :application/member (:member cmd)})))
 
@@ -485,7 +488,7 @@
                            [(:name (:member cmd))
                             (:email (:member cmd))])
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      (add-comment-and-attachments cmd application injections
+      (add-comment-and-attachments cmd injections
                                    {:event/type :application.event/member-uninvited
                                     :application/member (:member cmd)})))
 

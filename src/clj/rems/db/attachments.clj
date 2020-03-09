@@ -45,6 +45,14 @@
      :attachment/data data
      :attachment/type type}))
 
+(defn get-attachment-metadata [attachment-id]
+  (when-let [{:keys [id modifieruserid type appid filename]} (db/get-attachment-metadata {:id attachment-id})]
+    {:application/id appid
+     :attachment/id id
+     :attachment/user modifieruserid
+     :attachment/filename filename
+     :attachment/type type}))
+
 (defn get-attachments-for-application [application-id]
   (vec
    (for [{:keys [id filename type]} (db/get-attachments-for-application {:application-id application-id})]

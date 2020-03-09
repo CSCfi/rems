@@ -1304,17 +1304,27 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        valid-attachment-id 1234
-        invalid-attachment-id 1235
+        valid-attachment 1234
+        wrong-application-attachment 1235
+        wrong-user-attachment 1236
+        unknown-attachment 1237
         injections {:valid-user? #{reviewer}
-                    :attachment-for? (fn [_ attachment-id]
-                                       (= attachment-id valid-attachment-id))}]
+                    :get-attachment-metadata
+                    {valid-attachment {:application/id (:application/id application)
+                                       :attachment/id valid-attachment
+                                       :attachment/user handler-user-id}
+                     wrong-application-attachment {:application/id (inc (:application/id application))
+                                                   :attachment/id wrong-application-attachment
+                                                   :attachment/user handler-user-id}
+                     wrong-user-attachment {:application/id (:application/id application)
+                                            :attachment/id wrong-user-attachment
+                                            :attachment/user "carl"}}}]
     (testing "handler can remark"
       (let [event (ok-command application
                               {:type :application.command/remark
                                :actor handler-user-id
                                :comment "handler's remark"
-                               :attachments [1234]
+                               :attachments [valid-attachment]
                                :public false}
                               injections)
             application (apply-events application [event])]
@@ -1324,15 +1334,17 @@
                 :application/id app-id
                 :application/comment "handler's remark"
                 :application/public false
-                :event/attachments [1234]}
+                :event/attachments [valid-attachment]}
                event))))
-    (testing "invalid attachment"
-      (is (= {:errors [{:type :invalid-attachments :attachments [1235]}]}
+    (testing "invalid attachments"
+      (is (= {:errors [{:type :invalid-attachments
+                        :attachments [wrong-application-attachment wrong-user-attachment unknown-attachment]}]}
              (fail-command application
                            {:type :application.command/remark
                             :actor handler-user-id
                             :comment "handler's remark"
-                            :attachments [1234 1235]
+                            :attachments [valid-attachment
+                                          wrong-application-attachment wrong-user-attachment unknown-attachment]
                             :public false}
                            injections))))
     (testing "applicants cannot remark"
