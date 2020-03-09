@@ -16,28 +16,29 @@
    :event/actor UserId
    :application/id s/Int})
 
-(s/defschema ApprovedEvent
+(s/defschema EventWithComment
   (assoc EventBase
+         :application/comment s/Str
+         (s/optional-key :event/attachments) [s/Int]))
+
+(s/defschema ApprovedEvent
+  (assoc EventWithComment
          ;; single-value enums are supported by swagger, unlike s/eq.
          ;; we don't yet generate swagger for events but we might in
          ;; the future
-         :event/type (s/enum :application.event/approved)
-         :application/comment s/Str))
+         :event/type (s/enum :application.event/approved)))
 (s/defschema ClosedEvent
-  (assoc EventBase
-         :event/type (s/enum :application.event/closed)
-         :application/comment s/Str))
+  (assoc EventWithComment
+         :event/type (s/enum :application.event/closed)))
 (s/defschema ReviewedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/reviewed)
-         :application/request-id s/Uuid
-         :application/comment s/Str))
+         :application/request-id s/Uuid))
 (s/defschema ReviewRequestedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/review-requested)
          :application/request-id s/Uuid
-         :application/reviewers [s/Str]
-         :application/comment s/Str))
+         :application/reviewers [s/Str]))
 (s/defschema CopiedFromEvent
   (assoc EventBase
          :event/type (s/enum :application.event/copied-from)
@@ -63,17 +64,15 @@
          :workflow/id s/Int
          :workflow/type (apply s/enum workflow-types)))
 (s/defschema DecidedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/decided)
          :application/request-id s/Uuid
-         :application/decision (s/enum :approved :rejected)
-         :application/comment s/Str))
+         :application/decision (s/enum :approved :rejected)))
 (s/defschema DecisionRequestedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/decision-requested)
          :application/request-id s/Uuid
-         :application/deciders [s/Str]
-         :application/comment s/Str))
+         :application/deciders [s/Str]))
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
@@ -87,9 +86,8 @@
          :event/type (s/enum :application.event/licenses-accepted)
          :application/accepted-licenses #{s/Int}))
 (s/defschema LicensesAddedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/licenses-added)
-         :application/comment s/Str
          :application/licenses [{:license/id s/Int}]))
 (s/defschema MemberAddedEvent
   (assoc EventBase
@@ -106,41 +104,34 @@
          :event/type (s/enum :application.event/member-joined)
          :invitation/token s/Str))
 (s/defschema MemberRemovedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/member-removed)
-         :application/member {:userid UserId}
-         :application/comment s/Str))
+         :application/member {:userid UserId}))
 (s/defschema MemberUninvitedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/member-uninvited)
          :application/member {:name s/Str
-                              :email s/Str}
-         :application/comment s/Str))
+                              :email s/Str}))
 (s/defschema RejectedEvent
-  (assoc EventBase
-         :event/type (s/enum :application.event/rejected)
-         :application/comment s/Str))
+  (assoc EventWithComment
+         :event/type (s/enum :application.event/rejected)))
 (s/defschema RemarkedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/remarked)
-         (s/optional-key :event/attachments) [s/Int]
-         :application/comment s/Str
          :application/public s/Bool))
 (s/defschema ResourcesChangedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/resources-changed)
-         (s/optional-key :application/comment) s/Str
+         (s/optional-key :application/comment) s/Str ;; TODO
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]))
 (s/defschema ReturnedEvent
-  (assoc EventBase
-         :event/type (s/enum :application.event/returned)
-         :application/comment s/Str))
+  (assoc EventWithComment
+         :event/type (s/enum :application.event/returned)))
 (s/defschema RevokedEvent
-  (assoc EventBase
-         :event/type (s/enum :application.event/revoked)
-         :application/comment s/Str))
+  (assoc EventWithComment
+         :event/type (s/enum :application.event/revoked)))
 (s/defschema SubmittedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/submitted)))

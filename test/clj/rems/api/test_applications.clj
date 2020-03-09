@@ -810,12 +810,11 @@
     (testing "reviewer uploads an attachment"
       (let [attachment-id (add-attachment reviewer-id)]
         (is (number? attachment-id))
-        (testing ", attaches it to a private remark"
+        (testing ", attaches it to a review"
           (is (= {:success true} (send-command reviewer-id
-                                               {:type :application.command/remark
+                                               {:type :application.command/review
                                                 :application-id application-id
                                                 :comment "see attachment"
-                                                :public false
                                                 :attachments [attachment-id]})))
           (testing ", handler can fetch attachment"
             (is (= (slurp testfile)
@@ -826,7 +825,61 @@
                        slurp))))
           (testing ", applicant can't fetch attachment"
             (is (response-is-forbidden? (api-response :get (str "/api/applications/attachment/" attachment-id) nil
-                                                      api-key applicant-id)))))))))
+                                                      api-key applicant-id)))))))
+
+    (testing "handler makes a private remark"
+      (let [attachment-id (add-attachment handler-id)]
+        (is (number? attachment-id))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/remark
+                                              :public false
+                                              :application-id application-id
+                                              :comment "see attachment"
+                                              :attachments [attachment-id]})))
+        (testing ", handler can fetch attachment"
+          (is (= (slurp testfile)
+                 (-> (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                   api-key handler-id)
+                     assert-response-is-ok
+                     :body
+                     slurp))))
+        (testing ", applicant can't fetch attachment"
+          (is (response-is-forbidden? (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                                    api-key applicant-id))))))
+
+    (testing "handler approves with attachment"
+      (let [attachment-id (add-attachment handler-id)]
+        (is (number? attachment-id))
+        (testing ", attaches it to a private remark"
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/approve
+                                                :application-id application-id
+                                                :comment "see attachment"
+                                                :attachments [attachment-id]}))))))
+
+    (testing "handler closes with attachment"
+      (let [attachment-id (add-attachment handler-id)]
+        (is (number? attachment-id))
+        (testing ", attaches it to a private remark"
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/close
+                                                :application-id application-id
+                                                :comment "see attachment"
+                                                :attachments [attachment-id]}))))))
+
+    (testing "applicant can see the two new attachments"
+      (let [app (get-application application-id applicant-id)
+            [close-event approve-event] (reverse (:application/events app))
+            [close-id] (:event/attachments close-event)
+            [approve-id] (:event/attachments approve-event)]
+        (is (= "application.event/closed" (:event/type close-event)))
+        (is (= "application.event/approved" (:event/type approve-event)))
+        (is (number? close-id))
+        (is (number? approve-id))
+        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" close-id) nil
+                                             api-key handler-id))
+        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" approve-id) nil
+                                             api-key handler-id))))))
 
 (deftest test-application-api-license-attachments
   (let [api-key "42"
