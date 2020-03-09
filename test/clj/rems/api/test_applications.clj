@@ -331,7 +331,7 @@
                                                          :application-id application-id
                                                          :comment ""
                                                          :public false}))))
-      (testing "public remark"
+      (testing "public remark with"
         (is (= {:success true} (send-command handler-id {:type :application.command/remark
                                                          :application-id application-id
                                                          :comment ""
@@ -732,6 +732,64 @@
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-forbidden? response))))))
+
+(deftest test-application-comment-attachments
+  (let [api-key "42"
+        applicant-id "alice"
+        handler-id "developer"
+        reviewer-id "carl"
+        workflow-id (test-data/create-workflow! {:type :workflow/master
+                                                 :handlers [handler-id]})
+        cat-item-id (test-data/create-catalogue-item! {:workflow-id workflow-id})
+        application-id (test-data/create-application! {:catalogue-item-ids [cat-item-id]
+                                                       :actor applicant-id})]
+    (testing "submit"
+      (is (= {:success true} (send-command applicant-id
+                                           {:type :application.command/submit
+                                            :application-id application-id}))))
+    (testing "unrelated user can't upload attachment"
+      (is (response-is-forbidden? (-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
+                                      (authenticate api-key reviewer-id)
+                                      (assoc :params {"file" filecontent})
+                                      (assoc :multipart-params {"file" filecontent})
+                                      handler))))
+    (testing "invite reviewer"
+      (is (= {:success true} (send-command handler-id
+                                           {:type :application.command/request-review
+                                            :application-id application-id
+                                            :reviewers [reviewer-id]
+                                            :comment "please"}))))
+    (doseq [[description user-id] [["handler" handler-id] ["reviewer" reviewer-id]]]
+      (testing description
+        (testing "uploads an attachment"
+          (let [attachment-id (-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
+                                  (authenticate api-key user-id)
+                                  (assoc :params {"file" filecontent})
+                                  (assoc :multipart-params {"file" filecontent})
+                                  handler
+                                  read-ok-body
+                                  :id)]
+            (is (number? attachment-id))
+            (testing "and attaches it to a remark"
+              (is (= {:success true} (send-command user-id
+                                                   {:type :application.command/remark
+                                                    :application-id application-id
+                                                    :comment "see attachment"
+                                                    :public true
+                                                    :attachments [attachment-id]}))))))))
+
+    (testing "applicant can see attachment"
+      (let [app (get-application application-id applicant-id)
+            remark-event (last (:application/events app))
+            attachment-id (first (:event/attachments remark-event))]
+        (is (number? attachment-id))
+        (testing "and fetch it"
+          (is (= (slurp testfile)
+                 (-> (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                   api-key applicant-id)
+                     assert-response-is-ok
+                     :body
+                     slurp))))))))
 
 (deftest test-application-api-license-attachments
   (let [api-key "42"

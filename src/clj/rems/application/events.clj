@@ -123,6 +123,7 @@
 (s/defschema RemarkedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/remarked)
+         (s/optional-key :event/attachments) [s/Int]
          :application/comment s/Str
          :application/public s/Bool))
 (s/defschema ResourcesChangedEvent

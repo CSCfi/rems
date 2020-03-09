@@ -66,7 +66,8 @@
 (s/defschema RemarkCommand
   (assoc CommandBase
          :comment s/Str
-         :public s/Bool))
+         :public s/Bool
+         (s/optional-key :attachments) [s/Int]))
 (s/defschema RemoveMemberCommand
   (assoc CommandBase
          :member {:userid UserId}
@@ -414,11 +415,20 @@
              :application/request-id last-request-for-actor
              :application/comment (:comment cmd)}))))
 
+(defn- invalid-attachments-error [application injections attachment-ids]
+  (let [invalid-ids (for [id attachment-ids
+                          :when (not ((:attachment-for? injections) (:application/id application) id))]
+                      id)]
+    (when (seq invalid-ids)
+      {:errors [{:type :invalid-attachments :attachments invalid-ids}]})))
+
 (defmethod command-handler :application.command/remark
-  [cmd _application _injections]
-  (ok {:event/type :application.event/remarked
-       :application/comment (:comment cmd)
-       :application/public (:public cmd)}))
+  [cmd application injections]
+  (or (invalid-attachments-error application injections (:attachments cmd))
+      (ok {:event/type :application.event/remarked
+           :application/comment (:comment cmd)
+           :event/attachments (vec (:attachments cmd))
+           :application/public (:public cmd)})))
 
 (defmethod command-handler :application.command/add-licenses
   [cmd _application _injections]

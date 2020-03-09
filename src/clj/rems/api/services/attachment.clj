@@ -20,6 +20,7 @@
 
 (defn add-application-attachment [user-id application-id file]
   (let [application (applications/get-application user-id application-id)]
-    (when-not (application-util/form-fields-editable? application)
+    (when-not (some #{:application.command/save-draft :application.command/remark}
+                    (:application/permissions application))
       (throw-forbidden))
     (attachments/save-attachment! file user-id application-id)))

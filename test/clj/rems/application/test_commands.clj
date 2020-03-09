@@ -1287,12 +1287,17 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{reviewer}}]
+        valid-attachment-id 1234
+        invalid-attachment-id 1235
+        injections {:valid-user? #{reviewer}
+                    :attachment-for? (fn [_ attachment-id]
+                                       (= attachment-id valid-attachment-id))}]
     (testing "handler can remark"
       (let [event (ok-command application
                               {:type :application.command/remark
                                :actor handler-user-id
                                :comment "handler's remark"
+                               :attachments [1234]
                                :public false}
                               injections)
             application (apply-events application [event])]
@@ -1301,8 +1306,18 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "handler's remark"
-                :application/public false}
+                :application/public false
+                :event/attachments [1234]}
                event))))
+    (testing "invalid attachment"
+      (is (= {:errors [{:type :invalid-attachments :attachments [1235]}]}
+             (fail-command application
+                           {:type :application.command/remark
+                            :actor handler-user-id
+                            :comment "handler's remark"
+                            :attachments [1234 1235]
+                            :public false}
+                           injections))))
     (testing "applicants cannot remark"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
@@ -1337,6 +1352,7 @@
         (is (= {:event/type :application.event/remarked
                 :event/time test-time
                 :event/actor reviewer
+                :event/attachments []
                 :application/id app-id
                 :application/comment "first remark"
                 :application/public false}
@@ -1358,6 +1374,7 @@
             (is (= {:event/type :application.event/remarked
                     :event/time test-time
                     :event/actor reviewer
+                    :event/attachments []
                     :application/id app-id
                     :application/comment "second remark"
                     :application/public false}

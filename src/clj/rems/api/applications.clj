@@ -200,7 +200,7 @@
     ;; TODO: think about size limit
     (POST "/add-attachment" []
       :summary "Add an attachment file related to an application"
-      :roles #{:applicant}
+      :roles #{:logged-in}
       :multipart-params [file :- upload/TempFileUpload]
       :query-params [application-id :- (describe s/Int "application id")]
       :middleware [multipart/wrap-multipart-params]
