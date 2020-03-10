@@ -28,19 +28,32 @@
 
 (defn run-with-server
   [endpoint-spec callback]
-  (with-open [server (stub/start! {"/entitlements" endpoint-spec})]
+  (with-open [server (stub/start! {"/entitlements" endpoint-spec
+                                   "/ga4gh" endpoint-spec})]
     (with-redefs [rems.config/env (assoc rems.config/env
-                                         :entitlements-target {:add (str (:uri server) "/entitlements")})]
+                                         :entitlements-target {:add (str (:uri server) "/entitlements")
+                                                               :ga4gh (str (:uri server) "/ga4gh")})]
       (callback server))))
 
 (deftest test-post-entitlements!
-  (testing "ok"
+  (testing "ok :add action"
     (run-with-server
      {:status 200}
      (fn [server]
        (is (nil? (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))
        (is (= [+expected-payload+] (for [r (stub/recorded-requests server)]
                                      (json/parse-string (get-in r [:body "postData"]))))))))
+
+  (testing "ok :ga4gh action"
+    (run-with-server
+      {:status 200}
+      (fn [server]
+        (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
+        (is (= {:ga4gh_visa_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMSIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAwMjc1ODQwMDAwMH0.shOczQ78bE00HsvhPHqY1b5PcfIW2ebWd_4p6xb3TUg"
+                                "eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMiIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMDAwMH0.rfQTVmvlmkx2VsA5j5hGyaf0CUPh9I74WDlUbf_YHXk"]}
+               (first (for [r (stub/recorded-requests server)]
+                        (json/parse-string (get-in r [:body "postData"])))))))))
+
   (testing "not-found"
     (run-with-server
      {:status 404}
