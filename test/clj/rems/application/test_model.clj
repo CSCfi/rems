@@ -1399,3 +1399,22 @@
               ["new private answer" "private answer" :private false]]
              (answers submitted-returned-resubmitted-application :handler))
           "should see previous answers"))))
+
+(deftest test-hide-attachments
+  (let [application {:application/attachments [{:attachment/id 1 :attachment/filename "1.txt"}
+                                               {:attachment/id 2 :attachment/filename "2.txt"}
+                                               {:attachment/id 3 :attachment/filename "3.txt"}
+                                               {:attachment/id 4 :attachment/filename "4.txt"}
+                                               {:attachment/id 5 :attachment/filename "5.txt"}
+                                               {:attachment/id 6 :attachment/filename "6.txt"}]
+                     :application/form {:form/fields [{:field/type :attachment
+                                                       :field/value "1" :field/previous-value "2"}
+                                                      {:field/type :text
+                                                       :field/value "3" :field/previous-value "4"}]}
+                     :application/events [{:event/type :application.event/remarked
+                                           :comment "4"
+                                           :attachments [5 6]}]}]
+    (is (= [{:attachment/id 1 :attachment/filename "1.txt"}
+            {:attachment/id 2 :attachment/filename "2.txt"}]
+           (:application/attachments
+            (#'model/hide-attachments application))))))

@@ -754,15 +754,16 @@
         applicant-id "alice"
         handler-id "developer"
         reviewer-id "carl"
+        file #(assoc filecontent :filename %)
         workflow-id (test-data/create-workflow! {:type :workflow/master
                                                  :handlers [handler-id]})
         cat-item-id (test-data/create-catalogue-item! {:workflow-id workflow-id})
         application-id (test-data/create-application! {:catalogue-item-ids [cat-item-id]
                                                        :actor applicant-id})
         add-attachment #(-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
-                            (authenticate api-key %)
-                            (assoc :params {"file" filecontent})
-                            (assoc :multipart-params {"file" filecontent})
+                            (authenticate api-key %1)
+                            (assoc :params {"file" %2})
+                            (assoc :multipart-params {"file" %2})
                             handler
                             read-ok-body
                             :id)]
@@ -784,7 +785,7 @@
                                             :comment "please"}))))
 
     (testing "handler uploads an attachment"
-      (let [attachment-id (add-attachment handler-id)]
+      (let [attachment-id (add-attachment handler-id (file "handler-remark.txt"))]
         (is (number? attachment-id))
         (testing "and attaches it to a public remark"
           (is (= {:success true} (send-command handler-id
@@ -808,7 +809,7 @@
                      slurp))))))
 
     (testing "reviewer uploads an attachment"
-      (let [attachment-id (add-attachment reviewer-id)]
+      (let [attachment-id (add-attachment reviewer-id (file "reviewer-review.txt"))]
         (is (number? attachment-id))
         (testing ", handler can't use the attachment"
           (is (= {:success false
@@ -837,7 +838,7 @@
                                                       api-key applicant-id)))))))
 
     (testing "handler makes a private remark"
-      (let [attachment-id (add-attachment handler-id)]
+      (let [attachment-id (add-attachment handler-id (file "handler-private.txt"))]
         (is (number? attachment-id))
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/remark
@@ -857,7 +858,7 @@
                                                     api-key applicant-id))))))
 
     (testing "handler approves with attachment"
-      (let [attachment-id (add-attachment handler-id)]
+      (let [attachment-id (add-attachment handler-id (file "handler-approve.txt"))]
         (is (number? attachment-id))
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/approve
@@ -866,8 +867,8 @@
                                               :attachments [attachment-id]})))))
 
     (testing "handler closes with two attachments"
-      (let [id1 (add-attachment handler-id)
-            id2 (add-attachment handler-id)]
+      (let [id1 (add-attachment handler-id (file "handler-close1.txt"))
+            id2 (add-attachment handler-id (file "handler-close2.txt"))]
         (is (number? id1))
         (is (number? id2))
         (is (= {:success true} (send-command handler-id
@@ -891,7 +892,23 @@
         (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" close-id2) nil
                                              api-key handler-id))
         (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" approve-id) nil
-                                             api-key handler-id))))))
+                                             api-key handler-id))))
+
+    (testing ":application/attachments"
+      (testing "applicant"
+        (is (= ["handler-remark.txt"
+                "handler-approve.txt"
+                "handler-close1.txt"
+                "handler-close2.txt"]
+               (mapv :attachment/filename (:application/attachments (get-application application-id applicant-id))))))
+      (testing "handler"
+        (is (= ["handler-remark.txt"
+                "reviewer-review.txt"
+                "handler-private.txt"
+                "handler-approve.txt"
+                "handler-close1.txt"
+                "handler-close2.txt"]
+               (mapv :attachment/filename (:application/attachments (get-application application-id handler-id)))))))))
 
 (deftest test-application-api-license-attachments
   (let [api-key "42"
