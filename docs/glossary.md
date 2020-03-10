@@ -59,3 +59,18 @@
 - approved: the handler has approved the application
 - rejected: the handler has rejected the application
 - closed: the handler has closed an approved application, perhaps because it is obsolete
+
+## Architectural concepts
+
+- command: a description of an action a user wants to perform. Commands are can result in errors or if successful,
+  a number of events. Concretely, a JSON blob POSTed to an endpoint like /api/application/approve
+- event: a description of something that has happened. REMS stores
+  events in the database instead of storing the current state. This approach is called _Event Sourcing_.
+- process manager: something that reacts to new events with either
+  side effects (e.g. sending email) or more new events (e.g. approver
+  bot)
+- bot: a special kind of process manager that performs activities that
+  a normal user might perform. For example, the approver and rejecter
+  bots.
+- outbox: a database table that tracks side-effects that should happen
+  and their retries. For example emails or entitlement POSTs.
