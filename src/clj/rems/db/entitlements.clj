@@ -39,11 +39,12 @@
                               :is-active? (not expired?)})))
 
 (defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
-  (jwt/sign {:type "ControlledAccessGrants"
-                   :value (str "" resid)
-                   :source "https://ga4gh.org/duri/no_org"
-                   :by (str "" approvedby)
-                   :asserted (.getMillis ^DateTime start)} "secret")) ;;TODO use key/real secret here
+  (let [start-datetime (DateTime. start)]
+    (jwt/sign {:type "ControlledAccessGrants"
+                     :value (str "" resid)
+                     :source "https://ga4gh.org/duri/no_org"
+                     :by (str "" approvedby)
+                     :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
 
 (defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
   {:ga4gh_visa_v1 (reduce conj [] (mapv entitlement-to-permissions-api
@@ -62,7 +63,8 @@
     (csv/entitlements-to-csv ents)))
 
 (defn- get-entitlements-payload [entitlements action]
-  (when (not= action :ga4gh)
+  (case action
+    :ga4gh {:ga4gh_visa_v1 (reduce conj [] (mapv entitlement-to-permissions-api entitlements))}
     (for [e entitlements]
       {:application (:catappid e)
        :resource (:resid e)
@@ -121,7 +123,8 @@
                           :resource resource-id
                           :approvedby actor})
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
-    (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
+    (add-to-outbox! :add (db/get-entitlements {:application application-id :user user-id :resource resource-id}))
+    (add-to-outbox! :ga4gh (db/get-entitlements {:application application-id :user user-id :resource resource-id}))))
 
 (defn- revoke-entitlements! [application-id user-id resource-ids actor]
   (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids)

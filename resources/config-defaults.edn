@@ -41,7 +41,8 @@
 
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
-                       :remove nil}
+                       :remove nil
+                       :ga4gh nil}
 
  ;; Which database column to show as the application id.
  ;; Options: :id, :external-id
