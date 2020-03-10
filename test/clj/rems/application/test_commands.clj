@@ -297,7 +297,6 @@
     (is (= {:event/type :application.event/licenses-added
             :event/time test-time
             :event/actor handler-user-id
-            :event/attachments []
             :application/id app-id
             :application/comment "comment"
             :application/licenses [{:license/id 1} {:license/id 2}]}
@@ -624,7 +623,6 @@
       (is (= {:event/type :application.event/approved
               :event/time test-time
               :event/actor handler-user-id
-              :event/attachments []
               :application/id app-id
               :application/comment "fine"}
              (ok-command application
@@ -636,7 +634,6 @@
               :application/comment "bad"
               :event/time test-time
               :event/actor handler-user-id
-              :event/attachments []
               :application/id app-id}
              (ok-command application
                          {:type :application.command/reject
@@ -653,7 +650,6 @@
     (is (= {:event/type :application.event/returned
             :event/time test-time
             :event/actor handler-user-id
-            :event/attachments []
             :application/id app-id
             :application/comment "ret"}
            (ok-command application
@@ -676,7 +672,6 @@
     (is (= {:event/type :application.event/closed
             :event/time test-time
             :event/actor handler-user-id
-            :event/attachments []
             :application/id app-id
             :application/comment "outdated"}
            (ok-command application
@@ -698,7 +693,6 @@
     (is (= {:event/type :application.event/revoked
             :event/time test-time
             :event/actor handler-user-id
-            :event/attachments []
             :application/id app-id
             :application/comment "license violated"}
            (ok-command application
@@ -752,7 +746,6 @@
         (is (= {:event/type :application.event/decision-requested
                 :event/time test-time
                 :event/actor handler-user-id
-                :event/attachments []
                 :application/id app-id
                 :application/request-id request-id
                 :application/deciders ["deity"]
@@ -777,7 +770,6 @@
           (is (= {:event/type :application.event/decided
                   :event/time test-time
                   :event/actor "deity"
-                  :event/attachments []
                   :application/id app-id
                   :application/request-id request-id
                   :application/decision :approved
@@ -802,7 +794,6 @@
           (is (= {:event/type :application.event/decided
                   :event/time test-time
                   :event/actor "deity"
-                  :event/attachments []
                   :application/id app-id
                   :application/request-id request-id
                   :application/decision :rejected
@@ -1048,7 +1039,6 @@
       (is (= {:event/type :application.event/member-removed
               :event/time test-time
               :event/actor applicant-user-id
-              :event/attachments []
               :application/id app-id
               :application/member {:userid "somebody"}
               :application/comment "some comment"}
@@ -1062,37 +1052,32 @@
       (is (= {:event/type :application.event/member-removed
               :event/time test-time
               :event/actor handler-user-id
-              :event/attachments []
               :application/id app-id
-              :application/member {:userid "somebody"}
-              :application/comment ""}
+              ;; NB no comment
+              :application/member {:userid "somebody"}}
              (ok-command application
                          {:type :application.command/remove-member
                           :actor handler-user-id
-                          :member {:userid "somebody"}
-                          :comment ""}
+                          :member {:userid "somebody"}}
                          injections))))
     (testing "applicant cannot be removed"
       (is (= {:errors [{:type :cannot-remove-applicant}]}
              (fail-command application
                            {:type :application.command/remove-member
                             :actor applicant-user-id
-                            :member {:userid applicant-user-id}
-                            :comment ""}
+                            :member {:userid applicant-user-id}}
                            injections)
              (fail-command application
                            {:type :application.command/remove-member
                             :actor handler-user-id
-                            :member {:userid applicant-user-id}
-                            :comment ""}
+                            :member {:userid applicant-user-id}}
                            injections))))
     (testing "non-members cannot be removed"
       (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
              (fail-command application
                            {:type :application.command/remove-member
                             :actor handler-user-id
-                            :member {:userid "notamember"}
-                            :comment ""}
+                            :member {:userid "notamember"}}
                            injections))))
     (testing "removed members cannot see the application"
       (is (-> application
@@ -1100,8 +1085,7 @@
       (is (not (-> application
                    (apply-commands [{:type :application.command/remove-member
                                      :actor applicant-user-id
-                                     :member {:userid "somebody"}
-                                     :comment ""}]
+                                     :member {:userid "somebody"}}]
                                    injections)
                    (model/see-application? "somebody")))))))
 
@@ -1124,21 +1108,17 @@
       (is (= {:event/type :application.event/member-uninvited
               :event/time test-time
               :event/actor applicant-user-id
-              :event/attachments []
               :application/id app-id
-              :application/member {:name "Some Body" :email "some@body.com"}
-              :application/comment ""}
+              :application/member {:name "Some Body" :email "some@body.com"}}
              (ok-command application
                          {:type :application.command/uninvite-member
                           :actor applicant-user-id
-                          :member {:name "Some Body" :email "some@body.com"}
-                          :comment ""}
+                          :member {:name "Some Body" :email "some@body.com"}}
                          injections))))
     (testing "uninvite member by handler"
       (is (= {:event/type :application.event/member-uninvited
               :event/time test-time
               :event/actor handler-user-id
-              :event/attachments []
               :application/id app-id
               :application/member {:name "Some Body" :email "some@body.com"}
               :application/comment ""}
@@ -1223,7 +1203,6 @@
                 :application/request-id request-id-1
                 :application/reviewers [reviewer reviewer2]
                 :application/comment ""
-                :event/attachments []
                 :event/time test-time
                 :event/actor handler-user-id
                 :application/id app-id}
@@ -1233,7 +1212,6 @@
                 :application/request-id request-id-2
                 :application/reviewers [reviewer]
                 :application/comment ""
-                :event/attachments []
                 :event/time test-time
                 :event/actor handler-user-id
                 :application/id app-id}
@@ -1270,7 +1248,6 @@
           (is (= {:event/type :application.event/reviewed
                   :event/time test-time
                   :event/actor reviewer
-                  :event/attachments []
                   :application/id app-id
                   :application/request-id request-id-2
                   :application/comment "..."}
@@ -1286,7 +1263,6 @@
           (is (= {:event/type :application.event/reviewed
                   :event/time test-time
                   :event/actor reviewer2
-                  :event/attachments []
                   :application/id app-id
                   :application/request-id request-id-1
                   :application/comment "..."}
@@ -1381,7 +1357,6 @@
         (is (= {:event/type :application.event/remarked
                 :event/time test-time
                 :event/actor reviewer
-                :event/attachments []
                 :application/id app-id
                 :application/comment "first remark"
                 :application/public false}
@@ -1403,7 +1378,6 @@
             (is (= {:event/type :application.event/remarked
                     :event/time test-time
                     :event/actor reviewer
-                    :event/attachments []
                     :application/id app-id
                     :application/comment "second remark"
                     :application/public false}

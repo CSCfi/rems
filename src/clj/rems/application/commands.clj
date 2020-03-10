@@ -1,5 +1,6 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
+            [medley.core :as medley]
             [rems.common.application-util :as application-util]
             [rems.permissions :as permissions]
             [rems.util :refer [getx getx-in assert-ex try-catch-ex update-present]]
@@ -24,7 +25,7 @@
 
 (s/defschema CommandWithComment
   (assoc CommandBase
-         :comment s/Str
+         (s/optional-key :comment) s/Str
          (s/optional-key :attachments) [s/Int]))
 
 (s/defschema AcceptInvitationCommand
@@ -45,8 +46,7 @@
   (assoc CommandBase
          :external-id s/Str))
 (s/defschema ChangeResourcesCommand
-  (assoc CommandBase
-         (s/optional-key :comment) s/Str ;; TODO
+  (assoc CommandWithComment
          :catalogue-item-ids [s/Int]))
 (s/defschema CloseCommand
   CommandWithComment)
@@ -274,9 +274,10 @@
 
 (defn- add-comment-and-attachments [cmd injections event]
   (or (invalid-attachments-error injections cmd)
-      (ok (assoc event
-                 :application/comment (:comment cmd)
-                 :event/attachments (vec (:attachments cmd))))))
+      (ok (medley/assoc-some event
+                             :application/comment (:comment cmd)
+                             :event/attachments (when-let [att (:attachments cmd)]
+                                                  (vec att))))))
 
 (defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
@@ -442,12 +443,10 @@
       (unbundlable-catalogue-items-for-actor application (:catalogue-item-ids cmd) (:actor cmd) injections)
       (changes-original-form application (:catalogue-item-ids cmd) (:actor cmd) injections)
       (changes-original-workflow application (:catalogue-item-ids cmd) (:actor cmd) injections)
-      (ok (merge {:event/type :application.event/resources-changed
-                  :application/resources (build-resources-list (:catalogue-item-ids cmd) injections)
-                  :application/licenses (build-licenses-list (:catalogue-item-ids cmd) injections)}
-                 ;; TODO
-                 (when (:comment cmd)
-                   {:application/comment (:comment cmd)})))))
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/resources-changed
+                                    :application/resources (build-resources-list (:catalogue-item-ids cmd) injections)
+                                    :application/licenses (build-licenses-list (:catalogue-item-ids cmd) injections)})))
 
 (defmethod command-handler :application.command/add-member
   [cmd application injections]

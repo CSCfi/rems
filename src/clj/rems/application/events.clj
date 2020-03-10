@@ -18,7 +18,7 @@
 
 (s/defschema EventWithComment
   (assoc EventBase
-         :application/comment s/Str
+         (s/optional-key :application/comment) s/Str
          (s/optional-key :event/attachments) [s/Int]))
 
 (s/defschema ApprovedEvent
@@ -120,9 +120,8 @@
          :event/type (s/enum :application.event/remarked)
          :application/public s/Bool))
 (s/defschema ResourcesChangedEvent
-  (assoc EventBase
+  (assoc EventWithComment
          :event/type (s/enum :application.event/resources-changed)
-         (s/optional-key :application/comment) s/Str ;; TODO
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]))
@@ -198,9 +197,9 @@
                         :application/id 123
                         :application/comment "foo"}))))
   (testing "missing event specific key"
-    (is (= {:application/comment 'missing-required-key}
+    (is (= {:application/member 'missing-required-key}
            (s/check Event
-                    {:event/type :application.event/approved
+                    {:event/type :application.event/member-added
                      :event/time (DateTime.)
                      :event/actor "foo"
                      :application/id 123}))))
@@ -219,10 +218,10 @@
                          :event/actor "foo"
                          :application/id 123})))
   (testing "missing event specific key"
-    (is (= {:application/comment 'missing-required-key}
+    (is (= {:application/member 'missing-required-key}
            (:error
             (try-catch-ex
-             (validate-event {:event/type :application.event/approved
+             (validate-event {:event/type :application.event/member-added
                               :event/time (DateTime.)
                               :event/actor "foo"
                               :application/id 123}))))))
