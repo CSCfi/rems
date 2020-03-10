@@ -15,6 +15,8 @@
 - workflow: describes how an application is handled
   - The dynamic workflow is the default. Handlers can request reviews or decisions from other users but can ultimately do anything.
   - The decider workflow is a restricted version of the dynamic workflow. It only lets a decider approve or reject the application.
+  - The master workflow contains all possible commands and their interactions. Other workflows are produced from the master workflow
+  by filtering the available commands. The master workflow is not accessible in a production installation of REMS.
 - form: an instance of a form template that an applicant fills in when applying for a catalogue item
 - form template: the definition of a form including fields and their relationships
 - licenses: the applicant must accept a number of licenses when making an application
@@ -93,6 +95,3 @@ A selection of the events that can happen in REMS
   Examples of enriching include fetching user attributes from the
   database, computing the current and previous filled-in value for
   fields, and checking members users are blacklisted.
-- master workflow: a workflow that contains all possible commands and
-  their interactions. Other workflows are produced from the master
-  workflow by filtering the available commands.
