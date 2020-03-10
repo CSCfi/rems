@@ -29,6 +29,7 @@
   - answers mean values for the form fields + license acceptance
   - can also contain additional members
   - an application can have multiple catalogue items _if_ they have the same form & workflow
+- blacklist: a per-resource list of users that may not be given access to the resource. Managed by handlers and owners.
 
 ## Users & roles
 
@@ -49,13 +50,32 @@
 
 ## Events
 
+A selection of the events that can happen in REMS
+
 - submitted: the applicant submits the application when he thinks it is ready for approval
 - review requested: the handler has requested that an other user review an application
 - reviewed: in response to review requests
 - decision requested: the handler has requested that an other user decide whether to accept or reject this application
 - decision: the response to a decision request, that is, accept or reject
   - a decision does not cause the application to be approved or rejected, it is up to the handler to do that
+- remarked: a user involved with the application (e.g. handler, reviewer or decider) has left a comment
 - returned: the handler has returned the application to the applicant for editing
 - approved: the handler has approved the application
 - rejected: the handler has rejected the application
 - closed: the handler has closed an approved application, perhaps because it is obsolete
+- revoked: the handler has revoked access rights due to misuse and placed applying users on the blacklist
+
+## Architectural concepts
+
+- command: a description of an action a user wants to perform. Commands can result in errors or if successful,
+  a number of events. Concretely, a JSON blob POSTed to an endpoint like /api/application/approve
+- event: a description of something that has happened. REMS stores
+  events in the database instead of storing the current state. This approach is called _Event Sourcing_.
+- process manager: something that reacts to new events with either
+  side effects (e.g. sending email) or more new events (e.g. approver
+  bot)
+- bot: a special kind of process manager that performs activities that
+  a normal user might perform. For example, the approver and rejecter
+  bots.
+- outbox: a database table that tracks side-effects that should happen
+  and their retries. For example emails or entitlement POSTs.
