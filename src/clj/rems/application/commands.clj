@@ -121,6 +121,11 @@
 (def command-names
   (keys command-schemas))
 
+(def commands-with-comments
+  (set (for [[command schema] command-schemas
+             :when (contains? schema (s/optional-key :comment))]
+         command)))
+
 (s/defschema Command
   (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
          CommandInternal))

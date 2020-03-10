@@ -680,6 +680,11 @@
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-bad-request? response))))
+    (testing "uploading attachment for a draft as handler"
+      (let [response (-> (upload-request filecontent)
+                         (authenticate api-key handler-id)
+                         handler)]
+        (is (response-is-forbidden? response))))
     (testing "uploading attachment for a draft"
       (let [body (-> (upload-request filecontent)
                      (authenticate api-key user-id)
@@ -716,11 +721,6 @@
                                assert-response-is-ok)]
               (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
               (is (= (slurp testfile) (slurp (:body response)))))))))
-    (testing "uploading attachment for a submitted application"
-      (let [response (-> (upload-request filecontent)
-                         (authenticate api-key user-id)
-                         handler)]
-        (is (response-is-forbidden? response))))
     (testing "retrieving nonexistent attachment"
       (let [response (-> (read-request 999999999999999)
                          (authenticate api-key "carl")
