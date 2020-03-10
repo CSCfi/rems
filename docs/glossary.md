@@ -57,7 +57,7 @@
   Commands can result in errors or if successful, a number of events.
   Concretely, a JSON blob POSTed to an endpoint like
   /api/application/approve. The set of available commands is
-  controlled by the workflow.
+  controlled by the workflow. This follows the _Command Query Responsibility Segregation_ principle.
 - permissions: a set of commands that a user is allowed to perform on
   an application. Can also contain the special value :see-everything
   which means the user can see all fields and activity.
