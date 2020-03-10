@@ -67,7 +67,7 @@ A selection of the events that can happen in REMS
 
 ## Architectural concepts
 
-- command: a description of an action a user wants to perform. Commands are can result in errors or if successful,
+- command: a description of an action a user wants to perform. Commands can result in errors or if successful,
   a number of events. Concretely, a JSON blob POSTed to an endpoint like /api/application/approve
 - event: a description of something that has happened. REMS stores
   events in the database instead of storing the current state. This approach is called _Event Sourcing_.
