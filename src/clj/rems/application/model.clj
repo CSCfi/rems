@@ -532,7 +532,6 @@
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
-      ;; TODO this contains even attachments that user might not have access to:
       (assoc :application/attachments (get-attachments-for-application (getx application :application/id)))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ;; uses enriched users
