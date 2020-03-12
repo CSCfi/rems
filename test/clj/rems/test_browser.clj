@@ -266,7 +266,7 @@
                     ["label" ""]
                     ["text" ""]
                     ["texta" ""]]
-                   (for [field (select [:application/forms ALL :form/fields] application)]
+                   (for [field (select [:application/forms ALL :form/fields ALL] application)]
                      ;; TODO could test other fields here too, e.g. title
                      [(:field/type field)
                       (:field/value field)])))))))))
