@@ -351,26 +351,27 @@
               :class "mb-3"
               :title (or (get-in form [:form/title language]) (text :t.form/application))
               :always (into [:div]
-                            (for [fld (:form/fields form)
-                                  :when (and (field-visible? fld (get field-values form-id))
-                                             (not (:field/private fld)))] ; private fields will have empty value anyway
-                              [fields/field (assoc fld
+                            (for [field (:form/fields form)
+                                  :let [field-id (:field/id field)]
+                                  :when (and (field-visible? field (get field-values form-id))
+                                             (not (:field/private field)))] ; private fields will have empty value anyway
+                              [fields/field (assoc field
                                                    :form/id form-id
-                                                   :on-change #(rf/dispatch [::set-field-value form-id (:field/id fld) %])
-                                                   :on-set-attachment #(rf/dispatch [::save-attachment form-id (:field/id fld) %1 %2])
+                                                   :on-change #(rf/dispatch [::set-field-value form-id field-id %])
+                                                   :on-set-attachment #(rf/dispatch [::save-attachment form-id field-id %1 %2])
                                                    :on-remove-attachment #(do
-                                                                            (rf/dispatch [::set-field-value form-id (:field/id fld) ""])
-                                                                            (rf/dispatch [::set-attachment-success (:field/id fld)]))
-                                                   :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
-                                                   :field/value (get-in field-values [form-id (:field/id fld)])
-                                                   :field/attachment (when (= :attachment (:field/type fld))
-                                                                       (get attachments (parse-int (:field/value fld))))
-                                                   :field/previous-attachment (when (= :attachment (:field/type fld))
-                                                                                (when-let [prev (:field/previous-value fld)]
+                                                                            (rf/dispatch [::set-field-value form-id field-id ""])
+                                                                            (rf/dispatch [::set-attachment-success field-id]))
+                                                   :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
+                                                   :field/value (get-in field-values [form-id field-id])
+                                                   :field/attachment (when (= :attachment (:field/type field))
+                                                                       (get attachments (parse-int (:field/value field))))
+                                                   :field/previous-attachment (when (= :attachment (:field/type field))
+                                                                                (when-let [prev (:field/previous-value field)]
                                                                                   (get attachments (parse-int prev))))
-                                                   :success (= attachment-success (:field/id fld))
-                                                   :diff (get show-diff (:field/id fld))
-                                                   :validation (get-in field-validations [form-id (:field/id fld)])
+                                                   :success (= attachment-success field-id)
+                                                   :diff (get show-diff field-id)
+                                                   :validation (get-in field-validations [form-id field-id])
                                                    :readonly readonly?
                                                    :app-id (:application/id application))]))}]))))
 
