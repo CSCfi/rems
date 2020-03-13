@@ -48,7 +48,8 @@
 (defn field-wrapper
   "Common parts of a form field.
 
-  :field/id - number (required), field field-id
+  :field/id - number (required), field id
+  :form/id - number (required), form id
   :field/title - string (required), field title to show to the user
   :field/max-length - maximum number of characters (optional)
   :field/optional - boolean, true if the field is not required
