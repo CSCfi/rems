@@ -161,6 +161,22 @@
 ;;; Tests
 
 (deftest test-create
+  (testing "one resource"
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 1
+                                     :resource/ext-id "res1"}]
+            :application/licenses [{:license/id 1}]
+            :application/forms [{:form/id 1}]
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command nil {:type :application.command/create
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1]}
+                       injections))))
   (testing "multiple resources"
     (is (= {:event/type :application.event/created
             :event/actor applicant-user-id
