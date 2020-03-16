@@ -372,6 +372,9 @@
            :form/title (:form/title form-template)
            :form/fields fields)))
 
+(defn enrich-forms [forms get-form-template]
+  (mapv #(enrich-form % get-form-template) forms))
+
 (defn- set-application-description [application]
   (let [fields (select [:application/forms ALL :form/fields ALL] application)
         description (->> fields
@@ -536,7 +539,8 @@
                        get-attachments-for-application
                        get-config]
                 :as _injections}]
-  (-> (transform [:application/forms ALL] #(enrich-form % get-form-template) application)
+  (-> application
+      (update :application/forms enrich-forms get-form-template)
       enrich-answers ; uses enriched form
       enrich-field-visible ; uses enriched answers
       set-application-description ; uses enriched answers
