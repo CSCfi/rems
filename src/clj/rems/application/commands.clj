@@ -1,6 +1,5 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [com.rpl.specter :refer [ALL select]]
             [medley.core]
             [rems.common.util :refer [build-index]]
             [rems.common.application-util :as application-util]
@@ -237,7 +236,7 @@
     (unbundlable-catalogue-items catalogue-item-ids injections)))
 
 (defn- validation-error [application {:keys [validate-fields]}]
-  (let [errors (for [form (select [:application/forms ALL] application)
+  (let [errors (for [form (:application/forms application)
                      error (validate-fields (:form/fields form))]
                  (assoc error :form-id (:form/id form)))]
     (when (seq errors)
