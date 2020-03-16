@@ -44,7 +44,7 @@
                                         (:application/licenses event))
              :application/accepted-licenses {}
              :application/events []
-             :application/forms (mapv #(select-keys % [:form/id]) (:application/forms event))
+             :application/forms (:application/forms event)
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)})))
 
