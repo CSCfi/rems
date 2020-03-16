@@ -3,6 +3,7 @@
   (:require [clojure.string :as str]
             [cljs-time.core :as time]
             [rems.atoms :refer [file-download textarea success-symbol]]
+            [rems.common.util :refer [getx]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format localize-time]]
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
