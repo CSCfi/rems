@@ -423,13 +423,6 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
-(defn- attachment-link [attachment]
-  [:div.field
-   [:a.btn.btn-outline-secondary.mr-2
-    {:href (str "/applications/attachment/" (:attachment/id attachment))
-     :target :_blank}
-    (:attachment/filename attachment) " " [file-download]]])
-
 (defn- format-event [event]
   {:user (get-member-name (:event/actor-attributes event))
    :event (localize-event event)
@@ -449,7 +442,7 @@
    :attachments (when-let [attachments (seq (:event/attachments event))]
                   (into [:<>]
                         (for [a attachments]
-                          [attachment-link a])))
+                          [fields/attachment-link a])))
    :time (localize-time (:event/time event))})
 
 (defn- event-view [{:keys [time event comment decision attachments]}]

@@ -246,6 +246,14 @@
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
+(defn attachment-link [attachment]
+  (when attachment
+    [:div.field
+     [:a.btn.btn-outline-secondary.mr-2
+      {:href (str "/applications/attachment/" (:attachment/id attachment))
+       :target :_blank}
+      (:attachment/filename attachment) " " [file-download]]]))
+
 (defn attachment-field
   [{:keys [validation on-change on-set-attachment on-remove-attachment success] :as opts}]
   (let [title (localized (:field/title opts))
@@ -253,13 +261,6 @@
         filename (get-in opts [:field/attachment :attachment/filename])
         upload-field-id (str (field-name opts) "-input")
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document upload-field-id))))
-        link (fn [attachment-id filename]
-               (when-not (empty? attachment-id)
-                 [:div.field
-                  [:a.btn.btn-outline-secondary.mr-2
-                   {:href (str "/applications/attachment/" attachment-id)
-                    :target :_blank}
-                   filename " " [file-download]]]))
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
@@ -286,16 +287,16 @@
                                     (on-remove-attachment))}
                        (text :t.form/attachment-remove)]]
     [field-wrapper (assoc opts
-                          :readonly-component (link value filename)
+                          :readonly-component (attachment-link (:field/attachment opts))
                           :diff-component [:div {:style {:display :flex}}
                                            [:div
                                             (text :t.form/previous-value) ": "
-                                            (link (:field/previous-value opts) (get-in opts [:field/previous-attachment :attachment/filename]))]
+                                            (attachment-link (:field/previous-attachment opts))]
                                            [:div
                                             (text :t.form/current-value) ": "
-                                            (link value filename)]])
+                                            (attachment-link (:field/attachment opts))]])
      [:div.flex-row.d-flex.align-items-center
-      (link value filename)
+      (attachment-link (:field/attachment opts))
       (if (empty? value)
         upload-field
         remove-button)
