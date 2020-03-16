@@ -423,6 +423,13 @@
        (str prefix " "))
      (application-list/format-application-id config application)]))
 
+(defn- attachment-link [attachment]
+  [:div.field
+   [:a.btn.btn-outline-secondary.mr-2
+    {:href (str "/applications/attachment/" (:attachment/id attachment))
+     :target :_blank}
+    (:attachment/filename attachment) " " [file-download]]])
+
 (defn- format-event [event]
   {:user (get-member-name (:event/actor-attributes event))
    :event (localize-event event)
@@ -439,9 +446,13 @@
                 (when (not (empty? comment))
                   (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
+   :attachments (when-let [attachments (seq (:event/attachments event))]
+                  (into [:<>]
+                        (for [a attachments]
+                          [attachment-link a])))
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time event comment decision]}]
+(defn- event-view [{:keys [time event comment decision attachments]}]
   [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
@@ -449,7 +460,9 @@
     (when decision
       [:div decision])
     (when comment
-      [:div comment])]])
+      [:div comment])
+    (when attachments
+      [:div attachments])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
@@ -509,10 +522,15 @@
                                  [application-link new-app nil]))))
        ")"])))
 
+(defn- events-with-attachments [application]
+  (let [attachments-by-id (index-by [:attachment/id] (:application/attachments application))]
+    (for [event (:application/events application)]
+      (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
+
 (defn- application-state [application config]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
-        event-groups (->> (:application/events application)
+        event-groups (->> (events-with-attachments application)
                           (group-by #(or (:application/request-id %)
                                          (:event/id %)))
                           vals
