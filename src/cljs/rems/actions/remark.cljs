@@ -1,13 +1,17 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
-            [rems.text :refer [text]]))
+            [rems.atoms :as atoms]
+            [rems.flash-message :as flash-message]
+            [rems.text :refer [text]]
+            [rems.util :refer [post!]]))
 
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
    {:db (assoc db
                ::comment ""
+               ::attachment-id nil
                ::public false)}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
@@ -15,6 +19,25 @@
 
 (rf/reg-sub ::public (fn [db _] (::public db)))
 (rf/reg-event-db ::set-public (fn [db [_ value]] (assoc db ::public value)))
+
+(rf/reg-sub ::attachment-id (fn [db _] (::attachment-id db)))
+(rf/reg-event-db ::set-attachment-id (fn [db [_ value]] (assoc db ::attachment-id value)))
+
+(rf/reg-event-fx
+ ::save-attachment
+ (fn [{:keys [db]} [_ application-id file]]
+   (let [description "TODO"]
+     (post! "/api/applications/add-attachment"
+            {:url-params {:application-id application-id}
+             :body file
+             :handler (flash-message/default-success-handler
+                       :actions
+                       description
+                       (fn [response]
+                         (rf/dispatch [::set-attachment-id (:id response)])))
+             :error-handler (flash-message/default-error-handler :actions description)})
+     {})))
+
 
 (def ^:private action-form-id "remark")
 
@@ -24,7 +47,10 @@
    (command! :application.command/remark
              {:application-id application-id
               :comment (::comment db)
-              :public (::public db)}
+              :public (::public db)
+              :attachments (if-let [id (::attachment-id db)]
+                             [{:attachment/id id}]
+                             [])}
              {:description [text :t.actions/remark]
               :collapse action-form-id
               :on-finished on-finished})
@@ -36,7 +62,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn remark-view
-  [{:keys [comment on-set-comment public on-set-public on-send]}]
+  [{:keys [comment on-set-comment public on-set-public on-send attachment on-attach]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
    [[button-wrapper {:id action-form-id
@@ -48,6 +74,25 @@
                      :label (text :t.form/add-remark)
                      :comment comment
                      :on-comment on-set-comment}]
+    (when attachment
+      [atoms/success-symbol])
+    (let [upload-id (str "upload-" action-form-id)]
+      [:<>
+       [:input {:type "file"
+                :style {:display "none"}
+                :id upload-id
+                :name upload-id
+                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                :on-change (fn [event]
+                             (let [filecontent (aget (.. event -target -files) 0)
+                                   filename (.-name filecontent)
+                                   form-data (doto (js/FormData.)
+                                               (.append "file" filecontent))]
+                               (on-attach form-data)))}]
+       [:button.btn.btn-outline-secondary
+        {:type :button
+         :on-click (fn [_] (.click (.getElementById js/document upload-id)))}
+        (text :t.form/upload)]])
     (let [id (str "public-" action-form-id)]
       [:div.form-check
        [:input.form-check-input {:type "checkbox"
@@ -64,4 +109,6 @@
                 :public @(rf/subscribe [::public])
                 :on-set-public #(rf/dispatch [::set-public %])
                 :on-send #(rf/dispatch [::send-remark {:application-id application-id
-                                                       :on-finished on-finished}])}])
+                                                       :on-finished on-finished}])
+                :attachment @(rf/subscribe [::attachment-id])
+                :on-attach #(rf/dispatch [::save-attachment application-id %])}])
