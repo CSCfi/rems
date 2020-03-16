@@ -76,7 +76,7 @@
                 ": " (localized (:catalogue-item/title resource))]))])))
 
 (defn- format-validation-error [type field]
-  [:a {:href "#" :on-click (focus-input-field (fields/ids-to-name (:form/id field) (:field/id field)))}
+  [:a {:href "#" :on-click (focus-input-field (fields/field-name field))}
    (text-format type (localized (:field/title field)))])
 
 (defn- format-submission-errors

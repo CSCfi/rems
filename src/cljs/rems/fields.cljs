@@ -9,8 +9,8 @@
             [rems.util :refer [encode-option-keys decode-option-keys linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn ids-to-name [form-id field-id]
-  (str "form-" form-id "-field-" field-id))
+(defn field-name [field]
+  (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
 
 (defn- diff [value previous-value]
   (let [dmp (js/diff_match_patch.)
@@ -32,7 +32,7 @@
   (into [:div.form-control.diff {:id id}]
         (formatted-diff value previous-value)))
 
-(defn- toggle-diff-button [item-id diff-visible on-toggle-diff]
+(defn- toggle-diff-button [diff-visible on-toggle-diff]
   [:a.toggle-diff {:href "#"
                    :on-click (fn [event]
                                (.preventDefault event)
@@ -65,9 +65,7 @@
 
   editor-component - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
-  (let [form-id (getx opts :form/id)
-        field-id (getx opts :field/id)
-        title (linkify (localized (:field/title opts)))
+  (let [title (linkify (localized (:field/title opts)))
         optional (:field/optional opts)
         value (:field/value opts)
         previous-value (:field/previous-value opts)
@@ -77,18 +75,18 @@
        :fieldset.form-group.field
        :div.form-group.field)
      (merge
-      {:id (str "container-" (ids-to-name form-id field-id))}
+      {:id (str "container-" (field-name opts))}
       (when fieldset
         {:tab-index -1
          :aria-required (not optional)
          :aria-invalid (when validation true)
          :aria-describedby (when validation
-                             (str (ids-to-name form-id field-id) "-error"))}))
+                             (str (field-name opts) "-error"))}))
      [(if fieldset
         :legend.application-field-label
         :label.application-field-label)
       (when (not fieldset)
-        {:for (ids-to-name form-id field-id)})
+        {:for (field-name opts)})
       title " "
       (when max-length
         (text-format :t.form/maxlength (str max-length)))
@@ -98,19 +96,19 @@
         (text :t.form/required))]
      (when (and previous-value
                 (not= value previous-value))
-       [toggle-diff-button field-id diff on-toggle-diff])
+       [toggle-diff-button diff on-toggle-diff])
      (cond
        diff (or diff-component
-                [diff-field {:id (ids-to-name form-id field-id)
+                [diff-field {:id (field-name opts)
                              :value value
                              :previous-value previous-value}])
        readonly (or readonly-component
-                    [readonly-field {:id (ids-to-name form-id field-id)
+                    [readonly-field {:id (field-name opts)
                                      :value value}])
        :else editor-component)
      (when validation
        [:div.invalid-feedback
-        {:id (str (ids-to-name form-id field-id) "-error")
+        {:id (str (field-name opts) "-error")
          ;; XXX: Bootstrap's has "display: none" on .invalid-feedback by default
          ;;      and overrides that for example when there is a sibling .form-control.is-invalid,
          ;;      but that doesn't work with checkbox groups nor attachments, and we anyways
@@ -120,7 +118,7 @@
 
 (defn- non-field-wrapper [opts children]
   [:div.form-group
-   {:id (str "container-" (ids-to-name (:form/id opts) (:field/id opts)))}
+   {:id (str "container-" (field-name opts))}
    children])
 
 (defn- event-value [event]
@@ -128,21 +126,19 @@
 
 (defn text-field
   [{:keys [validation on-change] :as opts}]
-  (let [form-id (:form/id opts)
-        field-id (:field/id opts)
-        placeholder (localized (:field/placeholder opts))
+  (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
      [:input.form-control {:type "text"
-                           :id (ids-to-name form-id field-id)
-                           :name (ids-to-name form-id field-id)
+                           :id (field-name opts)
+                           :name (field-name opts)
                            :placeholder placeholder
                            :required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
-                                               (str (ids-to-name form-id field-id) "-error"))
+                                               (str (field-name opts) "-error"))
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :defaultValue value
@@ -150,20 +146,18 @@
 
 (defn texta-field
   [{:keys [validation on-change] :as opts}]
-  (let [form-id (:form/id opts)
-        field-id (:field/id opts)
-        placeholder (localized (:field/placeholder opts))
+  (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
         max-length (:field/max-length opts)]
     [field-wrapper opts
-     [textarea {:id (ids-to-name form-id field-id)
-                :name (ids-to-name form-id field-id)
+     [textarea {:id (field-name opts)
+                :name (field-name opts)
                 :placeholder placeholder
                 :required (not optional)
                 :aria-invalid (when validation true)
                 :aria-describedby (when validation
-                                    (str (ids-to-name form-id field-id) "-error"))
+                                    (str (field-name opts) "-error"))
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :value value
@@ -171,21 +165,19 @@
 
 (defn date-field
   [{:keys [min max validation on-change] :as opts}]
-  (let [form-id (:form/id opts)
-        field-id (:field/id opts)
-        value (:field/value opts)
+  (let [value (:field/value opts)
         optional (:field/optional opts)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
     [field-wrapper opts
      [:input.form-control {:type "date"
-                           :id (ids-to-name form-id field-id)
-                           :name (ids-to-name form-id field-id)
+                           :id (field-name opts)
+                           :name (field-name opts)
                            :class (when validation "is-invalid")
                            :defaultValue value
                            :required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
-                                               (str (ids-to-name form-id field-id) "-error"))
+                                               (str (field-name opts) "-error"))
                            :min min
                            :max max
                            :on-change (comp on-change event-value)}]]))
@@ -198,22 +190,20 @@
     (localized label)))
 
 (defn option-field [{:keys [validation on-change] :as opts}]
-  (let [form-id (:form/id opts)
-        field-id (:field/id opts)
-        value (:field/value opts)
+  (let [value (:field/value opts)
         options (:field/options opts)
         optional (:field/optional opts)]
     [field-wrapper
-     (assoc opts :readonly-component [readonly-field {:id (ids-to-name form-id field-id)
+     (assoc opts :readonly-component [readonly-field {:id (field-name opts)
                                                       :value (option-label value options)}])
-     (into [:select.form-control {:id (ids-to-name form-id field-id)
-                                  :name (ids-to-name form-id field-id)
+     (into [:select.form-control {:id (field-name opts)
+                                  :name (field-name opts)
                                   :class (when validation "is-invalid")
                                   :defaultValue value
                                   :required (not optional)
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
-                                                      (str (ids-to-name form-id field-id) "-error"))
+                                                      (str (field-name opts) "-error"))
                                   :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
@@ -225,22 +215,20 @@
     [non-field-wrapper opts [:label title]]))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
-  (let [form-id (:form/id opts)
-        field-id (:field/id opts)
-        value (:field/value opts)
+  (let [value (:field/value opts)
         options (:field/options opts)
         selected-keys (decode-option-keys value)]
     [field-wrapper
      (assoc opts
             :fieldset true
-            :readonly-component [readonly-field {:id (ids-to-name form-id field-id)
+            :readonly-component [readonly-field {:id (field-name opts)
                                                  :value (->> options
                                                              (filter #(contains? selected-keys (:key %)))
                                                              (map #(localized (:label %)))
                                                              (str/join ", "))}])
      (into [:div]
            (for [{:keys [key label]} options]
-             (let [option-id (str (ids-to-name form-id field-id) "-" key)
+             (let [option-id (str (field-name opts) "-" key)
                    on-change (fn [event]
                                (let [checked (.. event -target -checked)
                                      selected-keys (if checked
@@ -260,12 +248,10 @@
 
 (defn attachment-field
   [{:keys [validation on-change on-set-attachment on-remove-attachment success] :as opts}]
-  (let [form-id (:form/id opts)
-        field-id (:field/id opts)
-        title (localized (:field/title opts))
+  (let [title (localized (:field/title opts))
         value (:field/value opts)
         filename (get-in opts [:field/attachment :attachment/filename])
-        upload-field-id (str (ids-to-name form-id field-id) "-input")
+        upload-field-id (str (field-name opts) "-input")
         click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document upload-field-id))))
         link (fn [attachment-id filename]
                (when-not (empty? attachment-id)
@@ -289,7 +275,7 @@
                                               (on-change (str filename " (" (localize-time (time/now)) ")"))
                                               (on-set-attachment form-data title)))}]
                       [:button.btn.btn-outline-secondary
-                       {:id (ids-to-name form-id field-id)
+                       {:id (field-name opts)
                         :type :button
                         :on-click click-upload}
                        (text :t.form/upload)]]
@@ -350,54 +336,72 @@
    (component-info field)
    (example "field of type \"text\""
             [:form
-             [field {:field/type :text
+             [field {:form/id 1
+                     :field/id "1"
+                     :field/type :text
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}}]])
    (example "field of type \"text\" with maximum length"
             [:form
-             [field {:field/type :text
+             [field {:form/id 2
+                     :field/id "1"
+                     :field/type :text
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}
                      :field/max-length 10}]])
    (example "field of type \"text\" with validation error"
             [:form
-             [field {:field/type :text
+             [field {:form/id 3
+                     :field/id "1"
+                     :field/type :text
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}
                      :validation {:type :t.form.validation/required}}]])
    (example "non-editable field of type \"text\" without text"
             [:form
-             [field {:field/type :text
+             [field {:form/id 4
+                     :field/id "1"
+                     :field/type :text
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}
                      :readonly true}]])
    (example "non-editable field of type \"text\" with text"
             [:form
-             [field {:field/type :text
+             [field {:form/id 5
+                     :field/id "1"
+                     :field/type :text
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}
                      :readonly true
                      :field/value lipsum-short}]])
    (example "field of type \"texta\""
             [:form
-             [field {:field/type :texta
+             [field {:form/id 6
+                     :field/id "1"
+                     :field/type :texta
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}}]])
    (example "field of type \"texta\" with maximum length"
             [:form
-             [field {:field/type :texta
+             [field {:form/id 7
+                     :field/id "1"
+                     :field/type :texta
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}
                      :field/max-length 10}]])
    (example "field of type \"texta\" with validation error"
             [:form
-             [field {:field/type :texta
+             [field {:form/id 8
+                     :field/id "1"
+                     :field/type :texta
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}
                      :validation {:type :t.form.validation/required}}]])
    (example "non-editable field of type \"texta\""
             [:form
-             [field {:field/type :texta
+             [field {:form/id 9
+                     :field/id "1"
+                     :field/type :texta
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}
                      :readonly true
@@ -408,14 +412,18 @@
      [:div
       (example "editable field of type \"texta\" with previous value, diff hidden"
                [:form
-                [field {:field/type :texta
+                [field {:form/id 10
+                        :field/id "1"
+                        :field/type :texta
                         :field/title {:en "Title"}
                         :field/placeholder {:en "placeholder"}
                         :field/value lipsum-paragraphs
                         :field/previous-value previous-lipsum-paragraphs}]])
       (example "editable field of type \"texta\" with previous value, diff shown"
                [:form
-                [field {:field/type :texta
+                [field {:form/id 11
+                        :field/id "1"
+                        :field/type :texta
                         :field/title {:en "Title"}
                         :field/placeholder {:en "placeholder"}
                         :field/value lipsum-paragraphs
@@ -423,7 +431,9 @@
                         :diff true}]])
       (example "non-editable field of type \"texta\" with previous value, diff hidden"
                [:form
-                [field {:field/type :texta
+                [field {:form/id 12
+                        :field/id "1"
+                        :field/type :texta
                         :field/title {:en "Title"}
                         :field/placeholder {:en "placeholder"}
                         :readonly true
@@ -431,7 +441,9 @@
                         :field/previous-value previous-lipsum-paragraphs}]])
       (example "non-editable field of type \"texta\" with previous value, diff shown"
                [:form
-                [field {:field/type :texta
+                [field {:form/id 13
+                        :field/id "1"
+                        :field/type :texta
                         :field/title {:en "Title"}
                         :field/placeholder {:en "placeholder"}
                         :readonly true
@@ -440,7 +452,9 @@
                         :diff true}]])
       (example "non-editable field of type \"texta\" with previous value equal to current value"
                [:form
-                [field {:field/type :texta
+                [field {:form/id 14
+                        :field/id "1"
+                        :field/type :texta
                         :field/title {:en "Title"}
                         :field/placeholder {:en "placeholder"}
                         :readonly true
@@ -449,13 +463,15 @@
    (example "field of type \"attachment\""
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 15
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}}]])
    (example "field of type \"attachment\", file uploaded"
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 16
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "123"
@@ -464,7 +480,8 @@
    (example "field of type \"attachment\", file uploaded, success indicator"
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 17
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "123"
@@ -474,7 +491,8 @@
    (example "field of type \"attachment\", previous and new file uploaded, diff shown"
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 18
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "123"
@@ -487,7 +505,8 @@
    (example "field of type \"attachment\", previous and new file uploaded, diff hidden"
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 19
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/value "123"
@@ -499,7 +518,8 @@
    (example "field of type \"attachment\", previous file uploaded, new deleted, diff shown"
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 20
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/previous-value "456"
@@ -509,7 +529,8 @@
    (example "field of type \"attachment\", previous file uploaded, new deleted, diff hidden"
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 21
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :field/previous-value "456"
@@ -518,14 +539,16 @@
    (example "non-editable field of type \"attachment\""
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 22
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :readonly true}]])
    (example "non-editable field of type \"attachment\", file uploaded"
             [:form
              [field {:app-id 5
-                     :field/id 6
+                     :form/id 23
+                     :field/id "6"
                      :field/type :attachment
                      :field/title {:en "Title"}
                      :readonly true
@@ -534,35 +557,47 @@
                                         :attachment/filename "test.txt"}}]])
    (example "field of type \"date\""
             [:form
-             [field {:field/type :date
+             [field {:form/id 24
+                     :field/id "1"
+                     :field/type :date
                      :field/title {:en "Title"}}]])
    (example "field of type \"date\" with value"
             [:form
-             [field {:field/type :date
+             [field {:form/id 25
+                     :field/id "1"
+                     :field/type :date
                      :field/title {:en "Title"}
                      :field/value "2000-12-31"}]])
    (example "non-editable field of type \"date\""
             [:form
-             [field {:field/type :date
+             [field {:form/id 26
+                     :field/id "1"
+                     :field/type :date
                      :field/title {:en "Title"}
                      :readonly true
                      :field/value ""}]])
    (example "non-editable field of type \"date\" with value"
             [:form
-             [field {:field/type :date
+             [field {:form/id 27
+                     :field/id "1"
+                     :field/type :date
                      :field/title {:en "Title"}
                      :readonly true
                      :field/value "2000-12-31"}]])
    (example "field of type \"option\""
             [:form
-             [field {:field/type :option
+             [field {:form/id 28
+                     :field/id "1"
+                     :field/type :option
                      :field/title {:en "Title"}
                      :field/value "y"
                      :field/options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
                                      {:key "n" :label {:en "No" :fi "Ei"}}]}]])
    (example "non-editable field of type \"option\""
             [:form
-             [field {:field/type :option
+             [field {:form/id 29
+                     :field/id "1"
+                     :field/type :option
                      :field/title {:en "Title"}
                      :field/value "y"
                      :readonly true
@@ -570,7 +605,9 @@
                                      {:key "n" :label {:en "No" :fi "Ei"}}]}]])
    (example "field of type \"multiselect\""
             [:form
-             [field {:field/type :multiselect
+             [field {:form/id 30
+                     :field/id "1"
+                     :field/type :multiselect
                      :field/title {:en "Title"}
                      :field/value "egg bacon"
                      :field/options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
@@ -578,7 +615,9 @@
                                      {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
    (example "non-editable field of type \"multiselect\""
             [:form
-             [field {:field/type :multiselect
+             [field {:form/id 31
+                     :field/id "1"
+                     :field/type :multiselect
                      :field/title {:en "Title"}
                      :field/value "egg bacon"
                      :readonly true
@@ -587,16 +626,22 @@
                                      {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
    (example "optional field"
             [:form
-             [field {:field/type :texta
+             [field {:form/id 32
+                     :field/id "1"
+                     :field/type :texta
                      :field/optional true
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}}]])
    (example "field of type \"label\""
             [:form
-             [field {:field/type :label
+             [field {:form/id 33
+                     :field/id "1"
+                     :field/type :label
                      :field/title {:en "Lorem ipsum dolor sit amet"}}]])
    (example "field of type \"description\""
             [:form
-             [field {:field/type :description
+             [field {:form/id 34
+                     :field/id "1"
+                     :field/type :description
                      :field/title {:en "Title"}
                      :field/placeholder {:en "placeholder"}}]])])
