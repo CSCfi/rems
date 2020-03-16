@@ -314,7 +314,7 @@
                         [event]))))))
 
 (defmethod command-handler :application.command/save-draft
-  [cmd application _injections]
+  [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
        :application/field-values (:field-values cmd)}))
 
