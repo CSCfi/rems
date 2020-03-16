@@ -220,8 +220,7 @@
 (defn- save-attachment [{:keys [db]} [_ form-id field-id file description]]
   (let [application-id (get-in db [::application :data :application/id])]
     (post! "/api/applications/add-attachment"
-           {:url-params {:application-id application-id
-                         :field-id field-id}
+           {:url-params {:application-id application-id}
             :body file
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
