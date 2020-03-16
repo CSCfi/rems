@@ -497,9 +497,8 @@
                                       (::previous-submitted-answers application)])
         current-answers (build-index [:form :field] :value (first answer-versions))
         previous-answers (build-index [:form :field] :value (second answer-versions))]
-    (-> application
-        (dissoc ::draft-answers ::submitted-answers ::previous-submitted-answers)
-        (->> (transform [:application/forms ALL] #(enrich-form-answers % current-answers previous-answers))))))
+    (->> (dissoc application ::draft-answers ::submitted-answers ::previous-submitted-answers)
+         (transform [:application/forms ALL] #(enrich-form-answers % current-answers previous-answers)))))
 
 (defn enrich-deadline [application get-config]
   (let [days ((get-config) :application-deadline-days)]
