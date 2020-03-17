@@ -166,7 +166,7 @@ workflows:
               only: /.*/
             branches:
               only:
-                - master
+                - rems-demo
       - rahti-dev:
           requires:
             - build
@@ -174,7 +174,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - rems-demo
       - rahti-demo:
           requires:
             - build
