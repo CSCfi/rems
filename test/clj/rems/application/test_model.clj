@@ -21,7 +21,7 @@
        :form/organization "org"
        :form/title "form title"
        :form/fields [{:field/id "41"
-                      :field/title{:en "en title" :fi "fi title"}
+                      :field/title {:en "en title" :fi "fi title"}
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                       :field/optional false
                       :field/options []
@@ -46,7 +46,7 @@
        :form/organization "org"
        :form/title "form title 2"
        :form/fields [{:field/id "41"
-                      :field/title{:en "en title" :fi "fi title"}
+                      :field/title {:en "en title" :fi "fi title"}
                       :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                       :field/optional false
                       :field/max-length 100
