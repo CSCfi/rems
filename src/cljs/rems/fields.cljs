@@ -254,31 +254,38 @@
        :target :_blank}
       (:attachment/filename attachment) " " [file-download]]]))
 
+(defn upload-button [id on-upload]
+  (let [upload-id (str id "-input")]
+    [:div.upload-file.mr-2
+     [:input {:style {:display "none"}
+              :type "file"
+              :id upload-id
+              :name upload-id
+              :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+              :on-change (fn [event]
+                           (let [filecontent (aget (.. event -target -files) 0)
+                                 filename (.-name filecontent)
+                                 form-data (doto (js/FormData.)
+                                             (.append "file" filecontent))]
+                             (on-upload {:data form-data
+                                         :filename filename})))}]
+     [:button.btn.btn-outline-secondary
+      {:id id
+       :type :button
+       :on-click (fn [e] (.click (.getElementById js/document upload-id)))}
+      (text :t.form/upload)]]))
+
 (defn attachment-field
   [{:keys [validation on-change on-set-attachment on-remove-attachment success] :as opts}]
   (let [title (localized (:field/title opts))
         value (:field/value opts)
         filename (get-in opts [:field/attachment :attachment/filename])
         upload-field-id (str (field-name opts) "-input")
-        click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document upload-field-id))))
-        upload-field [:div.upload-file.mr-2
-                      [:input {:style {:display "none"}
-                               :type "file"
-                               :id upload-field-id
-                               :name upload-field-id
-                               :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                               :on-change (fn [event]
-                                            (let [filecontent (aget (.. event -target -files) 0)
-                                                  filename (.-name filecontent)
-                                                  form-data (doto (js/FormData.)
-                                                              (.append "file" filecontent))]
-                                              (on-change (str filename " (" (localize-time (time/now)) ")"))
-                                              (on-set-attachment form-data title)))}]
-                      [:button.btn.btn-outline-secondary
-                       {:id (field-name opts)
-                        :type :button
-                        :on-click click-upload}
-                       (text :t.form/upload)]]
+        upload-field [upload-button
+                      (field-name opts)
+                      (fn [{:keys [data filename]}]
+                        (on-change (str filename " (" (localize-time (time/now)) ")"))
+                        (on-set-attachment data title))]
         remove-button [:button.btn.btn-outline-secondary.mr-2
                        {:type :button
                         :on-click (fn [event]
