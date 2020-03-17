@@ -264,11 +264,9 @@
               :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
               :on-change (fn [event]
                            (let [filecontent (aget (.. event -target -files) 0)
-                                 filename (.-name filecontent)
                                  form-data (doto (js/FormData.)
                                              (.append "file" filecontent))]
-                             (on-upload {:data form-data
-                                         :filename filename})))}]
+                             (on-upload form-data)))}]
      [:button.btn.btn-outline-secondary
       {:id id
        :type :button
@@ -276,20 +274,18 @@
       (text :t.form/upload)]]))
 
 (defn attachment-field
-  [{:keys [validation on-change on-set-attachment on-remove-attachment success] :as opts}]
+  [{:keys [validation on-set-attachment on-remove-attachment success] :as opts}]
   (let [title (localized (:field/title opts))
         value (:field/value opts)
         filename (get-in opts [:field/attachment :attachment/filename])
         upload-field-id (str (field-name opts) "-input")
         upload-field [upload-button
                       (field-name opts)
-                      (fn [{:keys [data filename]}]
-                        (on-change (str filename " (" (localize-time (time/now)) ")"))
+                      (fn [data]
                         (on-set-attachment data title))]
         remove-button [:button.btn.btn-outline-secondary.mr-2
                        {:type :button
                         :on-click (fn [event]
-                                    (on-change "")
                                     (on-remove-attachment))}
                        (text :t.form/attachment-remove)]]
     [field-wrapper (assoc opts
