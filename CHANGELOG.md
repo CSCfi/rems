@@ -11,7 +11,7 @@ Changes since v2.8
 ## Breaking changers
 - Multiple form support #2043
   - Catalogue items that share a workflow but have different forms can now be bundled into one application.
-  - Migrations will update the data. API changes a listed here.
+  - Migrations will update the data. API changes are listed here.
   - Applications used to contain the key `application/form` but now will contain `application/forms` where there is a sequence of forms.
   - Commands with `field-values` will have a `form` in addition to `field` and `value`.
   - Events with `form/id` will have a `application/forms` where each has a `form/id`.
