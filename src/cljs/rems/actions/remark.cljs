@@ -27,7 +27,7 @@
 (rf/reg-event-fx
  ::save-attachment
  (fn [{:keys [db]} [_ application-id file]]
-   (let [description "TODO"]
+   (let [description [text :t.form/upload]]
      (post! "/api/applications/add-attachment"
             {:url-params {:application-id application-id}
              :body file
