@@ -267,7 +267,6 @@
                                :id upload-field-id
                                :name upload-field-id
                                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                               :class (when validation "is-invalid")
                                :on-change (fn [event]
                                             (let [filecontent (aget (.. event -target -files) 0)
                                                   filename (.-name filecontent)
