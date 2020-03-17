@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
             [rems.atoms :as atoms]
+            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -76,23 +77,7 @@
                      :on-comment on-set-comment}]
     (when attachment
       [atoms/success-symbol])
-    (let [upload-id (str "upload-" action-form-id)]
-      [:<>
-       [:input {:type "file"
-                :style {:display "none"}
-                :id upload-id
-                :name upload-id
-                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                :on-change (fn [event]
-                             (let [filecontent (aget (.. event -target -files) 0)
-                                   filename (.-name filecontent)
-                                   form-data (doto (js/FormData.)
-                                               (.append "file" filecontent))]
-                               (on-attach form-data)))}]
-       [:button.btn.btn-outline-secondary
-        {:type :button
-         :on-click (fn [_] (.click (.getElementById js/document upload-id)))}
-        (text :t.form/upload)]])
+    [fields/upload-button (str "upload-" action-form-id) on-attach]
     (let [id (str "public-" action-form-id)]
       [:div.form-check
        [:input.form-check-input {:type "checkbox"
