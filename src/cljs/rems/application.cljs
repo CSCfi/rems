@@ -118,8 +118,14 @@
    {:db (update db ::application fetcher/started)}))
 
 (defn- initialize-edit-application [db]
-  (let [application (get-in db [::application :data])]
-    (assoc db ::edit-application {:field-values (build-index [:form :field] :value (:application/field-values application))
+  (let [application (get-in db [::application :data])
+        field-values (->> (for [form (:application/forms application)
+                                field (:form/fields form)]
+                            {:form (:form/id form)
+                             :field (:field/id field)
+                             :value (:field/value field)})
+                          (build-index [:form :field] :value))]
+    (assoc db ::edit-application {:field-values field-values
                                   :show-diff {}
                                   :validation-errors nil})))
 
