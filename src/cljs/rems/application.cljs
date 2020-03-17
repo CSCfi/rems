@@ -40,8 +40,8 @@
 
 ;;;; Helpers
 
-(defn reload! [application-id]
-  (rf/dispatch [::fetch-application application-id]))
+(defn reload! [application-id & [full-reload?]]
+  (rf/dispatch [::fetch-application application-id full-reload?]))
 
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
@@ -106,14 +106,14 @@
    {:db (-> db
             (assoc ::application-id (parse-int id))
             (dissoc ::application ::edit-application ::attachment-success))
-    :dispatch [::fetch-application id]}))
+    :dispatch [::fetch-application id true]}))
 
 (rf/reg-event-fx
  ::fetch-application
- (fn [{:keys [db]} [_ id]]
+ (fn [{:keys [db]} [_ id full-reload?]]
    (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])
-           :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
+          {:handler #(rf/dispatch [::fetch-application-result % full-reload?])
+           :error-handler (comp #(rf/dispatch [::fetch-application-result nil full-reload?])
                                 (flash-message/default-error-handler :top [text :t.applications/application]))})
    {:db (update db ::application fetcher/started)}))
 
@@ -131,10 +131,10 @@
 
 (rf/reg-event-db
  ::fetch-application-result
- (fn [db [_ application]]
+ (fn [db [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
      (cond-> (update db ::application fetcher/finished application)
-       initial-fetch? (initialize-edit-application)))))
+       (or initial-fetch? full-reload?) (initialize-edit-application)))))
 
 (rf/reg-event-db
  ::set-validation-errors
@@ -725,7 +725,7 @@
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
                [:div#resource-action-forms
-                [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
+                [change-resources-form application can-comment? (partial reload! application-id true)]]]}]))
 
 (defn- previous-applications [applicant]
   ;; print mode forces the collapsible open, so fetch the content proactively
