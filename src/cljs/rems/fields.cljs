@@ -173,7 +173,7 @@
                            :id (field-name opts)
                            :name (field-name opts)
                            :class (when validation "is-invalid")
-                           :defaultValue value
+                           :value value
                            :required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
@@ -199,7 +199,7 @@
      (into [:select.form-control {:id (field-name opts)
                                   :name (field-name opts)
                                   :class (when validation "is-invalid")
-                                  :defaultValue value
+                                  :value value
                                   :required (not optional)
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
