@@ -41,6 +41,18 @@
                       :field/type :text
                       :field/privacy :private}]
        :enabled true
+       :archived false}
+   41 {:form/id 41
+       :form/organization "org"
+       :form/title "form title 2"
+       :form/fields [{:field/id "41"
+                      :field/title{:en "en title" :fi "fi title"}
+                      :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                      :field/optional false
+                      :field/max-length 100
+                      :field/type :text}
+]
+       :enabled true
        :archived false}})
 
 (def ^:private get-catalogue-item
@@ -87,6 +99,25 @@
        :resid "urn:31"
        :wfid 50
        :formid 40
+       :organization "org"
+       :localizations {:en {:id 20
+                            :langcode :en
+                            :title "en title"
+                            :infourl "http://info.com"}
+                       :fi {:id 20
+                            :langcode :fi
+                            :title "fi title"
+                            :infourl nil}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :archived false
+       :expired false}
+   40 {:id 40
+       :resource-id 31
+       :resid "urn:31"
+       :wfid 50
+       :formid 41
        :organization "org"
        :localizations {:en {:id 20
                             :langcode :en
@@ -695,9 +726,11 @@
                      :event/actor "handler"
                      :application/id 1
                      :application/comment "You should include this resource."
+                     :application/forms [{:form/id 40} {:form/id 41}]
                      :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                              {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                             {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                                             {:catalogue-item/id 30 :resource/ext-id "urn:31"}
+                                             {:catalogue-item/id 40 :resource/ext-id "urn:31"}]
                      :application/licenses [{:license/id 30}
                                             {:license/id 31}
                                             {:license/id 32}
@@ -707,9 +740,12 @@
                                       {:application/last-activity (DateTime. 3400)
                                        :application/modified (DateTime. 3400)
                                        :application/events events
-                                       :application/resources (conj (:application/resources submitted-application)
-                                                                    {:catalogue-item/id 30
-                                                                     :resource/ext-id "urn:31"})
+                                       :application/forms [{:form/id 40} {:form/id 41}]
+                                       :application/resources (concat (:application/resources submitted-application)
+                                                                      [{:catalogue-item/id 30
+                                                                        :resource/ext-id "urn:31"}
+                                                                       {:catalogue-item/id 40
+                                                                        :resource/ext-id "urn:31"}])
                                        :application/licenses (conj (:application/licenses submitted-application)
                                                                    {:license/id 34})})]
       (is (= expected-application (recreate expected-application)))))
@@ -719,6 +755,7 @@
                      :event/actor "handler"
                      :application/id 1
                      :application/comment "I changed the resources"
+                     :application/forms [{:form/id 40}]
                      :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                              {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
                      :application/licenses [{:license/id 30}

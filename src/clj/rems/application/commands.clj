@@ -263,6 +263,13 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
+(defn- build-forms-list [catalogue-item-ids {:keys [get-catalogue-item]}]
+  (->> catalogue-item-ids
+       (mapv get-catalogue-item)
+       (mapv :formid)
+       (distinct)
+       (mapv (fn [form-id] {:form/id form-id}))))
+
 (defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
@@ -420,15 +427,17 @@
 
 (defmethod command-handler :application.command/change-resources
   [cmd application injections]
-  (or (must-not-be-empty cmd :catalogue-item-ids)
-      (invalid-catalogue-items (:catalogue-item-ids cmd) injections)
-      (unbundlable-catalogue-items-for-actor application (:catalogue-item-ids cmd) (:actor cmd) injections)
-      (changes-original-workflow application (:catalogue-item-ids cmd) (:actor cmd) injections)
-      (ok (merge {:event/type :application.event/resources-changed
-                  :application/resources (build-resources-list (:catalogue-item-ids cmd) injections)
-                  :application/licenses (build-licenses-list (:catalogue-item-ids cmd) injections)}
-                 (when (:comment cmd)
-                   {:application/comment (:comment cmd)})))))
+  (let [cat-ids (:catalogue-item-ids cmd)]
+    (or (must-not-be-empty cmd :catalogue-item-ids)
+        (invalid-catalogue-items cat-ids injections)
+        (unbundlable-catalogue-items-for-actor application cat-ids (:actor cmd) injections)
+        (changes-original-workflow application cat-ids (:actor cmd) injections)
+        (ok (merge {:event/type :application.event/resources-changed
+                    :application/forms (build-forms-list cat-ids injections)
+                    :application/resources (build-resources-list cat-ids injections)
+                    :application/licenses (build-licenses-list cat-ids injections)}
+                   (when (:comment cmd)
+                     {:application/comment (:comment cmd)}))))))
 
 (defmethod command-handler :application.command/add-member
   [cmd application injections]

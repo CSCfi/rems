@@ -176,6 +176,7 @@
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
+      (assoc :application/forms (vec (:application/forms event)))
       (assoc :application/resources (vec (:application/resources event)))
       (assoc :application/licenses (map #(select-keys % [:license/id])
                                         (:application/licenses event)))))

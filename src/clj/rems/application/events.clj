@@ -132,6 +132,7 @@
   (assoc EventBase
          :event/type (s/enum :application.event/resources-changed)
          (s/optional-key :application/comment) s/Str
+         :application/forms [{:form/id FormId}]
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]))

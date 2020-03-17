@@ -397,6 +397,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -429,6 +430,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
+              :application/forms [{:form/id 1} {:form/id 2}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
               :application/licenses [{:license/id license-1}]}
@@ -443,6 +445,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-2}]}
              (ok-command application
@@ -464,6 +467,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
+              :application/forms [{:form/id 2}]
               :application/resources [{:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
               :application/licenses [{:license/id license-1}]}
              (ok-command application
@@ -478,6 +482,7 @@
               :event/actor handler-user-id
               :application/id app-id
               :application/comment "Changed these for you"
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -495,6 +500,7 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "Changed these for you"
+                :application/forms [{:form/id 1} {:form/id 2}]
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
@@ -512,6 +518,7 @@
               :event/actor handler-user-id
               :application/id app-id
               :application/comment "Changed these for you"
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -529,6 +536,7 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "Changed these for you"
+                :application/forms [{:form/id 1} {:form/id 2}]
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
