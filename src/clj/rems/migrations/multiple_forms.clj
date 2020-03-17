@@ -22,14 +22,11 @@ WHERE id = :id;
 ")
 
 (defn- get-application-forms [conn]
-  (reduce (fn [m {:keys [id eventdata]}]
-            (let [event (json/parse-string eventdata)]
-              (if (and (= "application.event/created" (:event/type event))
-                       (:form/id event))
-                (assoc m (:application/id event) (:form/id event))
-                m)))
-          {}
-          (get-application-events conn)))
+  (->> (get-application-events conn)
+       (map #(json/parse-string (:eventdata %)))
+       (filter #(and (= "created" (:event/type %)) (:form/id %)))
+       (map (juxt :application/id :form/id))
+       (into {})))
 
 (defmulti migrate-event (fn [id event application-forms] (:event/type event)))
 
