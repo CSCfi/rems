@@ -399,10 +399,11 @@
            :on-change #(rf/dispatch [::form-field-visibility-field field-index {:field/id (.. % -target -value)}])
            :value (or (:field/id visibility-field) "")}
           ^{:key "not-selected"} [:option ""]
-          (for [field (form-fields-that-can-be-used-in-visibility form)]
-            ^{:key (str field-index "-" (:field/id field))}
-            [:option {:value (:field/id field)}
-             (text-format :t.create-form/field-n (inc (:field/index field)) (localized-field-title field lang))])]
+          (doall
+           (for [field (form-fields-that-can-be-used-in-visibility form)]
+             ^{:key (str field-index "-" (:field/id field))}
+             [:option {:value (:field/id field)}
+              (text-format :t.create-form/field-n (inc (:field/index field)) (localized-field-title field lang))]))]
          [:div.invalid-feedback
           (when error-field (text-format error-field label-field))]]
         (when (:field/id visibility-field)
@@ -414,9 +415,10 @@
              :on-change #(rf/dispatch [::form-field-visibility-value field-index [(.. % -target -value)]])
              :value (or (first visibility-value) "")}
             ^{:key "not-selected"} [:option ""]
-            (for [value (form-field-values form (:field/id visibility-field))]
-              ^{:key (str field-index "-" (:value value))}
-              [:option {:value (:value value)} (get-in value [:title lang])])]
+            (doall
+             (for [value (form-field-values form (:field/id visibility-field))]
+               ^{:key (str field-index "-" (:value value))}
+               [:option {:value (:value value)} (get-in value [:title lang])]))]
            [:div.invalid-feedback
             (when error-value (text-format error-value label-value))]])])]))
 
