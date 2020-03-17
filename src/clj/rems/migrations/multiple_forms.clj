@@ -50,6 +50,12 @@ WHERE id = :id;
         (dissoc :form/id)
         (assoc :application/forms [{:form/id (:form/id event)}]))))
 
+(defmethod migrate-event "application.event/resources-changed"
+  [id event application-forms]
+  (when-not (:application/forms event)
+    (let [form-id (getx application-forms (:application/id event))]
+      (assoc event :application/forms [{:form/id form-id}]))))
+
 (defn- migrate-events [conn application-forms]
   (doseq [{:keys [id eventdata]} (get-application-events conn)]
     (let [event (json/parse-string eventdata)
