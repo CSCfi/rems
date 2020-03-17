@@ -370,7 +370,7 @@
                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
                                                    :field/value (get-in field-values [form-id field-id])
                                                    :field/attachment (when (= :attachment (:field/type field))
-                                                                       (get attachments (parse-int (:field/value field))))
+                                                                       (get attachments (parse-int (get-in field-values [form-id field-id]))))
                                                    :field/previous-attachment (when (= :attachment (:field/type field))
                                                                                 (when-let [prev (:field/previous-value field)]
                                                                                   (get attachments (parse-int prev))))
