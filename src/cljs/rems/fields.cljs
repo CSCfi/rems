@@ -141,7 +141,7 @@
                                                (str (field-name opts) "-error"))
                            :max-length max-length
                            :class (when validation "is-invalid")
-                           :defaultValue value
+                           :value value
                            :on-change (comp on-change event-value)}]]))
 
 (defn texta-field
