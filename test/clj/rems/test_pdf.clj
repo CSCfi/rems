@@ -33,9 +33,19 @@
                                                                   :fi "Katalogi-itemi"}
                                                           :form-id form})
         applicant "alice"
-        application-id (test-data/create-draft! applicant [catalogue-item] "pdf test" (time/date-time 2000))
+        application-id (test-data/create-application! {:actor applicant
+                                                       :catalogue-item-ids [catalogue-item]
+                                                       :time (time/date-time 2000)})
         handler "developer"]
-    (testing "submit"
+    (testing "fill and submit"
+      (test-data/fill-form! {:time (time/date-time 2000)
+                             :actor applicant
+                             :application-id application-id
+                             :field-value "pdf test"
+                             :optional-fields true})
+      (test-data/accept-licenses! {:time (time/date-time 2000)
+                                   :actor applicant
+                                   :application-id application-id})
       (test-data/command! {:time (time/date-time 2001)
                            :application-id application-id
                            :type :application.command/submit
@@ -76,7 +86,7 @@
                 [:paragraph "Text license"])
                ([:heading "Application"]
                 [:chunk {:style :bold} "This form demonstrates all possible field types. (This text itself is a label field.)"]
-                [:paragraph "pdf test"]
+                [:paragraph ""]
                 [:chunk {:style :bold} "Application title field"]
                 [:paragraph "pdf test"]
                 [:chunk {:style :bold} "Text field"]
@@ -84,25 +94,25 @@
                 [:chunk {:style :bold} "Text area"]
                 [:paragraph "pdf test"]
                 [:chunk {:style :bold} "Header"]
-                [:paragraph "pdf test"]
+                [:paragraph ""]
                 [:chunk {:style :bold} "Date field"]
-                [:paragraph ""]
+                [:paragraph "2002-03-04"]
                 [:chunk {:style :bold} "Email field"]
-                [:paragraph ""]
+                [:paragraph "user@example.com"]
                 [:chunk {:style :bold} "Attachment"]
                 [:paragraph ""]
                 [:chunk {:style :bold} "Option list. Choose the first option to reveal a new field."]
-                [:paragraph ""]
+                [:paragraph "Option1"]
                 [:chunk {:style :bold} "Conditional field. Shown only if first option is selected above."]
                 [:paragraph "pdf test"]
                 [:chunk {:style :bold} "Multi-select list"]
-                [:paragraph ""]
+                [:paragraph "Option1"]
                 [:chunk {:style :bold} "The following field types can have a max length."]
-                [:paragraph "pdf test"]
-                [:chunk {:style :bold} "Text field with max length"]
                 [:paragraph ""]
+                [:chunk {:style :bold} "Text field with max length"]
+                [:paragraph "pdf test"]
                 [:chunk {:style :bold} "Text area with max length"]
-                [:paragraph ""])]
+                [:paragraph "pdf test"])]
              (with-language :en
                #(#'pdf/render-application (applications/get-application handler application-id))))))
       (testing "pdf rendering succeeds"
