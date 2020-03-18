@@ -241,7 +241,7 @@ WHERE 1=1
 /*~ (when (:is-active? params) */
   AND entitlement.endt IS NULL
 /*~ ) ~*/
-;
+ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement.endt;
 
 -- :name save-attachment! :insert
 INSERT INTO attachment
