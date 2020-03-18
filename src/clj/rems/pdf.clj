@@ -5,41 +5,46 @@
             [rems.util :refer [getx getx-in]])
   (:import [java.io ByteArrayOutputStream]))
 
+(defn- render-user [user]
+  (str (or (:name user)
+           (:userid user))
+       " (" (:userid user) ")"
+       " <" (:email user) ">"))
+
 (defn- render-header [application]
   (let [state (getx application :application/state)
         events (getx application :application/events)
-        user (getx application :application/applicant)
         resources (getx application :application/resources)]
-    (list
-     [:paragraph
-      (text :t.applications/state)
-      (when state [:phrase ": " (localize-state state)])]
-     [:heading (text :t.applicant-info/applicant)]
-     [:paragraph (get user :name "-")]
-     [:paragraph (getx user :userid)]
-     [:paragraph (get user :email "-")]
-     ;; TODO more members
+    (concat
+     (list
+      [:paragraph
+       (text :t.applications/state)
+       (when state [:phrase ": " (localize-state state)])]
+      [:heading (text :t.applicant-info/applicants)]
+      [:paragraph (text :t.applicant-info/applicant) ": " (render-user (getx application :application/applicant))])
+     (seq
+      (for [member (getx application :application/members)]
+        [:paragraph (text :t.applicant-info/member) ": " (render-user member)]))
      ;; TODO more fields?
-     [:heading (text :t.form/resources)]
-     (into
-      [:list]
-      (for [resource resources]
-        [:phrase
-         (localized (:catalogue-item/title resource))
-         " (" (:resource/ext-id resource) ")"]))
-     [:heading (text :t.form/events)]
-     (if (empty? events)
-       [:paragraph "–"]
-       (into
-        [:table {:header [(text :t.form/user)
-                          (text :t.form/event)
-                          (text :t.form/comment)
-                          (text :t.form/date)]}]
-        (for [event events]
-          [(:event/actor event)
-           (localize-event event)
-           (get event :application/comment "")
-           (localize-time (:event/time event))]))))))
+     (list
+      [:heading (text :t.form/resources)]
+      (into
+       [:list]
+       (for [resource resources]
+         [:phrase
+          (localized (:catalogue-item/title resource))
+          " (" (:resource/ext-id resource) ")"]))
+      [:heading (text :t.form/events)]
+      (if (empty? events)
+        [:paragraph "–"]
+        (into
+         [:table {:header [(text :t.form/date)
+                           (text :t.form/event)
+                           (text :t.form/comment)]}]
+         (for [event events]
+           [(localize-time (:event/time event))
+            (localize-event event)
+            (get event :application/comment "")])))))))
 
 (defn- render-field [field]
   (list

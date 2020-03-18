@@ -11,6 +11,8 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-pdf-gold-standard
+  (test-data/create-user! {:eppn "alice" :commonName "Alice Applicant" :mail "alice@example.com"})
+  (test-data/create-user! {:eppn "beth" :commonName "Beth Applicant" :mail "beth@example.com"})
   (let [lic1 (test-data/create-license! {:license/type :link
                                          :license/title {:en "Google license"
                                                  :fi "Google-lisenssi"}
@@ -38,8 +40,14 @@
                            :application-id application-id
                            :type :application.command/submit
                            :actor applicant}))
-    (testing "handler"
+    (testing "add member"
       (test-data/command! {:time (time/date-time 2002)
+                           :application-id application-id
+                           :type :application.command/add-member
+                           :member {:userid "beth"}
+                           :actor handler}))
+    (testing "approve"
+      (test-data/command! {:time (time/date-time 2003)
                            :application-id application-id
                            :type :application.command/approve
                            :comment "approved"
@@ -48,21 +56,21 @@
       (is (= '[{}
                [:heading "Application"]
                ([:paragraph "State" [:phrase ": " "Approved"]]
-                [:heading "Applicant"]
-                [:paragraph nil]
-                [:paragraph "alice"]
-                [:paragraph nil]
+                [:heading "Applicants"]
+                [:paragraph "Applicant" ": " "Alice Applicant (alice) <alice@example.com>"]
+                [:paragraph "Member" ": " "Beth Applicant (beth) <beth@example.com>"]
                 [:heading "Resources"]
                 [:list [:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]]
                 [:heading "Events"]
                 [:table
-                 {:header ["User" "Event" "Comment" "Time"]}
+                 {:header ["Time" "Event" "Comment"]}
                  ;; TODO will break when timezone changes...
-                 ["alice" "alice created a new application." "" "2000-01-01 02:00"]
-                 ["alice" "alice saved the application as a draft." "" "2000-01-01 02:00"]
-                 ["alice" "alice accepted the terms of use." "" "2000-01-01 02:00"]
-                 ["alice" "alice submitted the application for review." "" "2001-01-01 02:00"]
-                 ["developer" "Developer approved the application." "approved" "2002-01-01 02:00"]])
+                 ["2000-01-01 02:00" "Alice Applicant created a new application." ""]
+                 ["2000-01-01 02:00" "Alice Applicant saved the application as a draft." ""]
+                 ["2000-01-01 02:00" "Alice Applicant accepted the terms of use." ""]
+                 ["2001-01-01 02:00" "Alice Applicant submitted the application for review." ""]
+                 ["2002-01-01 02:00" "Developer added Beth Applicant to the application." ""]
+                 ["2003-01-01 02:00" "Developer approved the application." "approved"]])
                ([:heading "This form demonstrates all possible field types. (This text itself is a label field.)"]
                 [:paragraph "pdf test"]
                 [:heading "Application title field"]
