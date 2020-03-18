@@ -470,7 +470,8 @@
                   :application/id 1
                   :application/field-values [{:form 40 :field "41" :value "foo"}
                                              {:form 40 :field "42" :value "bar"}
-                                             {:form 40 :field "43" :value "private answer"}]})
+                                             {:form 40 :field "43" :value "private answer"}
+                                             {:form 40 :field "field-does-not-exist" :value "something"}]})
 
 (def saved-application (merge created-application
                               {:application/modified (DateTime. 2000)
@@ -479,7 +480,8 @@
                                :application/accepted-licenses {}
                                :rems.application.model/draft-answers [{:form 40 :field "41" :value "foo"}
                                                                       {:form 40 :field "42" :value "bar"}
-                                                                      {:form 40 :field "43" :value "private answer"}]}))
+                                                                      {:form 40 :field "43" :value "private answer"}
+                                                                      {:form 40 :field "field-does-not-exist" :value "something"}]}))
 
 (deftest test-application-view-saved
   (is (= saved-application (recreate saved-application))))
@@ -513,7 +515,8 @@
                                        :application/todo :new-application
                                        :rems.application.model/submitted-answers [{:form 40 :field "41" :value "foo"}
                                                                                   {:form 40 :field "42" :value "bar"}
-                                                                                  {:form 40 :field "43" :value "private answer"}]
+                                                                                  {:form 40 :field "43" :value "private answer"}
+                                                                                  {:form 40 :field "field-does-not-exist" :value "something"}]
                                        :rems.application.model/previous-submitted-answers nil})))
 
 (deftest test-application-view-submitted
@@ -584,7 +587,8 @@
                                                                  :application/external-id "2019/42"}
                                        :rems.application.model/submitted-answers [{:form 40 :field "41" :value "foo"}
                                                                                   {:form 40 :field "42" :value "bar"}
-                                                                                  {:form 40 :field "43" :value "private answer"}]})]
+                                                                                  {:form 40 :field "43" :value "private answer"}
+                                                                                  {:form 40 :field "field-does-not-exist" :value "something"}]})]
       (is (= expected-application (recreate expected-application)))))
 
   (testing "copied to"
@@ -624,7 +628,8 @@
             :application/todo nil
             :rems.application.model/draft-answers [{:form 40 :field "41" :value "foo"}
                                                    {:form 40 :field "42" :value "bar"}
-                                                   {:form 40 :field "43" :value "private answer"}]})))
+                                                   {:form 40 :field "43" :value "private answer"}
+                                                   {:form 40 :field "field-does-not-exist" :value "something"}]})))
 
 (def submitted-returned-resubmitted-application
   (let [submitted-event {:event/type :application.event/submitted
@@ -640,10 +645,12 @@
                 :application/todo :resubmitted-application
                 :rems.application.model/submitted-answers [{:form 40 :field "41" :value "new foo"}
                                                            {:form 40 :field "42" :value "new bar"}
-                                                           {:form 40 :field "43" :value "new private answer"}]
+                                                           {:form 40 :field "43" :value "new private answer"}
+                                                           {:form 40 :field "field-does-not-exist" :value "something"}]
                :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
                                                                    {:form 40 :field "42" :value "bar"}
-                                                                   {:form 40 :field "43" :value "private answer"}]}))))
+                                                                   {:form 40 :field "43" :value "private answer"}
+                                                                   {:form 40 :field "field-does-not-exist" :value "something"}]}))))
 
 (deftest test-application-view-returned-resubmitted
   (testing "> returned"
@@ -659,14 +666,16 @@
                            ;; non-submitted versions should not show up as the previous value
                            :application/field-values [{:form 40 :field "41" :value "intermediate draft"}
                                                       {:form 40 :field "42" :value "intermediate draft"}
-                                                      {:form 40 :field "43" :value "intermediate draft"}]}
+                                                      {:form 40 :field "43" :value "intermediate draft"}
+                                                      {:form 40 :field "field-does-not-exist" :value "something"}]}
               new-event-2 {:event/type :application.event/draft-saved
                            :event/time (DateTime. 6000)
                            :event/actor "applicant"
                            :application/id 1
                            :application/field-values [{:form 40 :field "41" :value "new foo"}
                                                       {:form 40 :field "42" :value "new bar"}
-                                                      {:form 40 :field "43" :value "new private answer"}]}
+                                                      {:form 40 :field "43" :value "new private answer"}
+                                                      {:form 40 :field "field-does-not-exist" :value "something"}]}
               events (conj events new-event-1 new-event-2)
               expected-application (deep-merge expected-application
                                                {:application/modified (DateTime. 6000)
@@ -674,7 +683,8 @@
                                                 :application/events events
                                                 :rems.application.model/draft-answers [{:form 40 :field "41" :value "new foo"}
                                                                                        {:form 40 :field "42" :value "new bar"}
-                                                                                       {:form 40 :field "43" :value "new private answer"}]})]
+                                                                                       {:form 40 :field "43" :value "new private answer"}
+                                                                                       {:form 40 :field "field-does-not-exist" :value "something"}]})]
           (is (= expected-application (recreate expected-application)))
 
           (testing "> resubmitted"
@@ -691,10 +701,12 @@
                                                    :application/todo :resubmitted-application
                                                    :rems.application.model/submitted-answers [{:form 40 :field "41" :value "new foo"}
                                                                                               {:form 40 :field "42" :value "new bar"}
-                                                                                              {:form 40 :field "43" :value "new private answer"}]
+                                                                                              {:form 40 :field "43" :value "new private answer"}
+                                                                                              {:form 40 :field "field-does-not-exist" :value "something"}]
                                                    :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
                                                                                                        {:form 40 :field "42" :value "bar"}
-                                                                                                       {:form 40 :field "43" :value "private answer"}]}))]
+                                                                                                       {:form 40 :field "43" :value "private answer"}
+                                                                                                       {:form 40 :field "field-does-not-exist" :value "something"}]}))]
               (is (= expected-application (recreate expected-application)))))))
 
       (testing "> resubmitted (no draft saved)"
@@ -713,10 +725,12 @@
                                                ;; previous submitted answers must be the same
                                                :rems.application.model/submitted-answers [{:form 40 :field "41" :value "foo"}
                                                                                           {:form 40 :field "42" :value "bar"}
-                                                                                          {:form 40 :field "43" :value "private answer"}]
+                                                                                          {:form 40 :field "43" :value "private answer"}
+                                                                                          {:form 40 :field "field-does-not-exist" :value "something"}]
                                                :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
                                                                                                    {:form 40 :field "42" :value "bar"}
-                                                                                                   {:form 40 :field "43" :value "private answer"}]}))]
+                                                                                                   {:form 40 :field "43" :value "private answer"}
+                                                                                                   {:form 40 :field "field-does-not-exist" :value "something"}]}))]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-resources-changed
@@ -1108,7 +1122,8 @@
                                 :event/actor "applicant"
                                 :application/field-values [{:form 40 :field "41" :value "foo"}
                                                            {:form 40 :field "42" :value "bar"}
-                                                           {:form 40 :field "43" :value "private answer"}]
+                                                           {:form 40 :field "43" :value "private answer"}
+                                                           {:form 40 :field "field-does-not-exist" :value "something"}]
                                 :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
                                {:event/type :application.event/licenses-accepted
                                 :application/id 1
