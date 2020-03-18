@@ -311,7 +311,7 @@
                                             :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
-(def ^:private all-field-types-example
+(def all-field-types-example
   [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
                   :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
     :field/optional false
