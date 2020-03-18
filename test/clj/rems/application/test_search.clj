@@ -110,17 +110,29 @@
                                                           :field/title {:en "Text field"
                                                                         :fi "Tekstikenttä"}
                                                           :field/optional false}]})
-          cat-id (test-data/create-catalogue-item! {:form-id form-id})
-          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+          form-id2 (test-data/create-form! {:form/fields [{:field/id "1"
+                                                           :field/type :text
+                                                           :field/title {:en "Text field"
+                                                                         :fi "Tekstikenttä"}
+                                                           :field/optional false}]})
+          wf-id (test-data/create-workflow! {})
+          cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
+          cat-id2 (test-data/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
+          app-id (test-data/create-application! {:catalogue-item-ids [cat-id cat-id2]
                                                  :actor "alice"})]
       (test-data/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
                            :field-values [{:form form-id
                                            :field "1"
-                                           :value "Tis but a scratch."}]})
+                                           :value "Tis but a scratch."}
+                                          {:form form-id2
+                                           :field "1"
+                                           :value "It's just a flesh wound."}]})
       (is (= #{app-id} (search/find-applications "scratch")) "any field")
-      (is (= #{app-id} (search/find-applications "form:scratch")) "form field")))
+      (is (= #{app-id} (search/find-applications "form:scratch")) "form field")
+      (is (= #{app-id} (search/find-applications "flesh")) "any field")
+      (is (= #{app-id} (search/find-applications "form:flesh")) "form field")))
 
   (testing "updating applications"
     (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
