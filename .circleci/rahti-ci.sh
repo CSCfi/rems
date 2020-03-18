@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euxo pipefail
 
 instance=${1}
 
@@ -6,9 +7,9 @@ if [ "${instance}" == "dev" ] ; then
     tag1=circle
     tag2=$(git rev-parse HEAD)
     token=${rahti_dev_pod_delete_token}
-elif [ "${instance}" == "dev" ] ; then
+elif [ "${instance}" == "demo" ] ; then
     tag1=release
-    tag2=$(git describe --abbrev=0 --tags)
+    tag2=$(git describe --tags --exact-match)
     token=${rahti_demo_pod_delete_token}
 else
     echo "ERROR: Only \"dev\" and \"demo\" arguments supported!"
@@ -37,7 +38,6 @@ elif [ "${CONTAINER}" == "" ] ; then
     echo "ERROR: No \"rems-${instance}\" pods returned from rahti!"
     exit 2
 else
-    echo $CONTAINER
     curl -k -s \
         -X DELETE \
         -H "Authorization: Bearer ${token}" \
