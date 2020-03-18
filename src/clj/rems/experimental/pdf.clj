@@ -1,5 +1,5 @@
-(ns rems.pdf
-  "Generating pdf from applications"
+(ns rems.experimental.pdf
+  "Generating pdf files from applications using puppeteer and headless chrome."
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.tools.logging :as log]

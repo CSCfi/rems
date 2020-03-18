@@ -111,4 +111,6 @@
  :organizations ["default"]
 
  ;; Experimental features
+
+ ;; enable /api/applications/:id/experimental/pdf
  :enable-pdf-api false}

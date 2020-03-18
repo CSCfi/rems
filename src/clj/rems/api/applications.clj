@@ -17,7 +17,7 @@
             [rems.db.applications :as applications]
             [rems.db.csv :as csv]
             [rems.db.users :as users]
-            [rems.pdf :as pdf]
+            [rems.experimental.pdf :as experimental-pdf]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
@@ -247,7 +247,7 @@
         (ok app)
         (api-util/not-found-json-response)))
 
-    (GET "/:application-id/pdf" request
+    (GET "/:application-id/experimental/pdf" request
       :summary "PDF export of application (EXPERIMENTAL)"
       :roles #{:logged-in :api-key}
       :path-params [application-id :- (describe s/Int "application id")]
@@ -256,7 +256,7 @@
                   401 {:schema s/Str}}
       (if (not (:enable-pdf-api config/env))
         (not-implemented "pdf api not enabled")
-        (let [bytes (pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
+        (let [bytes (experimental-pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
           (-> (ok (ByteArrayInputStream. bytes))
               (content-type "application/pdf")))))
 
