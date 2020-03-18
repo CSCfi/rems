@@ -55,6 +55,16 @@
                                                             :organization "e2e"
                                                             :licenses []}
                              api-key owner-id)))
+
+                resource-ext-id2 "e2e-resource 2"
+                resource-id2
+                (testing "create resource 2"
+                  (extract-id
+                   (api-call :post "/api/resources/create" {:resid resource-ext-id2
+                                                            :organization "e2e"
+                                                            :licenses []}
+                             api-key owner-id)))
+
                 form-id
                 (testing "create form"
                   (extract-id
@@ -62,6 +72,17 @@
                                                         :form/title "e2e"
                                                         :form/fields [{:field/type :text
                                                                        :field/title {:en "text field"}
+                                                                       :field/optional false}]}
+                             api-key owner-id)))
+
+                form-id2
+                (testing "create form 2"
+                  (extract-id
+                   (api-call :post "/api/forms/create" {:form/organization "e2e"
+                                                        :form/title "e2e 2"
+                                                        :form/fields [{:field/id "e2e_fld_2"
+                                                                       :field/type :text
+                                                                       :field/title {:en "text field 2"}
                                                                        :field/optional false}]}
                              api-key owner-id)))
                 license-id
@@ -90,11 +111,21 @@
                                                                   :localizations {:en {:title "e2e catalogue item"}}}
                              api-key owner-id)))
 
+                catalogue-item-id2
+                (testing "create catalogue item 2"
+                  (extract-id
+                   (api-call :post "/api/catalogue-items/create" {:resid resource-id2
+                                                                  :form form-id2
+                                                                  :wfid workflow-id
+                                                                  :organization "e2e"
+                                                                  :localizations {:en {:title "e2e catalogue item 2"}}}
+                             api-key owner-id)))
+
                 application-id
                 (testing "create application"
                   (:application-id
                    (assert-success
-                    (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id]}
+                    (api-call :post "/api/applications/create" {:catalogue-item-ids [catalogue-item-id catalogue-item-id2]}
                               api-key applicant-id))))]
 
             (testing "fetch application as applicant"
@@ -102,7 +133,7 @@
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key applicant-id)]
                 (is (= applicant-id (get-in application [:application/applicant :userid])))
-                (is (= [resource-ext-id] (mapv :resource/ext-id (:application/resources application))))))
+                (is (= [resource-ext-id resource-ext-id2] (mapv :resource/ext-id (:application/resources application))))))
 
             (testing "check that application is visible"
               (let [applications (api-call :get "/api/my-applications" nil
@@ -114,7 +145,10 @@
                (api-call :post "/api/applications/save-draft" {:application-id application-id
                                                                :field-values [{:form form-id
                                                                                :field "fld1"
-                                                                               :value "e2e test contents"}]}
+                                                                               :value "e2e test contents"}
+                                                                              {:form form-id2
+                                                                               :field "e2e_fld_2"
+                                                                               :value "e2e test contents 2"}]}
                          api-key applicant-id)))
 
             (testing "accept terms of use"
@@ -173,20 +207,28 @@
 
             (testing "entitlement"
               (testing "visible via API"
-                (let [[entitlement & others] (api-call :get (str "/api/entitlements?user=" applicant-id) nil
-                                                       api-key owner-id)]
+                (let [[entitlement entitlement2 & others] (api-call :get (str "/api/entitlements?user=" applicant-id) nil
+                                                                    api-key owner-id)]
                   (is (empty? others))
                   (is (= resource-ext-id (:resource entitlement)))
-                  (is (not (:end entitlement)))))
+                  (is (= resource-ext-id2 (:resource entitlement2)))
+                  (is (not (:end entitlement)))
+                  (is (not (:end entitlement2)))))
               (testing "POSTed to callback"
-                (let [[req & others] (stub/recorded-requests entitlements-server)]
+                (let [[req req2 & others] (stub/recorded-requests entitlements-server)]
                   (is (empty? others))
                   (is (= "/add" (:path req)))
+                  (is (= "/add" (:path req2)))
                   (is (= [{:application application-id
                            :mail "applicant@example.com"
                            :resource resource-ext-id
                            :user applicant-id}]
-                         (json/parse-string (get-in req [:body "postData"])))))))
+                         (json/parse-string (get-in req [:body "postData"]))))
+                  (is (= [{:application application-id
+                           :mail "applicant@example.com"
+                           :resource resource-ext-id2
+                           :user applicant-id}]
+                         (json/parse-string (get-in req2 [:body "postData"])))))))
 
             (testing "close application"
               (assert-success
@@ -199,20 +241,28 @@
 
             (testing "ended entitlement"
               (testing "visible via API"
-                (let [[entitlement & others] (api-call :get (str "/api/entitlements?expired=true&user=" applicant-id) nil
-                                                       api-key owner-id)]
+                (let [[entitlement entitlement2  & others] (api-call :get (str "/api/entitlements?expired=true&user=" applicant-id) nil
+                                                                     api-key owner-id)]
                   (is (empty? others))
                   (is (= resource-ext-id (:resource entitlement)))
-                  (is (:end entitlement) entitlement)))
+                  (is (:end entitlement) entitlement)
+                  (is (= resource-ext-id2 (:resource entitlement2)))
+                  (is (:end entitlement2) entitlement2)))
               (testing "POSTed to callback"
-                (let [[_old req & others] (stub/recorded-requests entitlements-server)]
+                (let [[_old _old2 req req2 & others] (stub/recorded-requests entitlements-server)]
                   (is (empty? others))
                   (is (= "/remove" (:path req)))
                   (is (= [{:application application-id
                            :mail "applicant@example.com"
                            :resource resource-ext-id
                            :user applicant-id}]
-                         (json/parse-string (get-in req [:body "postData"])))))))
+                         (json/parse-string (get-in req [:body "postData"]))))
+                  (is (= "/remove" (:path req2)))
+                  (is (= [{:application application-id
+                           :mail "applicant@example.com"
+                           :resource resource-ext-id2
+                           :user applicant-id}]
+                         (json/parse-string (get-in req2 [:body "postData"])))))))
 
             (testing "fetch application as applicant"
               (let [application (api-call :get (str "/api/applications/" application-id) nil
