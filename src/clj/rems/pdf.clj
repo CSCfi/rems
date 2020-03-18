@@ -61,10 +61,9 @@
    (localized (:license/title license))])
 
 (defn- render-licenses [application]
-  (list [:heading (text :t.form/licenses)]
-        (seq
-         (for [license (getx application :application/licenses)]
-           (render-license license)))))
+  (concat (list [:heading (text :t.form/licenses)])
+          (for [license (getx application :application/licenses)]
+            (render-license license))))
 
 (defn- render-application [application]
   [{}

@@ -92,7 +92,11 @@
                 [:heading "Text area with max length"]
                 [:paragraph ""])
                ([:heading "Terms of use"]
-                ([:paragraph "Google license"]
-                 [:paragraph "Text license"]))]
+                [:paragraph "Google license"]
+                [:paragraph "Text license"])]
              (with-language :en
-               #(#'pdf/render-application (applications/get-application handler application-id))))))))
+               #(#'pdf/render-application (applications/get-application handler application-id))))))
+      (testing "pdf rendering succeeds"
+        (is (some?
+             (with-language :en
+               #(pdf/application-to-pdf-bytes (applications/get-application handler application-id))))))))
