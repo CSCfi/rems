@@ -512,7 +512,7 @@
                                     :field-values [{:form form-id :field "opt1" :value "opt"}]})
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
-                                    :field-values [{:form form-id :field "opt2" :value "opt"}]}))))
+                                    :field-values [{:form form-id2 :field "opt2" :value "opt"}]}))))
     (testing "can't submit without required field"
       (is (= {:success false
               :errors [{:form-id form-id :field-id "req1" :type "t.form.validation/required"}
