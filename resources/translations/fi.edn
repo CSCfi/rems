@@ -341,7 +341,6 @@
          :submit "Lähetä hakemus"
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
-         :user "Käyttäjä"
          :validation {:invalid-email "Sähköpostiosoite ei kelpaa."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
