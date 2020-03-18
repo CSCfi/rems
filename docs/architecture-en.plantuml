@@ -1,49 +1,62 @@
 @startuml
 skinParam ArrowColor Black
 skinParam BackgroundColor White
-skinParam componentBorderColor Black
 skinParam actorBorderColor Black
-skinparam componentBackgroundColor LightGray
-skinparam databaseBackgroundColor LightGray
 skinparam actorBackgroundColor LightGray
-skinparam Padding 5
+skinParam componentBorderColor DarkGray
+skinparam componentFontColor White
+skinparam componentStereotypeFontColor LightGray
+skinparam componentBackgroundColor #008292
+skinparam databaseFontColor White
+skinparam databaseBackgroundColor #008292
+skinparam entityBackgroundColor LightGray
+skinparam entityBorderColor DarkGray
+skinparam queueBackgroundColor LightGray
+skinparam queueBorderColor DarkGray
+skinparam frameBorderColor DarkGray
+skinparam frameBackgroundColor #f8f8f8
+skinparam nodeBorderColor DarkGray
+skinparam nodeBackgroundColor #f8f8f8
+skinparam DefaultTextAlignment Center
 
-actor Applicant
-actor Approver
-actor APIUser
+together {
+  actor Applicant
+  actor Approver
+  actor APIUser
+}
+
+node Proxy {
+  component Apache << SSL Termination >>
+}
+
+node REMS {
+  component WebApp << Single-page App >>
+
+  component API
+}
 
 node AuthenticationProvider {
-  component LDAP
-  component Haka
 }
 
-node Server {
-  component WebApp <<Single-Page App>>
-  component API <<REST>>
+database Postgres
+
+node EmailServer << SMTP >> {
 }
 
-WebApp --> AuthenticationProvider : "authenticates against"
-
-Applicant --> WebApp
-Approver --> WebApp
-WebApp -> API : "     "
-APIUser --> API : "use with API-Key\nauthenticated against DB"
-
-
-node DB {
-  database rems
+node 3rdPartySystem << REST >> {
 }
 
-node EmailServer {
-  component email
-}
 
-API --> email : "send mail"
+WebApp -left-> AuthenticationProvider : "OIDC, Haka"
+WebApp -down-> API : "REST"
+API -left-> AuthenticationProvider : "OIDC, Haka"
+Applicant -down-> Apache
+Approver -down-> Apache
+Apache -down-> WebApp
+APIUser .down.> Apache : "use with API-Key\nauthenticated against DB"
+Apache .down.> API : "use with API-Key\nauthenticated against DB"
+API -down-> Postgres
+API -down-> EmailServer : "email notifications"
+API -down-> 3rdPartySystem : "entitlement push"
 
-node 3rdPartySystem {
-  component Receiver
-}
-
-API --> rems
-API .> Receiver : "entitlement push"
 @enduml
