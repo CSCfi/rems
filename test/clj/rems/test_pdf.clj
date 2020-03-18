@@ -5,9 +5,10 @@
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.pdf :as pdf]
+            [rems.testing-util :refer [utc-fixture]]
             [rems.text :refer [with-language]]))
 
-(use-fixtures :once test-db-fixture)
+(use-fixtures :once utc-fixture test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-pdf-gold-standard
@@ -74,13 +75,12 @@
                 [:heading "Events"]
                 [:table
                  {:header ["Time" "Event" "Comment"]}
-                 ;; TODO will break when timezone changes...
-                 ["2000-01-01 02:00" "Alice Applicant created a new application." ""]
-                 ["2000-01-01 02:00" "Alice Applicant saved the application as a draft." ""]
-                 ["2000-01-01 02:00" "Alice Applicant accepted the terms of use." ""]
-                 ["2001-01-01 02:00" "Alice Applicant submitted the application for review." ""]
-                 ["2002-01-01 02:00" "Developer added Beth Applicant to the application." ""]
-                 ["2003-01-01 02:00" "Developer approved the application." "approved"]])
+                 ["2000-01-01 00:00" "Alice Applicant created a new application." ""]
+                 ["2000-01-01 00:00" "Alice Applicant saved the application as a draft." ""]
+                 ["2000-01-01 00:00" "Alice Applicant accepted the terms of use." ""]
+                 ["2001-01-01 00:00" "Alice Applicant submitted the application for review." ""]
+                 ["2002-01-01 00:00" "Developer added Beth Applicant to the application." ""]
+                 ["2003-01-01 00:00" "Developer approved the application." "approved"]])
                ([:heading "Terms of use"]
                 [:paragraph "Google license"]
                 [:paragraph "Text license"])

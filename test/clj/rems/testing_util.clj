@@ -7,7 +7,14 @@
            (com.google.common.io MoreFiles RecursiveDeleteOption)
            (java.nio.file Files)
            (java.nio.file.attribute FileAttribute)
+           (org.joda.time DateTimeZone)
            (org.slf4j LoggerFactory)))
+
+(defn utc-fixture [f]
+  (let [old (DateTimeZone/getDefault)]
+    (DateTimeZone/setDefault DateTimeZone/UTC)
+    (f)
+    (DateTimeZone/setDefault old)))
 
 (defn suppress-logging [^String logger-name]
   (fn [f]
