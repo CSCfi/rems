@@ -1,0 +1,3 @@
+{:ns rems.migrations.multiple-forms
+ :up-fn migrate-up
+ :down-fn nil}

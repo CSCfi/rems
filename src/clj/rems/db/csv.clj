@@ -2,6 +2,7 @@
   "Utilities for exporting database contents as CSV"
   (:require [clj-time.core :as time]
             [clojure.string :as str]
+            [com.rpl.specter :refer [ALL select]]
             [rems.config :refer [env]]
             [rems.db.user-settings :as user-settings]
             [rems.text :as text]))
@@ -68,20 +69,18 @@
 (defn- application-to-row [application]
   (concat (for [to-value (mapv :to-value application-columns)]
             (to-value application))
-          (->> application
-               :application/form
-               :form/fields
-               (mapv :field/value))))
+          (select [:application/forms ALL :form/fields ALL :field/value] application)))
 
+;; TODO: reporting when applications have different forms
 (defn- form-field-names [applications]
   (assert (apply = (->> applications
-                        (mapv :application/form)
+                        (mapcat :application/forms)
                         (mapv :form/id)))
           "All applications must have the same form id")
   (when (not (empty? applications))
     (->> (first applications)
-         :application/form
-         :form/fields
+         :application/forms
+         (mapcat :form/fields)
          (mapv :field/title)
          (mapv text/localized))))
 

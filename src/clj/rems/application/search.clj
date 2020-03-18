@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [com.rpl.specter :refer [ALL select]]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
@@ -9,7 +10,6 @@
             [rems.db.events :as events]
             [rems.text :as text])
   (:import [com.google.common.io MoreFiles RecursiveDeleteOption]
-           [java.nio.file Files]
            [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
@@ -75,10 +75,7 @@
                        #(text/localize-todo (:application/todo app)))))
               (cons (str (:application/todo app)))
               (str/join " "))
-   :form (->> (:form/fields (:application/form app))
-              (map (fn [field]
-                     ;; TODO: filter out checkboxes, attachments etc?
-                     (:field/value field)))
+   :form (->> (select [:application/forms ALL :form/fields ALL :field/value] app) ;; TODO: filter out checkboxes, attachments etc?
               (str/join " "))})
 
 (defn- index-application! [^IndexWriter writer app]

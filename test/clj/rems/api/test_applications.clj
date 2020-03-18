@@ -479,37 +479,54 @@
 
 (deftest test-application-validation
   (let [user-id "alice"
-        form-id (test-data/create-form! {:form/fields [{:field/title {:en "req"
+        form-id (test-data/create-form! {:form/fields [{:field/id "req1"
+                                                        :field/title {:en "req"
                                                                       :fi "pak"}
                                                         :field/type :text
                                                         :field/optional false}
-                                                       {:field/title {:en "opt"
+                                                       {:field/id "opt1"
+                                                        :field/title {:en "opt"
                                                                       :fi "val"}
                                                         :field/type :text
                                                         :field/optional true}]})
-        [req-id opt-id] (->> (form/get-form-template form-id)
-                             :form/fields
-                             (map :field/id))
-        cat-id (test-data/create-catalogue-item! {:form-id form-id})
-        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+        form-id2 (test-data/create-form! {:form/fields [{:field/id "req2"
+                                                         :field/title {:en "req"
+                                                                       :fi "pak"}
+                                                         :field/type :text
+                                                         :field/optional false}
+                                                        {:field/id "opt2"
+                                                         :field/title {:en "opt"
+                                                                       :fi "val"}
+                                                         :field/type :text
+                                                         :field/optional true}]})
+        wf-id (test-data/create-workflow! {})
+        cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
+        cat-id2 (test-data/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id cat-id2]
                                                :actor user-id})]
 
     (testing "set value of optional field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
-                                    :field-values [{:field opt-id :value "opt"}]}))))
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}]})
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id2 :field "opt2" :value "opt"}]}))))
     (testing "can't submit without required field"
       (is (= {:success false
-              :errors [{:field-id req-id, :type "t.form.validation/required"}]}
+              :errors [{:form-id form-id :field-id "req1" :type "t.form.validation/required"}
+                       {:form-id form-id2 :field-id "req2" :type "t.form.validation/required"}]}
              (send-command user-id {:type :application.command/submit
                                     :application-id app-id}))))
     (testing "set value of required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/save-draft
                                     :application-id app-id
-                                    :field-values [{:field opt-id :value "opt"}
-                                                   {:field req-id :value "req"}]}))))
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}]}))))
     (testing "can submit with required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
@@ -709,7 +726,7 @@
           (is (= {:success true}
                  (send-command user-id {:type :application.command/save-draft
                                         :application-id app-id
-                                        :field-values [{:field "attach" :value (str id)}]}))))
+                                        :field-values [{:form form-id :field "attach" :value (str id)}]}))))
         (testing "and submitting"
           (is (= {:success true}
                  (send-command user-id {:type :application.command/submit

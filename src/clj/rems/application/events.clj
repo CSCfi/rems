@@ -7,6 +7,7 @@
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
+(def FormId s/Int)
 (def FieldId s/Str)
 
 (s/defschema EventBase
@@ -60,7 +61,7 @@
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]
-         :form/id s/Int
+         :application/forms [{:form/id FormId}]
          :workflow/id s/Int
          :workflow/type (apply s/enum workflow-types)))
 (s/defschema DecidedEvent
@@ -76,7 +77,9 @@
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/draft-saved)
-         :application/field-values {FieldId s/Str}))
+         :application/field-values [{:form FormId
+                                     :field FieldId
+                                     :value s/Str}]))
 (s/defschema ExternalIdAssignedEvent
   (assoc EventBase
          :event/type (s/enum :application.event/external-id-assigned)
@@ -122,6 +125,7 @@
 (s/defschema ResourcesChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/resources-changed)
+         :application/forms [{:form/id FormId}]
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]))

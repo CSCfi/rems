@@ -239,7 +239,7 @@
    :application/accepted-licenses (s/maybe {UserId #{s/Int}})
    :application/events [Event]
    :application/description s/Str
-   :application/form Form
+   :application/forms [Form]
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) [Handler]}
@@ -249,6 +249,6 @@
 
 (s/defschema ApplicationOverview
   (dissoc Application
-          :application/form
           :application/events
+          :application/forms
           :application/licenses))
