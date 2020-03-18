@@ -593,7 +593,10 @@
         submit-command {:type :application.command/submit
                         :actor applicant-user-id}
         application-no-licenses (apply-events nil [created-event draft-saved-event])
-        application (apply-events application-no-licenses [licenses-accepted-event])]
+        application (apply-events application-no-licenses [licenses-accepted-event])
+        created-event2 (assoc created-event :application/forms [{:form/id 1} {:form/id 2}])
+        draft-saved-event2 (update draft-saved-event :application/field-values conj {:form 2 :field "1" :value "baz"})
+        application2 (apply-events nil [created-event2 draft-saved-event2 licenses-accepted-event])]
 
     (testing "cannot submit a valid form if licenses are not accepted"
       (is (= {:errors [{:type :t.actions.errors/licenses-not-accepted}]}
@@ -605,6 +608,13 @@
               :event/actor applicant-user-id
               :application/id app-id}
              (ok-command application submit-command injections))))
+
+    (testing "can submit two valid forms when licenses are accepted"
+      (is (= {:event/type :application.event/submitted
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id}
+             (ok-command application2 submit-command injections))))
 
     (testing "required fields"
       (testing "1st field is optional and empty, 2nd field is required but invisible"
@@ -629,7 +639,21 @@
                 :event/actor applicant-user-id
                 :application/id app-id}
                (-> application
-                   (ok-command submit-command injections))))))
+                   (ok-command submit-command injections)))))
+
+      (testing "cannot submit if one of two forms has required fields"
+        (is (= {:errors [{:field-id "1" :type :t.form.validation/required :form-id 2}]}
+               (-> application2
+                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                       {:form 1 :field "2" :value "bar"}
+                                                                                       {:form 2 :field "1" :value ""}])])
+                   (fail-command submit-command injections))))
+        (is (= {:errors [{:field-id "2" :type :t.form.validation/required :form-id 1}]}
+               (-> application2
+                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                       {:form 1 :field "2" :value ""}
+                                                                                       {:form 2 :field "1" :value "baz"}])])
+                   (fail-command submit-command injections))))))
 
     (testing "cannot submit if catalogue item is disabled"
       (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
