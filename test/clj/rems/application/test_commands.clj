@@ -12,6 +12,8 @@
 
 (def ^:private test-time (DateTime. 1000))
 (def ^:private app-id 123)
+(def ^:private new-app-id 456)
+(def ^:private new-external-id "2019/66")
 (def ^:private applicant-user-id "applicant")
 (def ^:private handler-user-id "assistant")
 (def ^:private dummy-created-event {:event/type :application.event/created
@@ -21,48 +23,92 @@
                                     :application/external-id "2000/123"
                                     :application/resources []
                                     :application/licenses []
-                                    :form/id 1
+                                    :application/forms [{:form/id 1}]
                                     :workflow/id 1
                                     :workflow/type :workflow/default})
-(def ^:private dummy-licenses {1 {:id 1
-                                  :licensetype "link"
-                                  :localizations {:en {:title "en title"
-                                                       :textcontent "en link"
-                                                       :attachment-id 1}
-                                                  :fi {:title "fi title"
-                                                       :textcontent "fi link"
-                                                       :attachment-id 2}}}})
-(def ^:private dummy-workflows {1 {:workflow {:handlers [{:userid handler-user-id
-                                                          :name "user"
-                                                          :email "user@example.com"}]}}})
-(def ^:private dummy-forms {1 {:form/fields [{:field/id "1"
-                                              :field/optional true
-                                              :field/type :options
-                                              :field/options [{:key "foo" :label "Foo"}
-                                                              {:key "bar" :label "Bar"}]}
-                                             {:field/id "2"
-                                              :field/optional false
-                                              :field/visibility {:visibility/type :only-if
-                                                                 :visibility/field {:field/id "1"}
-                                                                 :visibility/values ["foo"]}}]}})
+(def ^:private dummy-licenses
+  {1 {:id 1
+      :licensetype "link"
+      :localizations {:en {:title "en title"
+                           :textcontent "en link"
+                           :attachment-id 1}
+                      :fi {:title "fi title"
+                           :textcontent "fi link"
+                           :attachment-id 2}}}
+   2 {:id 2
+      :licensetype "link"
+      :localizations {:en {:title "en title"
+                           :textcontent "en link"}
+                      :fi {:title "fi title"
+                           :textcontent "fi link"}}}
+   3 {:id 3
+      :licensetype "link"
+      :localizations {:en {:title "en title"
+                           :textcontent "en link"}
+                      :fi {:title "fi title"
+                           :textcontent "fi link"}}}})
+
+(defn- dummy-get-workflow [id]
+  (getx {1 {:workflow {:type :workflow/default
+                       :handlers [{:userid handler-user-id
+                                   :name "user"
+                                   :email "user@example.com"}]}}}
+        id))
+(defn- dummy-get-form-template [id]
+  (getx {1 {:form/id 1
+            :form/fields [{:field/id "1"
+                           :field/optional true
+                           :field/type :options
+                           :field/options [{:key "foo" :label "Foo"}
+                                           {:key "bar" :label "Bar"}]}
+                          {:field/id "2"
+                           :field/optional false
+                           :field/visibility {:visibility/type :only-if
+                                              :visibility/field {:field/id "1"}
+                                              :visibility/values ["foo"]}}]}
+         2 {:form/id 2
+            :form/fields [{:field/id "1"
+                           :field/optional false}]}}
+        id))
 
 (defn- dummy-get-catalogue-item [id]
-  {:enabled true :archived false :expired false
-   :id id :wfid 1 :formid 1})
+  (when (< id 10000)
+    (merge {:enabled true :archived false :expired false
+            :id id :wfid 1 :formid 1}
+           (getx {1 {:resid "res1"}
+                  2 {:resid "res2"}
+                  3 {:resid "res3"
+                     :formid 2}
+                  4 {:resid "res4"
+                     :wfid 2}}
+                 id))))
+
+(defn- dummy-get-catalogue-item-licenses [id]
+  (getx {1 [{:id 1}]
+         2 [{:id 2}]
+         3 [{:id 1}
+            {:id 2}
+            {:id 3}]} id))
 
 (defn- dummy-get-config []
   {})
 
+(def allocated-new-ids? (atom false))
 (def ^:private injections
   {:blacklisted? (constantly false)
-   :get-workflow dummy-workflows
-   :get-form-template dummy-forms
+   :get-workflow dummy-get-workflow
+   :get-form-template dummy-get-form-template
    :get-catalogue-item dummy-get-catalogue-item
+   :get-catalogue-item-licenses dummy-get-catalogue-item-licenses
    :get-config dummy-get-config
    :get-license dummy-licenses
    :get-user (fn [userid] {:userid userid})
    :get-users-with-role (constantly nil)
-   :get-attachments-for-application (constantly nil)})
+   :get-attachments-for-application (constantly nil)
+   :allocate-application-ids! (fn [_time]
+                                (reset! allocated-new-ids? true)
+                                {:application/id new-app-id
+                                 :application/external-id new-external-id})})
 
 ;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
@@ -115,109 +161,96 @@
 ;;; Tests
 
 (deftest test-create
-  (let [cat-id 10
-        cat-id2 20
-        licence-id 30
-        licence-id2 40
-        form-id 50
-        wf-id 60
-        injections {:get-catalogue-item {cat-id {:id cat-id
-                                                 :resid "res1"
-                                                 :formid form-id
-                                                 :wfid wf-id}
-                                         cat-id2 {:id cat-id2
-                                                  :resid "res2"
-                                                  :formid form-id
-                                                  :wfid wf-id}}
-                    :get-catalogue-item-licenses {cat-id [{:id licence-id}]
-                                                  cat-id2 [{:id licence-id2}]}
-                    :get-workflow {wf-id {:workflow {:type :workflow/default}}}
-                    :allocate-application-ids! (fn [^DateTime time]
-                                                 {:application/id app-id
-                                                  :application/external-id (str (.getYear time) "/1")})}]
-    (testing "one resource"
-      (is (= {:event/type :application.event/created
-              :event/actor applicant-user-id
-              :event/time (DateTime. 1000)
-              :application/id app-id
-              :application/external-id "1970/1"
-              :application/resources [{:catalogue-item/id cat-id
-                                       :resource/ext-id "res1"}]
-              :application/licenses [{:license/id licence-id}]
-              :form/id form-id
-              :workflow/id wf-id
-              :workflow/type :workflow/default}
-             (ok-command nil {:type :application.command/create
+  (testing "one resource"
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 1
+                                     :resource/ext-id "res1"}]
+            :application/licenses [{:license/id 1}]
+            :application/forms [{:form/id 1}]
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command nil {:type :application.command/create
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1]}
+                       injections))))
+  (testing "multiple resources"
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 1
+                                     :resource/ext-id "res1"}
+                                    {:catalogue-item/id 2
+                                     :resource/ext-id "res2"}]
+            :application/licenses [{:license/id 1}
+                                   {:license/id 2}]
+            :application/forms [{:form/id 1}]
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command nil {:type :application.command/create
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1 2]}
+                       injections))))
+
+  (testing "error: zero catalogue items"
+    (is (= {:errors [{:type :must-not-be-empty
+                      :key :catalogue-item-ids}]}
+           (fail-command nil {:type :application.command/create
                               :actor applicant-user-id
-                              :catalogue-item-ids [cat-id]}
+                              :catalogue-item-ids []}
                          injections))))
 
-    (testing "multiple resources"
-      (is (= {:event/type :application.event/created
-              :event/actor applicant-user-id
-              :event/time (DateTime. 1000)
-              :application/id app-id
-              :application/external-id "1970/1"
-              :application/resources [{:catalogue-item/id cat-id
-                                       :resource/ext-id "res1"}
-                                      {:catalogue-item/id cat-id2
-                                       :resource/ext-id "res2"}]
-              :application/licenses [{:license/id licence-id}
-                                     {:license/id licence-id2}]
-              :form/id form-id
-              :workflow/id wf-id
-              :workflow/type :workflow/default}
-             (ok-command nil {:type :application.command/create
+  (testing "error: non-existing catalogue items"
+    (is (= {:errors [{:type :invalid-catalogue-item
+                      :catalogue-item-id 999999}]}
+           (fail-command nil {:type :application.command/create
                               :actor applicant-user-id
-                              :catalogue-item-ids [cat-id cat-id2]}
+                              :catalogue-item-ids [999999]}
                          injections))))
 
-    (testing "error: zero catalogue items"
-      (is (= {:errors [{:type :must-not-be-empty
-                        :key :catalogue-item-ids}]}
-             (fail-command nil {:type :application.command/create
-                                :actor applicant-user-id
-                                :catalogue-item-ids []}
-                           injections))))
+  (testing "catalogue items with different forms"
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 1
+                                     :resource/ext-id "res1"}
+                                    {:catalogue-item/id 3
+                                     :resource/ext-id "res3"}]
+            :application/licenses [{:license/id 1}
+                                   {:license/id 2}
+                                   {:license/id 3}]
+            :application/forms [{:form/id 1} {:form/id 2}]
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command nil {:type :application.command/create
+                            :actor applicant-user-id
+                            :catalogue-item-ids [1 3]}
+                       injections))))
 
-    (testing "error: non-existing catalogue items"
-      (is (= {:errors [{:type :invalid-catalogue-item
-                        :catalogue-item-id 999999}]}
-             (fail-command nil {:type :application.command/create
-                                :actor applicant-user-id
-                                :catalogue-item-ids [999999]}
-                           injections))))
+  (testing "error: catalogue items with different workflows"
+    (is (= {:errors [{:type :unbundlable-catalogue-items
+                      :catalogue-item-ids [1 4]}]}
+           (fail-command nil {:type :application.command/create
+                              :actor applicant-user-id
+                              :catalogue-item-ids [1 4]}
+                         injections))))
 
-    (testing "error: catalogue items with different forms"
-      (let [injections (assoc-in injections [:get-catalogue-item cat-id2 :formid] 666)]
-        (is (= {:errors [{:type :unbundlable-catalogue-items
-                          :catalogue-item-ids [10 20]}]}
-               (fail-command nil {:type :application.command/create
-                                  :actor applicant-user-id
-                                  :catalogue-item-ids [cat-id cat-id2]}
-                             injections)))))
-
-    (testing "error: catalogue items with different workflows"
-      (let [injections (assoc-in injections [:get-catalogue-item cat-id2 :wfid] 666)]
-        (is (= {:errors [{:type :unbundlable-catalogue-items
-                          :catalogue-item-ids [10 20]}]}
-               (fail-command nil {:type :application.command/create
-                                  :actor applicant-user-id
-                                  :catalogue-item-ids [cat-id cat-id2]}
-                             injections)))))
-
-    (testing "cannot execute the create command for an existing application"
-      (let [allocated-new-ids? (atom false)
-            injections (assoc injections :allocate-application-ids! (fn [_]
-                                                                      (reset! allocated-new-ids? true)))
-            application (apply-events nil [dummy-created-event])]
-        (is (= {:errors [{:type :forbidden}]}
-               (fail-command application {:type :application.command/create
-                                          :actor applicant-user-id
-                                          :catalogue-item-ids [cat-id]}
-                             injections)))
-        (is (false? @allocated-new-ids?)
-            "should not allocate new IDs")))))
+  (testing "cannot execute the create command for an existing application"
+    (reset! allocated-new-ids? false)
+    (let [application (apply-events nil [dummy-created-event])]
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application {:type :application.command/create
+                                        :actor applicant-user-id
+                                        :catalogue-item-ids [1]}
+                           injections)))
+      (is (false? @allocated-new-ids?) "should not allocate new IDs"))))
 
 (deftest test-save-draft
   (let [application (apply-events nil [dummy-created-event])]
@@ -226,24 +259,37 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
-              :application/field-values {"1" "foo" "2" "bar"}}
+              :application/field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}
              (ok-command application
                          {:type :application.command/save-draft
                           :actor applicant-user-id
-                          :field-values [{:field "1" :value "foo"}
-                                         {:field "2" :value "bar"}]}))))
+                          :field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}))))
+    (testing "saves a draft"
+      (is (= {:event/type :application.event/draft-saved
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id
+              :application/field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}
+             (ok-command application
+                         {:type :application.command/save-draft
+                          :actor applicant-user-id
+                          :field-values [{:form 1 :field "1" :value "foo"}
+                                         {:form 1 :field "2" :value "bar"}]}))))
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/save-draft
                             :actor "non-applicant"
-                            :field-values [{:field "1" :value "foo"}
-                                           {:field "2" :value "bar"}]})
+                            :field-values [{:form 1 :field "1" :value "foo"}
+                                           {:form 1 :field "2" :value "bar"}]})
              (fail-command application
                            {:type :application.command/save-draft
                             :actor handler-user-id
-                            :field-values [{:field "1" :value "foo"}
-                                           {:field "2" :value "bar"}]}))))
+                            :field-values [{:form 1 :field "1" :value "foo"}
+                                           {:form 1 :field "2" :value "bar"}]}))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -254,7 +300,7 @@
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
-                              :field-values [{:field "1" :value "updated"}]})))))
+                              :field-values [{:form 1 :field "1" :value "updated"}]})))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -270,11 +316,11 @@
                 :event/time test-time
                 :event/actor applicant-user-id
                 :application/id app-id
-                :application/field-values {"1" "updated"}}
+                :application/field-values [{:form 1 :field "1" :value "updated"}]}
                (ok-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values [{:field "1" :value "updated"}]})))))))
+                            :field-values [{:form 1 :field "1" :value "updated"}]})))))))
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
@@ -351,6 +397,7 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -378,20 +425,27 @@
                             :catalogue-item-ids [cat-1 cat-3-other-workflow]}
                            injections))))
 
-    (testing "applicant cannot add resources with different form"
-      (is (= {:errors [{:type :unbundlable-catalogue-items
-                        :catalogue-item-ids [cat-1 cat-4-other-form]}]}
-             (fail-command application
-                           {:type :application.command/change-resources
-                            :actor applicant-user-id
-                            :catalogue-item-ids [cat-1 cat-4-other-form]}
-                           injections))))
+    (testing "applicant can add resources with different form"
+      (is (= {:event/type :application.event/resources-changed
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id
+              :application/forms [{:form/id 1} {:form/id 2}]
+              :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
+                                      {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
+              :application/licenses [{:license/id license-1}]}
+             (ok-command application
+                         {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [cat-1 cat-4-other-form]}
+                         injections))))
 
     (testing "applicant can replace resources"
       (is (= {:event/type :application.event/resources-changed
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-2}]}
              (ok-command application
@@ -408,13 +462,19 @@
                             :catalogue-item-ids [cat-3-other-workflow]}
                            injections))))
 
-    (testing "applicant cannot replace resources with different form"
-      (is (= {:errors [{:type :changes-original-form :form/id form-1 :ids [form-2]}]}
-             (fail-command application
-                           {:type :application.command/change-resources
-                            :actor applicant-user-id
-                            :catalogue-item-ids [cat-4-other-form]}
-                           injections))))
+    (testing "applicant can replace resources with different form"
+      (is (= {:event/type :application.event/resources-changed
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id
+              :application/forms [{:form/id 2}]
+              :application/resources [{:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
+              :application/licenses [{:license/id license-1}]}
+             (ok-command application
+                         {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [cat-4-other-form]}
+                         injections))))
 
     (testing "handler can add resources to a submitted application"
       (is (= {:event/type :application.event/resources-changed
@@ -422,6 +482,7 @@
               :event/actor handler-user-id
               :application/id app-id
               :application/comment "Changed these for you"
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -439,6 +500,7 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "Changed these for you"
+                :application/forms [{:form/id 1} {:form/id 2}]
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
@@ -456,6 +518,7 @@
               :event/actor handler-user-id
               :application/id app-id
               :application/comment "Changed these for you"
+              :application/forms [{:form/id 1}]
               :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                       {:catalogue-item/id cat-2-other-license :resource/ext-id "res2"}]
               :application/licenses [{:license/id license-1}
@@ -473,6 +536,7 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "Changed these for you"
+                :application/forms [{:form/id 1} {:form/id 2}]
                 :application/resources [{:catalogue-item/id cat-1 :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-3-other-workflow :resource/ext-id "res3"}
                                         {:catalogue-item/id cat-4-other-form :resource/ext-id "res4"}]
@@ -501,26 +565,26 @@
 
 (deftest test-submit
   (let [injections {:validate-fields form-validation/validate-fields
-                    :get-form-template dummy-forms}
+                    :get-form-template dummy-get-form-template}
         created-event {:event/type :application.event/created
                        :event/time test-time
                        :event/actor applicant-user-id
                        :application/id app-id
                        :application/external-id "2000/123"
-                       :application/resources [{:catalogue-item/id 10
-                                                :resource/ext-id "urn:11"}
-                                               {:catalogue-item/id 20
-                                                :resource/ext-id "urn:21"}]
+                       :application/resources [{:catalogue-item/id 1
+                                                :resource/ext-id "res1"}
+                                               {:catalogue-item/id 2
+                                                :resource/ext-id "res2"}]
                        :application/licenses [{:license/id 1}]
-                       :form/id 1
-                       :workflow/id 50
+                       :application/forms [{:form/id 1}]
+                       :workflow/id 1
                        :workflow/type :workflow/default}
         draft-saved-event {:event/type :application.event/draft-saved
                            :event/time test-time
                            :event/actor applicant-user-id
                            :application/id app-id
-                           :application/field-values {"1" "foo"
-                                                      "2" "bar"}}
+                           :application/field-values [{:form 1 :field "1" :value "foo"}
+                                                      {:form 1 :field "2" :value "bar"}]}
         licenses-accepted-event {:event/type :application.event/licenses-accepted
                                  :event/time test-time
                                  :event/actor applicant-user-id
@@ -529,7 +593,10 @@
         submit-command {:type :application.command/submit
                         :actor applicant-user-id}
         application-no-licenses (apply-events nil [created-event draft-saved-event])
-        application (apply-events application-no-licenses [licenses-accepted-event])]
+        application (apply-events application-no-licenses [licenses-accepted-event])
+        created-event2 (assoc created-event :application/forms [{:form/id 1} {:form/id 2}])
+        draft-saved-event2 (update draft-saved-event :application/field-values conj {:form 2 :field "1" :value "baz"})
+        application2 (apply-events nil [created-event2 draft-saved-event2 licenses-accepted-event])]
 
     (testing "cannot submit a valid form if licenses are not accepted"
       (is (= {:errors [{:type :t.actions.errors/licenses-not-accepted}]}
@@ -542,6 +609,13 @@
               :application/id app-id}
              (ok-command application submit-command injections))))
 
+    (testing "can submit two valid forms when licenses are accepted"
+      (is (= {:event/type :application.event/submitted
+              :event/time test-time
+              :event/actor applicant-user-id
+              :application/id app-id}
+             (ok-command application2 submit-command injections))))
+
     (testing "required fields"
       (testing "1st field is optional and empty, 2nd field is required but invisible"
         (is (= {:event/type :application.event/submitted
@@ -549,15 +623,15 @@
                 :event/actor applicant-user-id
                 :application/id app-id}
                (-> application
-                   (apply-events [(-> draft-saved-event
-                                      (assoc-in [:application/field-values "1"] "")
-                                      (assoc-in [:application/field-values "2"] ""))])
+                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "1" :value ""}
+                                                                                      {:form 1 :field "2" :value ""}])])
                    (ok-command submit-command injections)))))
       (testing "1st field is given, 2nd field is required and visible but empty"
         (is (= {:errors [{:type :t.form.validation/required
+                          :form-id 1
                           :field-id "2"}]}
                (-> application
-                   (apply-events [(assoc-in draft-saved-event [:application/field-values "2"] "")])
+                   (apply-events [(assoc draft-saved-event :application/field-values [{:form 1 :field "2" :value ""}])])
                    (fail-command submit-command injections)))))
       (testing "1st field is given, 2nd field is given"
         (is (= {:event/type :application.event/submitted
@@ -565,11 +639,25 @@
                 :event/actor applicant-user-id
                 :application/id app-id}
                (-> application
-                   (ok-command submit-command injections))))))
+                   (ok-command submit-command injections)))))
+
+      (testing "cannot submit if one of two forms has required fields"
+        (is (= {:errors [{:field-id "1" :type :t.form.validation/required :form-id 2}]}
+               (-> application2
+                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                       {:form 1 :field "2" :value "bar"}
+                                                                                       {:form 2 :field "1" :value ""}])])
+                   (fail-command submit-command injections))))
+        (is (= {:errors [{:field-id "2" :type :t.form.validation/required :form-id 1}]}
+               (-> application2
+                   (apply-events [(assoc draft-saved-event2 :application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                                       {:form 1 :field "2" :value ""}
+                                                                                       {:form 2 :field "1" :value "baz"}])])
+                   (fail-command submit-command injections))))))
 
     (testing "cannot submit if catalogue item is disabled"
       (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
-        (is (= {:errors [{:type :t.actions.errors/disabled-catalogue-item, :catalogue-item-id 20}]}
+        (is (= {:errors [{:type :t.actions.errors/disabled-catalogue-item, :catalogue-item-id 2}]}
                (fail-command disabled submit-command injections)))))
 
     (testing "non-applicant cannot submit"
@@ -1364,72 +1452,58 @@
                    event-2))))))))
 
 (deftest test-copy-as-new
-  (let [old-app-id 100
-        new-app-id 200
-        created-event {:event/type :application.event/created
+  (let [created-event {:event/type :application.event/created
                        :event/time test-time
                        :event/actor applicant-user-id
-                       :application/id old-app-id
+                       :application/id app-id
                        :application/external-id "2018/55"
-                       :application/resources [{:catalogue-item/id 10
-                                                :resource/ext-id "urn:11"}
-                                               {:catalogue-item/id 20
-                                                :resource/ext-id "urn:21"}]
+                       :application/resources [{:catalogue-item/id 1
+                                                :resource/ext-id "res1"}
+                                               {:catalogue-item/id 2
+                                                :resource/ext-id "res2"}]
                        :application/licenses []
-                       :form/id 40
-                       :workflow/id 50
+                       :application/forms [{:form/id 1}]
+                       :workflow/id 1
                        :workflow/type :workflow/default}
-        injections {:get-catalogue-item {10 {:id 10
-                                             :resid "urn:11"
-                                             :formid 40
-                                             :wfid 50}
-                                         20 {:id 20
-                                             :resid "urn:21"
-                                             :formid 40
-                                             :wfid 50}}
-                    :get-catalogue-item-licenses {10 []
-                                                  20 []}
-                    :get-workflow {50 {:workflow {:type :workflow/default}}}
-                    :allocate-application-ids! (fn [_time]
-                                                 {:application/id new-app-id
-                                                  :application/external-id "2019/66"})}
         application (apply-events nil [created-event
                                        {:event/type :application.event/draft-saved
                                         :event/time test-time
                                         :event/actor applicant-user-id
-                                        :application/id old-app-id
-                                        :application/field-values {"1" "foo" "2" "bar"}}])]
+                                        :application/id app-id
+                                        :application/field-values [{:form 1 :field "1" :value "foo"}
+                                                                   {:form 1 :field "2" :value "bar"}]}])]
     (testing "creates a new application with the same form answers"
       (is (= [{:event/type :application.event/created
                :event/time test-time
                :event/actor applicant-user-id
                :application/id new-app-id
-               :application/external-id "2019/66"
-               :application/resources [{:catalogue-item/id 10
-                                        :resource/ext-id "urn:11"}
-                                       {:catalogue-item/id 20
-                                        :resource/ext-id "urn:21"}]
-               :application/licenses []
-               :form/id 40
-               :workflow/id 50
+               :application/external-id new-external-id
+               :application/resources [{:catalogue-item/id 1
+                                        :resource/ext-id "res1"}
+                                       {:catalogue-item/id 2
+                                        :resource/ext-id "res2"}]
+               :application/licenses [{:license/id 1} {:license/id 2}]
+               :application/forms [{:form/id 1}]
+               :workflow/id 1
                :workflow/type :workflow/default}
               {:event/type :application.event/draft-saved
                :event/time test-time
                :event/actor applicant-user-id
                :application/id new-app-id
-               :application/field-values {"1" "foo" "2" "bar"}}
+               :application/field-values [{:form 1 :field "1" :value "foo"}
+                                          {:form 1 :field "2" :value "bar"}]}
               {:event/type :application.event/copied-from
                :event/time test-time
                :event/actor applicant-user-id
                :application/id new-app-id
-               :application/copied-from {:application/id old-app-id
+               :application/copied-from {:application/id app-id
                                          :application/external-id "2018/55"}}
               {:event/type :application.event/copied-to
                :event/time test-time
                :event/actor applicant-user-id
-               :application/id old-app-id
+               :application/id app-id
                :application/copied-to {:application/id new-app-id
-                                       :application/external-id "2019/66"}}]
+                                       :application/external-id new-external-id}}]
              (ok-command application
                          {:type :application.command/copy-as-new
                           :actor applicant-user-id}

@@ -1,8 +1,10 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
+            [medley.core]
+            [rems.common.util :refer [build-index]]
             [rems.common.application-util :as application-util]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx getx-in assert-ex try-catch-ex update-present]]
+            [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import [java.util UUID]
@@ -12,6 +14,7 @@
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
+(def FormId s/Int)
 (def FieldId s/Str)
 
 (s/defschema CommandInternal
@@ -90,8 +93,8 @@
          :comment s/Str))
 (s/defschema SaveDraftCommand
   (assoc CommandBase
-         ;; {s/Int s/Str} is what we want, but that isn't nicely representable as JSON
-         :field-values [{:field FieldId
+         :field-values [{:form FormId
+                         :field FieldId
                          :value s/Str}]))
 (s/defschema SubmitCommand
   CommandBase)
@@ -219,23 +222,11 @@
                (apply not= original-workflow-id new-workflow-ids))
       {:errors [{:type :changes-original-workflow :workflow/id original-workflow-id :ids new-workflow-ids}]})))
 
-(defn- changes-original-form
-  "Checks that the given catalogue items are compatible with the original application from where the form is from. Applicant can't do it."
-  [application catalogue-item-ids actor {:keys [get-catalogue-item]}]
-  (let [catalogue-items (map get-catalogue-item catalogue-item-ids)
-        original-form-id (get-in application [:application/form :form/id])
-        new-form-ids (mapv :formid catalogue-items)]
-    (when (and (not (application-util/is-handler? application actor))
-               (apply not= original-form-id new-form-ids))
-      {:errors [{:type :changes-original-form :form/id original-form-id :ids new-form-ids}]})))
-
 (defn- unbundlable-catalogue-items
   "Checks that the given catalogue items are bundlable."
   [catalogue-item-ids {:keys [get-catalogue-item]}]
   (let [catalogue-items (map get-catalogue-item catalogue-item-ids)]
-    (when (not= 1
-                (count (set (map :formid catalogue-items)))
-                (count (set (map :wfid catalogue-items))))
+    (when-not (= 1 (count (set (map :wfid catalogue-items))))
       {:errors [{:type :unbundlable-catalogue-items :catalogue-item-ids catalogue-item-ids}]})))
 
 (defn- unbundlable-catalogue-items-for-actor
@@ -245,7 +236,9 @@
     (unbundlable-catalogue-items catalogue-item-ids injections)))
 
 (defn- validation-error [application {:keys [validate-fields]}]
-  (let [errors (validate-fields (getx-in application [:application/form :form/fields]))]
+  (let [errors (for [form (:application/forms application)
+                     error (validate-fields (:form/fields form))]
+                 (assoc error :form-id (:form/id form)))]
     (when (seq errors)
       {:errors errors})))
 
@@ -270,6 +263,13 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
+(defn- build-forms-list [catalogue-item-ids {:keys [get-catalogue-item]}]
+  (->> catalogue-item-ids
+       (mapv get-catalogue-item)
+       (mapv :formid)
+       (distinct)
+       (mapv (fn [form-id] {:form/id form-id}))))
+
 (defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
@@ -291,9 +291,9 @@
       (invalid-catalogue-items catalogue-item-ids injections)
       (unbundlable-catalogue-items catalogue-item-ids injections)
       (let [items (map get-catalogue-item catalogue-item-ids)
-            form-id (:formid (first items))
+            form-ids (distinct (map :formid items))
             workflow-id (:wfid (first items))
-            workflow-type (:type (:workflow (get-workflow workflow-id)))
+            workflow-type (getx-in (get-workflow workflow-id) [:workflow :type])
             ids (allocate-application-ids! time)]
         {:event {:event/type :application.event/created
                  :event/time time
@@ -302,7 +302,7 @@
                  :application/external-id (:application/external-id ids)
                  :application/resources (build-resources-list catalogue-item-ids injections)
                  :application/licenses (build-licenses-list catalogue-item-ids injections)
-                 :form/id form-id
+                 :application/forms (mapv (fn [form-id] {:form/id form-id}) form-ids)
                  :workflow/id workflow-id
                  :workflow/type workflow-type}})))
 
@@ -322,9 +322,7 @@
 (defmethod command-handler :application.command/save-draft
   [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
-       :application/field-values (into {}
-                                       (for [{:keys [field value]} (:field-values cmd)]
-                                         [field value]))}))
+       :application/field-values (:field-values cmd)}))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
@@ -429,16 +427,17 @@
 
 (defmethod command-handler :application.command/change-resources
   [cmd application injections]
-  (or (must-not-be-empty cmd :catalogue-item-ids)
-      (invalid-catalogue-items (:catalogue-item-ids cmd) injections)
-      (unbundlable-catalogue-items-for-actor application (:catalogue-item-ids cmd) (:actor cmd) injections)
-      (changes-original-form application (:catalogue-item-ids cmd) (:actor cmd) injections)
-      (changes-original-workflow application (:catalogue-item-ids cmd) (:actor cmd) injections)
-      (ok (merge {:event/type :application.event/resources-changed
-                  :application/resources (build-resources-list (:catalogue-item-ids cmd) injections)
-                  :application/licenses (build-licenses-list (:catalogue-item-ids cmd) injections)}
-                 (when (:comment cmd)
-                   {:application/comment (:comment cmd)})))))
+  (let [cat-ids (:catalogue-item-ids cmd)]
+    (or (must-not-be-empty cmd :catalogue-item-ids)
+        (invalid-catalogue-items cat-ids injections)
+        (unbundlable-catalogue-items-for-actor application cat-ids (:actor cmd) injections)
+        (changes-original-workflow application cat-ids (:actor cmd) injections)
+        (ok (merge {:event/type :application.event/resources-changed
+                    :application/forms (build-forms-list cat-ids injections)
+                    :application/resources (build-resources-list cat-ids injections)
+                    :application/licenses (build-licenses-list cat-ids injections)}
+                   (when (:comment cmd)
+                     {:application/comment (:comment cmd)}))))))
 
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
@@ -500,10 +499,11 @@
          [created-event
           {:event/type :application.event/draft-saved
            :application/id new-app-id
-           :application/field-values (->> (:form/fields (:application/form application))
-                                          (map (fn [field]
-                                                 [(:field/id field) (:field/value field)]))
-                                          (into {}))}
+           :application/field-values (for [form (:application/forms application)
+                                           field (:form/fields form)]
+                                       {:form (:form/id form)
+                                        :field (:field/id field)
+                                        :value (:field/value field)})}
           {:event/type :application.event/copied-from
            :application/id new-app-id
            :application/copied-from (select-keys application [:application/id :application/external-id])}
