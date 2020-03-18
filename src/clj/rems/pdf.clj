@@ -17,6 +17,12 @@
         resources (getx application :application/resources)]
     (concat
      (list
+      [:heading (str (text :t.applications/application)
+                     " "
+                     (get application :application/external-id
+                          (getx application :application/id))
+                     (when-let [description (get application :application/description)]
+                       (str ": " description)))]
       [:paragraph
        (text :t.applications/state)
        (when state [:phrase ": " (localize-state state)])]
@@ -25,7 +31,6 @@
      (seq
       (for [member (getx application :application/members)]
         [:paragraph (text :t.applicant-info/member) ": " (render-user member)]))
-     ;; TODO more fields?
      (list
       [:heading (text :t.form/resources)]
       (into
@@ -48,22 +53,20 @@
 
 (defn- render-field [field]
   (list
-   [:heading (localized (:field/title field))]
+   [:chunk {:style :bold} (localized (:field/title field))]
    [:paragraph (:field/value field)]))
 
 (defn- render-fields [application]
-  (seq ;; TODO clj-pdf doesn't tolerate empty sequences
-   (apply concat
-          (for [form (getx application :application/forms)
-                field (getx form :form/fields)]
-            (render-field field)))))
+  (apply concat
+         (list [:heading (text :t.form/application)])
+         (for [form (getx application :application/forms)
+               field (getx form :form/fields)]
+           (render-field field))))
 
 (defn- render-license [license]
-  ;; TODO nicer checkbox rendering
   ;; TODO license text?
+  ;; TODO get acceptance state?
   [:paragraph
-   ;; TODO get acceptance state
-   #_(if (getx license :license/accepted) "[x] " "[ ] ")
    (localized (:license/title license))])
 
 (defn- render-licenses [application]
@@ -73,10 +76,9 @@
 
 (defn- render-application [application]
   [{}
-   [:heading (text :t.applications/application)]
    (render-header application)
-   (render-fields application)
-   (render-licenses application)])
+   (render-licenses application)
+   (render-fields application)])
 
 (defn application-to-pdf [application out]
   (pdf (render-application application) out))
