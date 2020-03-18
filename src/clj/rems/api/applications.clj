@@ -14,10 +14,13 @@
             [rems.auth.auth :as auth]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :as config]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.csv :as csv]
             [rems.db.users :as users]
             [rems.experimental.pdf :as experimental-pdf]
+            [rems.pdf :as pdf]
+            [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
@@ -259,6 +262,22 @@
         (let [bytes (experimental-pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
           (-> (ok (ByteArrayInputStream. bytes))
               (content-type "application/pdf")))))
+
+    (GET "/:application-id/pdf" []
+      :summary "Get a pdf version of an application"
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")]
+      :produces ["application/pdf"]
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
+        (with-language context/*lang*
+          #(-> app
+               (pdf/application-to-pdf-bytes)
+               (ByteArrayInputStream.)
+               (ok)
+               ;; could also set "attachment" here to force download:
+               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
+               (content-type "application/pdf")))
+        (api-util/not-found-json-response)))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []
       :summary "Get file associated with licence of type attachment associated with application."

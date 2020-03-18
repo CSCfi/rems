@@ -274,6 +274,13 @@
 
 ;;;; UI components
 
+(defn- pdf-button [app-id]
+  (when app-id
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" app-id "/pdf")
+      :target :_blank}
+     "PDF " [external-link]]))
+
 (defn- link-license [license]
   (let [title (localized (:license/title license))
         link (localized (:license/link license))]
@@ -759,6 +766,7 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
+     [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [document-title (str (text :t.applications/application)
                           (when application
                             (str " " (application-list/format-application-id config application)))

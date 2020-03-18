@@ -98,6 +98,33 @@
                      read-body)]
         (is (:success body))))))
 
+(deftest pdf-smoke-test
+  (testing "not found"
+    (let [response (-> (request :get "/api/applications/9999999/pdf")
+                       (authenticate "42" "developer")
+                       handler)]
+      (is (response-is-not-found? response))))
+  (let [cat-id (test-data/create-catalogue-item! {:title {:fi "Fi title" :en "En title"}})
+        application-id (test-data/create-application! {:actor "alice"
+                                                       :catalogue-item-ids [cat-id]})]
+    (test-data/command! {:type :application.command/submit
+                         :application-id application-id
+                         :actor "alice"})
+    (testing "forbidden"
+      (let [response (-> (request :get (str "/api/applications/" application-id "/pdf"))
+                         (authenticate "42" "bob")
+                         handler)]
+        (is (response-is-forbidden? response))))
+    (testing "success"
+      (let [response (-> (request :get (str "/api/applications/" application-id "/pdf"))
+                         (authenticate "42" "developer")
+                         handler
+                         assert-response-is-ok)]
+        (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
+        (is (= (str "filename=\"" application-id ".pdf\"")
+               (get-in response [:headers "Content-Disposition"])))
+        (is (.startsWith (slurp (:body response)) "%PDF-1."))))))
+
 (deftest test-application-commands
   (let [user-id "alice"
         handler-id "developer"
