@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
+            [com.rpl.specter :refer [select ALL]]
             [etaoin.api :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
@@ -231,6 +232,9 @@
       (send-application)
       (is (= "Applied" (get-element-text *driver* :application-state))))
 
+    (testing "check a field answer"
+      (is (= "Test name" (get-element-text *driver* :form-1-field-fld2))))
+
     (let [application-id (get-application-id)]
       (testing "see application on applications page"
         (go-to-applications)
@@ -265,10 +269,19 @@
                     ["label" ""]
                     ["text" ""]
                     ["texta" ""]]
-                   (for [field (get-in application [:application/form :form/fields])]
+                   (for [field (select [:application/forms ALL :form/fields ALL] application)]
                      ;; TODO could test other fields here too, e.g. title
                      [(:field/type field)
-                      (:field/value field)])))))))))
+                      (:field/value field)]))))
+
+          (testing "after navigating to the application view again"
+            (scroll-and-click *driver* [{:css "table.my-applications"}
+                                        {:tag :tr :data-row application-id}
+                                        {:css ".btn-primary"}])
+            (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
+            (wait-page-loaded)
+            (testing "check a field answer"
+              (is (= "Test name" (get-element-text *driver* :form-1-field-fld2))))))))))
 
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}

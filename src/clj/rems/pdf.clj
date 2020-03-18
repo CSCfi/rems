@@ -54,7 +54,8 @@
 (defn- render-fields [application]
   (seq ;; TODO clj-pdf doesn't tolerate empty sequences
    (apply concat
-          (for [field (getx-in application [:application/form :form/fields])]
+          (for [form (getx application :application/forms)
+                field (getx form :form/fields)]
             (render-field field)))))
 
 (defn- render-license [license]

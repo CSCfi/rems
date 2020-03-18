@@ -41,6 +41,18 @@
                       :field/type :text
                       :field/privacy :private}]
        :enabled true
+       :archived false}
+   41 {:form/id 41
+       :form/organization "org"
+       :form/title "form title 2"
+       :form/fields [{:field/id "41"
+                      :field/title {:en "en title" :fi "fi title"}
+                      :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                      :field/optional false
+                      :field/max-length 100
+                      :field/type :text}
+]
+       :enabled true
        :archived false}})
 
 (def ^:private get-catalogue-item
@@ -87,6 +99,25 @@
        :resid "urn:31"
        :wfid 50
        :formid 40
+       :organization "org"
+       :localizations {:en {:id 20
+                            :langcode :en
+                            :title "en title"
+                            :infourl "http://info.com"}
+                       :fi {:id 20
+                            :langcode :fi
+                            :title "fi title"
+                            :infourl nil}}
+       :start (DateTime. 100)
+       :end nil
+       :enabled true
+       :archived false
+       :expired false}
+   40 {:id 40
+       :resource-id 31
+       :resid "urn:31"
+       :wfid 50
+       :formid 41
        :organization "org"
        :localizations {:en {:id 20
                             :langcode :en
@@ -227,7 +258,8 @@
 (def ^:dynamic *sample-event-seqs*)
 
 (defn save-sample-events! [events]
-  (swap! *sample-event-seqs* conj events)
+  (when (bound? #'*sample-event-seqs*)
+    (swap! *sample-event-seqs* conj events))
   events)
 
 (defn state-role-permissions [application]
@@ -401,7 +433,7 @@
                     :application/licenses [{:license/id 30}
                                            {:license/id 31}
                                            {:license/id 32}]
-                    :form/id 40
+                    :application/forms [{:form/id 40}]
                     :workflow/id 50
                     :workflow/type :workflow/master})
 
@@ -425,7 +457,7 @@
                                                  {:license/id 32}]
                           :application/accepted-licenses {}
                           :application/events [created-event]
-                          :application/form {:form/id 40}
+                          :application/forms [{:form/id 40}]
                           :application/workflow {:workflow/type :workflow/master
                                                  :workflow/id 50}})
 
@@ -436,16 +468,20 @@
                   :event/time (DateTime. 2000)
                   :event/actor "applicant"
                   :application/id 1
-                  :application/field-values {"41" "foo"
-                                             "42" "bar"
-                                             "43" "private answer"}})
+                  :application/field-values [{:form 40 :field "41" :value "foo"}
+                                             {:form 40 :field "42" :value "bar"}
+                                             {:form 40 :field "43" :value "private answer"}
+                                             {:form 40 :field "field-does-not-exist" :value "something"}]})
 
 (def saved-application (merge created-application
                               {:application/modified (DateTime. 2000)
                                :application/last-activity (DateTime. 2000)
                                :application/events [created-event saved-event]
                                :application/accepted-licenses {}
-                               :rems.application.model/draft-answers {"41" "foo", "42" "bar" "43" "private answer"}}))
+                               :rems.application.model/draft-answers [{:form 40 :field "41" :value "foo"}
+                                                                      {:form 40 :field "42" :value "bar"}
+                                                                      {:form 40 :field "43" :value "private answer"}
+                                                                      {:form 40 :field "field-does-not-exist" :value "something"}]}))
 
 (deftest test-application-view-saved
   (is (= saved-application (recreate saved-application))))
@@ -477,7 +513,10 @@
                                        :application/first-submitted (DateTime. 3000)
                                        :application/state :application.state/submitted
                                        :application/todo :new-application
-                                       :rems.application.model/submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}
+                                       :rems.application.model/submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                                  {:form 40 :field "42" :value "bar"}
+                                                                                  {:form 40 :field "43" :value "private answer"}
+                                                                                  {:form 40 :field "field-does-not-exist" :value "something"}]
                                        :rems.application.model/previous-submitted-answers nil})))
 
 (deftest test-application-view-submitted
@@ -546,7 +585,10 @@
                                        :application/events events
                                        :application/copied-from {:application/id 42
                                                                  :application/external-id "2019/42"}
-                                       :rems.application.model/submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}})]
+                                       :rems.application.model/submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                                  {:form 40 :field "42" :value "bar"}
+                                                                                  {:form 40 :field "43" :value "private answer"}
+                                                                                  {:form 40 :field "field-does-not-exist" :value "something"}]})]
       (is (= expected-application (recreate expected-application)))))
 
   (testing "copied to"
@@ -584,7 +626,10 @@
             :application/events [created-event saved-event licenses-accepted-event submitted-event returned-event]
             :application/state :application.state/returned
             :application/todo nil
-            :rems.application.model/draft-answers {"41" "foo" "42" "bar" "43" "private answer"}})))
+            :rems.application.model/draft-answers [{:form 40 :field "41" :value "foo"}
+                                                   {:form 40 :field "42" :value "bar"}
+                                                   {:form 40 :field "43" :value "private answer"}
+                                                   {:form 40 :field "field-does-not-exist" :value "something"}]})))
 
 (def submitted-returned-resubmitted-application
   (let [submitted-event {:event/type :application.event/submitted
@@ -598,8 +643,14 @@
                 :application/events events
                 :application/state :application.state/submitted
                 :application/todo :resubmitted-application
-                :rems.application.model/submitted-answers {"41" "new foo" "42" "new bar" "43" "new private answer"}
-                :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}}))))
+                :rems.application.model/submitted-answers [{:form 40 :field "41" :value "new foo"}
+                                                           {:form 40 :field "42" :value "new bar"}
+                                                           {:form 40 :field "43" :value "new private answer"}
+                                                           {:form 40 :field "field-does-not-exist" :value "something"}]
+               :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                   {:form 40 :field "42" :value "bar"}
+                                                                   {:form 40 :field "43" :value "private answer"}
+                                                                   {:form 40 :field "field-does-not-exist" :value "something"}]}))))
 
 (deftest test-application-view-returned-resubmitted
   (testing "> returned"
@@ -613,22 +664,27 @@
                            :event/actor "applicant"
                            :application/id 1
                            ;; non-submitted versions should not show up as the previous value
-                           :application/field-values {"41" "intermediate draft"
-                                                      "42" "intermediate draft"
-                                                      "43" "intermediate draft"}}
+                           :application/field-values [{:form 40 :field "41" :value "intermediate draft"}
+                                                      {:form 40 :field "42" :value "intermediate draft"}
+                                                      {:form 40 :field "43" :value "intermediate draft"}
+                                                      {:form 40 :field "field-does-not-exist" :value "something"}]}
               new-event-2 {:event/type :application.event/draft-saved
                            :event/time (DateTime. 6000)
                            :event/actor "applicant"
                            :application/id 1
-                           :application/field-values {"41" "new foo"
-                                                      "42" "new bar"
-                                                      "43" "new private answer"}}
+                           :application/field-values [{:form 40 :field "41" :value "new foo"}
+                                                      {:form 40 :field "42" :value "new bar"}
+                                                      {:form 40 :field "43" :value "new private answer"}
+                                                      {:form 40 :field "field-does-not-exist" :value "something"}]}
               events (conj events new-event-1 new-event-2)
               expected-application (deep-merge expected-application
                                                {:application/modified (DateTime. 6000)
                                                 :application/last-activity (DateTime. 6000)
                                                 :application/events events
-                                                :rems.application.model/draft-answers {"41" "new foo" "42" "new bar" "43" "new private answer"}})]
+                                                :rems.application.model/draft-answers [{:form 40 :field "41" :value "new foo"}
+                                                                                       {:form 40 :field "42" :value "new bar"}
+                                                                                       {:form 40 :field "43" :value "new private answer"}
+                                                                                       {:form 40 :field "field-does-not-exist" :value "something"}]})]
           (is (= expected-application (recreate expected-application)))
 
           (testing "> resubmitted"
@@ -643,8 +699,14 @@
                                                    :application/events events
                                                    :application/state :application.state/submitted
                                                    :application/todo :resubmitted-application
-                                                   :rems.application.model/submitted-answers {"41" "new foo" "42" "new bar" "43" "new private answer"}
-                                                   :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}}))]
+                                                   :rems.application.model/submitted-answers [{:form 40 :field "41" :value "new foo"}
+                                                                                              {:form 40 :field "42" :value "new bar"}
+                                                                                              {:form 40 :field "43" :value "new private answer"}
+                                                                                              {:form 40 :field "field-does-not-exist" :value "something"}]
+                                                   :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                                                       {:form 40 :field "42" :value "bar"}
+                                                                                                       {:form 40 :field "43" :value "private answer"}
+                                                                                                       {:form 40 :field "field-does-not-exist" :value "something"}]}))]
               (is (= expected-application (recreate expected-application)))))))
 
       (testing "> resubmitted (no draft saved)"
@@ -661,8 +723,14 @@
                                                :application/todo :resubmitted-application
                                                ;; when there was no draft-saved event, the current and
                                                ;; previous submitted answers must be the same
-                                               :rems.application.model/submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}
-                                               :rems.application.model/previous-submitted-answers {"41" "foo" "42" "bar" "43" "private answer"}}))]
+                                               :rems.application.model/submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                                          {:form 40 :field "42" :value "bar"}
+                                                                                          {:form 40 :field "43" :value "private answer"}
+                                                                                          {:form 40 :field "field-does-not-exist" :value "something"}]
+                                               :rems.application.model/previous-submitted-answers [{:form 40 :field "41" :value "foo"}
+                                                                                                   {:form 40 :field "42" :value "bar"}
+                                                                                                   {:form 40 :field "43" :value "private answer"}
+                                                                                                   {:form 40 :field "field-does-not-exist" :value "something"}]}))]
           (is (= expected-application (recreate expected-application))))))))
 
 (deftest test-application-view-resources-changed
@@ -672,9 +740,11 @@
                      :event/actor "handler"
                      :application/id 1
                      :application/comment "You should include this resource."
+                     :application/forms [{:form/id 40} {:form/id 41}]
                      :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                              {:catalogue-item/id 20 :resource/ext-id "urn:21"}
-                                             {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
+                                             {:catalogue-item/id 30 :resource/ext-id "urn:31"}
+                                             {:catalogue-item/id 40 :resource/ext-id "urn:31"}]
                      :application/licenses [{:license/id 30}
                                             {:license/id 31}
                                             {:license/id 32}
@@ -684,9 +754,12 @@
                                       {:application/last-activity (DateTime. 3400)
                                        :application/modified (DateTime. 3400)
                                        :application/events events
-                                       :application/resources (conj (:application/resources submitted-application)
-                                                                    {:catalogue-item/id 30
-                                                                     :resource/ext-id "urn:31"})
+                                       :application/forms [{:form/id 40} {:form/id 41}]
+                                       :application/resources (concat (:application/resources submitted-application)
+                                                                      [{:catalogue-item/id 30
+                                                                        :resource/ext-id "urn:31"}
+                                                                       {:catalogue-item/id 40
+                                                                        :resource/ext-id "urn:31"}])
                                        :application/licenses (conj (:application/licenses submitted-application)
                                                                    {:license/id 34})})]
       (is (= expected-application (recreate expected-application)))))
@@ -696,6 +769,7 @@
                      :event/actor "handler"
                      :application/id 1
                      :application/comment "I changed the resources"
+                     :application/forms [{:form/id 40}]
                      :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                              {:catalogue-item/id 30 :resource/ext-id "urn:31"}]
                      :application/licenses [{:license/id 30}
@@ -1038,7 +1112,7 @@
                                 :event/time (DateTime. 1000)
                                 :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]
-                                :form/id 40
+                                :application/forms [{:form/id 40}]
                                 :workflow/id 50
                                 :workflow/type :workflow/master
                                 :application/licenses [{:license/id 30} {:license/id 31} {:license/id 32}]}
@@ -1046,7 +1120,10 @@
                                 :application/id 1
                                 :event/time (DateTime. 2000)
                                 :event/actor "applicant"
-                                :application/field-values {"41" "foo" "42" "bar" "43" "private answer"}
+                                :application/field-values [{:form 40 :field "41" :value "foo"}
+                                                           {:form 40 :field "42" :value "bar"}
+                                                           {:form 40 :field "43" :value "private answer"}
+                                                           {:form 40 :field "field-does-not-exist" :value "something"}]
                                 :event/actor-attributes {:userid "applicant" :email "applicant@example.com" :name "Applicant"}}
                                {:event/type :application.event/licenses-accepted
                                 :application/id 1
@@ -1068,34 +1145,34 @@
           :rems.permissions/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
           :rems.permissions/role-permissions nil
           :application/description "foo"
-          :application/form {:form/id 40
-                             :form/title "form title"
-                             :form/fields [{:field/id "41"
-                                            :field/value "foo"
-                                            :field/type :description
-                                            :field/title {:en "en title" :fi "fi title"}
-                                            :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                            :field/optional false
-                                            :field/options []
-                                            :field/max-length 100
-                                            :field/visible true}
-                                           {:field/id "42"
-                                            :field/value "bar"
-                                            :field/type :text
-                                            :field/title {:en "en title" :fi "fi title"}
-                                            :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                            :field/optional false
-                                            :field/options []
-                                            :field/max-length 100
-                                            :field/visible true}
-                                           {:field/id "43"
-                                            :field/value "private answer"
-                                            :field/type :text
-                                            :field/title {:en "en title" :fi "fi title"}
-                                            :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                            :field/optional true
-                                            :field/privacy :private
-                                            :field/visible true}]}
+          :application/forms [{:form/id 40
+                               :form/title "form title"
+                               :form/fields [{:field/id "41"
+                                              :field/value "foo"
+                                              :field/type :description
+                                              :field/title {:en "en title" :fi "fi title"}
+                                              :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                              :field/optional false
+                                              :field/options []
+                                              :field/max-length 100
+                                              :field/visible true}
+                                             {:field/id "42"
+                                              :field/value "bar"
+                                              :field/type :text
+                                              :field/title {:en "en title" :fi "fi title"}
+                                              :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                              :field/optional false
+                                              :field/options []
+                                              :field/max-length 100
+                                              :field/visible true}
+                                             {:field/id "43"
+                                              :field/value "private answer"
+                                              :field/type :text
+                                              :field/title {:en "en title" :fi "fi title"}
+                                              :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                              :field/optional true
+                                              :field/privacy :private
+                                              :field/visible true}]}]
           :application/attachments []
           :application/workflow {:workflow/id 50
                                  :workflow/type :workflow/master
@@ -1198,23 +1275,45 @@
 
 (deftest test-enrich-answers
   (testing "draft"
-    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "a"}
-                                             {:field/id "2" :field/value "b"}]}}
-           (model/enrich-answers {:rems.application.model/draft-answers {"1" "a" "2" "b"}}))))
+    (is (= {:application/forms [{:form/id 1
+                                 :form/fields [{:field/id "1" :field/value "a"}
+                                               {:field/id "2" :field/value "b"}]}]}
+           (model/enrich-answers {:application/forms [{:form/id 1
+                                                       :form/fields [{:field/id "1"}
+                                                                     {:field/id "2"}]}]
+                                  :rems.application.model/draft-answers [{:form 1 :field "1" :value "a"}
+                                                                         {:form 1 :field "2" :value "b"}]}))))
   (testing "submitted"
-    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "a"}
-                                             {:field/id "2" :field/value "b"}]}}
-           (model/enrich-answers {:rems.application.model/submitted-answers {"1" "a" "2" "b"}}))))
+    (is (= {:application/forms [{:form/id 1
+                                 :form/fields [{:field/id "1" :field/value "a"}
+                                               {:field/id "2" :field/value "b"}]}]}
+           (model/enrich-answers {:application/forms [{:form/id 1
+                                                       :form/fields [{:field/id "1"}
+                                                                     {:field/id "2"}]}]
+                                  :rems.application.model/submitted-answers [{:form 1 :field "1" :value "a"}
+                                                                             {:form 1 :field "2" :value "b"}]}))))
   (testing "returned"
-    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "aa" :field/previous-value "a"}
-                                             {:field/id "2" :field/value "bb" :field/previous-value "b"}]}}
-           (model/enrich-answers {:rems.application.model/submitted-answers {"1" "a" "2" "b"}
-                                  :rems.application.model/draft-answers {"1" "aa" "2" "bb"}}))))
+    (is (= {:application/forms [{:form/id 1
+                                 :form/fields [{:field/id "1" :field/value "aa" :field/previous-value "a"}
+                                               {:field/id "2" :field/value "bb" :field/previous-value "b"}]}]}
+           (model/enrich-answers {:application/forms [{:form/id 1
+                                                       :form/fields [{:field/id "1"}
+                                                                     {:field/id "2"}]}]
+                                  :rems.application.model/submitted-answers [{:form 1 :field "1" :value "a"}
+                                                                             {:form 1 :field "2" :value "b"}]
+                                  :rems.application.model/draft-answers [{:form 1 :field "1" :value "aa"}
+                                                                         {:form 1 :field "2" :value "bb"}]}))))
   (testing "resubmitted"
-    (is (= {:application/form {:form/fields [{:field/id "1" :field/value "aa" :field/previous-value "a"}
-                                             {:field/id "2" :field/value "bb" :field/previous-value "b"}]}}
-           (model/enrich-answers {:rems.application.model/previous-submitted-answers {"1" "a" "2" "b"}
-                                  :rems.application.model/submitted-answers {"1" "aa" "2" "bb"}})))))
+    (is (= {:application/forms [{:form/id 1
+                                 :form/fields [{:field/id "1" :field/value "aa" :field/previous-value "a"}
+                                               {:field/id "2" :field/value "bb" :field/previous-value "b"}]}]}
+           (model/enrich-answers {:application/forms [{:form/id 1
+                                                       :form/fields [{:field/id "1"}
+                                                                     {:field/id "2"}]}]
+                                  :rems.application.model/previous-submitted-answers [{:form 1 :field "1" :value "a"}
+                                                                                      {:form 1 :field "2" :value "b"}]
+                                  :rems.application.model/submitted-answers [{:form 1 :field "1" :value "aa"}
+                                                                             {:form 1 :field "2" :value "bb"}]})))))
 
 (deftest test-enrich-active-handlers
   (let [application {:application/workflow {:workflow/id 1}
@@ -1254,22 +1353,23 @@
                                   (constantly {:application-deadline-days nil}))))))
 
 (deftest test-enrich-field-visible
-  (let [application {:application/form {:form/fields [{:field/id "fld1"
-                                                       :field/title "Option"
-                                                       :field/options [{:key "no" :label "No"}
-                                                                       {:key "yes" :label "Yes"}]}
-                                                      {:field/id "fld2"
-                                                       :field/title "Hidden field"
-                                                       :field/visibility {:visibility/type :only-if
-                                                                          :visibility/field {:field/id "fld1"}
-                                                                          :visibility/values ["yes"]}}]}}
+  (let [application {:application/forms [{:form/id 1
+                                          :form/fields [{:field/id "fld1"
+                                                         :field/title "Option"
+                                                         :field/options [{:key "no" :label "No"}
+                                                                         {:key "yes" :label "Yes"}]}
+                                                        {:field/id "fld2"
+                                                         :field/title "Hidden field"
+                                                         :field/visibility {:visibility/type :only-if
+                                                                            :visibility/field {:field/id "fld1"}
+                                                                            :visibility/values ["yes"]}}]}]}
         visible-fields (fn [application]
-                         (->> (get-in (model/enrich-field-visible application) [:application/form :form/fields])
+                         (->> (get-in (model/enrich-field-visible application) [:application/forms 0 :form/fields])
                               (filter :field/visible)
                               (map :field/id)))]
     (is (= ["fld1"] (visible-fields application)) "no answer should not make field visible")
-    (is (= ["fld1"] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
-    (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/form :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
+    (is (= ["fld1"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "no"))) "other option value should not make field visible")
+    (is (= ["fld1" "fld2"] (visible-fields (assoc-in application [:application/forms 0 :form/fields 0 :field/value] "yes"))) "visible when option value is yes")))
 
 (deftest test-apply-user-permissions
   (let [application (-> (model/application-view nil {:event/type :application.event/created
@@ -1372,8 +1472,8 @@
   (letfn [(answers [application & roles]
             (-> application
                 (model/enrich-with-injections injections)
-                (model/apply-privacy (set roles))
-                (get-in [:application/form :form/fields])
+                (model/apply-privacy (set (remove nil? roles)))
+                (get-in [:application/forms 0 :form/fields])
                 (->> (mapv (juxt :field/value
                                  :field/previous-value
                                  :field/privacy
@@ -1382,12 +1482,12 @@
     (doseq [role #{nil :reviewer :past-reviewer :owner :domain-owner}]
       (is (= [["foo" nil nil false] ["bar" nil nil false] ["" nil :private true]]
              (answers submitted-application role))
-          (str "role " role " should not see private answers")))
+          (str "role " (pr-str role) " should not see private answers")))
 
     (doseq [role #{:applicant :member :handler :reporter :decider :past-decider}]
       (is (= [["foo" nil nil false] ["bar" nil nil false] ["private answer" nil :private false]]
              (answers submitted-application role))
-          (str "role " role " should not see private answers")))
+          (str "role " (pr-str role) " should not see private answers")))
     (testing "previous value"
       (is (= [["new foo" "foo" nil false]
               ["new bar" "bar" nil false]

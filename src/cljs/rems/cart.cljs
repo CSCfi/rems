@@ -92,7 +92,7 @@
       [:span (text-format :t.cart/header (count items))]]
      (into [:table.rems-table.cart]
            (for [group (vals (into (sorted-map)
-                                   (group-by (juxt :wfid :formid) items)))]
+                                   (group-by :wfid items)))]
              [bundle-view (sort-by get-localized-title group) language]))]]])
 
 (defn cart-list-container []
