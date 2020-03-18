@@ -24,7 +24,7 @@ WHERE id = :id;
 (defn- get-application-forms [conn]
   (->> (get-application-events conn)
        (map #(json/parse-string (:eventdata %)))
-       (filter #(and (= "created" (:event/type %)) (:form/id %)))
+       (filter #(and (= "application.event/created" (:event/type %)) (:form/id %)))
        (map (juxt :application/id :form/id))
        (into {})))
 
