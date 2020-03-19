@@ -619,6 +619,37 @@
     (contains? (::latest-decision-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-decision)))
 
+
+(defn- visible-attachment-ids [application]
+  (let [from-events (->> (:application/events application)
+                         (mapcat :event/attachments)
+                         (map :attachment/id))
+        from-fields (for [form (getx application :application/forms)
+                          field (getx form :form/fields)
+                          :when (= :attachment (:field/type field))
+                          value [(:field/value field) (:field/previous-value field)]
+                          :when (not (empty? value))]
+                      (Integer/parseInt value))]
+    (set (concat from-events from-fields))))
+
+(deftest test-visible-attachment-ids
+  (let [application {:application/events [{:event/type :application.event/foo
+                                           :event/attachments [{:attachment/id 1}
+                                                               {:attachment/id 3}]}
+                                          {:event/type :application.event/bar}]
+                     :application/forms [{:form/fields [{:field/type :attachment
+                                                         :field/value "5" :field/previous-value "7"}]}
+                                         {:form/fields [{:field/type :text
+                                                         :field/value "2" :field/previous-vaule "2"}
+                                                        {:field/type :attachment
+                                                         :field/value "9"}]}]}]
+    (is (= #{1 3 5 7 9} (visible-attachment-ids application)))))
+
+(defn- hide-attachments [application]
+  (let [visible-ids (visible-attachment-ids application)
+        visible? (comp visible-ids :attachment/id)]
+    (update application :application/attachments #(filterv visible? %))))
+
 (defn see-application? [application user-id]
   (not= #{:everyone-else} (permissions/user-roles application user-id)))
 
@@ -634,6 +665,7 @@
           (personalize-todo user-id)
           (hide-non-public-information)
           (apply-privacy roles)
+          (hide-attachments)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))

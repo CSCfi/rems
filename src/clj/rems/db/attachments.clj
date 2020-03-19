@@ -37,11 +37,20 @@
      :success true}))
 
 (defn get-attachment [attachment-id]
-  (when-let [{:keys [type appid filename data]} (db/get-attachment {:id attachment-id})]
+  (when-let [{:keys [modifieruserid type appid filename data]} (db/get-attachment {:id attachment-id})]
     (check-attachment-content-type type)
     {:application/id appid
+     :attachment/user modifieruserid
      :attachment/filename filename
      :attachment/data data
+     :attachment/type type}))
+
+(defn get-attachment-metadata [attachment-id]
+  (when-let [{:keys [id modifieruserid type appid filename]} (db/get-attachment-metadata {:id attachment-id})]
+    {:application/id appid
+     :attachment/id id
+     :attachment/user modifieruserid
+     :attachment/filename filename
      :attachment/type type}))
 
 (defn get-attachments-for-application [application-id]

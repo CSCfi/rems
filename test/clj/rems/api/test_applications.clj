@@ -331,7 +331,7 @@
                                                          :application-id application-id
                                                          :comment ""
                                                          :public false}))))
-      (testing "public remark"
+      (testing "public remark with"
         (is (= {:success true} (send-command handler-id {:type :application.command/remark
                                                          :application-id application-id
                                                          :comment ""
@@ -678,7 +678,9 @@
 (deftest test-application-api-attachments
   (let [api-key "42"
         user-id "alice"
-        form-id (test-data/create-form! {:form/fields [{:field/title {:en "some attachment"
+        handler-id "developer" ;; developer is the default handler in test-data
+        form-id (test-data/create-form! {:form/fields [{:field/id "attach"
+                                                        :field/title {:en "some attachment"
                                                                       :fi "joku liite"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
@@ -690,6 +692,16 @@
                              (assoc :params {"file" file})
                              (assoc :multipart-params {"file" file})))
         read-request #(request :get (str "/api/applications/attachment/" %))]
+    (testing "uploading malicious file for a draft"
+      (let [response (-> (upload-request malicious-content)
+                         (authenticate api-key user-id)
+                         handler)]
+        (is (response-is-bad-request? response))))
+    (testing "uploading attachment for a draft as handler"
+      (let [response (-> (upload-request filecontent)
+                         (authenticate api-key handler-id)
+                         handler)]
+        (is (response-is-forbidden? response))))
     (testing "uploading attachment for a draft"
       (let [body (-> (upload-request filecontent)
                      (authenticate api-key user-id)
@@ -709,7 +721,23 @@
           (let [response (-> (read-request id)
                              (authenticate api-key "carl")
                              handler)]
-            (is (response-is-forbidden? response))))))
+            (is (response-is-forbidden? response))))
+        (testing "and using it in a field"
+          (is (= {:success true}
+                 (send-command user-id {:type :application.command/save-draft
+                                        :application-id app-id
+                                        :field-values [{:form form-id :field "attach" :value (str id)}]}))))
+        (testing "and submitting"
+          (is (= {:success true}
+                 (send-command user-id {:type :application.command/submit
+                                        :application-id app-id})))
+          (testing "and accessing it as handler"
+            (let [response (-> (read-request id)
+                               (authenticate api-key handler-id)
+                               handler
+                               assert-response-is-ok)]
+              (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
+              (is (= (slurp testfile) (slurp (:body response)))))))))
     (testing "retrieving nonexistent attachment"
       (let [response (-> (read-request 999999999999999)
                          (authenticate api-key "carl")
@@ -722,11 +750,6 @@
                          (authenticate api-key user-id)
                          handler)]
         (is (response-is-forbidden? response))))
-    (testing "uploading malicious file for a draft"
-      (let [response (-> (upload-request malicious-content)
-                         (authenticate api-key user-id)
-                         handler)]
-        (is (response-is-bad-request? response))))
     (testing "uploading attachment without authentication"
       (let [response (-> (upload-request filecontent)
                          handler)]
@@ -741,14 +764,169 @@
       (let [response (-> (upload-request filecontent)
                          (authenticate api-key "carl")
                          handler)]
-        (is (response-is-forbidden? response))))
-    (testing "uploading attachment for a submitted application"
-      (assert (= {:success true} (send-command user-id {:type :application.command/submit
-                                                        :application-id app-id})))
-      (let [response (-> (upload-request filecontent)
-                         (authenticate api-key user-id)
-                         handler)]
         (is (response-is-forbidden? response))))))
+
+(deftest test-application-comment-attachments
+  (let [api-key "42"
+        applicant-id "alice"
+        handler-id "developer"
+        reviewer-id "carl"
+        file #(assoc filecontent :filename %)
+        workflow-id (test-data/create-workflow! {:type :workflow/master
+                                                 :handlers [handler-id]})
+        cat-item-id (test-data/create-catalogue-item! {:workflow-id workflow-id})
+        application-id (test-data/create-application! {:catalogue-item-ids [cat-item-id]
+                                                       :actor applicant-id})
+        add-attachment #(-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
+                            (authenticate api-key %1)
+                            (assoc :params {"file" %2})
+                            (assoc :multipart-params {"file" %2})
+                            handler
+                            read-ok-body
+                            :id)]
+    (testing "submit"
+      (is (= {:success true} (send-command applicant-id
+                                           {:type :application.command/submit
+                                            :application-id application-id}))))
+    (testing "unrelated user can't upload attachment"
+      (is (response-is-forbidden? (-> (request :post (str "/api/applications/add-attachment?application-id=" application-id))
+                                      (authenticate api-key reviewer-id)
+                                      (assoc :params {"file" filecontent})
+                                      (assoc :multipart-params {"file" filecontent})
+                                      handler))))
+    (testing "invite reviewer"
+      (is (= {:success true} (send-command handler-id
+                                           {:type :application.command/request-review
+                                            :application-id application-id
+                                            :reviewers [reviewer-id]
+                                            :comment "please"}))))
+
+    (testing "handler uploads an attachment"
+      (let [attachment-id (add-attachment handler-id (file "handler-public-remark.txt"))]
+        (is (number? attachment-id))
+        (testing "and attaches it to a public remark"
+          (is (= {:success true} (send-command handler-id
+                                               {:type :application.command/remark
+                                                :application-id application-id
+                                                :comment "see attachment"
+                                                :public true
+                                                :attachments [{:attachment/id attachment-id}]}))))))
+
+    (testing "applicant can see attachment"
+      (let [app (get-application application-id applicant-id)
+            remark-event (last (:application/events app))
+            attachment-id (:attachment/id (first (:event/attachments remark-event)))]
+        (is (number? attachment-id))
+        (testing "and fetch it"
+          (is (= (slurp testfile)
+                 (-> (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                   api-key applicant-id)
+                     assert-response-is-ok
+                     :body
+                     slurp))))))
+
+    (testing "reviewer uploads an attachment"
+      (let [attachment-id (add-attachment reviewer-id (file "reviewer-review.txt"))]
+        (is (number? attachment-id))
+        (testing ", handler can't use the attachment"
+          (is (= {:success false
+                  :errors [{:type "invalid-attachments" :attachments [attachment-id]}]}
+                 (send-command handler-id
+                               {:type :application.command/remark
+                                :public false
+                                :application-id application-id
+                                :comment "see attachment"
+                                :attachments [{:attachment/id attachment-id}]}))))
+        (testing ", attaches it to a review"
+          (is (= {:success true} (send-command reviewer-id
+                                               {:type :application.command/review
+                                                :application-id application-id
+                                                :comment "see attachment"
+                                                :attachments [{:attachment/id attachment-id}]})))
+          (testing ", handler can fetch attachment"
+            (is (= (slurp testfile)
+                   (-> (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                     api-key handler-id)
+                       assert-response-is-ok
+                       :body
+                       slurp))))
+          (testing ", applicant can't fetch attachment"
+            (is (response-is-forbidden? (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                                      api-key applicant-id)))))))
+
+    (testing "handler makes a private remark"
+      (let [attachment-id (add-attachment handler-id (file "handler-private-remark.txt"))]
+        (is (number? attachment-id))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/remark
+                                              :public false
+                                              :application-id application-id
+                                              :comment "see attachment"
+                                              :attachments [{:attachment/id attachment-id}]})))
+        (testing ", handler can fetch attachment"
+          (is (= (slurp testfile)
+                 (-> (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                   api-key handler-id)
+                     assert-response-is-ok
+                     :body
+                     slurp))))
+        (testing ", applicant can't fetch attachment"
+          (is (response-is-forbidden? (api-response :get (str "/api/applications/attachment/" attachment-id) nil
+                                                    api-key applicant-id))))))
+
+    (testing "handler approves with attachment"
+      (let [attachment-id (add-attachment handler-id (file "handler-approve.txt"))]
+        (is (number? attachment-id))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/approve
+                                              :application-id application-id
+                                              :comment "see attachment"
+                                              :attachments [{:attachment/id attachment-id}]})))))
+
+    (testing "handler closes with two attachments"
+      (let [id1 (add-attachment handler-id (file "handler-close1.txt"))
+            id2 (add-attachment handler-id (file "handler-close2.txt"))]
+        (is (number? id1))
+        (is (number? id2))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/close
+                                              :application-id application-id
+                                              :comment "see attachment"
+                                              :attachments [{:attachment/id id1}
+                                                            {:attachment/id id2}]})))))
+
+    (testing "applicant can see the three new attachments"
+      (let [app (get-application application-id applicant-id)
+            [close-event approve-event] (reverse (:application/events app))
+            [close-id1 close-id2] (map :attachment/id (:event/attachments close-event))
+            [approve-id] (map :attachment/id (:event/attachments approve-event))]
+        (is (= "application.event/closed" (:event/type close-event)))
+        (is (= "application.event/approved" (:event/type approve-event)))
+        (is (number? close-id1))
+        (is (number? close-id2))
+        (is (number? approve-id))
+        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" close-id1) nil
+                                             api-key handler-id))
+        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" close-id2) nil
+                                             api-key handler-id))
+        (assert-response-is-ok (api-response :get (str "/api/applications/attachment/" approve-id) nil
+                                             api-key handler-id))))
+
+    (testing ":application/attachments"
+      (testing "applicant"
+        (is (= ["handler-public-remark.txt"
+                "handler-approve.txt"
+                "handler-close1.txt"
+                "handler-close2.txt"]
+               (mapv :attachment/filename (:application/attachments (get-application application-id applicant-id))))))
+      (testing "handler"
+        (is (= ["handler-public-remark.txt"
+                "reviewer-review.txt"
+                "handler-private-remark.txt"
+                "handler-approve.txt"
+                "handler-close1.txt"
+                "handler-close2.txt"]
+               (mapv :attachment/filename (:application/attachments (get-application application-id handler-id)))))))))
 
 (deftest test-application-api-license-attachments
   (let [api-key "42"

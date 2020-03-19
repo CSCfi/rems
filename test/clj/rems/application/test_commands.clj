@@ -1141,35 +1141,31 @@
               :event/time test-time
               :event/actor handler-user-id
               :application/id app-id
-              :application/member {:userid "somebody"}
-              :application/comment ""}
+              ;; NB no comment
+              :application/member {:userid "somebody"}}
              (ok-command application
                          {:type :application.command/remove-member
                           :actor handler-user-id
-                          :member {:userid "somebody"}
-                          :comment ""}
+                          :member {:userid "somebody"}}
                          injections))))
     (testing "applicant cannot be removed"
       (is (= {:errors [{:type :cannot-remove-applicant}]}
              (fail-command application
                            {:type :application.command/remove-member
                             :actor applicant-user-id
-                            :member {:userid applicant-user-id}
-                            :comment ""}
+                            :member {:userid applicant-user-id}}
                            injections)
              (fail-command application
                            {:type :application.command/remove-member
                             :actor handler-user-id
-                            :member {:userid applicant-user-id}
-                            :comment ""}
+                            :member {:userid applicant-user-id}}
                            injections))))
     (testing "non-members cannot be removed"
       (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
              (fail-command application
                            {:type :application.command/remove-member
                             :actor handler-user-id
-                            :member {:userid "notamember"}
-                            :comment ""}
+                            :member {:userid "notamember"}}
                            injections))))
     (testing "removed members cannot see the application"
       (is (-> application
@@ -1177,8 +1173,7 @@
       (is (not (-> application
                    (apply-commands [{:type :application.command/remove-member
                                      :actor applicant-user-id
-                                     :member {:userid "somebody"}
-                                     :comment ""}]
+                                     :member {:userid "somebody"}}]
                                    injections)
                    (model/see-application? "somebody")))))))
 
@@ -1202,13 +1197,11 @@
               :event/time test-time
               :event/actor applicant-user-id
               :application/id app-id
-              :application/member {:name "Some Body" :email "some@body.com"}
-              :application/comment ""}
+              :application/member {:name "Some Body" :email "some@body.com"}}
              (ok-command application
                          {:type :application.command/uninvite-member
                           :actor applicant-user-id
-                          :member {:name "Some Body" :email "some@body.com"}
-                          :comment ""}
+                          :member {:name "Some Body" :email "some@body.com"}}
                          injections))))
     (testing "uninvite member by handler"
       (is (= {:event/type :application.event/member-uninvited
@@ -1375,12 +1368,27 @@
                                     :event/time test-time
                                     :event/actor applicant-user-id
                                     :application/id app-id}])
-        injections {:valid-user? #{reviewer}}]
+        valid-attachment-id 1234
+        wrong-application-attachment-id 1235
+        wrong-user-attachment-id 1236
+        unknown-attachment-id 1237
+        injections {:valid-user? #{reviewer}
+                    :get-attachment-metadata
+                    {valid-attachment-id {:application/id (:application/id application)
+                                          :attachment/id valid-attachment-id
+                                          :attachment/user handler-user-id}
+                     wrong-application-attachment-id {:application/id (inc (:application/id application))
+                                                      :attachment/id wrong-application-attachment-id
+                                                      :attachment/user handler-user-id}
+                     wrong-user-attachment-id {:application/id (:application/id application)
+                                               :attachment/id wrong-user-attachment-id
+                                               :attachment/user "carl"}}}]
     (testing "handler can remark"
       (let [event (ok-command application
                               {:type :application.command/remark
                                :actor handler-user-id
                                :comment "handler's remark"
+                               :attachments [{:attachment/id valid-attachment-id}]
                                :public false}
                               injections)
             application (apply-events application [event])]
@@ -1389,8 +1397,22 @@
                 :event/actor handler-user-id
                 :application/id app-id
                 :application/comment "handler's remark"
-                :application/public false}
+                :application/public false
+                :event/attachments [{:attachment/id valid-attachment-id}]}
                event))))
+    (testing "invalid attachments"
+      (is (= {:errors [{:type :invalid-attachments
+                        :attachments [wrong-application-attachment-id wrong-user-attachment-id unknown-attachment-id]}]}
+             (fail-command application
+                           {:type :application.command/remark
+                            :actor handler-user-id
+                            :comment "handler's remark"
+                            :attachments [{:attachment/id valid-attachment-id}
+                                          {:attachment/id wrong-application-attachment-id}
+                                          {:attachment/id wrong-user-attachment-id}
+                                          {:attachment/id unknown-attachment-id}]
+                            :public false}
+                           injections))))
     (testing "applicants cannot remark"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application

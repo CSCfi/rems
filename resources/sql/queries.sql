@@ -250,7 +250,11 @@ VALUES
 (:application, :user, :filename, :type, :data);
 
 -- :name get-attachment :? :1
-SELECT appid, filename, type, data FROM attachment
+SELECT appid, filename, modifierUserId, type, data FROM attachment
+WHERE id = :id;
+
+-- :name get-attachment-metadata :? :1
+SELECT id, appid, filename, modifierUserId, type FROM attachment
 WHERE id = :id;
 
 -- :name get-attachments-for-application :? :*

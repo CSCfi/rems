@@ -1,6 +1,6 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core]
+            [medley.core :refer [assoc-some]]
             [rems.common.util :refer [build-index]]
             [rems.common.application-util :as application-util]
             [rems.permissions :as permissions]
@@ -25,6 +25,14 @@
 (s/defschema CommandBase
   {:application-id s/Int})
 
+(s/defschema CommandAttachment
+  {:attachment/id s/Int})
+
+(s/defschema CommandWithComment
+  (assoc CommandBase
+         (s/optional-key :comment) s/Str
+         (s/optional-key :attachments) [CommandAttachment]))
+
 (s/defschema AcceptInvitationCommand
   (assoc CommandBase
          :token s/Str))
@@ -32,65 +40,52 @@
   (assoc CommandBase
          :accepted-licenses [s/Int]))
 (s/defschema AddLicensesCommand
-  (assoc CommandBase
-         :comment s/Str
+  (assoc CommandWithComment
          :licenses [s/Int]))
 (s/defschema AddMemberCommand
   (assoc CommandBase
          :member {:userid UserId}))
 (s/defschema ApproveCommand
-  (assoc CommandBase
-         :comment s/Str))
+  CommandWithComment)
 (s/defschema AssignExternalIdCommand
   (assoc CommandBase
          :external-id s/Str))
 (s/defschema ChangeResourcesCommand
-  (assoc CommandBase
-         (s/optional-key :comment) s/Str
+  (assoc CommandWithComment
          :catalogue-item-ids [s/Int]))
 (s/defschema CloseCommand
-  (assoc CommandBase
-         :comment s/Str))
+  CommandWithComment)
 (s/defschema CopyAsNewCommand
   CommandBase)
 (s/defschema CreateCommand
   {:catalogue-item-ids [s/Int]})
 (s/defschema DecideCommand
-  (assoc CommandBase
-         :decision (s/enum :approved :rejected)
-         :comment s/Str))
+  (assoc CommandWithComment
+         :decision (s/enum :approved :rejected)))
 (s/defschema InviteMemberCommand
   (assoc CommandBase
          :member {:name s/Str
                   :email s/Str}))
 (s/defschema RejectCommand
-  (assoc CommandBase
-         :comment s/Str))
+  CommandWithComment)
 (s/defschema RemarkCommand
-  (assoc CommandBase
-         :comment s/Str
+  (assoc CommandWithComment
          :public s/Bool))
 (s/defschema RemoveMemberCommand
-  (assoc CommandBase
-         :member {:userid UserId}
-         :comment s/Str))
+  (assoc CommandWithComment
+         :member {:userid UserId}))
 (s/defschema RequestReviewCommand
-  (assoc CommandBase
-         :reviewers [UserId]
-         :comment s/Str))
+  (assoc CommandWithComment
+         :reviewers [UserId]))
 (s/defschema RequestDecisionCommand
-  (assoc CommandBase
-         :deciders [UserId]
-         :comment s/Str))
+  (assoc CommandWithComment
+         :deciders [UserId]))
 (s/defschema ReturnCommand
-  (assoc CommandBase
-         :comment s/Str))
+  CommandWithComment)
 (s/defschema ReviewCommand
-  (assoc CommandBase
-         :comment s/Str))
+  CommandWithComment)
 (s/defschema RevokeCommand
-  (assoc CommandBase
-         :comment s/Str))
+  CommandWithComment)
 (s/defschema SaveDraftCommand
   (assoc CommandBase
          :field-values [{:form FormId
@@ -99,10 +94,9 @@
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema UninviteMemberCommand
-  (assoc CommandBase
+  (assoc CommandWithComment
          :member {:name s/Str
-                  :email s/Str}
-         :comment s/Str))
+                  :email s/Str}))
 
 (def command-schemas
   {:application.command/accept-invitation AcceptInvitationCommand
@@ -131,6 +125,11 @@
 
 (def command-names
   (keys command-schemas))
+
+(def commands-with-comments
+  (set (for [[command schema] command-schemas
+             :when (contains? schema (s/optional-key :comment))]
+         command)))
 
 (s/defschema Command
   (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
@@ -263,6 +262,24 @@
 (defn- ok [& events]
   (ok-with-data nil events))
 
+(defn- invalid-attachments-error [injections cmd]
+  (let [invalid-ids (for [att (:attachments cmd)
+                          :let [id (:attachment/id att)
+                                attachment ((getx injections :get-attachment-metadata) id)]
+                          :when (or (nil? attachment)
+                                    (not= (:attachment/user attachment) (:actor cmd))
+                                    (not= (:application/id attachment) (:application-id cmd)))]
+                      id)]
+    (when (seq invalid-ids)
+      {:errors [{:type :invalid-attachments :attachments invalid-ids}]})))
+
+(defn- add-comment-and-attachments [cmd injections event]
+  (or (invalid-attachments-error injections cmd)
+      (ok (assoc-some event
+                      :application/comment (:comment cmd)
+                      :event/attachments (when-let [att (:attachments cmd)]
+                                           (vec att))))))
+
 (defn- build-forms-list [catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
@@ -338,38 +355,38 @@
       (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler :application.command/approve
-  [cmd _application _injections]
-  (ok {:event/type :application.event/approved
-       :application/comment (:comment cmd)}))
+  [cmd application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/approved}))
 
 (defmethod command-handler :application.command/reject
-  [cmd _application _injections]
-  (ok {:event/type :application.event/rejected
-       :application/comment (:comment cmd)}))
+  [cmd application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/rejected}))
 
 (defmethod command-handler :application.command/return
-  [cmd _application _injections]
-  (ok {:event/type :application.event/returned
-       :application/comment (:comment cmd)}))
+  [cmd application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/returned}))
 
 (defmethod command-handler :application.command/close
-  [cmd _application _injections]
-  (ok {:event/type :application.event/closed
-       :application/comment (:comment cmd)}))
+  [cmd application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/closed}))
 
 (defmethod command-handler :application.command/revoke
-  [cmd _application _injections]
-  (ok {:event/type :application.event/revoked
-       :application/comment (:comment cmd)}))
+  [cmd application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/revoked}))
 
 (defmethod command-handler :application.command/request-decision
-  [cmd _application injections]
+  [cmd application injections]
   (or (must-not-be-empty cmd :deciders)
       (invalid-users-errors (:deciders cmd) injections)
-      (ok {:event/type :application.event/decision-requested
-           :application/request-id (UUID/randomUUID)
-           :application/deciders (:deciders cmd)
-           :application/comment (:comment cmd)})))
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/decision-requested
+                                    :application/request-id (UUID/randomUUID)
+                                    :application/deciders (:deciders cmd)})))
 
 (defn- actor-is-not-decider-error [application cmd]
   (when-not (contains? (get application :rems.application.model/latest-decision-request-by-user)
@@ -377,24 +394,24 @@
     {:errors [{:type :forbidden}]}))
 
 (defmethod command-handler :application.command/decide
-  [cmd application _injections]
+  [cmd application injections]
   (or (actor-is-not-decider-error application cmd)
       (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
       (let [last-request-for-actor (get-in application [:rems.application.model/latest-decision-request-by-user (:actor cmd)])]
-        (ok {:event/type :application.event/decided
-             :application/request-id last-request-for-actor
-             :application/decision (:decision cmd)
-             :application/comment (:comment cmd)}))))
+        (add-comment-and-attachments cmd injections
+                                     {:event/type :application.event/decided
+                                      :application/request-id last-request-for-actor
+                                      :application/decision (:decision cmd)}))))
 
 (defmethod command-handler :application.command/request-review
-  [cmd _application injections]
+  [cmd application injections]
   (or (must-not-be-empty cmd :reviewers)
       (invalid-users-errors (:reviewers cmd) injections)
-      (ok {:event/type :application.event/review-requested
-           :application/request-id (UUID/randomUUID)
-           :application/reviewers (:reviewers cmd)
-           :application/comment (:comment cmd)})))
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/review-requested
+                                    :application/request-id (UUID/randomUUID)
+                                    :application/reviewers (:reviewers cmd)})))
 
 (defn- actor-is-not-reviewer-error [application cmd]
   (when-not (contains? (get application :rems.application.model/latest-review-request-by-user)
@@ -402,28 +419,28 @@
     {:errors [{:type :forbidden}]}))
 
 (defmethod command-handler :application.command/review
-  [cmd application _injections]
+  [cmd application injections]
   (or (actor-is-not-reviewer-error application cmd)
       (let [last-request-for-actor (get-in application [:rems.application.model/latest-review-request-by-user (:actor cmd)])]
-        (ok {:event/type :application.event/reviewed
-             ;; Currently we want to tie all comments to the latest request.
-             ;; In the future this might change so that commenters can freely continue to comment
-             ;; on any request they have gotten.
-             :application/request-id last-request-for-actor
-             :application/comment (:comment cmd)}))))
+        (add-comment-and-attachments cmd injections
+                                     {:event/type :application.event/reviewed
+                                      ;; Currently we want to tie all comments to the latest request.
+                                      ;; In the future this might change so that commenters can freely continue to comment
+                                      ;; on any request they have gotten.
+                                      :application/request-id last-request-for-actor}))))
 
 (defmethod command-handler :application.command/remark
-  [cmd _application _injections]
-  (ok {:event/type :application.event/remarked
-       :application/comment (:comment cmd)
-       :application/public (:public cmd)}))
+  [cmd application injections]
+  (add-comment-and-attachments cmd injections
+                               {:event/type :application.event/remarked
+                                :application/public (:public cmd)}))
 
 (defmethod command-handler :application.command/add-licenses
-  [cmd _application _injections]
+  [cmd application injections]
   (or (must-not-be-empty cmd :licenses)
-      (ok {:event/type :application.event/licenses-added
-           :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))
-           :application/comment (:comment cmd)})))
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/licenses-added
+                                    :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))})))
 
 (defmethod command-handler :application.command/change-resources
   [cmd application injections]
@@ -432,12 +449,11 @@
         (invalid-catalogue-items cat-ids injections)
         (unbundlable-catalogue-items-for-actor application cat-ids (:actor cmd) injections)
         (changes-original-workflow application cat-ids (:actor cmd) injections)
-        (ok (merge {:event/type :application.event/resources-changed
-                    :application/forms (build-forms-list cat-ids injections)
-                    :application/resources (build-resources-list cat-ids injections)
-                    :application/licenses (build-licenses-list cat-ids injections)}
-                   (when (:comment cmd)
-                     {:application/comment (:comment cmd)}))))))
+        (add-comment-and-attachments cmd injections
+                                     {:event/type :application.event/resources-changed
+                                      :application/forms (build-forms-list cat-ids injections)
+                                      :application/resources (build-resources-list cat-ids injections)
+                                      :application/licenses (build-licenses-list cat-ids injections)}))))
 
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
@@ -462,25 +478,25 @@
                       :invitation/token (:token cmd)}])))
 
 (defmethod command-handler :application.command/remove-member
-  [cmd application _injections]
+  [cmd application injections]
   (or (when (= (:userid (:application/applicant application)) (:userid (:member cmd)))
         {:errors [{:type :cannot-remove-applicant}]})
       (when-not (member? (:userid (:member cmd)) application)
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      (ok {:event/type :application.event/member-removed
-           :application/member (:member cmd)
-           :application/comment (:comment cmd)})))
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/member-removed
+                                    :application/member (:member cmd)})))
 
 (defmethod command-handler :application.command/uninvite-member
-  [cmd application _injections]
+  [cmd application injections]
   (or (when-not (contains? (set (map (juxt :name :email)
                                      (vals (:application/invitation-tokens application))))
                            [(:name (:member cmd))
                             (:email (:member cmd))])
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      (ok {:event/type :application.event/member-uninvited
-           :application/member (:member cmd)
-           :application/comment (:comment cmd)})))
+      (add-comment-and-attachments cmd injections
+                                   {:event/type :application.event/member-uninvited
+                                    :application/member (:member cmd)})))
 
 (defmethod command-handler :application.command/copy-as-new
   [cmd application injections]
