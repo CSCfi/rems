@@ -63,7 +63,8 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn remark-view
-  [{:keys [comment on-set-comment public on-set-public on-send attachment on-attach]}]
+  [{:keys [comment on-set-comment public on-set-public on-send
+           attachment on-attach on-remove-attachment]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
    [[button-wrapper {:id action-form-id
@@ -75,9 +76,6 @@
                      :label (text :t.form/add-remark)
                      :comment comment
                      :on-comment on-set-comment}]
-    (when attachment
-      [atoms/success-symbol])
-    [fields/upload-button (str "upload-" action-form-id) on-attach]
     (let [id (str "public-" action-form-id)]
       [:div.form-check
        [:input.form-check-input {:type "checkbox"
@@ -86,7 +84,18 @@
                                  :value public
                                  :on-change #(on-set-public (.. % -target -checked))}]
        [:label.form-check-label {:for id}
-        (text :t.actions/remark-public)]])]])
+        (text :t.actions/remark-public)]])
+    (if attachment
+      [:div.flex-row.d-flex.align-items-center
+       [:div.mr-2
+        [atoms/success-symbol]
+        [text :t.form/attachment-uploaded]]
+       [:button.btn.btn-outline-secondary.mr-2
+        {:type :button
+         :on-click (fn [event]
+                     (on-remove-attachment))}
+        (text :t.form/attachment-remove)]]
+      [fields/upload-button (str "upload-" action-form-id) on-attach])]])
 
 (defn remark-form [application-id on-finished]
   [remark-view {:comment @(rf/subscribe [::comment])
@@ -96,4 +105,5 @@
                 :on-send #(rf/dispatch [::send-remark {:application-id application-id
                                                        :on-finished on-finished}])
                 :attachment @(rf/subscribe [::attachment-id])
-                :on-attach #(rf/dispatch [::save-attachment application-id %])}])
+                :on-attach #(rf/dispatch [::save-attachment application-id %])
+                :on-remove-attachment #(rf/dispatch [::set-attachment-id nil])}])

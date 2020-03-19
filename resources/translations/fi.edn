@@ -316,6 +316,7 @@
          :alert-disabled-resources "Resurssit eivät ole enää saatavilla:"
          :application "Tiedot"
          :attachment-remove "Poista"
+         :attachment-uploaded "Liitetiedosto lisätty"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
          :copy-as-new "Kopioi uudeksi hakemukseksi"
