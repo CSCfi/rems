@@ -71,13 +71,14 @@
     (:field/value field)))
 
 (defn- render-field [field]
-  (list
-   [:paragraph (case (:field/type field)
-                 :label {}
-                 :header {:style :bold :size 15}
-                 {:style :bold})
-    (localized (:field/title field))]
-   [:paragraph (field-value field)]))
+  (when (:field/visible field)
+    (list
+     [:paragraph (case (:field/type field)
+                   :label {}
+                   :header {:style :bold :size 15}
+                   {:style :bold})
+      (localized (:field/title field))]
+     [:paragraph (field-value field)])))
 
 (defn- render-fields [application]
   (apply concat
