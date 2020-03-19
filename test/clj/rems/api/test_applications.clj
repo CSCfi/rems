@@ -802,7 +802,7 @@
                                             :comment "please"}))))
 
     (testing "handler uploads an attachment"
-      (let [attachment-id (add-attachment handler-id (file "handler-remark.txt"))]
+      (let [attachment-id (add-attachment handler-id (file "handler-public-remark.txt"))]
         (is (number? attachment-id))
         (testing "and attaches it to a public remark"
           (is (= {:success true} (send-command handler-id
@@ -855,7 +855,7 @@
                                                       api-key applicant-id)))))))
 
     (testing "handler makes a private remark"
-      (let [attachment-id (add-attachment handler-id (file "handler-private.txt"))]
+      (let [attachment-id (add-attachment handler-id (file "handler-private-remark.txt"))]
         (is (number? attachment-id))
         (is (= {:success true} (send-command handler-id
                                              {:type :application.command/remark
@@ -913,15 +913,15 @@
 
     (testing ":application/attachments"
       (testing "applicant"
-        (is (= ["handler-remark.txt"
+        (is (= ["handler-public-remark.txt"
                 "handler-approve.txt"
                 "handler-close1.txt"
                 "handler-close2.txt"]
                (mapv :attachment/filename (:application/attachments (get-application application-id applicant-id))))))
       (testing "handler"
-        (is (= ["handler-remark.txt"
+        (is (= ["handler-public-remark.txt"
                 "reviewer-review.txt"
-                "handler-private.txt"
+                "handler-private-remark.txt"
                 "handler-approve.txt"
                 "handler-close1.txt"
                 "handler-close2.txt"]
