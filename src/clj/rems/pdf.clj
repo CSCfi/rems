@@ -2,6 +2,7 @@
   "Rendering applications as pdf"
   (:require [clj-pdf.core :refer :all]
             [clj-time.core :as time]
+            [rems.common.util :refer [build-index]]
             [rems.text :refer [localized localize-event localize-state localize-time text with-language]]
             [rems.util :refer [getx getx-in]])
   (:import [java.io ByteArrayOutputStream]))
@@ -62,11 +63,8 @@
 (defn- field-value [field]
   (case (:field/type field)
     (:option :multiselect)
-    (->> (:field/options field)
-         (filter #(= (:field/value field) (:key %)))
-         first
-         :label
-         localized)
+    (localized (get (build-index [:key] :label (:field/options field))
+                    (:field/value field)))
 
     (:field/value field)))
 
