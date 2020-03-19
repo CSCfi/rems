@@ -621,7 +621,9 @@
 
 
 (defn- visible-attachment-ids [application]
-  (let [from-events (mapcat :event/attachments (:application/events application))
+  (let [from-events (->> (:application/events application)
+                         (mapcat :event/attachments)
+                         (map :attachment/id))
         from-fields (for [form (getx application :application/forms)
                           field (getx form :form/fields)
                           :when (= :attachment (:field/type field))
@@ -632,7 +634,8 @@
 
 (deftest test-visible-attachment-ids
   (let [application {:application/events [{:event/type :application.event/foo
-                                           :event/attachments [1 3]}
+                                           :event/attachments [{:attachment/id 1}
+                                                               {:attachment/id 3}]}
                                           {:event/type :application.event/bar}]
                      :application/forms [{:form/fields [{:field/type :attachment
                                                          :field/value "5" :field/previous-value "7"}]}

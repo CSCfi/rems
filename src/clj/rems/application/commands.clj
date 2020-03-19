@@ -25,10 +25,13 @@
 (s/defschema CommandBase
   {:application-id s/Int})
 
+(s/defschema CommandAttachment
+  {:attachment/id s/Int})
+
 (s/defschema CommandWithComment
   (assoc CommandBase
          (s/optional-key :comment) s/Str
-         (s/optional-key :attachments) [s/Int]))
+         (s/optional-key :attachments) [CommandAttachment]))
 
 (s/defschema AcceptInvitationCommand
   (assoc CommandBase
@@ -260,8 +263,9 @@
   (ok-with-data nil events))
 
 (defn- invalid-attachments-error [injections cmd]
-  (let [invalid-ids (for [id (:attachments cmd)
-                          :let [attachment ((getx injections :get-attachment-metadata) id)]
+  (let [invalid-ids (for [att (:attachments cmd)
+                          :let [id (:attachment/id att)
+                                attachment ((getx injections :get-attachment-metadata) id)]
                           :when (or (nil? attachment)
                                     (not= (:attachment/user attachment) (:actor cmd))
                                     (not= (:application/id attachment) (:application-id cmd)))]

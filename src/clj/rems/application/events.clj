@@ -17,10 +17,13 @@
    :event/actor UserId
    :application/id s/Int})
 
+(s/defschema EventAttachment
+  {:attachment/id s/Int})
+
 (s/defschema EventWithComment
   (assoc EventBase
          (s/optional-key :application/comment) s/Str
-         (s/optional-key :event/attachments) [s/Int]))
+         (s/optional-key :event/attachments) [EventAttachment]))
 
 (s/defschema ApprovedEvent
   (assoc EventWithComment

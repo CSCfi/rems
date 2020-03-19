@@ -810,12 +810,12 @@
                                                 :application-id application-id
                                                 :comment "see attachment"
                                                 :public true
-                                                :attachments [attachment-id]}))))))
+                                                :attachments [{:attachment/id attachment-id}]}))))))
 
     (testing "applicant can see attachment"
       (let [app (get-application application-id applicant-id)
             remark-event (last (:application/events app))
-            attachment-id (first (:event/attachments remark-event))]
+            attachment-id (:attachment/id (first (:event/attachments remark-event)))]
         (is (number? attachment-id))
         (testing "and fetch it"
           (is (= (slurp testfile)
@@ -836,13 +836,13 @@
                                 :public false
                                 :application-id application-id
                                 :comment "see attachment"
-                                :attachments [attachment-id]}))))
+                                :attachments [{:attachment/id attachment-id}]}))))
         (testing ", attaches it to a review"
           (is (= {:success true} (send-command reviewer-id
                                                {:type :application.command/review
                                                 :application-id application-id
                                                 :comment "see attachment"
-                                                :attachments [attachment-id]})))
+                                                :attachments [{:attachment/id attachment-id}]})))
           (testing ", handler can fetch attachment"
             (is (= (slurp testfile)
                    (-> (api-response :get (str "/api/applications/attachment/" attachment-id) nil
@@ -862,7 +862,7 @@
                                               :public false
                                               :application-id application-id
                                               :comment "see attachment"
-                                              :attachments [attachment-id]})))
+                                              :attachments [{:attachment/id attachment-id}]})))
         (testing ", handler can fetch attachment"
           (is (= (slurp testfile)
                  (-> (api-response :get (str "/api/applications/attachment/" attachment-id) nil
@@ -881,7 +881,7 @@
                                              {:type :application.command/approve
                                               :application-id application-id
                                               :comment "see attachment"
-                                              :attachments [attachment-id]})))))
+                                              :attachments [{:attachment/id attachment-id}]})))))
 
     (testing "handler closes with two attachments"
       (let [id1 (add-attachment handler-id (file "handler-close1.txt"))
@@ -892,13 +892,14 @@
                                              {:type :application.command/close
                                               :application-id application-id
                                               :comment "see attachment"
-                                              :attachments [id1 id2]})))))
+                                              :attachments [{:attachment/id id1}
+                                                            {:attachment/id id2}]})))))
 
     (testing "applicant can see the three new attachments"
       (let [app (get-application application-id applicant-id)
             [close-event approve-event] (reverse (:application/events app))
-            [close-id1 close-id2] (:event/attachments close-event)
-            [approve-id] (:event/attachments approve-event)]
+            [close-id1 close-id2] (map :attachment/id (:event/attachments close-event))
+            [approve-id] (map :attachment/id (:event/attachments approve-event))]
         (is (= "application.event/closed" (:event/type close-event)))
         (is (= "application.event/approved" (:event/type approve-event)))
         (is (number? close-id1))

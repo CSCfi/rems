@@ -1513,7 +1513,8 @@
                                                          :field/value "3" :field/previous-value "4"}]}]
                      :application/events [{:event/type :application.event/remarked
                                            :application/comment "4"
-                                           :event/attachments [5 6]}]}]
+                                           :event/attachments [{:attachment/id 5}
+                                                               {:attachment/id 6}]}]}]
     (is (= [{:attachment/id 1 :attachment/filename "1.txt"}
             {:attachment/id 2 :attachment/filename "2.txt"}
             {:attachment/id 5 :attachment/filename "5.txt"}
