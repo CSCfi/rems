@@ -211,77 +211,86 @@
       (add-to-cart "Default workflow")
       (apply-for-resource "Default workflow")
 
-      (fill-form-field "Application title field" "Test name")
-      (fill-form-field "Text field" "Test")
-      (fill-form-field "Text area" "Test2")
-      (set-date "Date field" "2050-01-02")
-      (fill-form-field "Email field" "user@example.com")
-      ;; leave attachment field empty
-      (is (not (field-visible? "Conditional field"))
-          "Conditional field is not visible before selecting option")
-      (select-option "Option list" "First option")
-      (wait-predicate #(field-visible? "Conditional field"))
-      (fill-form-field "Conditional field" "Conditional")
-      ;; pick two options for the multi-select field:
-      (check-box "Option2")
-      (check-box "Option3")
-      ;; leave "Text field with max length" empty
-      ;; leave "Text are with max length" empty
+      (let [application-id (get-application-id)
+            application (:body
+                         (http/get (str +test-url+ "/api/applications/" application-id)
+                                   {:as :json
+                                    :headers {"x-rems-api-key" "42"
+                                              "x-rems-user-id" "handler"}}))
+            form-id (get-in application [:application/forms 0 :form/id])
+            field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
+            field-selector (keyword (str "form-" form-id "-field-" field-id))] ; :form-1-field-fld2
+        (fill-form-field "Application title field" "Test name")
+        (fill-form-field "Text field" "Test")
+        (fill-form-field "Text area" "Test2")
+        (set-date "Date field" "2050-01-02")
+        (fill-form-field "Email field" "user@example.com")
+        ;; leave attachment field empty
+        (is (not (field-visible? "Conditional field"))
+            "Conditional field is not visible before selecting option")
+        (select-option "Option list" "First option")
+        (wait-predicate #(field-visible? "Conditional field"))
+        (fill-form-field "Conditional field" "Conditional")
+        ;; pick two options for the multi-select field:
+        (check-box "Option2")
+        (check-box "Option3")
+        ;; leave "Text field with max length" empty
+        ;; leave "Text are with max length" empty
 
-      (accept-licenses)
-      (send-application)
-      (is (= "Applied" (get-element-text *driver* :application-state))))
+        (accept-licenses)
+        (send-application)
+        (is (= "Applied" (get-element-text *driver* :application-state)))
 
-    (testing "check a field answer"
-      (is (= "Test name" (get-element-text *driver* :form-1-field-fld2))))
+        (testing "check a field answer"
+          (is (= "Test name" (get-element-text *driver* field-selector))))
 
-    (let [application-id (get-application-id)]
-      (testing "see application on applications page"
-        (go-to-applications)
-        (let [summary (get-application-summary application-id)]
-          (is (= "Default workflow" (:resource summary)))
-          (is (= "Applied" (:state summary)))
-          ;; don't bother trying to predict the external id:
-          (is (.contains (:description summary) "Test name"))))
-      (testing "fetch application from API"
-        (let [application (:body
-                           (http/get (str +test-url+ "/api/applications/" application-id)
-                                     {:as :json
-                                      :headers {"x-rems-api-key" "42"
-                                                "x-rems-user-id" "handler"}}))]
-          (testing "applicant information"
-            (is (= "alice" (get-in application [:application/applicant :userid])))
-            (is (= (set (map :license/id (:application/licenses application)))
-                   (set (get-in application [:application/accepted-licenses :alice])))))
-          (testing "form fields"
-            (is (= "Test name" (:application/description application)))
-            (is (= [["label" ""]
-                    ["description" "Test name"]
-                    ["text" "Test"]
-                    ["texta" "Test2"]
-                    ["header" ""]
-                    ["date" "2050-01-02"]
-                    ["email" "user@example.com"]
-                    ["attachment" ""]
-                    ["option" "Option1"]
-                    ["text" "Conditional"]
-                    ["multiselect" "Option2 Option3"]
-                    ["label" ""]
-                    ["text" ""]
-                    ["texta" ""]]
-                   (for [field (select [:application/forms ALL :form/fields ALL] application)]
-                     ;; TODO could test other fields here too, e.g. title
-                     [(:field/type field)
-                      (:field/value field)]))))
+        (testing "see application on applications page"
+          (go-to-applications)
+          (let [summary (get-application-summary application-id)]
+            (is (= "Default workflow" (:resource summary)))
+            (is (= "Applied" (:state summary)))
+            ;; don't bother trying to predict the external id:
+            (is (.contains (:description summary) "Test name"))))
 
-          (testing "after navigating to the application view again"
-            (scroll-and-click *driver* [{:css "table.my-applications"}
-                                        {:tag :tr :data-row application-id}
-                                        {:css ".btn-primary"}])
-            (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
-            (wait-page-loaded)
-            (testing "check a field answer"
-              (is (= "Test name" (get-element-text *driver* :form-1-field-fld2))))))))))
+        (testing "fetch application from API"
+          (let [application (:body
+                             (http/get (str +test-url+ "/api/applications/" application-id)
+                                       {:as :json
+                                        :headers {"x-rems-api-key" "42"
+                                                  "x-rems-user-id" "handler"}}))]
+            (testing "applicant information"
+              (is (= "alice" (get-in application [:application/applicant :userid])))
+              (is (= (set (map :license/id (:application/licenses application)))
+                     (set (get-in application [:application/accepted-licenses :alice])))))
+            (testing "form fields"
+              (is (= "Test name" (:application/description application)))
+              (is (= [["label" ""]
+                      ["description" "Test name"]
+                      ["text" "Test"]
+                      ["texta" "Test2"]
+                      ["header" ""]
+                      ["date" "2050-01-02"]
+                      ["email" "user@example.com"]
+                      ["attachment" ""]
+                      ["option" "Option1"]
+                      ["text" "Conditional"]
+                      ["multiselect" "Option2 Option3"]
+                      ["label" ""]
+                      ["text" ""]
+                      ["texta" ""]]
+                     (for [field (select [:application/forms ALL :form/fields ALL] application)]
+                       ;; TODO could test other fields here too, e.g. title
+                       [(:field/type field)
+                        (:field/value field)]))))
+
+            (testing "after navigating to the application view again"
+              (scroll-and-click *driver* [{:css "table.my-applications"}
+                                          {:tag :tr :data-row application-id}
+                                          {:css ".btn-primary"}])
+              (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
+              (wait-page-loaded)
+              (testing "check a field answer"
+                (is (= "Test name" (get-element-text *driver* field-selector)))))))))))
 
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}
