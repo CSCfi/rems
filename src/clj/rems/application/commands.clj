@@ -1,6 +1,6 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :as medley]
+            [medley.core :refer [assoc-some]]
             [rems.common.util :refer [build-index]]
             [rems.common.application-util :as application-util]
             [rems.permissions :as permissions]
@@ -261,7 +261,7 @@
 
 (defn- invalid-attachments-error [injections cmd]
   (let [invalid-ids (for [id (:attachments cmd)
-                          :let [attachment ((:get-attachment-metadata injections) id)]
+                          :let [attachment ((getx injections :get-attachment-metadata) id)]
                           :when (or (nil? attachment)
                                     (not= (:attachment/user attachment) (:actor cmd))
                                     (not= (:application/id attachment) (:application-id cmd)))]
@@ -271,10 +271,10 @@
 
 (defn- add-comment-and-attachments [cmd injections event]
   (or (invalid-attachments-error injections cmd)
-      (ok (medley/assoc-some event
-                             :application/comment (:comment cmd)
-                             :event/attachments (when-let [att (:attachments cmd)]
-                                                  (vec att))))))
+      (ok (assoc-some event
+                      :application/comment (:comment cmd)
+                      :event/attachments (when-let [att (:attachments cmd)]
+                                           (vec att))))))
 
 (defn- build-forms-list [catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
