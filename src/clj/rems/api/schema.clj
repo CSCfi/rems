@@ -69,7 +69,7 @@
    :application-id s/Int
    :start DateTime
    :end (s/maybe DateTime)
-   :mail (rjs/field s/Str
+   :mail (rjs/field (s/maybe s/Str)
                     {:deprecate true
                      :description "DEPRECATED, will disappear"})}) ;; TODO
 
