@@ -48,14 +48,12 @@
                                            :end nil
                                            :mail "malice@example.com"}
                                           (dissoc x :start :application-id)))
-                                   (is (valid-date? (:start x))))
-        sort-entitlements (partial sort-by (juxt :mail :end))]
+                                   (is (valid-date? (:start x))))]
     (testing "all"
       (let [data (-> (request :get "/api/entitlements")
                      (authenticate api-key "developer")
                      handler
-                     read-ok-body
-                     sort-entitlements)]
+                     read-ok-body)]
         (is (= 2 (count data)))
         (check-alice-entitlement (first data))
         (check-malice-entitlement (second data))))
@@ -65,8 +63,7 @@
         (let [data (-> (request :get "/api/entitlements")
                        (authenticate api-key userid)
                        handler
-                       read-ok-body
-                       sort-entitlements)]
+                       read-ok-body)]
           (is (= 2 (count data)))
           (check-alice-entitlement (first data))
           (check-malice-entitlement (second data)))))
@@ -75,8 +72,7 @@
       (let [data (-> (request :get "/api/entitlements?resource=urn:nbn:fi:lb-201403262")
                      (authenticate api-key "developer")
                      handler
-                     read-ok-body
-                     sort-entitlements)]
+                     read-ok-body)]
         (is (= 2 (count data)))
         (check-alice-entitlement (first data))
         (check-malice-entitlement (second data))))
@@ -101,8 +97,7 @@
       (let [data (-> (request :get "/api/entitlements?expired=true")
                      (authenticate api-key "owner")
                      handler
-                     read-ok-body
-                     sort-entitlements)]
+                     read-ok-body)]
         (is (= 3 (count data)))
         (check-alice-entitlement (first data))
         (check-alice-expired-entitlement (second data))
