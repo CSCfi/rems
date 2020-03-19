@@ -64,7 +64,11 @@
 
 (defn- render-field [field]
   (list
-   [:chunk {:style :bold} (localized (:field/title field))]
+   [:paragraph (case (:field/type field)
+                 :label {}
+                 :header {:style :bold :size 15}
+                 {:style :bold})
+    (localized (:field/title field))]
    [:paragraph (field-value field)]))
 
 (defn- render-fields [application]
