@@ -7,40 +7,21 @@
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
 
+(def ^:private action-form-id "remark")
+
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
    {:db (assoc db
                ::comment ""
-               ::attachment-id nil
-               ::public false)}))
+               ::public false)
+    :dispatch [:rems.actions.action/set-attachment-id action-form-id nil]}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
 (rf/reg-sub ::public (fn [db _] (::public db)))
 (rf/reg-event-db ::set-public (fn [db [_ value]] (assoc db ::public value)))
-
-(rf/reg-sub ::attachment-id (fn [db _] (::attachment-id db)))
-(rf/reg-event-db ::set-attachment-id (fn [db [_ value]] (assoc db ::attachment-id value)))
-
-(rf/reg-event-fx
- ::save-attachment
- (fn [{:keys [db]} [_ application-id file]]
-   (let [description [text :t.form/upload]]
-     (post! "/api/applications/add-attachment"
-            {:url-params {:application-id application-id}
-             :body file
-             :handler (flash-message/default-success-handler
-                       :actions
-                       description
-                       (fn [response]
-                         (rf/dispatch [::set-attachment-id (:id response)])))
-             :error-handler (flash-message/default-error-handler :actions description)})
-     {})))
-
-
-(def ^:private action-form-id "remark")
 
 (rf/reg-event-fx
  ::send-remark
@@ -49,7 +30,8 @@
              {:application-id application-id
               :comment (::comment db)
               :public (::public db)
-              :attachments (if-let [id (::attachment-id db)]
+              ;; TODO could just subscribe?
+              :attachments (if-let [id (get-in db [:rems.actions.action/attachment-id action-form-id])]
                              [{:attachment/id id}]
                              [])}
              {:description [text :t.actions/remark]
@@ -63,7 +45,8 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn remark-view
-  [{:keys [comment on-set-comment public on-set-public on-send
+  [{:keys [application-id
+           comment on-set-comment public on-set-public on-send
            attachment on-attach on-remove-attachment]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
@@ -86,17 +69,13 @@
        [:label.form-check-label {:for id}
         (text :t.actions/remark-public)]])
     [action-attachment {:id action-form-id
-                        :attachment attachment
-                        :on-attach on-attach
-                        :on-remove-attachment on-remove-attachment}]]])
+                        :application-id application-id}]]])
 
 (defn remark-form [application-id on-finished]
-  [remark-view {:comment @(rf/subscribe [::comment])
+  [remark-view {:application-id application-id
+                :comment @(rf/subscribe [::comment])
                 :on-set-comment #(rf/dispatch [::set-comment %])
                 :public @(rf/subscribe [::public])
                 :on-set-public #(rf/dispatch [::set-public %])
                 :on-send #(rf/dispatch [::send-remark {:application-id application-id
-                                                       :on-finished on-finished}])
-                :attachment @(rf/subscribe [::attachment-id])
-                :on-attach #(rf/dispatch [::save-attachment application-id %])
-                :on-remove-attachment #(rf/dispatch [::set-attachment-id nil])}])
+                                                       :on-finished on-finished}])}])

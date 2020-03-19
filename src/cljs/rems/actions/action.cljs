@@ -1,5 +1,6 @@
 (ns rems.actions.action
-  (:require [rems.atoms :refer [success-symbol textarea]]
+  (:require [re-frame.core :as rf]
+            [rems.atoms :refer [success-symbol textarea]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
@@ -42,7 +43,24 @@
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 
-(defn action-attachment [{:keys [id attachment on-attach on-remove-attachment]}]
+(rf/reg-sub ::attachment-id (fn [db [_ key]] (get-in db [::attachment-id key])))
+(rf/reg-event-db ::set-attachment-id (fn [db [_ key value]] (assoc-in db [::attachment-id key] value)))
+(rf/reg-event-fx
+ ::save-attachment
+ (fn [{:keys [db]} [_ application-id key file]]
+   (let [description [text :t.form/upload]]
+     (post! "/api/applications/add-attachment"
+            {:url-params {:application-id application-id}
+             :body file
+             :handler (flash-message/default-success-handler
+                       :actions
+                       description
+                       (fn [response]
+                         (rf/dispatch [::set-attachment-id key (:id response)])))
+             :error-handler (flash-message/default-error-handler :actions description)})
+     {})))
+
+(defn action-attachment-view [{:keys [id attachment on-attach on-remove-attachment]}]
   (if attachment
     [:div.flex-row.d-flex.align-items-center
      [:div.mr-2
@@ -54,6 +72,12 @@
                    (on-remove-attachment))}
       (text :t.form/attachment-remove)]]
     [fields/upload-button (str "upload-" id) on-attach]))
+
+(defn action-attachment [{:keys [application-id id]}]
+  [action-attachment-view {:id id
+                           :attachment @(rf/subscribe [::attachment-id id])
+                           :on-attach #(rf/dispatch [::save-attachment application-id id %])
+                           :on-remove-attachment #(rf/dispatch [::set-attachment-id id nil])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.
