@@ -5,10 +5,12 @@
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.pdf :as pdf]
-            [rems.testing-util :refer [utc-fixture]]
+            [rems.testing-util :refer [with-fixed-time utc-fixture]]
             [rems.text :refer [with-language]]))
 
-(use-fixtures :once utc-fixture test-db-fixture)
+(use-fixtures :once
+  utc-fixture
+  test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-pdf-gold-standard
@@ -66,6 +68,7 @@
     (testing "pdf contents"
       (is (= '[{}
                ([:heading "Application 2000/1: pdf test"]
+                [:paragraph "This PDF generated at" " " "2010-01-01 00:00"]
                 [:paragraph "State" [:phrase ": " "Approved"]]
                 [:heading "Applicants"]
                 [:paragraph "Applicant" ": " "Alice Applicant (alice) <alice@example.com>"]
@@ -114,7 +117,10 @@
                  ["2002-01-01 00:00" "Developer added Beth Applicant to the application." ""]
                  ["2003-01-01 00:00" "Developer approved the application." "approved"]])]
              (with-language :en
-               #(#'pdf/render-application (applications/get-application handler application-id))))))
+               (fn []
+                 (with-fixed-time (time/date-time 2010)
+                   (fn []
+                     (#'pdf/render-application (applications/get-application handler application-id)))))))))
       (testing "pdf rendering succeeds"
         (is (some?
              (with-language :en

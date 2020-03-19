@@ -1,6 +1,7 @@
 (ns rems.pdf
   "Rendering applications as pdf"
   (:require [clj-pdf.core :refer :all]
+            [clj-time.core :as time]
             [rems.text :refer [localized localize-event localize-state localize-time text with-language]]
             [rems.util :refer [getx getx-in]])
   (:import [java.io ByteArrayOutputStream]))
@@ -22,6 +23,10 @@
                           (getx application :application/id))
                      (when-let [description (get application :application/description)]
                        (str ": " description)))]
+      [:paragraph
+       (text :t.pdf/generated)
+       " "
+       (localize-time (time/now))]
       [:paragraph
        (text :t.applications/state)
        (when state [:phrase ": " (localize-state state)])]

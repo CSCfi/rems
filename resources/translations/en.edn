@@ -372,6 +372,7 @@
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "This page was not found."}
+  :pdf {:generated "This PDF generated at"}
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"
