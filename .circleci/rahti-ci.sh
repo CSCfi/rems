@@ -42,5 +42,5 @@ else
         -X DELETE \
         -H "Authorization: Bearer ${token}" \
         -H 'Accept: application/json' \
-        https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods/${CONTAINER}
+        https://rahti.csc.fi:8443/api/v1/namespaces/rems-${instance}/pods/${CONTAINER}
 fi
