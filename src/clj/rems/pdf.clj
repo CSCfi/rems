@@ -51,10 +51,21 @@
             (localize-event event)
             (get event :application/comment "")])))))))
 
+(defn- field-value [field]
+  (case (:field/type field)
+    (:option :multiselect)
+    (->> (:field/options field)
+         (filter #(= (:field/value field) (:key %)))
+         first
+         :label
+         localized)
+
+    (:field/value field)))
+
 (defn- render-field [field]
   (list
    [:chunk {:style :bold} (localized (:field/title field))]
-   [:paragraph (:field/value field)]))
+   [:paragraph (field-value field)]))
 
 (defn- render-fields [application]
   (apply concat
