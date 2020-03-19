@@ -56,8 +56,8 @@
                      read-ok-body)]
         (is (= 2 (count data)))
         (check-alice-entitlement (first data))
-        (check-malice-entitlement (second data)))
-)
+        (check-malice-entitlement (second data))))
+
     (doseq [userid ["developer" "owner" "reporter"]]
       (testing (str "all as " userid)
         (let [data (-> (request :get "/api/entitlements")
