@@ -1,7 +1,7 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
-            [rems.atoms :as atoms]
+            [rems.actions.action :refer [action-attachment action-button action-form-view action-comment
+                                         button-wrapper command!]]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
@@ -85,17 +85,10 @@
                                  :on-change #(on-set-public (.. % -target -checked))}]
        [:label.form-check-label {:for id}
         (text :t.actions/remark-public)]])
-    (if attachment
-      [:div.flex-row.d-flex.align-items-center
-       [:div.mr-2
-        [atoms/success-symbol]
-        [text :t.form/attachment-uploaded]]
-       [:button.btn.btn-outline-secondary.mr-2
-        {:type :button
-         :on-click (fn [event]
-                     (on-remove-attachment))}
-        (text :t.form/attachment-remove)]]
-      [fields/upload-button (str "upload-" action-form-id) on-attach])]])
+    [action-attachment {:id action-form-id
+                        :attachment attachment
+                        :on-attach on-attach
+                        :on-remove-attachment on-remove-attachment}]]])
 
 (defn remark-form [application-id on-finished]
   [remark-view {:comment @(rf/subscribe [::comment])

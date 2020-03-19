@@ -1,5 +1,6 @@
 (ns rems.actions.action
-  (:require [rems.atoms :refer [textarea]]
+  (:require [rems.atoms :refer [success-symbol textarea]]
+            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -40,6 +41,19 @@
                 :placeholder (text :t.actions/comment)
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
+
+(defn action-attachment [{:keys [id attachment on-attach on-remove-attachment]}]
+  (if attachment
+    [:div.flex-row.d-flex.align-items-center
+     [:div.mr-2
+      [success-symbol]
+      [text :t.form/attachment-uploaded]]
+     [:button.btn.btn-outline-secondary.mr-2
+      {:type :button
+       :on-click (fn [event]
+                   (on-remove-attachment))}
+      (text :t.form/attachment-remove)]]
+    [fields/upload-button (str "upload-" id) on-attach]))
 
 (defn action-form-view
   "Renders an action form that is collapsible.
