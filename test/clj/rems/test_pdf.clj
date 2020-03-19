@@ -71,16 +71,7 @@
                 [:paragraph "Applicant" ": " "Alice Applicant (alice) <alice@example.com>"]
                 [:paragraph "Member" ": " "Beth Applicant (beth) <beth@example.com>"]
                 [:heading "Resources"]
-                [:list [:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]]
-                [:heading "Events"]
-                [:table
-                 {:header ["Time" "Event" "Comment"]}
-                 ["2000-01-01 00:00" "Alice Applicant created a new application." ""]
-                 ["2000-01-01 00:00" "Alice Applicant saved the application as a draft." ""]
-                 ["2000-01-01 00:00" "Alice Applicant accepted the terms of use." ""]
-                 ["2001-01-01 00:00" "Alice Applicant submitted the application for review." ""]
-                 ["2002-01-01 00:00" "Developer added Beth Applicant to the application." ""]
-                 ["2003-01-01 00:00" "Developer approved the application." "approved"]])
+                [:list [:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]])
                ([:heading "Terms of use"]
                 [:paragraph "Google license"]
                 [:paragraph "Text license"])
@@ -112,7 +103,16 @@
                 [:paragraph {:style :bold} "Text field with max length"]
                 [:paragraph "pdf test"]
                 [:paragraph {:style :bold} "Text area with max length"]
-                [:paragraph "pdf test"])]
+                [:paragraph "pdf test"])
+               ([:heading "Events"]
+                [:table
+                 {:header ["Time" "Event" "Comment"]}
+                 ["2000-01-01 00:00" "Alice Applicant created a new application." ""]
+                 ["2000-01-01 00:00" "Alice Applicant saved the application as a draft." ""]
+                 ["2000-01-01 00:00" "Alice Applicant accepted the terms of use." ""]
+                 ["2001-01-01 00:00" "Alice Applicant submitted the application for review." ""]
+                 ["2002-01-01 00:00" "Developer added Beth Applicant to the application." ""]
+                 ["2003-01-01 00:00" "Developer approved the application." "approved"]])]
              (with-language :en
                #(#'pdf/render-application (applications/get-application handler application-id))))))
       (testing "pdf rendering succeeds"

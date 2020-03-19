@@ -13,7 +13,6 @@
 
 (defn- render-header [application]
   (let [state (getx application :application/state)
-        events (getx application :application/events)
         resources (getx application :application/resources)]
     (concat
      (list
@@ -38,18 +37,22 @@
        (for [resource resources]
          [:phrase
           (localized (:catalogue-item/title resource))
-          " (" (:resource/ext-id resource) ")"]))
-      [:heading (text :t.form/events)]
-      (if (empty? events)
-        [:paragraph "–"]
-        (into
-         [:table {:header [(text :t.form/date)
-                           (text :t.form/event)
-                           (text :t.form/comment)]}]
-         (for [event events]
-           [(localize-time (:event/time event))
-            (localize-event event)
-            (get event :application/comment "")])))))))
+          " (" (:resource/ext-id resource) ")"]))))))
+
+(defn- render-events [application]
+  (let [events (getx application :application/events)]
+    (list
+     [:heading (text :t.form/events)]
+     (if (empty? events)
+       [:paragraph "–"]
+       (into
+        [:table {:header [(text :t.form/date)
+                          (text :t.form/event)
+                          (text :t.form/comment)]}]
+        (for [event events]
+          [(localize-time (:event/time event))
+           (localize-event event)
+           (get event :application/comment "")]))))))
 
 (defn- field-value [field]
   (case (:field/type field)
@@ -93,7 +96,8 @@
   [{}
    (render-header application)
    (render-licenses application)
-   (render-fields application)])
+   (render-fields application)
+   (render-events application)])
 
 (defn application-to-pdf [application out]
   (pdf (render-application application) out))
