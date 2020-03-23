@@ -57,14 +57,15 @@
                      :comment comment
                      :on-comment on-set-comment}]
     (let [id (str "public-" action-form-id)]
-      [:div.form-check
-       [:input.form-check-input {:type "checkbox"
-                                 :id id
-                                 :name id
-                                 :value public
-                                 :on-change #(on-set-public (.. % -target -checked))}]
-       [:label.form-check-label {:for id}
-        (text :t.actions/remark-public)]])
+      [:div.form-group
+       [:div.form-check
+        [:input.form-check-input {:type "checkbox"
+                                  :id id
+                                  :name id
+                                  :value public
+                                  :on-change #(on-set-public (.. % -target -checked))}]
+        [:label.form-check-label {:for id}
+         (text :t.actions/remark-public)]]])
     [action-attachment {:key action-form-id
                         :application-id application-id}]]])
 

@@ -72,17 +72,19 @@
      {})))
 
 (defn action-attachment-view [{:keys [key attachment on-attach on-remove-attachment]}]
-  (if attachment
-    [:div.flex-row.d-flex.align-items-center
-     [:div.mr-2
-      [success-symbol]
-      [text :t.form/attachment-uploaded]]
-     [:button.btn.btn-outline-secondary.mr-2
-      {:type :button
-       :on-click (fn [event]
-                   (on-remove-attachment))}
-      (text :t.form/attachment-remove)]]
-    [fields/upload-button (str "upload-" key) on-attach]))
+  [:div.form-group
+   (if attachment
+     [:div.flex-row.d-flex.align-items-baseline
+      [:div
+       [text :t.form/attachment-uploaded]]
+      [:div
+       [success-symbol]]
+      [:button.btn.btn-outline-secondary.mr-2
+       {:type :button
+        :on-click (fn [event]
+                    (on-remove-attachment))}
+       (text :t.form/attachment-remove)]]
+     [fields/upload-button (str "upload-" key) on-attach])])
 
 (defn action-attachment [{:keys [application-id key]}]
   [action-attachment-view {:key key
