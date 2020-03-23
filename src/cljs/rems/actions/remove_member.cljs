@@ -20,6 +20,8 @@
  (fn [db [_ element-id value]]
    (assoc-in db [::comment element-id] value)))
 
+;; The API allows us to add attachments to these commands
+;; but this is left out from the UI for simplicity
 (rf/reg-event-fx
  ::remove-member
  (fn [_ [_ {:keys [collapse-id application-id member comment on-finished]}]]
