@@ -11,7 +11,9 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
+            [rems.db.users :as users]
             [rems.handler :as handler]
             [rems.json :as json]
             [rems.validate :as validate])
@@ -68,6 +70,7 @@
      \"test-data\" -- insert test data into database
      \"demo-data\" -- insert data for demoing purposes into database
      \"validate\" -- validate data in db
+     \"list-users\" -- list users and roles
      \"add-api-key <api-key> [<description>] [<permitted-role 1>] ... [<permitted-role n>]\" -- add api key to db.
         <description> is an optional text comment.
         <permitted-role> is, e.g., owner or handler. If no permitted roles are
@@ -112,6 +115,15 @@
       (mount/start #'rems.config/env #'rems.db.core/*db*)
       (api-key/add-api-key! key comment (or permitted-roles api-key/+all-roles+))
       (log/info "Api key added"))
+
+    "list-users"
+    (do
+      (mount/start #'rems.config/env #'rems.db.core/*db*)
+      (doseq [u (users/get-all-users)]
+        (-> u
+            (assoc :roles (roles/get-roles (:userid u)))
+            json/generate-string
+            println)))
 
     "validate"
     (do
