@@ -23,6 +23,9 @@ Changes since v2.8
 - API: comments are now optional for commands
 - API: comments can have attachments (#1928)
 
+### Additions
+- Generating bare-bones PDFs from applications. This is a non-experimental feature. Fancier PDF generation is still experimental and can be enabled with a flag. (#2053)
+
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
 ### Breaking changes

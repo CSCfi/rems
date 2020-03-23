@@ -321,10 +321,13 @@
          :attachment-uploaded "Attachment uploaded"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
+         :comment "Comment"
          :copy-as-new "Copy as a new application"
          :current-value "Current"
+         :date "Time"
          :diff-hide "Hide changes"
          :diff-show "Show changes"
+         :event "Event"
          :events "Events"
          :failed "Failed"
          :has-accepted-licenses "Terms of use accepted."
@@ -370,6 +373,7 @@
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "This page was not found."}
+  :pdf {:generated "This PDF generated at"}
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"

@@ -319,10 +319,13 @@
          :attachment-uploaded "Liitetiedosto lisätty"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
+         :comment "Kommentti"
          :copy-as-new "Kopioi uudeksi hakemukseksi"
          :current-value "Nykyinen"
+         :date "Aika"
          :diff-hide "Piilota muutokset"
          :diff-show "Näytä muutokset"
+         :event "Tapahtuma"
          :events "Tapahtumat"
          :failed "Epäonnistui"
          :has-accepted-licenses "Käyttöehdot hyväksytty."
@@ -368,6 +371,7 @@
                :skip-navigation "Siirry sivun pääsisältöön"}
   :not-found-page {:not-found "Ei löytynyt"
                    :page-was-not-found "Tätä sivua ei löytynyt."}
+  :pdf {:generated "Tämä PDF luotu"}
   :phases {:apply "Hae"
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
