@@ -60,7 +60,7 @@
              :error-handler (flash-message/default-error-handler :actions description)})
      {})))
 
-(defn action-attachment-view [{:keys [id attachment on-attach on-remove-attachment]}]
+(defn action-attachment-view [{:keys [key attachment on-attach on-remove-attachment]}]
   (if attachment
     [:div.flex-row.d-flex.align-items-center
      [:div.mr-2
@@ -71,13 +71,13 @@
        :on-click (fn [event]
                    (on-remove-attachment))}
       (text :t.form/attachment-remove)]]
-    [fields/upload-button (str "upload-" id) on-attach]))
+    [fields/upload-button (str "upload-" key) on-attach]))
 
-(defn action-attachment [{:keys [application-id id]}]
-  [action-attachment-view {:id id
-                           :attachment @(rf/subscribe [::attachment-id id])
-                           :on-attach #(rf/dispatch [::save-attachment application-id id %])
-                           :on-remove-attachment #(rf/dispatch [::set-attachment-id id nil])}])
+(defn action-attachment [{:keys [application-id key]}]
+  [action-attachment-view {:key key
+                           :attachment @(rf/subscribe [::attachment-id key])
+                           :on-attach #(rf/dispatch [::save-attachment application-id key %])
+                           :on-remove-attachment #(rf/dispatch [::set-attachment-id key nil])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.

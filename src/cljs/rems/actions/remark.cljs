@@ -68,7 +68,7 @@
                                  :on-change #(on-set-public (.. % -target -checked))}]
        [:label.form-check-label {:for id}
         (text :t.actions/remark-public)]])
-    [action-attachment {:id action-form-id
+    [action-attachment {:key action-form-id
                         :application-id application-id}]]])
 
 (defn remark-form [application-id on-finished]
