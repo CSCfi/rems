@@ -44,7 +44,18 @@
                 :on-change #(on-comment (.. % -target -value))}]]))
 
 (rf/reg-sub ::attachment-id (fn [db [_ key]] (get-in db [::attachment-id key])))
+
+;; attachments in the format the API wants
+(rf/reg-sub
+ ::attachments
+ (fn [db [_ key]]
+   (if-let [id (get-in db [:rems.actions.action/attachment-id key])]
+     [{:attachment/id id}]
+     [])))
+
+
 (rf/reg-event-db ::set-attachment-id (fn [db [_ key value]] (assoc-in db [::attachment-id key] value)))
+
 (rf/reg-event-fx
  ::save-attachment
  (fn [{:keys [db]} [_ application-id key file]]

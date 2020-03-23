@@ -25,15 +25,12 @@
 
 (rf/reg-event-fx
  ::send-remark
- (fn [{:keys [db]} [_ {:keys [application-id on-finished]}]]
+ (fn [_ [_ {:keys [application-id comment public attachments on-finished]}]]
    (command! :application.command/remark
              {:application-id application-id
-              :comment (::comment db)
-              :public (::public db)
-              ;; TODO could just subscribe?
-              :attachments (if-let [id (get-in db [:rems.actions.action/attachment-id action-form-id])]
-                             [{:attachment/id id}]
-                             [])}
+              :comment comment
+              :public public
+              :attachments attachments}
              {:description [text :t.actions/remark]
               :collapse action-form-id
               :on-finished on-finished})
@@ -72,10 +69,16 @@
                         :application-id application-id}]]])
 
 (defn remark-form [application-id on-finished]
-  [remark-view {:application-id application-id
-                :comment @(rf/subscribe [::comment])
-                :on-set-comment #(rf/dispatch [::set-comment %])
-                :public @(rf/subscribe [::public])
-                :on-set-public #(rf/dispatch [::set-public %])
-                :on-send #(rf/dispatch [::send-remark {:application-id application-id
-                                                       :on-finished on-finished}])}])
+  (let [attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])
+        comment @(rf/subscribe [::comment])
+        public @(rf/subscribe [::public])]
+    [remark-view {:application-id application-id
+                  :comment comment
+                  :on-set-comment #(rf/dispatch [::set-comment %])
+                  :public public
+                  :on-set-public #(rf/dispatch [::set-public %])
+                  :on-send #(rf/dispatch [::send-remark {:application-id application-id
+                                                         :comment comment
+                                                         :public public
+                                                         :attachments attachments
+                                                         :on-finished on-finished}])}]))
