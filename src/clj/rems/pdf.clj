@@ -13,17 +13,20 @@
        " (" (:userid user) ")"
        " <" (:email user) ">"))
 
+(def heading-style {:spacing-before 20})
+
 (defn- render-header [application]
   (let [state (getx application :application/state)
         resources (getx application :application/resources)]
     (concat
      (list
-      [:heading (str (text :t.applications/application)
-                     " "
-                     (get application :application/external-id
-                          (getx application :application/id))
-                     (when-let [description (get application :application/description)]
-                       (str ": " description)))]
+      [:heading heading-style
+       (str (text :t.applications/application)
+            " "
+            (get application :application/external-id
+                 (getx application :application/id))
+            (when-let [description (get application :application/description)]
+              (str ": " description)))]
       [:paragraph
        (text :t.pdf/generated)
        " "
@@ -31,13 +34,13 @@
       [:paragraph
        (text :t.applications/state)
        (when state [:phrase ": " (localize-state state)])]
-      [:heading (text :t.applicant-info/applicants)]
+      [:heading heading-style (text :t.applicant-info/applicants)]
       [:paragraph (text :t.applicant-info/applicant) ": " (render-user (getx application :application/applicant))])
      (seq
       (for [member (getx application :application/members)]
         [:paragraph (text :t.applicant-info/member) ": " (render-user member)]))
      (list
-      [:heading (text :t.form/resources)]
+      [:heading heading-style (text :t.form/resources)]
       (into
        [:list]
        (for [resource resources]
@@ -48,7 +51,7 @@
 (defn- render-events [application]
   (let [events (getx application :application/events)]
     (list
-     [:heading (text :t.form/events)]
+     [:heading heading-style (text :t.form/events)]
      (if (empty? events)
        [:paragraph "–"]
        (into
@@ -80,7 +83,7 @@
 
 (defn- render-fields [application]
   (apply concat
-         (list [:heading (text :t.form/application)])
+         (list [:heading heading-style (text :t.form/application)])
          (for [form (getx application :application/forms)
                field (getx form :form/fields)]
            (render-field field))))
@@ -92,7 +95,7 @@
    (localized (:license/title license))])
 
 (defn- render-licenses [application]
-  (concat (list [:heading (text :t.form/licenses)])
+  (concat (list [:heading heading-style (text :t.form/licenses)])
           (for [license (getx application :application/licenses)]
             (render-license license))))
 
