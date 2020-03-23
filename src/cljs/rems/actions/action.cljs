@@ -4,7 +4,8 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.util :refer [post!]])
+  (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
@@ -134,3 +135,14 @@
                       (collapse-action-form collapse)
                       (on-finished)))
           :error-handler (flash-message/default-error-handler :actions description)}))
+
+(defn guide []
+  [:div
+   (example "action attachment, no attachment"
+            [action-attachment-view {:key "action-guide-example-1"
+                                     :attachment nil
+                                     :on-attach (fn [_] nil)}])
+   (example "action attachment, uploaded attachment"
+            [action-attachment-view {:key "action-guide-example-1"
+                                     :attachment 13
+                                     :on-attach (fn [_] nil)}])])
