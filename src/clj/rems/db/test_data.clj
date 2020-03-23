@@ -244,16 +244,23 @@
    :actor actor
    :time (or time (time/now))})
 
-(defn fill-form! [{:keys [application-id actor field-value] :as command}]
+(defn fill-form! [{:keys [application-id actor field-value optional-fields] :as command}]
   (let [app (applications/get-application actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      :field-values (for [form (:application/forms app)
                                          field (:form/fields form)
-                                         :when (not (:field/optional field))]
+                                         :when (or optional-fields
+                                                   (not (:field/optional field)))]
                                      {:form (:form/id form)
                                       :field (:field/id field)
-                                      :value (or field-value "x")})))))
+                                      :value (case (:field/type field)
+                                               (:header :label) ""
+                                               :date "2002-03-04"
+                                               :email "user@example.com"
+                                               :attachment "" ;; don't know what to do for these
+                                               (:option :multiselect) (:key (first (:field/options field)))
+                                               (or field-value "x"))})))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
   (let [app (applications/get-application actor application-id)]
@@ -312,7 +319,7 @@
                                             :fi "http://disabled"}})]
     (db/set-license-enabled! {:id id :enabled false})))
 
-(def ^:private all-field-types-example
+(def all-field-types-example
   [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
                   :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
     :field/optional false

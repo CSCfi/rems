@@ -15,7 +15,7 @@
   test-data-fixture
   handler-fixture)
 
-(deftest test-pdf-smoke
+(deftest test-experimental-pdf-smoke
     ;; need to spin up an actual http server so that something can serve
     ;; the headless chrome that generates the pdf
     (let [port 3093] ;; no way to automatically assign port with the ring jetty adapter
@@ -30,7 +30,7 @@
                                      json/parse-string
                                      first
                                      :application/id)
-                  response (http/get (str "http://localhost:" port "/api/applications/" application-id "/pdf")
+                  response (http/get (str "http://localhost:" port "/api/applications/" application-id "/experimental/pdf")
                                      {:throw-exceptions false
                                       :headers {"x-rems-api-key" "42"
                                                 "x-rems-user-id" "reporter"}})]
