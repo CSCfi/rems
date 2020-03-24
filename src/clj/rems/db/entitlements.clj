@@ -47,12 +47,12 @@
                      :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
 
 (defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
-  {:ga4gh_visa_v1 (reduce conj [] (mapv entitlement-to-permissions-api
-        (db/get-entitlements {:user (if (has-roles? :handler :owner :organization-owner :reporter)
-                                      user-or-nil
-                                      (getx-user-id))
-                              :resource-ext-id resource-or-nil
-                              :is-active? (not expired?)})))})
+  {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api
+                                        (db/get-entitlements {:user            (if (has-roles? :handler :owner :organization-owner :reporter)
+                                                                                 user-or-nil
+                                                                                 (getx-user-id))
+                                                              :resource-ext-id resource-or-nil
+                                                              :is-active?      (not expired?)}))})
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
@@ -64,7 +64,7 @@
 
 (defn- get-entitlements-payload [entitlements action]
   (case action
-    :ga4gh {:ga4gh_visa_v1 (reduce conj [] (mapv entitlement-to-permissions-api entitlements))}
+    :ga4gh {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api entitlements)}
     (for [e entitlements]
       {:application (:catappid e)
        :resource (:resid e)
