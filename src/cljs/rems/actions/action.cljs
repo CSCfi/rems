@@ -50,6 +50,11 @@
 ;; attachments with filenames for rendering:
 (rf/reg-sub ::attachments-with-filenames (fn [db [_ key]] (get-in db [::attachments key])))
 (rf/reg-event-db ::set-attachments (fn [db [_ key value]] (assoc-in db [::attachments key] value)))
+(rf/reg-event-db ::add-attachment (fn [db [_ key value]] (update-in db [::attachments key] conj value)))
+(rf/reg-event-db
+ ::remove-attachment
+ (fn [db [_ key id]]
+   (update-in db [::attachments key] (partial remove (comp #{id} :attachment/id)))))
 
 (rf/reg-event-fx
  ::save-attachment
@@ -62,8 +67,8 @@
                        :actions
                        description
                        (fn [response]
-                         (rf/dispatch [::set-attachments key [{:attachment/id (:id response)
-                                                               :attachment/filename (.. file (get "file") -name)}]])))
+                         (rf/dispatch [::add-attachment key {:attachment/id (:id response)
+                                                             :attachment/filename (.. file (get "file") -name)}])))
              :error-handler (fn [response]
                              (if (= 415 (:status response))
                                (flash-message/show-default-error! :actions description
@@ -75,25 +80,24 @@
                                ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
-(defn action-attachment-view [{:keys [key attachment on-attach on-remove-attachment]}]
+(defn action-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
   [:div.form-group
-   (if attachment
-     [:div.flex-row.d-flex.align-items-baseline
-      [fields/attachment-link attachment]
-      [:button.btn.btn-outline-secondary.mr-2
-       {:type :button
-        :on-click (fn [event]
-                    (on-remove-attachment))}
-       (text :t.form/attachment-remove)]
-      [:div
-       [success-symbol]]]
-     [fields/upload-button (str "upload-" key) on-attach])])
+   (into [:<>]
+         (for [attachment attachments]
+           [:div.flex-row.d-flex.mb-2
+            [fields/attachment-link attachment]
+            [:button.btn.btn-outline-secondary.mr-2
+             {:type :button
+              :on-click (fn [event]
+                          (on-remove-attachment (:attachment/id attachment)))}
+             (text :t.form/attachment-remove)]]))
+   [fields/upload-button (str "upload-" key) on-attach]])
 
 (defn action-attachment [{:keys [application-id key]}]
   [action-attachment-view {:key key
-                           :attachment (first @(rf/subscribe [::attachments-with-filenames key]))
+                           :attachments @(rf/subscribe [::attachments-with-filenames key])
                            :on-attach #(rf/dispatch [::save-attachment application-id key %])
-                           :on-remove-attachment #(rf/dispatch [::set-attachments key []])}])
+                           :on-remove-attachment #(rf/dispatch [::remove-attachment key %])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.
@@ -145,7 +149,8 @@
             [action-attachment-view {:key "action-guide-example-1"
                                      :attachment nil
                                      :on-attach (fn [_] nil)}])
-   (example "action attachment, uploaded attachment"
+   (example "action attachment, multiple attachments"
             [action-attachment-view {:key "action-guide-example-1"
-                                     :attachment {:attachment/filename "attachment.xlsx"}
+                                     :attachments [{:attachment/filename "attachment.xlsx"}
+                                                   {:attachment/filename "data.pdf"}]
                                      :on-attach (fn [_] nil)}])])
