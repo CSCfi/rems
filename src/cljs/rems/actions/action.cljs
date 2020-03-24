@@ -138,6 +138,7 @@
 
 (defn guide []
   [:div
+   (component-info action-attachment-view)
    (example "action attachment, no attachment"
             [action-attachment-view {:key "action-guide-example-1"
                                      :attachment nil
