@@ -35,6 +35,8 @@
 (def ^:private action-form-id "change-resources")
 (def ^:private dropdown-id "change-resources-dropdown")
 
+;; The API allows us to add attachments to this command
+;; but this is left out from the UI for simplicity
 (rf/reg-event-fx
  ::send-change-resources
  (fn [_ [_ {:keys [application-id resources comment on-finished]}]]

@@ -220,8 +220,7 @@
 (defn- save-attachment [{:keys [db]} [_ form-id field-id file description]]
   (let [application-id (get-in db [::application :data :application/id])]
     (post! "/api/applications/add-attachment"
-           {:url-params {:application-id application-id
-                         :field-id field-id}
+           {:url-params {:application-id application-id}
             :body file
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
@@ -378,7 +377,7 @@
                                                    :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
                                                    :field/value (get-in field-values [form-id field-id])
                                                    :field/attachment (when (= :attachment (:field/type field))
-                                                                       (get attachments (parse-int (:field/value field))))
+                                                                       (get attachments (parse-int (get-in field-values [form-id field-id]))))
                                                    :field/previous-attachment (when (= :attachment (:field/type field))
                                                                                 (when-let [prev (:field/previous-value field)]
                                                                                   (get attachments (parse-int prev))))
@@ -447,9 +446,13 @@
                 (when (not (empty? comment))
                   (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
+   :attachments (when-let [attachments (seq (:event/attachments event))]
+                  (into [:<>]
+                        (for [a attachments]
+                          [fields/attachment-link a])))
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time event comment decision]}]
+(defn- event-view [{:keys [time event comment decision attachments]}]
   [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
@@ -457,7 +460,9 @@
     (when decision
       [:div decision])
     (when comment
-      [:div comment])]])
+      [:div comment])
+    (when attachments
+      [:div attachments])]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
@@ -517,10 +522,15 @@
                                  [application-link new-app nil]))))
        ")"])))
 
+(defn- events-with-attachments [application]
+  (let [attachments-by-id (index-by [:attachment/id] (:application/attachments application))]
+    (for [event (:application/events application)]
+      (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
+
 (defn- application-state [application config]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
-        event-groups (->> (:application/events application)
+        event-groups (->> (events-with-attachments application)
                           (group-by #(or (:application/request-id %)
                                          (:event/id %)))
                           vals

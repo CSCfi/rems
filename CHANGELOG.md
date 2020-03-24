@@ -21,10 +21,10 @@ Changes since v2.8
 - Allow organization owners to edit resources, forms, licenses and workflows in their own organization (#1893)
 - Show resources, forms, licenses and workflows from all organizations to organization owners (#1893)
 - API: comments are now optional for commands
-- API: comments can have attachments (#1928)
 
 ### Additions
 - Generating bare-bones PDFs from applications. This is a non-experimental feature. Fancier PDF generation is still experimental and can be enabled with a flag. (#2053)
+- It is possible to add an attachment to most actions that have a comment field (#1928)
 
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
