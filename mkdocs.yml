@@ -3,6 +3,7 @@ pages:
   - Home: index.md
   - User guide:
     - Linking to REMS: linking.md
+    - Bots: bots.md
     - Dictionary: dictionary.md
   - Developer guide:
     - Using the API: usingtheapi.md
