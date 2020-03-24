@@ -208,7 +208,11 @@
       :query-params [application-id :- (describe s/Int "application id")]
       :middleware [multipart/wrap-multipart-params]
       :return SaveAttachmentResponse
-      (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
+      (try
+        (ok (attachment/add-application-attachment (getx-user-id) application-id file))
+        (catch rems.InvalidRequestException e
+          (unsupported-media-type))))
+
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
