@@ -22,8 +22,8 @@
                    handler
                    read-ok-body)]
       (is (= 1 (count data)))
-      (is (= true (contains? data :ga4gh_visa_v1)))
-      (is (= true (vector? (:ga4gh_visa_v1 data))))
-      (is (= true (instance? String (first (:ga4gh_visa_v1 data))))))))
+      (is (contains? data :ga4gh_visa_v1))
+      (is (vector? (:ga4gh_visa_v1 data)))
+      (is (string? (first (:ga4gh_visa_v1 data)))))))
 
 
