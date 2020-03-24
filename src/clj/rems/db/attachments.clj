@@ -1,32 +1,19 @@
 (ns rems.db.attachments
   (:require [rems.common.application-util :refer [form-fields-editable?]]
+            [rems.common.attachment-types :as attachment-types]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])
   (:import [rems InvalidRequestException]))
 
-(defn check-attachment-content-type
-  "Checks that content-type matches the allowed ones listed on the UI side:
-   .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-  [content-type]
-  (when-not (or (#{"application/pdf"
-                   "application/msword" ;; .doc
-                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ;; .docx
-                   "application/vnd.oasis.opendocument.text" ;; .odt
-                   "application/vnd.ms-powerpoint" ;; .ppt
-                   "application/vnd.openxmlformats-officedocument.presentationml.presentation" ;; .pptx
-                   "application/vnd.oasis.opendocument.presentation" ;; .odp
-                   "application/vnd.ms-excel" ;; .xls
-                   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ;; .xlsx
-                   "application/vnd.oasis.opendocument.spreadsheet" ;; .ods
-                   "text/plain"}
-                 content-type)
-                (.startsWith content-type "image/"))
-    (throw (InvalidRequestException. (str "Unsupported content-type: " content-type)))))
+(defn check-allowed-attachment
+  [filename]
+  (when-not (attachment-types/allowed-extension? filename)
+    (throw (InvalidRequestException. (str "Unsupported extension: " filename)))))
 
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id]
-  (check-attachment-content-type content-type)
+  (check-allowed-attachment filename)
   (let [byte-array (file-to-bytes tempfile)
         id (:id (db/save-attachment! {:application application-id
                                       :user user-id
@@ -38,7 +25,7 @@
 
 (defn get-attachment [attachment-id]
   (when-let [{:keys [modifieruserid type appid filename data]} (db/get-attachment {:id attachment-id})]
-    (check-attachment-content-type type)
+    (check-allowed-attachment filename)
     {:application/id appid
      :attachment/user modifieruserid
      :attachment/filename filename

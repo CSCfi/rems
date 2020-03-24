@@ -3,6 +3,7 @@
   (:require [clojure.string :as str]
             [cljs-time.core :as time]
             [rems.atoms :refer [file-download textarea success-symbol]]
+            [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [getx]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format localize-time]]
@@ -261,7 +262,7 @@
               :type "file"
               :id upload-id
               :name upload-id
-              :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+              :accept attachment-types/allowed-extensions-string
               :on-change (fn [event]
                            (let [filecontent (aget (.. event -target -files) 0)
                                  form-data (doto (js/FormData.)

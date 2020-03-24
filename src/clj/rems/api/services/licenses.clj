@@ -27,7 +27,7 @@
      :id licid}))
 
 (defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
-  (attachments/check-attachment-content-type content-type)
+  (attachments/check-allowed-attachment filename)
   (let [byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
@@ -44,7 +44,7 @@
 
 (defn get-license-attachment [attachment-id]
   (when-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
-    (attachments/check-attachment-content-type (:type attachment))
+    (attachments/check-allowed-attachment (:filename attachment))
     {:attachment/filename (:filename attachment)
      :attachment/data (:data attachment)
      :attachment/type (:type attachment)}))
