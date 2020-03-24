@@ -21,6 +21,7 @@
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
+            [rems.common.attachment-types :as attachment-types]
             [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
@@ -235,7 +236,12 @@
                         (rf/dispatch [::save-application description])))
             :error-handler (fn [response]
                              (if (= 415 (:status response))
-                               (flash-message/show-default-error! :actions description [text :t.form/invalid-attachment])
+                               (flash-message/show-default-error! :actions description
+                                                                  [:div
+                                                                   [:p [text :t.form/invalid-attachment]]
+                                                                   [:p [text :t.form/upload-extensions]
+                                                                    ": "
+                                                                    attachment-types/allowed-extensions-string]])
                                ((flash-message/default-error-handler :actions description) response)))})
     {}))
 
