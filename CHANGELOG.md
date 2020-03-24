@@ -26,6 +26,9 @@ Changes since v2.8
 - Generating bare-bones PDFs from applications. This is a non-experimental feature. Fancier PDF generation is still experimental and can be enabled with a flag. (#2053)
 - It is possible to add an attachment to most actions that have a comment field (#1928)
 
+### Fixes
+- Excel and OpenOffice files are now really allowed as attachments. Also, .csv and .tsv are allowed. Allowed file extensions are documented in the UI. (#2023)
+
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
 ### Breaking changes

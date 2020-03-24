@@ -59,6 +59,9 @@
 (defn response-is-not-found? [response]
   (= 404 (:status response)))
 
+(defn response-is-unsupported-media-type? [response]
+  (= 415 (:status response)))
+
 (defn logged-in? [response]
   (str/includes? (get-in response [:headers "x-rems-roles"])
                  "logged-in"))

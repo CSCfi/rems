@@ -1,6 +1,7 @@
 (ns rems.actions.action
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [success-symbol textarea]]
+            [rems.common.attachment-types :as attachment-types]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
@@ -69,7 +70,15 @@
                        description
                        (fn [response]
                          (rf/dispatch [::set-attachment-id key (:id response)])))
-             :error-handler (flash-message/default-error-handler :actions description)})
+             :error-handler (fn [response]
+                             (if (= 415 (:status response))
+                               (flash-message/show-default-error! :actions description
+                                                                  [:div
+                                                                   [:p [text :t.form/invalid-attachment]]
+                                                                   [:p [text :t.form/upload-extensions]
+                                                                    ": "
+                                                                    attachment-types/allowed-extensions-string]])
+                               ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
 (defn action-attachment-view [{:keys [key attachment on-attach on-remove-attachment]}]

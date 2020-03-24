@@ -185,4 +185,6 @@
   (when elem
     (.on (js/$ elem)
          "shown.bs.collapse"
-         #(.focus elem))))
+         (fn []
+           (.focus elem)
+           false))))

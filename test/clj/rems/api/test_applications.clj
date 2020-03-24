@@ -723,7 +723,7 @@
       (let [response (-> (upload-request malicious-content)
                          (authenticate api-key user-id)
                          handler)]
-        (is (response-is-bad-request? response))))
+        (is (response-is-unsupported-media-type? response))))
     (testing "uploading attachment for a draft as handler"
       (let [response (-> (upload-request filecontent)
                          (authenticate api-key handler-id)
