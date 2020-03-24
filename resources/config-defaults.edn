@@ -75,18 +75,22 @@
  :extra-scripts {:root "/dev/null" :files []}
 
  ;; Optional extra pages shown in the navigation bar.
- :extra-pages [;; example of an external page
-               #_{:id "hello"
-                  :url "http://example.org/hello.html"
-                  :translations {:fi {:title "Hei"}
-                                 :en {:title "Hello"}}}
-
-               ;; example of a local markdown file
-               #_{:id "about"
-                  :translations {:fi {:title "Info"
-                                      :file "about-fi.md"}
-                                 :en {:title "About"
-                                      :file "about-en.md"}}}]
+ ;;
+ ;; Example: define two pages
+ ;;
+ ;; :extra-pages [;; This is a page that's hosted at an external URL
+ ;;               {:id "hello"
+ ;;                :url "http://example.org/hello.html"
+ ;;                :translations {:fi {:title "Hei"}
+ ;;                               :en {:title "Hello"}}}
+ ;;               ;; This is a page that's a markdown file, localized into two languages.
+ ;;               ;; The files are searched under :extra-pages-path (see below).
+ ;;               {:id "about"
+ ;;                :translations {:fi {:title "Info"
+ ;;                                    :file "about-fi.md"}
+ ;;                               :en {:title "About"
+ ;;                                    :file "about-en.md"}}}]
+ :extra-pages []
 
  ;; Path to the markdown files for the extra pages.
  :extra-pages-path nil
