@@ -233,7 +233,10 @@
                         (rf/dispatch [::set-field-value form-id field-id (str (:id response))])
                         (rf/dispatch [::set-attachment-success field-id])
                         (rf/dispatch [::save-application description])))
-            :error-handler (flash-message/default-error-handler :actions description)})
+            :error-handler (fn [response]
+                             (if (= 415 (:status response))
+                               (flash-message/show-default-error! :actions description [text :t.form/invalid-attachment])
+                               ((flash-message/default-error-handler :actions description) response)))})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)

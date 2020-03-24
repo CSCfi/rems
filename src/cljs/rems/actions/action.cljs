@@ -69,7 +69,10 @@
                        description
                        (fn [response]
                          (rf/dispatch [::set-attachment-id key (:id response)])))
-             :error-handler (flash-message/default-error-handler :actions description)})
+             :error-handler (fn [response]
+                             (if (= 415 (:status response))
+                               (flash-message/show-default-error! :actions description [text :t.form/invalid-attachment])
+                               ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
 (defn action-attachment-view [{:keys [key attachment on-attach on-remove-attachment]}]

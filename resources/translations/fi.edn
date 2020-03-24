@@ -329,6 +329,7 @@
          :events "Tapahtumat"
          :failed "Epäonnistui"
          :has-accepted-licenses "Käyttöehdot hyväksytty."
+         :invalid-attachment "Liitetiedosto ei kelpaa"
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
