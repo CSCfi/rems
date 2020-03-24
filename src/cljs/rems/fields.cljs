@@ -274,14 +274,14 @@
        :type :button
        :on-click (fn [e] (.click (.getElementById js/document upload-id)))}
       (text :t.form/upload)]
-     [:a.application-search-tips.btn.btn-link.collapsed
+     [:a.upload-info-button.btn.btn-link
       {:data-toggle "collapse"
        :href (str "#" info-id)
        :aria-label (text :t.form/upload-extensions)
        :aria-expanded "false"
        :aria-controls info-id}
       [:i.fa.fa-question-circle]]
-     [:div.search-tips.collapse {:id info-id
+     [:div.upload-info.collapse {:id info-id
                                  :ref focus-when-collapse-opened
                                  :tab-index "-1"}
       [text :t.form/upload-extensions]
