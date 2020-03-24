@@ -29,6 +29,13 @@
                 body (read-body response)]
             (is (= {:ga4gh_visa_v1 []} body))))
 
+        (testing "all for alice as alice"
+          (let [data (-> (request :get (str "/api/permissions/alice"))
+                         (authenticate "42" "alice")
+                         handler
+                         read-ok-body)]
+            (validate-alice-result data)))
+
         (testing "all for alice as handler"
           (let [data (-> (request :get "/api/permissions/alice")
                          (authenticate api-key "handler")
