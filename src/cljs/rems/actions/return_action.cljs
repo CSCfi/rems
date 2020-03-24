@@ -9,7 +9,7 @@
  ::open-form
  (fn [{:keys [db]} _]
    {:db (assoc db ::comment "")
-    :dispatch [:rems.actions.action/set-attachment-id action-form-id nil]}))
+    :dispatch [:rems.actions.action/set-attachments action-form-id []]}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))

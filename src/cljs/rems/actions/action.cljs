@@ -45,18 +45,8 @@
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 
-(rf/reg-sub ::attachment-id (fn [db [_ key]] (get-in db [::attachment-id key])))
-
-;; attachments in the format the API wants
-(rf/reg-sub
- ::attachments
- (fn [db [_ key]]
-   (if-let [id (get-in db [:rems.actions.action/attachment-id key])]
-     [{:attachment/id id}]
-     [])))
-
-
-(rf/reg-event-db ::set-attachment-id (fn [db [_ key value]] (assoc-in db [::attachment-id key] value)))
+(rf/reg-sub ::attachments (fn [db [_ key]] (get-in db [::attachments key])))
+(rf/reg-event-db ::set-attachments (fn [db [_ key value]] (assoc-in db [::attachments key] value)))
 
 (rf/reg-event-fx
  ::save-attachment
@@ -69,7 +59,7 @@
                        :actions
                        description
                        (fn [response]
-                         (rf/dispatch [::set-attachment-id key (:id response)])))
+                         (rf/dispatch [::set-attachments key [{:attachment/id (:id response)}]])))
              :error-handler (fn [response]
                              (if (= 415 (:status response))
                                (flash-message/show-default-error! :actions description
@@ -98,9 +88,9 @@
 
 (defn action-attachment [{:keys [application-id key]}]
   [action-attachment-view {:key key
-                           :attachment @(rf/subscribe [::attachment-id key])
+                           :attachment (first @(rf/subscribe [::attachments key]))
                            :on-attach #(rf/dispatch [::save-attachment application-id key %])
-                           :on-remove-attachment #(rf/dispatch [::set-attachment-id key nil])}])
+                           :on-remove-attachment #(rf/dispatch [::set-attachments key []])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.

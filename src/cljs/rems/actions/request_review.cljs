@@ -25,7 +25,7 @@
                ::comment ""
                ::potential-reviewers #{}
                ::selected-reviewers #{})
-    :dispatch [:rems.actions.action/set-attachment-id action-form-id nil]
+    :dispatch [:rems.actions.action/set-attachments action-form-id []]
     ::fetch-potential-reviewers #(rf/dispatch [::set-potential-reviewers %])}))
 
 (rf/reg-sub ::potential-reviewers (fn [db _] (::potential-reviewers db)))
