@@ -456,7 +456,7 @@
                   (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
    :attachments (when-let [attachments (seq (:event/attachments event))]
-                  (into [:<>]
+                  (into [:div.d-flex.flex-row]
                         (for [a attachments]
                           [fields/attachment-link a])))
    :time (localize-time (:event/time event))})
