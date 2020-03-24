@@ -16,7 +16,8 @@
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
             :comment "Kommentti"
             :decide "Päätä"
-            :errors {:disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
+            :errors {:already-member "Käyttäjä on jo tämän hakemuksen jäsen"
+                     :disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :submission-failed "Lähettäminen epäonnistui. Tarkasta seuraavat virheet:"}

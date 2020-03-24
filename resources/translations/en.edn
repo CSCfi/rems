@@ -16,7 +16,8 @@
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be opened again."]]
             :comment "Comment"
             :decide "Decide"
-            :errors {:disabled-catalogue-item "Resource no longer available."
+            :errors {:already-member "User is already a member of this application"
+                     :disabled-catalogue-item "Resource no longer available."
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
                      :submission-failed "Submission failed. Check the following errors:"}

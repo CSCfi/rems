@@ -254,7 +254,7 @@
 
 (defn already-member-error [application userid]
   (when (member? userid application)
-    {:errors [{:type :already-member :application-id (:application/id application)}]}))
+    {:errors [{:type :t.actions.errors/already-member :userid userid :application-id (:application/id application)}]}))
 
 (defn- ok-with-data [data events]
   (assoc data :events events))
