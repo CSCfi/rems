@@ -345,6 +345,7 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
+         :upload-extensions "Allowed file extensions"
          :validation {:invalid-email "Invalid email address."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."

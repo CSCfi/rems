@@ -7,7 +7,7 @@
             [rems.common.util :refer [getx]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
             [rems.text :refer [localized text text-format localize-time]]
-            [rems.util :refer [encode-option-keys decode-option-keys linkify]])
+            [rems.util :refer [encode-option-keys decode-option-keys focus-when-collapse-opened linkify]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn field-name [field]
@@ -256,7 +256,8 @@
       (:attachment/filename attachment) " " [file-download]]]))
 
 (defn upload-button [id on-upload]
-  (let [upload-id (str id "-input")]
+  (let [upload-id (str id "-input")
+        info-id (str id "-info")]
     [:div.upload-file.mr-2
      [:input {:style {:display "none"}
               :type "file"
@@ -272,7 +273,20 @@
       {:id id
        :type :button
        :on-click (fn [e] (.click (.getElementById js/document upload-id)))}
-      (text :t.form/upload)]]))
+      (text :t.form/upload)]
+     [:a.application-search-tips.btn.btn-link.collapsed
+      {:data-toggle "collapse"
+       :href (str "#" info-id)
+       :aria-label (text :t.form/upload-extensions)
+       :aria-expanded "false"
+       :aria-controls info-id}
+      [:i.fa.fa-question-circle]]
+     [:div.search-tips.collapse {:id info-id
+                                 :ref focus-when-collapse-opened
+                                 :tab-index "-1"}
+      [text :t.form/upload-extensions]
+      ": "
+      attachment-types/allowed-extensions-string]]))
 
 (defn attachment-field
   [{:keys [validation on-set-attachment on-remove-attachment success] :as opts}]
