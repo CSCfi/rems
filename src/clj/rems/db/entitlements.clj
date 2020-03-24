@@ -41,9 +41,9 @@
 (defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
   (let [start-datetime (DateTime. start)]
     (jwt/sign {:type "ControlledAccessGrants"
-                     :value (str "" resid)
+                     :value (str resid)
                      :source "https://ga4gh.org/duri/no_org"
-                     :by (str "" approvedby)
+                     :by (str approvedby)
                      :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
 
 (defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
