@@ -45,7 +45,10 @@
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 
-(rf/reg-sub ::attachments (fn [db [_ key]] (get-in db [::attachments key])))
+;; attachments in suitable format for api:
+(rf/reg-sub ::attachments (fn [db [_ key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments key]))))
+;; attachments with filenames for rendering:
+(rf/reg-sub ::attachments-with-filenames (fn [db [_ key]] (get-in db [::attachments key])))
 (rf/reg-event-db ::set-attachments (fn [db [_ key value]] (assoc-in db [::attachments key] value)))
 
 (rf/reg-event-fx
@@ -59,7 +62,8 @@
                        :actions
                        description
                        (fn [response]
-                         (rf/dispatch [::set-attachments key [{:attachment/id (:id response)}]])))
+                         (rf/dispatch [::set-attachments key [{:attachment/id (:id response)
+                                                               :attachment/filename (.. file (get "file") -name)}]])))
              :error-handler (fn [response]
                              (if (= 415 (:status response))
                                (flash-message/show-default-error! :actions description
@@ -75,20 +79,19 @@
   [:div.form-group
    (if attachment
      [:div.flex-row.d-flex.align-items-baseline
-      [:div
-       [text :t.form/attachment-uploaded]]
-      [:div
-       [success-symbol]]
+      [fields/attachment-link attachment]
       [:button.btn.btn-outline-secondary.mr-2
        {:type :button
         :on-click (fn [event]
                     (on-remove-attachment))}
-       (text :t.form/attachment-remove)]]
+       (text :t.form/attachment-remove)]
+      [:div
+       [success-symbol]]]
      [fields/upload-button (str "upload-" key) on-attach])])
 
 (defn action-attachment [{:keys [application-id key]}]
   [action-attachment-view {:key key
-                           :attachment (first @(rf/subscribe [::attachments key]))
+                           :attachment (first @(rf/subscribe [::attachments-with-filenames key]))
                            :on-attach #(rf/dispatch [::save-attachment application-id key %])
                            :on-remove-attachment #(rf/dispatch [::set-attachments key []])}])
 
@@ -144,5 +147,5 @@
                                      :on-attach (fn [_] nil)}])
    (example "action attachment, uploaded attachment"
             [action-attachment-view {:key "action-guide-example-1"
-                                     :attachment 13
+                                     :attachment {:attachment/filename "attachment.xlsx"}
                                      :on-attach (fn [_] nil)}])])
