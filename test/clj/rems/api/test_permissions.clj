@@ -27,7 +27,14 @@
                              (authenticate "42" "approver1")
                              handler)
                 body (read-body response)]
-            (is (= {:ga4gh_visa_v1 []} body))))
+            (is (= "unauthorized" body))))
+
+        (testing "all for alice as malice"
+          (let [response (-> (request :get (str "/api/permissions/alice"))
+                         (authenticate "42" "malice")
+                         handler)
+                body (read-body response)]
+            (is (= "unauthorized" body))))
 
         (testing "all for alice as alice"
           (let [data (-> (request :get (str "/api/permissions/alice"))

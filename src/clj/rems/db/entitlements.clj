@@ -6,7 +6,7 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
-            [rems.auth.util :refer [throw-forbidden]]
+            [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -50,7 +50,8 @@
   {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api
                         (db/get-entitlements {:user            (if (has-roles? :handler :owner :organization-owner :reporter)
                                                                  user-or-nil
-                                                                 (getx-user-id))
+                                                                 (when-not (= user-or-nil (getx-user-id))
+                                                                   (throw-unauthorized)))
                                               :resource-ext-id resource-or-nil
                                               :is-active?      (not expired?)}))})
 
