@@ -24,7 +24,7 @@ Changes since v2.8
 
 ### Additions
 - Generating bare-bones PDFs from applications. This is a non-experimental feature. Fancier PDF generation is still experimental and can be enabled with a flag. (#2053)
-- Most actions can now have attachments in addition to comments (#1928)
+- It is possible to add an attachment to most actions that have a comment field (#1928)
 
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
