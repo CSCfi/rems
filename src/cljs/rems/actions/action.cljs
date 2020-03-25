@@ -87,7 +87,8 @@
            [:div.flex-row.d-flex.mb-2
             [fields/attachment-link attachment]
             [:button.btn.btn-outline-secondary.mr-2
-             {:type :button
+             {:class (str "remove-attachment-" key)
+              :type :button
               :on-click (fn [event]
                           (on-remove-attachment (:attachment/id attachment)))}
              [close-symbol]

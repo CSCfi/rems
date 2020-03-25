@@ -302,6 +302,61 @@
               (testing "check a field answer"
                 (is (= "Test name" (get-element-text *driver* description-field-selector)))))))))))
 
+(defn get-attachments
+  ([]
+   (get-attachments {:css "a.attachment-link"}))
+  ([selector]
+   (mapv (partial get-element-text-el *driver*) (query-all *driver* selector))))
+
+(deftest test-handling
+  (let [applicant "alice"
+        handler "developer"
+        form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus"}
+                                                        :field/optional false
+                                                        :field/type :description}]})
+        catalogue-id (test-data/create-catalogue-item! {:form-id form-id})
+        application-id (test-data/create-draft! applicant
+                                                [catalogue-id]
+                                                "test-handling")]
+    (test-data/command! {:type :application.command/submit
+                         :application-id application-id
+                         :actor applicant})
+    (with-postmortem *driver* {:dir reporting-dir}
+      (login-as handler)
+      (testing "handler should see todos on logging in"
+        (wait-visible *driver* :todo-applications))
+      (testing "handler should see description of application"
+        (wait-visible *driver* {:class :application-description :fn/text "test-handling"}))
+      (let [app-button {:tag :a :href (str "/application/" application-id)}]
+        (testing "handler should see view button for application"
+          (wait-visible *driver* app-button))
+        (click *driver* app-button))
+      (testing "handler should see application after clicking on View"
+        (wait-visible *driver* {:tag :h1 :fn/has-text "test-handling"}))
+      (testing "open the approve form"
+        (click *driver* :approve-reject-action-button))
+      (testing "add a comment and two attachments"
+        (fill-human *driver* :comment-approve-reject "this is a comment")
+        (upload-file *driver* :upload-approve-reject-input "test-data/test.txt")
+        (wait-visible *driver* [{:css "a.attachment-link"}])
+        (upload-file *driver* :upload-approve-reject-input "test-data/test-fi.txt")
+        (wait-predicate #(= ["test.txt" "test-fi.txt"]
+                            (get-attachments))))
+      (testing "add and remove a third attachment"
+        (upload-file *driver* :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
+        (wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
+                            (get-attachments)))
+        (let [buttons (query-all *driver* {:css "button.remove-attachment-approve-reject"})]
+          (click-el *driver* (last buttons)))
+        (wait-predicate #(= ["test.txt" "test-fi.txt"]
+                            (get-attachments))))
+      (testing "approve"
+        (scroll-and-click *driver* :approve)
+        (wait-predicate #(= "Approved" (get-element-text *driver* :application-state))))
+      (testing "attachments visible in eventlog"
+        (is (= ["test.txt" "test-fi.txt"]
+               (get-attachments {:css "div.event a.attachment-link"})))))))
+
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}
     (go *driver* (str +test-url+ "guide"))
