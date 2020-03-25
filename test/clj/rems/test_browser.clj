@@ -218,14 +218,19 @@
                                     :headers {"x-rems-api-key" "42"
                                               "x-rems-user-id" "handler"}}))
             form-id (get-in application [:application/forms 0 :form/id])
-            field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
-            field-selector (keyword (str "form-" form-id "-field-" field-id))] ; :form-1-field-fld2
+            description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
+            description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
+            attachment-field (get-in application [:application/forms 0 :form/fields 7])
+            attachment-field-selector (keyword (str "form-" form-id "-field-" (:field/id attachment-field) "-input"))]
+        (is (= "attachment" (:field/type attachment-field))) ;; sanity check
+
         (fill-form-field "Application title field" "Test name")
         (fill-form-field "Text field" "Test")
         (fill-form-field "Text area" "Test2")
         (set-date "Date field" "2050-01-02")
         (fill-form-field "Email field" "user@example.com")
-        ;; leave attachment field empty
+        (upload-file *driver* attachment-field-selector "test-data/test.txt")
+
         (is (not (field-visible? "Conditional field"))
             "Conditional field is not visible before selecting option")
         (select-option "Option list" "First option")
@@ -242,7 +247,7 @@
         (is (= "Applied" (get-element-text *driver* :application-state)))
 
         (testing "check a field answer"
-          (is (= "Test name" (get-element-text *driver* field-selector))))
+          (is (= "Test name" (get-element-text *driver* description-field-selector))))
 
         (testing "see application on applications page"
           (go-to-applications)
@@ -257,7 +262,13 @@
                              (http/get (str +test-url+ "/api/applications/" application-id)
                                        {:as :json
                                         :headers {"x-rems-api-key" "42"
-                                                  "x-rems-user-id" "handler"}}))]
+                                                  "x-rems-user-id" "handler"}}))
+                attachment-id (get-in application [:application/attachments 0 :attachment/id])]
+            (testing "attachments"
+              (is (= [{:attachment/id attachment-id
+                       :attachment/filename "test.txt"
+                       :attachment/type "text/plain"}]
+                     (:application/attachments application))))
             (testing "applicant information"
               (is (= "alice" (get-in application [:application/applicant :userid])))
               (is (= (set (map :license/id (:application/licenses application)))
@@ -271,7 +282,7 @@
                       ["header" ""]
                       ["date" "2050-01-02"]
                       ["email" "user@example.com"]
-                      ["attachment" ""]
+                      ["attachment" (str attachment-id)]
                       ["option" "Option1"]
                       ["text" "Conditional"]
                       ["multiselect" "Option2 Option3"]
@@ -282,7 +293,6 @@
                        ;; TODO could test other fields here too, e.g. title
                        [(:field/type field)
                         (:field/value field)]))))
-
             (testing "after navigating to the application view again"
               (scroll-and-click *driver* [{:css "table.my-applications"}
                                           {:tag :tr :data-row application-id}
@@ -290,7 +300,7 @@
               (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
               (wait-page-loaded)
               (testing "check a field answer"
-                (is (= "Test name" (get-element-text *driver* field-selector)))))))))))
+                (is (= "Test name" (get-element-text *driver* description-field-selector)))))))))))
 
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}
