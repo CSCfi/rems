@@ -468,7 +468,7 @@
     (when comment
       [:div comment])
     (when-let [attachments (seq attachments)]
-      (into [:div.d-flex.flex-row]
+      (into [:div.d-flex.flex-row.flex-wrap]
             (for [a attachments]
               [fields/attachment-link a])))]])
 
