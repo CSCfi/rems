@@ -7,6 +7,16 @@ This is a short guide for running REMS as an uberjar. We also provide a [Dockerf
 1. Write a configuration file. See [configuration.md](configuration.md) for instructions.
 1. Run rems with a command like `java -Drems.config=path/to/your/rems/config rems.jar`.
 
+# Administering REMS
+
+Some pointers for common tasks:
+
+- API keys for HTTP API access can be added with the command
+  `java -Drems.config=path/to/your/rems/config rems.jar add-api-key <key> <optional-list-of-roles>`
+- Users get added automatically when logging in, or you can use the `/api/users/create` HTTP API
+- Roles (e.g. `owner`, which grants access to the administration ui) can be granted with a command like
+  `java -Drems.config=path/to/your/rems/config rems.jar grant-role <role> <userid>`
+
 # Upgrading REMS
 
 1. Get a new `rems.jar`
