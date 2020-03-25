@@ -125,6 +125,11 @@
             json/generate-string
             println)))
 
+    "grant-role"
+    (let [[_ role user] args]
+      (mount/start #'rems.config/env #'rems.db.core/*db*)
+      (roles/add-role! user (keyword role)))
+
     "validate"
     (do
       (mount/start #'rems.config/env #'rems.db.core/*db*)
