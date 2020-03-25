@@ -219,16 +219,16 @@
                   (is (empty? others))
                   (is (= "/add" (:path req)))
                   (is (= "/add" (:path req2)))
-                  (is (= [{:application application-id
-                           :mail "applicant@example.com"
-                           :resource resource-ext-id
-                           :user applicant-id}]
-                         (json/parse-string (get-in req [:body "postData"]))))
-                  (is (= [{:application application-id
-                           :mail "applicant@example.com"
-                           :resource resource-ext-id2
-                           :user applicant-id}]
-                         (json/parse-string (get-in req2 [:body "postData"])))))))
+                  (is (= #{{:application application-id
+                            :mail "applicant@example.com"
+                            :resource resource-ext-id
+                            :user applicant-id}
+                           {:application application-id
+                            :mail "applicant@example.com"
+                            :resource resource-ext-id2
+                            :user applicant-id}}
+                         (set (concat (json/parse-string (get-in req [:body "postData"]))
+                                      (json/parse-string (get-in req2 [:body "postData"])))))))))
 
             (testing "close application"
               (assert-success
@@ -252,17 +252,17 @@
                 (let [[_old _old2 req req2 & others] (stub/recorded-requests entitlements-server)]
                   (is (empty? others))
                   (is (= "/remove" (:path req)))
-                  (is (= [{:application application-id
-                           :mail "applicant@example.com"
-                           :resource resource-ext-id
-                           :user applicant-id}]
-                         (json/parse-string (get-in req [:body "postData"]))))
                   (is (= "/remove" (:path req2)))
-                  (is (= [{:application application-id
-                           :mail "applicant@example.com"
-                           :resource resource-ext-id2
-                           :user applicant-id}]
-                         (json/parse-string (get-in req2 [:body "postData"])))))))
+                  (is (= #{{:application application-id
+                            :mail "applicant@example.com"
+                            :resource resource-ext-id
+                            :user applicant-id}
+                           {:application application-id
+                            :mail "applicant@example.com"
+                            :resource resource-ext-id2
+                            :user applicant-id}}
+                         (set (concat (json/parse-string (get-in req [:body "postData"]))
+                                      (json/parse-string (get-in req2 [:body "postData"])))))))))
 
             (testing "fetch application as applicant"
               (let [application (api-call :get (str "/api/applications/" application-id) nil
