@@ -1,6 +1,6 @@
 (ns rems.actions.action
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [success-symbol textarea]]
+            [rems.atoms :refer [close-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -45,18 +45,16 @@
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 
-(rf/reg-sub ::attachment-id (fn [db [_ key]] (get-in db [::attachment-id key])))
-
-;; attachments in the format the API wants
-(rf/reg-sub
- ::attachments
- (fn [db [_ key]]
-   (if-let [id (get-in db [:rems.actions.action/attachment-id key])]
-     [{:attachment/id id}]
-     [])))
-
-
-(rf/reg-event-db ::set-attachment-id (fn [db [_ key value]] (assoc-in db [::attachment-id key] value)))
+;; attachments in suitable format for api:
+(rf/reg-sub ::attachments (fn [db [_ key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments key]))))
+;; attachments with filenames for rendering:
+(rf/reg-sub ::attachments-with-filenames (fn [db [_ key]] (get-in db [::attachments key])))
+(rf/reg-event-db ::set-attachments (fn [db [_ key value]] (assoc-in db [::attachments key] value)))
+(rf/reg-event-db ::add-attachment (fn [db [_ key value]] (update-in db [::attachments key] conj value)))
+(rf/reg-event-db
+ ::remove-attachment
+ (fn [db [_ key id]]
+   (update-in db [::attachments key] (partial remove (comp #{id} :attachment/id)))))
 
 (rf/reg-event-fx
  ::save-attachment
@@ -69,7 +67,8 @@
                        :actions
                        description
                        (fn [response]
-                         (rf/dispatch [::set-attachment-id key (:id response)])))
+                         (rf/dispatch [::add-attachment key {:attachment/id (:id response)
+                                                             :attachment/filename (.. file (get "file") -name)}])))
              :error-handler (fn [response]
                              (if (= 415 (:status response))
                                (flash-message/show-default-error! :actions description
@@ -81,26 +80,26 @@
                                ((flash-message/default-error-handler :actions description) response)))})
      {})))
 
-(defn action-attachment-view [{:keys [key attachment on-attach on-remove-attachment]}]
+(defn action-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
   [:div.form-group
-   (if attachment
-     [:div.flex-row.d-flex.align-items-baseline
-      [:div
-       [text :t.form/attachment-uploaded]]
-      [:div
-       [success-symbol]]
-      [:button.btn.btn-outline-secondary.mr-2
-       {:type :button
-        :on-click (fn [event]
-                    (on-remove-attachment))}
-       (text :t.form/attachment-remove)]]
-     [fields/upload-button (str "upload-" key) on-attach])])
+   (into [:<>]
+         (for [attachment attachments]
+           [:div.flex-row.d-flex.mb-2
+            [fields/attachment-link attachment]
+            [:button.btn.btn-outline-secondary.mr-2
+             {:type :button
+              :on-click (fn [event]
+                          (on-remove-attachment (:attachment/id attachment)))}
+             [close-symbol]
+             " "
+             (text :t.form/attachment-remove)]]))
+   [fields/upload-button (str "upload-" key) on-attach]])
 
 (defn action-attachment [{:keys [application-id key]}]
   [action-attachment-view {:key key
-                           :attachment @(rf/subscribe [::attachment-id key])
+                           :attachments @(rf/subscribe [::attachments-with-filenames key])
                            :on-attach #(rf/dispatch [::save-attachment application-id key %])
-                           :on-remove-attachment #(rf/dispatch [::set-attachment-id key nil])}])
+                           :on-remove-attachment #(rf/dispatch [::remove-attachment key %])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.
@@ -152,7 +151,8 @@
             [action-attachment-view {:key "action-guide-example-1"
                                      :attachment nil
                                      :on-attach (fn [_] nil)}])
-   (example "action attachment, uploaded attachment"
+   (example "action attachment, multiple attachments"
             [action-attachment-view {:key "action-guide-example-1"
-                                     :attachment 13
+                                     :attachments [{:attachment/filename "attachment.xlsx"}
+                                                   {:attachment/filename "data.pdf"}]
                                      :on-attach (fn [_] nil)}])])

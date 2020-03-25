@@ -455,10 +455,7 @@
                 (when (not (empty? comment))
                   (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
-   :attachments (when-let [attachments (seq (:event/attachments event))]
-                  (into [:<>]
-                        (for [a attachments]
-                          [fields/attachment-link a])))
+   :attachments (:event/attachments event)
    :time (localize-time (:event/time event))})
 
 (defn- event-view [{:keys [time event comment decision attachments]}]
@@ -470,8 +467,10 @@
       [:div decision])
     (when comment
       [:div comment])
-    (when attachments
-      [:div attachments])]])
+    (when-let [attachments (seq attachments)]
+      (into [:div.d-flex.flex-row.flex-wrap]
+            (for [a attachments]
+              [fields/attachment-link a])))]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
@@ -1014,6 +1013,24 @@
                                                     :license/text {:en lipsum}}]}
               :edit-application {:field-values {1 {"fld1" "abc"}}
                                  :accepted-licenses #{4}}}])
+
+   (component-info event-view)
+   (example "simple event"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Alice Applicant submitted the application"}])
+   (example "event with comment & decision"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Hannah Handler has made a decision on the application"
+                         :decision "Rejected"
+                         :comment "This application is bad."}])
+   (example "event with attachment"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Hannah Handler attached some things"
+                         :attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
+   (example "event with many attachments"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Hannah Handler attached some things"
+                         :attachments (repeat 30 {:attachment/filename "image.jpeg"})}])
 
    (component-info application-copy-notice)
    (example "no copies"

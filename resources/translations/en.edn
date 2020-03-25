@@ -319,7 +319,6 @@
          :alert-disabled-resources "Resources no longer available:"
          :application "Application"
          :attachment-remove "Remove"
-         :attachment-uploaded "Attachment uploaded"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
          :comment "Comment"

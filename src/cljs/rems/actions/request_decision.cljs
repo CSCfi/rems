@@ -24,7 +24,7 @@
                ::comment ""
                ::potential-deciders #{}
                ::selected-deciders #{})
-    :dispatch [:rems.actions.action/set-attachment-id action-form-id nil]
+    :dispatch [:rems.actions.action/set-attachments action-form-id []]
     ::fetch-potential-deciders #(rf/dispatch [::set-potential-deciders %])}))
 
 (rf/reg-sub ::potential-deciders (fn [db _] (::potential-deciders db)))
