@@ -28,7 +28,14 @@
                      (authenticate api-key "owner")
                      handler
                      read-ok-body)]
-        (validate-alice-result data)))))
+        (validate-alice-result data)))
+
+    (testing "without user not found is returned"
+      (let [response (-> (request :get "/api/permissions")
+                         (authenticate api-key "handler")
+                         handler)
+            body (read-body response)]
+        (is (= "not found" body))))))
 
 (deftest permissions-test-security
   (let [api-key "42"]

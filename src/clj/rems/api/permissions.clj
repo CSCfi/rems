@@ -19,6 +19,6 @@
       :path-params [user :- (describe s/Str "return permissions for this user, required")]
       :query-params [{expired :- (describe s/Bool "whether to include expired permissions") false}]
       :return GetPermissionsResponse
-      (when-not user
+      (when-not (empty? user)
         (api-util/not-found-json-response))
       (ok (entitlements/get-entitlements-for-permissions-api user nil expired)))))
