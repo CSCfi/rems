@@ -28,19 +28,34 @@
 
 (defn run-with-server
   [endpoint-spec callback]
-  (with-open [server (stub/start! {"/entitlements" endpoint-spec})]
+  (with-open [server (stub/start! {"/entitlements" endpoint-spec
+                                   "/ga4gh" endpoint-spec})]
     (with-redefs [rems.config/env (assoc rems.config/env
-                                         :entitlements-target {:add (str (:uri server) "/entitlements")})]
+                                         :entitlements-target {:add (str (:uri server) "/entitlements")
+                                                               :ga4gh (str (:uri server) "/ga4gh")})]
       (callback server))))
 
 (deftest test-post-entitlements!
-  (testing "ok"
+  (testing "ok :add action"
     (run-with-server
      {:status 200}
      (fn [server]
        (is (nil? (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))
        (is (= [+expected-payload+] (for [r (stub/recorded-requests server)]
                                      (json/parse-string (get-in r [:body "postData"]))))))))
+
+  (testing "ok :ga4gh action"
+    (run-with-server
+      {:status 200}
+      (fn [server]
+        (is (nil? (#'entitlements/post-entitlements! {:action :ga4gh :entitlements +entitlements+})))
+        (is (= {:ga4gh_visa_v1 ["eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMSIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAwMjc1ODQwMDAwMH0.shOczQ78bE00HsvhPHqY1b5PcfIW2ebWd_4p6xb3TUg"
+                                "eyJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiQ29udHJvbGxlZEFjY2Vzc0dyYW50cyIsInZhbHVlIjoicmVzMiIsInNvdXJjZSI6Imh0dHBzOi8vZ2E0Z2gub3JnL2R1cmkvbm9fb3JnIiwiYnkiOiIiLCJhc3NlcnRlZCI6MTAzNDI5NDQwMDAwMH0.rfQTVmvlmkx2VsA5j5hGyaf0CUPh9I74WDlUbf_YHXk"]}
+               (-> (stub/recorded-requests server)
+                   first
+                   (get-in [:body "postData"])
+                   json/parse-string))))))
+
   (testing "not-found"
     (run-with-server
      {:status 404}
@@ -58,12 +73,15 @@
   (testing "no server configured"
     (is (nil? (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))))
 
-(defmacro with-stub-server [sym & body]
+(defmacro with-stub-server [sym & body]  ;;TODO: use only this or run-with-server, not both!
   `(let [~sym (stub/start! {"/add" {:status 200}
-                            "/remove" {:status 200}})]
+                            "/remove" {:status 200}
+                            "/ga4gh" {:status 200}
+                            :default {:status 500 :body "Invalid Route" }})]
      (with-redefs [rems.config/env (assoc rems.config/env
                                           :entitlements-target {:add (str (:uri ~sym) "/add")
-                                                                :remove (str (:uri ~sym) "/remove")})]
+                                                                :remove (str (:uri ~sym) "/remove")
+                                                                :ga4gh (str (:uri ~sym) "/ga4gh")})]
        ~@body)))
 
 (defn- get-requests [server]
@@ -71,6 +89,12 @@
    (for [req (stub/recorded-requests server)]
      {:path (:path req)
       :body (json/parse-string (get-in req [:body "postData"]))})))
+
+(defn- requests-for-paths [server ^String path]
+  (filter #(= (% :path) path) (set (get-requests server))))
+
+(defn- is-valid-ga4gh? [entry]
+  (string? (first (:ga4gh_visa_v1 (:body entry)))))
 
 (deftest test-entitlement-granting
   (let [applicant "bob"
@@ -141,9 +165,13 @@
               (is (= #{[applicant "resource1"] [applicant "resource2"]}
                      (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
             (testing "POST"
-              (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
-                       {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}}
-                     (set (get-requests server))))))))
+              (let [add-paths (requests-for-paths server "/add")
+                    ga4gh-paths (requests-for-paths server "/ga4gh")]
+                (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
+                                {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}}
+                       (set add-paths)))
+                (is (= 2 (count ga4gh-paths)))
+                (is (every? is-valid-ga4gh? ga4gh-paths)))))))
 
       (testing "approved application, more accepted licenses generates more entitlements"
         (with-stub-server server
@@ -159,9 +187,13 @@
                      [member "resource1"] [member "resource2"]}
                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
           (testing "POST"
-            (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                     {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
-                   (set (get-requests server)))))))
+            (let [add-paths (requests-for-paths server "/add")
+                  ga4gh-paths (requests-for-paths server "/ga4gh")]
+              (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                       {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
+                     (set add-paths)))
+              (is (= 2 (count ga4gh-paths)))
+              (is (every? is-valid-ga4gh? ga4gh-paths))))))
 
       (testing "removing a member ends entitlements"
         (with-stub-server server
@@ -195,9 +227,15 @@
             (is (= #{[applicant "resource1"] [applicant "resource3"]}
                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
           (testing "POST"
-            (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}
-                     {:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}}
-                   (set (get-requests server)))))))
+            (let [add-paths (requests-for-paths server "/add")
+                  remove-paths (requests-for-paths server "/remove")
+                  ga4gh-paths (requests-for-paths server "/ga4gh")]
+              (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
+                     (set add-paths)))
+              (is (= #{{:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}}
+                     (set remove-paths)))
+              (is (= 1 (count ga4gh-paths)))
+              (is (every? is-valid-ga4gh? ga4gh-paths))))))
 
       (testing "closed application should end entitlements"
         (with-stub-server server

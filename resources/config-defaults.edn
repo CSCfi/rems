@@ -41,7 +41,8 @@
 
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
-                       :remove nil}
+                       :remove nil
+                       :ga4gh nil} ;; Url where entitlements are pushed in ga4gh format, see https://github.com/ga4gh-duri/ga4gh-duri.github.io/
 
  ;; Which database column to show as the application id.
  ;; Options: :id, :external-id

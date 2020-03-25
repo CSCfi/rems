@@ -22,12 +22,19 @@
 (def jwt-audience "8tVkdfnw8ynZ6rXNndD6eZ6ErsHdIgPi")
 (def now (Instant/parse "2018-11-03T16:17:00.000Z"))
 
+(def jwt-encoded "eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiMTIzIn0.6I9x2mlI2QZSk0E3xZPzlKBMSEsXgYv_Lgoz0yh7S7w")
+
 (def fake-jwk-provider
   (reify JwkProvider
     (get [_ _]
       (let [m (.getDeclaredMethod Jwk "fromValues" (into-array Class [Map]))]
         (.setAccessible m true)
         (.invoke m nil (into-array [jwk]))))))
+
+(deftest test-jwk-sign
+  (testing "signs valid payload"
+    (is (= jwt-encoded
+           (jwt/sign {:name "123"} "secret")))))
 
 (deftest test-jwt-validate
   (binding [jwt/jwk-provider fake-jwk-provider]
