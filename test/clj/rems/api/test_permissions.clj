@@ -14,62 +14,44 @@
   (is (vector? (:ga4gh_visa_v1 data)))
   (is (string? (first (:ga4gh_visa_v1 data)))))
 
-(deftest permissions-test
+(deftest permissions-test-content
   (let [api-key "42"]
-        (testing "listing without authentication"
-          (let [response (-> (request :get (str "/api/permissions/userx"))
-                             handler)
-                body (read-body response)]
-            (is (= "unauthorized" body))))
+    (testing "all for alice as handler"
+      (let [data (-> (request :get "/api/permissions/alice")
+                     (authenticate api-key "handler")
+                     handler
+                     read-ok-body)]
+        (validate-alice-result data)))
 
-        (testing "listing without appropriate role"
-          (let [response (-> (request :get (str "/api/permissions/alice"))
-                             (authenticate "42" "approver1")
-                             handler)
-                body (read-body response)]
-            (is (= "unauthorized" body))))
+    (testing "all for alice as owner"
+      (let [data (-> (request :get "/api/permissions/alice")
+                     (authenticate api-key "owner")
+                     handler
+                     read-ok-body)]
+        (validate-alice-result data)))))
 
-        (testing "all for alice as malice"
-          (let [response (-> (request :get (str "/api/permissions/alice"))
-                         (authenticate "42" "malice")
+(deftest permissions-test-security
+  (let [api-key "42"]
+    (testing "listing without authentication"
+      (let [response (-> (request :get (str "/api/permissions/userx"))
                          handler)
-                body (read-body response)]
-            (is (= "unauthorized" body))))
+            body (read-body response)]
+        (is (= "unauthorized" body))))
 
-        (testing "all for alice as alice"
-          (let [data (-> (request :get (str "/api/permissions/alice"))
-                         (authenticate "42" "alice")
-                         handler
-                         read-ok-body)]
-            (validate-alice-result data)))
+    (testing "listing without appropriate role"
+      (let [response (-> (request :get (str "/api/permissions/alice"))
+                         (authenticate api-key "approver1")
+                         handler)
+            body (read-body response)]
+        (is (= "forbidden" body))))
 
-        (testing "all for alice as handler"
-          (let [data (-> (request :get "/api/permissions/alice")
-                         (authenticate api-key "handler")
-                         handler
-                         read-ok-body)]
-            (validate-alice-result data)))
+    (testing "all for alice as malice"
+      (let [response (-> (request :get (str "/api/permissions/alice"))
+                         (authenticate api-key "malice")
+                         handler)
+            body (read-body response)]
+        (is (= "forbidden" body))))))
 
-        (testing "all for alice as owner"
-          (let [data (-> (request :get "/api/permissions/alice")
-                         (authenticate api-key "owner")
-                         handler
-                         read-ok-body)]
-            (validate-alice-result data)))
-
-        (testing "all for alice as organization-owner"
-          (let [data (-> (request :get "/api/permissions/alice")
-                         (authenticate api-key "organization-owner1")
-                         handler
-                         read-ok-body)]
-            (validate-alice-result data)))
-
-        (testing "all for alice as reporter"
-          (let [data (-> (request :get "/api/permissions/alice")
-                         (authenticate api-key "organization-owner1")
-                         handler
-                         read-ok-body)]
-            (validate-alice-result data)))))
 
 
 

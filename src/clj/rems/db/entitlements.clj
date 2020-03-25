@@ -46,12 +46,9 @@
                :by       (str approvedby)
                :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
 
-(defn get-entitlements-for-permissions-api [user-or-nil resource-or-nil expired?]
+(defn get-entitlements-for-permissions-api [user resource-or-nil expired?]
   {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api
-                        (db/get-entitlements {:user            (if (has-roles? :handler :owner :organization-owner :reporter)
-                                                                 user-or-nil
-                                                                 (when-not (= user-or-nil (getx-user-id))
-                                                                   (throw-unauthorized)))
+                        (db/get-entitlements {:user            user
                                               :resource-ext-id resource-or-nil
                                               :is-active?      (not expired?)}))})
 
