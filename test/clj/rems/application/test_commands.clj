@@ -68,7 +68,12 @@
                                               :visibility/values ["foo"]}}]}
          2 {:form/id 2
             :form/fields [{:field/id "1"
-                           :field/optional false}]}}
+                           :field/optional false}]}
+         3 {:form/id 3
+            :form/fields [{:field/id "text"
+                           :field/type :text}
+                          {:field/id "attachment"
+                           :field/type :attachment}]}}
         id))
 
 (defn- dummy-get-catalogue-item [id]
@@ -108,7 +113,9 @@
    :allocate-application-ids! (fn [_time]
                                 (reset! allocated-new-ids? true)
                                 {:application/id new-app-id
-                                 :application/external-id new-external-id})})
+                                 :application/external-id new-external-id})
+   :copy-attachment! (fn [_new-app-id attachment-id]
+                       (+ attachment-id 100))})
 
 ;; could rework tests to use model/build-application-view instead of this
 (defn apply-events [application events]
@@ -1484,7 +1491,7 @@
                                                {:catalogue-item/id 2
                                                 :resource/ext-id "res2"}]
                        :application/licenses []
-                       :application/forms [{:form/id 1}]
+                       :application/forms [{:form/id 3}]
                        :workflow/id 1
                        :workflow/type :workflow/default}
         application (apply-events nil [created-event
@@ -1492,8 +1499,8 @@
                                         :event/time test-time
                                         :event/actor applicant-user-id
                                         :application/id app-id
-                                        :application/field-values [{:form 1 :field "1" :value "foo"}
-                                                                   {:form 1 :field "2" :value "bar"}]}])]
+                                        :application/field-values [{:form 3 :field "text" :value "1"}
+                                                                   {:form 3 :field "attachment" :value "2"}]}])]
     (testing "creates a new application with the same form answers"
       (is (= [{:event/type :application.event/created
                :event/time test-time
@@ -1512,8 +1519,8 @@
                :event/time test-time
                :event/actor applicant-user-id
                :application/id new-app-id
-               :application/field-values [{:form 1 :field "1" :value "foo"}
-                                          {:form 1 :field "2" :value "bar"}]}
+               :application/field-values [{:form 3 :field "text" :value "1"}
+                                          {:form 3 :field "attachment" :value "102"}]}
               {:event/type :application.event/copied-from
                :event/time test-time
                :event/actor applicant-user-id
