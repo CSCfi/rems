@@ -40,6 +40,9 @@
    [:i {:class "fas fa-circle fa-stack-1x icon-stack-background"}]
    [:i {:class "fas fa-check-circle fa-stack-1x text-success"}]])
 
+(defn add-symbol []
+  [:i.fa.fa-plus])
+
 (defn empty-symbol []
   [:i.fa-stack])
 

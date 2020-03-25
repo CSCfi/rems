@@ -1,6 +1,6 @@
 (ns rems.actions.action
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [success-symbol textarea]]
+            [rems.atoms :refer [close-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -90,6 +90,8 @@
              {:type :button
               :on-click (fn [event]
                           (on-remove-attachment (:attachment/id attachment)))}
+             [close-symbol]
+             " "
              (text :t.form/attachment-remove)]]))
    [fields/upload-button (str "upload-" key) on-attach]])
 

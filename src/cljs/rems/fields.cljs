@@ -2,7 +2,7 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             [cljs-time.core :as time]
-            [rems.atoms :refer [file-download textarea success-symbol]]
+            [rems.atoms :refer [add-symbol close-symbol file-download textarea success-symbol]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [getx]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
@@ -273,6 +273,8 @@
       {:id id
        :type :button
        :on-click (fn [e] (.click (.getElementById js/document upload-id)))}
+      [add-symbol]
+      " "
       (text :t.form/upload)]
      [:a.upload-info-button.btn.btn-link
       {:data-toggle "collapse"
@@ -302,6 +304,8 @@
                        {:type :button
                         :on-click (fn [event]
                                     (on-remove-attachment))}
+                       [close-symbol]
+                       " "
                        (text :t.form/attachment-remove)]]
     [field-wrapper (assoc opts
                           :readonly-component (attachment-link (:field/attachment opts))
