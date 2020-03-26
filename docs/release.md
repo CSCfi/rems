@@ -51,9 +51,8 @@ CSC updates all supported environments such as https://rems2demo.csc.fi which is
 
    `git push origin v2.6`
 
-7. Create jar and war packages for the release,
-
-   `lein clean; lein uberjar; lein uberwar`
+7. Get the `rems.jar` and `rems.war` packages for the release from CircleCI.
+   You can do this manually or using `rems-deploy/scripts/fetch_from_circle.sh`
 
 8. Go to the github page for the release, e.g.,
 
@@ -67,9 +66,6 @@ CSC updates all supported environments such as https://rems2demo.csc.fi which is
 
     - Change lines starting with `###` to `##` for better formatting
 
-11. Press "Attach binaries" to upload rems.jar and rems.war from your
-    local directory target/uberjar/ under REMS repository.
+11. Press "Attach binaries" to upload the `rems.jar` and `rems.war` you got in step 8.
 
 12. Press "Publish release".
-
-13. Save changes
