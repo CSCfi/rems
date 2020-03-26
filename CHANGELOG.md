@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.8
+Changes since v2.9
+
+## v2.9 "Olarinluoma" 2020-03-26
 
 ### Breaking changes
 - Multiple form support #2043
