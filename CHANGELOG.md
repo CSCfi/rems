@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 Pull requests should add lines under the Unreleased heading if they
 have notable changes.
 
-## Unreleased
-
-Changes since v2.8
+## v2.9 "Olarinluoma" 2020-03-26
 
 ### Breaking changes
 - Multiple form support #2043
@@ -31,6 +29,10 @@ Changes since v2.8
 ### Fixes
 - Excel and OpenOffice files are now really allowed as attachments. Also, .csv and .tsv are allowed. Allowed file extensions are documented in the UI. (#2023)
 - Attachments now get copied when copying an application (#2056)
+
+## Unreleased
+
+Changes since v2.9
 
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 
