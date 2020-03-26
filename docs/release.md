@@ -15,11 +15,6 @@ changelog is updated by developers via the normal pull request process.
 
 Releases can be found on the github [release page](https://github.com/CSCfi/rems/releases).
 
-## Environments
-
-The integration test environment is updated by the developers.
-CSC updates all supported environments such as https://rems2demo.csc.fi which is for public testing and customer specific instances.
-
 ## Step-by-step instructions for creating a release
 
 1. Checkout the most recent master, e.g.,
