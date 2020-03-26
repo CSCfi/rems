@@ -498,6 +498,23 @@
                                    {:event/type :application.event/member-uninvited
                                     :application/member (:member cmd)})))
 
+(defn- copy-field-values! [copy-attachment! application new-application-id]
+  (vec
+   (for [form (:application/forms application)
+         field (:form/fields form)
+         :let [value (:field/value field)]]
+     {:form (:form/id form)
+      :field (:field/id field)
+      :value (cond
+               (not= :attachment (:field/type field))
+               value
+
+               (empty? value)
+               ""
+
+               :else
+               (str (copy-attachment! new-application-id (Integer/parseInt value))))})))
+
 (defmethod command-handler :application.command/copy-as-new
   [cmd application injections]
   (let [catalogue-item-ids (map :catalogue-item/id (:application/resources application))
@@ -509,17 +526,14 @@
       created-event-or-errors
       (let [created-event (:event created-event-or-errors)
             old-app-id (:application/id application)
-            new-app-id (:application/id created-event)]
+            new-app-id (:application/id created-event)
+            values (copy-field-values! (getx injections :copy-attachment!) application new-app-id)]
         (ok-with-data
          {:application-id new-app-id}
          [created-event
           {:event/type :application.event/draft-saved
            :application/id new-app-id
-           :application/field-values (for [form (:application/forms application)
-                                           field (:form/fields form)]
-                                       {:form (:form/id form)
-                                        :field (:field/id field)
-                                        :value (:field/value field)})}
+           :application/field-values values}
           {:event/type :application.event/copied-from
            :application/id new-app-id
            :application/copied-from (select-keys application [:application/id :application/external-id])}

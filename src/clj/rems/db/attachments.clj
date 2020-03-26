@@ -46,3 +46,11 @@
      {:attachment/id id
       :attachment/filename filename
       :attachment/type type})))
+
+(defn copy-attachment! [new-application-id attachment-id]
+  (let [attachment (db/get-attachment {:id attachment-id})]
+    (:id (db/save-attachment! {:application new-application-id
+                               :user (:modifieruserid attachment)
+                               :filename (:filename attachment)
+                               :type (:type attachment)
+                               :data (:data attachment)}))))

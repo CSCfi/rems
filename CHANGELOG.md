@@ -28,6 +28,7 @@ Changes since v2.8
 
 ### Fixes
 - Excel and OpenOffice files are now really allowed as attachments. Also, .csv and .tsv are allowed. Allowed file extensions are documented in the UI. (#2023)
+- Attachments now get copied when copying an application (#2056)
 
 ## v2.8 "Mankkaanlaaksontie" 2020-03-03
 

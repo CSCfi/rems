@@ -764,7 +764,24 @@
                                handler
                                assert-response-is-ok)]
               (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
-              (is (= (slurp testfile) (slurp (:body response)))))))))
+              (is (= (slurp testfile) (slurp (:body response)))))))
+        (testing "and copying the application"
+          (let [response (send-command user-id {:type :application.command/copy-as-new
+                                                :application-id app-id})
+                new-app-id (:application-id response)]
+            (is (:success response))
+            (is (number? new-app-id))
+            (testing "and fetching the copied attachent"
+              (let [new-app (get-application new-app-id user-id)
+                    new-id (get-in new-app [:application/attachments 0 :attachment/id])]
+                (is (number? new-id))
+                (is (not= id new-id))
+                (let [response (-> (read-request new-id)
+                                   (authenticate api-key user-id)
+                                   handler
+                                   assert-response-is-ok)]
+                  (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
+                  (is (= (slurp testfile) (slurp (:body response)))))))))))
     (testing "retrieving nonexistent attachment"
       (let [response (-> (read-request 999999999999999)
                          (authenticate api-key "carl")
