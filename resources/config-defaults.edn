@@ -1,3 +1,7 @@
+;; This file contains the default values of all config options supported by REMS.
+;; Details of the the config options are also documented here.
+;; See docs/configuration.md for more info.
+
 {;; HTTP server port.
  :port 3000
 
