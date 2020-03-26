@@ -12,10 +12,18 @@ This is a short guide for running REMS as an uberjar. We also provide a [Dockerf
 Some pointers for common tasks:
 
 - API keys for HTTP API access can be added with the command
-  `java -Drems.config=path/to/your/rems/config rems.jar add-api-key <key> <optional-list-of-roles>`
-- Users get added automatically when logging in, or you can use the `/api/users/create` HTTP API
-- Roles (e.g. `owner`, which grants access to the administration ui) can be granted with a command like
-  `java -Drems.config=path/to/your/rems/config rems.jar grant-role <role> <userid>`
+
+        java -Drems.config=path/to/your/rems/config rems.jar add-api-key <key> <optional-list-of-roles>`
+
+  If no roles are specified, all roles are allowed.
+- Users don't usually need to be added manually as they are automatically created when logging in.
+  If you need to add users programmatically, you can use the HTTP API `/api/users/create` as documented in OpenAPI aka Swagger.
+- Roles can be granted with a command like
+
+        java -Drems.config=path/to/your/rems/config rems.jar grant-role <role> <userid>
+
+  Typically you need to grant at least the `owner` role manually to someone to do administrative tasks through the UI.
+- More info about roles can be found in [glossary.md](glossary.md)
 
 # Upgrading REMS
 
