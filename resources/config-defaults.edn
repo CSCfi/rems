@@ -1,5 +1,6 @@
 ;; This file contains the default values of all config options supported by REMS.
 ;; Details of the the config options are also documented here.
+;; REMS will log a warning if you use a config option not listed in this file.
 ;; See docs/configuration.md for more info.
 
 {;; HTTP server port.
