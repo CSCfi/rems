@@ -330,11 +330,11 @@
       (let [app-button {:tag :a :href (str "/application/" application-id)}]
         (testing "handler should see view button for application"
           (wait-visible *driver* app-button))
-        (click *driver* app-button))
+        (scroll-and-click *driver* app-button))
       (testing "handler should see application after clicking on View"
         (wait-visible *driver* {:tag :h1 :fn/has-text "test-handling"}))
       (testing "open the approve form"
-        (click *driver* :approve-reject-action-button))
+        (scroll-and-click *driver* :approve-reject-action-button))
       (testing "add a comment and two attachments"
         (fill-human *driver* :comment-approve-reject "this is a comment")
         (upload-file *driver* :upload-approve-reject-input "test-data/test.txt")
