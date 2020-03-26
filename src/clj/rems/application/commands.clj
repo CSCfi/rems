@@ -498,7 +498,7 @@
                                    {:event/type :application.event/member-uninvited
                                     :application/member (:member cmd)})))
 
-(defn- copied-field-values [application new-application-id injections]
+(defn- copy-field-values! [copy-attachment! application new-application-id]
   (vec
    (for [form (:application/forms application)
          field (:form/fields form)
@@ -513,7 +513,7 @@
                ""
 
                :else
-               (str ((getx injections :copy-attachment!) new-application-id (Integer/parseInt value))))})))
+               (str (copy-attachment! new-application-id (Integer/parseInt value))))})))
 
 (defmethod command-handler :application.command/copy-as-new
   [cmd application injections]
@@ -527,7 +527,7 @@
       (let [created-event (:event created-event-or-errors)
             old-app-id (:application/id application)
             new-app-id (:application/id created-event)
-            values (copied-field-values application new-app-id injections)]
+            values (copy-field-values! (getx injections :copy-attachment!) application new-app-id)]
         (ok-with-data
          {:application-id new-app-id}
          [created-event
