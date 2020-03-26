@@ -8,7 +8,7 @@ have notable changes.
 
 Changes since v2.8
 
-## Breaking changers
+### Breaking changes
 - Multiple form support #2043
   - Catalogue items that share a workflow but have different forms can now be bundled into one application.
   - Migrations will update the data. API changes are listed here.
