@@ -16,6 +16,7 @@
             [rems.api.forms :refer [forms-api]]
             [rems.api.health :refer [health-api]]
             [rems.api.licenses :refer [licenses-api]]
+            [rems.api.organizations :refer [organizations-api]]
             [rems.api.permissions :refer [permissions-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
@@ -168,6 +169,7 @@
       forms-api
       health-api
       licenses-api
+      organizations-api
       permissions-api
       resources-api
       user-settings-api

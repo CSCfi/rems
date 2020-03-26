@@ -16,6 +16,7 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.testing-util :refer [with-user]]
@@ -1033,6 +1034,17 @@
 (defn- create-items! [users]
   (let [owner (users :owner)
         organization-owner1 (users :organization-owner1)
+        organization-owner2 (users :organization-owner2)
+
+        ;; Create organizations
+        hus (organizations/add-organization! {:organization/id "hus"
+                                              :organization/name "HUS"
+                                              :organization/owners [organization-owner1]
+                                              :organization/review-emails []})
+        thl (organizations/add-organization! {:organization/id "thl"
+                                              :organization/name "THL"
+                                              :organization/owners [organization-owner2]
+                                              :organization/review-emails []})
 
         ;; Create licenses
         license1 (create-license! {:actor owner

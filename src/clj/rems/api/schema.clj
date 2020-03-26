@@ -273,3 +273,10 @@
           :application/events
           :application/forms
           :application/licenses))
+
+(s/defschema Organization
+  {:organization/id s/Str
+   :organization/name s/Str
+   :organization/owners [UserWithAttributes]
+   :organization/review-emails [{:name s/Str
+                                 :email s/Str}]})
