@@ -250,7 +250,7 @@
 (defn attachment-link [attachment]
   (when attachment
     [:div.field
-     [:a.btn.btn-outline-secondary.mr-2
+     [:a.attachment-link.btn.btn-outline-secondary.mr-2
       {:href (str "/applications/attachment/" (:attachment/id attachment))
        :target :_blank}
       (:attachment/filename attachment) " " [file-download]]]))

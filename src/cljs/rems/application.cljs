@@ -459,7 +459,7 @@
    :time (localize-time (:event/time event))})
 
 (defn- event-view [{:keys [time event comment decision attachments]}]
-  [:div.row
+  [:div.row.event
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label event]
@@ -474,7 +474,7 @@
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
-    (into [:div.group]
+    (into [:div.event-group]
           (for [e group]
             [event-view e]))))
 
