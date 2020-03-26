@@ -26,6 +26,7 @@ Changes since v2.8
 - Generating bare-bones PDFs from applications. This is a non-experimental feature. Fancier PDF generation is still experimental and can be enabled with a flag. (#2053)
 - It is possible to add attachments to most actions that have a comment field (#1928)
 - Added `list-users` and `grant-role` commands for `rems.jar`. For details see <docs/installing_upgrading.md> (#2073)
+- A warning is now logged when the config file contains unrecognized keys.
 
 ### Fixes
 - Excel and OpenOffice files are now really allowed as attachments. Also, .csv and .tsv are allowed. Allowed file extensions are documented in the UI. (#2023)
