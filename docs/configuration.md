@@ -6,6 +6,8 @@ Configuration uses the [cprop](https://github.com/tolitius/cprop) library. You c
 
 The full list of available configuration options can be seen in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn).
 
+REMS tries to validate your config file when starting. Errors or warnings will be logged for problems found in the configuration file.
+
 ## Authentication options
 
 Currently supported authentication methods are SAML2 and OpenId Connect (e.g. Auth0). Login method to be used can be defined with the key `:authentication` and the following values are recognized:
