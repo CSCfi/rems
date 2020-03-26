@@ -71,6 +71,7 @@
      \"demo-data\" -- insert data for demoing purposes into database
      \"validate\" -- validate data in db
      \"list-users\" -- list users and roles
+     \"grant-role <role> <user>\" -- grant a role to a user
      \"add-api-key <api-key> [<description>] [<permitted-role 1>] ... [<permitted-role n>]\" -- add api key to db.
         <description> is an optional text comment.
         <permitted-role> is, e.g., owner or handler. If no permitted roles are
@@ -127,8 +128,10 @@
 
     "grant-role"
     (let [[_ role user] args]
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (roles/add-role! user (keyword role)))
+      (if (not (and role user))
+        (println "Usage: grant-role <role> <user>")
+        (do (mount/start #'rems.config/env #'rems.db.core/*db*)
+            (roles/add-role! user (keyword role)))))
 
     "validate"
     (do
