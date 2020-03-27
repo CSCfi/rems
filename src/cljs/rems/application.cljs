@@ -266,7 +266,7 @@
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
 
-(search/reg-fetcher ::previous-applications "/api/applications")
+(fetcher/reg-fetcher ::previous-applications "/api/applications")
 
 (rf/reg-sub
  ::previous-applications-except-current
