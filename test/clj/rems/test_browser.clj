@@ -84,7 +84,8 @@
     (screenshot (io/file reporting-dir "logged-in.png"))))
 
 (defn logout []
-  (click *driver* :logout))
+  (click *driver* :logout)
+  (wait-visible *driver* {:css ".login-component"}))
 
 (defn- wait-page-loaded []
   (wait-invisible *driver* {:css ".fa-spinner"}))
@@ -336,6 +337,7 @@
       (testing "open the approve form"
         (scroll-and-click *driver* :approve-reject-action-button))
       (testing "add a comment and two attachments"
+        (wait-visible *driver* :comment-approve-reject)
         (fill-human *driver* :comment-approve-reject "this is a comment")
         (upload-file *driver* :upload-approve-reject-input "test-data/test.txt")
         (wait-visible *driver* [{:css "a.attachment-link"}])
