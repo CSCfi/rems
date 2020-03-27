@@ -17,6 +17,7 @@
             [rems.handler :as handler]
             [rems.json :as json]
             [rems.validate :as validate])
+  (:import [sun.misc Signal SignalHandler])
   (:refer-clojure :exclude [parse-opts])
   (:gen-class))
 
@@ -62,6 +63,15 @@
   (validate/validate)
   (refresh-caches))
 
+(defn exit-on-signals! []
+  (let [exit (proxy [SignalHandler] []
+               (handle [sig]
+                 (log/info "Shutting down due to signal" (.getName sig))
+                 (System/exit 0)))]
+    (Signal/handle (Signal. "INT") exit) ;; e.g. ^C from terminal
+    (Signal/handle (Signal. "TERM") exit) ;; default kill signal of systemd
+    nil))
+
 (defn -main
   "Arguments can be either arguments to mount/start-with-args, or one of
      \"migrate\" -- migrate database
@@ -79,6 +89,7 @@
         If a pre-existing <api-key> is given, update description and permitted
           roles for that api-key."
   [& args]
+  (exit-on-signals!)
   (case (first args)
     ("migrate" "rollback")
     (do
