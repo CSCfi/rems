@@ -31,7 +31,7 @@
                  [hiccup "1.0.5"]
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
                  [lambdaisland/deep-diff "0.0-47"]
-                 [luminus-jetty "0.1.9"]
+                 [luminus-jetty "0.1.7"] ;; luminus-jetty 0.1.9 brings in websocket stuff that isn't compatible with the old tomcat versions we use
                  [luminus-migrations "0.6.6"]
                  [luminus-nrepl "0.1.6"]
                  [luminus/ring-ttl-session "0.3.3"]
