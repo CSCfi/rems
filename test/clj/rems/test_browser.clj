@@ -11,6 +11,7 @@
             [mount.core :as mount]
             [rems.config]
             [rems.db.test-data :as test-data]
+            [rems.db.user-settings :as user-settings]
             [rems.standalone])
   (:import (java.net SocketException)))
 
@@ -387,6 +388,9 @@
       (login-as "alice")
       (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"})
       (wait-page-loaded))
+
+    (testing "wait for language change to show in the db"
+      (wait-predicate #(= :fi (:language (user-settings/get-user-settings "alice")))))
 
     (testing "changed language must have been saved for user"
       (logout)
