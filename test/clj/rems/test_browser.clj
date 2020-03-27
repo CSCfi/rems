@@ -191,6 +191,12 @@
 (defn get-application-id []
   (last (str/split (get-url *driver*) #"/")))
 
+(defn get-attachments
+  ([]
+   (get-attachments {:css "a.attachment-link"}))
+  ([selector]
+   (mapv (partial get-element-text-el *driver*) (query-all *driver* selector))))
+
 ;; applications page
 
 (defn get-application-summary [application-id]
@@ -231,6 +237,7 @@
         (set-date "Date field" "2050-01-02")
         (fill-form-field "Email field" "user@example.com")
         (upload-file *driver* attachment-field-selector "test-data/test.txt")
+        (wait-predicate #(= ["test.txt"] (get-attachments)))
 
         (is (not (field-visible? "Conditional field"))
             "Conditional field is not visible before selecting option")
@@ -302,12 +309,6 @@
               (wait-page-loaded)
               (testing "check a field answer"
                 (is (= "Test name" (get-element-text *driver* description-field-selector)))))))))))
-
-(defn get-attachments
-  ([]
-   (get-attachments {:css "a.attachment-link"}))
-  ([selector]
-   (mapv (partial get-element-text-el *driver*) (query-all *driver* selector))))
 
 (deftest test-handling
   (let [applicant "alice"
