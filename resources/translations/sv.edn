@@ -16,7 +16,7 @@
             :close-intro [:div.intro [:p "Notera, att när du en gång stängt ansökan, kan den inte öppnas igen."]]
             :comment "Kommentar"
             :decide "Avgör"
-            :errors {:already-member "User is already a member of this application" ;; TODO
+            :errors {:already-member "Användare är redan medlem."
                      :disabled-catalogue-item "Resurserna är inte längre tillgängliga."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har into godkänt användarvillkoren."
@@ -329,7 +329,7 @@
          :events "Händelser"
          :failed "Misslyckades"
          :has-accepted-licenses "Har accepterat licenserna."
-         :invalid-attachment "Attachment file type not allowed." ;; TODO
+         :invalid-attachment "Filtyp inte tillåtet." ;; TODO
          :licenses "Licenser"
          :maxlength "(längd högst %1 tecken)"
          :must-accept-licenses "Varje sökande måste godkänna användarvillkoren för att använda resurserna."
@@ -343,7 +343,7 @@
          :submit "Lämna in ansökningen"
          :success "Genomfört"
          :upload "Lägg till bilaga"
-         :upload-extensions "Allowed file types" ;; TODO
+         :upload-extensions "Tillåtna filtyper"
          :validation {:invalid-email "Ogiltig e-postadress."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
@@ -373,7 +373,7 @@
                :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"
                    :page-was-not-found "Denna sida hittades inte."}
-  :pdf {:generated "This PDF generated at"} ;; TODO
+  :pdf {:generated "Detta pdf skapad"}
   :phases {:apply "Skicka in"
            :approve "Godkänn"
            :approved "Godkänt"
