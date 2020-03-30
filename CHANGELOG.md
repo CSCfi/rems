@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.9
 
+### Additions
+- Swedish localizations
+
 ## v2.9 "Olarinluoma" 2020-03-26
 
 ### Breaking changes
