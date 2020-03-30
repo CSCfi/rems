@@ -329,7 +329,7 @@
          :events "Händelser"
          :failed "Misslyckades"
          :has-accepted-licenses "Har accepterat licenserna."
-         :invalid-attachment "Filtyp inte tillåtet." ;; TODO
+         :invalid-attachment "Filtyp inte tillåtet."
          :licenses "Licenser"
          :maxlength "(längd högst %1 tecken)"
          :must-accept-licenses "Varje sökande måste godkänna användarvillkoren för att använda resurserna."
