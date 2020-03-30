@@ -751,16 +751,20 @@
                                  :license/type :link
                                  :license/organization "nbn"
                                  :license/title {:en "CC Attribution 4.0"
-                                                 :fi "CC Nimeä 4.0"}
+                                                 :fi "CC Nimeä 4.0"
+                                                 :sv "CC Erkännande 4.0"}
                                  :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                                :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"}})
+                                                :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
           text (create-license! {:actor owner
                                  :license/type :text
                                  :license/organization "nbn"
                                  :license/title {:en "General Terms of Use"
-                                                 :fi "Yleiset käyttöehdot"}
+                                                 :fi "Yleiset käyttöehdot"
+                                                 :sv "Allmänna villkor"}
                                  :license/text {:en (apply str (repeat 10 "License text in English. "))
-                                                :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))}})]
+                                                :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+                                                :sv (apply str (repeat 10 "Licens på svenska. "))}})]
       (doseq [licid [link text]]
         (doseq [wfid [default decider master auto-approve]]
           (db/create-workflow-license! {:wfid wfid :licid licid}))))
@@ -1055,7 +1059,8 @@
                                                                      :fi "Lisenssi, jonka omistaa organisaatio-omistaja"
                                                                      :sv "Licens som ägs av organisationägare"}
                                                      :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+                                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                                    :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         _ (create-disabled-license! {:actor owner
                                      :license/organization "nbn"})
         attachment-license (create-attachment-license! {:actor owner
