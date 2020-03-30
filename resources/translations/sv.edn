@@ -13,18 +13,19 @@
             :cancel "Avbryt"
             :change-resources "Ändra resurser"
             :close "Stäng ansökan"
-            :close-intro [:div.intro [:p "Notera, att när du en gång stängt ansökan, kan den inte öppnas igen."]] 
+            :close-intro [:div.intro [:p "Notera, att när du en gång stängt ansökan, kan den inte öppnas igen."]]
             :comment "Kommentar"
             :decide "Avgör"
-            :errors {:disabled-catalogue-item "Resurserna är inte längre tillgängliga."
+            :errors {:already-member "User is already a member of this application" ;; TODO
+                     :disabled-catalogue-item "Resurserna är inte längre tillgängliga."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har into godkänt användarvillkoren."
-                     :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"} 
+                     :submission-failed "Inlämningen misslyckades. Var vänlig kontrollera följande:"}
             :export-entitlements "Ladda ner rättigheterna som csv-fil"
             :handled-applications "Behandlade ansökningar"
             :invite-member "Bjud in medlem"
             :licenses-selection "Lägg till licenser"
-            :load-application-states "Ladda status för ansökningarna" 
+            :load-application-states "Ladda status för ansökningarna"
             :member "Medlem"
             :member-email "E-postaddress"
             :member-name "Namn"
@@ -63,17 +64,16 @@
                    :create-resource "Ny resurs"
                    :create-workflow "Nytt arbetsflöde"
                    :created "Skapad"
-                   :disable "Avaktivera" 
-                   :disabled-and-archived-explanation "Avaktiveringen döljer resursen för användarna. Arkiveringen döljer den också från administrationsvyn." 
+                   :disable "Avaktivera"
+                   :disabled-and-archived-explanation "Avaktiveringen döljer resursen för användarna. Arkiveringen döljer den också från administrationsvyn."
                    :display-archived "Visa arkiverade"
-                   :edit "Ändra" 
+                   :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-form "Ändra blankett"
                    :edit-workflow "Ändra arbetsflöde"
-                   :enable "Ta i bruk" 
+                   :enable "Ta i bruk"
                    :end "Slut"
-                   :errors {:forbidden-organization "Organisationen är blockerad för denna användare."
-                            :form-archived "Blanketten är arkiverad:"
+                   :errors {:form-archived "Blanketten är arkiverad:"
                             :form-in-use "Blanketten är aktiv:"
                             :license-archived "Licensen är arkiverad:"
                             :license-in-use "Lisencen är aktiv:"
@@ -81,7 +81,7 @@
                             :resource-in-use "Resursen är aktiv:"
                             :workflow-archived "Arbetsflödet är arkiverat:"
                             :workflow-in-use "Arbetsflödet är aktivt:"}
-                   :export-applications "exportera ansökningar" 
+                   :export-applications "exportera ansökningar"
                    :form "Blankett"
                    :forms "Blanketter"
                    :license "Licens"
@@ -96,7 +96,6 @@
                    :resource "Resurs"
                    :resources "Resurser"
                    :save "Spara"
-                   :select-organization "Välj organisation"
                    :start "Början"
                    :title "Namn"
                    :type "Typ"
@@ -150,14 +149,14 @@
                           :submitted "%1 lämnade in ansökningen."
                           :unknown "Okänd"}
                  :export {:applicant "Sökande"
-                          :external-id "Externt id" 
+                          :external-id "Externt id"
                           :first-submitted "Inlämnad"
-                          :id "id" 
+                          :id "id"
                           :resources "Resurser"
                           :state "Tillstånd"}
                  :handlers "Handläggare"
-                 :id "id" 
-                 :intro [:div.intro [:p "Fyll i ansökningen och skicka den för behandling. Du kan bjuda in andra som medlemmar i din ansökning. Alla medlemmar måste godkänna användarvillkoren senast när ansökningen godkänts."]] 
+                 :id "id"
+                 :intro [:div.intro [:p "Fyll i ansökningen och skicka den för behandling. Du kan bjuda in andra som medlemmar i din ansökning. Alla medlemmar måste godkänna användarvillkoren senast när ansökningen godkänts."]]
                  :last-activity "Ändrat"
                  :latest-activity "Senaste aktivitet"
                  :my-applications "Mina ansökningar"
@@ -174,7 +173,7 @@
                  :submitted "Inlämnad"
                  :todo "Kräver åtgärd"
                  :todos {:new-application "Ny ansökning"
-                         :no-pending-requests "Inga öppna ärenden" 
+                         :no-pending-requests "Inga öppna ärenden"
                          :resubmitted-application "Ansökning återinlämnad"
                          :unknown "Okänd"
                          :waiting-for-decision "Väntar på beslut"
@@ -214,13 +213,13 @@
                 :field-n "Fält %1: %2"
                 :field-title "Namn på fält"
                 :field-type "Typ av fält"
-                :maxlength "Max antal tecken (valfri begränsning)" 
-                :option-key "Id" 
+                :maxlength "Max antal tecken (valfri begränsning)"
+                :option-key "Id"
                 :option-label "Titel"
                 :option-n "Alternativ %1"
                 :optional "Frivilligt fält"
                 :placeholder "Exempel (frivilligt)"
-                :privacy {:private "Privat" 
+                :privacy {:private "Privat"
                           :public "Offentlig"}
                 :title "Blankettens namn"
                 :type-attachment "Bilaga"
@@ -228,11 +227,11 @@
                 :type-description "Ansökningens rubrik"
                 :type-email "E-postaddress"
                 :type-header "Titel"
-                :type-label "Fält för tilläggsinformation" 
+                :type-label "Fält för tilläggsinformation"
                 :type-multiselect "Lista med flerval"
-                :type-option "Lista (enkelt val)" 
-                :type-privacy "Offentlighet" 
-                :type-text "Textfält" 
+                :type-option "Lista (enkelt val)"
+                :type-privacy "Offentlighet"
+                :type-text "Textfält"
                 :type-texta "Textområde"
                 :type-visibility "Synlighet"
                 :visibility {:always "Alltid"
@@ -251,11 +250,11 @@
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:decider-workflow "Arbetsflöde för beslutsfattande"
-                    :decider-workflow-description "Handläggare har inte rätt att godkänna eller förkasta ansökan. Endast godkännare kan göra detta." 
+                    :decider-workflow-description "Handläggare har inte rätt att godkänna eller förkasta ansökan. Endast godkännare kan göra detta."
                     :default-workflow "Standard arbetsflöde"
-                    :default-workflow-description "Ansökan är under handläggarens kontroll. Behandlaren kan be enskilda granskare ta ställning till den och be om beslut enligt behov." 
+                    :default-workflow-description "Ansökan är under handläggarens kontroll. Behandlaren kan be enskilda granskare ta ställning till den och be om beslut enligt behov."
                     :handlers "Handläggare"
-                    :master-workflow "Master-arbetsflöde" 
+                    :master-workflow "Master-arbetsflöde"
                     :master-workflow-description "ENDAST FÖR TESTBRUK. Sammanslagning av alla möjliga arbetsflöden"
                     :title "Arbetsflödets namn"}
   :dropdown {:no-results "Inga resultat"
@@ -308,28 +307,32 @@
           :reviewer-reminder {:application "%1, skickad av %2"
                               :message "Bästa %1,\n\nFöljande ansökningar väntar på din granskning:\n\n%2\n\nDu kan granska nsökningar bakom denna länk:  %3"
                               :subject "Ansökningar väntar på granskning"}}
-  :footer "CSC – IT-centret för forskning" 
+  :footer "CSC – IT-centret för forskning"
   :form {:accepted-licenses "Licenserna har accepterats"
          :actions "Funktioner"
          :add-comments-not-shown-to-applicant "Kommentar osynlig för sökande"
          :add-comments-shown-to-applicant "Kommentar synlig för sökande"
          :add-remark "Anteckning (syns eller döljs för sökande)"
          :alert-blacklisted-users "Dessa medlemmar har blockerats för någon av de ansökta resurserna"
-         :alert-disabled-resources "Resurser som inte längre är tillgängliga:" 
+         :alert-disabled-resources "Resurser som inte längre är tillgängliga:"
          :application "Ansökning"
          :attachment-remove "Ta bort"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
+         :comment "Komment"
          :copy-as-new "Kopiera som nytt"
          :current-value "Nuvarande"
+         :date "Datum"
          :diff-hide "Dölja ändringar"
          :diff-show "Visa ändringar"
-         :events "Händelser" 
+         :event "Händelse"
+         :events "Händelser"
          :failed "Misslyckades"
          :has-accepted-licenses "Har accepterat licenserna."
+         :invalid-attachment "Attachment file type not allowed." ;; TODO
          :licenses "Licenser"
          :maxlength "(längd högst %1 tecken)"
-         :must-accept-licenses "Varje sökande måste godkänna användarvillkoren för att använda resurserna." 
+         :must-accept-licenses "Varje sökande måste godkänna användarvillkoren för att använda resurserna."
          :optional "(frivillig)"
          :please-wait "Vänta en stund"
          :previous-applications "Sökandes tidigare ansökningar"
@@ -338,8 +341,9 @@
          :resources "Resurser"
          :save "Spara utkast"
          :submit "Lämna in ansökningen"
-         :success "Genomfört" 
-         :upload "Lägg till bilaga" 
+         :success "Genomfört"
+         :upload "Lägg till bilaga"
+         :upload-extensions "Allowed file types" ;; TODO
          :validation {:invalid-email "Ogiltig e-postadress."
                       :invalid-user "Ogiltig användare."
                       :invalid-value "Ogiltigt värde."
@@ -353,7 +357,7 @@
          :opens-in-new-window "Öppnas i nytt fönster"}
   :login {:alternative "Andra alternativ för inloggning"
           :intro [:div [:h1 "Välkommen till REMS"] [:p "Detta är en demo-version där du kan testa REMS. Här finns en del fantasiresurser, som du kan ansöka rättigheter till. Läs mer på " [:a {:href "/extra-pages/about"} "Info-sidan"] "."]
-                  [:p "Var god, logga in."]] 
+                  [:p "Var god, logga in."]]
           :oidc-text "Logga in via OpenID Connect"
           :text "Logga in via Haka"
           :title "Logga in"}
@@ -366,9 +370,10 @@
                :home "Ingångssida"
                :logout "Logga ut"
                :settings "Inställningar"
-               :skip-navigation "Flytta till sidinnehåll"} 
+               :skip-navigation "Flytta till sidinnehåll"}
   :not-found-page {:not-found "Sidan hittades inte"
                    :page-was-not-found "Denna sida hittades inte."}
+  :pdf {:generated "This PDF generated at"} ;; TODO
   :phases {:apply "Skicka in"
            :approve "Godkänn"
            :approved "Godkänt"
@@ -384,18 +389,18 @@
            :example-searches "Exempel på sökningar"
            :learn-more "Läs mer"
            :search "Sök"} ;;
-  :settings {:idp-email "E-postadress från identfieringstjänst" ; < ONKO Oikein?
+  :settings {:idp-email "E-postadress från identfieringstjänst" ; TODO check
              :no-email "(ingen e-postaddress)"
              :notification-email "Använd en annan e-postadress för att ta emot meddelanden"
              :save "Spara"
              :warning-about-missing-email [:<> "Du måste " [:a {:href "/settings"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökning."]}
   :table {:ascending-order "Stigande"
-          :descending-order "Sjunkande" 
+          :descending-order "Sjunkande"
           :all-rows-selected "Alla rader är valda"
           :no-rows-selected "Inga rader är valda"
-          :some-rows-selected "Några rader är valda" 
+          :some-rows-selected "Några rader är valda"
           :show-all-n-rows "Visa alla %1 rader"}
-  :unauthorized-page {:unauthorized "Ingen användningsrätt" 
+  :unauthorized-page {:unauthorized "Ingen användningsrätt"
                       :you-are-unauthorized "Du har inte rätt att använda denna sida."}
-  :forbidden-page {:forbidden "Förbjuden" 
-                   :you-are-forbidden "Förbjudet."}}} 
+  :forbidden-page {:forbidden "Förbjuden"
+                   :you-are-forbidden "Förbjudet."}}}
