@@ -1039,12 +1039,24 @@
         ;; Create organizations
         hus (organizations/add-organization! {:organization/id "hus"
                                               :organization/name "HUS"
-                                              :organization/owners [organization-owner1]
+                                              :organization/owners [{:userid organization-owner1}]
                                               :organization/review-emails []})
         thl (organizations/add-organization! {:organization/id "thl"
                                               :organization/name "THL"
-                                              :organization/owners [organization-owner2]
+                                              :organization/owners [{:userid organization-owner2}]
                                               :organization/review-emails []})
+        nbn (organizations/add-organization! {:organization/id "nbn"
+                                              :organization/name "NBN"
+                                              :organization/owners [{:userid organization-owner2}]
+                                              :organization/review-emails []})
+        organization1 (organizations/add-organization! {:organization/id "organization1"
+                                                        :organization/name "Organization 1"
+                                                        :organization/owners [{:userid organization-owner1}]
+                                                        :organization/review-emails []})
+        organization2 (organizations/add-organization! {:organization/id "organization2"
+                                                        :organization/name "Organization 2"
+                                                        :organization/owners [{:userid organization-owner2}]
+                                                        :organization/review-emails []})
 
         ;; Create licenses
         license1 (create-license! {:actor owner
