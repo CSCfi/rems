@@ -322,7 +322,7 @@
 (def all-field-types-example
   [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
                   :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
-                  :sv "De här blanket visar alla möjliga fälttyper. (Det här text är en fält för tilläggsinformation.)"}
+                  :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}
     :field/optional false
     :field/type :label}
 
