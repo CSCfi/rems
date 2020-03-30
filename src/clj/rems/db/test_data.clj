@@ -1079,13 +1079,15 @@
 
         form (create-all-field-types-example-form! owner "nbn" "Example form with all field types")
         form-private-thl (create-form! {:actor owner :form/organization "thl" :form/title "Simple form" :form/fields [{:field/title {:en "Simple text field"
-                                                                                                                                     :fi "Yksinkertainen tekstikenttä"}
+                                                                                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                                                                                     :sv "Tekxtfält"}
                                                                                                                        :field/optional false
                                                                                                                        :field/type :text
                                                                                                                        :field/max-length 100
                                                                                                                        :field/privacy :private}]})
         form-private-hus (create-form! {:actor owner :form/organization "hus" :form/title "Simple form" :form/fields [{:field/title {:en "Simple text field"
-                                                                                                                                     :fi "Yksinkertainen tekstikenttä"}
+                                                                                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                                                                                     :sv "Tekxtfält"}
                                                                                                                        :field/optional false
                                                                                                                        :field/type :text
                                                                                                                        :field/max-length 100
