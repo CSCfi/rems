@@ -1,13 +1,14 @@
 (ns rems.administration.create-catalogue-item
   (:require [clojure.string :as str]
             [clojure.set :as set]
-            [medley.core :refer [map-vals]]
+            [medley.core :refer [find-first map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [text-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
+            [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
@@ -15,50 +16,23 @@
             [rems.text :refer [text]]
             [rems.util :refer [navigate! fetch post! put! trim-when-string]]))
 
-(defn- update-loading [db]
-  (cond
-    (not (and (::resources db) (::workflows db) (::forms db)))
-    {:db db}
-
-    (::editing? db)
-    {:db (assoc db ::loading-catalogue-item? true)
-     ::fetch-catalogue-item (::catalogue-item-id db)}
-
-    :else
-    {:db (dissoc db ::loading?)}))
+(defn- item-by-id [items id-key id]
+  (find-first #(= (id-key %) id) items))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ catalogue-item-id]]
-   (let [editing? (not (nil? catalogue-item-id))
-         roles (get-in db [:identity :roles])
-         user-organization (get-in db [:identity :user :organization])
-         all-organizations (get-in db [:config :organizations])
-         organization (cond
-                        (roles/disallow-setting-organization? roles)
-                        user-organization
+   {:db (assoc db
+               ::form nil
+               ::catalogue-item-id catalogue-item-id
+               ::editing? (some? catalogue-item-id))
+    :dispatch-n [[::workflows]
+                 [::resources]
+                 [::forms]
+                 (when catalogue-item-id [::catalogue-item])
+                 [:rems.administration.administration/owned-organizations {:owner [(get-in db [:identity :user :userid])]}]]}))
 
-                        (= (count all-organizations) 1)
-                        (first all-organizations)
-
-                        :else
-                        nil)]
-     {:db (assoc db
-                 ::form (when organization
-                          {:organization organization})
-                 ::catalogue-item-id catalogue-item-id
-                 ::editing? editing?
-                 ::loading? true
-                 ::organization-read-only? (or editing?
-                                               (not (nil? organization))))
-      ::fetch-workflows nil
-      ::fetch-resources nil
-      ::fetch-forms nil})))
-
-(rf/reg-sub ::catalogue-item (fn [db _] (::catalogue-item db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
-(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
-(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
@@ -94,7 +68,7 @@
   (let [request {:wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
                  :form (get-in form [:form :form/id])
-                 :organization (:organization form)
+                 :organization (get-in form [:organization :organization/id])
                  :localizations (into {}
                                       (for [lang languages]
                                         [lang {:title (trim-when-string (get-in form [:title lang]))
@@ -141,78 +115,22 @@
 (rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)
 (rf/reg-event-fx ::edit-catalogue-item edit-catalogue-item!)
 
-(defn- fetch-workflows []
-  (fetch "/api/workflows"
-         {:handler #(rf/dispatch [::fetch-workflows-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch workflows")}))
+(fetcher/reg-fetcher ::workflows "/api/workflows")
+(fetcher/reg-fetcher ::resources "/api/resources")
+(fetcher/reg-fetcher ::forms "/api/forms")
 
-(rf/reg-fx ::fetch-workflows fetch-workflows)
-
-(rf/reg-event-fx
- ::fetch-workflows-result
- (fn [{:keys [db]} [_ workflows]]
-   (-> (assoc db ::workflows workflows)
-       (update-loading))))
-
-(rf/reg-sub ::workflows (fn [db _] (::workflows db)))
-
-(defn- fetch-resources []
-  (fetch "/api/resources"
-         {:handler #(rf/dispatch [::fetch-resources-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch resources")}))
-
-(rf/reg-fx ::fetch-resources fetch-resources)
-
-(rf/reg-event-fx
- ::fetch-resources-result
- (fn [{:keys [db]} [_ resources]]
-   (-> (assoc db ::resources resources)
-       (update-loading))))
-
-(rf/reg-sub ::resources (fn [db _] (::resources db)))
+(defn- fetch-catalogue-item-success [db [_ {:keys [wfid resource-id formid localizations organization]}]]
+  (-> db
+      (assoc ::form {:workflow (item-by-id (::workflows db) :id wfid)
+                     :resource (item-by-id (::resources db) :id resource-id)
+                     :form (item-by-id (::forms db) :form/id formid)
+                     :organization organization
+                     :title (map-vals :title localizations)
+                     :infourl (map-vals :infourl localizations)})))
 
 
-(defn- fetch-forms []
-  (fetch "/api/forms"
-         {:handler #(rf/dispatch [::fetch-forms-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch forms")}))
-
-(rf/reg-fx ::fetch-forms fetch-forms)
-
-(rf/reg-event-fx
- ::fetch-forms-result
- (fn [{:keys [db]} [_ forms]]
-   (-> (assoc db ::forms forms)
-       (update-loading))))
-
-(rf/reg-sub ::forms (fn [db _] (::forms db)))
-
-
-(defn- fetch-catalogue-item [id]
-  (fetch (str "/api/catalogue-items/" id)
-         {:handler #(rf/dispatch [::fetch-catalogue-item-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch catalogue item")}))
-
-(rf/reg-fx
- ::fetch-catalogue-item
- (fn [id]
-   (fetch-catalogue-item id)))
-
-(defn- item-by-id [items id-key id]
-  (first (filter #(= (id-key %) id) items)))
-
-(rf/reg-event-db
- ::fetch-catalogue-item-result
- (fn [db [_ {:keys [wfid resource-id formid localizations organization]}]]
-   (-> db
-       (assoc ::form {:workflow (item-by-id (::workflows db) :id wfid)
-                      :resource (item-by-id (::resources db) :id resource-id)
-                      :form (item-by-id (::forms db) :form/id formid)
-                      :organization organization
-                      :title (map-vals :title localizations)
-                      :infourl (map-vals :infourl localizations)})
-       (dissoc ::loading-catalogue-item?
-               ::loading?))))
+(fetcher/reg-fetcher ::catalogue-item "/api/catalogue-items/:id" {:path-params (fn [db] {:id (::catalogue-item-id db)})
+                                                                  :on-success fetch-catalogue-item-success})
 
 ;;;; UI
 
@@ -226,10 +144,10 @@
 (def ^:private form-dropdown-id "form-dropdown")
 
 (defn- catalogue-item-organization-field []
-  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
+  (let [organizations @(rf/subscribe [:rems.administration.administration/owned-organizations])
         selected-organization @(rf/subscribe [::selected-organization])
         item-selected? #(= % selected-organization)
-        readonly @(rf/subscribe [::organization-read-only?])]
+        readonly (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
     [:div.form-group
      [:label {:for organization-dropdown-id} (text :t.administration/organization)]
      (if readonly
@@ -238,6 +156,8 @@
        [dropdown/dropdown
         {:id organization-dropdown-id
          :items organizations
+         :item-key :organization/id
+         :item-label :organization/name
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
@@ -339,7 +259,11 @@
 (defn create-catalogue-item-page []
   (let [languages @(rf/subscribe [:languages])
         editing? @(rf/subscribe [::editing?])
-        loading? @(rf/subscribe [::loading?])
+        loading? (or @(rf/subscribe [:rems.administration.administration/owned-organizations :fetching?])
+                     @(rf/subscribe [::workflows ::fetching?])
+                     @(rf/subscribe [::resources ::fetching?])
+                     @(rf/subscribe [::forms ::fetching?])
+                     @(rf/subscribe [::catalogue-item ::fetching?]))
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]

@@ -9,9 +9,12 @@
     :initialized? - whether at least one fetch has finished
     :loading? - whether the first fetch is in progress
     :reloading? - whether a subsequent fetch is in progress"
-  (:require [re-frame.core :as rf]
+  (:require [medley.core :refer [map-keys]]
+            [re-frame.core :as rf]
             [rems.flash-message :as flash-message]
-            [rems.util :refer [fetch]]))
+            [rems.util :refer [fetch]]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is]]))
 
 (defn- update-derived-state [state]
   (let [{:keys [initialized? fetching?]} state]
@@ -31,6 +34,15 @@
              :fetching? false)
       update-derived-state))
 
+(defn- process-path-params [url params]
+  (reduce (fn [url [k v]]
+            (str/replace url k v))
+          url
+          (map-keys str params)))
+
+(deftest test-process-path-params
+  (is (= "/api/abc/xyz/baz"
+         (process-path-params "/api/:rems.fetcher/foo/:bar/baz" {::foo "abc" :bar "xyz"}))))
 
 (defn reg-fetcher
   "Registers a set of event handlers and subscriptions for fetching data, with
@@ -52,19 +64,21 @@
   All state is stored in `db` under `::foo`, which can be removed to reset state.
 
   Further options can be given as a map `opts`:
-  - `:result`     - a transformation function that is applied to each result before storing it
-  - `:on-success` - called after successful fetch"
+  - `:result`      - a transformation function that is applied to each result before storing it
+  - `:on-success`  - called after successful fetch
+  - `:path-params` - a function that receives the db and can assign path param values"
   [id url & [opts]]
   (let [result-id (keyword (namespace id)
                            (str (name id) "-result"))
         result-fn (or (:result opts) identity)
-        on-success (or (:on-success opts) (fn [_result]))]
+        path-params (or (:path-params opts) (constantly nil))
+        on-success (or (:on-success opts) (constantly nil))]
     (rf/reg-event-fx
      id
      (fn [{:keys [db]} [_ query]]
        ;; do only one fetch at a time - will retry after the pending fetch is finished
        (when-not (get-in db [id :fetching?])
-         (fetch url
+         (fetch (process-path-params url (path-params db))
                 {:url-params query
                  :handler #(rf/dispatch [result-id {:data %} query])
                  :error-handler (fn [response]
