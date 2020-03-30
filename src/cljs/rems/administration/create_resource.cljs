@@ -7,6 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
+            [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
@@ -16,28 +17,11 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   (let [roles (get-in db [:identity :roles])
-         user-organization (get-in db [:identity :user :organization])
-         all-organizations (get-in db [:config :organizations])
-         organization (cond
-                        (roles/disallow-setting-organization? roles)
-                        user-organization
+   {:db (dissoc db ::form)
+    :dispatch-n [[:rems.administration.administration/owned-organizations {:owner (get-in db [:identity :user :userid])}]
+                 [::licenses {:active true}]]}))
 
-                        (= (count all-organizations) 1)
-                        (first all-organizations)
-
-                        :else
-                        nil)]
-     {:db (assoc db
-                 ::form (merge {:licenses []}
-                               (when organization
-                                 {:organization organization}))
-                 ::organization-read-only? (not (nil? organization))
-                 ::loading? true)
-      ::fetch-licenses nil})))
-
-(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
-(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
+(fetcher/reg-fetcher ::licenses "/api/licenses")
 
 ;; form state
 
@@ -57,7 +41,7 @@
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
-  (let [request {:organization (:organization form)
+  (let [request {:organization (get-in form [:organization :organization/id])
                  :resid (trim-when-string (:resid form))
                  :licenses (map :id (:licenses form))}]
     (when (valid-request? form request)
@@ -75,26 +59,6 @@
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
-;; available licenses
-
-(defn- fetch-licenses []
-  (fetch "/api/licenses"
-         {:url-params {:active true}
-          :handler #(rf/dispatch [::fetch-licenses-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch licenses")}))
-
-(rf/reg-fx ::fetch-licenses (fn [_] (fetch-licenses)))
-
-(rf/reg-event-db
- ::fetch-licenses-result
- (fn [db [_ licenses]]
-   (-> db
-       (assoc ::licenses licenses)
-       (dissoc ::loading?))))
-
-(rf/reg-sub ::licenses (fn [db _] (::licenses db)))
-
-
 ;;;; UI
 
 (def ^:private context
@@ -105,10 +69,10 @@
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
 (defn- resource-organization-field []
-  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
+  (let [organizations @(rf/subscribe [:rems.administration.administration/owned-organizations])
         selected-organization @(rf/subscribe [::selected-organization])
         item-selected? #(= % selected-organization)
-        readonly @(rf/subscribe [::organization-read-only?])]
+        readonly (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
     [:div.form-group
      [:label {:for organization-dropdown-id} (text :t.administration/organization)]
      (if readonly
@@ -117,6 +81,8 @@
        [dropdown/dropdown
         {:id organization-dropdown-id
          :items organizations
+         :item-key :organization/id
+         :item-label :organization/name
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
@@ -159,7 +125,8 @@
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
-  (let [loading? @(rf/subscribe [::loading?])
+  (let [loading? (or @(rf/subscribe [:rems.administration.administration/owned-organizations :fetching?])
+                     @(rf/subscribe [::licenses :fetching?]))
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]
