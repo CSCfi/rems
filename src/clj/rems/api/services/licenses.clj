@@ -11,23 +11,23 @@
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
 (defn create-license! [{:keys [licensetype organization localizations]} user-id]
-  (or (util/forbidden-organization-error organization)
-      (let [license (db/create-license! {:owneruserid user-id
-                                         :modifieruserid user-id
-                                         :organization (or organization "")
-                                         :type licensetype})
-            licid (:id license)]
-        (doseq [[langcode localization] localizations]
-          (db/create-license-localization! {:licid licid
-                                            :langcode (name langcode)
-                                            :title (:title localization)
-                                            :textcontent (:textcontent localization)
-                                            :attachmentId (:attachment-id localization)}))
-        {:success (not (nil? licid))
-         :id licid})))
+  (util/check-allowed-organization! organization)
+  (let [license (db/create-license! {:owneruserid user-id
+                                     :modifieruserid user-id
+                                     :organization (or organization "")
+                                     :type licensetype})
+        licid (:id license)]
+    (doseq [[langcode localization] localizations]
+      (db/create-license-localization! {:licid licid
+                                        :langcode (name langcode)
+                                        :title (:title localization)
+                                        :textcontent (:textcontent localization)
+                                        :attachmentId (:attachment-id localization)}))
+    {:success (not (nil? licid))
+     :id licid}))
 
 (defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
-  (attachments/check-attachment-content-type content-type)
+  (attachments/check-allowed-attachment filename)
   (let [byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
@@ -44,7 +44,7 @@
 
 (defn get-license-attachment [attachment-id]
   (when-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
-    (attachments/check-attachment-content-type (:type attachment))
+    (attachments/check-allowed-attachment (:filename attachment))
     {:attachment/filename (:filename attachment)
      :attachment/data (:data attachment)
      :attachment/type (:type attachment)}))
@@ -73,11 +73,13 @@
       {:resources resources
        :workflows workflows})))
 
-(defn set-license-enabled! [command]
-  (db/set-license-enabled! (select-keys command [:id :enabled]))
+(defn set-license-enabled! [{:keys [id enabled]}]
+  (util/check-allowed-organization! (:organization (licenses/get-license id)))
+  (db/set-license-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-license-archived! [{:keys [id archived]}]
+  (util/check-allowed-organization! (:organization (licenses/get-license id)))
   (let [usage (get-license-usage id)]
     (if (and archived usage)
       {:success false
@@ -91,14 +93,11 @@
 (defn get-license
   "Get a single license by id"
   [id]
-  (when-let [license (licenses/get-license id)]
-    (when (not (util/forbidden-organization? (:organization license)))
-      license)))
+  (licenses/get-license id))
 
 (defn get-all-licenses
   "Get all licenses.
 
    filters is a map of key-value pairs that must be present in the licenses"
   [filters]
-  (->> (licenses/get-all-licenses filters)
-       (remove #(util/forbidden-organization? (:organization %)))))
+  (licenses/get-all-licenses filters))

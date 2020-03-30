@@ -14,10 +14,13 @@
             [rems.auth.auth :as auth]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :as config]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.csv :as csv]
             [rems.db.users :as users]
+            [rems.experimental.pdf :as experimental-pdf]
             [rems.pdf :as pdf]
+            [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id update-present]]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
@@ -117,7 +120,7 @@
       :summary "Get the current user's own applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (applications/get-my-applications (getx-user-id))
                (filter-with-search query))))))
 
@@ -129,7 +132,7 @@
       :summary "Get all applications which the current user can see"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (applications/get-all-applications (getx-user-id))
                (filter-with-search query))))
 
@@ -137,7 +140,7 @@
       :summary "Get all applications that the current user needs to act on."
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-todos (getx-user-id))
                (filter-with-search query))))
 
@@ -145,7 +148,7 @@
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query") nil}]
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-handled-todos (getx-user-id))
                (filter-with-search query))))
 
@@ -200,12 +203,16 @@
     ;; TODO: think about size limit
     (POST "/add-attachment" []
       :summary "Add an attachment file related to an application"
-      :roles #{:applicant}
+      :roles #{:logged-in}
       :multipart-params [file :- upload/TempFileUpload]
       :query-params [application-id :- (describe s/Int "application id")]
       :middleware [multipart/wrap-multipart-params]
       :return SaveAttachmentResponse
-      (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
+      (try
+        (ok (attachment/add-application-attachment (getx-user-id) application-id file))
+        (catch rems.InvalidRequestException e
+          (unsupported-media-type))))
+
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
@@ -247,7 +254,7 @@
         (ok app)
         (api-util/not-found-json-response)))
 
-    (GET "/:application-id/pdf" request
+    (GET "/:application-id/experimental/pdf" request
       :summary "PDF export of application (EXPERIMENTAL)"
       :roles #{:logged-in :api-key}
       :path-params [application-id :- (describe s/Int "application id")]
@@ -256,9 +263,25 @@
                   401 {:schema s/Str}}
       (if (not (:enable-pdf-api config/env))
         (not-implemented "pdf api not enabled")
-        (let [bytes (pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
+        (let [bytes (experimental-pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
           (-> (ok (ByteArrayInputStream. bytes))
               (content-type "application/pdf")))))
+
+    (GET "/:application-id/pdf" []
+      :summary "Get a pdf version of an application"
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")]
+      :produces ["application/pdf"]
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
+        (with-language context/*lang*
+          #(-> app
+               (pdf/application-to-pdf-bytes)
+               (ByteArrayInputStream.)
+               (ok)
+               ;; could also set "attachment" here to force download:
+               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
+               (content-type "application/pdf")))
+        (api-util/not-found-json-response)))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []
       :summary "Get file associated with licence of type attachment associated with application."

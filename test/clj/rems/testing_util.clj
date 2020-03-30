@@ -1,5 +1,6 @@
 (ns rems.testing-util
-  (:require [clojure.java.io :as io]
+  (:require [clj-time.core :as time]
+            [clojure.java.io :as io]
             [rems.context :as context]
             [rems.db.roles :as roles]
             [rems.db.users :as users])
@@ -7,7 +8,24 @@
            (com.google.common.io MoreFiles RecursiveDeleteOption)
            (java.nio.file Files)
            (java.nio.file.attribute FileAttribute)
+           (org.joda.time DateTimeZone DateTimeUtils)
            (org.slf4j LoggerFactory)))
+
+(defn utc-fixture [f]
+  (let [old (DateTimeZone/getDefault)]
+    (DateTimeZone/setDefault DateTimeZone/UTC)
+    (f)
+    (DateTimeZone/setDefault old)))
+
+(defn with-fixed-time [date f]
+  (DateTimeUtils/setCurrentMillisFixed (.getMillis date))
+  (let [result (f)]
+    (DateTimeUtils/setCurrentMillisSystem)
+    result))
+
+(defn fixed-time-fixture [date]
+  (fn [f]
+    (with-fixed-time date f)))
 
 (defn suppress-logging [^String logger-name]
   (fn [f]

@@ -1,8 +1,12 @@
 (ns rems.actions.action
-  (:require [rems.atoms :refer [textarea]]
+  (:require [re-frame.core :as rf]
+            [rems.atoms :refer [close-symbol success-symbol textarea]]
+            [rems.common.attachment-types :as attachment-types]
+            [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
-            [rems.util :refer [post!]]))
+            [rems.util :refer [post!]])
+  (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
@@ -40,6 +44,63 @@
                 :placeholder (text :t.actions/comment)
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
+
+;; attachments in suitable format for api:
+(rf/reg-sub ::attachments (fn [db [_ key]] (mapv #(select-keys % [:attachment/id]) (get-in db [::attachments key]))))
+;; attachments with filenames for rendering:
+(rf/reg-sub ::attachments-with-filenames (fn [db [_ key]] (get-in db [::attachments key])))
+(rf/reg-event-db ::set-attachments (fn [db [_ key value]] (assoc-in db [::attachments key] value)))
+(rf/reg-event-db ::add-attachment (fn [db [_ key value]] (update-in db [::attachments key] conj value)))
+(rf/reg-event-db
+ ::remove-attachment
+ (fn [db [_ key id]]
+   (update-in db [::attachments key] (partial remove (comp #{id} :attachment/id)))))
+
+(rf/reg-event-fx
+ ::save-attachment
+ (fn [{:keys [db]} [_ application-id key file]]
+   (let [description [text :t.form/upload]]
+     (post! "/api/applications/add-attachment"
+            {:url-params {:application-id application-id}
+             :body file
+             :handler (flash-message/default-success-handler
+                       :actions
+                       description
+                       (fn [response]
+                         (rf/dispatch [::add-attachment key {:attachment/id (:id response)
+                                                             :attachment/filename (.. file (get "file") -name)}])))
+             :error-handler (fn [response]
+                             (if (= 415 (:status response))
+                               (flash-message/show-default-error! :actions description
+                                                                  [:div
+                                                                   [:p [text :t.form/invalid-attachment]]
+                                                                   [:p [text :t.form/upload-extensions]
+                                                                    ": "
+                                                                    attachment-types/allowed-extensions-string]])
+                               ((flash-message/default-error-handler :actions description) response)))})
+     {})))
+
+(defn action-attachment-view [{:keys [key attachments on-attach on-remove-attachment]}]
+  [:div.form-group
+   (into [:<>]
+         (for [attachment attachments]
+           [:div.flex-row.d-flex.mb-2
+            [fields/attachment-link attachment]
+            [:button.btn.btn-outline-secondary.mr-2
+             {:class (str "remove-attachment-" key)
+              :type :button
+              :on-click (fn [event]
+                          (on-remove-attachment (:attachment/id attachment)))}
+             [close-symbol]
+             " "
+             (text :t.form/attachment-remove)]]))
+   [fields/upload-button (str "upload-" key) on-attach]])
+
+(defn action-attachment [{:keys [application-id key]}]
+  [action-attachment-view {:key key
+                           :attachments @(rf/subscribe [::attachments-with-filenames key])
+                           :on-attach #(rf/dispatch [::save-attachment application-id key %])
+                           :on-remove-attachment #(rf/dispatch [::remove-attachment key %])}])
 
 (defn action-form-view
   "Renders an action form that is collapsible.
@@ -83,3 +144,16 @@
                       (collapse-action-form collapse)
                       (on-finished)))
           :error-handler (flash-message/default-error-handler :actions description)}))
+
+(defn guide []
+  [:div
+   (component-info action-attachment-view)
+   (example "action attachment, no attachment"
+            [action-attachment-view {:key "action-guide-example-1"
+                                     :attachment nil
+                                     :on-attach (fn [_] nil)}])
+   (example "action attachment, multiple attachments"
+            [action-attachment-view {:key "action-guide-example-1"
+                                     :attachments [{:attachment/filename "attachment.xlsx"}
+                                                   {:attachment/filename "data.pdf"}]
+                                     :on-attach (fn [_] nil)}])])

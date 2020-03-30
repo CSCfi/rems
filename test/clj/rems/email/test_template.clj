@@ -120,11 +120,12 @@
                                                :resource/ext-id "urn:11"}
                                               {:catalogue-item/id 20
                                                :resource/ext-id "urn:21"}]
+                      :application/forms [{:form/id 40}]
                       :workflow/id 5
                       :workflow/type :workflow/default}
                      {:application/id 7
                       :event/type :application.event/draft-saved
-                      :application/field-values {"1" "Application title"}}])
+                      :application/field-values [{:form 40 :field "1" :value "Application title"}]}])
 
 (def submit-event {:application/id 7
                    :event/type :application.event/submitted

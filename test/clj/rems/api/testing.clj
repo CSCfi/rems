@@ -44,6 +44,9 @@
 (defn assert-response-is-server-error? [response]
   (assert (= 500 (:status response))))
 
+(defn response-is-server-error? [response]
+  (= 500 (:status response)))
+
 (defn response-is-bad-request? [response]
   (= 400 (:status response)))
 
@@ -55,6 +58,9 @@
 
 (defn response-is-not-found? [response]
   (= 404 (:status response)))
+
+(defn response-is-unsupported-media-type? [response]
+  (= 415 (:status response)))
 
 (defn logged-in? [response]
   (str/includes? (get-in response [:headers "x-rems-roles"])
@@ -77,11 +83,14 @@
   (assert-response-is-ok response)
   (read-body response))
 
-(defn api-call [method api body api-key user-id]
+(defn api-response [method api body api-key user-id]
   (-> (request method api)
       (authenticate api-key user-id)
       (json-body body)
-      handler
+      handler))
+
+(defn api-call [method api body api-key user-id]
+  (-> (api-response method api body api-key user-id)
       read-ok-body))
 
 (defn assert-success [body]

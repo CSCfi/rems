@@ -116,10 +116,10 @@
     (update applications app-id model/application-view event)
     applications))
 
-(defn- exclude-unnecessary-keys-from-overview [application]
+(defn- ->ApplicationOverview [application]
   (dissoc application
           :application/events
-          :application/form
+          :application/forms
           :application/licenses))
 
 (mount/defstate
@@ -228,7 +228,7 @@
 (defn get-all-applications [user-id]
   (-> (refresh-all-applications-cache!)
       (get-in [::apps-by-user user-id])
-      (->> (map exclude-unnecessary-keys-from-overview))))
+      (->> (map ->ApplicationOverview))))
 
 (defn get-all-application-roles [user-id]
   (-> (refresh-all-applications-cache!)
@@ -249,7 +249,7 @@
 
 (defn export-applications-for-form-as-csv [user-id form-id]
   (let [applications (get-all-unrestricted-applications)
-        filtered-applications (filter #(= (:form/id (:application/form %)) form-id) applications)]
+        filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
     (csv/applications-to-csv filtered-applications user-id)))
 
 (defn reload-cache! []

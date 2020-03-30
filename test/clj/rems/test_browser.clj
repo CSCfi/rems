@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
+            [com.rpl.specter :refer [select ALL]]
             [etaoin.api :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
@@ -210,65 +211,151 @@
       (add-to-cart "Default workflow")
       (apply-for-resource "Default workflow")
 
-      (fill-form-field "Application title field" "Test name")
-      (fill-form-field "Text field" "Test")
-      (fill-form-field "Text area" "Test2")
-      (set-date "Date field" "2050-01-02")
-      (fill-form-field "Email field" "user@example.com")
-      ;; leave attachment field empty
-      (is (not (field-visible? "Conditional field"))
-          "Conditional field is not visible before selecting option")
-      (select-option "Option list" "First option")
-      (wait-predicate #(field-visible? "Conditional field"))
-      (fill-form-field "Conditional field" "Conditional")
-      ;; pick two options for the multi-select field:
-      (check-box "Option2")
-      (check-box "Option3")
-      ;; leave "Text field with max length" empty
-      ;; leave "Text are with max length" empty
+      (let [application-id (get-application-id)
+            application (:body
+                         (http/get (str +test-url+ "/api/applications/" application-id)
+                                   {:as :json
+                                    :headers {"x-rems-api-key" "42"
+                                              "x-rems-user-id" "handler"}}))
+            form-id (get-in application [:application/forms 0 :form/id])
+            description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
+            description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
+            attachment-field (get-in application [:application/forms 0 :form/fields 7])
+            attachment-field-selector (keyword (str "form-" form-id "-field-" (:field/id attachment-field) "-input"))]
+        (is (= "attachment" (:field/type attachment-field))) ;; sanity check
 
-      (accept-licenses)
-      (send-application)
-      (is (= "Applied" (get-element-text *driver* :application-state))))
+        (fill-form-field "Application title field" "Test name")
+        (fill-form-field "Text field" "Test")
+        (fill-form-field "Text area" "Test2")
+        (set-date "Date field" "2050-01-02")
+        (fill-form-field "Email field" "user@example.com")
+        (upload-file *driver* attachment-field-selector "test-data/test.txt")
 
-    (let [application-id (get-application-id)]
-      (testing "see application on applications page"
-        (go-to-applications)
-        (let [summary (get-application-summary application-id)]
-          (is (= "Default workflow" (:resource summary)))
-          (is (= "Applied" (:state summary)))
-          ;; don't bother trying to predict the external id:
-          (is (.contains (:description summary) "Test name"))))
-      (testing "fetch application from API"
-        (let [application (:body
-                           (http/get (str +test-url+ "/api/applications/" application-id)
-                                     {:as :json
-                                      :headers {"x-rems-api-key" "42"
-                                                "x-rems-user-id" "handler"}}))]
-          (testing "applicant information"
-            (is (= "alice" (get-in application [:application/applicant :userid])))
-            (is (= (set (map :license/id (:application/licenses application)))
-                   (set (get-in application [:application/accepted-licenses :alice])))))
-          (testing "form fields"
-            (is (= "Test name" (:application/description application)))
-            (is (= [["label" ""]
-                    ["description" "Test name"]
-                    ["text" "Test"]
-                    ["texta" "Test2"]
-                    ["header" ""]
-                    ["date" "2050-01-02"]
-                    ["email" "user@example.com"]
-                    ["attachment" ""]
-                    ["option" "Option1"]
-                    ["text" "Conditional"]
-                    ["multiselect" "Option2 Option3"]
-                    ["label" ""]
-                    ["text" ""]
-                    ["texta" ""]]
-                   (for [field (get-in application [:application/form :form/fields])]
-                     ;; TODO could test other fields here too, e.g. title
-                     [(:field/type field)
-                      (:field/value field)])))))))))
+        (is (not (field-visible? "Conditional field"))
+            "Conditional field is not visible before selecting option")
+        (select-option "Option list" "First option")
+        (wait-predicate #(field-visible? "Conditional field"))
+        (fill-form-field "Conditional field" "Conditional")
+        ;; pick two options for the multi-select field:
+        (check-box "Option2")
+        (check-box "Option3")
+        ;; leave "Text field with max length" empty
+        ;; leave "Text are with max length" empty
+
+        (accept-licenses)
+        (send-application)
+        (is (= "Applied" (get-element-text *driver* :application-state)))
+
+        (testing "check a field answer"
+          (is (= "Test name" (get-element-text *driver* description-field-selector))))
+
+        (testing "see application on applications page"
+          (go-to-applications)
+          (let [summary (get-application-summary application-id)]
+            (is (= "Default workflow" (:resource summary)))
+            (is (= "Applied" (:state summary)))
+            ;; don't bother trying to predict the external id:
+            (is (.contains (:description summary) "Test name"))))
+
+        (testing "fetch application from API"
+          (let [application (:body
+                             (http/get (str +test-url+ "/api/applications/" application-id)
+                                       {:as :json
+                                        :headers {"x-rems-api-key" "42"
+                                                  "x-rems-user-id" "handler"}}))
+                attachment-id (get-in application [:application/attachments 0 :attachment/id])]
+            (testing "attachments"
+              (is (= [{:attachment/id attachment-id
+                       :attachment/filename "test.txt"
+                       :attachment/type "text/plain"}]
+                     (:application/attachments application))))
+            (testing "applicant information"
+              (is (= "alice" (get-in application [:application/applicant :userid])))
+              (is (= (set (map :license/id (:application/licenses application)))
+                     (set (get-in application [:application/accepted-licenses :alice])))))
+            (testing "form fields"
+              (is (= "Test name" (:application/description application)))
+              (is (= [["label" ""]
+                      ["description" "Test name"]
+                      ["text" "Test"]
+                      ["texta" "Test2"]
+                      ["header" ""]
+                      ["date" "2050-01-02"]
+                      ["email" "user@example.com"]
+                      ["attachment" (str attachment-id)]
+                      ["option" "Option1"]
+                      ["text" "Conditional"]
+                      ["multiselect" "Option2 Option3"]
+                      ["label" ""]
+                      ["text" ""]
+                      ["texta" ""]]
+                     (for [field (select [:application/forms ALL :form/fields ALL] application)]
+                       ;; TODO could test other fields here too, e.g. title
+                       [(:field/type field)
+                        (:field/value field)]))))
+            (testing "after navigating to the application view again"
+              (scroll-and-click *driver* [{:css "table.my-applications"}
+                                          {:tag :tr :data-row application-id}
+                                          {:css ".btn-primary"}])
+              (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
+              (wait-page-loaded)
+              (testing "check a field answer"
+                (is (= "Test name" (get-element-text *driver* description-field-selector)))))))))))
+
+(defn get-attachments
+  ([]
+   (get-attachments {:css "a.attachment-link"}))
+  ([selector]
+   (mapv (partial get-element-text-el *driver*) (query-all *driver* selector))))
+
+(deftest test-handling
+  (let [applicant "alice"
+        handler "developer"
+        form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus"}
+                                                        :field/optional false
+                                                        :field/type :description}]})
+        catalogue-id (test-data/create-catalogue-item! {:form-id form-id})
+        application-id (test-data/create-draft! applicant
+                                                [catalogue-id]
+                                                "test-handling")]
+    (test-data/command! {:type :application.command/submit
+                         :application-id application-id
+                         :actor applicant})
+    (with-postmortem *driver* {:dir reporting-dir}
+      (login-as handler)
+      (testing "handler should see todos on logging in"
+        (wait-visible *driver* :todo-applications))
+      (testing "handler should see description of application"
+        (wait-visible *driver* {:class :application-description :fn/text "test-handling"}))
+      (let [app-button {:tag :a :href (str "/application/" application-id)}]
+        (testing "handler should see view button for application"
+          (wait-visible *driver* app-button))
+        (scroll-and-click *driver* app-button))
+      (testing "handler should see application after clicking on View"
+        (wait-visible *driver* {:tag :h1 :fn/has-text "test-handling"}))
+      (testing "open the approve form"
+        (scroll-and-click *driver* :approve-reject-action-button))
+      (testing "add a comment and two attachments"
+        (fill-human *driver* :comment-approve-reject "this is a comment")
+        (upload-file *driver* :upload-approve-reject-input "test-data/test.txt")
+        (wait-visible *driver* [{:css "a.attachment-link"}])
+        (upload-file *driver* :upload-approve-reject-input "test-data/test-fi.txt")
+        (wait-predicate #(= ["test.txt" "test-fi.txt"]
+                            (get-attachments))))
+      (testing "add and remove a third attachment"
+        (upload-file *driver* :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
+        (wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
+                            (get-attachments)))
+        (let [buttons (query-all *driver* {:css "button.remove-attachment-approve-reject"})]
+          (click-el *driver* (last buttons)))
+        (wait-predicate #(= ["test.txt" "test-fi.txt"]
+                            (get-attachments))))
+      (testing "approve"
+        (scroll-and-click *driver* :approve)
+        (wait-predicate #(= "Approved" (get-element-text *driver* :application-state))))
+      (testing "attachments visible in eventlog"
+        (is (= ["test.txt" "test-fi.txt"]
+               (get-attachments {:css "div.event a.attachment-link"})))))))
 
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}

@@ -9,14 +9,15 @@
             :approve-reject "Hyväksy tai hylkää"
             :assign-external-id "Aseta tunniste"
             :assign-external-id-info "Tunniste"
-            :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama hakemuslomake ja työvuo, voidaan liittää yhteen."]]
+            :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama työvuo, voidaan liittää yhteen."]]
             :cancel "Peruuta"
             :change-resources "Muuta resursseja"
             :close "Sulje hakemus"
             :close-intro [:div.intro [:p "Huomaa, että jos hakemus suljetaan, sitä ei voida avata uudelleen."]]
             :comment "Kommentti"
             :decide "Päätä"
-            :errors {:disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
+            :errors {:already-member "Käyttäjä on jo tämän hakemuksen jäsen"
+                     :disabled-catalogue-item "Resurssit eivät ole enää saatavilla."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :submission-failed "Lähettäminen epäonnistui. Tarkasta seuraavat virheet:"}
@@ -72,8 +73,7 @@
                    :edit-workflow "Muokkaa työvuota"
                    :enable "Ota käyttöön"
                    :end "Loppu"
-                   :errors {:forbidden-organization "Organisaatio on kielletty tältä käyttäjältä."
-                            :form-archived "Lomake on arkistoitu:"
+                   :errors {:form-archived "Lomake on arkistoitu:"
                             :form-in-use "Lomake on käytössä:"
                             :license-archived "Lisenssi on arkistoitu:"
                             :license-in-use "Lisenssi on käytössä:"
@@ -96,7 +96,6 @@
                    :resource "Resurssi"
                    :resources "Resurssit"
                    :save "Tallenna"
-                   :select-organization "Valitse organisaatio."
                    :start "Alku"
                    :title "Nimi"
                    :type "Tyyppi"
@@ -320,13 +319,17 @@
          :attachment-remove "Poista"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
+         :comment "Kommentti"
          :copy-as-new "Kopioi uudeksi hakemukseksi"
          :current-value "Nykyinen"
+         :date "Aika"
          :diff-hide "Piilota muutokset"
          :diff-show "Näytä muutokset"
+         :event "Tapahtuma"
          :events "Tapahtumat"
          :failed "Epäonnistui"
          :has-accepted-licenses "Käyttöehdot hyväksytty."
+         :invalid-attachment "Liitteen tiedostomuoto ei ole sallittu."
          :licenses "Käyttöehdot"
          :maxlength "(enintään %1 merkkiä)"
          :must-accept-licenses "Jokaisen hakijan on hyväksyttävä käyttöehdot käyttääkseen resursseja."
@@ -340,6 +343,7 @@
          :submit "Lähetä hakemus"
          :success "Onnistui"
          :upload "Lisää liitetiedosto"
+         :upload-extensions "Sallitut tiedostomuodot"
          :validation {:invalid-email "Sähköpostiosoite ei kelpaa."
                       :invalid-user "Käyttäjä ei kelpaa."
                       :invalid-value "Arvo ei kelpaa."
@@ -369,6 +373,7 @@
                :skip-navigation "Siirry sivun pääsisältöön"}
   :not-found-page {:not-found "Ei löytynyt"
                    :page-was-not-found "Tätä sivua ei löytynyt."}
+  :pdf {:generated "Tämä PDF luotu"}
   :phases {:apply "Hae"
            :approve "Hyväksyntä"
            :approved "Hyväksytty"

@@ -9,14 +9,15 @@
             :approve-reject "Approve or reject"
             :assign-external-id "Assign external id"
             :assign-external-id-info "External id"
-            :bundling-intro [:div.intro [:p "Note that only resources that have the same application form and workflow can be bundled together."]]
+            :bundling-intro [:div.intro [:p "Note that only resources that have the same application workflow can be bundled together."]]
             :cancel "Cancel"
             :change-resources "Change resources"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be opened again."]]
             :comment "Comment"
             :decide "Decide"
-            :errors {:disabled-catalogue-item "Resource no longer available."
+            :errors {:already-member "User is already a member of this application"
+                     :disabled-catalogue-item "Resource no longer available."
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
                      :submission-failed "Submission failed. Check the following errors:"}
@@ -72,8 +73,7 @@
                    :edit-workflow "Edit workflow"
                    :enable "Enable"
                    :end "End"
-                   :errors {:forbidden-organization "Organization is forbidden from the current user."
-                            :form-archived "Form has been archived:"
+                   :errors {:form-archived "Form has been archived:"
                             :form-in-use "Form in use:"
                             :license-archived "License has been archived:"
                             :license-in-use "License in use:"
@@ -96,7 +96,6 @@
                    :resource "Resource"
                    :resources "Resources"
                    :save "Save"
-                   :select-organization "Please select organization."
                    :start "Start"
                    :title "Title"
                    :type "Type"
@@ -322,13 +321,17 @@
          :attachment-remove "Remove"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
+         :comment "Comment"
          :copy-as-new "Copy as a new application"
          :current-value "Current"
+         :date "Time"
          :diff-hide "Hide changes"
          :diff-show "Show changes"
+         :event "Event"
          :events "Events"
          :failed "Failed"
          :has-accepted-licenses "Terms of use accepted."
+         :invalid-attachment "Attachment file type not allowed."
          :licenses "Terms of use"
          :maxlength "(max %1 characters)"
          :must-accept-licenses "Each member is required to accept the terms of use to access the resources."
@@ -342,6 +345,7 @@
          :submit "Send application"
          :success "Success"
          :upload "Upload an attachment"
+         :upload-extensions "Allowed file types"
          :validation {:invalid-email "Invalid email address."
                       :invalid-user "Invalid user."
                       :invalid-value "Invalid value."
@@ -371,6 +375,7 @@
                :skip-navigation "Skip to main content"}
   :not-found-page {:not-found "Not found"
                    :page-was-not-found "This page was not found."}
+  :pdf {:generated "This PDF generated at"}
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"

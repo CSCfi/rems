@@ -1,12 +1,14 @@
 (ns rems.application.model
   (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [map-vals update-existing]]
-            [rems.common.application-util :as application-util]
+            [com.rpl.specter :refer [ALL select transform]]
+            [medley.core :refer [assoc-some find-first map-vals update-existing]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
+            [rems.common.application-util :as application-util]
             [rems.common.form :refer [field-visible?]]
+            [rems.common.util :refer [build-index getx]]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx conj-vec]]))
+            [rems.util :refer [conj-vec]]))
 
 ;;;; Application
 
@@ -42,7 +44,7 @@
                                         (:application/licenses event))
              :application/accepted-licenses {}
              :application/events []
-             :application/form {:form/id (:form/id event)}
+             :application/forms (:application/forms event)
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)})))
 
@@ -174,6 +176,7 @@
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
+      (assoc :application/forms (vec (:application/forms event)))
       (assoc :application/resources (vec (:application/resources event)))
       (assoc :application/licenses (map #(select-keys % [:license/id])
                                         (:application/licenses event)))))
@@ -370,11 +373,13 @@
            :form/title (:form/title form-template)
            :form/fields fields)))
 
+(defn enrich-forms [forms get-form-template]
+  (mapv #(enrich-form % get-form-template) forms))
+
 (defn- set-application-description [application]
-  (let [fields (get-in application [:application/form :form/fields])
+  (let [fields (select [:application/forms ALL :form/fields ALL] application)
         description (->> fields
-                         (filter #(= :description (:field/type %)))
-                         first
+                         (find-first #(= :description (:field/type %)))
                          :field/value)]
     (assoc application :application/description (str description))))
 
@@ -477,23 +482,27 @@
   (-> application
       (permissions/give-role-to-users :reporter (get-users-with-role :reporter))))
 
+(defn- enrich-form-answers [form current-answers previous-answers]
+  (let [form-id (:form/id form)
+        current-answers (get current-answers form-id)
+        previous-answers (get previous-answers form-id)
+        fields (for [field (:form/fields form)
+                     :let [field-id (:field/id field)
+                           current-value (get current-answers field-id)
+                           previous-value (get previous-answers field-id)]]
+                 (assoc-some field
+                             :field/value current-value
+                             :field/previous-value previous-value))]
+    (assoc form :form/fields fields)))
+
 (defn enrich-answers [application]
   (let [answer-versions (remove nil? [(::draft-answers application)
                                       (::submitted-answers application)
                                       (::previous-submitted-answers application)])
-        current-answers (first answer-versions)
-        previous-answers (second answer-versions)]
-    (-> application
-        (dissoc ::draft-answers ::submitted-answers ::previous-submitted-answers)
-        (assoc-in [:application/form :form/fields] (merge-lists-by :field/id
-                                                                   (map (fn [[field-id value]]
-                                                                          {:field/id field-id
-                                                                           :field/previous-value value})
-                                                                        previous-answers)
-                                                                   (map (fn [[field-id value]]
-                                                                          {:field/id field-id
-                                                                           :field/value value})
-                                                                        current-answers))))))
+        current-answers (build-index [:form :field] :value (first answer-versions))
+        previous-answers (build-index [:form :field] :value (second answer-versions))]
+    (->> (dissoc application ::draft-answers ::submitted-answers ::previous-submitted-answers)
+         (transform [:application/forms ALL] #(enrich-form-answers % current-answers previous-answers)))))
 
 (defn enrich-deadline [application get-config]
   (let [days ((get-config) :application-deadline-days)]
@@ -504,14 +513,15 @@
                         days))
       application)))
 
+(defn- enrich-form-field-visible [form]
+  (let [field-values (build-index [:field/id] :field/value (:form/fields form))
+        update-field-visibility (fn [field] (assoc field :field/visible (field-visible? field field-values)))]
+    (transform [:form/fields ALL]
+               update-field-visibility
+               form)))
+
 (defn enrich-field-visible [application]
-  (let [fields (get-in application [:application/form :form/fields])
-        answers (into {} (map (juxt :field/id :field/value) fields))
-        fields-with-visible (mapv (fn [field]
-                                    (assoc field :field/visible (field-visible? field answers)))
-                                  fields)]
-    (-> application
-        (assoc-in [:application/form :form/fields] fields-with-visible))))
+  (transform [:application/forms ALL] enrich-form-field-visible application))
 
 (defn- enrich-disable-commands [application get-config]
   (permissions/blacklist application
@@ -519,16 +529,22 @@
                           (for [command (:disable-commands (get-config))]
                             {:permission command}))))
 
-(defn enrich-with-injections [application {:keys [blacklisted?
-                                                  get-form-template get-catalogue-item get-license
-                                                  get-user get-users-with-role get-workflow
-                                                  get-attachments-for-application
-                                                  get-config]}]
+(defn enrich-with-injections
+  [application {:keys [blacklisted?
+                       get-form-template
+                       get-catalogue-item
+                       get-license
+                       get-user
+                       get-users-with-role
+                       get-workflow
+                       get-attachments-for-application
+                       get-config]
+                :as _injections}]
   (-> application
-      enrich-answers
-      (update :application/form enrich-form get-form-template)
-      enrich-field-visible ; uses enriched form fields and answers
-      set-application-description
+      (update :application/forms enrich-forms get-form-template)
+      enrich-answers ; uses enriched form
+      enrich-field-visible ; uses enriched answers
+      set-application-description ; uses enriched answers
       (update :application/resources enrich-resources get-catalogue-item)
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
@@ -586,9 +602,7 @@
         (update-existing :field/previous-value (constantly "")))))
 
 (defn apply-privacy [application roles]
-  (update-in application
-             [:application/form :form/fields]
-             (partial mapv #(apply-field-privacy % roles))))
+  (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles) application))
 
 (defn- hide-non-public-information [application]
   (-> application
@@ -605,6 +619,37 @@
     (contains? (::latest-decision-request-by-user application) user-id)
     (assoc :application/todo :waiting-for-your-decision)))
 
+
+(defn- visible-attachment-ids [application]
+  (let [from-events (->> (:application/events application)
+                         (mapcat :event/attachments)
+                         (map :attachment/id))
+        from-fields (for [form (getx application :application/forms)
+                          field (getx form :form/fields)
+                          :when (= :attachment (:field/type field))
+                          value [(:field/value field) (:field/previous-value field)]
+                          :when (not (empty? value))]
+                      (Integer/parseInt value))]
+    (set (concat from-events from-fields))))
+
+(deftest test-visible-attachment-ids
+  (let [application {:application/events [{:event/type :application.event/foo
+                                           :event/attachments [{:attachment/id 1}
+                                                               {:attachment/id 3}]}
+                                          {:event/type :application.event/bar}]
+                     :application/forms [{:form/fields [{:field/type :attachment
+                                                         :field/value "5" :field/previous-value "7"}]}
+                                         {:form/fields [{:field/type :text
+                                                         :field/value "2" :field/previous-vaule "2"}
+                                                        {:field/type :attachment
+                                                         :field/value "9"}]}]}]
+    (is (= #{1 3 5 7 9} (visible-attachment-ids application)))))
+
+(defn- hide-attachments [application]
+  (let [visible-ids (visible-attachment-ids application)
+        visible? (comp visible-ids :attachment/id)]
+    (update application :application/attachments #(filterv visible? %))))
+
 (defn see-application? [application user-id]
   (not= #{:everyone-else} (permissions/user-roles application user-id)))
 
@@ -620,6 +665,7 @@
           (personalize-todo user-id)
           (hide-non-public-information)
           (apply-privacy roles)
+          (hide-attachments)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (permissions/cleanup)))))

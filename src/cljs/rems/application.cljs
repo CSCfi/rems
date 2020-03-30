@@ -1,11 +1,9 @@
 (ns rems.application
-  (:require [clojure.set :refer [union]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [goog.string]
-            [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
-            [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
+            [rems.actions.action :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
@@ -23,26 +21,28 @@
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
             [rems.application-list :as application-list]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
-            [rems.atoms :refer [external-link file-download info-field readonly-checkbox textarea document-title success-symbol empty-symbol]]
+            [rems.common.attachment-types :as attachment-types]
+            [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible?]]
-            [rems.common.util :refer [index-by parse-int]]
+            [rems.common.util :refer [build-index index-by parse-int]]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
-            [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
+            [rems.guide-utils :refer [lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.search :as search]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-decision localize-event localized localize-state localize-time text text-format]]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]])
+            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened]]
+            [rems.common.application-util :as application-util])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
 
-(defn reload! [application-id]
-  (rf/dispatch [::fetch-application application-id]))
+(defn reload! [application-id & [full-reload?]]
+  (rf/dispatch [::fetch-application application-id full-reload?]))
 
 (defn- in-processing? [application]
   (not (contains? #{:application.state/approved
@@ -77,19 +77,21 @@
                 ": " (localized (:catalogue-item/title resource))]))])))
 
 (defn- format-validation-error [type field]
-  [:a {:href "#" :on-click (focus-input-field (fields/id-to-name (:field/id field)))}
+  [:a {:href "#" :on-click (focus-input-field (fields/field-name field))}
    (text-format type (localized (:field/title field)))])
 
 (defn- format-submission-errors
   [application errors]
-  (let [fields-by-id (->> (get-in application [:application/form :form/fields])
-                          (index-by [:field/id]))]
+  (let [fields-index (index-by [:form/id :field/id]
+                               (for [form (:application/forms application)
+                                     field (:form/fields form)]
+                                 (assoc field :form/id (:form/id form))))]
     [:div (text :t.actions.errors/submission-failed)
      (into [:ul]
            (concat
-            (for [{:keys [type field-id]} errors]
-              [:li (if field-id
-                     (format-validation-error type (get fields-by-id field-id))
+            (for [{:keys [type form-id field-id]} errors]
+              [:li (if (and form-id field-id)
+                     (format-validation-error type (get-in fields-index [form-id field-id]))
                      (text type))])))]))
 
 
@@ -105,32 +107,35 @@
    {:db (-> db
             (assoc ::application-id (parse-int id))
             (dissoc ::application ::edit-application ::attachment-success))
-    :dispatch [::fetch-application id]}))
+    :dispatch [::fetch-application id true]}))
 
 (rf/reg-event-fx
  ::fetch-application
- (fn [{:keys [db]} [_ id]]
+ (fn [{:keys [db]} [_ id full-reload?]]
    (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])
-           :error-handler (comp #(rf/dispatch [::fetch-application-result nil])
+          {:handler #(rf/dispatch [::fetch-application-result % full-reload?])
+           :error-handler (comp #(rf/dispatch [::fetch-application-result nil full-reload?])
                                 (flash-message/default-error-handler :top [text :t.applications/application]))})
    {:db (update db ::application fetcher/started)}))
 
 (defn- initialize-edit-application [db]
   (let [application (get-in db [::application :data])
-        field-values (->> (get-in application [:application/form :form/fields])
-                          (map (juxt :field/id :field/value))
-                          (into {}))]
+        field-values (->> (for [form (:application/forms application)
+                                field (:form/fields form)]
+                            {:form (:form/id form)
+                             :field (:field/id field)
+                             :value (:field/value field)})
+                          (build-index [:form :field] :value))]
     (assoc db ::edit-application {:field-values field-values
                                   :show-diff {}
                                   :validation-errors nil})))
 
 (rf/reg-event-db
  ::fetch-application-result
- (fn [db [_ application]]
+ (fn [db [_ application full-reload?]]
    (let [initial-fetch? (not (:initialized? (::application db)))]
      (cond-> (update db ::application fetcher/finished application)
-       initial-fetch? (initialize-edit-application)))))
+       (or initial-fetch? full-reload?) (initialize-edit-application)))))
 
 (rf/reg-event-db
  ::set-validation-errors
@@ -138,8 +143,9 @@
    (assoc-in db [::edit-application :validation-errors] errors)))
 
 (defn- field-values-to-api [field-values]
-  (for [[field value] field-values]
-    {:field field :value value}))
+  (for [[form fields] field-values
+        [field value] fields]
+    {:form form :field field :value value}))
 
 (defn- save-application! [description application-id field-values]
   (post! "/api/applications/save-draft"
@@ -180,8 +186,7 @@
                                               (rf/dispatch [::fetch-application application-id])
                                               (flash-message/show-default-success! :actions description))
                                             (do
-                                              (let [validation-errors
-                                                    (filter :field-id (:errors response))]
+                                              (let [validation-errors (filter :field-id (:errors response))]
                                                 (rf/dispatch [::set-validation-errors validation-errors]))
                                               ;; validation errors can be too long for :actions location
                                               (flash-message/show-error! :top [format-submission-errors application (:errors response)]))))
@@ -213,11 +218,10 @@
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
-(defn- save-attachment [{:keys [db]} [_ field-id file description]]
+(defn- save-attachment [{:keys [db]} [_ form-id field-id file description]]
   (let [application-id (get-in db [::application :data :application/id])]
     (post! "/api/applications/add-attachment"
-           {:url-params {:application-id application-id
-                         :field-id field-id}
+           {:url-params {:application-id application-id}
             :body file
             ;; force saving a draft when you upload an attachment.
             ;; this ensures that the attachment is not left
@@ -227,18 +231,26 @@
                       description
                       (fn [response]
                         ;; no race condition here: events are handled in a FIFO manner
-                        (rf/dispatch [::set-field-value field-id (str (:id response))])
+                        (rf/dispatch [::set-field-value form-id field-id (str (:id response))])
                         (rf/dispatch [::set-attachment-success field-id])
                         (rf/dispatch [::save-application description])))
-            :error-handler (flash-message/default-error-handler :actions description)})
+            :error-handler (fn [response]
+                             (if (= 415 (:status response))
+                               (flash-message/show-default-error! :actions description
+                                                                  [:div
+                                                                   [:p [text :t.form/invalid-attachment]]
+                                                                   [:p [text :t.form/upload-extensions]
+                                                                    ": "
+                                                                    attachment-types/allowed-extensions-string]])
+                               ((flash-message/default-error-handler :actions description) response)))})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
 
 (rf/reg-event-db
  ::set-field-value
- (fn [db [_ field-id value]]
-   (assoc-in db [::edit-application :field-values field-id] value)))
+ (fn [db [_ form-id field-id value]]
+   (assoc-in db [::edit-application :field-values form-id field-id] value)))
 
 (rf/reg-event-db
  ::set-attachment-success
@@ -275,6 +287,13 @@
      nil (filterv #(not= application-id (:application/id %)) data))))
 
 ;;;; UI components
+
+(defn- pdf-button [app-id]
+  (when app-id
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" app-id "/pdf")
+      :target :_blank}
+     "PDF " [external-link]]))
 
 (defn- link-license [license]
   (let [title (localized (:license/title license))
@@ -340,37 +359,42 @@
 (defn- application-fields [application edit-application attachment-success]
   (let [field-values (:field-values edit-application)
         show-diff (:show-diff edit-application)
-        field-validations (index-by [:field-id] (:validation-errors edit-application))
+        field-validations (index-by [:form-id :field-id] (:validation-errors edit-application))
         attachments (index-by [:attachment/id] (:application/attachments application))
         form-fields-editable? (form-fields-editable? application)
-        readonly? (not form-fields-editable?)]
-    [collapsible/component
-     {:id "application-fields"
-      :title (text :t.form/application)
-      :always
-      [:div
-       (into [:div]
-             (for [fld (get-in application [:application/form :form/fields])
-                   :when (and (field-visible? fld field-values)
-                              (not (:field/private fld)))] ; private fields will have empty value anyway
-               [fields/field (assoc fld
-                                    :on-change #(rf/dispatch [::set-field-value (:field/id fld) %])
-                                    :on-set-attachment #(rf/dispatch [::save-attachment (:field/id fld) %1 %2])
-                                    :on-remove-attachment #(do
-                                                             (rf/dispatch [::set-field-value (:field/id fld) ""])
-                                                             (rf/dispatch [::set-attachment-success (:field/id fld)]))
-                                    :on-toggle-diff #(rf/dispatch [::toggle-diff (:field/id fld)])
-                                    :field/value (get field-values (:field/id fld))
-                                    :field/attachment (when (= :attachment (:field/type fld))
-                                                        (get attachments (parse-int (:field/value fld))))
-                                    :field/previous-attachment (when (= :attachment (:field/type fld))
-                                                                 (when-let [prev (:field/previous-value fld)]
-                                                                   (get attachments (parse-int prev))))
-                                    :success (= attachment-success (:field/id fld))
-                                    :diff (get show-diff (:field/id fld))
-                                    :validation (field-validations (:field/id fld))
-                                    :readonly readonly?
-                                    :app-id (:application/id application))]))]}]))
+        readonly? (not form-fields-editable?)
+        language @(rf/subscribe [:language])]
+    (into [:div]
+          (for [form (:application/forms application)
+                :let [form-id (:form/id form)]]
+            [collapsible/component
+             {:id "application-fields"
+              :class "mb-3"
+              :title (or (get-in form [:form/title language]) (text :t.form/application))
+              :always (into [:div]
+                            (for [field (:form/fields form)
+                                  :let [field-id (:field/id field)]
+                                  :when (and (field-visible? field (get field-values form-id))
+                                             (not (:field/private field)))] ; private fields will have empty value anyway
+                              [fields/field (assoc field
+                                                   :form/id form-id
+                                                   :on-change #(rf/dispatch [::set-field-value form-id field-id %])
+                                                   :on-set-attachment #(rf/dispatch [::save-attachment form-id field-id %1 %2])
+                                                   :on-remove-attachment #(do
+                                                                            (rf/dispatch [::set-field-value form-id field-id ""])
+                                                                            (rf/dispatch [::set-attachment-success field-id]))
+                                                   :on-toggle-diff #(rf/dispatch [::toggle-diff field-id])
+                                                   :field/value (get-in field-values [form-id field-id])
+                                                   :field/attachment (when (= :attachment (:field/type field))
+                                                                       (get attachments (parse-int (get-in field-values [form-id field-id]))))
+                                                   :field/previous-attachment (when (= :attachment (:field/type field))
+                                                                                (when-let [prev (:field/previous-value field)]
+                                                                                  (get attachments (parse-int prev))))
+                                                   :success (= attachment-success field-id)
+                                                   :diff (get show-diff field-id)
+                                                   :validation (get-in field-validations [form-id field-id])
+                                                   :readonly readonly?
+                                                   :app-id (:application/id application))]))}]))))
 
 (defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
@@ -431,21 +455,26 @@
                 (when (not (empty? comment))
                   (str (text :t.actions/comment) ": " (:application/comment event)))))
    :request-id (:application/request-id event)
+   :attachments (:event/attachments event)
    :time (localize-time (:event/time event))})
 
-(defn- event-view [{:keys [time user event comment decision]}]
-  [:div.row
+(defn- event-view [{:keys [time event comment decision attachments]}]
+  [:div.row.event
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label event]
     (when decision
       [:div decision])
     (when comment
-      [:div comment])]])
+      [:div comment])
+    (when-let [attachments (seq attachments)]
+      (into [:div.d-flex.flex-row.flex-wrap]
+            (for [a attachments]
+              [fields/attachment-link a])))]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
-    (into [:div.group]
+    (into [:div.event-group]
           (for [e group]
             [event-view e]))))
 
@@ -501,10 +530,15 @@
                                  [application-link new-app nil]))))
        ")"])))
 
+(defn- events-with-attachments [application]
+  (let [attachments-by-id (index-by [:attachment/id] (:application/attachments application))]
+    (for [event (:application/events application)]
+      (update event :event/attachments (partial mapv (comp attachments-by-id :attachment/id))))))
+
 (defn- application-state [application config]
   (let [state (:application/state application)
         last-activity (:application/last-activity application)
-        event-groups (->> (:application/events application)
+        event-groups (->> (events-with-attachments application)
                           (group-by #(or (:application/request-id %)
                                          (:event/id %)))
                           vals
@@ -716,7 +750,7 @@
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
                [:div#resource-action-forms
-                [change-resources-form application can-comment? (partial reload! application-id)]]]}]))
+                [change-resources-form application can-comment? (partial reload! application-id true)]]]}]))
 
 (defn- previous-applications [applicant]
   ;; print mode forces the collapsible open, so fetch the content proactively
@@ -743,7 +777,7 @@
      (when (contains? (:application/permissions application) :see-everything)
        [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
      [:div.my-3 [application-licenses application userid]]
-     [:div.my-3 [application-fields application edit-application attachment-success]]]
+     [:div.mt-3 [application-fields application edit-application attachment-success]]]
     [:div.col-lg-4
      [:div#float-actions.mb-3
       [flash-message/component :actions]
@@ -761,6 +795,7 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
+     [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [document-title (str (text :t.applications/application)
                           (when application
                             (str " " (application-list/format-application-id config application)))
@@ -910,25 +945,26 @@
                             :application/permissions #{:application.command/accept-licenses}
                             :application/state :application.state/draft
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id "fld1"
-                                                              :field/type :text
-                                                              :field/title {:en "Field 1"}
-                                                              :field/placeholder {:en "placeholder 1"}}
-                                                             {:field/id "fld2"
-                                                              :field/type :label
-                                                              :title "Please input your wishes below."}
-                                                             {:field/id "fld3"
-                                                              :field/type :texta
-                                                              :field/optional true
-                                                              :field/title {:en "Field 2"}
-                                                              :field/placeholder {:en "placeholder 2"}}
-                                                             {:field/id "fld4"
-                                                              :field/type :unsupported
-                                                              :field/title {:en "Field 3"}
-                                                              :field/placeholder {:en "placeholder 3"}}
-                                                             {:field/id "fld5"
-                                                              :field/type :date
-                                                              :field/title {:en "Field 4"}}]}
+                            :application/forms [{:form/id 1
+                                                 :form/fields [{:field/id "fld1"
+                                                                :field/type :text
+                                                                :field/title {:en "Field 1"}
+                                                                :field/placeholder {:en "placeholder 1"}}
+                                                               {:field/id "fld2"
+                                                                :field/type :label
+                                                                :title "Please input your wishes below."}
+                                                               {:field/id "fld3"
+                                                                :field/type :texta
+                                                                :field/optional true
+                                                                :field/title {:en "Field 2"}
+                                                                :field/placeholder {:en "placeholder 2"}}
+                                                               {:field/id "fld4"
+                                                                :field/type :unsupported
+                                                                :field/title {:en "Field 3"}
+                                                                :field/placeholder {:en "placeholder 3"}}
+                                                               {:field/id "fld5"
+                                                                :field/type :date
+                                                                :field/title {:en "Field 4"}}]}]
                             :application/licenses [{:license/id 4
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
@@ -937,7 +973,7 @@
                                                     :license/type :link
                                                     :license/title {:en "Link to license"}
                                                     :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
-              :edit-application {:field-values {"fld1" "abc"}
+              :edit-application {:field-values {1 {"fld1" "abc"}}
                                  :show-diff {}
                                  :validation-errors nil
                                  :accepted-licenses {"applicant" #{5}}}
@@ -947,15 +983,16 @@
              {:application {:application/id 17
                             :application/state :application.state/submitted
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id "fld1"
-                                                              :field/type :text
-                                                              :field/title {:en "Field 1"}
-                                                              :field/placeholder {:en "placeholder 1"}}]}
+                            :application/forms [{:form/id 1
+                                                 :form/fields [{:field/id "fld1"
+                                                                :field/type :text
+                                                                :field/title {:en "Field 1"}
+                                                                :field/placeholder {:en "placeholder 1"}}]}]
                             :application/licenses [{:license/id 4
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
                                                     :license/text {:en lipsum}}]}
-              :edit-application {:field-values {"fld1" "abc"}
+              :edit-application {:field-values {1 {"fld1" "abc"}}
                                  :accepted-licenses #{4}}}])
    (example "application, approved"
             [render-application
@@ -965,16 +1002,35 @@
                                                     :email "email@example.com"
                                                     :additional "additional field"}
                             :application/resources [{:catalogue-item/title {:en "An applied item"}}]
-                            :application/form {:form/fields [{:field/id "fld1"
-                                                              :field/type :text
-                                                              :field/title {:en "Field 1"}
-                                                              :field/placeholder {:en "placeholder 1"}}]}
+                            :application/forms [{:form/id 1
+                                                 :form/fields [{:field/id "fld1"
+                                                                :field/type :text
+                                                                :field/title {:en "Field 1"}
+                                                                :field/placeholder {:en "placeholder 1"}}]}]
                             :application/licenses [{:license/id 4
                                                     :license/type :text
                                                     :license/title {:en "A Text License"}
                                                     :license/text {:en lipsum}}]}
-              :edit-application {:field-values {"fld1" "abc"}
+              :edit-application {:field-values {1 {"fld1" "abc"}}
                                  :accepted-licenses #{4}}}])
+
+   (component-info event-view)
+   (example "simple event"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Alice Applicant submitted the application"}])
+   (example "event with comment & decision"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Hannah Handler has made a decision on the application"
+                         :decision "Rejected"
+                         :comment "This application is bad."}])
+   (example "event with attachment"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Hannah Handler attached some things"
+                         :attachments [{:attachment/filename "verylongfilename_loremipsum_dolorsitamet.pdf"}]}])
+   (example "event with many attachments"
+            [event-view {:time "2020-01-01 08:35"
+                         :event "Hannah Handler attached some things"
+                         :attachments (repeat 30 {:attachment/filename "image.jpeg"})}])
 
    (component-info application-copy-notice)
    (example "no copies"

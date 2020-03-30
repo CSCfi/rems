@@ -2,13 +2,15 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [com.rpl.specter :refer [ALL select]]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.events :as events]
             [rems.text :as text])
-  (:import [org.apache.lucene.analysis Analyzer]
+  (:import [com.google.common.io MoreFiles RecursiveDeleteOption]
+           [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode Term]
@@ -26,14 +28,17 @@
 (def ^:private index-lock (Object.))
 
 (mount/defstate ^Directory search-index
-  :start (let [directory (NIOFSDirectory. (.toPath (io/file (:search-index-path env))))]
+  :start (let [index-dir (.toPath (io/file (:search-index-path env)))]
            (locking index-lock
-             (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
-                                                            (.setOpenMode IndexWriterConfig$OpenMode/CREATE)))]
-               (.deleteAll writer)))
-           (atom {::directory directory
-                  ::searcher-manager (SearcherManager. directory (SearcherFactory.))
-                  ::last-processed-event-id 0}))
+             ;; delete old index
+             (when (.exists (.toFile index-dir))
+               (MoreFiles/deleteDirectoryContents index-dir (into-array [RecursiveDeleteOption/ALLOW_INSECURE])))
+             (let [directory (NIOFSDirectory. index-dir)]
+               ;; create a new empty index by creating and closing an IndexWriter, otehrwise SearcherManager will fail
+               (.close (IndexWriter. directory (IndexWriterConfig. analyzer)))
+               (atom {::directory directory
+                      ::searcher-manager (SearcherManager. directory (SearcherFactory.))
+                      ::last-processed-event-id 0}))))
   :stop (do
           (.close ^SearcherManager (::searcher-manager @search-index))
           (.close ^Directory (::directory @search-index))))
@@ -70,10 +75,7 @@
                        #(text/localize-todo (:application/todo app)))))
               (cons (str (:application/todo app)))
               (str/join " "))
-   :form (->> (:form/fields (:application/form app))
-              (map (fn [field]
-                     ;; TODO: filter out checkboxes, attachments etc?
-                     (:field/value field)))
+   :form (->> (select [:application/forms ALL :form/fields ALL :field/value] app) ;; TODO: filter out checkboxes, attachments etc?
               (str/join " "))})
 
 (defn- index-application! [^IndexWriter writer app]

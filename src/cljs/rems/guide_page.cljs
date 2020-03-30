@@ -1,5 +1,6 @@
 (ns rems.guide-page
   (:require [re-frame.core :as rf]
+            [rems.actions.action :as action]
             [rems.administration.administration :as administration]
             [rems.application :as application]
             [rems.application-list :as application-list]
@@ -115,6 +116,9 @@
 
     [:h2 "Form fields"]
     [fields/guide]
+
+    [:h2 "Application actions"]
+    [action/guide]
 
     [:h2 "Settings"]
     [settings/guide]

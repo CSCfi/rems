@@ -56,7 +56,8 @@
       (test-data/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
-                           :field-values [{:field "abc"
+                           :field-values [{:form form-id
+                                           :field "abc"
                                            :value "Supercalifragilisticexpialidocious"}]})
       (is (= #{app-id} (search/find-applications "Supercalifragilisticexpialidocious")) "any field")
       (is (= #{app-id} (search/find-applications "title:Supercalifragilisticexpialidocious")) "title field")))
@@ -104,23 +105,38 @@
       (is (= #{app-id} (search/find-applications "todo:\"waiting-for-review\"")) "keyword todo, any field")))
 
   (testing "find by form content"
-    (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
+    (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
+                                                          :field/type :text
                                                           :field/title {:en "Text field"
                                                                         :fi "Tekstikenttä"}
                                                           :field/optional false}]})
-          cat-id (test-data/create-catalogue-item! {:form-id form-id})
-          app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+          form-id2 (test-data/create-form! {:form/fields [{:field/id "1"
+                                                           :field/type :text
+                                                           :field/title {:en "Text field"
+                                                                         :fi "Tekstikenttä"}
+                                                           :field/optional false}]})
+          wf-id (test-data/create-workflow! {})
+          cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
+          cat-id2 (test-data/create-catalogue-item! {:form-id form-id2 :workflow-id wf-id})
+          app-id (test-data/create-application! {:catalogue-item-ids [cat-id cat-id2]
                                                  :actor "alice"})]
       (test-data/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
-                           :field-values [{:field "1"
-                                           :value "Tis but a scratch."}]})
+                           :field-values [{:form form-id
+                                           :field "1"
+                                           :value "Tis but a scratch."}
+                                          {:form form-id2
+                                           :field "1"
+                                           :value "It's just a flesh wound."}]})
       (is (= #{app-id} (search/find-applications "scratch")) "any field")
-      (is (= #{app-id} (search/find-applications "form:scratch")) "form field")))
+      (is (= #{app-id} (search/find-applications "form:scratch")) "form field")
+      (is (= #{app-id} (search/find-applications "flesh")) "any field")
+      (is (= #{app-id} (search/find-applications "form:flesh")) "form field")))
 
   (testing "updating applications"
-    (let [form-id (test-data/create-form! {:form/fields [{:field/type :text
+    (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
+                                                          :field/type :text
                                                           :field/title {:en "Text field"
                                                                         :fi "Tekstikenttä"}
                                                           :field/optional false}]})
@@ -130,7 +146,8 @@
       (test-data/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
-                           :field-values [{:field "1"
+                           :field-values [{:form form-id
+                                           :field "1"
                                            :value "version1"}]})
       (is (= #{app-id} (search/find-applications "version1"))
           "original version is indexed")
@@ -138,7 +155,8 @@
       (test-data/command! {:type :application.command/save-draft
                            :application-id app-id
                            :actor "alice"
-                           :field-values [{:field "1"
+                           :field-values [{:form form-id
+                                           :field "1"
                                            :value "version2"}]})
       (is (= #{} (search/find-applications "version1"))
           "should not find old versions")

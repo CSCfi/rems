@@ -1,24 +1,26 @@
 (ns rems.actions.approve-reject
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
+            [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
             [rems.text :refer [text]]))
-
-(rf/reg-event-fx
- ::open-form
- (fn [{:keys [db]} _]
-   {:db (assoc db ::comment "")}))
-
-(rf/reg-sub ::comment (fn [db _] (::comment db)))
-(rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
 (def ^:private action-form-id "approve-reject")
 
 (rf/reg-event-fx
+ ::open-form
+ (fn [{:keys [db]} _]
+   {:db (assoc db ::comment "")
+    :dispatch [:rems.actions.action/set-attachments action-form-id []]}))
+
+(rf/reg-sub ::comment (fn [db _] (::comment db)))
+(rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
+
+(rf/reg-event-fx
  ::send-approve
- (fn [_ [_ {:keys [application-id comment on-finished]}]]
+ (fn [_ [_ {:keys [application-id comment attachments on-finished]}]]
    (command! :application.command/approve
              {:application-id application-id
-              :comment comment}
+              :comment comment
+              :attachments attachments}
              {:description [text :t.actions/approve]
               :collapse action-form-id
               :on-finished on-finished})
@@ -26,10 +28,11 @@
 
 (rf/reg-event-fx
  ::send-reject
- (fn [_ [_ {:keys [application-id comment on-finished]}]]
+ (fn [_ [_ {:keys [application-id comment attachments on-finished]}]]
    (command! :application.command/reject
              {:application-id application-id
-              :comment comment}
+              :comment comment
+              :attachments attachments}
              {:description [text :t.actions/reject]
               :collapse action-form-id
               :on-finished on-finished})
@@ -42,7 +45,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn approve-reject-view
-  [{:keys [comment on-set-comment on-approve on-reject]}]
+  [{:keys [application-id comment on-set-comment on-approve on-reject]}]
   [action-form-view action-form-id
    (text :t.actions/approve-reject)
    [[button-wrapper {:id "reject"
@@ -53,18 +56,25 @@
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click on-approve}]]
-   [action-comment {:id action-form-id
-                    :label (text :t.form/add-comments-shown-to-applicant)
-                    :comment comment
-                    :on-comment on-set-comment}]])
+   [:<>
+    [action-comment {:id action-form-id
+                     :label (text :t.form/add-comments-shown-to-applicant)
+                     :comment comment
+                     :on-comment on-set-comment}]
+    [action-attachment {:application-id application-id
+                        :key action-form-id}]]])
 
 (defn approve-reject-form [application-id on-finished]
-  (let [comment @(rf/subscribe [::comment])]
-    [approve-reject-view {:comment comment
+  (let [comment @(rf/subscribe [::comment])
+        attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])]
+    [approve-reject-view {:application-id application-id
+                          :comment comment
                           :on-set-comment #(rf/dispatch [::set-comment %])
                           :on-approve #(rf/dispatch [::send-approve {:application-id application-id
                                                                      :comment comment
+                                                                     :attachments attachments
                                                                      :on-finished on-finished}])
                           :on-reject #(rf/dispatch [::send-reject {:application-id application-id
                                                                    :comment comment
+                                                                   :attachments attachments
                                                                    :on-finished on-finished}])}]))

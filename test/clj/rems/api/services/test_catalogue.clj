@@ -28,20 +28,24 @@
                                                    :workflow-id workflow-id})
         item-id2 (test-data/create-catalogue-item! {})
 
-        enable-catalogue-item! #(catalogue/set-catalogue-item-enabled! {:id item-id
-                                                                        :enabled %})
+        enable-catalogue-item! #(with-user owner
+                                  (catalogue/set-catalogue-item-enabled! {:id item-id
+                                                                          :enabled %}))
         archive-catalogue-item! #(with-user owner
                                    (catalogue/set-catalogue-item-archived! {:id item-id
                                                                             :archived %}))
-        archive-form! #(form/set-form-archived! {:id form-id
-                                                 :archived %})
+        archive-form! #(with-user owner
+                         (form/set-form-archived! {:id form-id
+                                                   :archived %}))
         archive-license! #(with-user owner
                             (licenses/set-license-archived! {:id lic-id
                                                              :archived %}))
-        archive-resource! #(resource/set-resource-archived! {:id res-id
-                                                             :archived %})
-        archive-workflow! #(workflow/set-workflow-archived! {:id workflow-id
-                                                             :archived %})]
+        archive-resource! #(with-user owner
+                             (resource/set-resource-archived! {:id res-id
+                                                               :archived %}))
+        archive-workflow! #(with-user owner
+                             (workflow/set-workflow-archived! {:id workflow-id
+                                                               :archived %}))]
     (testing "new catalogue items are enabled and not archived"
       (is (= {:enabled true
               :archived false}
@@ -78,8 +82,8 @@
     (testing "does not affect unrelated catalogue items"
       (enable-catalogue-item! true)
       (archive-catalogue-item! true)
-      (catalogue/set-catalogue-item-enabled! {:id item-id2 :enabled false})
       (with-user owner
+        (catalogue/set-catalogue-item-enabled! {:id item-id2 :enabled false})
         (catalogue/set-catalogue-item-archived! {:id item-id2 :archived false}))
       (is (= {:enabled true
               :archived true}
@@ -127,10 +131,11 @@
                           :fi "Vanha nimi"}})
         old-item (first (catalogue/get-localized-catalogue-items))
 
-        _ (catalogue/edit-catalogue-item!
-           {:id item-id
-            :localizations {:en {:title "New title"}
-                            :fi {:title "Uusi nimi"}}})
+        _ (with-user "owner"
+            (catalogue/edit-catalogue-item!
+             {:id item-id
+              :localizations {:en {:title "New title"}
+                              :fi {:title "Uusi nimi"}}}))
         new-item (first (catalogue/get-localized-catalogue-items))]
     (is (= "Old title" (get-in old-item [:localizations :en :title])))
     (is (= "Vanha nimi" (get-in old-item [:localizations :fi :title])))

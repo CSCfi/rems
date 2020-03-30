@@ -69,9 +69,19 @@
    :application-id s/Int
    :start DateTime
    :end (s/maybe DateTime)
-   :mail (rjs/field s/Str
+   :mail (rjs/field (s/maybe s/Str)
                     {:deprecate true
                      :description "DEPRECATED, will disappear"})}) ;; TODO
+
+(s/defschema Permission
+  {:type s/Str
+   :value s/Str
+   :source s/Str
+   :by s/Str
+   :asserted s/Int})
+
+(s/defschema Ga4ghVisa
+  {:ga4gh_visa_v1 [s/Str]})
 
 (s/defschema EnabledCommand
   {:id s/Int
@@ -239,7 +249,7 @@
    :application/accepted-licenses (s/maybe {UserId #{s/Int}})
    :application/events [Event]
    :application/description s/Str
-   :application/form Form
+   :application/forms [Form]
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) [Handler]}
@@ -249,6 +259,6 @@
 
 (s/defschema ApplicationOverview
   (dissoc Application
-          :application/form
           :application/events
+          :application/forms
           :application/licenses))

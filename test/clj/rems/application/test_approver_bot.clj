@@ -44,7 +44,7 @@
                                                {:catalogue-item/id 20
                                                 :resource/ext-id "urn:21"}]
                        :application/licenses []
-                       :form/id 40
+                       :application/forms [{:form/id 40}]
                        :workflow/id 50
                        :workflow/type :workflow/default}
         submitted-event {:event/type :application.event/submitted

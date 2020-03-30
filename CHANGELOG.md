@@ -6,13 +6,49 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.7
+Changes since v2.9
+
+## v2.9 "Olarinluoma" 2020-03-26
+
+### Breaking changes
+- Multiple form support #2043
+  - Catalogue items that share a workflow but have different forms can now be bundled into one application.
+  - Migrations will update the data. API changes are listed here.
+  - Applications used to contain the key `application/form` but now will contain `application/forms` where there is a sequence of forms.
+  - Commands with `field-values` will have a `form` in addition to `field` and `value`.
+  - Events with `form/id` will have a `application/forms` where each has a `form/id`.
+
+### Changes
+- Removed requirement for organizations to match when creating catalogue item or resource (#1893). This reverts the only breaking change in 2.8.
+- Allow organization owners to edit resources, forms, licenses and workflows in their own organization (#1893)
+- Show resources, forms, licenses and workflows from all organizations to organization owners (#1893)
+- API: comments are now optional for commands
+
+### Additions
+- Generating bare-bones PDFs from applications. This is a non-experimental feature. Fancier PDF generation is still experimental and can be enabled with a flag. (#2053)
+- It is possible to add attachments to most actions that have a comment field (#1928)
+- Added `list-users` and `grant-role` commands for `rems.jar`. For details see <docs/installing_upgrading.md> (#2073)
+- A warning is now logged when the config file contains unrecognized keys.
+
+### Fixes
+- Excel and OpenOffice files are now really allowed as attachments. Also, .csv and .tsv are allowed. Allowed file extensions are documented in the UI. (#2023)
+- Attachments now get copied when copying an application (#2056)
+
+## v2.8 "Mankkaanlaaksontie" 2020-03-03
+
+### Breaking changes
+- Betters support for organizations (#1893)
+  - Backend checks that organizations of license, resource, workflow and form match when creating a catalogue item or resource
 
 ### Changes
 - Duplicate resource external ids are now allowed (#1988)
 
 ### Additions
 - Applicant/member notification email address is now shown to handler (#1983)
+- Allow Excel and OpenOffice files as attachments (#2023)
+
+### Fixes
+- Filenames are now retained when downloading attachments (#2019)
 
 ## v2.7 "Koivuviidantie" 2020-02-03
 

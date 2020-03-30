@@ -8,15 +8,16 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (deftest catalogue-items-api-test
   (let [api-key "42"
         user-id "alice"
-        form-id (test-data/create-form! {:form/title "form name"})
-        wf-id (test-data/create-workflow! {:title "workflow name"})
-        res-id (test-data/create-resource! {:resource-ext-id "resource ext id"})]
+        form-id (test-data/create-form! {:form/title "form name" :form/organization "organization1"})
+        ;; can create catalogue items with mixed organizations:
+        wf-id (test-data/create-workflow! {:title "workflow name" :organization "abc"})
+        res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization "organization1"})]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
                    handler
@@ -35,7 +36,7 @@
                                       handler
                                       read-body))]
         (testing "create as owner"
-          (let [data (create-catalogue-item "owner" "test-organization")
+          (let [data (create-catalogue-item "owner" "organization1")
                 id (:id data)]
             (is (:success data))
             (is (number? id))
@@ -48,7 +49,7 @@
                         :workflow-name "workflow name"
                         :form-name "form name"
                         :resource-name "resource ext id"
-                        :organization "test-organization"
+                        :organization "organization1"
                         :localizations {}}
                        (select-keys data [:id :organization :workflow-name :form-name :resource-name :localizations])))))
             (testing "and fetch non-existing item"
@@ -66,22 +67,23 @@
               (is (number? id))))
 
           (testing "with incorrect organization"
-            (let [data (create-catalogue-item "organization-owner1" "organization2")]
+            (let [data (create-catalogue-item "organization-owner2" "organization1")]
               (is (not (:success data)))))))))
 
 (deftest catalogue-items-edit-test
   (let [api-key "42"
         owner "owner"
         user "alice"
-        form-id (test-data/create-form! {})
-        wf-id (test-data/create-workflow! {})
-        res-id (test-data/create-resource! {})]
+        form-id (test-data/create-form! {:form/organization "organization1"})
+        wf-id (test-data/create-workflow! {:organization "organization1"})
+        res-id (test-data/create-resource! {:organization "organization1"})]
     (testing "create"
       (let [create (-> (request :post "/api/catalogue-items/create")
                        (authenticate api-key owner)
                        (json-body {:form form-id
                                    :resid res-id
                                    :wfid wf-id
+                                   :organization "organization1"
                                    :localizations {:en {:title "En title"}
                                                    :sv {:title "Sv title"
                                                         :infourl "http://info.se"}}})
@@ -107,7 +109,7 @@
               (is (= {:title "Sv title"
                       :infourl "http://info.se"}
                      (dissoc (get-in data [:localizations :sv]) :id :langcode)))))
-          (testing "... and edit"
+          (testing "... and edit (as owner)"
             (let [response (-> (request :put "/api/catalogue-items/edit")
                                (authenticate api-key owner)
                                (json-body {:id id
@@ -127,7 +129,6 @@
                                (authenticate api-key user)
                                handler
                                read-ok-body)]
-                  (prn data)
                   (is (= id (:id data)))
                   (is (= {:title "En title"
                           :infourl nil}
@@ -137,7 +138,40 @@
                          (dissoc (get-in data [:localizations :sv]) :id :langcode)))
                   (is (= {:title "Fi title"
                           :infourl "http://info.fi"}
-                         (dissoc (get-in data [:localizations :fi]) :id :langcode))))))))))))
+                         (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))
+          (testing "... and edit (as organization owner)"
+            (let [response (-> (request :put "/api/catalogue-items/edit")
+                               (authenticate api-key "organization-owner1")
+                               (json-body {:id id
+                                           :localizations {:sv {:title "Sv title 2"
+                                                                :infourl nil}
+                                                           :fi {:title "Fi title 2"
+                                                                :infourl "http://info.fi"}}})
+                               handler
+                               read-ok-body)]
+              (is (:success response) (pr-str response))))
+          (testing "... and edit (as organization owner for another organization)"
+            (let [response (-> (request :put "/api/catalogue-items/edit")
+                               (authenticate api-key "organization-owner2")
+                               (json-body {:id id
+                                           :localizations {:sv {:title "Sv title 2"
+                                                                :infourl nil}
+                                                           :fi {:title "Fi title 2"
+                                                                :infourl "http://info.fi"}}})
+                               handler)]
+              (is (response-is-forbidden? response))
+              (is (= "no access to organization \"organization1\"" (read-body response))))))))
+
+    (testing "edit nonexisting"
+      (let [response (-> (request :put "/api/catalogue-items/edit")
+                         (authenticate api-key owner)
+                         (json-body {:id 999999999
+                                     :localizations {:sv {:title "Sv title 2"
+                                                          :infourl nil}
+                                                     :fi {:title "Fi title"
+                                                          :infourl "http://info.fi"}}})
+                         handler)]
+        (is (response-is-not-found? response))))))
 
 
 (deftest catalogue-items-api-security-test
@@ -188,11 +222,14 @@
 
 (deftest change-form-test
   (let [api-key "42"
-        resource-id (test-data/create-resource! {})
-        old-form-id (test-data/create-form! {:form/title "old form"})
-        new-form-id (test-data/create-form! {:form/title "new form"})
+        resource-id (test-data/create-resource! {:organization "organization1"})
+        old-form-id (test-data/create-form! {:form/title "old form"
+                                             :form/organization "organization1"})
+        new-form-id (test-data/create-form! {:form/title "new form"
+                                             :form/organization "organization1"})
         old-catalogue-item-id (test-data/create-catalogue-item!
-                               {:title {:en "change-form-test catalogue item en"
+                               {:organization "organization1"
+                                :title {:en "change-form-test catalogue item en"
                                         :fi "change-form-test catalogue item fi"}
                                 :resource-id resource-id
                                 :form-id old-form-id})]
@@ -229,4 +266,78 @@
           (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
                  (dissoc (get-in new-catalogue-item [:localizations langcode]) :id))))
 
-        (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))))
+        (is (= (:end old-catalogue-item) (:start new-catalogue-item)))))
+    (testing "can change to form that's in another organization"
+      (let [form-id (test-data/create-form! {:form/title "wrong organization"
+                                                   :form/organization "organization2"})
+            response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                         (authenticate api-key "owner")
+                         (json-body {:form form-id})
+                         handler
+                         read-ok-body)]
+        (is (true? (:success response)))))
+    (testing "can change form as organization owner"
+      (is (true? (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                     (authenticate api-key "organization-owner1")
+                     (json-body {:form new-form-id})
+                     handler
+                     read-ok-body
+                     :success))))
+    (testing "can't change form as owner of different organization"
+      (let [response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
+                         (authenticate api-key "organization-owner2")
+                         (json-body {:form new-form-id})
+                         handler)]
+        (is (response-is-forbidden? response))
+        (is (= "no access to organization \"organization1\"" (read-body response)))))))
+
+(deftest test-enable-archive
+  (let [api-key "42"
+        res-id (test-data/create-resource! {:resource-ext-id "resource ext id" :organization "organization1"})
+        id (test-data/create-catalogue-item!
+            {:organization "organization1"
+             :title {:en "en"
+                     :fi "fi"}
+             :resource-id res-id})
+        fetch #(api-call :get (str "/api/catalogue-items/" id)
+                         nil
+                         api-key "owner")]
+    (doseq [user ["owner" "organization-owner1"]]
+      (testing user
+        (testing "disable"
+          (is (:success (api-call :put "/api/catalogue-items/enabled"
+                                  {:id id
+                                   :enabled false}
+                                  api-key user)))
+          (is (false? (:enabled (fetch)))))
+        (testing "enable"
+          (is (:success (api-call :put "/api/catalogue-items/enabled"
+                                  {:id id
+                                   :enabled true}
+                                  api-key user)))
+          (is (true? (:enabled (fetch)))))
+        (testing "archive"
+          (is (:success (api-call :put "/api/catalogue-items/archived"
+                                  {:id id
+                                   :archived true}
+                                  api-key user)))
+          (is (true? (:archived (fetch)))))
+        (testing "unarchive"
+          (is (:success (api-call :put "/api/catalogue-items/archived"
+                                  {:id id
+                                   :archived false}
+                                  api-key user)))
+          (is (false? (:archived (fetch)))))))
+    (testing "incorrect organization owner can't"
+      (testing "enable"
+        (let [response (-> (request :put "/api/catalogue-items/enabled")
+                           (authenticate api-key "organization-owner2")
+                           (json-body {:id id :enabled true})
+                           handler)]
+          (is (response-is-forbidden? response))))
+      (testing "archive"
+        (let [response (-> (request :put "/api/catalogue-items/archived")
+                           (authenticate api-key "organization-owner2")
+                           (json-body {:id id :archived true})
+                           handler)]
+          (is (response-is-forbidden? response)))))))

@@ -1,11 +1,14 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
+            [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
+
+(def ^:private action-form-id "request-review")
+(def ^:private dropdown-id "request-review-dropdown")
 
 (rf/reg-fx
  ::fetch-potential-reviewers
@@ -22,6 +25,7 @@
                ::comment ""
                ::potential-reviewers #{}
                ::selected-reviewers #{})
+    :dispatch [:rems.actions.action/set-attachments action-form-id []]
     ::fetch-potential-reviewers #(rf/dispatch [::set-potential-reviewers %])}))
 
 (rf/reg-sub ::potential-reviewers (fn [db _] (::potential-reviewers db)))
@@ -38,16 +42,14 @@
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
-(def ^:private action-form-id "request-review")
-(def ^:private dropdown-id "request-review-dropdown")
-
 (rf/reg-event-fx
  ::send-request-review
- (fn [_ [_ {:keys [application-id reviewers comment on-finished]}]]
+ (fn [_ [_ {:keys [application-id reviewers comment attachments on-finished]}]]
    (command! :application.command/request-review
              {:application-id application-id
               :comment comment
-              :reviewers (map :userid reviewers)}
+              :reviewers (map :userid reviewers)
+              :attachments attachments}
              {:description [text :t.actions/request-review]
               :collapse action-form-id
               :on-finished on-finished})
@@ -59,7 +61,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-review-view
-  [{:keys [selected-reviewers potential-reviewers comment on-set-comment on-set-reviewers on-send]}]
+  [{:keys [application-id selected-reviewers potential-reviewers comment on-set-comment on-set-reviewers on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-review)
    [[button-wrapper {:id "request-review-button"
@@ -72,6 +74,8 @@
                      :label (text :t.form/add-comments-not-shown-to-applicant)
                      :comment comment
                      :on-comment on-set-comment}]
+    [action-attachment {:key action-form-id
+                        :application-id application-id}]
     [:div.form-group
      [:label {:for dropdown-id} (text :t.actions/request-selection)]
      [dropdown/dropdown
@@ -86,8 +90,10 @@
 (defn request-review-form [application-id on-finished]
   (let [selected-reviewers @(rf/subscribe [::selected-reviewers])
         potential-reviewers @(rf/subscribe [::potential-reviewers])
-        comment @(rf/subscribe [::comment])]
-    [request-review-view {:selected-reviewers selected-reviewers
+        comment @(rf/subscribe [::comment])
+        attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])]
+    [request-review-view {:application-id application-id
+                          :selected-reviewers selected-reviewers
                           :potential-reviewers potential-reviewers
                           :comment comment
                           :on-set-comment #(rf/dispatch [::set-comment %])
@@ -95,4 +101,5 @@
                           :on-send #(rf/dispatch [::send-request-review {:application-id application-id
                                                                          :reviewers selected-reviewers
                                                                          :comment comment
+                                                                         :attachments attachments
                                                                          :on-finished on-finished}])}]))

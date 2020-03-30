@@ -67,21 +67,21 @@
 
     (PUT "/archived" []
       :summary "Archive or unarchive license"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (licenses/set-license-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable license"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (licenses/set-license-enabled! command)))
 
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :multipart-params [file :- upload/TempFileUpload]
       :middleware [multipart/wrap-multipart-params]
       :return AttachmentMetadata
@@ -89,14 +89,14 @@
 
     (POST "/remove_attachment" []
       :summary "Remove an attachment that could have been used in a license."
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :query-params [attachment-id :- (describe s/Int "attachment id")]
       :return SuccessResponse
       (ok {:success (some? (licenses/remove-license-attachment! attachment-id))}))
 
     (GET "/attachments/:attachment-id" []
       :summary "Get a license's attachment"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :path-params [attachment-id :- (describe s/Int "attachment id")]
       (if-let [attachment (licenses/get-license-attachment attachment-id)]
         (attachment/download attachment)

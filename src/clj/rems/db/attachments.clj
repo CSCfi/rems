@@ -1,27 +1,19 @@
 (ns rems.db.attachments
   (:require [rems.common.application-util :refer [form-fields-editable?]]
+            [rems.common.attachment-types :as attachment-types]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db]
             [rems.util :refer [file-to-bytes]])
   (:import [rems InvalidRequestException]))
 
-(defn check-attachment-content-type
-  "Checks that content-type matches the allowed ones listed on the UI side:
-   .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-  [content-type]
-  (when-not (or (#{"application/pdf"
-                   "application/msword"
-                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                   "application/vnd.ms-powerpoint"
-                   "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                   "text/plain"}
-                 content-type)
-                (.startsWith content-type "image/"))
-    (throw (InvalidRequestException. (str "Unsupported content-type: " content-type)))))
+(defn check-allowed-attachment
+  [filename]
+  (when-not (attachment-types/allowed-extension? filename)
+    (throw (InvalidRequestException. (str "Unsupported extension: " filename)))))
 
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id]
-  (check-attachment-content-type content-type)
+  (check-allowed-attachment filename)
   (let [byte-array (file-to-bytes tempfile)
         id (:id (db/save-attachment! {:application application-id
                                       :user user-id
@@ -32,11 +24,20 @@
      :success true}))
 
 (defn get-attachment [attachment-id]
-  (when-let [{:keys [type appid filename data]} (db/get-attachment {:id attachment-id})]
-    (check-attachment-content-type type)
+  (when-let [{:keys [modifieruserid type appid filename data]} (db/get-attachment {:id attachment-id})]
+    (check-allowed-attachment filename)
     {:application/id appid
+     :attachment/user modifieruserid
      :attachment/filename filename
      :attachment/data data
+     :attachment/type type}))
+
+(defn get-attachment-metadata [attachment-id]
+  (when-let [{:keys [id modifieruserid type appid filename]} (db/get-attachment-metadata {:id attachment-id})]
+    {:application/id appid
+     :attachment/id id
+     :attachment/user modifieruserid
+     :attachment/filename filename
      :attachment/type type}))
 
 (defn get-attachments-for-application [application-id]
@@ -45,3 +46,11 @@
      {:attachment/id id
       :attachment/filename filename
       :attachment/type type})))
+
+(defn copy-attachment! [new-application-id attachment-id]
+  (let [attachment (db/get-attachment {:id attachment-id})]
+    (:id (db/save-attachment! {:application new-application-id
+                               :user (:modifieruserid attachment)
+                               :filename (:filename attachment)
+                               :type (:type attachment)
+                               :data (:data attachment)}))))

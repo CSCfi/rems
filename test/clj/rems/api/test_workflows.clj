@@ -9,6 +9,7 @@
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [sync-with-database-time]]
             [rems.handler :refer [handler]]
+            [rems.testing-util :refer [with-user]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -17,7 +18,7 @@
 
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
-  {:organization "test-organization"
+  {:organization "organization1"
    :title "workflow title"
    :workflow {:type "workflow/default"
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
@@ -33,96 +34,63 @@
       (select-keys (keys expected))))
 
 (deftest workflows-api-test
-  (testing "list"
-    (let [data (-> (request :get "/api/workflows")
-                   (authenticate "42" "owner")
-                   handler
-                   assert-response-is-ok
-                   read-body)]
-      (is (coll-is-not-empty? data))))
-
-  (let [id (test-data/create-workflow! {})]
-    (testing "get by id"
-      (let [data (-> (request :get (str "/api/workflows/" id))
-                     (authenticate "42" "owner")
-                     handler
-                     assert-response-is-ok
-                     read-body)]
-        (is (= id (:id data)))))
-
-    (testing "id not found"
-      (let [response (-> (request :get (str "/api/workflows/" 666))
-                         (authenticate "42" "owner")
-                         handler)]
-        (is (response-is-not-found? response)))))
-
   (let [create-workflow (fn [user-id organization type]
-                          (-> (request :post "/api/workflows/create")
-                              (json-body {:organization organization
-                                          :title "workflow title"
-                                          :type type
-                                          :handlers ["handler" "carl"]})
-                              (authenticate "42" user-id)
-                              handler
-                              assert-response-is-ok
-                              read-body))]
-    (testing "create default workflow"
-      (let [body (create-workflow "owner" "test-organization" :workflow/default)
-            id (:id body)]
-        (is (< 0 id))
-        (sync-with-database-time)
-        (testing "and fetch"
-          (is (= expected
-                 (fetch "42" "owner" id))))))
+                          (api-call :post "/api/workflows/create"
+                                    {:organization organization
+                                     :title "workflow title"
+                                     :type type
+                                     :handlers ["handler" "carl"]}
+                                    "42" user-id))]
+    (doseq [user-id ["owner" "organization-owner1"]]
+      (testing user-id
+        (testing "list"
+          (let [data (api-call :get "/api/workflows" nil
+                               "42" user-id)]
+            (is (coll-is-not-empty? data))))
 
-    (testing "create decider workflow"
-      (let [body (create-workflow "owner" "test-organization" :workflow/decider)
-            id (:id body)]
-        (is (< 0 id))
-        (sync-with-database-time)
-        (testing "and fetch"
-          (is (= (assoc-in expected [:workflow :type] "workflow/decider")
-                 (fetch "42" "owner" id))))))
+        (let [id (test-data/create-workflow! {})]
+          (testing "get by id"
+            (let [data (api-call :get (str "/api/workflows/" id) nil
+                                 "42" user-id)]
+              (is (= id (:id data)))))
 
-    (testing "create as organization owner"
-      (testing "with correct organization"
-        (let [body (create-workflow "organization-owner1" "organization1" :workflow/default)
-              id (:id body)]
-          (is (< 0 id))
-          (is (:success body))
+          (testing "id not found"
+            (is (response-is-not-found? (api-response :get (str "/api/workflows/" 666) nil
+                                                      "42" user-id)))))
 
-          (testing "fetch using correct organization owner"
-            (let [workflow (-> (request :get (str "/api/workflows/" id))
-                               (authenticate "42" "organization-owner1")
-                               handler
-                               assert-response-is-ok
-                               read-body)]
-              (is workflow)
-              (is (= ["handler" "carl"] (mapv :userid (get-in workflow [:workflow :handlers]))))))
+        (testing "create default workflow"
+          (let [body (create-workflow user-id "organization1" :workflow/default)
+                id (:id body)]
+            (is (< 0 id))
+            (sync-with-database-time)
+            (testing "and fetch"
+              (is (= expected
+                     (fetch "42" user-id id))))))
 
-          (testing "fetch using incorrect organization owner"
-            (let [response (-> (request :get (str "/api/workflows/" id))
-                               (authenticate "42" "organization-owner2")
-                               handler)]
-              (is (response-is-not-found? response))))
-          ;; TODO test listing api
-          (testing "fetch using owner"
-            (let [workflow (-> (request :get (str "/api/workflows/" id))
-                               (authenticate "42" "owner")
-                               handler
-                               assert-response-is-ok
-                               read-body)]
-              (is workflow)
-              (is (= ["handler" "carl"] (mapv :userid (get-in workflow [:workflow :handlers]))))))))
+        (testing "create decider workflow"
+          (let [body (create-workflow user-id "organization1" :workflow/decider)
+                id (:id body)]
+            (is (< 0 id))
+            (sync-with-database-time)
+            (testing "and fetch"
+              (is (= (-> expected
+                         (assoc-in [:workflow :type] "workflow/decider"))
+                     (fetch "42" user-id id))))))))
 
-      (testing "with incorrect organization"
-        (let [body (create-workflow "organization-owner1" "organization2" :workflow/default)]
-          (is (not (:success body))))))))
+    (testing "create as organization-owner with incorrect organization"
+      (let [response (api-response :post "/api/workflows/create"
+                                   {:organization "organization2"
+                                    :title "workflow title"
+                                    :type :workflow/default
+                                    :handlers ["handler" "carl"]}
+                                   "42" "organization-owner1")]
+        (is (response-is-forbidden? response))
+        (is (= "no access to organization \"organization2\"" (read-body response)))))))
 
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-workflow! {:organization "test-organization"
+        wfid (test-data/create-workflow! {:organization "organization1"
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
@@ -130,61 +98,68 @@
         _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
 
         fetch #(fetch api-key user-id wfid)
-        archive-license! #(licenses/set-license-archived! {:id lic-id
-                                                           :archived %})
-        set-enabled! #(-> (request :put "/api/workflows/enabled")
-                          (json-body {:id wfid
-                                      :enabled %})
-                          (authenticate api-key user-id)
-                          handler
-                          read-ok-body)
-        set-archived! #(-> (request :put "/api/workflows/archived")
-                           (json-body {:id wfid
-                                       :archived %})
-                           (authenticate api-key user-id)
-                           handler
-                           read-ok-body)]
+        archive-license! #(with-user user-id
+                            (licenses/set-license-archived! {:id lic-id
+                                                             :archived %}))
+        set-enabled! #(api-call :put "/api/workflows/enabled"
+                                {:id wfid
+                                 :enabled %1}
+                                api-key %2)
+        set-archived! #(api-call :put "/api/workflows/archived"
+                                 {:id wfid
+                                  :archived %1}
+                                 api-key %2)]
     (sync-with-database-time)
     (testing "before changes"
       (is (= expected (fetch))))
-    (testing "disable and archive"
-      (is (:success (set-enabled! false)))
-      (is (:success (set-archived! true)))
+    (testing "as owner"
+      (testing "disable and archive"
+        (is (:success (set-enabled! false user-id)))
+        (is (:success (set-archived! true user-id)))
+        (is (= (assoc expected
+                      :enabled false
+                      :archived true)
+               (fetch))))
+      (testing "re-enable"
+        (is (:success (set-enabled! true user-id)))
+        (is (= (assoc expected
+                      :archived true)
+               (fetch))))
+      (testing "unarchive"
+        (is (:success (set-archived! false user-id)))
+        (is (= expected
+               (fetch))))
+      (testing "cannot unarchive if license is archived"
+        (set-archived! true user-id)
+        (archive-license! true)
+        (is (not (:success (set-archived! false user-id))))
+        (archive-license! false)
+        (is (:success (set-archived! false user-id)))))
+    (testing "as organization-owner"
+      (is (:success (set-enabled! false "organization-owner1")))
+      (is (:success (set-archived! true "organization-owner1")))
       (is (= (assoc expected
                     :enabled false
                     :archived true)
              (fetch))))
-    (testing "re-enable"
-      (is (:success (set-enabled! true)))
-      (is (= (assoc expected
-                    :archived true)
-             (fetch))))
-    (testing "unarchive"
-      (is (:success (set-archived! false)))
-      (is (= expected
-             (fetch))))
-    (testing "cannot unarchive if license is archived"
-      (set-archived! true)
-      (archive-license! true)
-      (is (not (:success (set-archived! false))))
-      (archive-license! false)
-      (is (:success (set-archived! false))))))
+    (testing "as owner of different organization"
+      (is (response-is-forbidden? (api-response :put "/api/workflows/enabled"
+                                                {:id wfid :enabled true}
+                                                api-key "organization-owner2")))
+      (is (response-is-forbidden? (api-response :put "/api/workflows/archived"
+                                                {:id wfid :archived false}
+                                                api-key "organization-owner2"))))))
 
 (deftest workflows-edit-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-workflow! {:organization "test-organization"
+        wfid (test-data/create-workflow! {:organization "organization1"
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
-        fetch #(fetch api-key user-id wfid)
-        edit! #(-> (request :put "/api/workflows/edit")
-                   (json-body (merge {:id wfid} %))
-                   (authenticate api-key user-id)
-                   handler
-                   read-ok-body)
 
-        cat-id (test-data/create-catalogue-item! {:workflow-id wfid})
+        cat-id (test-data/create-catalogue-item! {:organization "organization1"
+                                                  :workflow-id wfid})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor "tester"})
         application->handler-user-ids
@@ -196,13 +171,17 @@
                (application->handler-user-ids app)))))
 
     (testing "change title"
-      (is (:success (edit! {:title "x"})))
+      (is (true? (:success (api-call :put "/api/workflows/edit"
+                                     {:id wfid :title "x"}
+                                     api-key user-id))))
       (is (= (assoc expected
                     :title "x")
-             (fetch))))
+             (fetch api-key user-id wfid))))
 
     (testing "change handlers"
-      (is (:success (edit! {:handlers ["owner" "alice"]})))
+      (is (true? (:success (api-call :put "/api/workflows/edit"
+                                     {:id wfid :handlers ["owner" "alice"]}
+                                     api-key user-id))))
       (is (= (assoc expected
                     :title "x"
                     :workflow {:type "workflow/default"
@@ -212,7 +191,20 @@
                                           {:email "alice@example.com"
                                            :name "Alice Applicant"
                                            :userid "alice"}]})
-             (fetch))))
+             (fetch api-key user-id wfid))))
+
+    (testing "edit as organization-owner"
+      (is (true? (:success (api-call :put "/api/workflows/edit"
+                                     {:id wfid :title "y"}
+                                     api-key "organization-owner1"))))
+      (is (= "y"
+             (:title (fetch api-key "organization-owner1" wfid)))))
+
+    (testing "edit as owner of different organization"
+      (is (response-is-forbidden? (-> (request :put "/api/workflows/edit")
+                                      (json-body {:id wfid :title "y"})
+                                      (authenticate api-key "organization-owner2")
+                                      handler))))
 
     (testing "application is updated when handlers are changed"
       (let [app (applications/get-unrestricted-application app-id)]
@@ -222,8 +214,9 @@
 (deftest workflows-api-filtering-test
   (let [enabled-wf (test-data/create-workflow! {})
         disabled-wf (test-data/create-workflow! {})
-        _ (workflow/set-workflow-enabled! {:id disabled-wf
-                                           :enabled false})
+        _ (with-user "owner"
+            (workflow/set-workflow-enabled! {:id disabled-wf
+                                             :enabled false}))
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})
                                                    (authenticate "42" "owner")
                                                    handler

@@ -63,14 +63,14 @@
 
     (PUT "/archived" []
       :summary "Archive or unarchive resource"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command ArchivedCommand]
       :return SuccessResponse
       (ok (resource/set-resource-archived! command)))
 
     (PUT "/enabled" []
       :summary "Enable or disable resource"
-      :roles #{:owner}
+      :roles #{:owner :organization-owner}
       :body [command EnabledCommand]
       :return SuccessResponse
       (ok (resource/set-resource-enabled! command)))))

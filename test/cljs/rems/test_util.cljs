@@ -11,7 +11,7 @@
   "Return a given time as a local DateTime instance formatted by rems.text/time-format.
    Note that exact time checking would make the tests break when run from a different timezone."
   [time]
-  (format/unparse-local time-format (time/to-default-time-zone time)))
+  (format/unparse-local (time-format) (time/to-default-time-zone time)))
 
 (deftest localize-time-test
   (is (= (expected-time test-time) (localize-time "1980-01-02T13:45:00.000Z")))
@@ -67,4 +67,3 @@
              ["(See www-page at "
               [:a {:target :_blank :href "http://www.abc.com"} "www.abc.com"]
               ".)"])))))
-

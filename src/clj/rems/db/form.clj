@@ -116,19 +116,21 @@
 
 (defn create-form! [user-id form]
   (let [organization (:form/organization form)]
-    (or (util/forbidden-organization-error organization)
-        (let [form-id (:id (db/save-form-template! {:organization organization
-                                                    :title (:form/title form)
-                                                    :user user-id
-                                                    :fields (serialize-fields form)}))]
-          {:success (not (nil? form-id))
-           :id form-id}))))
+    (util/check-allowed-organization! organization)
+    (let [form-id (:id (db/save-form-template! {:organization organization
+                                                :title (:form/title form)
+                                                :user user-id
+                                                :fields (serialize-fields form)}))]
+      {:success (not (nil? form-id))
+       :id form-id})))
 
 (defn edit-form! [user-id form]
   (let [form-id (:form/id form)
         organization (:form/organization form)]
-    (or (util/forbidden-organization-error organization)
-        (form-in-use-error form-id)
+    ;; need to check both previous and new organization
+    (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
+    (util/check-allowed-organization! organization)
+    (or (form-in-use-error form-id)
         (do (db/edit-form-template! {:id form-id
                                      :organization organization
                                      :title (:form/title form)
@@ -136,11 +138,13 @@
                                      :fields (serialize-fields form)})
             {:success true}))))
 
-(defn set-form-enabled! [command]
-  (db/set-form-template-enabled! (select-keys command [:id :enabled]))
+(defn set-form-enabled! [{:keys [id enabled]}]
+  (util/check-allowed-organization! (:form/organization (get-form-template id)))
+  (db/set-form-template-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-form-archived! [{:keys [id archived]}]
+  (util/check-allowed-organization! (:form/organization (get-form-template id)))
   (let [catalogue-items (catalogue-items-for-form id)]
     (if (and archived (seq catalogue-items))
       {:success false

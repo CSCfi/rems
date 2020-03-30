@@ -47,6 +47,9 @@
 (def ^:private action-form-id "add-licenses")
 (def ^:private dropdown-id "add-licenses-dropdown")
 
+;; The API allows us to add attachments to the add-licenses command,
+;; however this is left out from the UI to avoid confusion with
+;; attachment licenses.
 (rf/reg-event-fx
  ::send-add-licenses
  (fn [_ [_ {:keys [application-id licenses comment on-finished]}]]

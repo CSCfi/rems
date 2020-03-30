@@ -200,12 +200,12 @@ VALUES (nextval('catalogue_item_application_id_seq'))
 RETURNING id;
 
 -- :name add-entitlement! :!
-INSERT INTO entitlement (catAppId, userId, resId)
-VALUES (:application, :user, :resource);
+INSERT INTO entitlement (catAppId, userId, resId, approvedby)
+VALUES (:application, :user, :resource, :approvedby);
 
 -- :name end-entitlements! :!
 UPDATE entitlement
-SET endt = current_timestamp
+SET (endt, revokedby) = (current_timestamp, :revokedby)
 WHERE catAppId = :application
 /*~ (when (:user params) */
   AND entitlement.userId = :user
@@ -222,7 +222,8 @@ WHERE catAppId = :application
 --   :user -- user id to limit select to
 --   :resource -- resid to limit select to
 --   :is-active? -- entitlement is without end date
-SELECT res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail FROM entitlement
+SELECT res.id AS resourceId, res.resId, catAppId, entitlement.userId, entitlement.start, entitlement.endt AS "end", users.userAttrs->>'mail' AS mail,
+entitlement.approvedby FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
 LEFT OUTER JOIN users on entitlement.userId = users.userId
 WHERE 1=1
@@ -241,7 +242,7 @@ WHERE 1=1
 /*~ (when (:is-active? params) */
   AND entitlement.endt IS NULL
 /*~ ) ~*/
-;
+ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement.endt;
 
 -- :name save-attachment! :insert
 INSERT INTO attachment
@@ -249,8 +250,19 @@ INSERT INTO attachment
 VALUES
 (:application, :user, :filename, :type, :data);
 
+-- :name copy-attachments! :!
+INSERT INTO attachment
+(appId, modifierUserId, filename, type, data)
+SELECT :to-id, modifierUserId, filename, type, data
+FROM attachment
+WHERE appId = :from-id;
+
 -- :name get-attachment :? :1
-SELECT appid, filename, type, data FROM attachment
+SELECT appid, filename, modifierUserId, type, data FROM attachment
+WHERE id = :id;
+
+-- :name get-attachment-metadata :? :1
+SELECT id, appid, filename, modifierUserId, type FROM attachment
 WHERE id = :id;
 
 -- :name get-attachments-for-application :? :*

@@ -108,27 +108,21 @@ jobs:
           paths:
             - target/uberjar/rems.jar
 
-  rahti:
+  rahti-dev:
     <<: *defaults
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - run: docker build --pull --tag docker-registry.rahti.csc.fi/rems/rems:circle --tag docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD) .
-      - run: docker login -p $rahtitoken -u unused docker-registry.rahti.csc.fi
-      - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle
-      - run: docker push docker-registry.rahti.csc.fi/rems/rems:circle-$(git rev-parse HEAD)
-      - run: |
-          DEV_CONTAINER_NAME=$(curl -k -s \
-            -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
-            -H 'Accept: application/json' \
-            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods | \
-            jq '.items | .[].metadata.name' | grep rems-dev | tr -d \")
-          curl -k -s \
-            -X DELETE \
-            -H "Authorization: Bearer $rahti_dev_pod_delete_token" \
-            -H 'Accept: application/json' \
-            https://rahti.csc.fi:8443/api/v1/namespaces/rems-dev/pods/${DEV_CONTAINER_NAME}
+      - run: .circleci/rahti-ci.sh dev
+
+  rahti-demo:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: .circleci/rahti-ci.sh demo
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
@@ -137,28 +131,43 @@ jobs:
       - image: alpine
     steps:
       - run: 'true'
+
 workflows:
   version: 2
   build-test-and-deploy:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /.*/
       - without-db:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/
       - test:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/
       - doo:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/
       - war:
           requires:
             - build
           filters:
+            tags:
+              only: /.*/
             branches:
               only:
                 - master
-      - rahti:
+      - rahti-dev:
           requires:
             - build
             - war
@@ -166,6 +175,15 @@ workflows:
             branches:
               only:
                 - master
+      - rahti-demo:
+          requires:
+            - build
+            - war
+          filters:
+            tags:
+              only: /v[0-9]\.[0-9].*/
+            branches:
+              ignore: /.*/
       - ok:
           requires:
             - build
@@ -173,4 +191,6 @@ workflows:
             - test
             - doo
             - war
-            - rahti
+          filters:
+            tags:
+              only: /.*/

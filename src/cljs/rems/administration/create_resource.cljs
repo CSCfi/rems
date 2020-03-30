@@ -53,8 +53,7 @@
 ;; form submit
 
 (defn- valid-request? [form request]
-  (and (every? #(= (:organization request) %) (map :organization (:licenses form)))
-       (not (str/blank? (:organization request)))
+  (and (not (str/blank? (:organization request)))
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
@@ -119,8 +118,7 @@
         {:id organization-dropdown-id
          :items organizations
          :item-selected? item-selected?
-         :on-change #(do (rf/dispatch [::set-selected-organization %])
-                         (rf/dispatch [::set-licenses []]))}])]))
+         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
 (defn- resource-id-field []
   [text-field context {:keys [:resid]
@@ -128,24 +126,22 @@
                        :placeholder (text :t.create-resource/resid-placeholder)}])
 
 (defn- resource-licenses-field []
-  (let [organization @(rf/subscribe [::selected-organization])
-        licenses @(rf/subscribe [::licenses])
-        compatible-licenses (filter #(= organization (% :organization)) licenses)
+  (let [licenses @(rf/subscribe [::licenses])
         selected-licenses @(rf/subscribe [::selected-licenses])
         language @(rf/subscribe [:language])]
     [:div.form-group
      [:label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
-     (if (nil? organization)
-       [fields/readonly-field {:id licenses-dropdown-id
-                               :value (text :t.administration/select-organization)}]
-       [dropdown/dropdown
-        {:id licenses-dropdown-id
-         :items compatible-licenses
-         :item-key :id
-         :item-label #(get-localized-title % language)
-         :item-selected? #(contains? (set selected-licenses) %)
-         :multi? true
-         :on-change #(rf/dispatch [::set-licenses %])}])]))
+     [dropdown/dropdown
+      {:id licenses-dropdown-id
+       :items licenses
+       :item-key :id
+       :item-label #(str (get-localized-title % language)
+                         " (org: "
+                         (:organization %)
+                         ")")
+       :item-selected? #(contains? (set selected-licenses) %)
+       :multi? true
+       :on-change #(rf/dispatch [::set-licenses %])}]]))
 
 (defn- save-resource-button [form]
   (let [request (build-request form)]

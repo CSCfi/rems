@@ -105,11 +105,13 @@
 
 
 (deftest test-get-workflow
+  (create-users)
   (with-user "owner"
     (testing "not found"
       (is (nil? (workflow/get-workflow 123))))))
 
 (deftest test-get-handlers
+  (create-users)
   (with-user "owner"
     (let [simplify #(map :userid %)
           wf1 (test-data/create-workflow! {:organization ""

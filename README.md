@@ -2,144 +2,44 @@
 
 # Resource Entitlement Management System
 
+Resource Entitlement Management System (REMS) is a tool for managing access rights to resources, such as research datasets.
+
+Applicants can use their federated user IDs to log in to REMS, fill in the data access application and agree to the dataset's terms of use. The REMS system then circulates the application to the resource owner or designated representative for approval. REMS also produces the necessary reports on the applications and the granted data access rights.
+
+REMS is a Clojure+ClojureScript Single Page App.
+
+REMS is developed by a [team](mailto:rems@csc.fi) at CSC – IT Center for Science.
+
+You can try out REMS using the publicly available demo instance at <https://rems-demo.rahtiapp.fi>.
+
 ## Getting started
 
-### Development database
+- You can [run the application with Docker](docs/development.md#Running-the-application-with-Docker)
+- or read the full [development documentation](docs/development.md)
+- or proceed to the [installation instructions](docs/installing-upgrading.md).
 
-Run the official postgres docker image and initialize the database by running
+## Releases
 
-```
-./dev_db.sh
-```
+Currently, the REMS project aims to make small, frequent releases.
+Releases are compatible with old data. Since REMS is undergoing active
+development, we can't guarantee backwards compatibility for the API.
+However, all breaking changes are highlighted in the release notes.
 
-Which does roughly the following:
-
-1. run a postgres container named `rems_test`
-2. initialize the database with `resources/sql/init.sql`
-3. create the schema and populates it with test data
-
-When done you can stop (and automatically remove) the database.
-
-```
-docker stop rems_test
-```
-
-### Populating the database
-
-- You can get some test data with `lein run test-data`
-
-### Running the application
-
-REMS is a Clojure+Clojurescript Single Page App.
-
-To start the (clojure) backend:
-
-```
-lein run
-```
-
-To start the (clojurescript) frontend, run in another terminal:
-
-```
-lein figwheel
-```
-
-Point your browser to <http://localhost:3000>
-
-### Running the application with Docker
-
-Build the image and initialize the database:
-
-    lein uberjar
-    docker-compose build
-    docker-compose up -d db
-    docker-compose run --rm app migrate
-    docker-compose run --rm app test-data
-
-Start the application:
-
-    docker-compose up -d
-
-Point your browser to <http://localhost:3000>
-
-Shutdown:
-
-    docker-compose stop
-
-Shutdown and remove all data:
-
-    docker-compose down
-
-### Running tests
-
-To run unit tests:
-
-```
-lein kaocha unit
-```
-
-To run tests that need a database:
-
-```
-lein kaocha integration
-```
-
-To run build the JS bundle and run browser tests (requires chromedriver in $PATH, the alias also builds cljs):
-
-```
-lein browsertests
-```
-
-If browser tests fail, screenshots and DOM are written in `browsertest-errors`.
-
-#### Clojurescript tests
-
-First make sure you have the npm depenencies with
-
-```
-lein deps
-```
-
-and then just run
-
-```
-lein doo once
-```
-
-to run tests in Headless Chrome via Karma. 
-
-You may need to run `npm install karma karma-cljs-test karma-chrome-launcher` first to install the necessary tools and packages.
-
-#### Running all the tests
-
-To conveniently run all the tests you can run the lein alias
-
-```
-lein alltests
-```
-
-## Component Guide
-
-You can access the component guide at `/guide`. It contains all the
-components in various configurations.
+See the [release page](https://github.com/CSCfi/rems/releases) for the releases.
 
 ## Contributing
 
-REMS is an open source project. In case you would like to contribute to its development, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) document.
+REMS is an open source project.
+We welcome [ideas and issues through GitHub](https://github.com/CSCfi/rems/issues).
+You can also [contact the team via email](mailto:rems@csc.fi).
+In case you would like to contribute to its development, please refer to the [contributing document](CONTRIBUTING.md).
+You can follow the progress of the project on the [GitHub project board](https://github.com/CSCfi/rems/projects/1).
 
-## More documentation
+## Documentation
 
-Documentation files can be found under the [docs](./docs) folder.
+The REMS API is documented using
+[OpenAPI aka Swagger](https://swagger.io/docs/specification/about/).
+You can check out the API docs using
+[the swagger-ui of the public demo instance](https://rems-demo.rahtiapp.fi/swagger-ui).
 
-Documentation can also be read from the browser by launching user docs server with the command:
-`mkdocs serve`
-or simply by visiting https://rems2docs.rahtiapp.fi.
-
-Alternatively docker images can be used for running the documentation server:
-
-```
-docker build . -f docs-server/Dockerfile -t rems-mkdocs-server
-docker run -it -p 8000:8000 --name rems-user-guide rems-mkdocs-server --rm
-```
-
-_Note_ live reload is disabled for the docker version of mkdocs.
+Documentation can be found under the [docs](./docs) folder.

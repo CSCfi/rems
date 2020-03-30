@@ -43,6 +43,9 @@
            :email-retry-period "P20d"
            :disable-commands ["application.command/close" "application.command/reject"]}))))
 
+(def known-config-keys
+  (set (keys (load-config :resource "config-defaults.edn"))))
+
 ;; if we start doing more thorough validation, could use a schema instead
 (defn- validate-config [config]
   (when-let [url (:public-url config)]
@@ -53,6 +56,8 @@
     (log/warn "Supported-values: " (pr-str commands/command-names)))
   (assert (not (empty? (:organizations config)))
           ":organizations can not be empty")
+  (when-let [invalid-keys (seq (remove known-config-keys (keys config)))]
+    (log/warn "Unrecognized config keys: " (pr-str invalid-keys)))
   config)
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn"

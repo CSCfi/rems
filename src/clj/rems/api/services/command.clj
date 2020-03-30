@@ -7,6 +7,7 @@
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.application-util :as application-util]
             [rems.db.applications :as applications]
+            [rems.db.attachments :as attachments]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.events :as events]
@@ -48,7 +49,9 @@
    :get-catalogue-item catalogue/get-localized-catalogue-item
    :get-catalogue-item-licenses applications/get-catalogue-item-licenses
    :get-workflow workflow/get-workflow
-   :allocate-application-ids! applications/allocate-application-ids!})
+   :allocate-application-ids! applications/allocate-application-ids!
+   :get-attachment-metadata attachments/get-attachment-metadata
+   :copy-attachment! attachments/copy-attachment!})
 
 (defn command! [cmd]
   ;; Use locks to prevent multiple commands being executed in parallel.

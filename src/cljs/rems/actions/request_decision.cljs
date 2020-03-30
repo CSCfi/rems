@@ -1,11 +1,14 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
-            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper command!]]
+            [rems.actions.action :refer [action-attachment action-button action-comment action-form-view button-wrapper command!]]
             [rems.atoms :refer [enrich-user]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
+
+(def ^:private action-form-id "request-decision")
+(def ^:private dropdown-id "request-decision-dropdown")
 
 (rf/reg-fx
  ::fetch-potential-deciders
@@ -21,6 +24,7 @@
                ::comment ""
                ::potential-deciders #{}
                ::selected-deciders #{})
+    :dispatch [:rems.actions.action/set-attachments action-form-id []]
     ::fetch-potential-deciders #(rf/dispatch [::set-potential-deciders %])}))
 
 (rf/reg-sub ::potential-deciders (fn [db _] (::potential-deciders db)))
@@ -37,15 +41,13 @@
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
 
-(def ^:private action-form-id "request-decision")
-(def ^:private dropdown-id "request-decision-dropdown")
-
 (rf/reg-event-fx
  ::send-request-decision
- (fn [_ [_ {:keys [deciders application-id comment on-finished]}]]
+ (fn [_ [_ {:keys [deciders application-id comment attachments on-finished]}]]
    (command! :application.command/request-decision
              {:application-id application-id
               :comment comment
+              :attachments attachments
               :deciders (map :userid deciders)}
              {:description [text :t.actions/request-decision]
               :collapse action-form-id
@@ -58,7 +60,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-decision-view
-  [{:keys [selected-deciders potential-deciders comment on-set-comment on-set-deciders on-send]}]
+  [{:keys [application-id selected-deciders potential-deciders comment on-set-comment on-set-deciders on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-decision)
    [[button-wrapper {:id "request-decision"
@@ -71,6 +73,8 @@
                      :label (text :t.form/add-comments-not-shown-to-applicant)
                      :comment comment
                      :on-comment on-set-comment}]
+    [action-attachment {:application-id application-id
+                        :key action-form-id}]
     [:div.form-group
      [:label {:for dropdown-id} (text :t.actions/request-selection)]
      [dropdown/dropdown
@@ -85,8 +89,10 @@
 (defn request-decision-form [application-id on-finished]
   (let [selected-deciders @(rf/subscribe [::selected-deciders])
         potential-deciders @(rf/subscribe [::potential-deciders])
-        comment @(rf/subscribe [::comment])]
-    [request-decision-view {:selected-deciders selected-deciders
+        comment @(rf/subscribe [::comment])
+        attachments @(rf/subscribe [:rems.actions.action/attachments action-form-id])]
+    [request-decision-view {:application-id application-id
+                            :selected-deciders selected-deciders
                             :potential-deciders potential-deciders
                             :comment comment
                             :on-set-comment #(rf/dispatch [::set-comment %])
@@ -94,4 +100,5 @@
                             :on-send #(rf/dispatch [::send-request-decision {:application-id application-id
                                                                              :deciders selected-deciders
                                                                              :comment comment
+                                                                             :attachments attachments
                                                                              :on-finished on-finished}])}]))

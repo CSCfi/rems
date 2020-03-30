@@ -6,23 +6,28 @@
             [rems.db.resource :as resource])
   (:import (org.postgresql.util PSQLException)))
 
-(defn create-resource! [{:keys [resid organization licenses]} user-id]
-  (or (util/forbidden-organization-error organization)
-      (let [id (:id (db/create-resource! {:resid resid
-                                          :organization organization
-                                          :owneruserid user-id
-                                          :modifieruserid user-id}))]
-        (doseq [licid licenses]
-          (db/create-resource-license! {:resid id
-                                        :licid licid}))
-        {:success true
-         :id id})))
+(defn get-resource [id] (resource/get-resource id))
+(defn get-resources [filters] (resource/get-resources filters))
 
-(defn set-resource-enabled! [command]
-  (db/set-resource-enabled! (select-keys command [:id :enabled]))
+(defn create-resource! [{:keys [resid organization licenses] :as command} user-id]
+  (util/check-allowed-organization! organization)
+  (let [id (:id (db/create-resource! {:resid resid
+                                      :organization organization
+                                      :owneruserid user-id
+                                      :modifieruserid user-id}))]
+    (doseq [licid licenses]
+      (db/create-resource-license! {:resid id
+                                    :licid licid}))
+    {:success true
+     :id id}))
+
+(defn set-resource-enabled! [{:keys [id enabled]}]
+  (util/check-allowed-organization! (:organization (get-resource id)))
+  (db/set-resource-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-resource-archived! [{:keys [id archived]}]
+  (util/check-allowed-organization! (:organization (get-resource id)))
   (let [catalogue-items
         (->> (catalogue/get-localized-catalogue-items {:resource-id id
                                                        :archived false})
@@ -45,6 +50,3 @@
         (db/set-resource-archived! {:id id
                                     :archived archived})
         {:success true}))))
-
-(defn get-resource [id] (resource/get-resource id))
-(defn get-resources [filters] (resource/get-resources filters))

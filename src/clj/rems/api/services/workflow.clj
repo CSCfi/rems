@@ -12,17 +12,17 @@
   (s/validator workflow/WorkflowBody))
 
 (defn create-workflow! [{:keys [user-id organization type title handlers]}]
-  (or (util/forbidden-organization-error organization)
-      (let [body {:type type
-                  :handlers handlers}
-            id (:id (db/create-workflow! {:organization organization,
-                                          :owneruserid user-id,
-                                          :modifieruserid user-id,
-                                          :title title,
-                                          :workflow (json/generate-string
-                                                     (validate-workflow-body body))}))]
-        {:success (not (nil? id))
-         :id id})))
+  (util/check-allowed-organization! organization)
+  (let [body {:type type
+              :handlers handlers}
+        id (:id (db/create-workflow! {:organization organization,
+                                      :owneruserid user-id,
+                                      :modifieruserid user-id,
+                                      :title title,
+                                      :workflow (json/generate-string
+                                                 (validate-workflow-body body))}))]
+    {:success (not (nil? id))
+     :id id}))
 
 (defn- unrich-workflow [workflow]
   ;; TODO: keep handlers always in the same format, to avoid this conversion (we can ignore extra keys)
@@ -34,14 +34,16 @@
   (let [workflow (unrich-workflow (workflow/get-workflow id))
         workflow-body (cond-> (:workflow workflow)
                         handlers (assoc :handlers handlers))]
+    (util/check-allowed-organization! (:organization workflow))
     (db/edit-workflow! {:id id
                         :title title
                         :workflow (json/generate-string workflow-body)}))
   (applications/reload-cache!)
   {:success true})
 
-(defn set-workflow-enabled! [command]
-  (db/set-workflow-enabled! (select-keys command [:id :enabled]))
+(defn set-workflow-enabled! [{:keys [id enabled]}]
+  (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
+  (db/set-workflow-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-workflow-archived! [{:keys [id archived]}]
@@ -51,6 +53,7 @@
         (->> (catalogue/get-localized-catalogue-items {:workflow id
                                                        :archived false})
              (map #(select-keys % [:id :title :localizations])))]
+    (util/check-allowed-organization! (:organization workflow))
     (cond
       (and archived (seq catalogue-items))
       {:success false
@@ -69,13 +72,10 @@
         {:success true}))))
 
 (defn get-workflow [id]
-  (when-let [wf (workflow/get-workflow id)]
-    (when (not (util/forbidden-organization? (:organization wf)))
-      wf)))
+  (workflow/get-workflow id))
 
 (defn get-workflows [filters]
-  (->> (workflow/get-workflows filters)
-       (remove #(util/forbidden-organization? (:organization %)))))
+  (workflow/get-workflows filters))
 
 (defn get-available-actors [] (users/get-users))
 

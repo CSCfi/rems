@@ -33,7 +33,7 @@
 
     (GET "/" []
       :summary "Get blacklist entries"
-      :roles #{:handler :owner :reporter}
+      :roles #{:handler :owner :reporter :organization-owner}
       :query-params [{user :- schema/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
@@ -44,9 +44,11 @@
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
-      :roles #{:owner :handler}
+      :roles #{:owner :handler :organization-owner}
       :return [schema/UserWithAttributes]
       (ok (users/get-users)))
+
+    ;; TODO write access to blacklist for organization-owner
 
     (POST "/add" []
       :summary "Add a blacklist entry"

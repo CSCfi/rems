@@ -66,12 +66,15 @@
 (defn user-exists? [userid]
   (some? (get-raw-user-attributes userid)))
 
-(defn- get-all-users []
+(defn- get-all-users-raw []
   (->> (db/get-users)
        (map :userid)
        (map get-raw-user-attributes)
        (map merge-user-settings)
        (doall)))
+
+(defn get-all-users []
+  (map format-user (get-all-users-raw)))
 
 ;; TODO Filter applicant, requesting user
 ;;
@@ -87,7 +90,7 @@
 ;;   application, and the application is visible to the handler and can
 ;;   be approved.
 (defn get-users []
-  (->> (get-all-users)
+  (->> (get-all-users-raw)
        (remove invalid-user?)
        (map format-user)))
 
