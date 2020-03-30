@@ -322,80 +322,80 @@
 (def all-field-types-example
   [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
                   :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
-                  :sv "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"} ;; TODO translate
+                  :sv "De här blanket visar alla möjliga fälttyper. (Det här text är en fält för tilläggsinformation.)"}
     :field/optional false
     :field/type :label}
 
    {:field/title {:en "Application title field"
                   :fi "Hakemuksen otsikko -kenttä"
-                  :sv "Hakemuksen otsikko -kenttä"} ;; TODO translate
+                  :sv "Ansökningens rubrikfält"}
     :field/optional false
     :field/type :description}
 
    {:field/title {:en "Text field"
                   :fi "Tekstikenttä"
-                  :sv "Tekstikenttä"} ;; TODO translate
+                  :sv "Textfält"}
     :field/optional false
     :field/type :text
     :field/placeholder {:en "Placeholder text"
                         :fi "Täyteteksti"
-                        :sv "Täyteteksti"}} ;; TODO translate
+                        :sv "Textexempel"}}
 
    {:field/title {:en "Text area"
                   :fi "Tekstialue"
-                  :sv "Tekstialue"} ;; TODO translate
+                  :sv "Textområde"}
     :field/optional false
     :field/type :texta
     :field/placeholder {:en "Placeholder text"
                         :fi "Täyteteksti"
-                        :sv "Täyteteksti"}} ;; TODO translate
+                        :sv "Textexempel"}}
 
    {:field/title {:en "Header"
                   :fi "Otsikko"
-                  :sv "Otsikko"} ;; TODO translate
+                  :sv "Titel"}
     :field/type :header
     :field/optional false}
 
    {:field/title {:en "Date field"
                   :fi "Päivämääräkenttä"
-                  :sv "Päivämääräkenttä"} ;; TODO translate
+                  :sv "Datumfält"}
     :field/optional true
     :field/type :date}
 
    {:field/title {:en "Email field"
                   :fi "Sähköpostikenttä"
-                  :sv "Sähköpostikenttä"} ;; TODO translate
+                  :sv "E-postaddressfält"}
     :field/optional true
     :field/type :email}
 
    {:field/title {:en "Attachment"
                   :fi "Liitetiedosto"
-                  :sv "Liitetiedosto"} ;; TODO translate
+                  :sv "Bilaga"}
     :field/optional true
     :field/type :attachment}
 
    {:field/title {:en "Option list. Choose the first option to reveal a new field."
                   :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
-                  :sv "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."} ;; TODO translate
+                  :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
     :field/optional true
     :field/type :option
     :field/id "option"
     :field/options [{:key "Option1"
                      :label {:en "First option"
                              :fi "Ensimmäinen vaihtoehto"
-                             :sv "Ensimmäinen vaihtoehto"}} ;; TODO translate
+                             :sv "Första alternativ"}}
                     {:key "Option2"
                      :label {:en "Second option"
                              :fi "Toinen vaihtoehto"
-                             :sv "Toinen vaihtoehto"}} ;; TODO translate
+                             :sv "Andra alternativ"}}
                     {:key "Option3"
                      :label {:en "Third option"
                              :fi "Kolmas vaihtoehto"
-                             :sv "Kolmas vaihtoehto"}}]} ;; TODO translate
+                             :sv "Tredje alternativ"}}]}
 
    {:field/title {:en "Conditional field. Shown only if first option is selected above."
                   :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
-                  :sv "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."} ;; TODO translate
+                  :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
     :field/optional false
     :field/type :text
     :field/visibility {:visibility/type :only-if
@@ -404,39 +404,39 @@
 
    {:field/title {:en "Multi-select list"
                   :fi "Monivalintalista"
-                  :sv "Monivalintalista"} ;; TODO translate
+                  :sv "Lista med flerval"}
     :field/optional true
     :field/type :multiselect
     :field/options [{:key "Option1"
                      :label {:en "First option"
                              :fi "Ensimmäinen vaihtoehto"
-                             :sv "Ensimmäinen vaihtoehto"}} ;; TODO translate
+                             :sv "Första alternativ"}}
                     {:key "Option2"
                      :label {:en "Second option"
                              :fi "Toinen vaihtoehto"
-                             :sv "Toinen vaihtoehto"}} ;; TODO translate
+                             :sv "Andra alternativ"}}
                     {:key "Option3"
                      :label {:en "Third option"
                              :fi "Kolmas vaihtoehto"
-                             :sv "Kolmas vaihtoehto"}}]} ;; TODO translate
+                             :sv "Tredje alternativ"}}]}
 
    {:field/title {:en "The following field types can have a max length."
                   :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
-                  :sv "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."} ;; TODO translate
+                  :sv "De nästa fälttyperna kan ha bengränsat längd."}
     :field/optional false
     :field/type :label}
 
    ;; fields which support maxlength
    {:field/title {:en "Text field with max length"
                   :fi "Tekstikenttä pituusrajalla"
-                  :sv "Tekstikenttä pituusrajalla"} ;; TODO translate
+                  :sv "Textfält med begränsat längd"}
     :field/optional true
     :field/type :text
     :field/max-length 10}
 
    {:field/title {:en "Text area with max length"
                   :fi "Tekstialue pituusrajalla"
-                  :sv "Tekstialue pituusrajalla"} ;; TODO translate
+                  :sv "Textområdet med begränsat längd"}
     :field/optional true
     :field/type :texta
     :field/max-length 100}])
@@ -455,6 +455,7 @@
     :form/title title
     :form/fields all-field-types-example}))
 
+;; TODO translate to swedish?
 (defn create-thl-demo-form!
   [users]
   (create-form!
@@ -937,29 +938,31 @@
                   :form/title "Performance tests"
                   :form/fields [{:field/title {:en "Project name"
                                                :fi "Projektin nimi"
-                                               :sv "Projektin nimi"} ;; TODO translate
+                                               :sv "Projektets namn"}
                                  :field/optional false
                                  :field/type :description
                                  :field/placeholder {:en "Project"
                                                      :fi "Projekti"
-                                                     :sv "Projekti"}} ;; TODO translate
+                                                     :sv "Projekt"}}
 
                                 {:field/title {:en "Project description"
                                                :fi "Projektin kuvaus"
-                                               :sv "Projektin kuvaus"} ;; TODO translate
+                                               :sv "Projektets beskrivning"}
                                  :field/optional false
                                  :field/type :texta
                                  :field/placeholder {:en "The purpose of the project is to..."
                                                      :fi "Projektin tarkoitus on..."
-                                                     :sv "Projektin tarkoitus on..."}}]}) ;; TODO translate
+                                                     :sv "Det här projekt..."}}]})
         form (form/get-form-template form-id)
         license-id (create-license! {:actor owner
                                      :license/type :text
                                      :license/organization "perf"
                                      :license/title {:en "Performance License"
-                                                     :fi "Suorituskykylisenssi"}
+                                                     :fi "Suorituskykylisenssi"
+                                                     :sv "Licens för prestand"}
                                      :license/text {:en "Be fast."
-                                                    :fi "Ole nopea."}})
+                                                    :fi "Ole nopea."
+                                                    :sv "Var snabb."}})
         cat-item-ids (vec (in-parallel
                            (for [n (range-1 resource-count)]
                              (fn []
@@ -967,7 +970,8 @@
                                                                     :license-ids [license-id]})]
                                  (create-catalogue-item! {:actor owner
                                                           :title {:en (str "Performance test resource " n)
-                                                                  :fi (str "Suorituskykytestiresurssi " n)}
+                                                                  :fi (str "Suorituskykytestiresurssi " n)
+                                                                  :sv (str "Licens för prestand " n)}
                                                           :resource-id resource-id
                                                           :form-id form-id
                                                           :organization "perf"
@@ -1030,21 +1034,26 @@
                                    :license/type :link
                                    :license/organization "nbn"
                                    :license/title {:en "Demo license"
-                                                   :fi "Demolisenssi"}
+                                                   :fi "Demolisenssi"
+                                                   :sv "Demolicens"}
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                  :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         extra-license (create-license! {:actor owner
                                         :license/type :link
                                         :license/organization "nbn"
                                         :license/title {:en "Extra license"
-                                                        :fi "Ylimääräinen lisenssi"}
+                                                        :fi "Ylimääräinen lisenssi"
+                                                        :sv "Extra licens"}
                                         :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                       :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+                                                       :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                       :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         license-organization-owner (create-license! {:actor organization-owner1
                                                      :license/type :link
                                                      :license/organization "organization1"
                                                      :license/title {:en "License owned by organization owner"
-                                                                     :fi "Lisenssi, jonka omistaa organisaatio-omistaja"}
+                                                                     :fi "Lisenssi, jonka omistaa organisaatio-omistaja"
+                                                                     :sv "Licens som ägs av organisationägare"}
                                                      :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
                                                                     :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
         _ (create-disabled-license! {:actor owner
@@ -1078,47 +1087,59 @@
                                         :licid license-organization-owner})
 
         form (create-all-field-types-example-form! owner "nbn" "Example form with all field types")
-        form-private-thl (create-form! {:actor owner :form/organization "thl" :form/title "Simple form" :form/fields [{:field/title {:en "Simple text field"
-                                                                                                                                     :fi "Yksinkertainen tekstikenttä"
-                                                                                                                                     :sv "Tekxtfält"}
-                                                                                                                       :field/optional false
-                                                                                                                       :field/type :text
-                                                                                                                       :field/max-length 100
-                                                                                                                       :field/privacy :private}]})
-        form-private-hus (create-form! {:actor owner :form/organization "hus" :form/title "Simple form" :form/fields [{:field/title {:en "Simple text field"
-                                                                                                                                     :fi "Yksinkertainen tekstikenttä"
-                                                                                                                                     :sv "Tekxtfält"}
-                                                                                                                       :field/optional false
-                                                                                                                       :field/type :text
-                                                                                                                       :field/max-length 100
-                                                                                                                       :field/privacy :private}]})
+        form-private-thl (create-form! {:actor owner
+                                        :form/organization "thl"
+                                        :form/title "Simple form"
+                                        :form/fields [{:field/title {:en "Simple text field"
+                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                     :sv "Textfält"}
+                                                       :field/optional false
+                                                       :field/type :text
+                                                       :field/max-length 100
+                                                       :field/privacy :private}]})
+        form-private-hus (create-form! {:actor owner
+                                        :form/organization "hus"
+                                        :form/title "Simple form"
+                                        :form/fields [{:field/title {:en "Simple text field"
+                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                     :sv "Textfält"}
+                                                       :field/optional false
+                                                       :field/type :text
+                                                       :field/max-length 100
+                                                       :field/privacy :private}]})
         form-organization-owner (create-all-field-types-example-form! organization-owner1 "organization1" "Owned by organization owner")]
     (create-archived-form! owner)
 
     ;; Create catalogue items
     (create-catalogue-item! {:actor owner
                              :title {:en "Master workflow"
-                                     :fi "Master-työvuo"}
+                                     :fi "Master-työvuo"
+                                     :sv "Master-arbetsflöde"}
                              :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"}
+                                       :fi "http://www.google.fi"
+                                       :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:master workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Decider workflow"
-                                     :fi "Päättäjätyövuo"}
+                                     :fi "Päättäjätyövuo"
+                                     :sv "Arbetsflöde för beslutsfattande"}
                              :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"}
+                                       :fi "http://www.google.fi"
+                                       :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:decider workflows)})
     (let [catid (create-catalogue-item! {:actor owner
                                          :title {:en "Default workflow"
-                                                 :fi "Oletustyövuo"}
+                                                 :fi "Oletustyövuo"
+                                                 :sv "Standard arbetsflöde"}
                                          :infourl {:en "http://www.google.com"
-                                                   :fi "http://www.google.fi"}
+                                                   :fi "http://www.google.fi"
+                                                   :sv "http://www.google.se"}
                                          :resource-id res1
                                          :form-id form
                                          :organization "nbn"
@@ -1126,29 +1147,34 @@
       (create-applications! catid users))
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 2"
-                                     :fi "Oletustyövuo 2"}
+                                     :fi "Oletustyövuo 2"
+                                     :sv "Standard arbetsflöde 2"}
                              :resource-id res2
                              :form-id form-private-thl
                              :organization "csc"
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 3"
-                                     :fi "Oletustyövuo 3"}
+                                     :fi "Oletustyövuo 3"
+                                     :sv "Standard arbetsflöde 3"}
                              :resource-id res3
                              :form-id form-private-hus
                              :organization "hus"
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
-                                     :fi "Oletustyövuo ylimääräisellä lisenssillä"}
+                                     :fi "Oletustyövuo ylimääräisellä lisenssillä"
+                                     :sv "Arbetsflöde med extra licens"}
                              :resource-id res-with-extra-license
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:title {:en "Auto-approve workflow"
-                                     :fi "Työvuo automaattisella hyväksynnällä"}
+                                     :fi "Työvuo automaattisella hyväksynnällä"
+                                     :sv "Arbetsflöde med automatisk godkänning"}
                              :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"}
+                                       :fi "http://www.google.fi"
+                                       :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
                              :organization "nbn"
@@ -1164,7 +1190,8 @@
                                     :handlers [(:approver1 users) (:approver2 users)]})
           thl-catid (create-catalogue-item! {:actor owner
                                              :title {:en "THL catalogue item"
-                                                     :fi "THL katalogi-itemi"}
+                                                     :fi "THL katalogi-itemi"
+                                                     :sv "THL katalogartikel"}
                                              :resource-id thl-res
                                              :form-id thlform
                                              :organization "thl"
@@ -1172,7 +1199,8 @@
       (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"
-                                                            :fi "Oletustyövuo (pois käytöstä)"}
+                                                            :fi "Oletustyövuo (pois käytöstä)"
+                                                            :sv "Standard arbetsflöde (avaktiverat)"}
                                                     :resource-id res1
                                                     :form-id form
                                                     :organization "nbn"
@@ -1183,7 +1211,8 @@
       (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
     (let [default-expired (create-catalogue-item! {:actor owner
                                                    :title {:en "Default workflow (expired)"
-                                                           :fi "Oletustyövuo (vanhentunut)"}
+                                                           :fi "Oletustyövuo (vanhentunut)"
+                                                           :sv "Standard arbetsflöde (utgånget)"}
                                                    :resource-id res1
                                                    :form-id form
                                                    :organization "nbn"
@@ -1191,7 +1220,8 @@
       (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
     (create-catalogue-item! {:actor organization-owner1
                              :title {:en "Owned by organization owner"
-                                     :fi "Organisaatio-omistajan omistama"}
+                                     :fi "Organisaatio-omistajan omistama"
+                                     :sv "Ägas av organisationägare"}
                              :resource-id res-organization-owner
                              :form-id form-organization-owner
                              :organization "organization1"
