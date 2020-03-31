@@ -111,6 +111,7 @@
 
   :npm {:devDependencies [;; cljs testing
                           [karma "3.1.1"]
+                          [karma-junit-reporter "2.0.1"]
                           [karma-cljs-test "0.1.0"]
                           [karma-chrome-launcher "2.2.0"]
                           ;; printing to pdf
@@ -118,7 +119,10 @@
 
   :doo {:build "test"
         :paths {:karma "node_modules/karma/bin/karma"}
-        :alias {:default [:chrome-headless]}}
+        :alias {:default [:chrome-headless]}
+        :karma {:config {"plugins" ["karma-junit-reporter"]
+                         "reporters" ["progress" "junit"]
+                         "junitReporter" {"outputDir" "target/test-results"}}}}
 
   :aliases {"kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
             "browsertests" ["do" ["cljsbuild" "once"] ["kaocha" "browser"]]
