@@ -160,6 +160,7 @@
                                 [criterium "0.4.5"]
                                 [doo "0.1.11"]
                                 [lambdaisland/kaocha "1.0-612"]
+                                [lambdaisland/kaocha-junit-xml "0.0-70"]
                                 [etaoin "0.3.6"]
                                 [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
                                 [re-frisk "0.5.4.1"]

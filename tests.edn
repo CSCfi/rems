@@ -12,4 +12,6 @@
                      :focus-meta [:integration]}]
             :kaocha/reporter kaocha.report.progress/report
             :plugins [:kaocha.plugin/print-invocations
-                      :kaocha.plugin/profiling]}
+                      :kaocha.plugin/profiling
+                      :kaocha.plugin/junit-xml]
+            :kaocha.plugin.junit-xml/target-file "target/test-results/kaocha.xml"}
