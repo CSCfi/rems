@@ -57,6 +57,8 @@ jobs:
             - v2-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
+      - store_test_results:
+          path: target/test-results
 
   test:
     <<: *defaults
@@ -78,6 +80,8 @@ jobs:
 
       - run: FOR_TESTS=1 ./dev_db.sh
       - run: lein cljtests-ci
+      - store_test_results:
+          path: target/test-results
       - store_artifacts:
           path: browsertest-errors
 
@@ -89,6 +93,8 @@ jobs:
           keys:
             - v2-dependencies-{{ checksum "project.clj" }}
       - run: lein doo chrome-headless test once
+      - store_test_results:
+          path: target/test-results
 
   war:
     <<: *defaults
