@@ -63,6 +63,11 @@
   (validate/validate)
   (refresh-caches))
 
+;; The default of the JVM is to exit with code 128+signal. However, we
+;; shut down gracefully on SIGINT and SIGTERM due to the exit hooks
+;; mount has installed. Thus exit code 0 is the right choice. This
+;; also makes REMS standalone work nicely with systemd: by default it
+;; uses SIGTERM to stop services and expects a succesful exit.
 (defn exit-on-signals! []
   (let [exit (proxy [SignalHandler] []
                (handle [sig]
