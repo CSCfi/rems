@@ -9,31 +9,17 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
+            [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! post! trim-when-string]]))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::enter-page
- (fn [db _]
-   (let [roles (get-in db [:identity :roles])
-         user-organization (get-in db [:identity :user :organization])
-         all-organizations (get-in db [:config :organizations])
-         organization (cond
-                        (roles/disallow-setting-organization? roles)
-                        user-organization
-
-                        (= (count all-organizations) 1)
-                        (first all-organizations)
-
-                        :else
-                        nil)]
-     (assoc db
-            ::form (when organization
-                     {:organization organization})
-            ::organization-read-only? (not (nil? organization))))))
+ (fn [{:keys [db]} _]
+   {:db (dissoc db ::form)
+    :dispatch-n [[:rems.administration.administration/owned-organizations {:owner (get-in db [:identity :user :userid])}]]}))
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
-(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 
 (rf/reg-event-db
  ::set-form-field
@@ -74,7 +60,7 @@
 (defn build-request [form languages]
   (let [license-type (:licensetype form)
         request {:licensetype license-type
-                 :organization (:organization form)
+                 :organization (get-in form [:organization :organization/id])
                  :localizations (into {} (map (fn [[lang data]]
                                                 [lang (build-localization data license-type)])
                                               (:localizations form)))}]
@@ -134,10 +120,10 @@
   [:h3 (str/upper-case (name language))])
 
 (defn- license-organization-field []
-  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
+  (let [organizations @(rf/subscribe [:rems.administration.administration/owned-organizations])
         selected-organization @(rf/subscribe [::selected-organization])
-        item-selected? #(= % selected-organization)
-        readonly @(rf/subscribe [::organization-read-only?])]
+        item-selected? #(= (:organization/id %) selected-organization)
+        readonly (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
     [:div.form-group
      [:label {:for organization-dropdown-id} (text :t.administration/organization)]
      (if readonly
@@ -146,6 +132,8 @@
        [dropdown/dropdown
         {:id organization-dropdown-id
          :items organizations
+         :item-key :organization/id
+         :item-label :organization/name
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-organization %])}])]))
 
@@ -240,24 +228,27 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [languages @(rf/subscribe [:languages])]
+  (let [languages @(rf/subscribe [:languages])
+        loading? (or @(rf/subscribe [:rems.administration.administration/owned-organizations :fetching?]))]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/create-license)]
      [flash-message/component :top]
-     [collapsible/component
-      {:id "create-license"
-       :title (text :t.administration/create-license)
-       :always [:div.fields
-                [license-organization-field]
-                [license-type-radio-group]
-                (for [language languages]
-                  [:div {:key language}
-                   [language-heading language]
-                   [license-title-field language]
-                   [license-link-field language]
-                   [license-text-field language]
-                   [license-attachment-field language]])
-                [:div.col.commands
-                 [cancel-button]
-                 [save-license-button #(rf/dispatch [::create-license %])]]]}]]))
+     (if loading?
+       [:div [spinner/big]]
+       [collapsible/component
+        {:id "create-license"
+         :title (text :t.administration/create-license)
+         :always [:div.fields
+                  [license-organization-field]
+                  [license-type-radio-group]
+                  (for [language languages]
+                    [:div {:key language}
+                     [language-heading language]
+                     [license-title-field language]
+                     [license-link-field language]
+                     [license-text-field language]
+                     [license-attachment-field language]])
+                  [:div.col.commands
+                   [cancel-button]
+                   [save-license-button #(rf/dispatch [::create-license %])]]]}])]))
