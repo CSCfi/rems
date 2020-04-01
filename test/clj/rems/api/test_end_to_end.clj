@@ -22,7 +22,8 @@
     (email/try-send-emails!)
     (entitlements/process-outbox!))
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
-                                                "/remove" {:status 200}})]
+                                                "/remove" {:status 200}})
+              event-server (stub/start! {"/event" {:status 200}})]
     ;; TODO should test emails with a mock smtp server
     (let [email-atom (atom [])]
       (with-redefs [rems.config/env (assoc rems.config/env
@@ -31,7 +32,8 @@
                                            :languages [:en]
                                            :mail-from "rems@rems.rems"
                                            :entitlements-target {:add (str (:uri entitlements-server) "/add")
-                                                                 :remove (str (:uri entitlements-server) "/remove")})
+                                                                 :remove (str (:uri entitlements-server) "/remove")}
+                                           :event-notification-targets [(str (:uri event-server) "/event")])
                     postal.core/send-message (fn [_host message] (swap! email-atom conj message))]
         (let [api-key "42"
               owner-id "owner"
@@ -267,7 +269,40 @@
             (testing "fetch application as applicant"
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key applicant-id)]
-                (is (= "application.state/closed" (:application/state application)))))))))))
+                (is (= "application.state/closed" (:application/state application)))))
+
+            (testing "event notifications"
+              (let [events (for [r (stub/recorded-requests event-server)]
+                             (-> r
+                                 :body
+                                 (get "postData")
+                                 json/parse-string
+                                 (select-keys [:application/id :event/type :event/actor
+                                               :application/field-values :application/resources :application/forms])))]
+                (is (= [{:application/id application-id
+                         :event/type "application.event/created"
+                         :event/actor applicant-id
+                         :application/resources [{:resource/ext-id resource-ext-id :catalogue-item/id catalogue-item-id}
+                                                 {:resource/ext-id resource-ext-id2 :catalogue-item/id catalogue-item-id2}]
+                         :application/forms [{:form/id form-id} {:form/id form-id2}]}
+                        {:application/id application-id
+                         :event/type "application.event/draft-saved"
+                         :event/actor applicant-id
+                         :application/field-values [{:value "e2e test contents" :field "fld1" :form form-id}
+                                                    {:value "e2e test contents 2" :field "e2e_fld_2" :form form-id2}]}
+                        {:application/id application-id
+                         :event/type "application.event/licenses-accepted"
+                         :event/actor applicant-id}
+                        {:application/id application-id
+                         :event/type "application.event/submitted"
+                         :event/actor applicant-id}
+                        {:application/id application-id
+                         :event/type "application.event/approved"
+                         :event/actor handler-id}
+                        {:application/id application-id
+                         :event/type "application.event/closed"
+                         :event/actor handler-id}]
+                       events))))))))))
 
 (deftest test-approver-rejecter-bots
   (let [api-key "42"

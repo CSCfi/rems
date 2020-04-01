@@ -15,6 +15,7 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.email.core :as email]
+            [rems.event-notification :as event-notification]
             [rems.form-validation :as form-validation]
             [rems.util :refer [secure-token]])
   (:import rems.TryAgainException))
@@ -41,7 +42,8 @@
    (email/generate-event-emails! new-events)
    (run-entitlements new-events)
    (rejecter-bot/run-rejecter-bot new-events)
-   (approver-bot/run-approver-bot new-events)))
+   (approver-bot/run-approver-bot new-events)
+   (event-notification/notify! new-events)))
 
 (def ^:private command-injections
   {:valid-user? users/user-exists?
