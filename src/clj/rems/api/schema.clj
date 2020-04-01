@@ -61,6 +61,7 @@
 
 (s/defschema Event
   (assoc events/EventBase
+         :event/actor-attributes UserWithAttributes
          s/Keyword s/Any))
 
 (s/defschema Entitlement
