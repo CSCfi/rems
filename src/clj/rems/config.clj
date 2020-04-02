@@ -65,11 +65,8 @@
                 ":"
                 (pr-str invalid-events))
       (log/warn "Supported event types:" (pr-str events/event-types))))
-  (assert (not (empty? (:organizations config)))
-          ":organizations can not be empty")
   (when-let [invalid-keys (seq (remove known-config-keys (keys config)))]
-    (log/warn "Unrecognized config keys: " (pr-str invalid-keys)))
-  config)
+    (log/warn "Unrecognized config keys: " (pr-str invalid-keys))))
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn"
                                       ;; If the "rems.config" system property is not defined, the :file parameter will

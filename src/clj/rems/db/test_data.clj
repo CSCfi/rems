@@ -1037,6 +1037,14 @@
         organization-owner2 (users :organization-owner2)
 
         ;; Create organizations
+        default (organizations/add-organization! {:organization/id "default"
+                                              :organization/name "The Default Organization"
+                                              :organization/owners [{:userid organization-owner1} {:userid organization-owner2}]
+                                              :organization/review-emails []})
+        perf (organizations/add-organization! {:organization/id "perf"
+                                              :organization/name "Performance Test Organization"
+                                              :organization/owners [{:userid organization-owner1}]
+                                              :organization/review-emails []})
         hus (organizations/add-organization! {:organization/id "hus"
                                               :organization/name "HUS"
                                               :organization/owners [{:userid organization-owner1}]
