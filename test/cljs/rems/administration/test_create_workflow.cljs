@@ -4,13 +4,13 @@
 
 (deftest build-create-request-test
   (testing "all workflows"
-    (let [form {:organization "abc"
+    (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/default
                 :handlers ["bob"]}]
       (is (not (nil? (build-create-request form))))
       (testing "missing organization"
-        (is (nil? (build-create-request (assoc form :organization "")))))
+        (is (nil? (build-create-request (assoc form :organization nil)))))
       (testing "missing title"
         (is (nil? (build-create-request (assoc form :title "")))))
       (testing "missing workflow type"
@@ -19,7 +19,7 @@
         (is (nil? (build-create-request (assoc form :type :no-such-type)))))))
 
   (testing "default workflow"
-    (let [form {:organization "abc"
+    (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/default
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
@@ -33,7 +33,7 @@
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
 
   (testing "decider workflow"
-    (let [form {:organization "abc"
+    (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/decider
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
@@ -47,7 +47,7 @@
         (is (nil? (build-create-request (assoc-in form [:handlers] [])))))))
 
   (testing "master workflow"
-    (let [form {:organization "abc"
+    (let [form {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/master
                 :handlers [{:userid "bob"} {:userid "carl"}]}]

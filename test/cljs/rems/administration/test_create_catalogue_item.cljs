@@ -7,7 +7,7 @@
                       :fi "fi title"}
               :infourl {:en "hello"
                         :fi ""}
-              :organization "organization1"
+              :organization {:organization/id "organization1"}
               :workflow {:id 123
                          :organization "organization1"}
               :resource {:id 456

@@ -3,7 +3,7 @@
             [rems.administration.create-resource :refer [build-request]]))
 
 (deftest build-request-test
-  (let [form {:organization "organization1"
+  (let [form {:organization {:organization/id "organization1"}
               :resid "resource id"
               :licenses [{:id 123
                           :organization "organization1"

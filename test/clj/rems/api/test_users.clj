@@ -46,14 +46,14 @@
           (json-body {:userid userid
                       :name "User Org"
                       :email nil
-                      :organization "org"})
+                      :organizations ["org"]})
           (authenticate "42" "owner")
           handler
           assert-response-is-ok)
       (is (= {:userid userid
               :email nil
               :name "User Org"
-              :organization "org"} (users/get-user userid))))))
+              :organizations ["org"]} (users/get-user userid))))))
 
 (deftest users-api-security-test
   (testing "without authentication"

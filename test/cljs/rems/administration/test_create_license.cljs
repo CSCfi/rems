@@ -24,7 +24,7 @@
 
 (deftest build-request-test
   (let [form {:licensetype "link"
-              :organization "default"
+              :organization {:organization/id "default"}
               :localizations {:en {:title "en title"
                                    :link "en link"
                                    :text "en text"

@@ -15,7 +15,7 @@
   (users/add-user! "user-with-org" {:eppn "user-with-org"
                                     :commonName "User Org"
                                     :mail "user@org"
-                                    :organization "org"})
+                                    :organizations ["org"]})
 
   (testing "get-raw-user-attributes"
     (is (= {:eppn "whatever"
@@ -25,7 +25,7 @@
     (is (= {:eppn "user-with-org"
             :commonName "User Org"
             :mail "user@org"
-            :organization "org"}
+            :organizations ["org"]}
            (#'users/get-raw-user-attributes "user-with-org"))))
 
   (testing "get-user"
@@ -36,14 +36,14 @@
     (is (= {:userid "user-with-org"
             :name "User Org"
             :email "user@org"
-            :organization "org"}
+            :organizations ["org"]}
            (users/get-user "user-with-org"))))
 
   (testing "get-all-users"
     (is (= [{:userid "user-with-org"
              :name "User Org"
              :email "user@org"
-             :organization "org"}
+             :organizations ["org"]}
             {:userid "whatever"
              :name "What Ever"
              :email nil}]

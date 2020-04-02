@@ -15,7 +15,7 @@
 
 (deftest add-form-field-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "adds fields"
       (reset-form)
       (is (= {:form/fields []}
@@ -45,7 +45,7 @@
 
 (deftest remove-form-field-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "removes fields"
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
@@ -82,7 +82,7 @@
 
 (deftest move-form-field-up-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields up"
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
@@ -124,7 +124,7 @@
 
 (deftest move-form-field-down-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields down"
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
@@ -165,7 +165,7 @@
             "after move 3")))))
 
 (deftest build-request-test
-  (let [form {:form/organization "abc"
+  (let [form {:form/organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/index 0
