@@ -11,7 +11,7 @@
 
 (def OutboxData
   {(s/optional-key :outbox/id) s/Int
-   :outbox/type (s/enum :email :entitlement-post)
+   :outbox/type (s/enum :email :entitlement-post :event-notification)
    :outbox/backoff Duration
    :outbox/created DateTime
    :outbox/deadline DateTime
@@ -19,7 +19,8 @@
    :outbox/latest-attempt (s/maybe DateTime)
    :outbox/latest-error (s/maybe s/Str)
    (s/optional-key :outbox/email) s/Any
-   (s/optional-key :outbox/entitlement-post) s/Any})
+   (s/optional-key :outbox/entitlement-post) s/Any
+   (s/optional-key :outbox/event-notification) s/Any})
 
 (def ^Duration initial-backoff (Duration/standardSeconds 10))
 (def ^Duration max-backoff (Duration/standardHours 12))

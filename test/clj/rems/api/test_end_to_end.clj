@@ -6,6 +6,7 @@
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.entitlements :as entitlements]
             [rems.email.core :as email]
+            [rems.event-notification :as event-notification]
             [rems.json :as json]
             [stub-http.core :as stub]))
 
@@ -20,7 +21,8 @@
 (deftest test-end-to-end
   (testing "clear poller backlog"
     (email/try-send-emails!)
-    (entitlements/process-outbox!))
+    (entitlements/process-outbox!)
+    (event-notification/process-outbox!))
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
                                                 "/remove" {:status 200}})
               event-server (stub/start! {"/event" {:status 200}})]
@@ -270,6 +272,8 @@
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key applicant-id)]
                 (is (= "application.state/closed" (:application/state application)))))
+
+            (event-notification/process-outbox!)
 
             (testing "event notifications"
               (let [events (for [r (stub/recorded-requests event-server)]

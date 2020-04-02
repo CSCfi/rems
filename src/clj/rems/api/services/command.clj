@@ -43,7 +43,7 @@
    (run-entitlements new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
-   (event-notification/notify! new-events)))
+   (event-notification/queue-notifications! new-events)))
 
 (def ^:private command-injections
   {:valid-user? users/user-exists?
