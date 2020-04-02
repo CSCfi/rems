@@ -14,7 +14,7 @@
   {:userid UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
-   (s/optional-key :organization) (s/maybe s/Str)
+   (s/optional-key :organizations) [s/Str]
    (s/optional-key :notification-email) (s/maybe s/Str)})
 
 (s/defschema CatalogueItemLocalizations
