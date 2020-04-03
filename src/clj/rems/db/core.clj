@@ -8,21 +8,24 @@
             [mount.core :refer [defstate] :as mount]
             [rems.config :refer [env]]))
 
+(defn- check-db! [db]
+  (try
+    (with-open [_ (clojure.java.jdbc/get-connection db)]
+      nil)
+    (catch Exception e
+      (throw (IllegalArgumentException.
+              (str "Can not connect to database "
+                   (pr-str db)
+                   ". Check the :database-name and :database-jndi-name config variables. "
+                   "The database might also be unreachable. ")
+              e)))))
+
 (defstate ^:dynamic *db*
   :start (let [db (cond (:test (mount/args)) (conman/connect! {:jdbc-url (:test-database-url env)})
                         (:database-url env) (conman/connect! {:jdbc-url (:database-url env)})
                         (:database-jndi-name env) {:name (:database-jndi-name env)}
                         :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))]
-           (try
-             (with-open [_ (clojure.java.jdbc/get-connection db)]
-               nil)
-             (catch Exception e
-               (throw (IllegalArgumentException.
-                       (str "Can not connect to database "
-                            (pr-str db)
-                            ". Check the :database-name and :database-jndi-name config variables. "
-                            "The database might also be unreachable. ")
-                       e))))
+           (check-db! db)
            db)
   :stop (conman/disconnect! *db*))
 
