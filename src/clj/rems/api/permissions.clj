@@ -22,6 +22,6 @@
       :return GetPermissionsResponse
       (if (not (:enable-permissions-api config/env))
         (not-implemented "permissions api not implemented")
-        (do (when-not (empty? user)
-              (api-util/not-found-json-response))
-            (ok (entitlements/get-entitlements-for-permissions-api user nil expired)))))))
+        (if (empty? user)
+          (api-util/not-found-json-response)
+          (ok (entitlements/get-entitlements-for-permissions-api user nil expired)))))))
