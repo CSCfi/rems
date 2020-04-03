@@ -8,6 +8,7 @@
             [mount.core :refer [defstate] :as mount]
             [rems.config :refer [env]]))
 
+;; See docs/architecture/010-transactions.md
 (def ^:private +hikaricp-settings+
   {:connection-init-sql "SET lock_timeout TO '10s'; SET idle_in_transaction_session_timeout TO '20s';"})
 
