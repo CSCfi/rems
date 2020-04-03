@@ -404,3 +404,34 @@
       (change-language :en)
       (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
     (is true))) ; avoid no assertions warning
+
+(deftest test-application-commands-lock-timeout
+  (let [api-key "42"
+        user-id "alice"
+        application-id (test-data/create-application! {:actor user-id})
+
+        old-handle-command rems.application.commands/handle-command
+        handle-command-with-sleep (fn [cmd application injections]
+                                    (Thread/sleep (* 1000 20)) ;; more than the lock timeout of 10s
+                                    (old-handle-command cmd application injections))]
+    (rems.email.core/try-send-emails!) ;; remove a bit of clutter from the log
+    (with-redefs [rems.application.commands/handle-command handle-command-with-sleep]
+      (let [commands [(future (http/post (str +test-url+ "/api/applications/save-draft")
+                                         {:throw-exceptions false
+                                          :as :json
+                                          :headers {"x-rems-api-key" "42"
+                                                    "x-rems-user-id" user-id}
+                                          :content-type :json
+                                          :form-params {:application-id application-id
+                                                        :field-values []}}))
+                      (future (http/post (str +test-url+ "/api/applications/save-draft")
+                                         {:throw-exceptions false
+                                          :as :json
+                                          :headers {"x-rems-api-key" "42"
+                                                    "x-rems-user-id" user-id}
+                                          :content-type :json
+                                          :form-params {:application-id application-id
+                                                        :field-values []}}))]]
+        (is (= #{{:status 200 :body {:success true}}
+                 {:status 500 :body "{\"type\":\"unknown-exception\",\"class\":\"org.postgresql.util.PSQLException\"}"}}
+               (set (mapv #(select-keys (deref %) [:body :status]) commands))))))))

@@ -9,8 +9,10 @@
 
 (defstate ^:dynamic *db*
   :start (cond
-           (:test (mount/args)) (conman/connect! {:jdbc-url (:test-database-url env)})
-           (:database-url env) (conman/connect! {:jdbc-url (:database-url env)})
+           (:test (mount/args)) (conman/connect! {:jdbc-url (:test-database-url env)
+                                                 :connection-init-sql "SET lock_timeout TO '10s';"})
+           (:database-url env) (conman/connect! {:jdbc-url (:database-url env)
+                                                 :connection-init-sql "SET lock_timeout TO '10s';"})
            (:database-jndi-name env) {:name (:database-jndi-name env)}
            :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))
   :stop (conman/disconnect! *db*))
