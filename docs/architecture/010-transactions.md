@@ -29,11 +29,12 @@ Our application commands are processed roughly in the following way
 (implementation: `rems.api.services.command/command!`):
 
 1. get all events for application from the `application_event` table
+   - NB! we have caching for `get-all-applications` but not for `get-unrestricted-application`, which is used here
 2. compute application state
 3. run command handler (given command and application state)
 4. if command handler succeeds, append new events to `application_event`
 5. run process managers on new events, which can result in
-   - new commands (e.g. from `approver-bot`)
+   - new commands (e.g. from `approver-bot`), which are processed immediately in the same thread
    - new rows in db (e.g. `outbox` or `blacklist` rows)
 
 If we were just running commands in parallel with serializable
