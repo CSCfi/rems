@@ -63,7 +63,7 @@
 (defn try-again-handler
   [exception _ex-data _request]
   (log/error "try again" exception)
-  (-> (too-many-requests)
+  (-> (service-unavailable "please try again")
       (plain-text)))
 
 (defn with-logging
