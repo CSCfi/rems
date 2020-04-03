@@ -125,6 +125,9 @@
  ;; enable /api/applications/:id/experimental/pdf
  :enable-pdf-api false
 
+ ;; enable /api/permissions/:user
+ :enable-permissions-api false
+
  ;; Options used only for development
  :render-css-file? false
  :test-database-url nil}
