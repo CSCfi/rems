@@ -8,11 +8,16 @@
             [mount.core :refer [defstate] :as mount]
             [rems.config :refer [env]]))
 
+(def ^:private +hikaricp-settings+
+  {:connection-init-sql "SET lock_timeout TO '10s';"})
+
 (defstate ^:dynamic *db*
-  :start (try (let [db (cond (:test (mount/args)) (conman/connect! {:jdbc-url (:test-database-url env)
-                                                                    :connection-init-sql "SET lock_timeout TO '10s';"})
-                             (:database-url env) (conman/connect! {:jdbc-url (:database-url env)
-                                                                   :connection-init-sql "SET lock_timeout TO '10s';"})
+  :start (try (let [db (cond (:test (mount/args)) (conman/connect! (merge +hikaricp-settings+
+                                                                          {:jdbc-url (:test-database-url env)}))
+                             (:database-url env) (conman/connect! (merge +hikaricp-settings+
+                                                                         {:jdbc-url (:database-url env)}))
+                             ;; the jndi codepath doesn't use hikari, so we can't use +hikaricp-settings+
+                             ;; TODO figure out another way to set lock_timeout in this case
                              (:database-jndi-name env) {:name (:database-jndi-name env)}
                              :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))]
                 ;; get a connection from the pool to get errors earlier
