@@ -20,7 +20,8 @@
                (throw (IllegalArgumentException.
                        (str "Can not connect to database "
                             (pr-str db)
-                            ". :database-name or :database-jndi-name invalid.")
+                            ". Check the :database-name and :database-jndi-name config variables. "
+                            "The database might also be unreachable. ")
                        e))))
            db)
   :stop (conman/disconnect! *db*))
