@@ -60,9 +60,11 @@
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
   ;;
   ;; To clarify: without this lock our API calls would sometimes fail
-  ;; with error 500 resulting from a transaction conflict exception
-  ;; that we do not handle currently. With this lock, API calls block
-  ;; more but never result in transaction conflicts.
+  ;; with transaction conflicts due to the serializable isolation
+  ;; level. The transaction conflict exceptions aren't handled
+  ;; currently and would cause API calls to fail with HTTP status 500.
+  ;; With this lock, API calls block more but never result in
+  ;; transaction conflicts.
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
   (let [app (when-let [app-id (:application-id cmd)]
               (applications/get-unrestricted-application app-id))
