@@ -11,15 +11,13 @@
             [ring.mock.request :refer :all]
             [rems.standalone]))
 
-(defn standalone-fixture
-  "Run a full REMS HTTP server."
-  [f]
-  (mount/start)
-  (migrations/migrate ["migrate"] (select-keys rems.config/env [:database-url]))
-  (test-data/create-test-data!)
-  (f)
-  (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-  (mount/stop))
+(def ^{:doc "Run a full REMS HTTP server."} standalone-fixture
+  (join-fixtures [test-db-fixture
+                  reset-db-fixture
+                  test-data-fixture
+                  (fn [f]
+                    (mount/start) ;; mount/stop is in test-db-fixture
+                    (f))]))
 
 (defn handler-fixture [f]
   (mount/start
