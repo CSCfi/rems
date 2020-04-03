@@ -8,25 +8,20 @@
             [mount.core :refer [defstate] :as mount]
             [rems.config :refer [env]]))
 
-(defn- check-db! [db]
-  (try
-    (with-open [_ (clojure.java.jdbc/get-connection db)]
-      nil)
-    (catch Exception e
-      (throw (IllegalArgumentException.
-              (str "Can not connect to database "
-                   (pr-str db)
-                   ". Check the :database-name and :database-jndi-name config variables. "
-                   "The database might also be unreachable. ")
-              e)))))
-
 (defstate ^:dynamic *db*
-  :start (let [db (cond (:test (mount/args)) (conman/connect! {:jdbc-url (:test-database-url env)})
-                        (:database-url env) (conman/connect! {:jdbc-url (:database-url env)})
-                        (:database-jndi-name env) {:name (:database-jndi-name env)}
-                        :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))]
-           (check-db! db)
-           db)
+  :start (try (let [db (cond (:test (mount/args)) (conman/connect! {:jdbc-url (:test-database-url env)})
+                             (:database-url env) (conman/connect! {:jdbc-url (:database-url env)})
+                             (:database-jndi-name env) {:name (:database-jndi-name env)}
+                             :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))]
+                ;; get a connection from the pool to get errors earlier
+                (with-open [_ (clojure.java.jdbc/get-connection db)]
+                  db))
+              (catch Exception e
+                (throw (IllegalArgumentException.
+                        (str "Can not connect to database. "
+                             "Check the :database-name and :database-jndi-name config variables. "
+                             "The database might also be unreachable. ")
+                        e))))
   :stop (conman/disconnect! *db*))
 
 (conman/bind-connection *db* "sql/queries.sql")
