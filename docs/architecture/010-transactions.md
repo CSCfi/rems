@@ -48,17 +48,30 @@ added a
 statement before step 1. This means that further command handlers will
 wait for the lock before progressing.
 
+## Problems with locks
+
+There have been a couple of incidents in production where for some
+reason a thread got stuck holding the lock on `application_table`.
+This prevented other commands from being processed. Additionally, the
+only thing communicated to the users was an eventual HTTP timeout,
+which they might've not had the patience to wait for.
+
+To protect against failures like this, we set two [PostgreSQL config
+variables] for every connection (implementation: `rems.db.core`):
+- `lock_timeout` to 10 seconds
+- `idle_in_transaction_session_timeout` to 20 seconds
+
+This guarantees that if a thread is stuck holding the lock, other
+commands will fail within 10 seconds (with a HTTP 503 Service
+Unavailable), and the connection that the stuck thread is holding will
+get closed after 20 seconds, freeing the lock.
+
+Implementation in [PR #2100]
+
+[PostgreSQL config variables]: https://www.postgresql.org/docs/9.6/runtime-config-client.html
+[PR #2100]: https://github.com/CSCfi/rems/pull/2100
+
 ## Future work
 
 We should handle transaction conflict exceptions. There is no
 guarantee that they will not happen with isolation level serializable.
-
-We should investigate setting the
-`idle_in_transaction_session_timeout` option for our database
-connections to avoid e.g. stuck threads rendering the whole system
-unusable.
-
-We have considered setting `lock_timeout` to try to avoid production
-problems with stuck threads & connections running out. Investigate if
-this really helps, and consider `idle_in_transaction_session_timeout`
-instead.
