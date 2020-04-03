@@ -32,7 +32,9 @@ Our application commands are processed roughly in the following way
 2. compute application state
 3. run command handler (given command and application state)
 4. if command handler succeeds, append new events to `application_event`
-5. run process managers on new events, generating e.g. rows in the outbox table
+5. run process managers on new events, which can result in
+   - new commands (e.g. from `approver-bot`)
+   - new rows in db (e.g. `outbox` or `blacklist` rows)
 
 If we were just running commands in parallel with serializable
 transactions, we'd get transaction conflicts from the events added in
