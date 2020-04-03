@@ -405,33 +405,65 @@
       (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
     (is true))) ; avoid no assertions warning
 
-(deftest test-application-commands-lock-timeout
+(deftest test-api-sql-timeouts
   (let [api-key "42"
         user-id "alice"
         application-id (test-data/create-application! {:actor user-id})
+        application-id-2 (test-data/create-application! {:actor user-id})
 
         old-handle-command rems.application.commands/handle-command
-        handle-command-with-sleep (fn [cmd application injections]
-                                    (Thread/sleep (* 1000 20)) ;; more than the lock timeout of 10s
-                                    (old-handle-command cmd application injections))]
+        sleep-time (atom nil)]
     (rems.email.core/try-send-emails!) ;; remove a bit of clutter from the log
-    (with-redefs [rems.application.commands/handle-command handle-command-with-sleep]
-      (let [commands [(future (http/post (str +test-url+ "/api/applications/save-draft")
-                                         {:throw-exceptions false
-                                          :as :json
-                                          :headers {"x-rems-api-key" "42"
-                                                    "x-rems-user-id" user-id}
-                                          :content-type :json
-                                          :form-params {:application-id application-id
-                                                        :field-values []}}))
-                      (future (http/post (str +test-url+ "/api/applications/save-draft")
-                                         {:throw-exceptions false
-                                          :as :json
-                                          :headers {"x-rems-api-key" "42"
-                                                    "x-rems-user-id" user-id}
-                                          :content-type :json
-                                          :form-params {:application-id application-id
-                                                        :field-values []}}))]]
-        (is (= #{{:status 200 :body {:success true}}
-                 {:status 503 :body "please try again"}}
-               (set (mapv #(select-keys (deref %) [:body :status]) commands))))))))
+    (with-redefs [rems.application.commands/handle-command
+                  (fn [cmd application injections]
+                    (when-let [time @sleep-time]
+                      (Thread/sleep time))
+                    (old-handle-command cmd application injections))]
+      (testing "lock_timeout"
+        ;; more than the lock timeout of 10s, less than the connection idle timeout of 20s
+        (reset! sleep-time (* 15 1000))
+        (let [commands [(future (http/post (str +test-url+ "/api/applications/save-draft")
+                                           {:throw-exceptions false
+                                            :as :json
+                                            :headers {"x-rems-api-key" "42"
+                                                      "x-rems-user-id" user-id}
+                                            :content-type :json
+                                            :form-params {:application-id application-id
+                                                          :field-values []}}))
+                        (future (http/post (str +test-url+ "/api/applications/save-draft")
+                                           {:throw-exceptions false
+                                            :as :json
+                                            :headers {"x-rems-api-key" "42"
+                                                      "x-rems-user-id" user-id}
+                                            :content-type :json
+                                            :form-params {:application-id application-id-2
+                                                          :field-values []}}))]]
+          (is (= #{{:status 200 :body {:success true}}
+                   {:status 503 :body "please try again"}}
+                 (set (mapv #(select-keys (deref %) [:body :status]) commands))))))
+      (testing "idle_in_transaction_session_timeout"
+        (testing "slow transaction should hit timeout"
+          ;; more than the connection idle timeout of 20s
+          (reset! sleep-time (* 30 1000))
+          (is (= {:status 500 :body "{\"type\":\"unknown-exception\",\"class\":\"clojure.lang.ExceptionInfo\"}"}
+                 (-> (http/post (str +test-url+ "/api/applications/save-draft")
+                                {:throw-exceptions false
+                                 :as :json
+                                 :headers {"x-rems-api-key" "42"
+                                           "x-rems-user-id" user-id}
+                                 :content-type :json
+                                 :form-params {:application-id application-id
+                                               :field-values []}})
+                     (select-keys [:body :status])))))
+        (testing "subsequent transactions should pass"
+          (reset! sleep-time nil)
+          (is (= {:status 200 :body {:success true}}
+                 (-> (http/post (str +test-url+ "/api/applications/save-draft")
+                                {:throw-exceptions false
+                                 :as :json
+                                 :headers {"x-rems-api-key" "42"
+                                           "x-rems-user-id" user-id}
+                                 :content-type :json
+                                 :form-params {:application-id application-id
+                                               :field-values []}})
+                     (select-keys [:body :status])))))))))

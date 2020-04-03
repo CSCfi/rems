@@ -9,7 +9,7 @@
             [rems.config :refer [env]]))
 
 (def ^:private +hikaricp-settings+
-  {:connection-init-sql "SET lock_timeout TO '10s';"})
+  {:connection-init-sql "SET lock_timeout TO '10s'; SET idle_in_transaction_session_timeout TO '20s';"})
 
 (defstate ^:dynamic *db*
   :start (try (let [db (cond (:test (mount/args)) (conman/connect! (merge +hikaricp-settings+
