@@ -16,7 +16,8 @@
             [rems.db.workflow :as workflow]
             [rems.email.core :as email]
             [rems.form-validation :as form-validation]
-            [rems.util :refer [secure-token]]))
+            [rems.util :refer [secure-token]])
+  (:import rems.TryAgainException))
 
 (defn- run-entitlements [new-events]
   (doseq [event new-events]
@@ -58,9 +59,12 @@
   ;; Serializable isolation level will already avoid anomalies, but produces
   ;; lots of transaction conflicts when there is contention. This lock
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
-  (log/info :TIMEOUT (jdbc/query db/*db* ["SHOW lock_timeout"]))
-  (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
-  (log/info :GOT-LOCK)
+  (try
+    (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
+    (catch org.postgresql.util.PSQLException e
+      (if (.contains (.getMessage e) "lock timeout")
+        (throw (TryAgainException. e))
+        (throw e))))
   (let [app (when-let [app-id (:application-id cmd)]
               (applications/get-unrestricted-application app-id))
         result (commands/handle-command cmd app command-injections)]
@@ -72,5 +76,4 @@
           (when (:errors result)
             (log/error "process manager command failed"
                        (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))
-    (log/info :DONE)
     result))

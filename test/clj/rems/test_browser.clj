@@ -433,5 +433,5 @@
                                           :form-params {:application-id application-id
                                                         :field-values []}}))]]
         (is (= #{{:status 200 :body {:success true}}
-                 {:status 500 :body "{\"type\":\"unknown-exception\",\"class\":\"org.postgresql.util.PSQLException\"}"}}
+                 {:status 429 :body ""}}
                (set (mapv #(select-keys (deref %) [:body :status]) commands))))))))
