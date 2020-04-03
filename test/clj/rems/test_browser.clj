@@ -7,8 +7,8 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [select ALL]]
             [etaoin.api :refer :all]
-            [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
@@ -39,14 +39,6 @@
         (log/warn e "WebDriver failed to start, retrying...")
         (run)))))
 
-(defn fixture-standalone [f]
-  (mount/start)
-  (migrations/migrate ["migrate"] (select-keys rems.config/env [:database-url]))
-  (test-data/create-test-data!)
-  (f)
-  (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-  (mount/stop))
-
 (defn smoke-test [f]
   (let [response (http/get (str +test-url+ "js/app.js"))]
     (assert (= 200 (:status response))
@@ -59,7 +51,7 @@
 
 (use-fixtures
   :once
-  fixture-standalone
+  standalone-fixture
   smoke-test)
 
 ;;; basic navigation
@@ -404,44 +396,3 @@
       (change-language :en)
       (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
     (is true))) ; avoid no assertions warning
-
-(deftest test-api-sql-timeouts
-  (let [api-key "42"
-        user-id "alice"
-        application-id (test-data/create-application! {:actor user-id})
-        application-id-2 (test-data/create-application! {:actor user-id})
-        save-draft! #(-> (http/post (str +test-url+ "/api/applications/save-draft")
-                                    {:throw-exceptions false
-                                     :as :json
-                                     :headers {"x-rems-api-key" "42"
-                                               "x-rems-user-id" user-id}
-                                     :content-type :json
-                                     :form-params {:application-id application-id
-                                                   :field-values []}})
-                         (select-keys [:body :status]))
-
-        old-handle-command rems.application.commands/handle-command
-        sleep-time (atom nil)
-        slow-handle-command (fn [cmd application injections]
-                              (when-let [time @sleep-time]
-                                (Thread/sleep time))
-                              (old-handle-command cmd application injections))]
-    (rems.email.core/try-send-emails!) ;; remove a bit of clutter from the log
-    (with-redefs [rems.application.commands/handle-command slow-handle-command]
-      (testing "lock_timeout"
-        ;; more than the lock timeout of 10s, less than the connection idle timeout of 20s
-        (reset! sleep-time (* 15 1000))
-        (let [commands [(future (save-draft!)) (future (save-draft!))]]
-          (is (= #{{:status 200 :body {:success true}}
-                   {:status 503 :body "please try again"}}
-                 (set (mapv deref commands))))))
-      (testing "idle_in_transaction_session_timeout"
-        (testing "slow transaction should hit timeout"
-          ;; more than the connection idle timeout of 20s
-          (reset! sleep-time (* 30 1000))
-          (is (= {:status 500 :body "{\"type\":\"unknown-exception\",\"class\":\"clojure.lang.ExceptionInfo\"}"}
-                 (save-draft!))))
-        (testing "subsequent transactions should pass"
-          (reset! sleep-time nil)
-          (is (= {:status 200 :body {:success true}}
-                 (save-draft!))))))))
