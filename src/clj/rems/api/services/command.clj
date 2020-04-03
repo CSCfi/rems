@@ -58,6 +58,11 @@
   ;; Serializable isolation level will already avoid anomalies, but produces
   ;; lots of transaction conflicts when there is contention. This lock
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
+  ;;
+  ;; To clarify: without this lock our API calls would sometimes fail
+  ;; with error 500 resulting from a transaction conflict exception
+  ;; that we do not handle currently. With this lock, API calls block
+  ;; more but never result in transaction conflicts.
   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
   (let [app (when-let [app-id (:application-id cmd)]
               (applications/get-unrestricted-application app-id))
