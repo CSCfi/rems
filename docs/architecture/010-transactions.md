@@ -4,8 +4,10 @@ Authors: @opqdonut
 
 ## Introduction
 
-This is an ADR written in aftermath to a production incident (#2102)
+This is an ADR written in aftermath to a production incident [Issue #2102]
 to describe our current design choices with database transactions.
+
+[Issue #2102]: https://github.com/CSCfi/rems/issues/2101
 
 ## Design philosophy
 
@@ -74,11 +76,17 @@ Implementation in [PR #2100]
 ## Future work
 
 We should handle transaction conflict exceptions. There is no
-guarantee that they will not happen with isolation level serializable.
+guarantee that they will not happen with isolation level serializable. [Issue #2103].
+
+[Issue #2103]: https://github.com/CSCfi/rems/issues/2103
 
 In addition to API calls, scheduled jobs like email outbox processing
-should also be in transactions.
+should also be in transactions. [Issue #2104].
+
+[Issue #2104]: https://github.com/CSCfi/rems/issues/2104
 
 Consider adding some sort of warning/error when a rems.db.core
 function is called outside a transaction. This can be done with e.g. a
-custom `bind-connection` macro.
+custom `bind-connection` macro. [Issue #2105].
+
+[Issue #2105]: https://github.com/CSCfi/rems/issues/2105
