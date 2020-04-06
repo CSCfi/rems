@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.9
+Changes since v2.10
+
+## v2.10 "Riihitontuntie" 2020-04-06
 
 ### Additions
 - Swedish localizations. They can be enabled by adding `:sv` to the `:languages` config option. (#1892)
