@@ -5,6 +5,7 @@
             [mount.core :as mount]
             [rems.api.schema :as schema]
             [rems.config]
+            [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
             [rems.json :as json]
             [rems.scheduler :as scheduler]))
@@ -51,7 +52,12 @@
 
 (defn queue-notifications! [events]
   (doseq [event events]
-    (let [body (json/generate-string event)]
+    (let [;; TODO: get-unrestricted-application doesn't have a public
+          ;; schema and includes internal stuff like ::latest-review-request-by-user.
+          ;; Need to figure out a non-user-specific version of get-application
+          application (applications/get-unrestricted-application (:application/id event))
+          event-with-app (assoc event :event/application application)
+          body (json/generate-string event-with-app)]
       (when-let [targets (seq (get rems.config/env :event-notification-targets))]
         (doseq [target targets]
           (when (wants? target event)

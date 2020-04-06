@@ -285,19 +285,27 @@
                                  (get "postData")
                                  json/parse-string
                                  (select-keys [:application/id :event/type :event/actor
-                                               :application/resources :application/forms])))]
+                                               :application/resources :application/forms
+                                               :event/application])
+                                 (update :event/application select-keys [:application/id :application/state])))]
                 (is (= [{:application/id application-id
                          :event/type "application.event/created"
                          :event/actor applicant-id
                          :application/resources [{:resource/ext-id resource-ext-id :catalogue-item/id catalogue-item-id}
                                                  {:resource/ext-id resource-ext-id2 :catalogue-item/id catalogue-item-id2}]
-                         :application/forms [{:form/id form-id} {:form/id form-id2}]}
+                         :application/forms [{:form/id form-id} {:form/id form-id2}]
+                         :event/application {:application/id application-id
+                                             :application/state "application.state/draft"}}
                         {:application/id application-id
                          :event/type "application.event/submitted"
-                         :event/actor applicant-id}
+                         :event/actor applicant-id
+                         :event/application {:application/id application-id
+                                             :application/state "application.state/submitted"}}
                         {:application/id application-id
                          :event/type "application.event/approved"
-                         :event/actor handler-id}]
+                         :event/actor handler-id
+                         :event/application {:application/id application-id
+                                             :application/state "application.state/approved"}}]
                        events))))))))))
 
 (deftest test-approver-rejecter-bots
