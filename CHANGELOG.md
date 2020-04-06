@@ -9,7 +9,7 @@ have notable changes.
 Changes since v2.9
 
 ### Additions
-- Swedish localizations
+- Swedish localizations. They can be enabled by adding `:sv` to the `:languages` config option. (#1892)
 
 ### Fixes
 - REMS now exits with status 0 on SIGINT and SIGTERM
