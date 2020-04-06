@@ -75,3 +75,10 @@ Implementation in [PR #2100]
 
 We should handle transaction conflict exceptions. There is no
 guarantee that they will not happen with isolation level serializable.
+
+In addition to API calls, scheduled jobs like email outbox processing
+should also be in transactions.
+
+Consider adding some sort of warning/error when a rems.db.core
+function is called outside a transaction. This can be done with e.g. a
+custom `bind-connection` macro.
