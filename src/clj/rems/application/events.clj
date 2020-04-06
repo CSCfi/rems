@@ -168,6 +168,9 @@
    :application.event/revoked RevokedEvent
    :application.event/submitted SubmittedEvent})
 
+(def event-types
+  (keys event-schemas))
+
 (s/defschema Event
   (apply r/dispatch-on :event/type (flatten (seq event-schemas))))
 
