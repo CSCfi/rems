@@ -59,6 +59,15 @@
   ;; Serializable isolation level will already avoid anomalies, but produces
   ;; lots of transaction conflicts when there is contention. This lock
   ;; roughly doubles the throughput for rems.db.test-transactions tests.
+  ;;
+  ;; To clarify: without this lock our API calls would sometimes fail
+  ;; with transaction conflicts due to the serializable isolation
+  ;; level. The transaction conflict exceptions aren't handled
+  ;; currently and would cause API calls to fail with HTTP status 500.
+  ;; With this lock, API calls block more but never result in
+  ;; transaction conflicts.
+  ;;
+  ;; See docs/architecture/010-transactions.md for more info.
   (try
     (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
     (catch org.postgresql.util.PSQLException e
