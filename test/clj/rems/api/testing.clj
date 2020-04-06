@@ -3,10 +3,21 @@
   (:require [cheshire.core :refer [parse-stream]]
             [clojure.string :as str]
             [clojure.test :refer :all]
+            [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all]
+            [rems.standalone]))
+
+(def ^{:doc "Run a full REMS HTTP server."} standalone-fixture
+  (join-fixtures [test-db-fixture
+                  reset-db-fixture
+                  test-data-fixture
+                  (fn [f]
+                    (mount/start) ;; mount/stop is in test-db-fixture
+                    (f))]))
 
 (defn handler-fixture [f]
   (mount/start

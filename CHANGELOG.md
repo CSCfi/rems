@@ -11,6 +11,7 @@ Changes since v2.9
 ### Fixes
 
 - REMS now exits with status 0 on SIGINT and SIGTERM
+- REMS now sets PostgreSQL `lock_timeout` (configurable, defaults to 10s) and `idle_in_transaction_session_timeout` (configurable, defaults to 20s) to avoid deadlocks (#2101)
 
 ## v2.9 "Olarinluoma" 2020-03-26
 
