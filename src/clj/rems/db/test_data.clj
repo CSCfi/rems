@@ -321,66 +321,81 @@
 
 (def all-field-types-example
   [{:field/title {:en "This form demonstrates all possible field types. (This text itself is a label field.)"
-                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"}
+                  :fi "Tämä lomake havainnollistaa kaikkia mahdollisia kenttätyyppejä. (Tämä teksti itsessään on lisätietokenttä.)"
+                  :sv "Detta blanket visar alla möjliga fälttyper. (Det här texten är en fält för tilläggsinformation.)"}
     :field/optional false
     :field/type :label}
 
    {:field/title {:en "Application title field"
-                  :fi "Hakemuksen otsikko -kenttä"}
+                  :fi "Hakemuksen otsikko -kenttä"
+                  :sv "Ansökningens rubrikfält"}
     :field/optional false
     :field/type :description}
 
    {:field/title {:en "Text field"
-                  :fi "Tekstikenttä"}
+                  :fi "Tekstikenttä"
+                  :sv "Textfält"}
     :field/optional false
     :field/type :text
     :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"}}
+                        :fi "Täyteteksti"
+                        :sv "Textexempel"}}
 
    {:field/title {:en "Text area"
-                  :fi "Tekstialue"}
+                  :fi "Tekstialue"
+                  :sv "Textområde"}
     :field/optional false
     :field/type :texta
     :field/placeholder {:en "Placeholder text"
-                        :fi "Täyteteksti"}}
+                        :fi "Täyteteksti"
+                        :sv "Textexempel"}}
 
    {:field/title {:en "Header"
-                  :fi "Otsikko"}
+                  :fi "Otsikko"
+                  :sv "Titel"}
     :field/type :header
     :field/optional false}
 
    {:field/title {:en "Date field"
-                  :fi "Päivämääräkenttä"}
+                  :fi "Päivämääräkenttä"
+                  :sv "Datumfält"}
     :field/optional true
     :field/type :date}
 
    {:field/title {:en "Email field"
-                  :fi "Sähköpostikenttä"}
+                  :fi "Sähköpostikenttä"
+                  :sv "E-postaddressfält"}
     :field/optional true
     :field/type :email}
 
    {:field/title {:en "Attachment"
-                  :fi "Liitetiedosto"}
+                  :fi "Liitetiedosto"
+                  :sv "Bilaga"}
     :field/optional true
     :field/type :attachment}
 
    {:field/title {:en "Option list. Choose the first option to reveal a new field."
-                  :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."}
+                  :fi "Valintalista. Valitse ensimmäinen vaihtoehto paljastaaksesi uuden kentän."
+                  :sv "Lista. Välj det första alternativet för att visa ett nytt fält."}
     :field/optional true
     :field/type :option
     :field/id "option"
     :field/options [{:key "Option1"
                      :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"}}
+                             :fi "Ensimmäinen vaihtoehto"
+                             :sv "Första alternativ"}}
                     {:key "Option2"
                      :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"}}
+                             :fi "Toinen vaihtoehto"
+                             :sv "Andra alternativ"}}
                     {:key "Option3"
                      :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"}}]}
+                             :fi "Kolmas vaihtoehto"
+                             :sv "Tredje alternativ"}}]}
 
    {:field/title {:en "Conditional field. Shown only if first option is selected above."
-                  :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."}
+                  :fi "Ehdollinen kenttä. Näytetään vain jos yllä valitaan ensimmäinen vaihtoehto."
+                  :sv "Villkorlig fält. Visas bara som första alternativet har väljats ovan."}
     :field/optional false
     :field/type :text
     :field/visibility {:visibility/type :only-if
@@ -388,33 +403,40 @@
                        :visibility/values ["Option1"]}}
 
    {:field/title {:en "Multi-select list"
-                  :fi "Monivalintalista"}
+                  :fi "Monivalintalista"
+                  :sv "Lista med flerval"}
     :field/optional true
     :field/type :multiselect
     :field/options [{:key "Option1"
                      :label {:en "First option"
-                             :fi "Ensimmäinen vaihtoehto"}}
+                             :fi "Ensimmäinen vaihtoehto"
+                             :sv "Första alternativ"}}
                     {:key "Option2"
                      :label {:en "Second option"
-                             :fi "Toinen vaihtoehto"}}
+                             :fi "Toinen vaihtoehto"
+                             :sv "Andra alternativ"}}
                     {:key "Option3"
                      :label {:en "Third option"
-                             :fi "Kolmas vaihtoehto"}}]}
+                             :fi "Kolmas vaihtoehto"
+                             :sv "Tredje alternativ"}}]}
 
    {:field/title {:en "The following field types can have a max length."
-                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."}
+                  :fi "Seuraavilla kenttätyypeillä voi olla pituusrajoitus."
+                  :sv "De nästa fälttyperna kan ha bengränsat längd."}
     :field/optional false
     :field/type :label}
 
    ;; fields which support maxlength
    {:field/title {:en "Text field with max length"
-                  :fi "Tekstikenttä pituusrajalla"}
+                  :fi "Tekstikenttä pituusrajalla"
+                  :sv "Textfält med begränsat längd"}
     :field/optional true
     :field/type :text
     :field/max-length 10}
 
    {:field/title {:en "Text area with max length"
-                  :fi "Tekstialue pituusrajalla"}
+                  :fi "Tekstialue pituusrajalla"
+                  :sv "Textområdet med begränsat längd"}
     :field/optional true
     :field/type :texta
     :field/max-length 100}])
@@ -433,6 +455,7 @@
     :form/title title
     :form/fields all-field-types-example}))
 
+;; TODO translate to swedish?
 (defn create-thl-demo-form!
   [users]
   (create-form!
@@ -440,199 +463,253 @@
     :form/organization "thl"
     :form/title "THL form"
     :form/fields [{:field/title {:en "Application title"
-                                 :fi "Hakemuksen otsikko"}
+                                 :fi "Hakemuksen otsikko"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :description
                    :field/placeholder {:en "Study of.."
-                                       :fi "Tutkimus aiheesta.."}}
+                                       :fi "Tutkimus aiheesta.."
+                                       :sv "TODO"}}
                   {:field/title {:en "1. Research project full title"
-                                 :fi "1. Tutkimusprojektin täysi nimi"}
+                                 :fi "1. Tutkimusprojektin täysi nimi"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "2. This is an amendment of a previous approved application"
-                                 :fi "2. Hakemus täydentää edellistä hakemusta"}
+                                 :fi "2. Hakemus täydentää edellistä hakemusta"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :option
                    :field/options [{:key "false"
                                     :label {:en "no"
-                                            :fi "ei"}}
+                                            :fi "ei"
+                                            :sv "TODO"}}
                                    {:key "true"
                                     :label {:en "yes"
-                                            :fi "kyllä"}}]}
+                                            :fi "kyllä"
+                                            :sv "TODO"}}]}
                   {:field/title {:en "If yes, what were the previous project permit code/s?"
-                                 :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"}
+                                 :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :text}
                   {:field/title {:en "3. Study PIs (name, titile, affiliation, email)"
-                                 :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"}
+                                 :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "4. Contact person for application if different than applicant (name, email)"
-                                 :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"}
+                                 :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "5. Research project start date"
-                                 :fi "5. Projektin aloituspäivä"}
+                                 :fi "5. Projektin aloituspäivä"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :date}
                   {:field/title {:en "6. Research project end date"
-                                 :fi "6. Projektin lopetuspäivä"}
+                                 :fi "6. Projektin lopetuspäivä"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :date}
                   {:field/title {:en "7. Describe in detail the aims of the study and analysis plan"
-                                 :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                                 :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "8. If this is an amendment, please describe briefly what is new"
-                                 :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."}
+                                 :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
-                                 :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                                 :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
-                                       :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
+                                       :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "10. Place/plces of research, including place of sample and/or data analysis."
-                                 :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."}
+                                 :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."
+                                 :sv "TODO"}
                    :field/placeholder {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
-                                       :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."}
+                                       :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "11. Description of other research group members and their role in the applied project."
-                                 :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
+                                 :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."
+                                 :sv "TODO"}
                    :field/placeholder {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
-                                       :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
+                                       :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "12. Specify selection criteria of study participants (if applicable)"
-                                 :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"}
+                                 :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
-                                       :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."}
+                                       :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)"
-                                 :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"}
+                                 :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
-                                       :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."}
+                                       :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "14. Specify requested genomics or other omics data (if applicable)"
-                                 :fi "14. Kuvaile tarvittava genomiikkadata."}
+                                 :fi "14. Kuvaile tarvittava genomiikkadata."
+                                 :sv "TODO"}
                    :field/placeholder {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
-                                       :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
+                                       :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"
+                                       :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "16. Are biological samples requested?"
-                                 :fi "16. Pyydetäänkö biologisia näytteitä?"}
+                                 :fi "16. Pyydetäänkö biologisia näytteitä?"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :option
                    :field/options [{:key "false"
                                     :label {:en "no"
-                                            :fi "ei"}}
+                                            :fi "ei"
+                                            :sv "TODO"}}
                                    {:key "true"
                                     :label {:en "yes"
-                                            :fi "kyllä"}}]}
+                                            :fi "kyllä"
+                                            :sv "TODO"}}]}
                   {:field/title {:en "The type and amount of biological samples requested"
-                                 :fi "Biologisten näytteiden tyypit ja määrät."}
+                                 :fi "Biologisten näytteiden tyypit ja määrät."
+                                 :sv "TODO"}
                    :field/placeholder {:en "Type and amount of samples and any additional specific criteria."
-                                       :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."}
+                                       :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."
+                                       :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "17. What study results will be returned to THL Biobank (if any)?"
-                                 :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"}
+                                 :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
-                                       :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"}
+                                       :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "Expected date for return of study results"
-                                 :fi "Odotettu tutkimustuloksien palautuspäivämäärä"}
+                                 :fi "Odotettu tutkimustuloksien palautuspäivämäärä"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :date}
                   {:field/title {:en "18. Ethical aspects of the project"
-                                 :fi "18. Tutkimuksen eettiset puolet"}
+                                 :fi "18. Tutkimuksen eettiset puolet"
+                                 :sv "TODO"}
                    :field/placeholder {:en "If you have any documents from an ethical board, please provide them as an attachment."
-                                       :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."}
+                                       :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "19. Project keywords (max 5)"
-                                 :fi "19. Projektin avainsanat (maks. 5)"}
+                                 :fi "19. Projektin avainsanat (maks. 5)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "List a few keywords that are related to this research project (please separate with comma)"
-                                       :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."}
+                                       :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "20. Planned publications (max 3)"
-                                 :fi "20. Suunnitellut julkaisut (maks. 3)"}
+                                 :fi "20. Suunnitellut julkaisut (maks. 3)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Planned publication titles / research topics"
-                                       :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"}
+                                       :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "21. Funding information"
-                                 :fi "21. Rahoitus"}
+                                 :fi "21. Rahoitus"
+                                 :sv "TODO"}
                    :field/placeholder {:en "List all funding sources which will be used for this research project."
-                                       :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"}
+                                       :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)"
-                                 :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"}
+                                 :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Electronic invoice address when possible + invoicing reference"
-                                       :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."}
+                                       :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."
+                                       :sv "TODO"}
                    :field/optional false
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "23. Other information"
-                                 :fi "23. Muuta"}
+                                 :fi "23. Muuta"
+                                 :sv "TODO"}
                    :field/placeholder {:en "Any other relevant information for the application"
-                                       :fi "Muuta hakemukseen liittyvää oleellista tietoa"}
+                                       :fi "Muuta hakemukseen liittyvää oleellista tietoa"
+                                       :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "THL Biobank's registered area/s of operation to which the research project complies:"
-                                 :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"}
+                                 :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"
+                                 :sv "TODO"}
                    :field/optional false
                    :field/type :multiselect
                    :field/options [{:key "population_health"
                                     :label {:en "Promoting the population's health"
-                                            :fi "Edistää kansanterveytttä"}}
+                                            :fi "Edistää kansanterveytttä"
+                                            :sv "TODO"}}
                                    {:key "disease_mechanisms"
                                     :label {:en "Identifying factors involved in disease mechanisms"
-                                            :fi "Tunnistaa tautien mekanismeja"}}
+                                            :fi "Tunnistaa tautien mekanismeja"
+                                            :sv "TODO"}}
                                    {:key "disease_prevention"
                                     :label {:en "Disease prevention"
-                                            :fi "Estää tautien leviämistä"}}
+                                            :fi "Estää tautien leviämistä"
+                                            :sv "TODO"}}
                                    {:key "health_product_development"
                                     :label {:en "Developing products that promote the welfare and health of the population"
-                                            :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."}}
+                                            :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."
+                                            :sv "TODO"}}
                                    {:key "treatment_development"
                                     :label {:en "Developing products and treatments for diseases"
-                                            :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"}}
+                                            :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"
+                                            :sv "TODO"}}
                                    {:key "other"
                                     :label {:en "Other"
-                                            :fi "Muuta"}}]}
+                                            :fi "Muuta"
+                                            :sv "TODO"}}]}
                   {:field/title {:en "Other, specify"
-                                 :fi "Muuta, tarkenna"}
+                                 :fi "Muuta, tarkenna"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :texta
                    :field/max-length 100}
                   {:field/title {:en "Data management plan (pdf)"
-                                 :fi "Datanhallintasuunnitelma (pdf)"}
+                                 :fi "Datanhallintasuunnitelma (pdf)"
+                                 :sv "TODO"}
                    :field/optional true
                    :field/type :attachment}]}))
 
@@ -674,16 +751,20 @@
                                  :license/type :link
                                  :license/organization "nbn"
                                  :license/title {:en "CC Attribution 4.0"
-                                                 :fi "CC Nimeä 4.0"}
+                                                 :fi "CC Nimeä 4.0"
+                                                 :sv "CC Erkännande 4.0"}
                                  :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                                :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"}})
+                                                :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
           text (create-license! {:actor owner
                                  :license/type :text
                                  :license/organization "nbn"
                                  :license/title {:en "General Terms of Use"
-                                                 :fi "Yleiset käyttöehdot"}
+                                                 :fi "Yleiset käyttöehdot"
+                                                 :sv "Allmänna villkor"}
                                  :license/text {:en (apply str (repeat 10 "License text in English. "))
-                                                :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))}})]
+                                                :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+                                                :sv (apply str (repeat 10 "Licens på svenska. "))}})]
       (doseq [licid [link text]]
         (doseq [wfid [default decider master auto-approve]]
           (db/create-workflow-license! {:wfid wfid :licid licid}))))
@@ -860,26 +941,32 @@
                   :form/organization "perf"
                   :form/title "Performance tests"
                   :form/fields [{:field/title {:en "Project name"
-                                               :fi "Projektin nimi"}
+                                               :fi "Projektin nimi"
+                                               :sv "Projektets namn"}
                                  :field/optional false
                                  :field/type :description
                                  :field/placeholder {:en "Project"
-                                                     :fi "Projekti"}}
+                                                     :fi "Projekti"
+                                                     :sv "Projekt"}}
 
                                 {:field/title {:en "Project description"
-                                               :fi "Projektin kuvaus"}
+                                               :fi "Projektin kuvaus"
+                                               :sv "Projektets beskrivning"}
                                  :field/optional false
                                  :field/type :texta
                                  :field/placeholder {:en "The purpose of the project is to..."
-                                                     :fi "Projektin tarkoitus on..."}}]})
+                                                     :fi "Projektin tarkoitus on..."
+                                                     :sv "Det här projekt..."}}]})
         form (form/get-form-template form-id)
         license-id (create-license! {:actor owner
                                      :license/type :text
                                      :license/organization "perf"
                                      :license/title {:en "Performance License"
-                                                     :fi "Suorituskykylisenssi"}
+                                                     :fi "Suorituskykylisenssi"
+                                                     :sv "Licens för prestand"}
                                      :license/text {:en "Be fast."
-                                                    :fi "Ole nopea."}})
+                                                    :fi "Ole nopea."
+                                                    :sv "Var snabb."}})
         cat-item-ids (vec (in-parallel
                            (for [n (range-1 resource-count)]
                              (fn []
@@ -887,7 +974,8 @@
                                                                     :license-ids [license-id]})]
                                  (create-catalogue-item! {:actor owner
                                                           :title {:en (str "Performance test resource " n)
-                                                                  :fi (str "Suorituskykytestiresurssi " n)}
+                                                                  :fi (str "Suorituskykytestiresurssi " n)
+                                                                  :sv (str "Licens för prestand " n)}
                                                           :resource-id resource-id
                                                           :form-id form-id
                                                           :organization "perf"
@@ -950,23 +1038,29 @@
                                    :license/type :link
                                    :license/organization "nbn"
                                    :license/title {:en "Demo license"
-                                                   :fi "Demolisenssi"}
+                                                   :fi "Demolisenssi"
+                                                   :sv "Demolicens"}
                                    :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                  :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         extra-license (create-license! {:actor owner
                                         :license/type :link
                                         :license/organization "nbn"
                                         :license/title {:en "Extra license"
-                                                        :fi "Ylimääräinen lisenssi"}
+                                                        :fi "Ylimääräinen lisenssi"
+                                                        :sv "Extra licens"}
                                         :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                       :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+                                                       :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                       :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         license-organization-owner (create-license! {:actor organization-owner1
                                                      :license/type :link
                                                      :license/organization "organization1"
                                                      :license/title {:en "License owned by organization owner"
-                                                                     :fi "Lisenssi, jonka omistaa organisaatio-omistaja"}
+                                                                     :fi "Lisenssi, jonka omistaa organisaatio-omistaja"
+                                                                     :sv "Licens som ägs av organisationägare"}
                                                      :license/link {:en "https://www.apache.org/licenses/LICENSE-2.0"
-                                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"}})
+                                                                    :fi "https://www.apache.org/licenses/LICENSE-2.0"
+                                                                    :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         _ (create-disabled-license! {:actor owner
                                      :license/organization "nbn"})
         attachment-license (create-attachment-license! {:actor owner
@@ -998,45 +1092,59 @@
                                         :licid license-organization-owner})
 
         form (create-all-field-types-example-form! owner "nbn" "Example form with all field types")
-        form-private-thl (create-form! {:actor owner :form/organization "thl" :form/title "Simple form" :form/fields [{:field/title {:en "Simple text field"
-                                                                                                                                     :fi "Yksinkertainen tekstikenttä"}
-                                                                                                                       :field/optional false
-                                                                                                                       :field/type :text
-                                                                                                                       :field/max-length 100
-                                                                                                                       :field/privacy :private}]})
-        form-private-hus (create-form! {:actor owner :form/organization "hus" :form/title "Simple form" :form/fields [{:field/title {:en "Simple text field"
-                                                                                                                                     :fi "Yksinkertainen tekstikenttä"}
-                                                                                                                       :field/optional false
-                                                                                                                       :field/type :text
-                                                                                                                       :field/max-length 100
-                                                                                                                       :field/privacy :private}]})
+        form-private-thl (create-form! {:actor owner
+                                        :form/organization "thl"
+                                        :form/title "Simple form"
+                                        :form/fields [{:field/title {:en "Simple text field"
+                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                     :sv "Textfält"}
+                                                       :field/optional false
+                                                       :field/type :text
+                                                       :field/max-length 100
+                                                       :field/privacy :private}]})
+        form-private-hus (create-form! {:actor owner
+                                        :form/organization "hus"
+                                        :form/title "Simple form"
+                                        :form/fields [{:field/title {:en "Simple text field"
+                                                                     :fi "Yksinkertainen tekstikenttä"
+                                                                     :sv "Textfält"}
+                                                       :field/optional false
+                                                       :field/type :text
+                                                       :field/max-length 100
+                                                       :field/privacy :private}]})
         form-organization-owner (create-all-field-types-example-form! organization-owner1 "organization1" "Owned by organization owner")]
     (create-archived-form! owner)
 
     ;; Create catalogue items
     (create-catalogue-item! {:actor owner
                              :title {:en "Master workflow"
-                                     :fi "Master-työvuo"}
+                                     :fi "Master-työvuo"
+                                     :sv "Master-arbetsflöde"}
                              :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"}
+                                       :fi "http://www.google.fi"
+                                       :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:master workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Decider workflow"
-                                     :fi "Päättäjätyövuo"}
+                                     :fi "Päättäjätyövuo"
+                                     :sv "Arbetsflöde för beslutsfattande"}
                              :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"}
+                                       :fi "http://www.google.fi"
+                                       :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:decider workflows)})
     (let [catid (create-catalogue-item! {:actor owner
                                          :title {:en "Default workflow"
-                                                 :fi "Oletustyövuo"}
+                                                 :fi "Oletustyövuo"
+                                                 :sv "Standard arbetsflöde"}
                                          :infourl {:en "http://www.google.com"
-                                                   :fi "http://www.google.fi"}
+                                                   :fi "http://www.google.fi"
+                                                   :sv "http://www.google.se"}
                                          :resource-id res1
                                          :form-id form
                                          :organization "nbn"
@@ -1044,29 +1152,34 @@
       (create-applications! catid users))
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 2"
-                                     :fi "Oletustyövuo 2"}
+                                     :fi "Oletustyövuo 2"
+                                     :sv "Standard arbetsflöde 2"}
                              :resource-id res2
                              :form-id form-private-thl
                              :organization "csc"
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 3"
-                                     :fi "Oletustyövuo 3"}
+                                     :fi "Oletustyövuo 3"
+                                     :sv "Standard arbetsflöde 3"}
                              :resource-id res3
                              :form-id form-private-hus
                              :organization "hus"
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
-                                     :fi "Oletustyövuo ylimääräisellä lisenssillä"}
+                                     :fi "Oletustyövuo ylimääräisellä lisenssillä"
+                                     :sv "Arbetsflöde med extra licens"}
                              :resource-id res-with-extra-license
                              :form-id form
                              :organization "nbn"
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:title {:en "Auto-approve workflow"
-                                     :fi "Työvuo automaattisella hyväksynnällä"}
+                                     :fi "Työvuo automaattisella hyväksynnällä"
+                                     :sv "Arbetsflöde med automatisk godkänning"}
                              :infourl {:en "http://www.google.com"
-                                       :fi "http://www.google.fi"}
+                                       :fi "http://www.google.fi"
+                                       :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
                              :organization "nbn"
@@ -1082,7 +1195,8 @@
                                     :handlers [(:approver1 users) (:approver2 users)]})
           thl-catid (create-catalogue-item! {:actor owner
                                              :title {:en "THL catalogue item"
-                                                     :fi "THL katalogi-itemi"}
+                                                     :fi "THL katalogi-itemi"
+                                                     :sv "THL katalogartikel"}
                                              :resource-id thl-res
                                              :form-id thlform
                                              :organization "thl"
@@ -1090,7 +1204,8 @@
       (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
     (let [default-disabled (create-catalogue-item! {:actor owner
                                                     :title {:en "Default workflow (disabled)"
-                                                            :fi "Oletustyövuo (pois käytöstä)"}
+                                                            :fi "Oletustyövuo (pois käytöstä)"
+                                                            :sv "Standard arbetsflöde (avaktiverat)"}
                                                     :resource-id res1
                                                     :form-id form
                                                     :organization "nbn"
@@ -1101,7 +1216,8 @@
       (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
     (let [default-expired (create-catalogue-item! {:actor owner
                                                    :title {:en "Default workflow (expired)"
-                                                           :fi "Oletustyövuo (vanhentunut)"}
+                                                           :fi "Oletustyövuo (vanhentunut)"
+                                                           :sv "Standard arbetsflöde (utgånget)"}
                                                    :resource-id res1
                                                    :form-id form
                                                    :organization "nbn"
@@ -1109,7 +1225,8 @@
       (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
     (create-catalogue-item! {:actor organization-owner1
                              :title {:en "Owned by organization owner"
-                                     :fi "Organisaatio-omistajan omistama"}
+                                     :fi "Organisaatio-omistajan omistama"
+                                     :sv "Ägas av organisationägare"}
                              :resource-id res-organization-owner
                              :form-id form-organization-owner
                              :organization "organization1"

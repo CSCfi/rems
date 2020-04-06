@@ -16,6 +16,7 @@
  :oidc-client-id "65TIN1Joo6EvsHSPCN4zyCaxxPh0WJF1"
  :oidc-client-secret "e1yr9R_8WW3Xg03wm6wJ4UmNVVjiqdVhwFGvHhttyoRS3h04F4MGh0zRaV7vKm30"
 
+ :languages [:en :fi :sv]
  :public-url "http://localhost:3000/"
  :render-css-file? true
  :extra-pages [{:id "about"

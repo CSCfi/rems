@@ -19,7 +19,10 @@
 (defn validate-forms []
   (doseq [template (form/get-form-templates {})]
     (validate-form-template template)
-    (assert (nil? (common-form/validate-form-template template (:languages env))))))
+    (when-let [errors (common-form/validate-form-template template (:languages env))]
+      (throw (ex-info "Form template validation failed"
+                      {:template template
+                       :errors errors})))))
 
 (defn- valid-organization? [org]
   (contains? (set (:organizations env)) org))
