@@ -3,6 +3,8 @@
  :nrepl-port 7001
  :public-url "http://localhost:3001/"
  :database-url "postgresql://localhost/rems_test?user=rems_test"
+ :database-lock-timeout "4s"
+ :database-idle-in-transaction-session-timeout "8s"
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-test"
  :authentication :fake-shibboleth

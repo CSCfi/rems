@@ -32,16 +32,17 @@
     (rems.email.core/try-send-emails!) ;; remove a bit of clutter from the log
     (with-redefs [rems.application.commands/handle-command sleeping-handle-command]
       (testing "lock_timeout"
-        ;; more than the lock timeout of 10s, less than the connection idle timeout of 20s
-        (reset! sleep-time (* 15 1000))
+        ;; more than the lock timeout of 4s, less than the connection idle timeout of 8s
+        ;; these shorter-than-default timeouts are in dev-config.edn and test-config.edn
+        (reset! sleep-time (* 6 1000))
         (let [commands [(future (save-draft!)) (future (save-draft!))]]
           (is (= #{{:status 200 :body {:success true}}
                    {:status 503 :body "please try again"}}
                  (set (mapv deref commands))))))
       (testing "idle_in_transaction_session_timeout"
         (testing "slow transaction should hit timeout"
-          ;; more than the connection idle timeout of 20s
-          (reset! sleep-time (* 30 1000))
+          ;; more than the connection idle timeout of 8s
+          (reset! sleep-time (* 10 1000))
           (is (= {:status 500 :body "{\"type\":\"unknown-exception\",\"class\":\"clojure.lang.ExceptionInfo\"}"}
                  (save-draft!))))
         (testing "subsequent transactions should pass"
