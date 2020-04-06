@@ -26,7 +26,8 @@
             [ring.util.response :as response]
             [schema.core :as s])
   (:import [rems.auth ForbiddenException UnauthorizedException]
-           rems.InvalidRequestException))
+           rems.InvalidRequestException
+           rems.TryAgainException))
 
 (defn- plain-text [response]
   (response/content-type response "text/plain"))
@@ -57,6 +58,12 @@
 (defn not-found-handler
   [request]
   (-> (not-found "not found")
+      (plain-text)))
+
+(defn try-again-handler
+  [exception _ex-data _request]
+  (log/error "try again" exception)
+  (-> (service-unavailable "please try again")
       (plain-text)))
 
 (defn with-logging
@@ -102,6 +109,7 @@
      :exceptions {:handlers {UnauthorizedException unauthorized-handler
                              ForbiddenException forbidden-handler
                              InvalidRequestException invalid-handler
+                             TryAgainException try-again-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                              ;; add logging to validation handlers
                              ::ex/request-validation (with-logging ex/request-validation-handler)

@@ -16,7 +16,8 @@
             [rems.db.workflow :as workflow]
             [rems.email.core :as email]
             [rems.form-validation :as form-validation]
-            [rems.util :refer [secure-token]]))
+            [rems.util :refer [secure-token]])
+  (:import rems.TryAgainException))
 
 (defn- run-entitlements [new-events]
   (doseq [event new-events]
@@ -65,7 +66,14 @@
   ;; currently and would cause API calls to fail with HTTP status 500.
   ;; With this lock, API calls block more but never result in
   ;; transaction conflicts.
-  (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
+  ;;
+  ;; See docs/architecture/010-transactions.md for more info.
+  (try
+    (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
+    (catch org.postgresql.util.PSQLException e
+      (if (.contains (.getMessage e) "lock timeout")
+        (throw (TryAgainException. e))
+        (throw e))))
   (let [app (when-let [app-id (:application-id cmd)]
               (applications/get-unrestricted-application app-id))
         result (commands/handle-command cmd app command-injections)]

@@ -6,7 +6,10 @@
 
 (use-fixtures
   :once
-  api-fixture)
+  api-fixture
+  (fn [f]
+    (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api true)]
+      (f))))
 
 (defn- validate-alice-result [data]
   (is (= 1 (count data)))
@@ -58,6 +61,16 @@
                          handler)
             body (read-body response)]
         (is (= "forbidden" body))))))
+
+(deftest permissions-test-api-disabled
+  (with-redefs [rems.config/env (assoc rems.config/env :enable-permissions-api false)]
+    (let [api-key "42"]
+      (testing "when permissions api is disabled"
+        (let [response (-> (request :get "/api/permissions/alice")
+                       (authenticate api-key "handler")
+                       handler)
+              body (read-body response)]
+          (is (= "permissions api not implemented" body)))))))
 
 
 

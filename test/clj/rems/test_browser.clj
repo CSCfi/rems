@@ -7,8 +7,8 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [select ALL]]
             [etaoin.api :refer :all]
-            [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
@@ -39,14 +39,6 @@
         (log/warn e "WebDriver failed to start, retrying...")
         (run)))))
 
-(defn fixture-standalone [f]
-  (mount/start)
-  (migrations/migrate ["migrate"] (select-keys rems.config/env [:database-url]))
-  (test-data/create-test-data!)
-  (f)
-  (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-  (mount/stop))
-
 (defn smoke-test [f]
   (let [response (http/get (str +test-url+ "js/app.js"))]
     (assert (= 200 (:status response))
@@ -59,7 +51,7 @@
 
 (use-fixtures
   :once
-  fixture-standalone
+  standalone-fixture
   smoke-test)
 
 ;;; basic navigation
