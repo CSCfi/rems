@@ -35,7 +35,10 @@
                                            :mail-from "rems@rems.rems"
                                            :entitlements-target {:add (str (:uri entitlements-server) "/add")
                                                                  :remove (str (:uri entitlements-server) "/remove")}
-                                           :event-notification-targets [(str (:uri event-server) "/event")])
+                                           :event-notification-targets [{:url (str (:uri event-server) "/event")
+                                                                         :event-types [:application.event/created
+                                                                                       :application.event/submitted
+                                                                                       :application.event/approved]}])
                     postal.core/send-message (fn [_host message] (swap! email-atom conj message))]
         (let [api-key "42"
               owner-id "owner"
@@ -282,7 +285,7 @@
                                  (get "postData")
                                  json/parse-string
                                  (select-keys [:application/id :event/type :event/actor
-                                               :application/field-values :application/resources :application/forms])))]
+                                               :application/resources :application/forms])))]
                 (is (= [{:application/id application-id
                          :event/type "application.event/created"
                          :event/actor applicant-id
@@ -290,21 +293,10 @@
                                                  {:resource/ext-id resource-ext-id2 :catalogue-item/id catalogue-item-id2}]
                          :application/forms [{:form/id form-id} {:form/id form-id2}]}
                         {:application/id application-id
-                         :event/type "application.event/draft-saved"
-                         :event/actor applicant-id
-                         :application/field-values [{:value "e2e test contents" :field "fld1" :form form-id}
-                                                    {:value "e2e test contents 2" :field "e2e_fld_2" :form form-id2}]}
-                        {:application/id application-id
-                         :event/type "application.event/licenses-accepted"
-                         :event/actor applicant-id}
-                        {:application/id application-id
                          :event/type "application.event/submitted"
                          :event/actor applicant-id}
                         {:application/id application-id
                          :event/type "application.event/approved"
-                         :event/actor handler-id}
-                        {:application/id application-id
-                         :event/type "application.event/closed"
                          :event/actor handler-id}]
                        events))))))))))
 

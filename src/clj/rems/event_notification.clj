@@ -44,9 +44,15 @@
                 :outbox/event-notification {:target target
                                             :body body}}))
 
+(defn wants? [target event]
+  (let [whitelist (:event-types target)]
+    (or (empty? whitelist)
+        (some? (some #{(:event/type event)} whitelist)))))
+
 (defn queue-notifications! [events]
   (doseq [event events]
     (let [body (json/generate-string event)]
       (when-let [targets (seq (get rems.config/env :event-notification-targets))]
         (doseq [target targets]
-          (add-to-outbox! target body))))))
+          (when (wants? target event)
+            (add-to-outbox! (:url target) body)))))))
