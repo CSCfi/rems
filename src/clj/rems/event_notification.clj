@@ -20,10 +20,10 @@
           status (:status response)]
       (when-not (= 200 status)
         (log/error "Event notification response status" status)
-        {:status status}))
+        (str "status " status)))
     (catch Exception e
       (log/error "Event notification failed" e)
-      {:exception (str e)})))
+      (str "exception " e))))
 
 (defn process-outbox! []
   (doseq [entry (outbox/get-entries {:type :event-notification :due-now? true})]
