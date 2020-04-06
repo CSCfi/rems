@@ -25,12 +25,12 @@
 
         old-handle-command rems.application.commands/handle-command
         sleep-time (atom nil)
-        slow-handle-command (fn [cmd application injections]
-                              (when-let [time @sleep-time]
-                                (Thread/sleep time))
-                              (old-handle-command cmd application injections))]
+        sleeping-handle-command (fn [cmd application injections]
+                                   (when-let [time @sleep-time]
+                                     (Thread/sleep time))
+                                   (old-handle-command cmd application injections))]
     (rems.email.core/try-send-emails!) ;; remove a bit of clutter from the log
-    (with-redefs [rems.application.commands/handle-command slow-handle-command]
+    (with-redefs [rems.application.commands/handle-command sleeping-handle-command]
       (testing "lock_timeout"
         ;; more than the lock timeout of 10s, less than the connection idle timeout of 20s
         (reset! sleep-time (* 15 1000))
