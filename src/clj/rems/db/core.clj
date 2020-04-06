@@ -9,13 +9,16 @@
             [rems.config :refer [env]]))
 
 ;; See docs/architecture/010-transactions.md
-(def ^:private +hikaricp-settings+
-  {:connection-init-sql "SET lock_timeout TO '10s'; SET idle_in_transaction_session_timeout TO '20s';"})
+(defn- hikaricp-settings []
+  ;; HikariConfig wants an actual String, no support for parameterized queries...
+  {:connection-init-sql
+   (str "SET lock_timeout TO '" (:database-lock-timeout env) "'; "
+        "SET idle_in_transaction_session_timeout TO '" (:database-idle-in-transaction-session-timeout env) "';")})
 
 (defstate ^:dynamic *db*
-  :start (try (let [db (cond (:test (mount/args)) (conman/connect! (merge +hikaricp-settings+
+  :start (try (let [db (cond (:test (mount/args)) (conman/connect! (merge (hikaricp-settings)
                                                                           {:jdbc-url (:test-database-url env)}))
-                             (:database-url env) (conman/connect! (merge +hikaricp-settings+
+                             (:database-url env) (conman/connect! (merge (hikaricp-settings)
                                                                          {:jdbc-url (:database-url env)}))
                              ;; the jndi codepath doesn't use hikari, so we can't use +hikaricp-settings+
                              ;; TODO figure out another way to set lock_timeout in this case

@@ -21,6 +21,11 @@
  :database-url nil
  :database-jndi-name "java:comp/env/jdbc/rems"
 
+ ;; Value for PostgreSQL lock_timeout
+ :database-lock-timeout "10s"
+ ;; Value for PostgreSQL idle_in_transaction_session_timeout
+ :database-idle-in-transaction-session-timeout "20s"
+
  ;; Path to a writable directory where to store the Lucene search index files.
  :search-index-path "search-index"
 
