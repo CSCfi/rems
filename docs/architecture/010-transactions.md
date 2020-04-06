@@ -4,8 +4,8 @@ Authors: @opqdonut
 
 ## Introduction
 
-This is an ADR written in aftermath to a production incident to
-describe our current design choices with database transactions.
+This is an ADR written in aftermath to a production incident (#2102)
+to describe our current design choices with database transactions.
 
 ## Design philosophy
 
