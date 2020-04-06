@@ -111,6 +111,7 @@
 
   :npm {:devDependencies [;; cljs testing
                           [karma "3.1.1"]
+                          [karma-junit-reporter "2.0.1"]
                           [karma-cljs-test "0.1.0"]
                           [karma-chrome-launcher "2.2.0"]
                           ;; printing to pdf
@@ -118,7 +119,10 @@
 
   :doo {:build "test"
         :paths {:karma "node_modules/karma/bin/karma"}
-        :alias {:default [:chrome-headless]}}
+        :alias {:default [:chrome-headless]}
+        :karma {:config {"plugins" ["karma-junit-reporter"]
+                         "reporters" ["progress" "junit"]
+                         "junitReporter" {"outputDir" "target/test-results"}}}}
 
   :aliases {"kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
             "browsertests" ["do" ["cljsbuild" "once"] ["kaocha" "browser"]]
@@ -159,7 +163,8 @@
                                 [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
                                 [criterium "0.4.5"]
                                 [doo "0.1.11"]
-                                [lambdaisland/kaocha "0.0-590"]
+                                [lambdaisland/kaocha "1.0-612"]
+                                [lambdaisland/kaocha-junit-xml "0.0-70"]
                                 [etaoin "0.3.6"]
                                 [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
                                 [re-frisk "0.5.4.1"]

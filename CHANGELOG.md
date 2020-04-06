@@ -11,6 +11,9 @@ Changes since v2.9
 ### Additions
 - Swedish localizations
 
+### Fixes
+- REMS now exits with status 0 on SIGINT and SIGTERM
+
 ## v2.9 "Olarinluoma" 2020-03-26
 
 ### Breaking changes

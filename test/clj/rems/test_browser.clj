@@ -11,6 +11,7 @@
             [mount.core :as mount]
             [rems.config]
             [rems.db.test-data :as test-data]
+            [rems.db.user-settings :as user-settings]
             [rems.standalone])
   (:import (java.net SocketException)))
 
@@ -84,7 +85,8 @@
     (screenshot (io/file reporting-dir "logged-in.png"))))
 
 (defn logout []
-  (click *driver* :logout))
+  (click *driver* :logout)
+  (wait-visible *driver* {:css ".login-component"}))
 
 (defn- wait-page-loaded []
   (wait-invisible *driver* {:css ".fa-spinner"}))
@@ -190,6 +192,12 @@
 (defn get-application-id []
   (last (str/split (get-url *driver*) #"/")))
 
+(defn get-attachments
+  ([]
+   (get-attachments {:css "a.attachment-link"}))
+  ([selector]
+   (mapv (partial get-element-text-el *driver*) (query-all *driver* selector))))
+
 ;; applications page
 
 (defn get-application-summary [application-id]
@@ -230,6 +238,7 @@
         (set-date "Date field" "2050-01-02")
         (fill-form-field "Email field" "user@example.com")
         (upload-file *driver* attachment-field-selector "test-data/test.txt")
+        (wait-predicate #(= ["test.txt"] (get-attachments)))
 
         (is (not (field-visible? "Conditional field"))
             "Conditional field is not visible before selecting option")
@@ -302,12 +311,6 @@
               (testing "check a field answer"
                 (is (= "Test name" (get-element-text *driver* description-field-selector)))))))))))
 
-(defn get-attachments
-  ([]
-   (get-attachments {:css "a.attachment-link"}))
-  ([selector]
-   (mapv (partial get-element-text-el *driver*) (query-all *driver* selector))))
-
 (deftest test-handling
   (let [applicant "alice"
         handler "developer"
@@ -336,6 +339,7 @@
       (testing "open the approve form"
         (scroll-and-click *driver* :approve-reject-action-button))
       (testing "add a comment and two attachments"
+        (wait-visible *driver* :comment-approve-reject)
         (fill-human *driver* :comment-approve-reject "this is a comment")
         (upload-file *driver* :upload-approve-reject-input "test-data/test.txt")
         (wait-visible *driver* [{:css "a.attachment-link"}])
@@ -384,6 +388,9 @@
       (login-as "alice")
       (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"})
       (wait-page-loaded))
+
+    (testing "wait for language change to show in the db"
+      (wait-predicate #(= :fi (:language (user-settings/get-user-settings "alice")))))
 
     (testing "changed language must have been saved for user"
       (logout)

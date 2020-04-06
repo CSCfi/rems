@@ -1,5 +1,6 @@
 (ns rems.common.util
   (:require [medley.core :refer [map-vals]]
+            [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
 
@@ -171,15 +172,15 @@
                        '({:b 2 :c 2}))))))
 
 (defn recursive-keys [m]
-  (mapcat (fn [[k v]]
-            (if (map? v)
-              (map (partial cons k) (recursive-keys v))
-              [(list k)]))
-          m))
+  (apply set/union
+         (for [[k v] m]
+           (if (map? v)
+             (set (map (partial cons k) (recursive-keys v)))
+             #{(list k)}))))
 
 (deftest test-recursive-keys
-  (is (= [[:a] [:b]] (recursive-keys {:a [1] :b "foo"})))
-  (is (= [[:a :b] [:a :c] [:a :d :e] [:a :d :f]]
+  (is (= #{[:a] [:b]} (recursive-keys {:a [1] :b "foo"})))
+  (is (= #{[:a :b] [:a :c] [:a :d :e] [:a :d :f]}
          (recursive-keys {:a {:b 1 :c nil :d {:e "foo" :f [3]}}}))))
 
 (defn parse-int [s]
