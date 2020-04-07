@@ -190,5 +190,5 @@
                      :application.event/resources-changed
                      :application.event/revoked}
                    (:event/type event))
-    (let [application (applications/get-unrestricted-application (:application/id event))]
+    (let [application (applications/get-application-internal (:application/id event))]
       (update-entitlements-for-application application (:event/actor event)))))

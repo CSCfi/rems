@@ -28,7 +28,7 @@
 (defn- revokes-to-blacklist [new-events]
   (doseq [event new-events]
     (when (= :application.event/revoked (:event/type event))
-      (let [application (applications/get-unrestricted-application (:application/id event))]
+      (let [application (applications/get-application-internal (:application/id event))]
         (doseq [resource (:application/resources application)]
           (blacklist/add-users-to-blacklist! {:users (application-util/applicant-and-members application)
                                               :resource/ext-id (:resource/ext-id resource)
@@ -77,7 +77,7 @@
         (throw (TryAgainException. e))
         (throw e))))
   (let [app (when-let [app-id (:application-id cmd)]
-              (applications/get-unrestricted-application app-id))
+              (applications/get-application-internal app-id))
         result (commands/handle-command cmd app command-injections)]
     (when-not (:errors result)
       (doseq [event (:events result)]
