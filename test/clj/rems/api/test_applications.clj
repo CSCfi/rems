@@ -1241,9 +1241,9 @@
                                                 api-key applicant))))
     (testing "reporter can get raw application"
       (is (= {:application/id app-id
-              :rems.permissions/user-roles {(keyword applicant) ["applicant"]
-                                            (keyword handler) ["handler"]
-                                            (keyword reporter) ["reporter"]}}
+              :application/user-roles {(keyword applicant) ["applicant"]
+                                       (keyword handler) ["handler"]
+                                       (keyword reporter) ["reporter"]}}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
-                 (select-keys [:application/id :rems.permissions/user-roles])))))))
+                 (select-keys [:application/id :application/user-roles])))))))

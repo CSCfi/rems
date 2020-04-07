@@ -262,8 +262,8 @@
   (-> Application
       (dissoc :application/permissions
               :application/roles)
-      (assoc :rems.permissions/role-permissions s/Any ;; TODO schema for this
-             :rems.permissions/user-roles s/Any))) ;; TODO schema for this
+      (assoc :application/role-permissions s/Any ;; TODO schema for this
+             :application/user-roles s/Any))) ;; TODO schema for this
 
 (s/defschema ApplicationOverview
   (dissoc Application
