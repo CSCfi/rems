@@ -279,15 +279,17 @@
             (event-notification/process-outbox!)
 
             (testing "event notifications"
-              (let [events (for [r (stub/recorded-requests event-server)]
+              (let [requests (stub/recorded-requests event-server)
+                    events (for [r requests]
                              (-> r
                                  :body
-                                 (get "postData")
+                                 (get "content")
                                  json/parse-string
                                  (select-keys [:application/id :event/type :event/actor
                                                :application/resources :application/forms
                                                :event/application])
                                  (update :event/application select-keys [:application/id :application/state])))]
+                (is (every? (comp #{"PUT"} :method) requests))
                 (is (= [{:application/id application-id
                          :event/type "application.event/created"
                          :event/actor applicant-id

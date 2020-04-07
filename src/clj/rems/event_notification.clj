@@ -12,12 +12,11 @@
 
 (defn- notify! [target body]
   (try
-    ;; TODO: switch to PUT, which is harder to test because of a bug in stub-http
-    (let [response (http/post target
-                              {:body body
-                               :content-type :json
-                               :socket-timeout 2500
-                               :conn-timeout 2500})
+    (let [response (http/put target
+                             {:body body
+                              :content-type :json
+                              :socket-timeout 2500
+                              :conn-timeout 2500})
           status (:status response)]
       (when-not (= 200 status)
         (log/error "Event notification response status" status)
