@@ -61,7 +61,7 @@
          {:handler #(rf/dispatch-sync [:loaded-theme %])
           :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
-;;; subscriptions
+;;;; Global events & subscriptions
 
 (rf/reg-sub
  :page
@@ -89,8 +89,6 @@
  :theme
  (fn [db _]
    (:theme db)))
-
-;;; handlers
 
 (rf/reg-event-db
  :initialize-db
@@ -183,6 +181,16 @@
  ::grab-focus?
  (fn [db _]
    (::grab-focus? db)))
+
+(rf/reg-event-fx
+ :after-translations-are-loaded
+ (fn [{:keys [db]} [_ on-loaded]]
+   (if (seq (:translations db))
+     (on-loaded)
+     (.setTimeout js/window #(rf/dispatch [:after-translations-are-loaded on-loaded]) 100))
+   {}))
+
+;;;; Pages
 
 (defn home-page []
   (if @(rf/subscribe [:user])
@@ -311,16 +319,7 @@
      [main-content page-id grab-focus?]
      [footer]]))
 
-(rf/reg-event-fx
- :after-translations-are-loaded
- (fn [{:keys [db]} [_ on-loaded]]
-   (if (seq (:translations db))
-     (on-loaded)
-     (.setTimeout js/window #(rf/dispatch [:after-translations-are-loaded on-loaded]) 100))
-   {}))
-
-;; -------------------------
-;; Routes
+;;;; Routes
 
 (secretary/defroute "/" []
   (rf/dispatch [:set-active-page :home]))
@@ -475,8 +474,7 @@
 (secretary/defroute "*" []
   (rf/dispatch [:set-active-page :not-found]))
 
-;; -------------------------
-;; History
+;;;; History
 ;; must be called after routes have been defined
 
 (defn hook-browser-navigation! []
@@ -510,9 +508,7 @@
                  (fn [_event]
                    (rf/dispatch [:rems.spa/user-triggered-navigation]))))
 
-
-;; -------------------------
-;; Initialize app
+;;;; Initialize app
 
 (defn mount-components []
   (rf/clear-subscription-cache!)
