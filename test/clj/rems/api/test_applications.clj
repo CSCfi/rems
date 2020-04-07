@@ -1229,3 +1229,21 @@
                           app-id)))
       (is (contains? (get-ids (get-handled-todos decider))
                      app-id)))))
+
+(deftest test-application-raw
+  (let [api-key "42"
+        applicant "alice"
+        handler "developer"
+        reporter "reporter"
+        app-id (test-data/create-application! {:actor applicant})]
+    (testing "applicant can't get raw application"
+      (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/raw") nil
+                                                api-key applicant))))
+    (testing "reporter can get raw application"
+      (is (= {:application/id app-id
+              :rems.permissions/user-roles {(keyword applicant) ["applicant"]
+                                            (keyword handler) ["handler"]
+                                            (keyword reporter) ["reporter"]}}
+             (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
+                           api-key reporter)
+                 (select-keys [:application/id :rems.permissions/user-roles])))))))
