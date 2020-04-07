@@ -50,11 +50,11 @@
         (some? (some #{(:event/type event)} whitelist)))))
 
 (defn queue-notifications! [events]
-  (doseq [event events]
-    (let [application (applications/get-application (:application/id event))
-          event-with-app (assoc event :event/application application)
-          body (json/generate-string event-with-app)]
-      (when-let [targets (seq (get rems.config/env :event-notification-targets))]
+  (when-let [targets (seq (get rems.config/env :event-notification-targets))]
+    (doseq [event events]
+      (let [application (applications/get-application (:application/id event))
+            event-with-app (assoc event :event/application application)
+            body (json/generate-string event-with-app)]
         (doseq [target targets]
           (when (wants? target event)
             (add-to-outbox! (:url target) body)))))))
