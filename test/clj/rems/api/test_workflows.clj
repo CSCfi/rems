@@ -166,7 +166,7 @@
         (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
     (sync-with-database-time)
     (testing "application is initialized with the correct set of handlers"
-      (let [app (applications/get-application-raw app-id)]
+      (let [app (applications/get-application app-id)]
         (is (= #{"handler" "carl"}
                (application->handler-user-ids app)))))
 
@@ -207,7 +207,7 @@
                                       handler))))
 
     (testing "application is updated when handlers are changed"
-      (let [app (applications/get-application-raw app-id)]
+      (let [app (applications/get-application app-id)]
         (is (= #{"owner" "alice"}
                (application->handler-user-ids app)))))))
 

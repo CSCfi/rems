@@ -51,7 +51,7 @@
 
 (defn queue-notifications! [events]
   (doseq [event events]
-    (let [application (applications/get-application-raw (:application/id event))
+    (let [application (applications/get-application (:application/id event))
           event-with-app (assoc event :event/application application)
           body (json/generate-string event-with-app)]
       (when-let [targets (seq (get rems.config/env :event-notification-targets))]

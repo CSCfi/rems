@@ -21,7 +21,7 @@
 (defn- event-to-emails [event]
   (when-let [app-id (:application/id event)]
     (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
-                              (applications/get-application-raw app-id))))
+                              (applications/get-application app-id))))
 
 (defn- enqueue-email! [email]
   (outbox/put! {:outbox/type :email

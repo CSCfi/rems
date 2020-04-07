@@ -85,8 +85,8 @@
                                                   :form-id form-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant})
-        external-id (:application/external-id (applications/get-application-raw app-id))
-        get-application #(applications/get-application-raw app-id)]
+        external-id (:application/external-id (applications/get-application app-id))
+        get-application #(applications/get-application app-id)]
 
     (testing "draft applications not included as default"
       (is (= ""
