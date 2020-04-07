@@ -71,3 +71,10 @@
                  :database-url "HIDDEN"
                  :test-database-url "HIDDEN"
                  :oidc-client-secret "HIDDEN")))))
+
+(def keepalive-api
+  (context "/keepalive" []
+    :tags ["keepalive"]
+    (GET "/" []
+      :summary "Restarts session timeout."
+      (ok))))

@@ -56,3 +56,8 @@
     (is (:healthy body))
     (is (string? (:latest-event body)))
     (is (not (empty? (:latest-event body))))))
+
+(deftest test-keepalive-api
+  (assert-response-is-ok (-> (request :get "/keepalive")
+                             handler))
+  (is true))

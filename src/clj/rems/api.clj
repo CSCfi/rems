@@ -129,6 +129,7 @@
       public/translations-api
       public/theme-api
       public/config-api
+      public/keepalive-api
 
       my-applications-api
       applications-api
