@@ -90,6 +90,11 @@
    :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
                                                                   (blacklist/blacklisted? userid resource)))})
 
+;; TODO rename
+;;  get-unrestricted-application -> get-application-internal
+;;  get-application-raw -> get-application
+;;  get-application -> get-application-for-user
+
 (defn get-unrestricted-application
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
@@ -98,6 +103,12 @@
     (if (empty? events)
       nil ; application not found
       (model/build-application-view events fetcher-injections))))
+
+(defn get-application-raw
+  "Full application state with internal information hidden. No personalized for any users. Suitable for public APIs"
+  [application-id]
+  (when-let [application (get-unrestricted-application application-id)]
+    (model/hide-non-public-information application)))
 
 (defn get-application
   "Returns the part of application state which the specified user

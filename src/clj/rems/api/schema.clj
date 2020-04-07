@@ -261,13 +261,8 @@
 (s/defschema ApplicationRaw
   (-> Application
       (dissoc :application/permissions
-              :application/roles
-              :application/invited-members s/Any)
-      (assoc :application/invitation-tokens s/Any ;; TODO this should be hidden
-             :application/past-members s/Any ;; TODO schema for this
-             (s/optional-key :rems.application.model/latest-decision-request-by-user) s/Any ;; TODO hide?
-             (s/optional-key :rems.application.model/latest-review-request-by-user) s/Any ;; TODO hide?
-             :rems.permissions/role-permissions s/Any ;; TODO schema for this
+              :application/roles)
+      (assoc :rems.permissions/role-permissions s/Any ;; TODO schema for this
              :rems.permissions/user-roles s/Any))) ;; TODO schema for this
 
 (s/defschema ApplicationOverview

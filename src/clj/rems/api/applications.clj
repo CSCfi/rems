@@ -260,7 +260,7 @@
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema ApplicationRaw}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-unrestricted-application application-id)]
+      (if-let [app (applications/get-application-raw application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
