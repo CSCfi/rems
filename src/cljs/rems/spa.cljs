@@ -40,6 +40,7 @@
             [rems.focus :as focus]
             [rems.common.git :as git]
             [rems.guide-page :refer [guide-page]]
+            [rems.keepalive :as keepalive]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
@@ -518,6 +519,7 @@
   (version-info)
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
+  (keepalive/register-keepalive-listeners!)
   (-> (p/all [(fetch-translations!)
               (fetch-theme!)
               (config/fetch-config!)
