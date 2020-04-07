@@ -10,6 +10,7 @@ Changes since v2.10
 
 ### Additions
 - REMS sessions now stay alive while the user is active in the browser (#2107)
+- The `/api/users/active` API lists which users have active sessions at the moment.
 
 ## v2.10 "Riihitontuntie" 2020-04-06
 
