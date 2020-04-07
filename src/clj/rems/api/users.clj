@@ -3,6 +3,7 @@
             [rems.api.schema :refer :all]
             [rems.api.util] ; required for route :roles
             [rems.db.users :as users]
+            [rems.middleware :as middleware]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -28,4 +29,10 @@
       :body [command CreateUserCommand]
       :return SuccessResponse
       (create-user command)
-      (ok {:success true}))))
+      (ok {:success true}))
+
+    (GET "/active" []
+      :summary "List active users"
+      :roles #{:owner}
+      :return [UserWithAttributes]
+      (ok (middleware/get-active-users)))))

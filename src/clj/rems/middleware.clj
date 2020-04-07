@@ -213,10 +213,22 @@
         handler
         (update :headers update-present "Location" unrelativize-url))))
 
+(def session-store (ttl-memory-store (* 60 30)))
+
+(defn get-active-users []
+  ;; We're poking into the internals of ring-ttl-session.core. Would
+  ;; be neater to implement our own introspectable session store.
+  (doall
+   (for [session (vals (.em_map session-store))
+         :let [identity (:identity session)]
+         :when identity]
+     (users/format-user identity))))
+
+
 (def +wrap-defaults-settings+
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
-      (assoc-in [:session :store] (ttl-memory-store (* 60 30)))
+      (assoc-in [:session :store] session-store)
       (assoc-in [:session :flash] true)
       ; ring-defaults sets the cookies with strict same-site limits, but this breaks OpenID Connect logins.
       ; Different options for using lax cookies are described in the authentication ADR.
