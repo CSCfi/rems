@@ -71,3 +71,14 @@
                  :database-url "HIDDEN"
                  :test-database-url "HIDDEN"
                  :oidc-client-secret "HIDDEN")))))
+
+(def keepalive-api
+  (context "/keepalive" []
+    :tags ["keepalive"]
+    (GET "/" []
+      :summary "Restarts session timeout."
+      ;; We use ring-ttl-session, which uses an expiring map to track sessions.
+      ;; We install the wrap-session middleware via wrap-defaults in rems.middleware.
+      ;; The session middleware looks up the user's session, and doing
+      ;; so refreshes the key in the expiring map.
+      (ok))))

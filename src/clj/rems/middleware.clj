@@ -7,6 +7,7 @@
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
+            [mount.core :as mount]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -213,10 +214,23 @@
         handler
         (update :headers update-present "Location" unrelativize-url))))
 
-(def +wrap-defaults-settings+
+(mount/defstate session-store
+  :start (ttl-memory-store (* 60 30)))
+
+(defn get-active-users []
+  ;; We're poking into the internals of ring-ttl-session.core. Would
+  ;; be neater to implement our own introspectable session store.
+  (doall
+   (for [session (vals (.em_map session-store))
+         :let [identity (:identity session)]
+         :when identity]
+     (users/format-user identity))))
+
+
+(defn wrap-defaults-settings []
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
-      (assoc-in [:session :store] (ttl-memory-store (* 60 30)))
+      (assoc-in [:session :store] session-store)
       (assoc-in [:session :flash] true)
       ; ring-defaults sets the cookies with strict same-site limits, but this breaks OpenID Connect logins.
       ; Different options for using lax cookies are described in the authentication ADR.
@@ -234,7 +248,7 @@
       wrap-api-key-or-csrf-token
       auth/wrap-auth
       wrap-webjars
-      (wrap-defaults +wrap-defaults-settings+)
+      (wrap-defaults (wrap-defaults-settings))
       wrap-internal-error
       wrap-formats
       wrap-request-context))

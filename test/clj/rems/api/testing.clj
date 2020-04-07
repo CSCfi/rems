@@ -8,8 +8,9 @@
             [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
             [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
-            [ring.mock.request :refer :all]
-            [rems.standalone]))
+            [rems.middleware]
+            [rems.standalone]
+            [ring.mock.request :refer :all]))
 
 (def ^{:doc "Run a full REMS HTTP server."} standalone-fixture
   (join-fixtures [test-db-fixture
@@ -22,11 +23,13 @@
 (defn handler-fixture [f]
   (mount/start
    #'rems.locales/translations
+   #'rems.middleware/session-store
    #'rems.handler/handler)
   ;; TODO: silence logging somehow?
   (f)
   (mount/stop
    #'rems.locales/translations
+   #'rems.middleware/session-store
    #'rems.handler/handler))
 
 (def api-fixture
