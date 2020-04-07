@@ -8,7 +8,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each ;; active-api-test needs a fresh session store
   api-fixture)
 
 (deftest users-api-test
@@ -97,3 +97,30 @@
           (authenticate "42" "user-owner")
           handler
           assert-response-is-ok))))
+
+(deftest active-api-test
+  (let [api-key "42"
+        owner "owner"]
+    (testing "no users yet"
+      (is (= []
+             (api-call :get "/api/users/active" nil
+                       api-key owner))))
+    (testing "log in elsa"
+      (let [cookie (login-with-cookies "elsa")]
+        (-> (request :get "/api/keepalive")
+            (header "Cookie" cookie)
+            handler
+            assert-response-is-ok)
+        (is (= [{:userid "elsa" :name "Elsa Roleless" :email "elsa@example.com"}]
+               (api-call :get "/api/users/active" nil
+                         api-key owner)))))
+    (testing "log in frank"
+      (let [cookie (login-with-cookies "frank")]
+        (-> (request :get "/api/keepalive")
+            (header "Cookie" cookie)
+            handler
+            assert-response-is-ok)
+        (is (= #{{:userid "elsa" :name "Elsa Roleless" :email "elsa@example.com"}
+                 {:userid "frank" :name "Frank Roleless" :email "frank@example.com" :organization "frank"}}
+               (set (api-call :get "/api/users/active" nil
+                              api-key owner))))))))

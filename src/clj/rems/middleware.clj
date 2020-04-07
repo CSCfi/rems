@@ -7,6 +7,7 @@
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
+            [mount.core :as mount]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -213,7 +214,8 @@
         handler
         (update :headers update-present "Location" unrelativize-url))))
 
-(def session-store (ttl-memory-store (* 60 30)))
+(mount/defstate session-store
+  :start (ttl-memory-store (* 60 30)))
 
 (defn get-active-users []
   ;; We're poking into the internals of ring-ttl-session.core. Would
@@ -225,7 +227,7 @@
      (users/format-user identity))))
 
 
-(def +wrap-defaults-settings+
+(defn wrap-defaults-settings []
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] session-store)
@@ -246,7 +248,7 @@
       wrap-api-key-or-csrf-token
       auth/wrap-auth
       wrap-webjars
-      (wrap-defaults +wrap-defaults-settings+)
+      (wrap-defaults (wrap-defaults-settings))
       wrap-internal-error
       wrap-formats
       wrap-request-context))
