@@ -169,7 +169,7 @@
                                 [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
                                 [re-frisk "0.5.4.1"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
-                                [se.haleby/stub-http "0.2.7"]]
+                                [se.haleby/stub-http "0.2.8"]]
 
                  :plugins [[lein-ancient "0.6.15"]
                            [lein-doo "0.1.11"]
