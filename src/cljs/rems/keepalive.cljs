@@ -20,5 +20,5 @@
          (assoc db ::next-keepalive (time/plus now keepalive-interval)))))))
 
 (defn register-keepalive-listeners! []
-  (doseq [event ["mousemove", "keydown", "scroll", "touchstart"]]
+  (doseq [event ["mousedown", "mousemove", "keydown", "scroll", "touchstart"]]
     (.addEventListener js/document event (fn [_] (rf/dispatch [::activity])) true)))
