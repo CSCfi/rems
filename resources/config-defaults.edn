@@ -58,6 +58,8 @@
  ;; a :url, and optionally :event-types to receive only the specified
  ;; event types.
  ;;
+ ;; See also: docs/event-notification.md
+ ;;
  ;; Example:
  ;;
  ;; :event-notification-targets [{:url "http://events/everything"}
