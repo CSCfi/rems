@@ -245,7 +245,7 @@
    :time (or time (time/now))})
 
 (defn fill-form! [{:keys [application-id actor field-value optional-fields] :as command}]
-  (let [app (applications/get-application actor application-id)]
+  (let [app (applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      :field-values (for [form (:application/forms app)
@@ -263,7 +263,7 @@
                                                (or field-value "x"))})))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
-  (let [app (applications/get-application actor application-id)]
+  (let [app (applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/accept-licenses
                      :accepted-licenses (map :license/id (:application/licenses app))))))

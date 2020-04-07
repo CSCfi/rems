@@ -120,8 +120,8 @@
                (fn []
                  (with-fixed-time (time/date-time 2010)
                    (fn []
-                     (#'pdf/render-application (applications/get-application handler application-id)))))))))
+                     (#'pdf/render-application (applications/get-application-for-user handler application-id)))))))))
       (testing "pdf rendering succeeds"
         (is (some?
              (with-language :en
-               #(pdf/application-to-pdf-bytes (applications/get-application handler application-id))))))))
+               #(pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id))))))))

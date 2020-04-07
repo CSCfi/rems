@@ -47,7 +47,7 @@
       handler
       read-ok-body))
 
-(defn- get-application [app-id user-id]
+(defn- get-application-for-user [app-id user-id]
   (-> (request :get (str "/api/applications/" app-id))
       (authenticate "42" user-id)
       handler
@@ -171,7 +171,7 @@
                                             :application-id application-id}))))
 
     (testing "getting application as applicant"
-      (let [application (get-application application-id user-id)]
+      (let [application (get-application-for-user application-id user-id)]
         (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
         (is (= ["application.event/created"
                 "application.event/licenses-accepted"
@@ -185,7 +185,7 @@
                (set (get application :application/permissions))))))
 
     (testing "getting application as handler"
-      (let [application (get-application application-id handler-id)]
+      (let [application (get-application-for-user application-id handler-id)]
         (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-review"
                  "application.command/request-decision"
@@ -207,7 +207,7 @@
     (testing "disabling a command"
       (with-redefs [rems.config/env (assoc rems.config/env :disable-commands [:application.command/remark])]
         (testing "handler doesn't see hidden command"
-          (let [application (get-application application-id handler-id)]
+          (let [application (get-application-for-user application-id handler-id)]
             (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
             (is (= #{"application.command/request-review"
                      "application.command/request-decision"
@@ -254,7 +254,7 @@
                                            {:type :application.command/assign-external-id
                                             :application-id application-id
                                             :external-id "abc123"})))
-      (let [application (get-application application-id handler-id)]
+      (let [application (get-application-for-user application-id handler-id)]
         (is (= "abc123" (:application/external-id application)))))
 
     (testing "application can be returned"
@@ -282,7 +282,7 @@
                               :application-id application-id
                               :comment "What am I commenting on?"}))))
       (testing "review with request"
-        (let [eventcount (count (get (get-application application-id handler-id) :events))]
+        (let [eventcount (count (get (get-application-for-user application-id handler-id) :events))]
           (testing "requesting review"
             (is (= {:success true} (send-command handler-id
                                                  {:type :application.command/request-review
@@ -295,7 +295,7 @@
                                                   :application-id application-id
                                                   :comment "Yeah, I dunno"}))))
           (testing "review was linked to request"
-            (let [application (get-application application-id handler-id)
+            (let [application (get-application-for-user application-id handler-id)
                   request-event (get-in application [:application/events eventcount])
                   review-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
@@ -303,14 +303,14 @@
 
       (testing "adding and then accepting additional licenses"
         (testing "add licenses"
-          (let [application (get-application application-id user-id)]
+          (let [application (get-application-for-user application-id user-id)]
             (is (= #{license-id1 license-id2} (license-ids-for-application application)))
             (is (= {:success true} (send-command handler-id
                                                  {:type :application.command/add-licenses
                                                   :application-id application-id
                                                   :licenses [license-id4]
                                                   :comment "Please approve these new terms"})))
-            (let [application (get-application application-id user-id)]
+            (let [application (get-application-for-user application-id user-id)]
               (is (= #{license-id1 license-id2 license-id4} (license-ids-for-application application))))))
         (testing "applicant accepts the additional licenses"
           (is (= {:success true} (send-command user-id
@@ -319,7 +319,7 @@
                                                 :accepted-licenses [license-id4]})))))
 
       (testing "changing resources as handler"
-        (let [application (get-application application-id user-id)]
+        (let [application (get-application-for-user application-id user-id)]
           (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
           (is (= #{license-id1 license-id2 license-id4} (license-ids-for-application application)))
           (is (= {:success true} (send-command handler-id
@@ -327,7 +327,7 @@
                                                 :application-id application-id
                                                 :catalogue-item-ids [cat-item-id3]
                                                 :comment "Here are the correct resources"})))
-          (let [application (get-application application-id user-id)]
+          (let [application (get-application-for-user application-id user-id)]
             (is (= #{cat-item-id3} (catalogue-item-ids-for-application application)))
             ;; TODO: The previously added licenses should probably be retained in the licenses after changing resources.
             (is (= #{license-id3} (license-ids-for-application application))))))
@@ -337,7 +337,7 @@
                                              {:type :application.command/change-resources
                                               :application-id application-id
                                               :catalogue-item-ids [cat-item-id2]})))
-        (let [application (get-application application-id user-id)]
+        (let [application (get-application-for-user application-id user-id)]
           (is (= #{cat-item-id2} (catalogue-item-ids-for-application application)))
           (is (= #{license-id1 license-id2} (license-ids-for-application application)))))
 
@@ -367,9 +367,9 @@
         (is (= {:success true} (send-command handler-id {:type :application.command/approve
                                                          :application-id application-id
                                                          :comment ""})))
-        (let [handler-data (get-application application-id handler-id)
+        (let [handler-data (get-application-for-user application-id handler-id)
               handler-event-types (map :event/type (get handler-data :application/events))
-              applicant-data (get-application application-id user-id)
+              applicant-data (get-application-for-user application-id user-id)
               applicant-event-types (map :event/type (get applicant-data :application/events))]
           (testing "handler can see all events"
             (is (= {:application/id application-id
@@ -434,7 +434,7 @@
 
     (testing "creating"
       (is (some? application-id))
-      (let [created (get-application application-id user-id)]
+      (let [created (get-application-for-user application-id user-id)]
         (is (= "application.state/draft" (get created :application/state)))))
 
     (testing "getting application as other user is forbidden"
@@ -453,7 +453,7 @@
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
                                     :application-id application-id})))
-      (let [submitted (get-application application-id user-id)]
+      (let [submitted (get-application-for-user application-id user-id)]
         (is (= "application.state/submitted" (get submitted :application/state)))
         (is (= ["application.event/created"
                 "application.event/submitted"]
@@ -467,7 +467,7 @@
                                   :application-id application-id
                                   :comment ""})))
     (is (= "application.state/closed"
-           (:application/state (get-application application-id user-id))))))
+           (:application/state (get-application-for-user application-id user-id))))))
 
 (deftest test-application-submit
   (let [owner "owner"
@@ -578,7 +578,7 @@
                "application.command/save-draft"
                "application.command/submit"
                "application.command/uninvite-member"}
-             (set (:application/permissions (get-application app-id applicant))))))
+             (set (:application/permissions (get-application-for-user app-id applicant))))))
     (testing "submit"
       (is (= {:success true}
              (send-command applicant {:type :application.command/submit
@@ -588,7 +588,7 @@
                "application.command/copy-as-new"
                "application.command/remove-member"
                "application.command/uninvite-member"}
-             (set (:application/permissions (get-application app-id applicant))))))
+             (set (:application/permissions (get-application-for-user app-id applicant))))))
     (testing "handler's commands"
       (is (= #{"application.command/add-licenses"
                "application.command/add-member"
@@ -603,7 +603,7 @@
                "application.command/return"
                "application.command/uninvite-member"
                "see-everything"}
-             (set (:application/permissions (get-application app-id handler))))))
+             (set (:application/permissions (get-application-for-user app-id handler))))))
     (testing "request decision"
       (is (= {:success true}
              (send-command handler {:type :application.command/request-decision
@@ -615,7 +615,7 @@
                "application.command/reject"
                "application.command/remark"
                "see-everything"}
-             (set (:application/permissions (get-application app-id decider))))))
+             (set (:application/permissions (get-application-for-user app-id decider))))))
     (testing "approve"
       (is (= {:success true}
              (send-command decider {:type :application.command/approve
@@ -772,7 +772,7 @@
             (is (:success response))
             (is (number? new-app-id))
             (testing "and fetching the copied attachent"
-              (let [new-app (get-application new-app-id user-id)
+              (let [new-app (get-application-for-user new-app-id user-id)
                     new-id (get-in new-app [:application/attachments 0 :attachment/id])]
                 (is (number? new-id))
                 (is (not= id new-id))
@@ -857,7 +857,7 @@
                                                 :attachments [{:attachment/id attachment-id}]}))))))
 
     (testing "applicant can see attachment"
-      (let [app (get-application application-id applicant-id)
+      (let [app (get-application-for-user application-id applicant-id)
             remark-event (last (:application/events app))
             attachment-id (:attachment/id (first (:event/attachments remark-event)))]
         (is (number? attachment-id))
@@ -940,7 +940,7 @@
                                                             {:attachment/id id2}]})))))
 
     (testing "applicant can see the three new attachments"
-      (let [app (get-application application-id applicant-id)
+      (let [app (get-application-for-user application-id applicant-id)
             [close-event approve-event] (reverse (:application/events app))
             [close-id1 close-id2] (map :attachment/id (:event/attachments close-event))
             [approve-id] (map :attachment/id (:event/attachments approve-event))]
@@ -962,7 +962,7 @@
                 "handler-approve.txt"
                 "handler-close1.txt"
                 "handler-close2.txt"]
-               (mapv :attachment/filename (:application/attachments (get-application application-id applicant-id))))))
+               (mapv :attachment/filename (:application/attachments (get-application-for-user application-id applicant-id))))))
       (testing "handler"
         (is (= ["handler-public-remark.txt"
                 "reviewer-review.txt"
@@ -970,7 +970,7 @@
                 "handler-approve.txt"
                 "handler-close1.txt"
                 "handler-close2.txt"]
-               (mapv :attachment/filename (:application/attachments (get-application application-id handler-id)))))))))
+               (mapv :attachment/filename (:application/attachments (get-application-for-user application-id handler-id)))))))))
 
 (deftest test-application-api-license-attachments
   (let [api-key "42"

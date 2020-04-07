@@ -93,7 +93,6 @@
 ;; TODO rename
 ;;  get-unrestricted-application -> get-application-internal
 ;;  get-application-raw -> get-application
-;;  get-application -> get-application-for-user
 
 (defn get-unrestricted-application
   "Returns the full application state without any user permission
@@ -110,7 +109,7 @@
   (when-let [application (get-unrestricted-application application-id)]
     (model/hide-non-public-information application)))
 
-(defn get-application
+(defn get-application-for-user
   "Returns the part of application state which the specified user
    is allowed to see. Suitable for returning from public APIs as-is."
   [user-id application-id]
