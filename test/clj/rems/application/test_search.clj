@@ -39,7 +39,7 @@
 
   (testing "find by ID"
     (let [app-id (test-data/create-application! {:actor "alice"})
-          app (applications/get-unrestricted-application app-id)]
+          app (applications/get-application-raw app-id)]
       (is (= #{app-id} (search/find-applications (str app-id))) "app ID, any field")
       (is (= #{app-id} (search/find-applications (str "id:" app-id))) "app ID")
       (is (= #{app-id} (search/find-applications (str "id:\"" (:application/external-id app) "\""))) "external ID")))

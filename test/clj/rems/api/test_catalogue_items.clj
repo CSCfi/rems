@@ -93,7 +93,7 @@
         (is (:success create))
         (let [app-id (test-data/create-application! {:catalogue-item-ids [id]
                                                      :actor "alice"})
-              get-app #(applications/get-unrestricted-application app-id)]
+              get-app #(applications/get-application-raw app-id)]
           (is (= {:sv "http://info.se"}
                  (:catalogue-item/infourl
                   (first (:application/resources (get-app))))))

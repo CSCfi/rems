@@ -19,5 +19,5 @@
       :actor bot-userid}]))
 
 (defn run-rejecter-bot [new-events]
-  (doall (mapcat #(generate-commands % (applications/get-unrestricted-application (:application/id %)))
+  (doall (mapcat #(generate-commands % (applications/get-application-raw (:application/id %)))
                  new-events)))

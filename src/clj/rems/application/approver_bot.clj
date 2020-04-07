@@ -19,5 +19,5 @@
       :comment ""}]))
 
 (defn run-approver-bot [new-events]
-  (doall (mapcat #(generate-commands % (applications/get-unrestricted-application (:application/id %)))
+  (doall (mapcat #(generate-commands % (applications/get-application-raw (:application/id %)))
                  new-events)))
