@@ -36,16 +36,16 @@
   ;; only warning for now
   (doseq [form (form/get-form-templates {})]
     (when-not (valid-organization? (:form/organization form))
-      (log/warn "Unrecognized organization in form: " (pr-str form))))
+      (log/warn "Unrecognized organization in form:" (pr-str form))))
   (doseq [resource (db/get-resources {})]
     (when-not (valid-organization? (:organization resource))
-      (log/warn "Unrecognized organization in resource: " (pr-str resource))))
+      (log/warn "Unrecognized organization in resource:" (pr-str resource))))
   (doseq [license (licenses/get-all-licenses {})]
     (when-not (valid-organization? (:organization license))
-      (log/warn "Unrecognized organization in license: " (pr-str license))))
+      (log/warn "Unrecognized organization in license:" (pr-str license))))
   (doseq [item (catalogue/get-localized-catalogue-items)]
     (when-not (valid-organization? (:organization item))
-      (log/warn "Unrecognized organization in catalogue item: " (pr-str item)))))
+      (log/warn "Unrecognized organization in catalogue item:" (pr-str item)))))
 
 (defn validate []
   (log/info "Validating data")
