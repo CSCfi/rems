@@ -1057,6 +1057,11 @@
                                               :organization/name "NBN"
                                               :organization/owners [{:userid organization-owner2}]
                                               :organization/review-emails []})
+
+        csc (organizations/add-organization! {:organization/id "csc"
+                                              :organization/name "CSC – IT CENTER FOR SCIENCE LTD."
+                                              :organization/owners []
+                                              :organization/review-emails []})
         organization1 (organizations/add-organization! {:organization/id "organization1"
                                                         :organization/name "Organization 1"
                                                         :organization/owners [{:userid organization-owner1}]

@@ -111,6 +111,6 @@
             handler
             assert-response-is-ok)
         (is (= #{{:userid "elsa" :name "Elsa Roleless" :email "elsa@example.com"}
-                 {:userid "frank" :name "Frank Roleless" :email "frank@example.com" :organization "frank"}}
+                 {:userid "frank" :name "Frank Roleless" :email "frank@example.com" :organizations ["frank"]}}
                (set (api-call :get "/api/users/active" nil
                               api-key owner))))))))

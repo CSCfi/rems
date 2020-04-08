@@ -25,8 +25,7 @@
    :extra-pages [ExtraPage]
    :languages [s/Keyword]
    :default-language s/Keyword
-   :dev s/Bool
-   :organizations [s/Str]})
+   :dev s/Bool})
 
 (def translations-api
   (context "/translations" []
