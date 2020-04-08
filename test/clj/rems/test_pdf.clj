@@ -47,6 +47,13 @@
                                                   :filename "attachment.pdf"
                                                   :type "application/pdf"
                                                   :data (byte-array 0)}))]
+        ;; two draft-saved events
+        (test-data/fill-form! {:time (time/date-time 2000)
+                               :actor applicant
+                               :application-id application-id
+                               :field-value "pdf test"
+                               :attachment attachment
+                               :optional-fields true})
         (test-data/fill-form! {:time (time/date-time 2000)
                                :actor applicant
                                :application-id application-id
@@ -129,7 +136,6 @@
               [[:heading pdf/heading-style "Events"]
                [:list
                 [:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil nil]
-                [:phrase "2000-01-01 00:00" " " "Alice Applicant saved the application as a draft." nil nil]
                 [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil nil]
                 [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil]
                 [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil nil]

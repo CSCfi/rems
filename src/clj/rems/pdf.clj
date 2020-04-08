@@ -61,7 +61,8 @@
        [:paragraph "–"]
        (into
         [:list]
-        (for [event events]
+        (for [event events
+              :when (not (#{:application.event/draft-saved} (:event/type event)))]
           [:phrase
            (localize-time (:event/time event))
            " "
