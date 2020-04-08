@@ -4,6 +4,7 @@
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
+            [clojure.tools.logging :as log]
             [conman.core :as conman]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
@@ -253,10 +254,12 @@
     (csv/applications-to-csv filtered-applications user-id)))
 
 (defn reload-cache! []
+  (log/info "Start rems.db.applications/reload-cache!")
   (empty-injections-cache!)
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
   (events-cache/empty! all-applications-cache)
-  (refresh-all-applications-cache!))
+  (refresh-all-applications-cache!)
+  (log/info "Finished rems.db.applications/reload-cache!"))
 
 ;; empty the cache occasionally in case some of the injected entities are changed
 (mount/defstate all-applications-cache-reloader
