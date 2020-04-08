@@ -2,6 +2,7 @@
   "Rendering applications as pdf"
   (:require [clj-pdf.core :refer :all]
             [clj-time.core :as time]
+            [clojure.string :as str]
             [rems.common.util :refer [build-index]]
             [rems.text :refer [localized localize-event localize-state localize-time text with-language]]
             [rems.util :refer [getx getx-in]])
@@ -49,7 +50,8 @@
           " (" (:resource/ext-id resource) ")"]))))))
 
 (defn- render-events [application]
-  (let [events (getx application :application/events)]
+  (let [attachment-filenames (build-index [:attachment/id] :attachment/filename (:application/attachments application))
+        events (getx application :application/events)]
     (list
      [:heading heading-style (text :t.form/events)]
      (if (empty? events)
@@ -66,7 +68,12 @@
                (str "\n"
                     (text :t.form/comment)
                     ": "
-                    comment)))]))))))
+                    comment)))
+           (when-let [attachments (seq (get event :event/attachments))]
+             (str "\n"
+                  (text :t.form/attachments)
+                  ": "
+                  (str/join ", " (map (comp attachment-filenames :attachment/id) attachments))))]))))))
 
 (defn- field-value [field]
   (case (:field/type field)

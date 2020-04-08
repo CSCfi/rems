@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.pdf :as pdf]
@@ -60,11 +61,22 @@
                            :member {:userid "beth"}
                            :actor handler}))
     (testing "approve"
-      (test-data/command! {:time (time/date-time 2003)
-                           :application-id application-id
-                           :type :application.command/approve
-                           :comment "approved"
-                           :actor handler}))
+      (let [att1 (:id (db/save-attachment! {:application application-id
+                                            :user handler
+                                            :filename "file1.txt"
+                                            :type "text/plain"
+                                            :data (byte-array 0)}))
+            att2 (:id (db/save-attachment! {:application application-id
+                                            :user handler
+                                            :filename "file2.pdf"
+                                            :type "application/pdf"
+                                            :data (byte-array 0)}))]
+        (test-data/command! {:time (time/date-time 2003)
+                             :application-id application-id
+                             :type :application.command/approve
+                             :comment "approved"
+                             :attachments [{:attachment/id att1} {:attachment/id att2}]
+                             :actor handler})))
     (testing "pdf contents"
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: pdf test"]
@@ -109,13 +121,14 @@
                [:paragraph "pdf test"]]
               [[:heading pdf/heading-style "Events"]
                [:list
-                [:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil]
-                [:phrase "2000-01-01 00:00" " " "Alice Applicant saved the application as a draft." nil]
-                [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil]
-                [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil]
-                [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil]
+                [:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil nil]
+                [:phrase "2000-01-01 00:00" " " "Alice Applicant saved the application as a draft." nil nil]
+                [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil nil]
+                [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil]
+                [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil nil]
                 [:phrase "2003-01-01 00:00" " " "Developer approved the application."
-                 "\nComment: approved"]]]]
+                 "\nComment: approved"
+                 "\nAttachments: file1.txt, file2.pdf"]]]]
              (with-language :en
                (fn []
                  (with-fixed-time (time/date-time 2010)

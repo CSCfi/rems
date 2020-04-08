@@ -317,6 +317,7 @@
          :alert-disabled-resources "Resurser som inte längre är tillgängliga:"
          :application "Ansökning"
          :attachment-remove "Ta bort"
+         :attachments "Bilagor"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
          :comment "Komment"

@@ -317,6 +317,7 @@
          :alert-disabled-resources "Resurssit eivät ole enää saatavilla:"
          :application "Tiedot"
          :attachment-remove "Poista"
+         :attachments "Liitteet"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
          :comment "Kommentti"
