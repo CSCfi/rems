@@ -42,11 +42,17 @@
                                                        :time (time/date-time 2000)})
         handler "developer"]
     (testing "fill and submit"
-      (test-data/fill-form! {:time (time/date-time 2000)
-                             :actor applicant
-                             :application-id application-id
-                             :field-value "pdf test"
-                             :optional-fields true})
+      (let [attachment (:id (db/save-attachment! {:application application-id
+                                                  :user handler
+                                                  :filename "attachment.pdf"
+                                                  :type "application/pdf"
+                                                  :data (byte-array 0)}))]
+        (test-data/fill-form! {:time (time/date-time 2000)
+                               :actor applicant
+                               :application-id application-id
+                               :field-value "pdf test"
+                               :attachment attachment
+                               :optional-fields true}))
       (test-data/accept-licenses! {:time (time/date-time 2000)
                                    :actor applicant
                                    :application-id application-id})
@@ -106,7 +112,7 @@
                [:paragraph {:style :bold} "Email field"]
                [:paragraph "user@example.com"]
                [:paragraph {:style :bold} "Attachment"]
-               [:paragraph ""]
+               [:paragraph "attachment.pdf"]
                [:paragraph {:style :bold} "Option list. Choose the first option to reveal a new field."]
                [:paragraph "First option"]
                [:paragraph {:style :bold} "Conditional field. Shown only if first option is selected above."]

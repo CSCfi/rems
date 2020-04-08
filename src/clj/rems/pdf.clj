@@ -49,8 +49,11 @@
           (localized (:catalogue-item/title resource))
           " (" (:resource/ext-id resource) ")"]))))))
 
+(defn- attachment-filenames [application]
+  (build-index [:attachment/id] :attachment/filename (:application/attachments application)))
+
 (defn- render-events [application]
-  (let [attachment-filenames (build-index [:attachment/id] :attachment/filename (:application/attachments application))
+  (let [filenames (attachment-filenames application)
         events (getx application :application/events)]
     (list
      [:heading heading-style (text :t.form/events)]
@@ -73,17 +76,22 @@
              (str "\n"
                   (text :t.form/attachments)
                   ": "
-                  (str/join ", " (map (comp attachment-filenames :attachment/id) attachments))))]))))))
+                  (str/join ", " (map (comp filenames :attachment/id) attachments))))]))))))
 
-(defn- field-value [field]
-  (case (:field/type field)
-    (:option :multiselect)
-    (localized (get (build-index [:key] :label (:field/options field))
-                    (:field/value field)))
+(defn- field-value [filenames field]
+  (let [value (:field/value field)]
+    (case (:field/type field)
+      (:option :multiselect)
+      (localized (get (build-index [:key] :label (:field/options field)) value))
 
-    (:field/value field)))
+      :attachment
+      (if (empty? value)
+        value
+        (get filenames (Integer/parseInt value)))
 
-(defn- render-field [field]
+      (:field/value field))))
+
+(defn- render-field [filenames field]
   (when (:field/visible field)
     (list
      [:paragraph (case (:field/type field)
@@ -91,14 +99,15 @@
                    :header {:style :bold :size 15}
                    {:style :bold})
       (localized (:field/title field))]
-     [:paragraph (field-value field)])))
+     [:paragraph (field-value filenames field)])))
 
 (defn- render-fields [application]
-  (apply concat
-         (list [:heading heading-style (text :t.form/application)])
-         (for [form (getx application :application/forms)
-               field (getx form :form/fields)]
-           (render-field field))))
+  (let [filenames (attachment-filenames application)]
+    (apply concat
+           (list [:heading heading-style (text :t.form/application)])
+           (for [form (getx application :application/forms)
+                 field (getx form :form/fields)]
+             (render-field filenames field)))))
 
 (defn- render-license [license]
   ;; TODO license text?
