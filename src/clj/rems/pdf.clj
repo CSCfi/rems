@@ -55,13 +55,18 @@
      (if (empty? events)
        [:paragraph "–"]
        (into
-        [:table {:header [(text :t.form/date)
-                          (text :t.form/event)
-                          (text :t.form/comment)]}]
+        [:list]
         (for [event events]
-          [(localize-time (:event/time event))
+          [:phrase
+           (localize-time (:event/time event))
+           " "
            (localize-event event)
-           (get event :application/comment "")]))))))
+           (let [comment (get event :application/comment)]
+             (when-not (empty? comment)
+               (str "\n"
+                    (text :t.form/comment)
+                    ": "
+                    comment)))]))))))
 
 (defn- field-value [field]
   (case (:field/type field)

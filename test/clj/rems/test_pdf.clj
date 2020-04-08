@@ -108,14 +108,14 @@
                [:paragraph {:style :bold} "Text area with max length"]
                [:paragraph "pdf test"]]
               [[:heading pdf/heading-style "Events"]
-               [:table
-                {:header ["Time" "Event" "Comment"]}
-                ["2000-01-01 00:00" "Alice Applicant created a new application." ""]
-                ["2000-01-01 00:00" "Alice Applicant saved the application as a draft." ""]
-                ["2000-01-01 00:00" "Alice Applicant accepted the terms of use." ""]
-                ["2001-01-01 00:00" "Alice Applicant submitted the application for review." ""]
-                ["2002-01-01 00:00" "Developer added Beth Applicant to the application." ""]
-                ["2003-01-01 00:00" "Developer approved the application." "approved"]]]]
+               [:list
+                [:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil]
+                [:phrase "2000-01-01 00:00" " " "Alice Applicant saved the application as a draft." nil]
+                [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil]
+                [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil]
+                [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil]
+                [:phrase "2003-01-01 00:00" " " "Developer approved the application."
+                 "\nComment: approved"]]]]
              (with-language :en
                (fn []
                  (with-fixed-time (time/date-time 2010)
