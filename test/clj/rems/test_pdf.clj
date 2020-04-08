@@ -97,33 +97,34 @@
                [:paragraph "Google license"]
                [:paragraph "Text license"]]
               [[:heading pdf/heading-style "Application"]
-               [:paragraph {} "This form demonstrates all possible field types. (This text itself is a label field.)"]
+               [:paragraph pdf/label-field-style
+                "This form demonstrates all possible field types. (This text itself is a label field.)"]
                [:paragraph ""]
-               [:paragraph {:style :bold} "Application title field"]
+               [:paragraph pdf/field-style "Application title field"]
                [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Text field"]
+               [:paragraph pdf/field-style "Text field"]
                [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Text area"]
+               [:paragraph pdf/field-style "Text area"]
                [:paragraph "pdf test"]
-               [:paragraph {:style :bold :size 15} "Header"]
+               [:paragraph pdf/header-field-style "Header"]
                [:paragraph ""]
-               [:paragraph {:style :bold} "Date field"]
+               [:paragraph pdf/field-style "Date field"]
                [:paragraph "2002-03-04"]
-               [:paragraph {:style :bold} "Email field"]
+               [:paragraph pdf/field-style "Email field"]
                [:paragraph "user@example.com"]
-               [:paragraph {:style :bold} "Attachment"]
+               [:paragraph pdf/field-style "Attachment"]
                [:paragraph "attachment.pdf"]
-               [:paragraph {:style :bold} "Option list. Choose the first option to reveal a new field."]
+               [:paragraph pdf/field-style "Option list. Choose the first option to reveal a new field."]
                [:paragraph "First option"]
-               [:paragraph {:style :bold} "Conditional field. Shown only if first option is selected above."]
+               [:paragraph pdf/field-style "Conditional field. Shown only if first option is selected above."]
                [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Multi-select list"]
+               [:paragraph pdf/field-style "Multi-select list"]
                [:paragraph "First option"]
-               [:paragraph {} "The following field types can have a max length."]
+               [:paragraph pdf/label-field-style "The following field types can have a max length."]
                [:paragraph ""]
-               [:paragraph {:style :bold} "Text field with max length"]
+               [:paragraph pdf/field-style "Text field with max length"]
                [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Text area with max length"]
+               [:paragraph pdf/field-style "Text area with max length"]
                [:paragraph "pdf test"]]
               [[:heading pdf/heading-style "Events"]
                [:list
@@ -143,4 +144,7 @@
       (testing "pdf rendering succeeds"
         (is (some?
              (with-language :en
-               #(pdf/application-to-pdf-bytes (applications/get-application handler application-id))))))))
+               #(do
+                  ;; uncomment this to get a pdf file to look at
+                  #_(pdf/application-to-pdf (applications/get-application handler application-id) "/tmp/example-application.pdf")
+                  (pdf/application-to-pdf-bytes (applications/get-application handler application-id)))))))))

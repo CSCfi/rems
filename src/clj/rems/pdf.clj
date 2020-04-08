@@ -91,13 +91,17 @@
 
       (:field/value field))))
 
+(def label-field-style {:spacing-before 8})
+(def header-field-style {:spacing-before 8 :style :bold :size 15})
+(def field-style {:spacing-before 8 :style :bold})
+
 (defn- render-field [filenames field]
   (when (:field/visible field)
     (list
      [:paragraph (case (:field/type field)
-                   :label {}
-                   :header {:style :bold :size 15}
-                   {:style :bold})
+                   :label label-field-style
+                   :header header-field-style
+                   field-style)
       (localized (:field/title field))]
      [:paragraph (field-value filenames field)])))
 
