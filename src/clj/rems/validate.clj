@@ -32,7 +32,6 @@
   (doseq [form (form/get-form-templates {})]
     (when-not (valid-organization? (:form/organization form))
       (log/warn "Unrecognized organization in form: " (pr-str form))))
-  ;; rems.db.resource/get-resources requires a user to be set (for forbidden-organization?)
   (doseq [resource (db/get-resources {})]
     (when-not (valid-organization? (:organization resource))
       (log/warn "Unrecognized organization in resource: " (pr-str resource))))
