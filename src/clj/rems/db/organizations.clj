@@ -7,7 +7,8 @@
 (defn add-organization! [org]
   (db/add-organization! {:id (:organization/id org)
                          :data (json/generate-string org)})
-  (:organization/id org))
+  {:success true
+   :organization/id (:organization/id org)})
 
 (defn- parse-organization [raw]
   (json/parse-string (:data raw)))
