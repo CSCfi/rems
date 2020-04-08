@@ -685,9 +685,11 @@
                               :application.command/assign-external-id [assign-external-id-button]
                               :application.command/close [close-action-button]
                               :application.command/copy-as-new [copy-as-new-button]]]
-    (distinct (for [[command action] (partition 2 commands-and-actions)
-                    :when (contains? (:application/permissions application) command)]
-                action))))
+    (concat (distinct (for [[command action] (partition 2 commands-and-actions)
+                            :when (contains? (:application/permissions application) command)]
+                        action))
+            (list [pdf-button (:application/id application)]))))
+
 
 (defn- actions-form [application]
   (let [app-id (:application/id application)
@@ -795,7 +797,6 @@
         attachment-success @(rf/subscribe [::attachment-success])
         userid (:userid @(rf/subscribe [:user]))]
     [:div.container-fluid
-     [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [document-title (str (text :t.applications/application)
                           (when application
                             (str " " (application-list/format-application-id config application)))
