@@ -4,16 +4,7 @@ REMS can be configured to send events notifications over HTTP.
 
 ## Configuration
 
-The configuration option `:event-notification-targets` should be an array of targets, each containing:
-- `:url`, the URL to send HTTP PUT methods to
-- `:event-types`, an array of event types to send. This is optional, and a missing value means "send everything".
-
-An example:
-```
-:event-notification-targets [{:url "http://events/everything"}
-                             {:url "http://events/filtered"
-                              :event-types [:application.event/created :application.event/submitted]}]
-```
+See `:event-notification-targets` in [config-defaults.edn](../resources/config-defaults.edn).
 
 ## Schema
 

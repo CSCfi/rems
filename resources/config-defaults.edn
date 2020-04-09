@@ -54,9 +54,11 @@
                        :remove nil
                        :ga4gh nil} ;; Url where entitlements are pushed in ga4gh format, see https://github.com/ga4gh-duri/ga4gh-duri.github.io/
 
- ;; URLs to notify about new events. Each target should contain
- ;; a :url, and optionally :event-types to receive only the specified
- ;; event types.
+ ;; URLs to notify about new events. An array of targets. Targets can have keys:
+ ;;   :url (mandatory) - the url to send HTTP PUT requests to
+ ;;   :event-types (optional) - an array of event types to send. A missing value means "send everything".
+ ;;   :timeout (optional) - timeout for the PUT in seconds. Defaults to 60s.
+ ;;   :headers (optional) - a map of additional HTTP headers to send.
  ;;
  ;; See also: docs/event-notification.md
  ;;
@@ -64,7 +66,10 @@
  ;;
  ;; :event-notification-targets [{:url "http://events/everything"}
  ;;                              {:url "http://events/filtered"
- ;;                               :event-types [:application.event/created :application.event/submitted]}]
+ ;;                               :event-types [:application.event/created :application.event/submitted]
+ ;;                               :timeout 120
+ ;;                               :headers {"Authorization" "abc123"
+ ;;                                         "X-Header" "value"}}]
  :event-notification-targets []
 
  ;; Which database column to show as the application id.

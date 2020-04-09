@@ -9,16 +9,21 @@
             [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
             [rems.json :as json]
-            [rems.scheduler :as scheduler]))
+            [rems.scheduler :as scheduler]
+            [rems.util :refer [getx]]))
+
+(def ^:private default-timeout 60)
 
 (defn- notify! [target body]
   (try
-    (let [response (http/put target
+    (let [timeout-ms (* 1000 (get target :timeout default-timeout))
+          response (http/put (getx target :url)
                              {:body body
                               :throw-exceptions false
                               :content-type :json
-                              :socket-timeout 2500
-                              :conn-timeout 2500})
+                              :headers (get target :headers)
+                              :socket-timeout timeout-ms
+                              :conn-timeout timeout-ms})
           status (:status response)]
       (when-not (= 200 status)
         (log/error "Event notification response status" status)
@@ -65,4 +70,4 @@
             body (json/generate-string event-with-app)]
         (doseq [target targets]
           (when (wants? target event)
-            (add-to-outbox! (:url target) body)))))))
+            (add-to-outbox! target body)))))))

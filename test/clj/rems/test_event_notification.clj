@@ -19,18 +19,29 @@
 (deftest test-notify!
   (with-open [server (stub/start! {"/ok" {:status 200}
                                    "/broken" {:status 500}
-                                   "/timeout" {:status 200 :delay 5000}})] ;; timeout of 2500 in the code
+                                   "/timeout" {:status 200 :delay 5000}})]
     (let [body "body"]
       (testing "success"
-        (is (nil? (#'event-notification/notify! (str (:uri server) "/ok") body)))
-        ;; TODO check request
-        )
+        (is (nil? (#'event-notification/notify! {:url (str (:uri server) "/ok")
+                                                 :headers {"additional-header" "value"}}
+                                                body)))
+        (let [[req & more] (stub/recorded-requests server)]
+          (is (empty? more))
+          (is (= {:method "PUT"
+                  :path "/ok"
+                  :body {"content" body}}
+                 (select-keys req [:method :path :body])))
+          (is (= "value" (get-in req [:headers :additional-header])))))
       (testing "error code"
-        (is (= "failed: 500" (#'event-notification/notify! (str (:uri server) "/broken") body))))
+        (is (= "failed: 500" (#'event-notification/notify! {:url (str (:uri server) "/broken")}
+                                                           body))))
       (testing "timeout"
-        (is (= "failed: exception" (#'event-notification/notify! (str (:uri server) "/timeout") body))))
+        (is (= "failed: exception" (#'event-notification/notify! {:url (str (:uri server) "/timeout")
+                                                                  :timeout 2}
+                                                                 body))))
       (testing "invalid url"
-        (is (= "failed: exception" (#'event-notification/notify! "http://invalid/lol" body)))))))
+        (is (= "failed: exception" (#'event-notification/notify! {:url "http://invalid/lol"}
+                                                                 body)))))))
 
 (deftest test-event-notification
   ;; this is an integration test from commands to notifications
