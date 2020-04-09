@@ -19,35 +19,33 @@
 (defn- render-header [application]
   (let [state (getx application :application/state)
         resources (getx application :application/resources)]
-    (concat
-     (list
-      [:heading heading-style
-       (str (text :t.applications/application)
-            " "
-            (get application :application/external-id
-                 (getx application :application/id))
-            (when-let [description (get application :application/description)]
-              (str ": " description)))]
-      [:paragraph
-       (text :t.pdf/generated)
-       " "
-       (localize-time (time/now))]
-      [:paragraph
-       (text :t.applications/state)
-       (when state [:phrase ": " (localize-state state)])]
-      [:heading heading-style (text :t.applicant-info/applicants)]
-      [:paragraph (text :t.applicant-info/applicant) ": " (render-user (getx application :application/applicant))])
-     (seq
+    (list
+     [:heading heading-style
+      (str (text :t.applications/application)
+           " "
+           (get application :application/external-id
+                (getx application :application/id))
+           (when-let [description (get application :application/description)]
+             (str ": " description)))]
+     [:paragraph
+      (text :t.pdf/generated)
+      " "
+      (localize-time (time/now))]
+     [:paragraph
+      (text :t.applications/state)
+      (when state [:phrase ": " (localize-state state)])]
+     [:heading heading-style (text :t.applicant-info/applicants)]
+     [:paragraph (text :t.applicant-info/applicant) ": " (render-user (getx application :application/applicant))]
+     (doall
       (for [member (getx application :application/members)]
         [:paragraph (text :t.applicant-info/member) ": " (render-user member)]))
-     (list
-      [:heading heading-style (text :t.form/resources)]
-      (into
-       [:list]
+     [:heading heading-style (text :t.form/resources)]
+     [:list
+      (doall
        (for [resource resources]
          [:phrase
           (localized (:catalogue-item/title resource))
-          " (" (:resource/ext-id resource) ")"]))))))
+          " (" (:resource/ext-id resource) ")"]))])))
 
 (defn- attachment-filenames [application]
   (build-index [:attachment/id] :attachment/filename (:application/attachments application)))
@@ -59,25 +57,25 @@
      [:heading heading-style (text :t.form/events)]
      (if (empty? events)
        [:paragraph "–"]
-       (into
-        [:list]
-        (for [event events
-              :when (not (#{:application.event/draft-saved} (:event/type event)))]
-          [:phrase
-           (localize-time (:event/time event))
-           " "
-           (localize-event event)
-           (let [comment (get event :application/comment)]
-             (when-not (empty? comment)
-               (str "\n"
-                    (text :t.form/comment)
-                    ": "
-                    comment)))
-           (when-let [attachments (seq (get event :event/attachments))]
-             (str "\n"
-                  (text :t.form/attachments)
-                  ": "
-                  (str/join ", " (map (comp filenames :attachment/id) attachments))))]))))))
+       [:list
+        (doall
+         (for [event events
+               :when (not (#{:application.event/draft-saved} (:event/type event)))]
+           [:phrase
+            (localize-time (:event/time event))
+            " "
+            (localize-event event)
+            (let [comment (get event :application/comment)]
+              (when-not (empty? comment)
+                (str "\n"
+                     (text :t.form/comment)
+                     ": "
+                     comment)))
+            (when-let [attachments (seq (get event :event/attachments))]
+              (str "\n"
+                   (text :t.form/attachments)
+                   ": "
+                   (str/join ", " (map (comp filenames :attachment/id) attachments))))]))]))))
 
 (defn- field-value [filenames field]
   (let [value (:field/value field)]
@@ -108,11 +106,11 @@
 
 (defn- render-fields [application]
   (let [filenames (attachment-filenames application)]
-    (apply concat
-           (list [:heading heading-style (text :t.form/application)])
+    (list [:heading heading-style (text :t.form/application)]
+          (doall
            (for [form (getx application :application/forms)
                  field (getx form :form/fields)]
-             (render-field filenames field)))))
+             (render-field filenames field))))))
 
 (defn- render-license [license]
   ;; TODO license text?
@@ -121,9 +119,10 @@
    (localized (:license/title license))])
 
 (defn- render-licenses [application]
-  (concat (list [:heading heading-style (text :t.form/licenses)])
-          (for [license (getx application :application/licenses)]
-            (render-license license))))
+  (list [:heading heading-style (text :t.form/licenses)]
+        (doall
+         (for [license (getx application :application/licenses)]
+           (render-license license)))))
 
 (defn- render-application [application]
   [{}
