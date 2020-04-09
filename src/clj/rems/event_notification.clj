@@ -15,6 +15,7 @@
 (def ^:private default-timeout 60)
 
 (defn- notify! [target body]
+  (log/info "Sending event notification to" (:url target))
   (try
     (let [timeout-ms (* 1000 (get target :timeout default-timeout))
           response (http/put (getx target :url)
