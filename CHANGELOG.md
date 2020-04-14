@@ -11,6 +11,9 @@ Changes since v2.11
 ### Additions
 - Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
 
+### Fixes
+- Long attachment filenames are now truncated in the UI (#2118)
+
 ## v2.11 "Kotitontuntie" 2020-04-07
 
 ### Additions

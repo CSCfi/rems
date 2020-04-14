@@ -4,7 +4,7 @@
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [attachment-link external-link readonly-checkbox document-title]]
+            [rems.atoms :as atoms :refer [license-attachment-link external-link readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
@@ -67,7 +67,7 @@
                           [inline-info-field
                            (str (text :t.create-license/license-attachment)
                                 " (" (str/upper-case (name langcode)) ")")
-                           [attachment-link (:attachment-id localization) (:title localization)]
+                           [license-attachment-link (:attachment-id localization) (:title localization)]
                            {:box? false}])))
                     [[inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? license)}]]]))}]
    (let [id (:id license)]
@@ -106,7 +106,7 @@
                       [inline-info-field
                        (str (text :t.create-license/license-attachment)
                             " (" (str/upper-case (name langcode)) ")")
-                       [attachment-link (:attachment-id localization) (:title localization)]
+                       [license-attachment-link (:attachment-id localization) (:title localization)]
                        {:box? false}]))))))
 
 (defn licenses-view [licenses language]

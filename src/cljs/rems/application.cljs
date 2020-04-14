@@ -22,7 +22,7 @@
             [rems.application-list :as application-list]
             [rems.common.application-util :refer [accepted-licenses? form-fields-editable? get-member-name]]
             [rems.common.attachment-types :as attachment-types]
-            [rems.atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
+            [rems.atoms :refer [attachment-link external-link file-download info-field readonly-checkbox document-title success-symbol empty-symbol]]
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible?]]
@@ -470,7 +470,7 @@
     (when-let [attachments (seq attachments)]
       (into [:div.d-flex.flex-row.flex-wrap]
             (for [a attachments]
-              [fields/attachment-link a])))]])
+              [attachment-link a])))]])
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]

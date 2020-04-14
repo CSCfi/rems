@@ -1,6 +1,6 @@
 (ns rems.actions.action
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [close-symbol success-symbol textarea]]
+            [rems.atoms :refer [attachment-link close-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -84,8 +84,8 @@
   [:div.form-group
    (into [:<>]
          (for [attachment attachments]
-           [:div.flex-row.d-flex.mb-2
-            [fields/attachment-link attachment]
+           [:div.flex-row.d-flex.flex-wrap.mb-2
+            [attachment-link attachment]
             [:button.btn.btn-outline-secondary.mr-2
              {:class (str "remove-attachment-" key)
               :type :button
@@ -156,4 +156,9 @@
             [action-attachment-view {:key "action-guide-example-1"
                                      :attachments [{:attachment/filename "attachment.xlsx"}
                                                    {:attachment/filename "data.pdf"}]
+                                     :on-attach (fn [_] nil)}])
+      (example "action attachment, multiple attachments, long filenames"
+            [action-attachment-view {:key "action-guide-example-1"
+                                     :attachments [{:attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}
+                                                   {:attachment/filename "this_is_another_very_very_very_long_filename_of_another_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}]
                                      :on-attach (fn [_] nil)}])])
