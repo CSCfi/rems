@@ -250,9 +250,11 @@
 (defn attachment-link [attachment]
   (when attachment
     [:div.field
-     [:a.attachment-link.btn.btn-outline-secondary.mr-2
+     [:a.attachment-link.btn.btn-outline-secondary.mr-2.text-truncate
       {:href (str "/applications/attachment/" (:attachment/id attachment))
-       :target :_blank}
+       :target :_blank
+       :title (:attachment/filename attachment)
+       :style {:max-width "25em"}}
       (:attachment/filename attachment) " " [file-download]]]))
 
 (defn upload-button [id on-upload]
@@ -483,6 +485,15 @@
                     :field/value "123"
                     :field/attachment {:attachment/id 123
                                        :attachment/filename "test.txt"}}])
+   (example "field of type \"attachment\", file uploaded, long filename"
+            [field {:app-id 5
+                    :form/id 16
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :field/value "123"
+                    :field/attachment {:attachment/id 123
+                                       :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}}])
    (example "field of type \"attachment\", file uploaded, success indicator"
             [field {:app-id 5
                     :form/id 17
