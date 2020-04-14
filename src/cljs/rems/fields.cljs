@@ -2,7 +2,7 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             [cljs-time.core :as time]
-            [rems.atoms :refer [add-symbol close-symbol file-download textarea success-symbol]]
+            [rems.atoms :refer [add-symbol attachment-link close-symbol file-download textarea success-symbol]]
             [rems.common.attachment-types :as attachment-types]
             [rems.common.util :refer [getx]]
             [rems.guide-utils :refer [lipsum-short lipsum-paragraphs]]
@@ -247,14 +247,6 @@
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
-(defn attachment-link [attachment]
-  (when attachment
-    [:div.field
-     [:a.attachment-link.btn.btn-outline-secondary.mr-2
-      {:href (str "/applications/attachment/" (:attachment/id attachment))
-       :target :_blank}
-      (:attachment/filename attachment) " " [file-download]]]))
-
 (defn upload-button [id on-upload]
   (let [upload-id (str id "-input")
         info-id (str id "-info")]
@@ -483,6 +475,15 @@
                     :field/value "123"
                     :field/attachment {:attachment/id 123
                                        :attachment/filename "test.txt"}}])
+   (example "field of type \"attachment\", file uploaded, long filename"
+            [field {:app-id 5
+                    :form/id 16
+                    :field/id "6"
+                    :field/type :attachment
+                    :field/title {:en "Title"}
+                    :field/value "123"
+                    :field/attachment {:attachment/id 123
+                                       :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}}])
    (example "field of type \"attachment\", file uploaded, success indicator"
             [field {:app-id 5
                     :form/id 17
