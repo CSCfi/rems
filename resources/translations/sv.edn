@@ -65,7 +65,7 @@
                    :create-workflow "Nytt arbetsflöde"
                    :created "Skapad"
                    :disable "Avaktivera"
-                   :disabled-and-archived-explanation "Avaktiveringen döljer resursen för användarna. Arkiveringen döljer den också från administrationsvyn."
+                   :disabled-and-archived-explanation "Avaktiveringen döljer föremål för användarna. Arkiveringen döljer den också från administrationsvyn."
                    :display-archived "Visa arkiverade"
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
