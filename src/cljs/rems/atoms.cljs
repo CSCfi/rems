@@ -103,25 +103,26 @@
      [:label title]
      [:div (if box? {:class "form-control"} {:style {:padding-left 0}}) value]]))
 
+(defn download-link
+  [title url]
+  [:a.attachment-link.btn.btn-outline-secondary.mr-2.text-truncate
+   {:href url
+    :target :_blank
+    :title title
+    :style {:max-width "25em"}}
+   title " " [file-download]])
+
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
   [id title]
-  [:a.btn.btn-secondary.mr-2
-   {:href (str "/api/licenses/attachments/" id)
-    :target :_blank}
-   title " " [external-link]])
+  [download-link title (str "/api/licenses/attachments/" id)])
 
 (defn attachment-link
   "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
   [attachment]
   (when attachment
     [:div.field
-     [:a.attachment-link.btn.btn-outline-secondary.mr-2.text-truncate
-      {:href (str "/applications/attachment/" (:attachment/id attachment))
-       :target :_blank
-       :title (:attachment/filename attachment)
-       :style {:max-width "25em"}}
-      (:attachment/filename attachment) " " [file-download]]]))
+     [download-link (:attachment/filename attachment) (str "/applications/attachment/" (:attachment/id attachment))]]))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)
