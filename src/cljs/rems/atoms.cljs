@@ -103,13 +103,25 @@
      [:label title]
      [:div (if box? {:class "form-control"} {:style {:padding-left 0}}) value]]))
 
-(defn attachment-link
+(defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
   [id title]
   [:a.btn.btn-secondary.mr-2
    {:href (str "/api/licenses/attachments/" id)
     :target :_blank}
    title " " [external-link]])
+
+(defn attachment-link
+  "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
+  [attachment]
+  (when attachment
+    [:div.field
+     [:a.attachment-link.btn.btn-outline-secondary.mr-2.text-truncate
+      {:href (str "/applications/attachment/" (:attachment/id attachment))
+       :target :_blank
+       :title (:attachment/filename attachment)
+       :style {:max-width "25em"}}
+      (:attachment/filename attachment) " " [file-download]]]))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)
@@ -166,4 +178,8 @@
                 [info-field "Name" "Bob Tester" {:inline? true}])
        (component-info attachment-link)
        (example "attachment-link"
-                [attachment-link 1 "my-attachment.pdf"])])))
+                [attachment-link {:attachment/id 1
+                                  :attachment/filename "my-attachment.pdf"}])
+       (example "attachment-link, long filename"
+                [attachment-link {:attachment/id 123
+                                  :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])])))

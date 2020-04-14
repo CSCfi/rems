@@ -1,6 +1,6 @@
 (ns rems.actions.action
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [close-symbol success-symbol textarea]]
+            [rems.atoms :refer [attachment-link close-symbol success-symbol textarea]]
             [rems.common.attachment-types :as attachment-types]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -85,7 +85,7 @@
    (into [:<>]
          (for [attachment attachments]
            [:div.flex-row.d-flex.flex-wrap.mb-2
-            [fields/attachment-link attachment]
+            [attachment-link attachment]
             [:button.btn.btn-outline-secondary.mr-2
              {:class (str "remove-attachment-" key)
               :type :button
