@@ -8,12 +8,14 @@ have notable changes.
 
 Changes since v2.11
 
+### Additions
+- Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
+
 ## v2.11 "Kotitontuntie" 2020-04-07
 
 ### Additions
 - REMS sessions now stay alive while the user is active in the browser (#2107).
 - The `/api/users/active` API lists which users have active sessions at the moment.
-- Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
 
 ## v2.10 "Riihitontuntie" 2020-04-06
 
