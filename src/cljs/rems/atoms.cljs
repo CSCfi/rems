@@ -103,7 +103,7 @@
      [:label title]
      [:div (if box? {:class "form-control"} {:style {:padding-left 0}}) value]]))
 
-(defn download-link
+(defn download-button
   [title url]
   [:a.attachment-link.btn.btn-outline-secondary.mr-2.text-truncate
    {:href url
@@ -115,14 +115,14 @@
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
   [id title]
-  [download-link title (str "/api/licenses/attachments/" id)])
+  [download-button title (str "/api/licenses/attachments/" id)])
 
 (defn attachment-link
   "Renders a link to attachment (should have keys :attachment/id and :attachment/filename)"
   [attachment]
   (when attachment
     [:div.field
-     [download-link (:attachment/filename attachment) (str "/applications/attachment/" (:attachment/id attachment))]]))
+     [download-button (:attachment/filename attachment) (str "/applications/attachment/" (:attachment/id attachment))]]))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)
