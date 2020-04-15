@@ -992,7 +992,9 @@
 (deftest test-application-attachment-zip
   (let [api-key "42"
         applicant-id "alice"
-        handler-id "developer" ;; developer is the default handler in test-data
+        handler-id "handler"
+        reporter-id "reporter"
+        workflow-id (test-data/create-workflow! {:handlers [handler-id]})
         form-id (test-data/create-form! {:form/fields [{:field/id "attach1"
                                                         :field/title {:en "some attachment"
                                                                       :fi "joku liite"}
@@ -1003,7 +1005,8 @@
                                                                       :fi "toinen liite"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
-        cat-id (test-data/create-catalogue-item! {:form-id form-id})
+        cat-id (test-data/create-catalogue-item! {:workflow-id workflow-id
+                                                  :form-id form-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor applicant-id})
         add-attachment (fn [user file]
@@ -1040,7 +1043,7 @@
                                            :application-id app-id
                                            :field-values [{:form form-id :field "attach1" :value (str blue-id)}
                                                           {:form form-id :field "attach2" :value (str red-id)}]})))))
-    (testing "fetch zip"
+    (testing "fetch zip as applicant"
       (is (= {"blue.txt" (slurp testfile)
               "red.txt" (slurp testfile)}
              (fetch-zip applicant-id))))
@@ -1063,7 +1066,19 @@
                 "red.txt" (slurp testfile)
                 "blue (1).txt" (slurp testfile)
                 "yellow.txt" (slurp testfile)}
-               (fetch-zip applicant-id)))))))
+               (fetch-zip handler-id))))
+      (testing "fetch zip as reporter"
+        (is (= {"blue.txt" (slurp testfile)
+                "red.txt" (slurp testfile)
+                "blue (1).txt" (slurp testfile)
+                "yellow.txt" (slurp testfile)}
+               (fetch-zip reporter-id))))
+      (testing "fetch zip as third party"
+        (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/attachments") nil
+                                                  api-key "malice"))))
+      (testing "fetch zip for nonexisting application"
+        (is (response-is-not-found? (api-response :get "/api/applications/99999999/attachments" nil
+                                                  api-key "malice")))))))
 
 
 (deftest test-application-api-license-attachments
