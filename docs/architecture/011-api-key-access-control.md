@@ -27,7 +27,11 @@ implicit roles would require more code.
 
 As a concrete example, an API key with only the role `:logged-in`
 would still be able to impersonate the handler of an application and
-perform handler commands like approving the applicaiton.
+perform handler commands like approving the application.
+
+In order to support the use cases at the end of this document, we need
+to either fix the interaction between API key roles & implicit roles,
+or choose a new approach.
 
 ## Proposed approach
 
@@ -60,8 +64,9 @@ Proposed approach: Two API keys:
   with the `:user-owner` role. (Can also be limited to the
   `/api/users/create` endpoint.)
 - Another API key for creating applications. It can impersonate
-  anyone, but is limited to the `/api/application/save-draft` and
-  `/api/application/submit` endpoints.
+  anyone, but is limited to the `/api/application/create`,
+  `/api/application/save-draft` and `/api/application/submit`
+  endpoints.
 
 ### Fetching entitlements and applications
 
