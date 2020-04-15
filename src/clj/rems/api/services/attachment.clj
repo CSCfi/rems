@@ -1,7 +1,5 @@
 (ns rems.api.services.attachment
   (:require [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.test :refer :all]
             [rems.application.commands :as commands]
             [rems.common.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
@@ -45,29 +43,14 @@
       (throw-forbidden))
     (attachments/save-attachment! file user-id application-id)))
 
-(defn- add-postfix [filename postfix]
-  (if-let [i (str/last-index-of filename \.)]
-    (str (subs filename 0 i) postfix (subs filename i))
-    (str filename postfix)))
-
-(deftest test-add-postfix
-  (is (= "foo (1).txt"
-         (add-postfix "foo.txt" " (1)")))
-  (is (= "foo_bar_quux (1)"
-         (add-postfix "foo_bar_quux" " (1)")))
-  (is (= "foo.bar!.quux"
-         (add-postfix "foo.bar.quux" "!")))
-  (is (= "!"
-         (add-postfix "" "!"))))
-
 (defn zip-attachments [application]
   (let [out (ByteArrayOutputStream.)]
     (with-open [zip (ZipOutputStream. out)]
       (doseq [metadata (getx application :application/attachments)]
         (let [id (getx metadata :attachment/id)
               attachment (attachments/get-attachment id)]
-          ;; disambiguate filenames with id
-          (.putNextEntry zip (ZipEntry. (add-postfix (getx attachment :attachment/filename) (str " (" id ")"))))
+          ;; TODO handle duplicate filenames
+          (.putNextEntry zip (ZipEntry. (getx attachment :attachment/filename)))
           (.write zip (getx attachment :attachment/data))
           (.closeEntry zip))))
     (-> (ok (ByteArrayInputStream. (.toByteArray out))) ;; extra copy of the data here, could be more efficient

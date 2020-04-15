@@ -747,6 +747,20 @@
                              assert-response-is-ok)]
             (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
             (is (= (slurp testfile) (slurp (:body response))))))
+        (testing "and uploading an attachment with the same name"
+          (let [id (-> (upload-request filecontent)
+                       (authenticate api-key user-id)
+                       handler
+                       read-ok-body
+                       :id)]
+            (is (number? id))
+            (testing "and retrieving it"
+              (let [response (-> (read-request id)
+                             (authenticate api-key user-id)
+                             handler
+                             assert-response-is-ok)]
+            (is (= "attachment;filename=\"test (1).txt\"" (get-in response [:headers "Content-Disposition"])))
+            (is (= (slurp testfile) (slurp (:body response))))))))
         (testing "and retrieving it as non-applicant"
           (let [response (-> (read-request id)
                              (authenticate api-key "carl")
@@ -930,9 +944,9 @@
                                               :comment "see attachment"
                                               :attachments [{:attachment/id attachment-id}]})))))
 
-    (testing "handler closes with two attachments"
-      (let [id1 (add-attachment handler-id (file "handler-close1.txt"))
-            id2 (add-attachment handler-id (file "handler-close2.txt"))]
+    (testing "handler closes with two attachments (with the same name)"
+      (let [id1 (add-attachment handler-id (file "handler-close.txt"))
+            id2 (add-attachment handler-id (file "handler-close.txt"))]
         (is (number? id1))
         (is (number? id2))
         (is (= {:success true} (send-command handler-id
@@ -963,16 +977,16 @@
       (testing "applicant"
         (is (= ["handler-public-remark.txt"
                 "handler-approve.txt"
-                "handler-close1.txt"
-                "handler-close2.txt"]
+                "handler-close.txt"
+                "handler-close (1).txt"]
                (mapv :attachment/filename (:application/attachments (get-application application-id applicant-id))))))
       (testing "handler"
         (is (= ["handler-public-remark.txt"
                 "reviewer-review.txt"
                 "handler-private-remark.txt"
                 "handler-approve.txt"
-                "handler-close1.txt"
-                "handler-close2.txt"]
+                "handler-close.txt"
+                "handler-close (1).txt"]
                (mapv :attachment/filename (:application/attachments (get-application application-id handler-id)))))))))
 
 (deftest test-application-attachment-zip
@@ -1018,38 +1032,38 @@
                (send-command applicant-id {:type :application.command/save-draft
                                            :application-id app-id
                                            :field-values [{:form form-id :field "attach1" :value (str id)}]})))))
-    (let [blue-id (add-attachment applicant-id (file "blue.txt"))
-          red-id (add-attachment applicant-id (file "red.txt"))]
-      (testing "save a new draft"
+    (testing "save a new draft"
+      (let [blue-id (add-attachment applicant-id (file "blue.txt"))
+            red-id (add-attachment applicant-id (file "red.txt"))]
         (is (= {:success true}
                (send-command applicant-id {:type :application.command/save-draft
                                            :application-id app-id
                                            :field-values [{:form form-id :field "attach1" :value (str blue-id)}
-                                                          {:form form-id :field "attach2" :value (str red-id)}]}))))
-      (testing "fetch zip"
-        (is (= {(str "blue (" blue-id ").txt") (slurp testfile)
-                (str "red (" red-id ").txt") (slurp testfile)}
-               (fetch-zip applicant-id))))
-      (testing "submit"
-        (is (= {:success true}
-               (send-command applicant-id {:type :application.command/submit
-                                           :application-id app-id}))))
+                                                          {:form form-id :field "attach2" :value (str red-id)}]})))))
+    (testing "fetch zip"
+      (is (= {"blue.txt" (slurp testfile)
+              "red.txt" (slurp testfile)}
+             (fetch-zip applicant-id))))
+    (testing "submit"
+      (is (= {:success true}
+             (send-command applicant-id {:type :application.command/submit
+                                         :application-id app-id}))))
+    (testing "remark with attachments"
       (let [blue-comment-id (add-attachment handler-id (file "blue.txt"))
             yellow-comment-id (add-attachment handler-id (file "yellow.txt"))]
-        (testing "remark with attachments"
-          (is (= {:success true} (send-command handler-id
-                                               {:type :application.command/remark
-                                                :public true
-                                                :application-id app-id
-                                                :comment "see attachment"
-                                                :attachments [{:attachment/id blue-comment-id}
-                                                              {:attachment/id yellow-comment-id}]}))))
-        (testing "fetch zip as handler"
-          (is (= {(str "blue (" blue-id ").txt") (slurp testfile)
-                  (str "red (" red-id ").txt") (slurp testfile)
-                  (str "blue (" blue-comment-id ").txt") (slurp testfile)
-                  (str "yellow (" yellow-comment-id ").txt") (slurp testfile)}
-                 (fetch-zip applicant-id))))))))
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/remark
+                                              :public true
+                                              :application-id app-id
+                                              :comment "see attachment"
+                                              :attachments [{:attachment/id blue-comment-id}
+                                                            {:attachment/id yellow-comment-id}]}))))
+      (testing "fetch zip as handler"
+        (is (= {"blue.txt" (slurp testfile)
+                "red.txt" (slurp testfile)
+                "blue (1).txt" (slurp testfile)
+                "yellow.txt" (slurp testfile)}
+               (fetch-zip applicant-id)))))))
 
 
 (deftest test-application-api-license-attachments
