@@ -1027,8 +1027,8 @@
                                            :field-values [{:form form-id :field "attach1" :value (str blue-id)}
                                                           {:form form-id :field "attach2" :value (str red-id)}]}))))
       (testing "fetch zip"
-        (is (= {(str blue-id "-blue.txt") (slurp testfile)
-                (str red-id "-red.txt") (slurp testfile)}
+        (is (= {(str "blue (" blue-id ").txt") (slurp testfile)
+                (str "red (" red-id ").txt") (slurp testfile)}
                (fetch-zip applicant-id))))
       (testing "submit"
         (is (= {:success true}
@@ -1045,10 +1045,10 @@
                                                 :attachments [{:attachment/id blue-comment-id}
                                                               {:attachment/id yellow-comment-id}]}))))
         (testing "fetch zip as handler"
-          (is (= {(str blue-id "-blue.txt") (slurp testfile)
-                  (str red-id "-red.txt") (slurp testfile)
-                  (str blue-comment-id "-blue.txt") (slurp testfile)
-                  (str yellow-comment-id "-yellow.txt") (slurp testfile)}
+          (is (= {(str "blue (" blue-id ").txt") (slurp testfile)
+                  (str "red (" red-id ").txt") (slurp testfile)
+                  (str "blue (" blue-comment-id ").txt") (slurp testfile)
+                  (str "yellow (" yellow-comment-id ").txt") (slurp testfile)}
                  (fetch-zip applicant-id))))))))
 
 
