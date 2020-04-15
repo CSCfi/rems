@@ -1,5 +1,6 @@
 (ns rems.api.services.attachment
   (:require [clojure.set :as set]
+            [clojure.tools.logging :as log]
             [rems.application.commands :as commands]
             [rems.common.application-util :as application-util]
             [rems.auth.util :refer [throw-forbidden]]
@@ -8,7 +9,7 @@
             [rems.util :refer [getx]]
             [ring.util.http-response :refer [ok content-type header]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
-           [java.util.zip ZipOutputStream ZipEntry]))
+           [java.util.zip ZipOutputStream ZipEntry ZipException]))
 
 (defn download [attachment]
   (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
@@ -49,10 +50,15 @@
       (doseq [metadata (getx application :application/attachments)]
         (let [id (getx metadata :attachment/id)
               attachment (attachments/get-attachment id)]
-          ;; TODO handle duplicate filenames
-          (.putNextEntry zip (ZipEntry. (getx attachment :attachment/filename)))
-          (.write zip (getx attachment :attachment/data))
-          (.closeEntry zip))))
+          ;; we deduplicate filenames when uploading, but here's a
+          ;; failsafe in case we have duplicate filenames in old
+          ;; applications
+          (try
+            (.putNextEntry zip (ZipEntry. (getx attachment :attachment/filename)))
+            (.write zip (getx attachment :attachment/data))
+            (.closeEntry zip)
+            (catch ZipException e
+              (log/warn "Ignoring attachment" (pr-str metadata) "when generating zip. Cause:" e))))))
     (-> (ok (ByteArrayInputStream. (.toByteArray out))) ;; extra copy of the data here, could be more efficient
         (header "Content-Disposition" (str "attachment;filename=attachments-" (getx application :application/id) ".zip"))
         (content-type "application/zip"))))
