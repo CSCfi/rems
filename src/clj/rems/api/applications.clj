@@ -254,6 +254,16 @@
         (ok app)
         (api-util/not-found-json-response)))
 
+    (GET "/:application-id/attachments" []
+      :summary "Get all attachments as a zip file"
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")]
+      :responses {200 {}
+                  404 {:schema s/Str :description "Not found"}}
+      (if-let [app (applications/get-application (getx-user-id) application-id)]
+        (attachment/zip-attachments app)
+        (api-util/not-found-json-response)))
+
     (GET "/:application-id/experimental/pdf" request
       :summary "PDF export of application (EXPERIMENTAL)"
       :roles #{:logged-in :api-key}

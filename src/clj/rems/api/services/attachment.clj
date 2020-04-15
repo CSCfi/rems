@@ -6,8 +6,10 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
+            [rems.util :refer [getx]]
             [ring.util.http-response :refer [ok content-type header]])
-  (:import [java.io ByteArrayInputStream]))
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
+           [java.util.zip ZipOutputStream ZipEntry]))
 
 (defn download [attachment]
   (-> (ok (ByteArrayInputStream. (:attachment/data attachment)))
@@ -41,3 +43,17 @@
                     (:application/permissions application))
       (throw-forbidden))
     (attachments/save-attachment! file user-id application-id)))
+
+(defn zip-attachments [application]
+  (let [out (ByteArrayOutputStream.)]
+    (with-open [zip (ZipOutputStream. out)]
+      (doseq [metadata (getx application :application/attachments)]
+        (let [id (getx metadata :attachment/id)
+              attachment (attachments/get-attachment id)]
+          ;; disambiguate filenames with id
+          (.putNextEntry zip (ZipEntry. (str id "-" (getx attachment :attachment/filename))))
+          (.write zip (getx attachment :attachment/data))
+          (.closeEntry zip))))
+    (-> (ok (ByteArrayInputStream. (.toByteArray out))) ;; extra copy of the data here, could be more efficient
+        (header "Content-Disposition" (str "attachment;filename=attachments-" (getx application :application/id) ".zip"))
+        (content-type "application/zip"))))
