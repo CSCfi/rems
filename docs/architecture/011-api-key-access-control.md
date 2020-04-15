@@ -1,6 +1,6 @@
 # 011: API Key Access Control
 
-Authors: @opqdonut
+Authors: @opqdonut @Macroz @foxlynx
 
 ## Background
 
