@@ -6,7 +6,7 @@
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-dev"
  :theme-path "example-theme/theme.edn"
- :authentication :fake-shibboleth
+ :authentication :fake
  :log-authentication-details true
  ; when shibboleth is removed, we can use oidc exclusively
  ;; Open ID Connect settings

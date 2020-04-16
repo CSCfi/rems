@@ -1,13 +1,13 @@
 (ns rems.auth.oidc
-  (:require [rems.atoms :as atoms :refer [document-title]]
+  (:require [rems.atoms :as atoms]
             [rems.navbar :as nav]
             [rems.text :refer [text]]))
 
 (defn login-component []
   [:div
-   [document-title (text :t.login/title)]
-   [:p (text :t.login/oidc-text)]
-   [:div
-    [atoms/link nil
+   (text :t.login/oidc-title)
+   (text :t.login/oidc-text)
+   [:div.text-center
+    [atoms/link {:class "btn btn-primary btn-lg login-btn"}
      (nav/url-dest "/oidc-login")
-     [atoms/image {:class "login-btn" :alt "OIDC"} "/img/oidc-logo.jpg"]]]])
+     (text :t.login/login)]]])

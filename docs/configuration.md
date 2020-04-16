@@ -14,7 +14,7 @@ Currently supported authentication methods are SAML2 and OpenId Connect (e.g. Au
 
 * `:shibboleth` for SAML2
 * `:oidc` for OpenId Connect
-* `:fake-shibboleth` for development login
+* `:fake` for development login
 
 ### SAML2 (`:shibboleth`)
 
@@ -29,7 +29,7 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-client-secret`
 * `:public-url` - the redirect uri sent to the openid endpoint is `{public-url}/oidc-callback`
 
-### Development login (`:fake-shibboleth`)
+### Development login (`:fake`)
 
 This option should not be used in production. Keep also in mind that anyone with access to the dev/test server using development authentication can login with your fake credentials.
 

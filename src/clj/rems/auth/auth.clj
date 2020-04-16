@@ -3,7 +3,7 @@
             [buddy.auth.middleware :refer [wrap-authentication]]
             [buddy.auth.protocols]
             [compojure.core :refer [GET routes]]
-            [rems.auth.fake-shibboleth :as fake-shibboleth]
+            [rems.auth.fake-login :as fake-login]
             [rems.auth.oidc :as oidc]
             [rems.auth.shibboleth :as shibboleth]
             [rems.config :refer [env]]
@@ -45,14 +45,14 @@
 (defn- login-url []
   (case (:authentication env)
     :shibboleth (shibboleth/login-url)
-    :fake-shibboleth (fake-shibboleth/login-url)
-    :oidc (oidc/login-url)))
+    :oidc (oidc/login-url)
+    :fake (fake-login/login-url)))
 
 (defn- logout-url []
   (case (:authentication env)
     :shibboleth (shibboleth/logout-url)
-    :fake-shibboleth (fake-shibboleth/logout-url)
-    :oidc (oidc/logout-url)))
+    :oidc (oidc/logout-url)
+    :fake (fake-login/logout-url)))
 
 (defn auth-routes []
   (routes
@@ -60,5 +60,5 @@
    (GET "/login" _ (redirect (login-url)))
    (case (:authentication env)
      :shibboleth never-match-route ; shibboleth routes handled by tomcat
-     :fake-shibboleth fake-shibboleth/routes
-     :oidc oidc/routes)))
+     :oidc oidc/routes
+     :fake fake-login/routes)))

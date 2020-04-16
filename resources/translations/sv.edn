@@ -356,11 +356,15 @@
   :link {:download-file "Ladda ner fil"
          :opens-in-new-window "Öppnas i nytt fönster"}
   :login {:alternative "Andra alternativ för inloggning"
-          :intro [:div [:h1 "Välkommen till REMS"] [:p "Detta är en demo-version där du kan testa REMS. Här finns en del fantasiresurser, som du kan ansöka rättigheter till. Läs mer på " [:a {:href "/extra-pages/about"} "Info-sidan"] "."]
-                  [:p "Var god, logga in."]]
-          :oidc-text "Logga in via OpenID Connect"
-          :text "Logga in via Haka"
-          :title "Logga in"}
+          :alternative-text ""
+          :intro [:div [:h1 "Välkommen till REMS"] [:p "Detta är en demo-version där du kan testa REMS. Här finns en del fantasiresurser, som du kan ansöka rättigheter till. Läs mer på " [:a {:href "/extra-pages/about"} "Info-sidan"] "."]]
+          :login "Logga in"
+          :oidc-text ""
+          :oidc-title ""
+          :shibboleth-text ""
+          :shibboleth-title ""
+          :text [:p "Var god, logga in."]
+          :title ""}
   :missing "Översättning hittades inte: %1"
   :navigation {:actions "Funktioner"
                :administration "Administration"

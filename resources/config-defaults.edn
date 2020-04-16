@@ -29,7 +29,7 @@
  ;; Path to a writable directory where to store the Lucene search index files.
  :search-index-path "search-index"
 
- ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :oidc
+ ;; Supported authentication methods: :shibboleth, :oidc, :fake
  :authentication :shibboleth
 
  ;; Log additional details about authentication

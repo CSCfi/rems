@@ -1,11 +1,10 @@
-(ns rems.auth.fake-shibboleth
+(ns rems.auth.fake-login
   (:require [clojure.string :as str]
             [compojure.core :refer [GET defroutes]]
             [hiccup.page :refer [html5]]
             [hiccup.util :refer [url]]
             [rems.db.core :as db]
             [rems.db.users :as users]
-            [rems.json :as json]
             [ring.util.response :refer [content-type redirect response]]))
 
 (def ^{:private true
@@ -44,12 +43,18 @@ a { text-decoration: none; color: #fff; }
 a:visited { color: #fff; }
 ")
 
+(defn login-url []
+  "/oidc-login")
+
+(defn logout-url []
+  "/oidc-logout")
+
 (defn- fake-login [session username]
   (assoc (redirect "/redirect")
          :session (assoc session :identity (users/get-raw-user-attributes username))))
 
 (defn- user-selection [username]
-  (let [url (url "/Shibboleth.sso/Login" {:username username})]
+  (let [url (url (login-url) {:username username})]
     [:div.user {:onclick (str "window.location.href='" url "';")}
      [:a {:href url} username]]))
 
@@ -73,12 +78,6 @@ a:visited { color: #fff; }
 (defn- fake-logout [{session :session}]
   (assoc (redirect "/") :session (dissoc session :identity)))
 
-(defn login-url []
-  "/Shibboleth.sso/Login")
-
-(defn logout-url []
-  "/Shibboleth.sso/Logout")
-
 (defroutes routes
-  (GET "/Shibboleth.sso/Login" req (fake-login-screen req))
-  (GET "/Shibboleth.sso/Logout" req (fake-logout req)))
+  (GET (login-url) req (fake-login-screen req))
+  (GET (logout-url) req (fake-logout req)))
