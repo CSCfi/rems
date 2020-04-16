@@ -1061,17 +1061,13 @@
                                               :comment "see attachment"
                                               :attachments [{:attachment/id blue-comment-id}
                                                             {:attachment/id yellow-comment-id}]}))))
-      (testing "fetch zip as handler"
+      (testing "fetch zip as applicant, handler and reporter"
         (is (= {"blue.txt" (slurp testfile)
                 "red.txt" (slurp testfile)
                 "blue (1).txt" (slurp testfile)
                 "yellow.txt" (slurp testfile)}
-               (fetch-zip handler-id))))
-      (testing "fetch zip as reporter"
-        (is (= {"blue.txt" (slurp testfile)
-                "red.txt" (slurp testfile)
-                "blue (1).txt" (slurp testfile)
-                "yellow.txt" (slurp testfile)}
+               (fetch-zip applicant-id)
+               (fetch-zip handler-id)
                (fetch-zip reporter-id))))
       (testing "fetch zip as third party"
         (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/attachments") nil
