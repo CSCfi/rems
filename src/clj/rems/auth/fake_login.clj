@@ -44,10 +44,10 @@ a:visited { color: #fff; }
 ")
 
 (defn login-url []
-  "/oidc-login")
+  "/fake-login")
 
 (defn logout-url []
-  "/oidc-logout")
+  "/fake-logout")
 
 (defn- fake-login [session username]
   (assoc (redirect "/redirect")

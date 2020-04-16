@@ -1,6 +1,7 @@
 (ns rems.auth.auth
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
+            [rems.auth.fake :as fake]
             [rems.auth.oidc :as oidc]
             [rems.auth.shibboleth :as shibboleth]
             [rems.navbar :as nav]
@@ -12,7 +13,7 @@
         login-component (case (:authentication config)
                           :shibboleth (shibboleth/login-component)
                           :oidc (oidc/login-component)
-                          :fake (oidc/login-component)
+                          :fake (fake/login-component)
                           nil)]
     [:<>
      (text :t.login/title)

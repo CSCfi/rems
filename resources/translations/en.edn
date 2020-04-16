@@ -359,6 +359,8 @@
          :opens-in-new-window "Opens in a new window"}
   :login {:alternative "Other login options"
           :alternative-text ""
+          :fake-text ""
+          :fake-title ""
           :intro [:div [:h1 "Welcome to REMS"] [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. More information is available on " [:a {:href "/extra-pages/about"} "About"] " page."]]
           :login "Login"
           :oidc-text ""
