@@ -16,9 +16,11 @@ Currently supported authentication methods are SAML2 and OpenId Connect (e.g. Au
 * `:oidc` for OpenId Connect
 * `:fake` for development login
 
+A link to an alternative login endpoint can also be shown if the `:alternative-login-url` option is set.
+
 ### SAML2 (`:shibboleth`)
 
-When using this option, login requests are directed to `/Shibboleth.sso/Login`. A link to an alternative login endpoint can also be shown if the `:alternative-login-url` option is set.
+When using this option, login requests are directed to `/Shibboleth.sso/Login`.
 
 ### OpenId Connect (`:oidc`)
 
