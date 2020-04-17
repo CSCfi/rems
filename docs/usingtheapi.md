@@ -3,7 +3,7 @@
 These examples assume that the REMS instance you want to talk to is running locally at `localhost:3000`.
 
 ## Authentication
- 
+
 To call the API programmatically, you will first need to add an API key to the `api_key` database table. The API key must be provided in the `x-rems-api-key` header when calling the API.
 
 Some API endpoints also require `x-rems-user-id` header to contain the REMS user ID for the user that is being represented, i.e. the user which applies for a resource or approves an application.
@@ -52,6 +52,6 @@ Returns the list of catalogue items as a JSON response:
 
 ## Learn More
 
-See the [REMS API documentation](https://rems2demo.csc.fi/swagger-ui) for a list of all available operations.
+See the [REMS API documentation](https://rems-demo.rahtiapp.fi/swagger-ui) for a list of all available operations.
 
-You may also inspect what API request the REMS UI does using your web browser's developer tools. The REMS UI does its requests using the `application/transit+json` content-type, but all the APIs work also using `application/json` (which is the default). 
+You may also inspect what API request the REMS UI does using your web browser's developer tools. The REMS UI does its requests using the `application/transit+json` content-type, but all the APIs work also using `application/json` (which is the default).
