@@ -20,7 +20,7 @@
   (with-open [server (stub/start! {"/ok" {:status 200}
                                    "/broken" {:status 500}
                                    "/timeout" {:status 200 :delay 5000}})]
-    (let [body "body"]
+    (let [body {:value 1}]
       (testing "success"
         (is (nil? (#'event-notification/notify! {:url (str (:uri server) "/ok")
                                                  :headers {"additional-header" "value"}}
@@ -29,9 +29,10 @@
           (is (empty? more))
           (is (= {:method "PUT"
                   :path "/ok"
-                  :body {"content" body}}
+                  :body {"content" (json/generate-string body)}}
                  (select-keys req [:method :path :body])))
-          (is (= "value" (get-in req [:headers :additional-header])))))
+          (is (= "value" (get-in req [:headers :additional-header])))
+          ))
       (testing "error code"
         (is (= "failed: 500" (#'event-notification/notify! {:url (str (:uri server) "/broken")}
                                                            body))))

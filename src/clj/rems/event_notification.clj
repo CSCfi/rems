@@ -15,11 +15,12 @@
 (def ^:private default-timeout 60)
 
 (defn- notify! [target body]
-  (log/info "Sending event notification to" (:url target))
+  (log/info "Sending event notification for event" (select-keys body [:application/id :event/type :event/time])
+            "to" (:url target))
   (try
     (let [timeout-ms (* 1000 (get target :timeout default-timeout))
           response (http/put (getx target :url)
-                             {:body body
+                             {:body (json/generate-string body)
                               :throw-exceptions false
                               :content-type :json
                               :headers (get target :headers)
@@ -68,9 +69,7 @@
     (is (true? (wants? target {:event/type :application.event/approved})))))
 
 (defn- notification-body [event]
-  (-> event
-      (assoc :event/application (applications/get-application (:application/id event)))
-      json/generate-string))
+  (assoc event :event/application (applications/get-application (:application/id event))))
 
 (defn queue-notifications! [events]
   (when-let [targets (seq (get rems.config/env :event-notification-targets))]
