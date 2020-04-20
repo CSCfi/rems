@@ -295,6 +295,13 @@
       :target :_blank}
      "PDF " [external-link]]))
 
+(defn- attachment-zip-button [app-id]
+  (when app-id
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" app-id "/attachments")
+      :target :_blank}
+     (text :t.form/attachments-as-zip) " " [file-download]]))
+
 (defn- link-license [license]
   (let [title (localized (:license/title license))
         link (localized (:license/link license))]
@@ -688,7 +695,8 @@
     (concat (distinct (for [[command action] (partition 2 commands-and-actions)
                             :when (contains? (:application/permissions application) command)]
                         action))
-            (list [pdf-button (:application/id application)]))))
+            (list [pdf-button (:application/id application)]
+                  [attachment-zip-button (:application/id application)]))))
 
 
 (defn- actions-form [application]
