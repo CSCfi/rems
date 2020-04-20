@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-applications
-  (:require [clojure.java.io :as io]
+  (:require [clj-time.core :as time]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.api.services.catalogue :as catalogue]
@@ -1338,17 +1339,111 @@
 (deftest test-application-raw
   (let [api-key "42"
         applicant "alice"
-        handler "developer"
+        handler "handler"
         reporter "reporter"
-        app-id (test-data/create-application! {:actor applicant})]
+        form-id (test-data/create-form! {:form/title "notifications"
+                                         :form/fields [{:field/type :text
+                                                        :field/id "field-1"
+                                                        :field/title {:en "text field"}
+                                                        :field/optional false}]})
+        workflow-id (test-data/create-workflow! {:title "wf"
+                                                 :handlers [handler]
+                                                 :type :workflow/default})
+        ext-id "resres"
+        res-id (test-data/create-resource! {:resource-ext-id ext-id})
+        cat-id (test-data/create-catalogue-item! {:form-id form-id
+                                                  :resource-id res-id
+                                                  :workflow-id workflow-id})
+        app-id (test-data/create-draft! applicant [cat-id] "raw test" (time/date-time 2010))]
+    (test-data/create-user! {:eppn applicant :mail "alice@example.com" :commonName "Alice Applicant"})
+    (test-data/create-user! {:eppn handler :mail "handler@example.com" :commonName "Hannah Handler"})
+    (test-data/create-user! {:eppn reporter :mail "reporter@example.com" :commonName "Robbie Reporter"})
     (testing "applicant can't get raw application"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/raw") nil
                                                 api-key applicant))))
     (testing "reporter can get raw application"
-      (is (= {:application/id app-id
-              :application/user-roles {(keyword applicant) ["applicant"]
-                                       (keyword handler) ["handler"]
-                                       (keyword reporter) ["reporter"]}}
+      (is (= {:application/description ""
+              :application/invited-members []
+              :application/last-activity "2010-01-01T00:00:00.000Z"
+              :application/attachments []
+              :application/licenses []
+              :application/created "2010-01-01T00:00:00.000Z"
+              :application/state "application.state/draft"
+              :application/role-permissions
+              {:everyone-else ["application.command/accept-invitation"]
+               :member ["application.command/copy-as-new"
+                        "application.command/accept-licenses"]
+               :reporter ["see-everything"]
+               :applicant ["application.command/copy-as-new"
+                           "application.command/invite-member"
+                           "application.command/submit"
+                           "application.command/remove-member"
+                           "application.command/accept-licenses"
+                           "application.command/uninvite-member"
+                           "application.command/save-draft"
+                           "application.command/close"
+                           "application.command/change-resources"]}
+              :application/modified "2010-01-01T00:00:00.000Z"
+              :application/user-roles {:alice ["applicant"] :handler ["handler"] :reporter ["reporter"]}
+              :application/external-id "2010/1"
+              :application/workflow {:workflow/type "workflow/default"
+                                     :workflow/id workflow-id
+                                     :workflow.dynamic/handlers
+                                     [{:email "handler@example.com" :userid "handler" :name "Hannah Handler"}]}
+              :application/blacklist []
+              :application/id app-id
+              :application/todo nil
+              :application/applicant {:email "alice@example.com" :userid "alice" :name "Alice Applicant"}
+              :application/members []
+              :application/resources [{:catalogue-item/start "REDACTED"
+                                       :catalogue-item/end nil
+                                       :catalogue-item/expired false
+                                       :catalogue-item/enabled true
+                                       :resource/id res-id
+                                       :catalogue-item/title {}
+                                       :catalogue-item/infourl {}
+                                       :resource/ext-id ext-id
+                                       :catalogue-item/archived false
+                                       :catalogue-item/id cat-id}]
+              :application/accepted-licenses {:alice []}
+              :application/forms [{:form/fields [{:field/value "raw test"
+                                                  :field/type "text"
+                                                  :field/title {:en "text field"}
+                                                  :field/id "field-1"
+                                                  :field/optional false
+                                                  :field/visible true
+                                                  :field/private false}]
+                                   :form/title "notifications"
+                                   :form/id form-id}]
+              :application/events [{:application/external-id "2010/1"
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :email "alice@example.com"}
+                                    :application/id app-id
+                                    :event/time "2010-01-01T00:00:00.000Z"
+                                    :workflow/type "workflow/default"
+                                    :application/resources [{:catalogue-item/id cat-id :resource/ext-id ext-id}]
+                                    :application/forms [{:form/id form-id}]
+                                    :workflow/id workflow-id
+                                    :event/actor "alice"
+                                    :event/type "application.event/created"
+                                    :event/id 100
+                                    :application/licenses []}
+                                   {:event/id 100
+                                    :event/type "application.event/draft-saved"
+                                    :event/time "2010-01-01T00:00:00.000Z"
+                                    :event/actor "alice"
+                                    :application/id app-id
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :email "alice@example.com"}
+                                    :application/field-values [{:form form-id :field "field-1" :value "raw test"}]}
+                                   {:event/id 100
+                                    :event/type "application.event/licenses-accepted"
+                                    :event/time "2010-01-01T00:00:00.000Z"
+                                    :event/actor "alice"
+                                    :application/id app-id
+                                    :event/actor-attributes {:userid "alice" :name "Alice Applicant" :email "alice@example.com"}
+                                    :application/accepted-licenses []}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
-                 (select-keys [:application/id :application/user-roles])))))))
+                 ;; start is set by the db not easy to mock
+                 (assoc-in [:application/resources 0 :catalogue-item/start] "REDACTED")
+                 ;; event ids are unpredictable
+                 (update :application/events (partial map #(update % :event/id (constantly 100))))))))))

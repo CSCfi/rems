@@ -104,7 +104,9 @@
   "Full application state with internal information hidden. Not personalized for any users. Suitable for public APIs."
   [application-id]
   (when-let [application (get-application-internal application-id)]
-    (model/hide-non-public-information application)))
+    (-> application
+        (model/hide-non-public-information)
+        (model/apply-privacy #{:reporter})))) ;; to populate required :field/private attributes
 
 (defn get-application-for-user
   "Returns the part of application state which the specified user
