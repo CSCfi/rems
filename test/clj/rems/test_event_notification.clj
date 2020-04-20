@@ -5,6 +5,7 @@
             [rems.config]
             [rems.api.services.command :as command]
             [rems.api.testing :refer [api-fixture api-call]]
+            [rems.db.events]
             [rems.db.test-data :as test-data]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
@@ -75,7 +76,8 @@
             app-id (:application-id (command/command! {:type :application.command/create
                                                        :actor applicant
                                                        :time (time/date-time 2001)
-                                                       :catalogue-item-ids [cat-id]}))]
+                                                       :catalogue-item-ids [cat-id]}))
+            event-id (:event/id (first (rems.db.events/get-application-events app-id)))]
         (testing "no notifications before outbox is processed"
           (is (empty? (stub/recorded-requests server))))
         (event-notification/process-outbox!)
@@ -88,6 +90,7 @@
                    (set (map :path notifications))))
             (is (= {:application/external-id "2001/1"
                     :application/id app-id
+                    :event/id event-id
                     :event/time "2001-01-01T00:00:00.000Z"
                     :workflow/type "workflow/default"
                     :application/resources [{:resource/ext-id ext-id

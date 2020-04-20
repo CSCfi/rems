@@ -15,7 +15,7 @@
 (def ^:private default-timeout 60)
 
 (defn- notify! [target body]
-  (log/info "Sending event notification for event" (select-keys body [:application/id :event/type :event/time])
+  (log/info "Sending event notification for event" (select-keys body [:event/id :application/id :event/type :event/time])
             "to" (:url target))
   (try
     (let [timeout-ms (* 1000 (get target :timeout default-timeout))
