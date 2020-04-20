@@ -37,7 +37,7 @@
                                                            body))))
       (testing "timeout"
         (is (= "failed: exception" (#'event-notification/notify! {:url (str (:uri server) "/timeout")
-                                                                  :timeout 2}
+                                                                  :timeout 1}
                                                                  body))))
       (testing "invalid url"
         (is (= "failed: exception" (#'event-notification/notify! {:url "http://invalid/lol"}
@@ -81,8 +81,7 @@
                                                        :time (time/date-time 2001)
                                                        :catalogue-item-ids [cat-id]}))]
         (testing "no notifications before outbox is processed"
-          (is (= []
-                 (stub/recorded-requests server))))
+          (is (empty? (stub/recorded-requests server))))
         (event-notification/process-outbox!)
         (testing "created event gets sent to both endpoints"
           (let [notifications (get-notifications)]
