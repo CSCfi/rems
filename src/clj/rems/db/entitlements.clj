@@ -95,7 +95,7 @@
 
 (defn process-outbox! []
   (doseq [entry (mapv fix-entry-from-db
-                      (outbox/get-entries {:type :entitlement-post :due-now? true}))]
+                      (outbox/get-due-entries :entitlement-post))]
     ;; TODO could send multiple entitlements at once instead of one outbox entry at a time
     (if-let [error (post-entitlements! (:outbox/entitlement-post entry))]
       (let [entry (outbox/attempt-failed! entry error)]
@@ -177,7 +177,7 @@
     (when (seq members-to-update)
       (log/info "updating entitlements on application" application-id)
       (doseq [[userid resource-ids] entitlements-to-add]
-        (grant-entitlements! application-id userid resource-ids actor)) 
+        (grant-entitlements! application-id userid resource-ids actor))
       (doseq [[userid resource-ids] entitlements-to-remove]
         (revoke-entitlements! application-id userid resource-ids actor)))))
 

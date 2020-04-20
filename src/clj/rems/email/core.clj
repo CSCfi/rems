@@ -111,7 +111,7 @@
             (str "failed sending email: " e)))))))
 
 (defn try-send-emails! []
-  (doseq [email (outbox/get-entries {:type :email :due-now? true})]
+  (doseq [email (outbox/get-due-entries :email)]
     (if-let [error (send-email! (:outbox/email email))]
       (let [email (outbox/attempt-failed! email error)]
         (when (not (:outbox/next-attempt email))

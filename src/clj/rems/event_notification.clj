@@ -34,7 +34,7 @@
       "failed: exception")))
 
 (defn process-outbox! []
-  (doseq [entry (outbox/get-entries {:type :event-notification :due-now? true})]
+  (doseq [entry (outbox/get-due-entries :event-notification)]
     (if-let [error (notify! (get-in entry [:outbox/event-notification :target])
                             (get-in entry [:outbox/event-notification :body]))]
       (let [entry (outbox/attempt-failed! entry error)]

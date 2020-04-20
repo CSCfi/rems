@@ -74,6 +74,9 @@
      due-now? (filter (partial next-attempt-now? (DateTime/now))) ;; TODO move to db?
      type (filter #(= type (:outbox/type %))))))
 
+(defn get-due-entries [type]
+  (get-entries {:type type :due-now? true}))
+
 (defn get-entry-by-id [id]
   (first (get-entries {:ids [id]})))
 
