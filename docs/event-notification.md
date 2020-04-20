@@ -2,6 +2,19 @@
 
 REMS can be configured to send events notifications over HTTP.
 
+Event notifications are performed _one at a time_, waiting for a HTTP
+200 response from the notification endpoint. Everything except a HTTP
+200 response counts as a failure. Failed notifications are retried
+with exponential backoff for up to 12 hours.
+
+Due to retries, the event notification endpoint _should be_ idempotent.
+
+Event notifications are _not guaranteed to be ordered_ by event
+creation order, especially when retries occur.
+
+Event notification failures are logged. You can also inspect the
+`outbox` db table for the retry state of notifications.
+
 ## Configuration
 
 See `:event-notification-targets` in [config-defaults.edn](../resources/config-defaults.edn).
@@ -18,9 +31,3 @@ The body of the HTTP PUT request will be a JSON object that contains:
 
 Other keys may also be present depending on the event type.
 
-## Error handling
-
-Event notifications are retried with exponential backoff for up to 12
-hours. Everything except a HTTP 200 status counts as a failure.
-Failures are logged. You can also inspect the `outbox` db table for
-the retry state of notifications.
