@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-applications
-  (:require [clojure.string :as str]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.testing :refer :all]
@@ -11,7 +12,9 @@
             [rems.handler :refer [handler]]
             [rems.json]
             [rems.testing-util :refer [with-user]]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all])
+  (:import java.io.ByteArrayOutputStream
+           java.util.zip.ZipInputStream))
 
 (use-fixtures
   :once
@@ -688,9 +691,9 @@
                        read-ok-body)]
       (is (= (count (str/split exported #"\n")) 2)))))
 
-(def testfile (clojure.java.io/file "./test-data/test.txt"))
+(def testfile (io/file "./test-data/test.txt"))
 
-(def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
+(def malicious-file (io/file "./test-data/malicious_test.html"))
 
 (def filecontent {:tempfile testfile
                   :content-type "text/plain"
@@ -744,6 +747,20 @@
                              assert-response-is-ok)]
             (is (= "attachment;filename=\"test.txt\"" (get-in response [:headers "Content-Disposition"])))
             (is (= (slurp testfile) (slurp (:body response))))))
+        (testing "and uploading an attachment with the same name"
+          (let [id (-> (upload-request filecontent)
+                       (authenticate api-key user-id)
+                       handler
+                       read-ok-body
+                       :id)]
+            (is (number? id))
+            (testing "and retrieving it"
+              (let [response (-> (read-request id)
+                             (authenticate api-key user-id)
+                             handler
+                             assert-response-is-ok)]
+            (is (= "attachment;filename=\"test (1).txt\"" (get-in response [:headers "Content-Disposition"])))
+            (is (= (slurp testfile) (slurp (:body response))))))))
         (testing "and retrieving it as non-applicant"
           (let [response (-> (read-request id)
                              (authenticate api-key "carl")
@@ -927,9 +944,9 @@
                                               :comment "see attachment"
                                               :attachments [{:attachment/id attachment-id}]})))))
 
-    (testing "handler closes with two attachments"
-      (let [id1 (add-attachment handler-id (file "handler-close1.txt"))
-            id2 (add-attachment handler-id (file "handler-close2.txt"))]
+    (testing "handler closes with two attachments (with the same name)"
+      (let [id1 (add-attachment handler-id (file "handler-close.txt"))
+            id2 (add-attachment handler-id (file "handler-close.txt"))]
         (is (number? id1))
         (is (number? id2))
         (is (= {:success true} (send-command handler-id
@@ -960,17 +977,105 @@
       (testing "applicant"
         (is (= ["handler-public-remark.txt"
                 "handler-approve.txt"
-                "handler-close1.txt"
-                "handler-close2.txt"]
+                "handler-close.txt"
+                "handler-close (1).txt"]
                (mapv :attachment/filename (:application/attachments (get-application-for-user application-id applicant-id))))))
       (testing "handler"
         (is (= ["handler-public-remark.txt"
                 "reviewer-review.txt"
                 "handler-private-remark.txt"
                 "handler-approve.txt"
-                "handler-close1.txt"
-                "handler-close2.txt"]
+                "handler-close.txt"
+                "handler-close (1).txt"]
                (mapv :attachment/filename (:application/attachments (get-application-for-user application-id handler-id)))))))))
+
+(deftest test-application-attachment-zip
+  (let [api-key "42"
+        applicant-id "alice"
+        handler-id "handler"
+        reporter-id "reporter"
+        workflow-id (test-data/create-workflow! {:handlers [handler-id]})
+        form-id (test-data/create-form! {:form/fields [{:field/id "attach1"
+                                                        :field/title {:en "some attachment"
+                                                                      :fi "joku liite"}
+                                                        :field/type :attachment
+                                                        :field/optional true}
+                                                       {:field/id "attach2"
+                                                        :field/title {:en "another attachment"
+                                                                      :fi "toinen liite"}
+                                                        :field/type :attachment
+                                                        :field/optional true}]})
+        cat-id (test-data/create-catalogue-item! {:workflow-id workflow-id
+                                                  :form-id form-id})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                               :actor applicant-id})
+        add-attachment (fn [user file]
+                         (-> (request :post (str "/api/applications/add-attachment?application-id=" app-id))
+                             (authenticate api-key user)
+                             (assoc :params {"file" file})
+                             (assoc :multipart-params {"file" file})
+                             handler
+                             read-ok-body
+                             :id))
+        file #(assoc filecontent :filename %)
+        fetch-zip (fn [user-id]
+                    (with-open [zip (-> (api-response :get (str "/api/applications/" app-id "/attachments") nil
+                                                      api-key user-id)
+                                        :body
+                                        ZipInputStream.)]
+                      (loop [files {}]
+                        (if-let [entry (.getNextEntry zip)]
+                          (let [buf (ByteArrayOutputStream.)]
+                            (io/copy zip buf)
+                            (recur (assoc files (.getName entry) (.toString buf "UTF-8"))))
+                          files))))]
+    (testing "save a draft"
+      (let [id (add-attachment applicant-id (file "invisible.txt"))]
+        (is (= {:success true}
+               (send-command applicant-id {:type :application.command/save-draft
+                                           :application-id app-id
+                                           :field-values [{:form form-id :field "attach1" :value (str id)}]})))))
+    (testing "save a new draft"
+      (let [blue-id (add-attachment applicant-id (file "blue.txt"))
+            red-id (add-attachment applicant-id (file "red.txt"))]
+        (is (= {:success true}
+               (send-command applicant-id {:type :application.command/save-draft
+                                           :application-id app-id
+                                           :field-values [{:form form-id :field "attach1" :value (str blue-id)}
+                                                          {:form form-id :field "attach2" :value (str red-id)}]})))))
+    (testing "fetch zip as applicant"
+      (is (= {"blue.txt" (slurp testfile)
+              "red.txt" (slurp testfile)}
+             (fetch-zip applicant-id))))
+    (testing "submit"
+      (is (= {:success true}
+             (send-command applicant-id {:type :application.command/submit
+                                         :application-id app-id}))))
+    (testing "remark with attachments"
+      (let [blue-comment-id (add-attachment handler-id (file "blue.txt"))
+            yellow-comment-id (add-attachment handler-id (file "yellow.txt"))]
+        (is (= {:success true} (send-command handler-id
+                                             {:type :application.command/remark
+                                              :public true
+                                              :application-id app-id
+                                              :comment "see attachment"
+                                              :attachments [{:attachment/id blue-comment-id}
+                                                            {:attachment/id yellow-comment-id}]}))))
+      (testing "fetch zip as applicant, handler and reporter"
+        (is (= {"blue.txt" (slurp testfile)
+                "red.txt" (slurp testfile)
+                "blue (1).txt" (slurp testfile)
+                "yellow.txt" (slurp testfile)}
+               (fetch-zip applicant-id)
+               (fetch-zip handler-id)
+               (fetch-zip reporter-id))))
+      (testing "fetch zip as third party"
+        (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/attachments") nil
+                                                  api-key "malice"))))
+      (testing "fetch zip for nonexisting application"
+        (is (response-is-not-found? (api-response :get "/api/applications/99999999/attachments" nil
+                                                  api-key "malice")))))))
+
 
 (deftest test-application-api-license-attachments
   (let [api-key "42"

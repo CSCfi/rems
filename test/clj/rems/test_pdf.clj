@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.pdf :as pdf]
@@ -41,11 +42,24 @@
                                                        :time (time/date-time 2000)})
         handler "developer"]
     (testing "fill and submit"
-      (test-data/fill-form! {:time (time/date-time 2000)
-                             :actor applicant
-                             :application-id application-id
-                             :field-value "pdf test"
-                             :optional-fields true})
+      (let [attachment (:id (db/save-attachment! {:application application-id
+                                                  :user handler
+                                                  :filename "attachment.pdf"
+                                                  :type "application/pdf"
+                                                  :data (byte-array 0)}))]
+        ;; two draft-saved events
+        (test-data/fill-form! {:time (time/date-time 2000)
+                               :actor applicant
+                               :application-id application-id
+                               :field-value "pdf test"
+                               :attachment attachment
+                               :optional-fields true})
+        (test-data/fill-form! {:time (time/date-time 2000)
+                               :actor applicant
+                               :application-id application-id
+                               :field-value "pdf test"
+                               :attachment attachment
+                               :optional-fields true}))
       (test-data/accept-licenses! {:time (time/date-time 2000)
                                    :actor applicant
                                    :application-id application-id})
@@ -60,11 +74,22 @@
                            :member {:userid "beth"}
                            :actor handler}))
     (testing "approve"
-      (test-data/command! {:time (time/date-time 2003)
-                           :application-id application-id
-                           :type :application.command/approve
-                           :comment "approved"
-                           :actor handler}))
+      (let [att1 (:id (db/save-attachment! {:application application-id
+                                            :user handler
+                                            :filename "file1.txt"
+                                            :type "text/plain"
+                                            :data (byte-array 0)}))
+            att2 (:id (db/save-attachment! {:application application-id
+                                            :user handler
+                                            :filename "file2.pdf"
+                                            :type "application/pdf"
+                                            :data (byte-array 0)}))]
+        (test-data/command! {:time (time/date-time 2003)
+                             :application-id application-id
+                             :type :application.command/approve
+                             :comment "approved"
+                             :attachments [{:attachment/id att1} {:attachment/id att2}]
+                             :actor handler})))
     (testing "pdf contents"
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: pdf test"]
@@ -72,50 +97,51 @@
                [:paragraph "State" [:phrase ": " "Approved"]]
                [:heading pdf/heading-style "Applicants"]
                [:paragraph "Applicant" ": " "Alice Applicant (alice) <alice@example.com>"]
-               [:paragraph "Member" ": " "Beth Applicant (beth) <beth@example.com>"]
+               [[:paragraph "Member" ": " "Beth Applicant (beth) <beth@example.com>"]]
                [:heading pdf/heading-style "Resources"]
-               [:list [:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]]]
+               [:list [[:phrase "Catalogue item" " (" "pdf-resource-ext" ")"]]]]
               [[:heading pdf/heading-style "Terms of use"]
-               [:paragraph "Google license"]
-               [:paragraph "Text license"]]
+               [[:paragraph "Google license"]
+                [:paragraph "Text license"]]]
               [[:heading pdf/heading-style "Application"]
-               [:paragraph {} "This form demonstrates all possible field types. (This text itself is a label field.)"]
-               [:paragraph ""]
-               [:paragraph {:style :bold} "Application title field"]
-               [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Text field"]
-               [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Text area"]
-               [:paragraph "pdf test"]
-               [:paragraph {:style :bold :size 15} "Header"]
-               [:paragraph ""]
-               [:paragraph {:style :bold} "Date field"]
-               [:paragraph "2002-03-04"]
-               [:paragraph {:style :bold} "Email field"]
-               [:paragraph "user@example.com"]
-               [:paragraph {:style :bold} "Attachment"]
-               [:paragraph ""]
-               [:paragraph {:style :bold} "Option list. Choose the first option to reveal a new field."]
-               [:paragraph "First option"]
-               [:paragraph {:style :bold} "Conditional field. Shown only if first option is selected above."]
-               [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Multi-select list"]
-               [:paragraph "First option"]
-               [:paragraph {} "The following field types can have a max length."]
-               [:paragraph ""]
-               [:paragraph {:style :bold} "Text field with max length"]
-               [:paragraph "pdf test"]
-               [:paragraph {:style :bold} "Text area with max length"]
-               [:paragraph "pdf test"]]
+               [[[:paragraph pdf/label-field-style
+                  "This form demonstrates all possible field types. (This text itself is a label field.)"]
+                 [:paragraph ""]]
+                [[:paragraph pdf/field-style "Application title field"]
+                 [:paragraph "pdf test"]]
+                [[:paragraph pdf/field-style "Text field"]
+                 [:paragraph "pdf test"]]
+                [[:paragraph pdf/field-style "Text area"]
+                 [:paragraph "pdf test"]]
+                [[:paragraph pdf/header-field-style "Header"]
+                 [:paragraph ""]]
+                [[:paragraph pdf/field-style "Date field"]
+                 [:paragraph "2002-03-04"]]
+                [[:paragraph pdf/field-style "Email field"]
+                 [:paragraph "user@example.com"]]
+                [[:paragraph pdf/field-style "Attachment"]
+                 [:paragraph "attachment.pdf"]]
+                [[:paragraph pdf/field-style "Option list. Choose the first option to reveal a new field."]
+                 [:paragraph "First option"]]
+                [[:paragraph pdf/field-style "Conditional field. Shown only if first option is selected above."]
+                 [:paragraph "pdf test"]]
+                [[:paragraph pdf/field-style "Multi-select list"]
+                 [:paragraph "First option"]]
+                [[:paragraph pdf/label-field-style "The following field types can have a max length."]
+                 [:paragraph ""]]
+                [[:paragraph pdf/field-style "Text field with max length"]
+                 [:paragraph "pdf test"]]
+                [[:paragraph pdf/field-style "Text area with max length"]
+                 [:paragraph "pdf test"]]]]
               [[:heading pdf/heading-style "Events"]
-               [:table
-                {:header ["Time" "Event" "Comment"]}
-                ["2000-01-01 00:00" "Alice Applicant created a new application." ""]
-                ["2000-01-01 00:00" "Alice Applicant saved the application as a draft." ""]
-                ["2000-01-01 00:00" "Alice Applicant accepted the terms of use." ""]
-                ["2001-01-01 00:00" "Alice Applicant submitted the application for review." ""]
-                ["2002-01-01 00:00" "Developer added Beth Applicant to the application." ""]
-                ["2003-01-01 00:00" "Developer approved the application." "approved"]]]]
+               [:list
+                [[:phrase "2000-01-01 00:00" " " "Alice Applicant created a new application." nil nil]
+                 [:phrase "2000-01-01 00:00" " " "Alice Applicant accepted the terms of use." nil nil]
+                 [:phrase "2001-01-01 00:00" " " "Alice Applicant submitted the application for review." nil nil]
+                 [:phrase "2002-01-01 00:00" " " "Developer added Beth Applicant to the application." nil nil]
+                 [:phrase "2003-01-01 00:00" " " "Developer approved the application."
+                  "\nComment: approved"
+                  "\nAttachments: file1.txt, file2.pdf"]]]]]
              (with-language :en
                (fn []
                  (with-fixed-time (time/date-time 2010)
@@ -124,4 +150,7 @@
       (testing "pdf rendering succeeds"
         (is (some?
              (with-language :en
-               #(pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id))))))))
+               #(do
+                  ;; uncomment this to get a pdf file to look at
+                  #_(pdf/application-to-pdf (applications/get-application-for-user handler application-id) "/tmp/example-application.pdf")
+                  (pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id)))))))))

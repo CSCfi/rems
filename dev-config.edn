@@ -23,7 +23,9 @@
                 :translations {:fi {:title "Info"
                                     :filename "about-fi.md"}
                                :en {:title "About"
-                                    :filename "about-en.md"}}}]
+                                    :filename "about-en.md"}
+                               :sv {:title "Info"
+                                    :filename "about-sv.md"}}}]
  :extra-pages-path "./test-data/extra-pages"
  :application-deadline-days 4
  :enable-pdf-api true

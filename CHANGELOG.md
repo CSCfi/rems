@@ -8,11 +8,20 @@ have notable changes.
 
 Changes since v2.11
 
-### Additions
-- Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
+### Changes
+- Improvements to PDFs (#2114)
+  - show attachment file names
+  - list instead of table for events
+  - hide draft-saved events
+  - vertical space around form fields
+  - PDF button moved to Actions pane
 
 ### Fixes
 - Long attachment filenames are now truncated in the UI (#2118)
+
+### Additions
+- `api/applications/:id/attachments` api for downloading all attachments as a zip file (#2075)
+- Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
 
 ## v2.11 "Kotitontuntie" 2020-04-07
 

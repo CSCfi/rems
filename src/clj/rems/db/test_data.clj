@@ -244,7 +244,7 @@
    :actor actor
    :time (or time (time/now))})
 
-(defn fill-form! [{:keys [application-id actor field-value optional-fields] :as command}]
+(defn fill-form! [{:keys [application-id actor field-value optional-fields attachment] :as command}]
   (let [app (applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
@@ -258,7 +258,7 @@
                                                (:header :label) ""
                                                :date "2002-03-04"
                                                :email "user@example.com"
-                                               :attachment "" ;; don't know what to do for these
+                                               :attachment (str attachment)
                                                (:option :multiselect) (:key (first (:field/options field)))
                                                (or field-value "x"))})))))
 
