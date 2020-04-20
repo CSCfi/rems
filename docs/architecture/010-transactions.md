@@ -1,6 +1,6 @@
 # 010: Database transactions
 
-Authors: @opqdonut
+Authors: @opqdonut @Macroz
 
 ## Introduction
 

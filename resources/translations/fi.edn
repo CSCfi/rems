@@ -65,7 +65,7 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :disable "Poista käytöstä"
-                   :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa kielivaran käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
+                   :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa asian käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
                    :display-archived "Näytä arkistoidut"
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"

@@ -16,6 +16,9 @@ Changes since v2.11
   - vertical space around form fields
   - PDF button moved to Actions pane
 
+### Fixes
+- Long attachment filenames are now truncated in the UI (#2118)
+
 ## v2.11 "Kotitontuntie" 2020-04-07
 
 ### Additions
