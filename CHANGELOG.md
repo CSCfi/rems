@@ -11,6 +11,9 @@ Changes since v2.11
 ### Fixes
 - Long attachment filenames are now truncated in the UI (#2118)
 
+### Additions
+- `api/applications/:id/attachments` api for downloading all attachments as a zip file (#2075)
+
 ## v2.11 "Kotitontuntie" 2020-04-07
 
 ### Additions
