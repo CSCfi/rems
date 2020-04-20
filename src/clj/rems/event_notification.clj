@@ -35,6 +35,11 @@
       "failed: exception")))
 
 (defn process-outbox! []
+  ;; TODO if we want to guarantee event ordering, we need fetch all
+  ;; outbox entries here, and pick the one with the lowest outbox id
+  ;; or event id, and do nothing if it isn't due yet.
+  ;;
+  ;; This can be done per target url or globally.
   (doseq [entry (outbox/get-due-entries :event-notification)]
     (if-let [error (notify! (get-in entry [:outbox/event-notification :target])
                             (get-in entry [:outbox/event-notification :body]))]

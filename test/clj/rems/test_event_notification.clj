@@ -117,3 +117,36 @@
             (is (= "/all" (:path req)))
             (is (= "application.event/draft-saved"
                    (:event/type (:data req))))))))))
+
+(deftest test-event-notification-ordering
+  (with-open [server (stub/start! {"/" {:status 200}})]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :event-notification-targets [{:url (str (:uri server) "/")}])]
+      (let [get-notifications #(doall
+                                (for [r (stub/recorded-requests server)]
+                                  (-> r
+                                      :body
+                                      (get "content")
+                                      json/parse-string
+                                      (select-keys [:event/id :event/time]))))
+            form-id (test-data/create-form! {:form/title "notifications"
+                                             :form/fields [{:field/type :text
+                                                            :field/id "field-1"
+                                                            :field/title {:en "text field"}
+                                                            :field/optional false}]})
+            cat-id (test-data/create-catalogue-item! {:form-id form-id})
+            applicant "alice"
+            t (time/date-time 2010)
+            app-id (:application-id (command/command! {:type :application.command/create
+                                                       :actor applicant
+                                                       :time t
+                                                       :catalogue-item-ids [cat-id]}))]
+        (dotimes [i 100]
+          (command/command! {:type :application.command/save-draft
+                             :actor applicant
+                             :application-id app-id
+                             :time (time/plus t (time/seconds i))
+                             :field-values [{:form form-id :field "field-1" :value (str i)}]}))
+        (event-notification/process-outbox!)
+        (let [notifications (get-notifications)]
+          (is (apply < (mapv :event/id notifications))))))))
