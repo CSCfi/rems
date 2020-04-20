@@ -4,17 +4,15 @@
             [medley.core :refer [dissoc-in]]
             [rems.config]
             [rems.api.services.command :as command]
+            [rems.api.testing :refer [api-fixture api-call]]
             [rems.db.test-data :as test-data]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
-            [rems.testing-util :refer [fixed-time-fixture with-user]]
             [stub-http.core :as stub]))
 
 (use-fixtures
   :once
-  test-db-fixture
-  rollback-db-fixture)
+  api-fixture)
 
 (deftest test-notify!
   (with-open [server (stub/start! {"/ok" {:status 200}
@@ -58,10 +56,7 @@
                                    :data (-> r
                                              :body
                                              (get "content")
-                                             json/parse-string
-                                             (dissoc-in [:event/application :application/events])
-                                             ;; catalogue-item/start is set by the db and can't be easily fixed
-                                             (dissoc-in [:event/application :application/resources 0 :catalogue-item/start]))}))
+                                             json/parse-string)}))
             form-id (test-data/create-form! {:form/title "notifications"
                                              :form/fields [{:field/type :text
                                                             :field/id "field-1"
@@ -85,7 +80,9 @@
           (is (empty? (stub/recorded-requests server))))
         (event-notification/process-outbox!)
         (testing "created event gets sent to both endpoints"
-          (let [notifications (get-notifications)]
+          (let [notifications (get-notifications)
+                app-from-raw-api (api-call :get (str "/api/applications/" app-id "/raw") nil
+                                           "42" "reporter")]
             (is (= 2 (count notifications)))
             (is (= #{"/created" "/all"}
                    (set (map :path notifications))))
@@ -100,57 +97,7 @@
                     :event/actor applicant
                     :event/type "application.event/created"
                     :application/licenses []
-                    :event/application {:application/description ""
-                                        :application/invited-members []
-                                        :application/last-activity "2001-01-01T00:00:00.000Z"
-                                        :application/attachments []
-                                        :application/licenses []
-                                        :application/created "2001-01-01T00:00:00.000Z"
-                                        :application/state "application.state/draft"
-                                        :application/role-permissions
-                                        {:everyone-else ["application.command/accept-invitation"]
-                                         :member ["application.command/copy-as-new"
-                                                  "application.command/accept-licenses"]
-                                         :reporter ["see-everything"]
-                                         :applicant ["application.command/copy-as-new"
-                                                     "application.command/invite-member"
-                                                     "application.command/submit"
-                                                     "application.command/remove-member"
-                                                     "application.command/accept-licenses"
-                                                     "application.command/uninvite-member"
-                                                     "application.command/save-draft"
-                                                     "application.command/close"
-                                                     "application.command/change-resources"]}
-                                        :application/modified "2001-01-01T00:00:00.000Z"
-                                        :application/user-roles {:alice ["applicant"] :handler ["handler"]}
-                                        :application/external-id "2001/1"
-                                        :application/workflow {:workflow/type "workflow/default"
-                                                               :workflow/id workflow-id
-                                                               :workflow.dynamic/handlers
-                                                               [{:email nil :userid "handler" :name nil}]}
-                                        :application/blacklist []
-                                        :application/id app-id
-                                        :application/todo nil
-                                        :application/applicant {:email nil :userid "alice" :name nil}
-                                        :application/members []
-                                        :application/resources [{:catalogue-item/end nil
-                                                                 :catalogue-item/expired false
-                                                                 :catalogue-item/enabled true
-                                                                 :resource/id res-id
-                                                                 :catalogue-item/title {}
-                                                                 :catalogue-item/infourl {}
-                                                                 :resource/ext-id ext-id
-                                                                 :catalogue-item/archived false
-                                                                 :catalogue-item/id cat-id}]
-                                        :application/accepted-licenses {}
-                                        :application/forms [{:form/fields [{:field/value ""
-                                                                            :field/type "text"
-                                                                            :field/title {:en "text field"}
-                                                                            :field/id "field-1"
-                                                                            :field/optional false
-                                                                            :field/visible true}]
-                                                             :form/title "notifications"
-                                                             :form/id form-id}]}}
+                    :event/application app-from-raw-api}
                    (:data (first notifications))))
             (is (= (:data (first notifications))
                    (:data (second notifications))))))
