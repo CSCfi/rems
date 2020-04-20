@@ -30,7 +30,7 @@
       (= user-id (:attachment/user attachment))
       attachment
 
-      (contains-attachment? (applications/get-application user-id (:application/id attachment))
+      (contains-attachment? (applications/get-application-for-user user-id (:application/id attachment))
                             attachment-id)
       attachment
 
@@ -38,7 +38,7 @@
       (throw-forbidden))))
 
 (defn add-application-attachment [user-id application-id file]
-  (let [application (applications/get-application user-id application-id)]
+  (let [application (applications/get-application-for-user user-id application-id)]
     (when-not (some (set/union commands/commands-with-comments
                                #{:application.command/save-draft})
                     (:application/permissions application))

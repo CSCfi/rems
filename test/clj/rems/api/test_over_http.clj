@@ -4,9 +4,12 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
-            [rems.db.test-data :as test-data]))
+            [rems.db.test-data :as test-data]
+            [rems.json :as json]
+            [rems.event-notification :as event-notification]
+            [stub-http.core :as stub]))
 
-(use-fixtures :once standalone-fixture)
+(use-fixtures :each standalone-fixture)
 
 (deftest test-api-sql-timeouts
   (let [api-key "42"
@@ -16,7 +19,7 @@
         save-draft! #(-> (http/post (str (:public-url rems.config/env) "/api/applications/save-draft")
                                     {:throw-exceptions false
                                      :as :json
-                                     :headers {"x-rems-api-key" "42"
+                                     :headers {"x-rems-api-key" api-key
                                                "x-rems-user-id" user-id}
                                      :content-type :json
                                      :form-params {:application-id application-id
@@ -49,3 +52,43 @@
           (reset! sleep-time nil)
           (is (= {:status 200 :body {:success true}}
                  (save-draft!))))))))
+
+(deftest test-allocate-external-id
+  ;; this test mimics an external id number service
+  (with-open [server (stub/start! {"/" (fn [r]
+                                         (let [event (json/parse-string (get-in r [:body "content"]))
+                                               app-id (:application/id event)
+                                               response (http/post (str (:public-url rems.config/env) "/api/applications/assign-external-id")
+                                                                   {:as :json
+                                                                    :headers {"x-rems-api-key" "42"
+                                                                              "x-rems-user-id" "developer"}
+                                                                    :content-type :json
+                                                                    :form-params {:application-id app-id
+                                                                                  :external-id "new-id"}})]
+                                           (assert (get-in response [:body :success])))
+                                         {:status 200})})]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :event-notification-targets [{:url (:uri server)
+                                                                       :event-types [:application.event/submitted]}])]
+      (let [api-key "42"
+            applicant "alice"
+            cat-id (test-data/create-catalogue-item! {})
+            app-id (test-data/create-draft! applicant [cat-id] "value")
+            get-ext-id #(-> (http/get (str (:public-url rems.config/env) "/api/applications/" app-id)
+                                      {:as :json
+                                       :headers {"x-rems-api-key" api-key
+                                                 "x-rems-user-id" applicant}})
+                            (get-in [:body :application/external-id]))]
+        (event-notification/process-outbox!)
+        (is (empty? (stub/recorded-requests server)))
+        (is (not= "new-id" (get-ext-id)))
+        (is (-> (http/post (str (:public-url rems.config/env) "/api/applications/submit")
+                           {:as :json
+                            :headers {"x-rems-api-key" api-key
+                                      "x-rems-user-id" applicant}
+                            :content-type :json
+                            :form-params {:application-id app-id}})
+                (get-in [:body :success])))
+        (event-notification/process-outbox!)
+        (is (= 1 (count (stub/recorded-responses server))))
+        (is (= "new-id" (get-ext-id)))))))

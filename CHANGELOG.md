@@ -21,6 +21,7 @@ Changes since v2.11
 
 ### Additions
 - `api/applications/:id/attachments` api for downloading all attachments as a zip file (#2075)
+- Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
 
 ## v2.11 "Kotitontuntie" 2020-04-07
 

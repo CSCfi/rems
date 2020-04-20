@@ -245,12 +245,24 @@
 
     ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
-      :summary "Get application by `application-id`"
+      :summary "Get application by `application-id`. Application is customized for the requesting user (e.g. event visibility, permissions, etc)."
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema Application}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application (getx-user-id) application-id)]
+      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+        (ok app)
+        (api-util/not-found-json-response)))
+
+    (GET "/:application-id/raw" []
+      :summary (str "Get application by `application-id`. Unlike the /api/applicaitons/:application-id endpoint, "
+                    "the data here isn't customized for the requesting user (see schema for details). Suitable "
+                    "for integrations and exporting applications.")
+      :roles #{:reporter :owner}
+      :path-params [application-id :- (describe s/Int "application id")]
+      :responses {200 {:schema ApplicationRaw}
+                  404 {:schema s/Str :description "Not found"}}
+      (if-let [app (applications/get-application application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -260,7 +272,7 @@
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application (getx-user-id) application-id)]
+      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
         (attachment/zip-attachments app)
         (api-util/not-found-json-response)))
 
@@ -282,7 +294,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
       :produces ["application/pdf"]
-      (if-let [app (applications/get-application (getx-user-id) application-id)]
+      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
         (with-language context/*lang*
           #(-> app
                (pdf/application-to-pdf-bytes)

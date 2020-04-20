@@ -61,6 +61,7 @@
 
 (s/defschema Event
   (assoc events/EventBase
+         :event/actor-attributes UserWithAttributes
          s/Keyword s/Any))
 
 (s/defschema Entitlement
@@ -256,6 +257,13 @@
    :application/roles #{s/Keyword}
    :application/permissions Permissions
    :application/attachments [ApplicationAttachment]})
+
+(s/defschema ApplicationRaw
+  (-> Application
+      (dissoc :application/permissions
+              :application/roles)
+      (assoc :application/role-permissions {s/Keyword #{s/Keyword}}
+             :application/user-roles {s/Str #{s/Keyword}})))
 
 (s/defschema ApplicationOverview
   (dissoc Application

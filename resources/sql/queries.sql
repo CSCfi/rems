@@ -552,7 +552,7 @@ WHERE 1 = 1
 /*~ (when (:ids params) */
   AND id IN (:v*:ids)
 /*~ ) ~*/
-;
+ORDER BY id ASC;
 
 -- :name update-outbox! :!
 UPDATE outbox

@@ -8,6 +8,7 @@
             [cprop.tools :refer [merge-maps]]
             [mount.core :refer [defstate]]
             [rems.application.commands :as commands]
+            [rems.application.events :as events]
             [rems.json :as json])
   (:import [java.io FileNotFoundException]
            [org.joda.time Period]))
@@ -52,8 +53,15 @@
     (assert (.endsWith url "/")
             (str ":public-url should end with /:" (pr-str url))))
   (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
-    (log/warn "Unrecognized values in :disable-commands : " (pr-str invalid-commands))
-    (log/warn "Supported-values: " (pr-str commands/command-names)))
+    (log/warn "Unrecognized values in :disable-commands :" (pr-str invalid-commands))
+    (log/warn "Supported-values:" (pr-str commands/command-names)))
+  (doseq [target (:event-notification-targets config)]
+    (when-let [invalid-events (seq (remove (set events/event-types) (:event-types target)))]
+      (log/warn "Unrecognized event types in event notification target"
+                (pr-str target)
+                ":"
+                (pr-str invalid-events))
+      (log/warn "Supported event types:" (pr-str events/event-types))))
   (assert (not (empty? (:organizations config)))
           ":organizations can not be empty")
   (when-let [invalid-keys (seq (remove known-config-keys (keys config)))]

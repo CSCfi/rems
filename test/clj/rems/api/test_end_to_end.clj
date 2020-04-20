@@ -6,6 +6,7 @@
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.entitlements :as entitlements]
             [rems.email.core :as email]
+            [rems.event-notification :as event-notification]
             [rems.json :as json]
             [stub-http.core :as stub]))
 
@@ -20,9 +21,11 @@
 (deftest test-end-to-end
   (testing "clear poller backlog"
     (email/try-send-emails!)
-    (entitlements/process-outbox!))
+    (entitlements/process-outbox!)
+    (event-notification/process-outbox!))
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
-                                                "/remove" {:status 200}})]
+                                                "/remove" {:status 200}})
+              event-server (stub/start! {"/event" {:status 200}})]
     ;; TODO should test emails with a mock smtp server
     (let [email-atom (atom [])]
       (with-redefs [rems.config/env (assoc rems.config/env
@@ -31,7 +34,11 @@
                                            :languages [:en]
                                            :mail-from "rems@rems.rems"
                                            :entitlements-target {:add (str (:uri entitlements-server) "/add")
-                                                                 :remove (str (:uri entitlements-server) "/remove")})
+                                                                 :remove (str (:uri entitlements-server) "/remove")}
+                                           :event-notification-targets [{:url (str (:uri event-server) "/event")
+                                                                         :event-types [:application.event/created
+                                                                                       :application.event/submitted
+                                                                                       :application.event/approved]}])
                     postal.core/send-message (fn [_host message] (swap! email-atom conj message))]
         (let [api-key "42"
               owner-id "owner"
@@ -267,7 +274,41 @@
             (testing "fetch application as applicant"
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key applicant-id)]
-                (is (= "application.state/closed" (:application/state application)))))))))))
+                (is (= "application.state/closed" (:application/state application)))))
+
+            (event-notification/process-outbox!)
+
+            (testing "event notifications"
+              (let [requests (stub/recorded-requests event-server)
+                    events (for [r requests]
+                             (-> r
+                                 :body
+                                 (get "content")
+                                 json/parse-string
+                                 (select-keys [:application/id :event/type :event/actor
+                                               :application/resources :application/forms
+                                               :event/application])
+                                 (update :event/application select-keys [:application/id :application/state])))]
+                (is (every? (comp #{"PUT"} :method) requests))
+                (is (= [{:application/id application-id
+                         :event/type "application.event/created"
+                         :event/actor applicant-id
+                         :application/resources [{:resource/ext-id resource-ext-id :catalogue-item/id catalogue-item-id}
+                                                 {:resource/ext-id resource-ext-id2 :catalogue-item/id catalogue-item-id2}]
+                         :application/forms [{:form/id form-id} {:form/id form-id2}]
+                         :event/application {:application/id application-id
+                                             :application/state "application.state/draft"}}
+                        {:application/id application-id
+                         :event/type "application.event/submitted"
+                         :event/actor applicant-id
+                         :event/application {:application/id application-id
+                                             :application/state "application.state/submitted"}}
+                        {:application/id application-id
+                         :event/type "application.event/approved"
+                         :event/actor handler-id
+                         :event/application {:application/id application-id
+                                             :application/state "application.state/approved"}}]
+                       events))))))))))
 
 (deftest test-approver-rejecter-bots
   (let [api-key "42"

@@ -21,7 +21,7 @@
 (defn- event-to-emails [event]
   (when-let [app-id (:application/id event)]
     (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
-                              (applications/get-unrestricted-application app-id))))
+                              (applications/get-application app-id))))
 
 (defn- enqueue-email! [email]
   (outbox/put! {:outbox/type :email
@@ -111,7 +111,7 @@
             (str "failed sending email: " e)))))))
 
 (defn try-send-emails! []
-  (doseq [email (outbox/get-entries {:type :email :due-now? true})]
+  (doseq [email (outbox/get-due-entries :email)]
     (if-let [error (send-email! (:outbox/email email))]
       (let [email (outbox/attempt-failed! email error)]
         (when (not (:outbox/next-attempt email))

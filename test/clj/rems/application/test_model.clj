@@ -263,7 +263,7 @@
   events)
 
 (defn state-role-permissions [application]
-  (->> (:rems.permissions/role-permissions application)
+  (->> (:application/role-permissions application)
        (map (fn [[role permissions]]
               {:state (:application/state application)
                :role role
@@ -1142,8 +1142,8 @@
                                 :event/actor "handler"
                                 :application/comment "looks good"
                                 :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler"}}]
-          :rems.permissions/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
-          :rems.permissions/role-permissions nil
+          :application/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
+          :application/role-permissions nil
           :application/description "foo"
           :application/forms [{:form/id 40
                                :form/title "form title"

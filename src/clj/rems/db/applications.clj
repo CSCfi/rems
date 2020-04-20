@@ -91,7 +91,7 @@
    :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
                                                                   (blacklist/blacklisted? userid resource)))})
 
-(defn get-unrestricted-application
+(defn get-application-internal
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
@@ -101,10 +101,18 @@
       (model/build-application-view events fetcher-injections))))
 
 (defn get-application
+  "Full application state with internal information hidden. Not personalized for any users. Suitable for public APIs."
+  [application-id]
+  (when-let [application (get-application-internal application-id)]
+    (-> application
+        (model/hide-non-public-information)
+        (model/apply-privacy #{:reporter})))) ;; to populate required :field/private attributes
+
+(defn get-application-for-user
   "Returns the part of application state which the specified user
    is allowed to see. Suitable for returning from public APIs as-is."
   [user-id application-id]
-  (when-let [application (get-unrestricted-application application-id)]
+  (when-let [application (get-application-internal application-id)]
     (or (model/apply-user-permissions application user-id)
         (throw-forbidden))))
 
@@ -144,7 +152,7 @@
 (defn- group-apps-by-user [apps]
   (->> apps
        (mapcat (fn [app]
-                 (for [user (keys (:rems.permissions/user-roles app))]
+                 (for [user (keys (:application/user-roles app))]
                    (when-let [app (model/apply-user-permissions app user)]
                      [user app]))))
        (reduce (fn [apps-by-user [user app]]
@@ -166,7 +174,7 @@
 
 (defn- group-roles-by-user [apps]
   (->> apps
-       (mapcat (fn [app] (:rems.permissions/user-roles app)))
+       (mapcat (fn [app] (:application/user-roles app)))
        (reduce (fn [roles-by-user [user roles]]
                  (update roles-by-user user set/union roles))
                {})))
@@ -183,7 +191,7 @@
 (defn- group-users-by-role [apps]
   (->> apps
        (mapcat (fn [app]
-                 (for [[user roles] (:rems.permissions/user-roles app)
+                 (for [[user roles] (:application/user-roles app)
                        role roles]
                    [user role])))
        (reduce (fn [users-by-role [user role]]

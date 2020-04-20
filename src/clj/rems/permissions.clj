@@ -7,7 +7,7 @@
 (defn- give-role-to-user [application role user]
   (assert (keyword? role) {:role role})
   (assert (string? user) {:user user})
-  (update-in application [::user-roles user] conj-set role))
+  (update-in application [:application/user-roles user] conj-set role))
 
 (defn give-role-to-users [application role users]
   (reduce (fn [app user]
@@ -24,39 +24,39 @@
   (assert (keyword? role) {:role role})
   (assert (string? user) {:user user})
   (-> application
-      (update-in [::user-roles user] disj role)
-      (update ::user-roles dissoc-if-empty user)))
+      (update-in [:application/user-roles user] disj role)
+      (update :application/user-roles dissoc-if-empty user)))
 
 (defn user-roles [application user]
-  (let [specific-roles (set (get-in application [::user-roles user]))]
+  (let [specific-roles (set (get-in application [:application/user-roles user]))]
     (if (seq specific-roles)
       specific-roles
       #{:everyone-else})))
 
 (deftest test-user-roles
   (testing "give first role"
-    (is (= {::user-roles {"user" #{:role-1}}}
+    (is (= {:application/user-roles {"user" #{:role-1}}}
            (-> {}
                (give-role-to-user :role-1 "user")))))
   (testing "give more roles"
-    (is (= {::user-roles {"user" #{:role-1 :role-2}}}
+    (is (= {:application/user-roles {"user" #{:role-1 :role-2}}}
            (-> {}
                (give-role-to-user :role-1 "user")
                (give-role-to-user :role-2 "user")))))
   (testing "remove some roles"
-    (is (= {::user-roles {"user" #{:role-1}}}
+    (is (= {:application/user-roles {"user" #{:role-1}}}
            (-> {}
                (give-role-to-user :role-1 "user")
                (give-role-to-user :role-2 "user")
                (remove-role-from-user :role-2 "user")))))
   (testing "remove all roles"
-    (is (= {::user-roles {}}
+    (is (= {:application/user-roles {}}
            (-> {}
                (give-role-to-user :role-1 "user")
                (remove-role-from-user :role-1 "user")))))
   (testing "give a role to multiple users"
-    (is (= {::user-roles {"user-1" #{:role-1}
-                          "user-2" #{:role-1}}}
+    (is (= {:application/user-roles {"user-1" #{:role-1}
+                                     "user-2" #{:role-1}}}
            (-> {}
                (give-role-to-users :role-1 ["user-1" "user-2"])))))
   (testing "multiple users, get the roles of a single user"
@@ -78,39 +78,39 @@
   [application permission-map]
   (reduce (fn [application [role permissions]]
             (assert (keyword? role) {:role role})
-            (assoc-in application [::role-permissions role] (set permissions)))
+            (assoc-in application [:application/role-permissions role] (set permissions)))
           application
           permission-map))
 
 (deftest test-update-role-permissions
   (testing "adding"
-    (is (= {::role-permissions {:role #{:foo :bar}}}
+    (is (= {:application/role-permissions {:role #{:foo :bar}}}
            (-> {}
                (update-role-permissions {:role [:foo :bar]})))))
   (testing "updating"
-    (is (= {::role-permissions {:role #{:gazonk}}}
+    (is (= {:application/role-permissions {:role #{:gazonk}}}
            (-> {}
                (update-role-permissions {:role [:foo :bar]})
                (update-role-permissions {:role [:gazonk]})))))
   (testing "removing"
-    (is (= {::role-permissions {:role #{}}}
+    (is (= {:application/role-permissions {:role #{}}}
            (-> {}
                (update-role-permissions {:role [:foo :bar]})
                (update-role-permissions {:role []}))))
-    (is (= {::role-permissions {:role #{}}}
+    (is (= {:application/role-permissions {:role #{}}}
            (-> {}
                (update-role-permissions {:role [:foo :bar]})
                (update-role-permissions {:role nil})))))
 
   (testing "can set permissions for multiple roles"
-    (is (= {::role-permissions {:role-1 #{:foo}
-                                :role-2 #{:bar}}}
+    (is (= {:application/role-permissions {:role-1 #{:foo}
+                                           :role-2 #{:bar}}}
            (-> {}
                (update-role-permissions {:role-1 [:foo]
                                          :role-2 [:bar]})))))
   (testing "does not alter unrelated roles"
-    (is (= {::role-permissions {:unrelated #{:foo}
-                                :role #{:gazonk}}}
+    (is (= {:application/role-permissions {:unrelated #{:foo}
+                                           :role #{:gazonk}}}
            (-> {}
                (update-role-permissions {:unrelated [:foo]
                                          :role [:bar]})
@@ -136,7 +136,7 @@
                    (set (map :permission rules))))))
 
 (defn- map-permissions [application f]
-  (update application ::role-permissions #(map-kv-vals f %)))
+  (update application :application/role-permissions #(map-kv-vals f %)))
 
 (defn- permissions-for-role [rules role]
   (set/union (get rules role #{})
@@ -154,16 +154,16 @@
                 (update-role-permissions {:role-1 [:foo :bar]})
                 (update-role-permissions {:role-2 [:foo :bar]}))]
     (testing "disallow a permission for all roles"
-      (is (= {::role-permissions {:role-1 #{:bar}
-                                  :role-2 #{:bar}}}
+      (is (= {:application/role-permissions {:role-1 #{:bar}
+                                             :role-2 #{:bar}}}
              (blacklist app (compile-rules [{:permission :foo}])))))
     (testing "disallow a permission for a single role"
-      (is (= {::role-permissions {:role-1 #{:bar}
-                                  :role-2 #{:foo :bar}}}
+      (is (= {:application/role-permissions {:role-1 #{:bar}
+                                             :role-2 #{:foo :bar}}}
              (blacklist app (compile-rules [{:role :role-1 :permission :foo}])))))
     (testing "multiple rules"
-      (is (= {::role-permissions {:role-1 #{:bar}
-                                  :role-2 #{:foo}}}
+      (is (= {:application/role-permissions {:role-1 #{:bar}
+                                             :role-2 #{:foo}}}
              (blacklist app (compile-rules [{:role :role-1 :permission :foo}
                                             {:role :role-2 :permission :bar}])))))))
 
@@ -179,16 +179,16 @@
                 (update-role-permissions {:role-1 [:foo :bar]})
                 (update-role-permissions {:role-2 [:foo :bar]}))]
     (testing "allow a permission for all roles"
-      (is (= {::role-permissions {:role-1 #{:foo}
-                                  :role-2 #{:foo}}}
+      (is (= {:application/role-permissions {:role-1 #{:foo}
+                                             :role-2 #{:foo}}}
              (whitelist app (compile-rules [{:permission :foo}])))))
     (testing "allow a permission for a single role"
-      (is (= {::role-permissions {:role-1 #{:foo}
-                                  :role-2 #{}}}
+      (is (= {:application/role-permissions {:role-1 #{:foo}
+                                             :role-2 #{}}}
              (whitelist app (compile-rules [{:role :role-1 :permission :foo}])))))
     (testing "multiple rules"
-      (is (= {::role-permissions {:role-1 #{:foo}
-                                  :role-2 #{:bar}}}
+      (is (= {:application/role-permissions {:role-1 #{:foo}
+                                             :role-2 #{:bar}}}
              (whitelist app (compile-rules [{:role :role-1 :permission :foo}
                                             {:role :role-2 :permission :bar}])))))))
 
@@ -199,7 +199,7 @@
   [application user]
   (->> (user-roles application user)
        (mapcat (fn [role]
-                 (get-in application [::role-permissions role])))
+                 (get-in application [:application/role-permissions role])))
        set))
 
 (deftest test-user-permissions
@@ -222,4 +222,4 @@
                (user-permissions "user"))))))
 
 (defn cleanup [application]
-  (dissoc application ::user-roles ::role-permissions))
+  (dissoc application :application/user-roles :application/role-permissions))

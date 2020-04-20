@@ -50,7 +50,7 @@
      :attachment/type (:type attachment)}))
 
 (defn get-application-license-attachment [user-id application-id license-id language]
-  (when-let [app (applications/get-application user-id application-id)]
+  (when-let [app (applications/get-application-for-user user-id application-id)]
     (when-let [license (some #(when (= license-id (:license/id %)) %)
                              (:application/licenses app))]
       (when-let [attachment-id (get-in license [:license/attachment-id language])]

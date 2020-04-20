@@ -604,7 +604,7 @@
 (defn apply-privacy [application roles]
   (transform [:application/forms ALL :form/fields ALL] #(apply-field-privacy % roles) application))
 
-(defn- hide-non-public-information [application]
+(defn hide-non-public-information [application]
   (-> application
       hide-invitation-tokens
       ;; these are not used by the UI, so no need to expose them (especially the user IDs)
