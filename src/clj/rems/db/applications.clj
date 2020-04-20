@@ -100,7 +100,7 @@
       (model/build-application-view events fetcher-injections))))
 
 (defn get-application
-  "Full application state with internal information hidden. No personalized for any users. Suitable for public APIs"
+  "Full application state with internal information hidden. Not personalized for any users. Suitable for public APIs."
   [application-id]
   (when-let [application (get-application-internal application-id)]
     (model/hide-non-public-information application)))
