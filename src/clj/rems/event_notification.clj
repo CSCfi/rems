@@ -38,7 +38,7 @@
     (if-let [error (notify! (get-in entry [:outbox/event-notification :target])
                             (get-in entry [:outbox/event-notification :body]))]
       (let [entry (outbox/attempt-failed! entry error)]
-        (when (not (:outbox/next-attempt entry))
+        (when-not (:outbox/next-attempt entry)
           (log/warn "all attempts to send event notification id " (:outbox/id entry) "failed")))
       (outbox/attempt-succeeded! (:outbox/id entry)))))
 
@@ -61,14 +61,21 @@
   (let [target {:url "whatever" :event-types [:application.event/submitted :application.event/approved]}]
     (is (false? (wants? target {:event/type :application.event/created})))
     (is (true? (wants? target {:event/type :application.event/submitted})))
+    (is (true? (wants? target {:event/type :application.event/approved}))))
+  (let [target {:url "whatever" :event-types []}]
+    (is (true? (wants? target {:event/type :application.event/created})))
+    (is (true? (wants? target {:event/type :application.event/submitted})))
     (is (true? (wants? target {:event/type :application.event/approved})))))
+
+(defn- notification-body [event]
+  (-> event
+      (assoc :event/application (applications/get-application (:application/id event)))
+      json/generate-string))
 
 (defn queue-notifications! [events]
   (when-let [targets (seq (get rems.config/env :event-notification-targets))]
-    (doseq [event events]
-      (let [application (applications/get-application (:application/id event))
-            event-with-app (assoc event :event/application application)
-            body (json/generate-string event-with-app)]
-        (doseq [target targets]
-          (when (wants? target event)
-            (add-to-outbox! target body)))))))
+    (doseq [event events
+            :let [body (notification-body event)]
+            target targets
+            :when (wants? target event)]
+      (add-to-outbox! target body))))
