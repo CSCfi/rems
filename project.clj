@@ -7,7 +7,7 @@
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-commons/secretary "1.2.4"]
                  [clj-http "3.10.0"]
-                 [clj-pdf "2.4.0"]
+                 [clj-pdf "2.4.3"]
                  [clj-time "0.15.2"]
                  [cljs-ajax "0.8.0"]
                  [cljsjs/react "16.9.0-1"]

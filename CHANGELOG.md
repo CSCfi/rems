@@ -8,6 +8,14 @@ have notable changes.
 
 Changes since v2.11
 
+### Changes
+- Improvements to PDFs (#2114)
+  - show attachment file names
+  - list instead of table for events
+  - hide draft-saved events
+  - vertical space around form fields
+  - PDF button moved to Actions pane
+
 ### Fixes
 - Long attachment filenames are now truncated in the UI (#2118)
 
