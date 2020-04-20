@@ -8,6 +8,7 @@
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-test"
  :authentication :fake-shibboleth
+ :languages [:en :fi :sv]
  :enable-pdf-api true
  ;; list all organizations used in test-data
  :organizations ["default" "perf" "thl" "nbn" "organization1" "organization2"]}
