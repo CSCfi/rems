@@ -295,10 +295,10 @@
       :target :_blank}
      "PDF " [external-link]]))
 
-(defn- attachment-zip-button [app-id]
-  (when app-id
+(defn- attachment-zip-button [application]
+  (when-not (empty? (:application/attachments application))
     [:a.btn.btn-secondary
-     {:href (str "/api/applications/" app-id "/attachments")
+     {:href (str "/api/applications/" (:application/id application) "/attachments")
       :target :_blank}
      (text :t.form/attachments-as-zip) " " [file-download]]))
 
@@ -696,7 +696,7 @@
                             :when (contains? (:application/permissions application) command)]
                         action))
             (list [pdf-button (:application/id application)]
-                  [attachment-zip-button (:application/id application)]))))
+                  [attachment-zip-button application]))))
 
 
 (defn- actions-form [application]
