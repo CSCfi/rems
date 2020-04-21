@@ -945,6 +945,25 @@
               :license/text {:en lipsum-paragraphs}}
              false])
 
+   (component-info actions-form)
+   (example "all actions available"
+            [actions-form {:application/id 123
+                           :application/permissions #{:application.command/save-draft
+                                                      :application.command/submit
+                                                      :application.command/return
+                                                      :application.command/request-review
+                                                      :application.command/review
+                                                      :application.command/request-decision
+                                                      :application.command/decide
+                                                      :application.command/remark
+                                                      :application.command/approve
+                                                      :application.command/reject
+                                                      :application.command/revoke
+                                                      :application.command/assign-external-id
+                                                      :application.command/close
+                                                      :application.command/copy-as-new}
+                           :application/attachments [{:attachment/filename "foo.txt"} {:attachment/filename "bar.txt"}]}])
+
    (component-info render-application)
    (example "application, partially filled, as applicant"
             [render-application
