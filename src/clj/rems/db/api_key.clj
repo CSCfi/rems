@@ -13,6 +13,3 @@
   (db/upsert-api-key! {:apikey key
                        :comment comment
                        :permittedroles (json/generate-string +all-roles+)}))
-
-(defn permitted-roles [key]
-  (set (mapv keyword (json/parse-string (:permittedroles (db/get-api-key {:apikey key}))))))

@@ -69,22 +69,13 @@
 
 (defn wrap-context [handler]
   (fn [request]
-    (let [user-roles (if context/*user*
-                       (set/union (roles/get-roles (getx-user-id))
-                                  (applications/get-all-application-roles (getx-user-id)))
-                       #{})
-          permitted-roles (if (:uses-valid-api-key? request)
-                            (set/intersection user-roles
-                                              (-> request
-                                                  auth/get-api-key
-                                                  api-key/permitted-roles))
-                            user-roles)]
-      (binding [context/*root-path* (calculate-root-path request)
-                context/*roles* (if (:uses-valid-api-key? request)
-                                  (conj permitted-roles :api-key)
-                                  permitted-roles)]
-        (with-mdc {:roles (str/join " " (sort context/*roles*))}
-          (handler request))))))
+    (binding [context/*root-path* (calculate-root-path request)
+              context/*roles* (cond-> #{}
+                                context/*user* (set/union (roles/get-roles (getx-user-id))
+                                                          (applications/get-all-application-roles (getx-user-id)))
+                                (:uses-valid-api-key? request) (conj :api-key))]
+      (with-mdc {:roles (str/join " " (sort context/*roles*))}
+        (handler request)))))
 
 (defn wrap-role-headers [handler]
   (fn [request]
