@@ -356,11 +356,17 @@
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"
-          :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "/extra-pages/about"} "Info-sivulla"] "."]
-                  [:p "Ole hyvä ja kirjaudu sisään."]]
-          :oidc-text "Kirjaudu sisään käyttäen OpenID Connectia"
-          :text "Kirjaudu sisään Haka-tunnuksin"
-          :title "Kirjaudu sisään"}
+          :alternative-text ""
+          :fake-text ""
+          :fake-title ""
+          :intro [:div [:h1 "Tervetuloa REMSiin"] [:p "Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Lisätietoja " [:a {:href "/extra-pages/about"} "Info-sivulla"] "."]]
+          :login "Kirjaudu sisään"
+          :oidc-text ""
+          :oidc-title ""
+          :shibboleth-text ""
+          :shibboleth-title ""
+          :text [:p "Ole hyvä ja kirjaudu sisään."]
+          :title ""}
   :missing "Käännös puuttuu %1"
   :navigation {:actions "Toiminnot"
                :administration "Ylläpito"

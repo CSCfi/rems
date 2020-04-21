@@ -7,7 +7,6 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [select ALL]]
             [etaoin.api :refer :all]
-            [mount.core :as mount]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
             [rems.db.test-data :as test-data]
@@ -70,7 +69,7 @@
     (set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
     (go +test-url+)
     (screenshot (io/file reporting-dir "landing-page.png"))
-    (scroll-and-click {:class "login-btn"})
+    (scroll-and-click {:css ".login-btn"})
     (screenshot (io/file reporting-dir "login-page.png"))
     (scroll-and-click [{:class "users"} {:tag :a, :fn/text username}])
     (wait-visible :logout)

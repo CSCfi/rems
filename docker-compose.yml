@@ -9,7 +9,7 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://db:5432/rems?user=rems&password=remspassword
-      AUTHENTICATION: :fake-shibboleth
+      AUTHENTICATION: :fake
       PUBLIC_URL: http://localhost:3000/
     mem_reservation: 200m
     mem_limit: 500m

@@ -9,6 +9,8 @@ have notable changes.
 Changes since v2.11
 
 ### Changes
+- Login component and its texts have changed to a more simplified look. Please, remember to update your extra translations to match.
+- Development login configuration is changed from `:fake-shibboleth` to `:fake` and styled like OIDC login
 - Improvements to PDFs (#2114)
   - show attachment file names
   - list instead of table for events
