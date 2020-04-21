@@ -293,14 +293,14 @@
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" app-id "/pdf")
       :target :_blank}
-     "PDF " [external-link]]))
+      [external-link] " PDF"]))
 
 (defn- attachment-zip-button [application]
   (when-not (empty? (:application/attachments application))
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" (:application/id application) "/attachments")
       :target :_blank}
-     (text :t.form/attachments-as-zip) " " [file-download]]))
+     [file-download] " " (text :t.form/attachments-as-zip)]))
 
 (defn- link-license [license]
   (let [title (localized (:license/title license))
