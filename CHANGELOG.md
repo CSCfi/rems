@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.11
 
+### Breaking changes
+- Support for API key roles removed (#2127)
+
 ### Changes
 - Improvements to PDFs (#2114)
   - show attachment file names
