@@ -87,12 +87,9 @@
      \"validate\" -- validate data in db
      \"list-users\" -- list users and roles
      \"grant-role <role> <user>\" -- grant a role to a user
-     \"add-api-key <api-key> [<description>] [<permitted-role 1>] ... [<permitted-role n>]\" -- add api key to db.
+     \"add-api-key <api-key> [<description>]\" -- add api key to db.
         <description> is an optional text comment.
-        <permitted-role> is, e.g., owner or handler. If no permitted roles are
-          given, permit all roles.
-        If a pre-existing <api-key> is given, update description and permitted
-          roles for that api-key."
+        If a pre-existing <api-key> is given, update description for it."
   [& args]
   (exit-on-signals!)
   (case (first args)
@@ -128,9 +125,9 @@
       (test-data/create-demo-data!))
 
     "add-api-key"
-    (let [[_ key comment & permitted-roles] args]
+    (let [[_ key comment] args]
       (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (api-key/add-api-key! key comment (or permitted-roles api-key/+all-roles+))
+      (api-key/add-api-key! key comment)
       (log/info "Api key added"))
 
     "list-users"

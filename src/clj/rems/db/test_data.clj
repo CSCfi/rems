@@ -1234,8 +1234,8 @@
 
 (defn create-test-data! []
   (assert-no-existing-data!)
-  (api-key/add-api-key! 42 "test data with all roles permitted" api-key/+all-roles+)
-  (api-key/add-api-key! 43 "test data with only logged-in role permitted" ["logged-in"])
+  (api-key/add-api-key! 42 "test data")
+  (api-key/add-api-key! 43 "test data")
   (create-test-users-and-roles!)
   (create-bots!)
   (create-items! +fake-users+))
@@ -1245,7 +1245,7 @@
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
-    (api-key/add-api-key! 55 "Finna" api-key/+all-roles+)
+    (api-key/add-api-key! 55 "Finna")
     (create-users-and-roles! users user-data)
     (create-bots!)
     (create-items! users)))
