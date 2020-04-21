@@ -157,7 +157,7 @@
                                  :accepted-licenses [lic-id1]}) ; only accept some licenses
             (is (= {applicant #{lic-id1 lic-id2}
                     member #{lic-id1}}
-                   (:application/accepted-licenses (applications/get-unrestricted-application app-id))))
+                   (:application/accepted-licenses (applications/get-application app-id))))
 
             (entitlements/process-outbox!)
 

@@ -7,7 +7,7 @@
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-commons/secretary "1.2.4"]
                  [clj-http "3.10.0"]
-                 [clj-pdf "2.4.0"]
+                 [clj-pdf "2.4.3"]
                  [clj-time "0.15.2"]
                  [cljs-ajax "0.8.0"]
                  [cljsjs/react "16.9.0-1"]
@@ -169,7 +169,7 @@
                                 [figwheel-sidecar "0.5.19" :exclusions [org.clojure/tools.nrepl com.fasterxml.jackson.core/jackson-core]]
                                 [re-frisk "0.5.4.1"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
-                                [se.haleby/stub-http "0.2.7"]]
+                                [se.haleby/stub-http "0.2.8"]]
 
                  :plugins [[lein-ancient "0.6.15"]
                            [lein-doo "0.1.11"]

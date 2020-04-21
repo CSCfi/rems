@@ -16,7 +16,7 @@
                    handler
                    read-body)
           languages (keys data)]
-      (is (= [:en :fi] (sort languages))))))
+      (is (= [:en :fi :sv] (sort languages))))))
 
 (deftest test-config-api-smoke
   (let [config (-> (request :get "/api/config")

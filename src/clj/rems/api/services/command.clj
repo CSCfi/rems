@@ -15,6 +15,7 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.email.core :as email]
+            [rems.event-notification :as event-notification]
             [rems.form-validation :as form-validation]
             [rems.util :refer [secure-token]])
   (:import rems.TryAgainException))
@@ -27,7 +28,7 @@
 (defn- revokes-to-blacklist [new-events]
   (doseq [event new-events]
     (when (= :application.event/revoked (:event/type event))
-      (let [application (applications/get-unrestricted-application (:application/id event))]
+      (let [application (applications/get-application-internal (:application/id event))]
         (doseq [resource (:application/resources application)]
           (blacklist/add-users-to-blacklist! {:users (application-util/applicant-and-members application)
                                               :resource/ext-id (:resource/ext-id resource)
@@ -41,7 +42,8 @@
    (email/generate-event-emails! new-events)
    (run-entitlements new-events)
    (rejecter-bot/run-rejecter-bot new-events)
-   (approver-bot/run-approver-bot new-events)))
+   (approver-bot/run-approver-bot new-events)
+   (event-notification/queue-notifications! new-events)))
 
 (def ^:private command-injections
   {:valid-user? users/user-exists?
@@ -75,14 +77,13 @@
         (throw (TryAgainException. e))
         (throw e))))
   (let [app (when-let [app-id (:application-id cmd)]
-              (applications/get-unrestricted-application app-id))
+              (applications/get-application-internal app-id))
         result (commands/handle-command cmd app command-injections)]
     (when-not (:errors result)
-      (doseq [event (:events result)]
-        (events/add-event! event))
-      (doseq [cmd2 (run-process-managers (:events result))]
-        (let [result (command! cmd2)]
-          (when (:errors result)
-            (log/error "process manager command failed"
-                       (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))
+      (let [events-from-db (mapv events/add-event! (:events result))]
+        (doseq [cmd2 (run-process-managers events-from-db)]
+          (let [result (command! cmd2)]
+            (when (:errors result)
+              (log/error "process manager command failed"
+                         (pr-str {:cmd cmd2 :result result :parent-cmd cmd})))))))
     result))

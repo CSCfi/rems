@@ -35,6 +35,8 @@
  :logo-name-sm-fi "rems_logo_fi.png"
  :logo-name-en "rems_logo_en.png"
  :logo-name-sm-en "rems_logo_en.png"
+ :logo-name-sv "rems_logo_sv.png"
+ :logo-name-sm-sv "rems_logo_sv.png"
  :logo-content-origin "initial"
  :phase-color "#111"
  :phase-bgcolor "#f8f8f8"

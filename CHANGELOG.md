@@ -11,9 +11,19 @@ Changes since v2.11
 ### Changes
 - Login component and its texts have changed to a more simplified look. Please, remember to update your extra translations to match.
 - Development login configuration is changed from `:fake-shibboleth` to `:fake` and styled like OIDC login
+- Improvements to PDFs (#2114)
+  - show attachment file names
+  - list instead of table for events
+  - hide draft-saved events
+  - vertical space around form fields
+  - PDF button moved to Actions pane
 
 ### Fixes
 - Long attachment filenames are now truncated in the UI (#2118)
+
+### Additions
+- Downloading all attachments as a zip file (API `/api/applications/:id/attachments`, button in UI) (#2075)
+- Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
 
 ## v2.11 "Kotitontuntie" 2020-04-07
 

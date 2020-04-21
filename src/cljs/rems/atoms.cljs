@@ -110,7 +110,7 @@
     :target :_blank
     :title title
     :style {:max-width "25em"}}
-   title " " [file-download]])
+   [file-download] " " title])
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."

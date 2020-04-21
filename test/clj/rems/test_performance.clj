@@ -79,7 +79,7 @@
     (println "cache size" (mm/measure applications/all-applications-cache))))
 
 (defn benchmark-get-application []
-  (let [test-get-application #(applications/get-application "developer" 12)]
+  (let [test-get-application #(applications/get-application-for-user "developer" 12)]
     (run-benchmarks [{:name "get-application"
                       :benchmark test-get-application}])))
 

@@ -49,7 +49,7 @@
                          :application-id app-id
                          :actor "handler"
                          :comment ""})
-    (is (= :application.state/approved (:application/state (applications/get-application applicant app-id))))
+    (is (= :application.state/approved (:application/state (applications/get-application-for-user applicant app-id))))
 
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
         "should create entitlements for both resources")))

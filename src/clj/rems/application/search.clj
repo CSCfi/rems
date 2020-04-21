@@ -104,7 +104,7 @@
           (let [app-ids (distinct (map :application/id events))]
             (log/info "Start indexing" (count app-ids) "applications...")
             (doseq [app-id app-ids]
-              (index-application! writer (applications/get-unrestricted-application app-id)))
+              (index-application! writer (applications/get-application app-id)))
             (log/info "Finished indexing" (count app-ids) "applications")))
         (.maybeRefresh searcher-manager)
         (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
