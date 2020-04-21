@@ -1235,7 +1235,6 @@
 (defn create-test-data! []
   (assert-no-existing-data!)
   (api-key/add-api-key! 42 "test data")
-  (api-key/add-api-key! 43 "test data")
   (create-test-users-and-roles!)
   (create-bots!)
   (create-items! +fake-users+))
