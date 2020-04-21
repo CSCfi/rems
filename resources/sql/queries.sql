@@ -485,7 +485,7 @@ FROM application_event
 ORDER BY id DESC
 LIMIT 1;
 
--- :name add-application-event! :? :1
+-- :name add-application-event! :returning-execute :1
 INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb)
 RETURNING id, eventData::TEXT;
