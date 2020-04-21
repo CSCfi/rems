@@ -70,10 +70,12 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
-              context/*roles* (cond-> #{}
-                                context/*user* (set/union (roles/get-roles (getx-user-id))
-                                                          (applications/get-all-application-roles (getx-user-id)))
-                                (:uses-valid-api-key? request) (conj :api-key))]
+              context/*roles* (set/union
+                               (when context/*user*
+                                 (set/union (roles/get-roles (getx-user-id))
+                                            (applications/get-all-application-roles (getx-user-id))))
+                               (when (:uses-valid-api-key? request)
+                                 #{:api-key}))]
       (with-mdc {:roles (str/join " " (sort context/*roles*))}
         (handler request)))))
 
