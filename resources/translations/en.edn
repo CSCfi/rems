@@ -320,6 +320,7 @@
          :application "Application"
          :attachment-remove "Remove"
          :attachments "Attachments"
+         :attachments-as-zip "All attachments (zip)"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
          :comment "Comment"

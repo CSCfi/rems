@@ -318,6 +318,7 @@
          :application "Tiedot"
          :attachment-remove "Poista"
          :attachments "Liitteet"
+         :attachments-as-zip "Kaikki liiteet (zip)"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
          :comment "Kommentti"

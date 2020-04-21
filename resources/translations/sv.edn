@@ -318,6 +318,7 @@
          :application "Ansökning"
          :attachment-remove "Ta bort"
          :attachments "Bilagor"
+         :attachments-as-zip "Alla bilagor (zip)"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
          :comment "Komment"
