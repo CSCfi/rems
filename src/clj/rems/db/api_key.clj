@@ -3,10 +3,16 @@
             [rems.json :as json]
             [rems.util :refer [update-present]]))
 
-(defn get-api-key [key]
-  (-> (db/get-api-key {:apikey key})
+(defn- format-api-key [key]
+  (-> key
       (update-present :users json/parse-string)
       (update-present :paths json/parse-string)))
+
+(defn get-api-key [key]
+  (format-api-key (db/get-api-key {:apikey key})))
+
+(defn get-api-keys []
+  (mapv format-api-key (db/get-api-keys {})))
 
 (defn- path-matches [path pattern]
   (re-matches (re-pattern pattern) path))
@@ -23,3 +29,7 @@
                        :comment comment
                        :users (when users (json/generate-string users))
                        :paths (when paths (json/generate-string paths))}))
+
+(defn update-api-key! [key & [opts]]
+  (add-api-key! key (merge (get-api-key key)
+                           opts)))

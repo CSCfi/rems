@@ -1,6 +1,7 @@
 (ns rems.standalone
   "Run the REMS app in an embedded http server."
-  (:require [clojure.tools.cli :refer [parse-opts]]
+  (:require [clojure.string :as str]
+            [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [luminus-migrations.core :as migrations]
             [luminus.http-server :as http]
@@ -87,9 +88,17 @@
      \"validate\" -- validate data in db
      \"list-users\" -- list users and roles
      \"grant-role <role> <user>\" -- grant a role to a user
-     \"add-api-key <api-key> [<description>]\" -- add api key to db.
+     \"api-key get\" -- list all api keys
+     \"api-key get <api-key>\" -- get details of api key
+     \"api-key add <api-key> [<description>]\" -- add api key to db.
         <description> is an optional text comment.
-        If a pre-existing <api-key> is given, update description for it."
+        If a pre-existing <api-key> is given, update description for it.
+     \"api-key set-users <api-key> [<uid1> <uid2> ...]\" -- set allowed users for api key
+        An empty set of users means all users are allowed.
+        Adds the api key if it doesn't exist.
+     \"api-key set-paths <api-key> [<regex1> <regex2> ...]\" -- set allowed path regexes for api key
+        An empty set of regexes means all paths are allowed.
+        Adds the api key if it doesn't exist."
   [& args]
   (exit-on-signals!)
   (case (first args)
@@ -124,11 +133,19 @@
                    #'rems.locales/translations)
       (test-data/create-demo-data!))
 
-    "add-api-key"
-    (let [[_ key comment] args]
+    "api-key"
+    (let [[_ command api-key & command-args] args]
       (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (api-key/add-api-key! key {:comment comment})
-      (log/info "Api key added"))
+      (case command
+        "get" (do)
+        "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
+        "set-users" (api-key/update-api-key! api-key {:users command-args})
+        "set-paths" (api-key/update-api-key! api-key {:paths command-args})
+        (do (println "Usage error")
+            (System/exit 1)))
+      (if api-key
+        (prn (api-key/get-api-key api-key))
+        (mapv prn (api-key/get-api-keys))))
 
     "list-users"
     (do

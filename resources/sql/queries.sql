@@ -502,8 +502,11 @@ DO UPDATE
 SET (apiKey, comment, users, paths) = (:apikey, :comment, :users::jsonb, :paths::jsonb);
 
 -- :name get-api-key :? :1
-SELECT apiKey, users::TEXT, paths::TEXT FROM api_key
+SELECT apiKey, comment, users::TEXT, paths::TEXT FROM api_key
 WHERE apiKey = :apikey;
+
+-- :name get-api-keys :? :*
+SELECT apiKey, comment, users::TEXT, paths::TEXT FROM api_key;
 
 -- :name get-application-by-invitation-token :? :1
 SELECT app.id
