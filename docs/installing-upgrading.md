@@ -17,6 +17,7 @@ Some pointers for common tasks:
 
         java -Drems.config=path/to/your/rems/config -jar rems.jar add-api-key <key>
 
+  See [usingtheapi.md](usingtheapi.md) for more info.
 - Users don't usually need to be added manually as they are automatically created when logging in.
   If you need to add users programmatically, you can use the HTTP API `/api/users/create` as documented in OpenAPI aka Swagger.
 - Roles can be granted with a command like

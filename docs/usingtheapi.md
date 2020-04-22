@@ -1,12 +1,58 @@
 # Using the API
 
-These examples assume that the REMS instance you want to talk to is running locally at `localhost:3000`.
+## Documentation
+
+The REMS API is documented using
+[OpenAPI aka Swagger](https://swagger.io/docs/specification/about/).
+You can check out the API docs using
+[the swagger-ui of the public demo instance](https://rems-demo.rahtiapp.fi/swagger-ui),
+or your local development instance at <http://localhost:3000/swagger-ui>.
 
 ## Authentication
 
-To call the API programmatically, you will first need to add an API key to the `api_key` database table. The API key must be provided in the `x-rems-api-key` header when calling the API.
+You can use either browser session authentication or an API key.
 
-Some API endpoints also require `x-rems-user-id` header to contain the REMS user ID for the user that is being represented, i.e. the user which applies for a resource or approves an application.
+### Session authentication
+
+Once a user has logged in to REMS normally, they can use the API from
+their browser. In practice this means that you can log in and then use
+the "Try it out!" feature in Swagger UI.
+
+Session authentication is also used by implementation of  REMS browser UI
+
+### API key authentication
+
+You can also authenticate by setting these two headers:
+- `x-rems-api-key` -- an API key
+- `x-rems-user-id` -- the user id of a user to impersonate
+
+API keys can be defined and modified using the `api-key` command line option to REMS. Here are some examples:
+
+```sh
+# Get all API keys:
+java -Drems.config=path/to/config -jar rems.jar api-key get
+# Add an API key with an optional comment:
+java -Drems.config=path/to/config -jar rems.jar api-key add abcd1234 this is my secret api key
+```
+
+API keys can optionally have _user_ and _path whitelists_. These limit
+the users the API key can impersonate, and the paths the API key can
+access. Here are some examples:
+
+```sh
+# Set whitelists:
+java -Drems.config=path/to/config -jar rems.jar api-key set-users abcd1234 alice bob
+java -Drems.config=path/to/config -jar rems.jar api-key set-paths abcd1234 '/api/catalogue' '/api/applications/.*'
+# Clear whitelists:
+java -Drems.config=path/to/config -jar rems.jar api-key set-users abcd1234
+java -Drems.config=path/to/config -jar rems.jar api-key set-paths abcd1234
+```
+
+For more information about the api-key command line commands, run:
+
+```sh
+java -Drems.config=path/to/config -jar rems.jar help
+```
 
 ## Example
 
@@ -52,6 +98,7 @@ Returns the list of catalogue items as a JSON response:
 
 ## Learn More
 
-See the [REMS API documentation](https://rems-demo.rahtiapp.fi/swagger-ui) for a list of all available operations.
-
-You may also inspect what API request the REMS UI does using your web browser's developer tools. The REMS UI does its requests using the `application/transit+json` content-type, but all the APIs work also using `application/json` (which is the default).
+You may also inspect what API request the REMS UI does using your web
+browser's developer tools. The REMS UI does its requests using the
+`application/transit+json` content-type, but all the APIs work also
+using `application/json` (which is the default).
