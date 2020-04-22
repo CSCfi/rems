@@ -78,7 +78,7 @@
       (is (response-is-unauthorized? (api-response :get "/api/catalogue" nil
                                                    "46" "owner"))))
     (testing "> api key with regex can access only matching paths >"
-      (doseq [path ["/api/catalogue" "/api/catalogue-items"]]
+      (doseq [path ["/api/catalogue?query=param" "/api/catalogue-items"]]
         (testing path
           (is (= 200 (:status (api-response :get path nil
                                             "47" "owner"))))))

@@ -15,18 +15,20 @@
 (defn get-api-key [request]
   (get-in request [:headers "x-rems-api-key"]))
 
+(defn get-api-user [request]
+  (get-in request [:headers "x-rems-user-id"]))
+
 (defn- api-key-backend []
   (reify
     buddy.auth.protocols/IAuthentication
     (-parse [_ request]
-      {:key (get-api-key request)
-       :user (when-let [uid (get-in request [:headers "x-rems-user-id"])]
-               (merge {:eppn uid}
-                      ;; we need the raw user attrs here to emulate other login methods
-                      (users/get-raw-user-attributes uid)))})
-    (-authenticate [_ request {:keys [key user]}]
-      (when (api-key/valid? key (:eppn user) (:uri request))
-        user))))
+      {})
+    (-authenticate [_ request _]
+      (when (:uses-valid-api-key? request)
+        (when-let [uid (get-api-user request)]
+          (merge {:eppn uid}
+                 ;; we need the raw user attrs here to emulate other login methods
+                 (users/get-raw-user-attributes uid)))))))
 
 (defn- auth-backends []
   (let [backend (case (:authentication env)
@@ -36,9 +38,8 @@
 
 (defn- wrap-uses-valid-api-key [handler]
   (fn [request]
-    ;; TODO duplication here...
     (handler (assoc request :uses-valid-api-key? (api-key/valid? (get-api-key request)
-                                                                 (get-in request [:headers "x-rems-user-id"])
+                                                                 (get-api-user request)
                                                                  (:uri request))))))
 
 (defn wrap-auth [handler]
