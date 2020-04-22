@@ -48,6 +48,11 @@ java -Drems.config=path/to/config -jar rems.jar api-key set-users abcd1234
 java -Drems.config=path/to/config -jar rems.jar api-key set-paths abcd1234
 ```
 
+The user whitelist contains userids. The path whitelist contains
+regexps that must match the whole path. If the user (or path)
+whitelist is empty, any user (or respectively path) is allowed for the
+API key.
+
 For more information about the api-key command line commands, run:
 
 ```sh
