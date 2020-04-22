@@ -19,7 +19,7 @@
          (or (nil? (:paths key))
              (some? (some (partial path-matches? path) (:paths key)))))))
 
-(defn add-api-key! [key comment & [users paths]]
+(defn add-api-key! [key & [{:keys [comment users paths]}]]
   (db/upsert-api-key! {:apikey key
                        :comment comment
                        :users (when users (json/generate-string users))

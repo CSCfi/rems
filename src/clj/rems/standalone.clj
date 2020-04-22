@@ -127,7 +127,7 @@
     "add-api-key"
     (let [[_ key comment] args]
       (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (api-key/add-api-key! key comment)
+      (api-key/add-api-key! key {:comment comment})
       (log/info "Api key added"))
 
     "list-users"

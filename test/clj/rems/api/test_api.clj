@@ -47,8 +47,8 @@
                      handler)]
         (is (response-is-forbidden? resp)))))
   (testing "api key user whitelist"
-    (api-key/add-api-key! "43" "all users" nil)
-    (api-key/add-api-key! "44" "only alice & malice" ["alice" "malice"])
+    (api-key/add-api-key! "43" {:comment "all users" :users nil})
+    (api-key/add-api-key! "44" {:comment "only alice & malice" :users ["alice" "malice"]})
     (testing "> api key without whitelist can impersonate any user"
       (doseq [user ["owner" "alice" "malice"]]
         (is (= 200 (:status (api-response :get "/api/catalogue/" nil
@@ -60,8 +60,8 @@
       (is (response-is-unauthorized? (api-response :get "/api/catalogue/" nil
                                                    "44" "owner")))))
   (testing "api key path whitelist"
-    (api-key/add-api-key! "45" "all paths" nil nil)
-    (api-key/add-api-key! "46" "limited paths" nil ["/api/translations" "/api/config"])
+    (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
+    (api-key/add-api-key! "46" {:comment "limited paths" :paths ["/api/translations" "/api/config"]})
     (testing "> api key without whitelist can access any path"
       (doseq [path ["/api/translations" "/api/config" "/api/catalogue"]]
         (is (= 200 (:status (api-response :get path nil
