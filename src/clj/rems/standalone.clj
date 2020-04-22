@@ -101,73 +101,80 @@
         Adds the api key if it doesn't exist."
   [& args]
   (exit-on-signals!)
-  (case (first args)
-    ("migrate" "rollback")
-    (do
-      (mount/start #'rems.config/env)
-      (migrations/migrate args (select-keys env [:database-url])))
+  (let [usage #(do
+                 (println "Usage:")
+                 (println (:doc (meta #'-main))))]
+    (case (first args)
+      "help"
+      (usage)
 
-    "reset"
-    (do
-      (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
-      (when (= "YES" (read-line))
-        (do
-          (println "Running reset")
-          (mount/start #'rems.config/env)
-          (migrations/migrate args (select-keys env [:database-url])))))
+      ("migrate" "rollback")
+      (do
+        (mount/start #'rems.config/env)
+        (migrations/migrate args (select-keys env [:database-url])))
 
-    "test-data"
-    (do
-      (mount/start #'rems.config/env
-                   #'rems.db.core/*db*
-                   #'rems.locales/translations)
-      (log/info "Creating test data")
-      (test-data/create-test-data!)
-      (test-data/create-performance-test-data!)
-      (log/info "Test data created"))
+      "reset"
+      (do
+        (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
+        (when (= "YES" (read-line))
+          (do
+            (println "Running reset")
+            (mount/start #'rems.config/env)
+            (migrations/migrate args (select-keys env [:database-url])))))
 
-    "demo-data"
-    (do
-      (mount/start #'rems.config/env
-                   #'rems.db.core/*db*
-                   #'rems.locales/translations)
-      (test-data/create-demo-data!))
+      "test-data"
+      (do
+        (mount/start #'rems.config/env
+                     #'rems.db.core/*db*
+                     #'rems.locales/translations)
+        (log/info "Creating test data")
+        (test-data/create-test-data!)
+        (test-data/create-performance-test-data!)
+        (log/info "Test data created"))
 
-    "api-key"
-    (let [[_ command api-key & command-args] args]
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (case command
-        "get" (do)
-        "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
-        "set-users" (api-key/update-api-key! api-key {:users command-args})
-        "set-paths" (api-key/update-api-key! api-key {:paths command-args})
-        (do (println "Usage error")
-            (System/exit 1)))
-      (if api-key
-        (prn (api-key/get-api-key api-key))
-        (mapv prn (api-key/get-api-keys))))
+      "demo-data"
+      (do
+        (mount/start #'rems.config/env
+                     #'rems.db.core/*db*
+                     #'rems.locales/translations)
+        (test-data/create-demo-data!))
 
-    "list-users"
-    (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (doseq [u (users/get-all-users)]
-        (-> u
-            (assoc :roles (roles/get-roles (:userid u)))
-            json/generate-string
-            println)))
+      "api-key"
+      (let [[_ command api-key & command-args] args]
+        (mount/start #'rems.config/env #'rems.db.core/*db*)
+        (case command
+          "get" (do)
+          "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
+          "set-users" (api-key/update-api-key! api-key {:users command-args})
+          "set-paths" (api-key/update-api-key! api-key {:paths command-args})
+          (do (usage)
+              (System/exit 1)))
+        (if api-key
+          (prn (api-key/get-api-key api-key))
+          (mapv prn (api-key/get-api-keys))))
 
-    "grant-role"
-    (let [[_ role user] args]
-      (if (not (and role user))
-        (println "Usage: grant-role <role> <user>")
-        (do (mount/start #'rems.config/env #'rems.db.core/*db*)
-            (roles/add-role! user (keyword role)))))
+      "list-users"
+      (do
+        (mount/start #'rems.config/env #'rems.db.core/*db*)
+        (doseq [u (users/get-all-users)]
+          (-> u
+              (assoc :roles (roles/get-roles (:userid u)))
+              json/generate-string
+              println)))
 
-    "validate"
-    (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (when-not (validate/validate)
-        (System/exit 2)))
+      "grant-role"
+      (let [[_ role user] args]
+        (if (not (and role user))
+          (do (usage)
+              (System/exit 1))
+          (do (mount/start #'rems.config/env #'rems.db.core/*db*)
+              (roles/add-role! user (keyword role)))))
 
-    ;; default
-    (apply start-app args)))
+      "validate"
+      (do
+        (mount/start #'rems.config/env #'rems.db.core/*db*)
+        (when-not (validate/validate)
+          (System/exit 2)))
+
+      ;; default
+      (apply start-app args))))
