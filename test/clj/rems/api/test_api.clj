@@ -58,7 +58,20 @@
         (is (= 200 (:status (api-response :get "/api/catalogue/" nil
                                           "44" user)))))
       (is (response-is-unauthorized? (api-response :get "/api/catalogue/" nil
-                                                   "44" "owner"))))))
+                                                   "44" "owner")))))
+  (testing "api key path whitelist"
+    (api-key/add-api-key! "45" "all paths" nil nil)
+    (api-key/add-api-key! "46" "limited paths" nil ["/api/translations" "/api/config"])
+    (testing "> api key without whitelist can access any path"
+      (doseq [path ["/api/translations" "/api/config" "/api/catalogue"]]
+        (is (= 200 (:status (api-response :get path nil
+                                          "45" "owner"))))))
+    (testing "> api key with whitelist can access only given paths"
+      (doseq [path ["/api/translations" "/api/config"]]
+        (is (= 200 (:status (api-response :get path nil
+                                          "46" "owner")))))
+      (is (response-is-unauthorized? (api-response :get "/api/catalogue/" nil
+                                                   "46" "owner"))))))
 
 (deftest test-health-api
   (let [body (-> (request :get "/api/health")

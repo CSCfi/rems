@@ -490,18 +490,19 @@ INSERT INTO application_event (appId, eventData)
 VALUES (:application, :eventdata::jsonb);
 
 -- :name upsert-api-key! :insert
-INSERT INTO api_key (apiKey, comment, users)
+INSERT INTO api_key (apiKey, comment, users, paths)
 VALUES (
 :apikey,
 :comment,
-:users::jsonb
+:users::jsonb,
+:paths::jsonb
 )
 ON CONFLICT (apiKey)
 DO UPDATE
-SET (apiKey, comment, users) = (:apikey, :comment, :users::jsonb);
+SET (apiKey, comment, users, paths) = (:apikey, :comment, :users::jsonb, :paths::jsonb);
 
 -- :name get-api-key :? :1
-SELECT apiKey, users::TEXT FROM api_key
+SELECT apiKey, users::TEXT, paths::TEXT FROM api_key
 WHERE apiKey = :apikey;
 
 -- :name get-application-by-invitation-token :? :1

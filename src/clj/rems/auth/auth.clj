@@ -25,7 +25,7 @@
                       ;; we need the raw user attrs here to emulate other login methods
                       (users/get-raw-user-attributes uid)))})
     (-authenticate [_ request {:keys [key user]}]
-      (when (api-key/valid? key (:eppn user))
+      (when (api-key/valid? key (:eppn user) (:uri request))
         user))))
 
 (defn- auth-backends []
@@ -38,7 +38,8 @@
   (fn [request]
     ;; TODO duplication here...
     (handler (assoc request :uses-valid-api-key? (api-key/valid? (get-api-key request)
-                                                                 (get-in request [:headers "x-rems-user-id"]))))))
+                                                                 (get-in request [:headers "x-rems-user-id"])
+                                                                 (:uri request))))))
 
 (defn wrap-auth [handler]
   (wrap-uses-valid-api-key
