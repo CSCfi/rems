@@ -8,16 +8,15 @@
       (update-present :users json/parse-string)
       (update-present :paths json/parse-string)))
 
-;; TODO support for richer patterns
-(defn- path-matches? [pattern path]
-  (= pattern path))
+(defn- path-matches [path pattern]
+  (re-matches (re-pattern pattern) path))
 
 (defn valid? [key user path]
   (when-let [key (get-api-key key)]
     (and (or (nil? (:users key))
              (some? (some #{user} (:users key))))
          (or (nil? (:paths key))
-             (some? (some (partial path-matches? path) (:paths key)))))))
+             (some? (some (partial path-matches path) (:paths key)))))))
 
 (defn add-api-key! [key & [{:keys [comment users paths]}]]
   (db/upsert-api-key! {:apikey key
