@@ -35,9 +35,9 @@ java -Drems.config=path/to/config -jar rems.jar api-key get
 java -Drems.config=path/to/config -jar rems.jar api-key add abcd1234 this is my secret api key
 ```
 
-API keys can optionally have _user_ and _path whitelists_. These limit
-the users the API key can impersonate, and the paths the API key can
-access. Here are some examples:
+API keys can optionally have _user_ and _method/path whitelists_. These limit
+the users the API key can impersonate, and which paths the API key can
+access with which HTTP method. Here are some examples:
 
 ```sh
 # Set whitelists:
@@ -49,10 +49,11 @@ java -Drems.config=path/to/config -jar rems.jar api-key set-users abcd1234
 java -Drems.config=path/to/config -jar rems.jar api-key allow-all abcd1234
 ```
 
-The user whitelist contains userids. The path whitelist contains
-regexps that must match the whole path. If the user (or path)
-whitelist is empty, any user (or respectively path) is allowed for the
-API key.
+The user whitelist contains userids. A path whitelist entry contains a
+method (the special string `any` means any method), and a regular
+expression that must match the whole path. If the user (or
+method/path) whitelist is empty, any user (or respectively
+method/path) is allowed for the API key.
 
 For more information about the api-key command line commands, run:
 

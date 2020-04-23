@@ -97,6 +97,8 @@
         An empty set of users means all users are allowed.
         Adds the api key if it doesn't exist.
      \"api-key allow <api-key> <method> <regex>\" -- add an entry to the allowed method/path whitelist
+        The special method `any` means any method.
+        The regex is a (Java) regular expression that should match the whole path of the request.
      \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
         An empty list means all methods and paths are allowed."
   [& args]
