@@ -42,10 +42,11 @@ access. Here are some examples:
 ```sh
 # Set whitelists:
 java -Drems.config=path/to/config -jar rems.jar api-key set-users abcd1234 alice bob
-java -Drems.config=path/to/config -jar rems.jar api-key set-paths abcd1234 '/api/catalogue' '/api/applications/.*'
+java -Drems.config=path/to/config -jar rems.jar api-key allow abcd1234 get '/api/users/.*'
+java -Drems.config=path/to/config -jar rems.jar api-key allow abcd1234 any '/api/applications/.*'
 # Clear whitelists:
 java -Drems.config=path/to/config -jar rems.jar api-key set-users abcd1234
-java -Drems.config=path/to/config -jar rems.jar api-key set-paths abcd1234
+java -Drems.config=path/to/config -jar rems.jar api-key allow-all abcd1234
 ```
 
 The user whitelist contains userids. The path whitelist contains

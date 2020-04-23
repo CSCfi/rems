@@ -40,6 +40,7 @@
   (fn [request]
     (handler (assoc request :uses-valid-api-key? (api-key/valid? (get-api-key request)
                                                                  (get-api-user request)
+                                                                 (:request-method request)
                                                                  (:uri request))))))
 
 (defn wrap-auth [handler]

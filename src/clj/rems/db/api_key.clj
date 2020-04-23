@@ -1,5 +1,6 @@
 (ns rems.db.api-key
-  (:require [rems.db.core :as db]
+  (:require [clojure.test :refer :all]
+            [rems.db.core :as db]
             [rems.json :as json]
             [rems.util :refer [update-present]]))
 
@@ -14,17 +15,44 @@
 (defn get-api-keys []
   (mapv format-api-key (db/get-api-keys {})))
 
-(defn- path-matches [path pattern]
-  (re-matches (re-pattern pattern) path))
+(defn- method= [method pattern]
+  (let [normalized (.toLowerCase (name method))
+        normalized-pattern (.toLowerCase (name pattern))]
+    (or (= normalized-pattern "any")
+        (= normalized-pattern normalized))))
 
-(defn valid? [key user path]
+(defn- allowed-by [method path pattern]
+  (prn :ALLOWED method path pattern)
+  (and
+   (method= method (:method pattern))
+   (re-matches (re-pattern (:path pattern)) path)))
+
+(deftest test-allowed-by
+  (testing "simple pattern"
+    (is (allowed-by :get "/foo" {:method "get" :path "/foo"}))
+    (is (allowed-by "GET" "/foo" {:method "get" :path "/foo"}))
+    (is (not (allowed-by :get "/foo/" {:method "get" :path "/foo"}))) ;; NB!
+    (is (not (allowed-by :put "/foo" {:method "get" :path "/foo"})))
+    (is (not (allowed-by :get "/foob" {:method "get" :path "/foo"}))))
+  (testing "method wildcard"
+    (is (allowed-by :get "/foo" {:method "any" :path "/foo"}))
+    (is (allowed-by :post "/foo" {:method "any" :path "/foo"}))
+    (is (not (allowed-by :get "/foob" {:method "any" :path "/foo"}))))
+  (testing "path regex"
+    (is (allowed-by :get "/foo" {:method "get" :path "/f[^b]*"}))
+    (is (not (allowed-by :put "/foo" {:method "get" :path "/f[^b]*"})))
+    (is (allowed-by :get "/fizzle/pop" {:method "get" :path "/f[^b]*"}))
+    (is (not (allowed-by :get "/fi/b" {:method "get" :path "/f[^b]*"})))))
+
+(defn valid? [key user method path]
   (when-let [key (get-api-key key)]
     (and (or (nil? (:users key))
              (some? (some #{user} (:users key))))
          (or (nil? (:paths key))
-             (some? (some (partial path-matches path) (:paths key)))))))
+             (some? (some (partial allowed-by method path) (:paths key)))))))
 
 (defn add-api-key! [key & [{:keys [comment users paths]}]]
+  ;; TODO validate paths
   (db/upsert-api-key! {:apikey key
                        :comment comment
                        :users (when users (json/generate-string users))

@@ -63,8 +63,14 @@
                                                    "44" "owner")))))
   (testing "api key path whitelist"
     (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
-    (api-key/add-api-key! "46" {:comment "limited paths" :paths ["/api/applications" "/api/my-applications"]})
-    (api-key/add-api-key! "47" {:comment "regex path" :paths ["/api/c.*"]})
+    (api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
+                                                                  :path "/api/applications"}
+                                                                 {:method "any"
+                                                                  :path "/api/my-applications"}]})
+    (api-key/add-api-key! "47" {:comment "regex path" :paths [{:method "any"
+                                                               :path "/api/c.*"}
+                                                              {:method "get"
+                                                               :path "/api/users/.*"}]})
     (testing "> api key without whitelist can access any path >"
       (doseq [path ["/api/applications" "/api/my-applications" "/api/catalogue"]]
         (testing path
@@ -77,12 +83,20 @@
                                             "46" "owner"))))))
       (is (response-is-unauthorized? (api-response :get "/api/catalogue" nil
                                                    "46" "owner"))))
-    (testing "> api key with regex can access only matching paths >"
+    (testing "> api key with whitelist can access only matching paths >"
       (doseq [path ["/api/catalogue?query=param" "/api/catalogue-items"]]
         (testing path
           (is (= 200 (:status (api-response :get path nil
                                             "47" "owner"))))))
       (is (response-is-unauthorized? (api-response :get "/api/applications" nil
+                                                   "47" "owner"))))
+    (testing "> api key with whitelist can use only matching methods"
+      (is (= 200 (:status (api-response :get "/api/users/active" nil
+                                        "47" "owner"))))
+      (is (response-is-unauthorized? (api-response :post "/api/users/create"
+                                                   {:userid "testing"
+                                                    :name nil
+                                                    :email nil}
                                                    "47" "owner"))))))
 
 (deftest test-health-api

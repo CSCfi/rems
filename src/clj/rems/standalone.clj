@@ -96,9 +96,9 @@
      \"api-key set-users <api-key> [<uid1> <uid2> ...]\" -- set allowed users for api key
         An empty set of users means all users are allowed.
         Adds the api key if it doesn't exist.
-     \"api-key set-paths <api-key> [<regex1> <regex2> ...]\" -- set allowed path regexes for api key
-        An empty set of regexes means all paths are allowed.
-        Adds the api key if it doesn't exist."
+     \"api-key allow <api-key> <method> <regex>\" -- add an entry to the allowed method/path whitelist
+     \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
+        An empty list means all methods and paths are allowed."
   [& args]
   (exit-on-signals!)
   (let [usage #(do
@@ -146,7 +146,11 @@
           "get" (do)
           "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
           "set-users" (api-key/update-api-key! api-key {:users command-args})
-          "set-paths" (api-key/update-api-key! api-key {:paths command-args})
+          "allow" (let [[method path] command-args
+                        entry {:method method :path path}
+                        old (:paths (api-key/get-api-key api-key))]
+                    (api-key/update-api-key! api-key {:paths (conj old entry)}))
+          "allow-all" (api-key/update-api-key! api-key {:paths nil})
           (do (usage)
               (System/exit 1)))
         (if api-key
