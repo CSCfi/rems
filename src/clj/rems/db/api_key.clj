@@ -22,7 +22,6 @@
         (= normalized-pattern normalized))))
 
 (defn- allowed-by [method path pattern]
-  (prn :ALLOWED method path pattern)
   (and
    (method= method (:method pattern))
    (re-matches (re-pattern (:path pattern)) path)))
