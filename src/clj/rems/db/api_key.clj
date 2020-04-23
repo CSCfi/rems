@@ -51,7 +51,9 @@
              (some? (some (partial allowed-by method path) (:paths key)))))))
 
 (defn add-api-key! [key & [{:keys [comment users paths]}]]
-  ;; TODO validate paths
+  (doseq [entry paths]
+    (assert (= [:method :path] (keys entry))
+            (str "Invalid path whitelist entry: " (pr-str entry))))
   (db/upsert-api-key! {:apikey key
                        :comment comment
                        :users (when users (json/generate-string users))
