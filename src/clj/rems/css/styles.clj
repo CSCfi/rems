@@ -482,6 +482,7 @@
      :box-shadow "0 0 4px 8px rgba(60, 108, 61, 0.5)"
      :animation [[pulse-opacity "0.6s ease-out 1 both"]]}]
 
+   ;; Navbar
    [:.navbar-wrapper
     {:max-width content-width}]
    [:.navbar
@@ -512,6 +513,29 @@
      {:color (get-theme-attribute :nav-active-color :color4)}]
     [:&:hover
      {:color (get-theme-attribute :nav-hover-color :color4)}]]
+   [:.navbar {:white-space "nowrap"}]
+   [(s/descendant :.user-widget :.nav-link) {:display :inline-block}]
+   [:.user-name {:text-transform :none}]
+   [:#big-navbar {:text-transform (get-theme-attribute :big-navbar-text-transform "none")}]
+   [(s/descendant :.navbar-text :.language-switcher)
+    {:margin-right (u/rem 1)}]
+   [:.navbar-flex {:display "flex"
+                   :flex-direction "row"
+                   :justify-content "space-between"
+                   :min-width "100%"}]
+   ;; Footer
+   (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
+     [:footer {:width "100%"
+               :height (u/px 53.6)
+               :color footer-text-color
+               :background-color (get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
+               :text-align "center"
+               :margin-top (u/em 1)}
+      [:.navbar {:color footer-text-color}]
+      [:a :a:hover {:color footer-text-color
+                    :font-weight (button-navbar-font-weight)}]])
+
+   ;; Logo, login, etc.
    [:.logo {:height (u/px 140)
             :background-color (get-theme-attribute :logo-bgcolor)
             :padding "0 20px"
@@ -529,16 +553,6 @@
                                  :padding-left (u/px 20)
                                  :padding-right (u/px 20)
                                  :padding-top (u/px 8)}]
-   (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
-     [:footer {:width "100%"
-               :height (u/px 53.6)
-               :color footer-text-color
-               :background-color (get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
-               :text-align "center"
-               :margin-top (u/em 1)}
-      [:.navbar {:color footer-text-color}]
-      [:a :a:hover {:color footer-text-color
-                    :font-weight (button-navbar-font-weight)}]])
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"
@@ -551,18 +565,13 @@
    [:.login-btn {:max-height (u/px 70)
                  :margin-bottom (u/px 20)}
     [:&:hover {:filter "brightness(80%)"}]]
+
    (generate-rems-table-styles)
    [:.btn.disabled {:opacity 0.25}]
    [:.catalogue-item-link {:color "#fff"
                            :text-decoration "underline"}]
    [:.language-switcher {:padding ".5em 0"}]
    (generate-media-queries)
-   [:.navbar {:white-space "nowrap"}]
-   [(s/descendant :.user-widget :.nav-link) {:display :inline-block}]
-   [:.user-name {:text-transform :none}]
-   [:#big-navbar {:text-transform (get-theme-attribute :big-navbar-text-transform "none")}]
-   [(s/descendant :.navbar-text :.language-switcher)
-    {:margin-right (u/rem 1)}]
    [:.example-page {:margin (u/rem 2)}]
    [(s/> :.example-page :h1) {:margin "4rem 0"}]
    [(s/> :.example-page :h2) {:margin-top (u/rem 8)
@@ -613,10 +622,6 @@
    [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
    [".children-inline-blocks > *" {:display :inline-block}]
 
-   [:.navbar-flex {:display "flex"
-                   :flex-direction "row"
-                   :justify-content "space-between"
-                   :min-width "100%"}]
    [(s/> :.form-actions "*:not(:first-child)")
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
