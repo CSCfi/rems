@@ -526,14 +526,16 @@
    ;; Footer
    (let [footer-text-color (get-theme-attribute :footer-color :table-heading-color "#fff")]
      [:footer {:width "100%"
-               :height (u/px 53.6)
+               :min-height (u/px 53.6)
                :color footer-text-color
+               :font-size (u/px 19) ;; same as navbar
+               :padding-top "1rem"
+               :padding-bottom "1rem"
                :background-color (get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
-               :text-align "center"
                :margin-top (u/em 1)}
-      [:.navbar {:color footer-text-color}]
       [:a :a:hover {:color footer-text-color
-                    :font-weight (button-navbar-font-weight)}]])
+                    :font-weight (button-navbar-font-weight)}]
+      [:.dev-reload-button {:float "right"}]])
 
    ;; Logo, login, etc.
    [:.logo {:height (u/px 140)

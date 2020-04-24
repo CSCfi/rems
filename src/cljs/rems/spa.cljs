@@ -280,11 +280,10 @@
 (defn footer []
   [:footer.footer
    [:div.container
-    [:div.navbar
-     [:div.navbar-text (text :t/footer)]
-     (when (config/dev-environment?)
-       [:div.dev-only
-        [dev-reload-button]])]]])
+    (when (config/dev-environment?)
+      [:div.dev-reload-button.dev-only
+       [dev-reload-button]])
+    [:div.footer-text (text :t/footer)]]])
 
 (defn logo []
   [:div.logo [:div.container.img]])
