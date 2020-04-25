@@ -277,6 +277,6 @@
 (s/defschema Organization
   {:organization/id s/Str
    :organization/name s/Str
-   :organization/owners [User]
-   :organization/review-emails [{:name s/Str
-                                 :email s/Str}]})
+   (s/optional-key :organization/owners) [User]
+   (s/optional-key :organization/review-emails) [{:name s/Str
+                                                  :email s/Str}]})

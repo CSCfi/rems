@@ -33,7 +33,7 @@
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
-            [rems.common.util :refer [parse-int]]
+            [rems.common.util :refer [index-by parse-int]]
             [rems.config :as config]
             [rems.extra-pages :refer [extra-pages]]
             [rems.flash-message :as flash-message]
@@ -52,15 +52,20 @@
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.history.Html5History))
 
-(defn fetch-translations! []
+(defn- fetch-translations! []
   (fetch "/api/translations"
          {:handler #(rf/dispatch-sync [:loaded-translations %])
           :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
 
-(defn fetch-theme! []
+(defn- fetch-theme! []
   (fetch "/api/theme"
          {:handler #(rf/dispatch-sync [:loaded-theme %])
           :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
+
+(defn- fetch-organizations! []
+  (fetch "/api/organizations"
+         {:handler #(rf/dispatch-sync [:loaded-organizations %])
+          :error-handler (flash-message/default-error-handler :top "Fetch organizations")}))
 
 ;;;; Global events & subscriptions
 
@@ -90,6 +95,27 @@
  :theme
  (fn [db _]
    (:theme db)))
+
+(rf/reg-sub
+ :organizations
+ (fn [db _]
+   (sort-by :organization/name (:organizations db))))
+
+(rf/reg-sub
+ :organizations-by-id
+ (fn [db _]
+   (index-by [:organization/id] (:organizations db))))
+
+(rf/reg-sub
+ :owned-organizations
+ (fn [db _]
+   (let [roles (get-in db [:identity :roles])
+         userid (get-in db [:identity :user :userid])]
+     (for [org (:organizations db)
+           :let [owners (set (map :userid (:organization/owners org)))]
+           :when (or (contains? roles :owner)
+                     (contains? owners userid))]
+       org))))
 
 (rf/reg-event-db
  :initialize-db
@@ -124,6 +150,11 @@
  :loaded-theme
  (fn [db [_ theme]]
    (assoc db :theme theme)))
+
+(rf/reg-event-db
+ :loaded-organizations
+ (fn [db [_ organizations]]
+   (assoc db :organizations organizations)))
 
 (rf/reg-event-fx
  :unauthorized!
@@ -312,9 +343,17 @@
                              (rf/dispatch [:set-active-page :not-found])
                              nil))])})))
 
+(defn- lazy-load-data!
+  "Loads datasets that are not required for immediate render or e.g. require login."
+  []
+  (when @(rf/subscribe [:user])
+    (when (empty? @(rf/subscribe [:organizations]))
+      (fetch-organizations!))))
+
 (defn page []
   (let [page-id @(rf/subscribe [:page])
         grab-focus? @(rf/subscribe [::grab-focus?])]
+    (lazy-load-data!)
     [:div
      [nav/navigation-widget page-id]
      [logo]
@@ -521,6 +560,7 @@
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (keepalive/register-keepalive-listeners!)
+  ;; see also: lazy-load-data! and dev-reload-button
   (-> (p/all [(fetch-translations!)
               (fetch-theme!)
               (config/fetch-config!)

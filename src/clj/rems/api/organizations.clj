@@ -3,6 +3,7 @@
             [rems.api.schema :refer :all]
             [rems.api.util] ; required for route :roles
             [rems.db.organizations :as organizations]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -19,11 +20,11 @@
     :tags ["organizations"]
 
     (GET "/" []
-      :summary "Get organizations"
-      :roles #{:owner :organization-owner :handler}
+      :summary "Get organizations. Returns more information for owners and handlers."
+      :roles #{:logged-in}
       :query-params [{owner :- (describe s/Str "return only organizations that are owned by owner") nil}]
       :return [Organization]
-      (ok (organizations/get-organizations owner)))
+      (ok (organizations/get-organizations (getx-user-id) owner)))
 
     (POST "/create" []
       :summary "Create organization"

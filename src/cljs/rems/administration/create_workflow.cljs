@@ -36,9 +36,6 @@
 
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
 (defn- fetch-workflow-success [db [_ {:keys [title organization workflow]}]]
   (update db ::form merge {:title title
                            :organization organization
@@ -119,25 +116,19 @@
    :update-form ::set-form-field})
 
 (def ^:private handlers-dropdown-id "handlers-dropdown")
-(def ^:private organization-dropdown-id "organization-dropdown")
+
+(rf/reg-sub
+ ::selected-organization
+ (fn [db _]
+   (let [organization-id (get-in db [::form :form/organization])]
+     (get-in db [:organizations-by-id organization-id]))))
+
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
 
 (defn- workflow-organization-field []
-  (let [organizations @(rf/subscribe [:rems.administration.administration/owned-organizations])
-        selected-organization @(rf/subscribe [::selected-organization])
-        item-selected? #(= % selected-organization)
-        readonly (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
-    [:div.form-group
-     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
-     (if readonly
-       [fields/readonly-field {:id organization-dropdown-id
-                               :value selected-organization}]
-       [dropdown/dropdown
-        {:id organization-dropdown-id
-         :items organizations
-         :item-key :organization/id
-         :item-label :organization/name
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
+  [fields/organization-field {:id "organization-dropdown"
+                              :value @(rf/subscribe [::selected-organization])
+                              :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- workflow-title-field []
   [text-field context {:keys [:title]

@@ -28,9 +28,6 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
 (rf/reg-sub ::selected-licenses (fn [db _] (get-in db [::form :licenses])))
 (rf/reg-event-db ::set-licenses (fn [db [_ licenses]] (assoc-in db [::form :licenses] (sort-by :id licenses))))
 
@@ -65,26 +62,20 @@
   {:get-form ::form
    :update-form ::set-form-field})
 
-(def ^:private organization-dropdown-id "organization-dropdown")
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
+(rf/reg-sub
+ ::selected-organization
+ (fn [db _]
+   (let [organization-id (get-in db [::form :form/organization])]
+     (get-in db [:organizations-by-id organization-id]))))
+
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
+
 (defn- resource-organization-field []
-  (let [organizations @(rf/subscribe [:rems.administration.administration/owned-organizations])
-        selected-organization @(rf/subscribe [::selected-organization])
-        item-selected? #(= % selected-organization)
-        readonly (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
-    [:div.form-group
-     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
-     (if readonly
-       [fields/readonly-field {:id organization-dropdown-id
-                               :value selected-organization}]
-       [dropdown/dropdown
-        {:id organization-dropdown-id
-         :items organizations
-         :item-key :organization/id
-         :item-label :organization/name
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
+  [fields/organization-field {:id "organization-dropdown"
+                              :value @(rf/subscribe [::selected-organization])
+                              :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- resource-id-field []
   [text-field context {:keys [:resid]

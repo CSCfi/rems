@@ -165,7 +165,7 @@
             "after move 3")))))
 
 (deftest build-request-test
-  (let [form {:form/organization {:organization/id "abc"}
+  (let [form {:form/organization "abc"
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/index 0
