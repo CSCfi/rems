@@ -100,11 +100,11 @@
   (assert-response-is-ok response)
   (read-body response))
 
-(defn api-response [method api body api-key user-id]
-  (-> (request method api)
-      (authenticate api-key user-id)
-      (json-body body)
-      handler))
+(defn api-response [method api & [body api-key user-id]]
+  (cond-> (request method api)
+    (and api-key user-id) (authenticate api-key user-id)
+    body (json-body body)
+    true handler))
 
 (defn api-call [method api body api-key user-id]
   (-> (api-response method api body api-key user-id)
