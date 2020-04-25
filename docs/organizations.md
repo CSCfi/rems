@@ -10,7 +10,7 @@ progress, but here is a summary of the current status.
 
 Available organizations are stored in the database table `organization`.
 While taking a new REMS instance into use, you should create them either 
-using the API or command-line tools (see installation and operating instructions).
+using the API or the UI. See [installing-upgrading.md](installing-upgrading.md).
 
 ## Organizations of users
 
