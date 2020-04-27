@@ -52,7 +52,7 @@
   (when-let [url (:public-url config)]
     (assert (.endsWith url "/")
             (str ":public-url should end with /:" (pr-str url))))
-  (assert (some (partial = (:default-language config)) (:languages config))
+  (assert (contains? (set (:languages config)) (:default-language config))
           (str ":default-language should be one of :languages: "
                (pr-str (select-keys config [:default-language :languages]))))
   (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
