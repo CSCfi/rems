@@ -6,6 +6,7 @@
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
             [rems.api.applications :refer [applications-api my-applications-api]]
+            [rems.api.audit-log :refer [audit-log-api]]
             [rems.api.blacklist :refer [blacklist-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
@@ -157,6 +158,7 @@
 
       my-applications-api
       applications-api
+      audit-log-api
       blacklist-api
       catalogue-api
       catalogue-items-api
