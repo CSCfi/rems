@@ -32,12 +32,7 @@
       (let [resp (-> (request :get "/api/forms")
                      (authenticate "42" "owner")
                      handler)]
-        (is (= 200 (:status resp)))))
-    (testing "handler and owner roles unavailable"
-      (let [resp (-> (request :get "/api/forms")
-                     (authenticate "43" "owner")
-                     handler)]
-        (is (response-is-forbidden? resp)))))
+        (is (= 200 (:status resp))))))
   (testing ":api-key role not available when using wrong API key"
     (let [username "alice"
           cookie (login-with-cookies username)

@@ -491,18 +491,17 @@ VALUES (:application, :eventdata::jsonb)
 RETURNING id, eventData::TEXT;
 
 -- :name upsert-api-key! :insert
-INSERT INTO api_key (apiKey, comment, permittedRoles)
+INSERT INTO api_key (apiKey, comment)
 VALUES (
 :apikey,
-:comment,
-:permittedroles::jsonb
+:comment
 )
 ON CONFLICT (apiKey)
 DO UPDATE
-SET (apiKey, comment, permittedRoles) = (:apikey, :comment, :permittedroles::jsonb);
+SET (apiKey, comment) = (:apikey, :comment);
 
 -- :name get-api-key :? :1
-SELECT apiKey, permittedRoles::TEXT FROM api_key
+SELECT apiKey FROM api_key
 WHERE apiKey = :apikey;
 
 -- :name get-application-by-invitation-token :? :1
