@@ -4,6 +4,19 @@ cd rems
 
 [ -z "$COMMANDS" ] && COMMANDS="run"
 
+certfile=$(ls /rems/certs)
+
+if [ ! -z ${certfile} ] && [ "${certfile}" != "null" ] ; then
+    keytool -importcert -cacerts -noprompt \
+            -storepass changeit \
+            -file /rems/certs/${certfile} \
+            -alias ${certfile}
+
+    keytool -storepasswd -cacerts \
+            -storepass changeit  \
+            -new $(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 20)
+fi
+
 for COMMAND in $COMMANDS
 do
     if [ "${COMMAND}" = "run" ] ; then
