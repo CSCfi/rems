@@ -569,4 +569,15 @@ INSERT INTO audit_log (time, path, method, apikey, userid, status)
 VALUES (:time, :path, :method, :apikey, :userid, :status);
 
 -- :name get-audit-log
-SELECT * FROM audit_log;
+SELECT * FROM audit_log
+WHERE 1=1
+/*~ (when (:userid params) */
+  AND userid = :userid
+/*~ ) ~*/
+/*~ (when (:after params) */
+  AND time >= :after
+/*~ ) ~*/
+/*~ (when (:before params) */
+  AND time < :before
+/*~ ) ~*/
+ORDER BY time ASC;
