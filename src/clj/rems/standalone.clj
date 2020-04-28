@@ -100,6 +100,7 @@
      \"api-key allow <api-key> <method> <regex>\" -- add an entry to the allowed method/path whitelist
         The special method `any` means any method.
         The regex is a (Java) regular expression that should match the whole path of the request.
+        Example regex: /api/applications/[0-9]+/?
      \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
         An empty list means all methods and paths are allowed."
   [& args]
