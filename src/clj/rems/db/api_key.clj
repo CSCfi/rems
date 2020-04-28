@@ -62,3 +62,6 @@
 (defn update-api-key! [key & [opts]]
   (add-api-key! key (merge (get-api-key key)
                            opts)))
+
+(defn delete-api-key! [key]
+  (db/delete-api-key! {:apikey key}))

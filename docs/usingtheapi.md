@@ -33,6 +33,8 @@ API keys can be defined and modified using the `api-key` command line option to 
 java -Drems.config=path/to/config -jar rems.jar api-key get
 # Add an API key with an optional comment:
 java -Drems.config=path/to/config -jar rems.jar api-key add abcd1234 this is my secret api key
+# Remove an API key:
+java -Drems.config=path/to/config -jar rems.jar api-key delete abcd1234
 ```
 
 API keys can optionally have _user_ and _method/path whitelists_. These limit

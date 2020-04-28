@@ -93,6 +93,7 @@
      \"api-key add <api-key> [<description>]\" -- add api key to db.
         <description> is an optional text comment.
         If a pre-existing <api-key> is given, update description for it.
+     \"api-key delete <api-key>\" -- remove api key from db.
      \"api-key set-users <api-key> [<uid1> <uid2> ...]\" -- set allowed users for api key
         An empty set of users means all users are allowed.
         Adds the api key if it doesn't exist.
@@ -147,6 +148,7 @@
         (case command
           "get" (do)
           "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
+          "delete" (api-key/delete-api-key! api-key)
           "set-users" (api-key/update-api-key! api-key {:users command-args})
           "allow" (let [[method path] command-args
                         entry {:method method :path path}

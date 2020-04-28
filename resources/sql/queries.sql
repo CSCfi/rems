@@ -502,6 +502,9 @@ ON CONFLICT (apiKey)
 DO UPDATE
 SET (apiKey, comment, users, paths) = (:apikey, :comment, :users::jsonb, :paths::jsonb);
 
+-- :name delete-api-key! :!
+DELETE FROM api_key WHERE apiKey = :apikey;
+
 -- :name get-api-key :? :1
 SELECT apiKey, comment, users::TEXT, paths::TEXT FROM api_key
 WHERE apiKey = :apikey;
