@@ -206,10 +206,12 @@
         (.setItem js/sessionStorage "rems-redirect-url" redirect-url))
       [:div
        [:div.row.justify-content-center
-        [:div.col-md-6.row.justify-content-center
+        [flash-message/component :top]]
+       [:div.row.justify-content-center
+        [:div.col-md-6.row
          (text :t.login/intro)]]
        [:div.row.justify-content-center
-        [:div.col-md-6.row.justify-content-center
+        [:div.col-md-6.row
          [auth/login-component]]]])))
 
 (defn unauthorized-page []

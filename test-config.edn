@@ -7,7 +7,7 @@
  :database-idle-in-transaction-session-timeout "8s"
  :test-database-url "postgresql://localhost/rems_test?user=rems_test"
  :search-index-path "target/search-index-test"
- :authentication :fake-shibboleth
+ :authentication :fake
  :languages [:en :fi :sv]
  :enable-pdf-api true
  ;; list all organizations used in test-data

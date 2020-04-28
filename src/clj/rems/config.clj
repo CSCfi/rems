@@ -52,6 +52,9 @@
   (when-let [url (:public-url config)]
     (assert (.endsWith url "/")
             (str ":public-url should end with /:" (pr-str url))))
+  (assert (contains? (set (:languages config)) (:default-language config))
+          (str ":default-language should be one of :languages: "
+               (pr-str (select-keys config [:default-language :languages]))))
   (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
     (log/warn "Unrecognized values in :disable-commands :" (pr-str invalid-commands))
     (log/warn "Supported-values:" (pr-str commands/command-names)))

@@ -52,9 +52,9 @@
       :target :_blank
       :aria-disabled disabled?
       :tabIndex (when disabled? "-1")}
-     (text :t.administration/export-applications)
+     [atoms/external-link]
      " "
-     [atoms/external-link]]))
+     (text :t.administration/export-applications)]))
 
 (def ^:private form-dropdown-id "form-dropdown")
 

@@ -117,7 +117,7 @@
   (re-find #"[^;]*" cookie))
 
 (defn login-with-cookies [username]
-  (let [login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
+  (let [login-headers (-> (request :get "/fake-login" {:username username})
                           handler
                           :headers)
         cookie (-> (get login-headers "Set-Cookie")

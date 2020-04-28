@@ -1,13 +1,13 @@
-(ns rems.auth.oidc
+(ns rems.auth.fake
   (:require [rems.atoms :as atoms]
             [rems.navbar :as nav]
             [rems.text :refer [text]]))
 
 (defn login-component []
   [:div
-   (text :t.login/oidc-title)
-   (text :t.login/oidc-text)
+   (text :t.login/fake-title)
+   (text :t.login/fake-text)
    [:div.text-center
     [atoms/link {:class "btn btn-primary btn-lg login-btn"}
-     (nav/url-dest "/oidc-login")
+     (nav/url-dest "/fake-login")
      (text :t.login/login)]]])

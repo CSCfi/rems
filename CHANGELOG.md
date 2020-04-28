@@ -12,6 +12,8 @@ Changes since v2.11
 - Support for API key roles removed (#2127)
 
 ### Changes
+- Login component and its texts have changed to a more simplified look. Please, remember to update your extra translations to match.
+- Development login configuration is changed from `:fake-shibboleth` to `:fake` and styled like OIDC login
 - Improvements to PDFs (#2114)
   - show attachment file names
   - list instead of table for events
@@ -23,7 +25,7 @@ Changes since v2.11
 - Long attachment filenames are now truncated in the UI (#2118)
 
 ### Additions
-- `api/applications/:id/attachments` api for downloading all attachments as a zip file (#2075)
+- Downloading all attachments as a zip file (API `/api/applications/:id/attachments`, button in UI) (#2075)
 - Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
 - API key user and path whitelists added. See [docs/usingtheapi.md](docs/usingtheapi.md). (#2127)
 

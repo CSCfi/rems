@@ -94,7 +94,7 @@
                          (get-localized-title item language)
                          ", "
                          (text :t.link/opens-in-new-window))}
-       (text :t.catalogue/more-info) " " [external-link]])))
+        [external-link] " " (text :t.catalogue/more-info)])))
 
 (rf/reg-sub
  ::catalogue-table-rows

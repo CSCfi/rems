@@ -293,7 +293,14 @@
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" app-id "/pdf")
       :target :_blank}
-     "PDF " [external-link]]))
+      [external-link] " PDF"]))
+
+(defn- attachment-zip-button [application]
+  (when-not (empty? (:application/attachments application))
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" (:application/id application) "/attachments")
+      :target :_blank}
+     [file-download] " " (text :t.form/attachments-as-zip)]))
 
 (defn- link-license [license]
   (let [title (localized (:license/title license))
@@ -688,7 +695,8 @@
     (concat (distinct (for [[command action] (partition 2 commands-and-actions)
                             :when (contains? (:application/permissions application) command)]
                         action))
-            (list [pdf-button (:application/id application)]))))
+            (list [pdf-button (:application/id application)]
+                  [attachment-zip-button application]))))
 
 
 (defn- actions-form [application]
@@ -936,6 +944,25 @@
               :license/title {:en "A Text License"}
               :license/text {:en lipsum-paragraphs}}
              false])
+
+   (component-info actions-form)
+   (example "all actions available"
+            [actions-form {:application/id 123
+                           :application/permissions #{:application.command/save-draft
+                                                      :application.command/submit
+                                                      :application.command/return
+                                                      :application.command/request-review
+                                                      :application.command/review
+                                                      :application.command/request-decision
+                                                      :application.command/decide
+                                                      :application.command/remark
+                                                      :application.command/approve
+                                                      :application.command/reject
+                                                      :application.command/revoke
+                                                      :application.command/assign-external-id
+                                                      :application.command/close
+                                                      :application.command/copy-as-new}
+                           :application/attachments [{:attachment/filename "foo.txt"} {:attachment/filename "bar.txt"}]}])
 
    (component-info render-application)
    (example "application, partially filled, as applicant"
