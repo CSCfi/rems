@@ -1,3 +1,5 @@
+# For documentation see docs/docker.md
+
 FROM openjdk:11-jre-slim
 
 RUN mkdir /rems
