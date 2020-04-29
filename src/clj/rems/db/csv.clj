@@ -3,6 +3,7 @@
   (:require [clj-time.core :as time]
             [clojure.string :as str]
             [com.rpl.specter :refer [ALL select]]
+            [medley.core :refer [find-first]]
             [rems.config :refer [env]]
             [rems.db.user-settings :as user-settings]
             [rems.text :as text]))
@@ -72,7 +73,7 @@
           (select [:application/forms ALL #(= form-id (:form/id %)) :form/fields ALL :field/value] application)))
 
 (defn- form-field-names [form-id application]
-  (let [form (first (filter #(= form-id (:form/id %)) (:application/forms application)))]
+  (let [form (find-first #(= form-id (:form/id %)) (:application/forms application))]
       (assert form
               (str "Form " form-id " not found in application " (:application/id application)))
       (->> form

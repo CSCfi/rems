@@ -707,14 +707,14 @@
       (let [exported (api-call :get (str "/api/applications/export?form-id=" form-id) nil
                                api-key reporter)
             [header & lines] (str/split-lines exported)]
-        (is (.contains exported "Field 1")
+        (is (str/includes? exported "Field 1")
             exported)
-        (is (not (.contains exported "HIDDEN"))
+        (is (not (str/includes? exported "HIDDEN"))
             exported)
         (is (= 2 (count lines)))
-        (is (some #(.contains % "\"Item1\",\"Answer1\"") lines)
+        (is (some #(str/includes? % "\"Item1\",\"Answer1\"") lines)
             lines)
-        (is (some #(.contains % "\"Item1, Item2\",\"Answer2\"") lines)
+        (is (some #(str/includes? % "\"Item1, Item2\",\"Answer2\"") lines)
             lines)))
     (testing "handler can't export"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/export?form-id=" form-id) nil
