@@ -97,7 +97,7 @@
 
 ;; This should be run outside transaction-middleware since we want to
 ;; write even on GET queries. We're only running one insert statement
-;; so we don't need a separte transaction for logging.
+;; so we don't need a separate transaction for logging.
 (defn audit-log-middleware [handler]
   (fn [request]
     (let [response (handler request)]
