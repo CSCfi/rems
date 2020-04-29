@@ -105,6 +105,22 @@ Returns the list of catalogue items as a JSON response:
 ]
 ```
 
+## Audit log
+
+All HTTP requests for the API are logged to the database. The log
+entries include
+
+- HTTP method
+- HTTP path
+- api key used
+- user
+- HTTP response code
+- timestamp
+
+You can query the log using the `/api/audit-log` (available with the
+`reporter` role), or directly from the `audit_log` table in the
+database.
+
 ## Learn More
 
 You may also inspect what API request the REMS UI does using your web
