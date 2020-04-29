@@ -17,10 +17,13 @@
     (GET "/" []
       :summary "Get audit log entries"
       :query-params [{userid :- (describe s/Str "Only show entries for this user") nil}
+                     {application :- (describe s/Str "Only show requests for `/api/application/<application>*` endpoints") nil}
                      {after :- (describe DateTime "Only show entries after this time") nil}
                      {before :- (describe DateTime "Only show entries before this time") nil}]
       :roles #{:reporter}
       :return [AuditLogEntry]
       (db/get-audit-log {:userid userid
                          :after after
+                         :path (when application
+                                 (str "/api/applications/" application "%"))
                          :before before}))))

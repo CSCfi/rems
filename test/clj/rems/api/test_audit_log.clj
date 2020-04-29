@@ -3,13 +3,15 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures :each api-fixture)
 
 (deftest test-audit-log
-  (let [time-a (atom nil)]
+  (let [time-a (atom nil)
+        app-id (test-data/create-application! {:actor "alice"})]
     (testing "populate log"
       (testing "> unknown endpoint"
         (testing "> no user"
@@ -29,8 +31,15 @@
             (testing "> authorized"
               (is (= 200 (:status (-> (request :get "/api/users/active")
                                       (authenticate "42" "owner")
+                                      handler)))))
+            (reset! time-a (time/now))
+            (testing "> application"
+              (is (= 200 (:status (-> (request :get (str "/api/applications/" app-id))
+                                      (authenticate "42" "alice")
+                                      handler))))
+              (is (= 200 (:status (-> (request :get (str "/api/applications/" app-id "/pdf"))
+                                      (authenticate "42" "reporter")
                                       handler))))))
-          (reset! time-a (time/now))
           (testing "> POST"
             (testing "> status 200, different api key"
               (api-key/add-api-key! "43" {})
@@ -73,6 +82,8 @@
               {:userid "owner" :apikey "42" :method "get" :path "/api/unknown" :status "404"}
               {:userid "alice" :apikey "42" :method "get" :path "/api/users/active" :status "403"}
               {:userid "owner" :apikey "42" :method "get" :path "/api/users/active" :status "200"}
+              {:userid "alice" :apikey "42" :method "get" :path (str "/api/applications/" app-id) :status "200"}
+              {:userid "reporter" :apikey "42" :method "get" :path (str "/api/applications/" app-id "/pdf") :status "200"}
               {:userid "alice" :apikey "43" :method "post" :path "/api/applications/submit" :status "200"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "400"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "500"}
@@ -86,6 +97,7 @@
                        read-ok-body)))))
     (testing "filtering log by user"
       (is (= [{:userid "alice" :apikey "42" :method "get" :path "/api/users/active" :status "403"}
+              {:userid "alice" :apikey "42" :method "get" :path (str "/api/applications/" app-id) :status "200"}
               {:userid "alice" :apikey "43" :method "post" :path "/api/applications/submit" :status "200"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "400"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "500"}
@@ -109,4 +121,18 @@
              (-> (request :get "/api/audit-log?after=2100-01")
                  (authenticate "42" "reporter")
                  handler
-                 read-ok-body))))))
+                 read-ok-body))))
+    (testing "filtering log by application"
+      (is (= [{:userid "alice" :apikey "42" :method "get" :path (str "/api/applications/" app-id) :status "200"}
+              {:userid "reporter" :apikey "42" :method "get" :path (str "/api/applications/" app-id "/pdf") :status "200"}]
+             (mapv #(dissoc % :time)
+                   (-> (request :get (str "/api/audit-log?application=" app-id))
+                       (authenticate "42" "reporter")
+                       handler
+                       read-ok-body))))
+      (is (= []
+             (mapv #(dissoc % :time)
+                   (-> (request :get "/api/audit-log?application=99999999")
+                       (authenticate "42" "reporter")
+                       handler
+                       read-ok-body)))))))

@@ -587,4 +587,7 @@ WHERE 1=1
 /*~ (when (:before params) */
   AND time < :before
 /*~ ) ~*/
+/*~ (when (:path params) */
+  AND path LIKE :path
+/*~ ) ~*/
 ORDER BY time ASC;
