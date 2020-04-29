@@ -128,13 +128,13 @@
       (is (= [{:userid "alice" :apikey "42" :method "get" :path (str "/api/applications/" app-id) :status "200"}
               {:userid "reporter" :apikey "42" :method "get" :path (str "/api/applications/" app-id "/pdf") :status "200"}]
              (mapv #(dissoc % :time)
-                   (-> (request :get (str "/api/audit-log?application=" app-id))
+                   (-> (request :get (str "/api/audit-log?application-id=" app-id))
                        (authenticate "42" "reporter")
                        handler
                        read-ok-body))))
       (is (= []
              (mapv #(dissoc % :time)
-                   (-> (request :get "/api/audit-log?application=99999999")
+                   (-> (request :get "/api/audit-log?application-id=99999999")
                        (authenticate "42" "reporter")
                        handler
                        read-ok-body)))))))
