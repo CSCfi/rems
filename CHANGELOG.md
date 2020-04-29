@@ -29,6 +29,7 @@ Changes since v2.11
 - Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
 - API key user and path whitelists added. See [docs/usingtheapi.md](docs/usingtheapi.md). (#2127)
 - Audit log for all API calls in the database. Can be queried via `/api/audit-log` by the `reporter` role. (#2057)
+- `/api/applications/export` is now allowed for the `reporter` role (previously only `owner`)
 
 ## v2.11 "Kotitontuntie" 2020-04-07
 
