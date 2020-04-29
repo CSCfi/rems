@@ -93,4 +93,4 @@ requests as needed.
 ## Implementation & docs
 
 - [Issue #2127](https://github.com/CSCfi/rems/issues/2127)
-- [docs/usingtheapi.md](../usingtheapi.md)
+- [docs/using-the-api.md](../using-the-api.md)
