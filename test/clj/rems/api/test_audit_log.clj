@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.api-key :as api-key]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -32,6 +33,7 @@
           (reset! time-a (time/now))
           (testing "> POST"
             (testing "> status 200, different api key"
+              (api-key/add-api-key! "43" {})
               (is (false? (:success (-> (request :post "/api/applications/submit")
                                         (authenticate "43" "alice")
                                         (json-body {:application-id 99999999999})
