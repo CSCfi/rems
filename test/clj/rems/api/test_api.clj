@@ -1,7 +1,6 @@
 (ns ^:integration rems.api.test-api
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.core :as db]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
