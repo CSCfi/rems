@@ -29,25 +29,27 @@
                                               (authenticate "42" "alice")
                                               handler))))
             (testing "> authorized"
-              (is (= 200 (:status (-> (request :get "/api/users/active")
-                                      (authenticate "42" "owner")
-                                      handler)))))
+              (is (response-is-ok? (-> (request :get "/api/users/active")
+                                       (authenticate "42" "owner")
+                                       handler))))
             (reset! time-a (time/now))
             (testing "> application"
-              (is (= 200 (:status (-> (request :get (str "/api/applications/" app-id))
-                                      (authenticate "42" "alice")
-                                      handler))))
-              (is (= 200 (:status (-> (request :get (str "/api/applications/" app-id "/pdf"))
-                                      (authenticate "42" "reporter")
-                                      handler))))))
+              (is (response-is-ok? (-> (request :get (str "/api/applications/" app-id))
+                                       (authenticate "42" "alice")
+                                       handler)))
+              (is (response-is-ok? (-> (request :get (str "/api/applications/" app-id "/pdf"))
+                                       (authenticate "42" "reporter")
+                                       handler)))))
           (testing "> POST"
             (testing "> status 200, different api key"
               (api-key/add-api-key! "43" {})
-              (is (false? (:success (-> (request :post "/api/applications/submit")
-                                        (authenticate "43" "alice")
-                                        (json-body {:application-id 99999999999})
-                                        handler
-                                        read-ok-body)))))
+              ;; this is actually a {:success false} response since
+              ;; the application doesn't exist, but here we only care
+              ;; about the HTTP status.
+              (is (response-is-ok? (-> (request :post "/api/applications/submit")
+                                       (authenticate "43" "alice")
+                                       (json-body {:application-id 99999999999})
+                                       handler))))
             (testing "> status 400"
               (is (response-is-bad-request? (-> (request :post "/api/applications/submit")
                                                 (authenticate "42" "alice")
@@ -63,10 +65,10 @@
           (let [cookie (login-with-cookies "malice")
                 csrf (get-csrf-token cookie)]
             (testing "> GET"
-              (is (= 200 (:status (-> (request :get "/api/catalogue")
-                                      (header "Cookie" cookie)
-                                      (header "x-csrf-token" csrf)
-                                      handler)))))
+              (is (response-is-ok? (-> (request :get "/api/catalogue")
+                                       (header "Cookie" cookie)
+                                       (header "x-csrf-token" csrf)
+                                       handler))))
             (testing "> failed PUT"
               (is (response-is-forbidden? (-> (request :put "/api/catalogue-items/archived")
                                               (header "Cookie" cookie)
