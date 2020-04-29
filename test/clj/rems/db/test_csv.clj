@@ -80,22 +80,33 @@
                                                :fi "Kuvaus"}
                                  :field/optional true
                                  :field/type :description}]})
+        other-form-id (test-data/create-form!
+                       {:form/fields [{:field/title {:en "SHOULD NOT BE VISIBLE"
+                                                     :fi "SHOULD NOT BE VISIBLE"}
+                                       :field/optional true
+                                       :field/type :text}]})
+        wf-id (test-data/create-workflow! {})
         cat-id (test-data/create-catalogue-item! {:title {:en "Test resource"
                                                           :fi "Testiresurssi"}
-                                                  :form-id form-id})
-        app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
+                                                  :form-id form-id
+                                                  :workflow-id wf-id})
+        other-cat-id (test-data/create-catalogue-item! {:title {:en "Other resource"
+                                                                :fi "Toinen resurssi"}
+                                                        :form-id other-form-id
+                                                        :workflow-id wf-id})
+        app-id (test-data/create-application! {:catalogue-item-ids [cat-id other-cat-id]
                                                :actor applicant})
         external-id (:application/external-id (applications/get-application app-id))
         get-application #(applications/get-application app-id)]
 
     (testing "draft applications not included as default"
       (is (= ""
-             (csv/applications-to-csv [(get-application)] "owner"))))
+             (csv/applications-to-csv [(get-application)] form-id "owner"))))
 
     (testing "draft applications included when explicitly set"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"\",\"\"\n")
-             (csv/applications-to-csv [(get-application)] "owner" :include-drafts true))))
+                  app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource, Other resource\",\"\",\"\"\n")
+             (csv/applications-to-csv [(get-application)] form-id "owner" :include-drafts true))))
 
     (test-data/fill-form! {:application-id app-id
                            :actor applicant
@@ -103,8 +114,8 @@
 
     (testing "form filled out"
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
-                  app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource\",\"test value\",\"\"\n")
-             (csv/applications-to-csv [(get-application)] "owner" :include-drafts true))))
+                  app-id ",\"" external-id "\",\"Alice Applicant\",,\"Draft\",\"Test resource, Other resource\",\"test value\",\"\"\n")
+             (csv/applications-to-csv [(get-application)] form-id "owner" :include-drafts true))))
 
     (test-data/accept-licenses! {:application-id app-id
                                  :actor applicant})
@@ -118,5 +129,5 @@
       (is (= (str "\"Id\",\"External id\",\"Applicant\",\"Submitted\",\"State\",\"Resources\",\"Application title\",\"Description\"\n"
                   app-id ",\"" external-id "\",\"Alice Applicant\",\""
                   (text/localize-time test-time)
-                  "\",\"Applied\",\"Test resource\",\"test value\",\"\"\n")
-             (csv/applications-to-csv [(get-application)] "owner"))))))
+                  "\",\"Applied\",\"Test resource, Other resource\",\"test value\",\"\"\n")
+             (csv/applications-to-csv [(get-application)] form-id "owner"))))))

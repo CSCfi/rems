@@ -66,25 +66,21 @@
    application-column-state
    application-column-resources])
 
-(defn- application-to-row [application]
+(defn- application-to-row [form-id application]
   (concat (for [to-value (mapv :to-value application-columns)]
             (to-value application))
-          (select [:application/forms ALL :form/fields ALL :field/value] application)))
+          (select [:application/forms ALL #(= form-id (:form/id %)) :form/fields ALL :field/value] application)))
 
-;; TODO: reporting when applications have different forms
-(defn- form-field-names [applications]
-  (assert (apply = (->> applications
-                        (mapcat :application/forms)
-                        (mapv :form/id)))
-          "All applications must have the same form id")
-  (when (not (empty? applications))
-    (->> (first applications)
-         :application/forms
-         (mapcat :form/fields)
-         (mapv :field/title)
-         (mapv text/localized))))
+(defn- form-field-names [form-id application]
+  (let [form (first (filter #(= form-id (:form/id %)) (:application/forms application)))]
+      (assert form
+              (str "Form " form-id " not found in application " (:application/id application)))
+      (->> form
+           :form/fields
+           (mapv :field/title)
+           (mapv text/localized))))
 
-(defn applications-to-csv [applications user-id & {:keys [include-drafts]}]
+(defn applications-to-csv [applications form-id user-id & {:keys [include-drafts]}]
   (let [language (:language (user-settings/get-user-settings user-id))
         applications (filter #(or include-drafts
                                   (not= (:application/state %) :application.state/draft))
@@ -93,8 +89,8 @@
       ""
       (text/with-language language
         #(print-to-csv :column-names (concat (mapv (comp text/text :name) application-columns)
-                                             (form-field-names applications))
-                       :rows (mapv application-to-row applications)
+                                             (form-field-names form-id (first applications)))
+                       :rows (mapv (partial application-to-row form-id) applications)
                        :quote-strings? true)))))
 
 (defn applications-filename []
