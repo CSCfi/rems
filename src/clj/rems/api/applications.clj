@@ -255,9 +255,7 @@
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/raw" []
-      :summary (str "Get application by `application-id`. Unlike the /api/applicaitons/:application-id endpoint, "
-                    "the data here isn't customized for the requesting user (see schema for details). Suitable "
-                    "for integrations and exporting applications.")
+      :summary "Get application by `application-id`. Unlike the /api/applications/:application-id endpoint, the data here isn't customized for the requesting user (see schema for details). Suitable for integrations and exporting applications."
       :roles #{:reporter :owner}
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema ApplicationRaw}
