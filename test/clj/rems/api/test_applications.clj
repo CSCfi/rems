@@ -678,19 +678,25 @@
 
 (deftest test-application-export
   (let [applicant "alice"
-        owner "owner"
+        handler "handler"
+        reporter "reporter"
         api-key "42"
+        wf-id (test-data/create-workflow! {:type :workflow/default
+                                           :handlers [handler]})
         form-id (test-data/create-form! {})
-        cat-id (test-data/create-catalogue-item! {:form-id form-id})
+        cat-id (test-data/create-catalogue-item! {:workflow-id wf-id
+                                                  :form-id form-id})
         app-id (test-data/create-application! {:actor applicant
                                                :catalogue-item-ids [cat-id]})]
     (send-command applicant {:type :application.command/submit
                              :application-id app-id})
-    (let [exported (-> (request :get (str "/api/applications/export?form-id=" form-id))
-                       (authenticate api-key owner)
-                       handler
-                       read-ok-body)]
-      (is (= (count (str/split exported #"\n")) 2)))))
+    (testing "reporter can export"
+      (let [exported (api-call :get (str "/api/applications/export?form-id=" form-id) nil
+                               api-key reporter)]
+        (is (= (count (str/split exported #"\n")) 2))))
+    (testing "handler can't export"
+      (is (response-is-forbidden? (api-response :get (str "/api/applications/export?form-id=" form-id) nil
+                                                api-key handler))))))
 
 (def testfile (io/file "./test-data/test.txt"))
 
