@@ -1,10 +1,12 @@
 (ns rems.api
-  (:require [clojure.stacktrace :refer [print-cause-trace]]
+  (:require [clj-time.core :as time]
+            [clojure.stacktrace :refer [print-cause-trace]]
             [clojure.tools.logging :as log]
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
             [rems.api.applications :refer [applications-api my-applications-api]]
+            [rems.api.audit-log :refer [audit-log-api]]
             [rems.api.blacklist :refer [blacklist-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
@@ -20,7 +22,10 @@
             [rems.api.user-settings :refer [user-settings-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
+            [rems.auth.auth :as auth]
+            [rems.db.core :as db]
             [rems.json :refer [muuntaja]]
+            [rems.util :refer [get-user-id]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [ring.util.response :as response]
@@ -90,6 +95,23 @@
 (defn- read-only? [request]
   (not (contains? #{:put :post} (:request-method request))))
 
+;; This should be run outside transaction-middleware since we want to
+;; write even on GET queries. We're only running one insert statement
+;; so we don't need a separate transaction for logging.
+(defn audit-log-middleware [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (try
+        (db/add-to-audit-log! {:time (time/now)
+                               :path (:uri request)
+                               :method (name (:request-method request))
+                               :apikey (auth/get-api-key request)
+                               :userid (get-user-id)
+                               :status (str (:status response))})
+        (catch Throwable t
+          (log/error "Adding to audit log failed:" t)))
+      response)))
+
 (defn transaction-middleware [handler]
   (fn [request]
     (conman/with-transaction [rems.db.core/*db* {:isolation :serializable
@@ -101,7 +123,10 @@
   request)
 
 (def api-routes
-  (api
+  ;; we wrap audit-log-middleware outside compojure-api since we want
+  ;; to see the status codes produced by our exception handlers
+  (audit-log-middleware
+   (api
     {;; TODO: should this be in rems.middleware?
      :formats muuntaja
      :middleware [cors-middleware
@@ -133,6 +158,7 @@
 
       my-applications-api
       applications-api
+      audit-log-api
       blacklist-api
       catalogue-api
       catalogue-items-api
@@ -149,4 +175,4 @@
       workflows-api
 
       ;; keep this last
-      (undocumented not-found-handler))))
+      (undocumented not-found-handler)))))

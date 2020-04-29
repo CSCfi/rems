@@ -570,3 +570,24 @@ WHERE id = :id;
 -- :name delete-outbox! :!
 DELETE FROM outbox
 WHERE id = :id;
+
+-- :name add-to-audit-log! :!
+INSERT INTO audit_log (time, path, method, apikey, userid, status)
+VALUES (:time, :path, :method, :apikey, :userid, :status);
+
+-- :name get-audit-log
+SELECT * FROM audit_log
+WHERE 1=1
+/*~ (when (:userid params) */
+  AND userid = :userid
+/*~ ) ~*/
+/*~ (when (:after params) */
+  AND time >= :after
+/*~ ) ~*/
+/*~ (when (:before params) */
+  AND time < :before
+/*~ ) ~*/
+/*~ (when (:path params) */
+  AND path LIKE :path
+/*~ ) ~*/
+ORDER BY time ASC;
