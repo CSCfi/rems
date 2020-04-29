@@ -27,7 +27,9 @@
 (deftest test-allowed-by
   (testing "simple pattern"
     (is (allowed-by :get "/foo" {:method "get" :path "/foo"}))
-    (is (not (allowed-by :get "/foo/" {:method "get" :path "/foo"}))) ;; NB!
+    (testing ", trailing slashes matter"
+      (is (not (allowed-by :get "/foo/" {:method "get" :path "/foo"})))
+      (is (not (allowed-by :get "/foo" {:method "get" :path "/foo/"}))))
     (is (not (allowed-by :put "/foo" {:method "get" :path "/foo"})))
     (is (not (allowed-by :get "/foob" {:method "get" :path "/foo"}))))
   (testing "method wildcard"
