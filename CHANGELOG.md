@@ -23,6 +23,7 @@ Changes since v2.11
 
 ### Fixes
 - Long attachment filenames are now truncated in the UI (#2118)
+- `/api/applications/export` now doesn't blow up when an application has multiple forms. Instead only answers for the requested form are returned. (#2153)
 
 ### Additions
 - Downloading all attachments as a zip file (API `/api/applications/:id/attachments`, button in UI) (#2075)
