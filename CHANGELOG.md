@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.11
 
+### Breaking changes
+- Support for API key roles removed (#2127)
+
 ### Changes
 - Login component and its texts have changed to a more simplified look. Please, remember to update your extra translations to match.
 - Development login configuration is changed from `:fake-shibboleth` to `:fake` and styled like OIDC login
@@ -24,6 +27,7 @@ Changes since v2.11
 ### Additions
 - Downloading all attachments as a zip file (API `/api/applications/:id/attachments`, button in UI) (#2075)
 - Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
+- API key user and path whitelists added. See [docs/usingtheapi.md](docs/usingtheapi.md). (#2127)
 - Audit log for all API calls in the database. Can be queried via `/api/audit-log` by the `reporter` role. (#2057)
 
 ## v2.11 "Kotitontuntie" 2020-04-07

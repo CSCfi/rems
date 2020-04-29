@@ -80,23 +80,13 @@
   (testing "user with user-owner role"
     (users/add-user! "user-owner" {:eppn "user-owner"})
     (roles/add-role! "user-owner" :user-owner)
-    (testing "with api key with all roles"
-      (-> (request :post (str "/api/users/create"))
-          (json-body {:userid "test1"
-                      :email "test1@example.com"
-                      :name "Test 1"})
-          (authenticate "42" "user-owner")
-          handler
-          assert-response-is-ok))
-    (testing "with api key with only user-owner role"
-      (api-key/add-api-key! "999" "" [:user-owner])
-      (-> (request :post (str "/api/users/create"))
-          (json-body {:userid "test2"
-                      :email "test2@example.com"
-                      :name "Test 2"})
-          (authenticate "42" "user-owner")
-          handler
-          assert-response-is-ok))))
+    (-> (request :post (str "/api/users/create"))
+        (json-body {:userid "test1"
+                    :email "test1@example.com"
+                    :name "Test 1"})
+        (authenticate "42" "user-owner")
+        handler
+        assert-response-is-ok)))
 
 (deftest active-api-test
   (let [api-key "42"

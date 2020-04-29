@@ -1,0 +1,3 @@
+ALTER TABLE api_key
+  ADD COLUMN users jsonb DEFAULT NULL,
+  ADD COLUMN paths jsonb DEFAULT NULL;

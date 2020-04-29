@@ -1,6 +1,7 @@
 (ns rems.standalone
   "Run the REMS app in an embedded http server."
-  (:require [clojure.tools.cli :refer [parse-opts]]
+  (:require [clojure.string :as str]
+            [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [luminus-migrations.core :as migrations]
             [luminus.http-server :as http]
@@ -87,73 +88,102 @@
      \"validate\" -- validate data in db
      \"list-users\" -- list users and roles
      \"grant-role <role> <user>\" -- grant a role to a user
-     \"add-api-key <api-key> [<description>] [<permitted-role 1>] ... [<permitted-role n>]\" -- add api key to db.
+     \"api-key get\" -- list all api keys
+     \"api-key get <api-key>\" -- get details of api key
+     \"api-key add <api-key> [<description>]\" -- add api key to db.
         <description> is an optional text comment.
-        <permitted-role> is, e.g., owner or handler. If no permitted roles are
-          given, permit all roles.
-        If a pre-existing <api-key> is given, update description and permitted
-          roles for that api-key."
+        If a pre-existing <api-key> is given, update description for it.
+     \"api-key delete <api-key>\" -- remove api key from db.
+     \"api-key set-users <api-key> [<uid1> <uid2> ...]\" -- set allowed users for api key
+        An empty set of users means all users are allowed.
+        Adds the api key if it doesn't exist.
+     \"api-key allow <api-key> <method> <regex>\" -- add an entry to the allowed method/path whitelist
+        The special method `any` means any method.
+        The regex is a (Java) regular expression that should match the whole path of the request.
+        Example regex: /api/applications/[0-9]+/?
+     \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
+        An empty list means all methods and paths are allowed."
   [& args]
   (exit-on-signals!)
-  (case (first args)
-    ("migrate" "rollback")
-    (do
-      (mount/start #'rems.config/env)
-      (migrations/migrate args (select-keys env [:database-url])))
+  (let [usage #(do
+                 (println "Usage:")
+                 (println (:doc (meta #'-main))))]
+    (case (first args)
+      "help"
+      (usage)
 
-    "reset"
-    (do
-      (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
-      (when (= "YES" (read-line))
-        (do
-          (println "Running reset")
-          (mount/start #'rems.config/env)
-          (migrations/migrate args (select-keys env [:database-url])))))
+      ("migrate" "rollback")
+      (do
+        (mount/start #'rems.config/env)
+        (migrations/migrate args (select-keys env [:database-url])))
 
-    "test-data"
-    (do
-      (mount/start #'rems.config/env
-                   #'rems.db.core/*db*
-                   #'rems.locales/translations)
-      (log/info "Creating test data")
-      (test-data/create-test-data!)
-      (test-data/create-performance-test-data!)
-      (log/info "Test data created"))
+      "reset"
+      (do
+        (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
+        (when (= "YES" (read-line))
+          (do
+            (println "Running reset")
+            (mount/start #'rems.config/env)
+            (migrations/migrate args (select-keys env [:database-url])))))
 
-    "demo-data"
-    (do
-      (mount/start #'rems.config/env
-                   #'rems.db.core/*db*
-                   #'rems.locales/translations)
-      (test-data/create-demo-data!))
+      "test-data"
+      (do
+        (mount/start #'rems.config/env
+                     #'rems.db.core/*db*
+                     #'rems.locales/translations)
+        (log/info "Creating test data")
+        (test-data/create-test-data!)
+        (test-data/create-performance-test-data!)
+        (log/info "Test data created"))
 
-    "add-api-key"
-    (let [[_ key comment & permitted-roles] args]
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (api-key/add-api-key! key comment (or permitted-roles api-key/+all-roles+))
-      (log/info "Api key added"))
+      "demo-data"
+      (do
+        (mount/start #'rems.config/env
+                     #'rems.db.core/*db*
+                     #'rems.locales/translations)
+        (test-data/create-demo-data!))
 
-    "list-users"
-    (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (doseq [u (users/get-all-users)]
-        (-> u
-            (assoc :roles (roles/get-roles (:userid u)))
-            json/generate-string
-            println)))
+      "api-key"
+      (let [[_ command api-key & command-args] args]
+        (mount/start #'rems.config/env #'rems.db.core/*db*)
+        (case command
+          "get" (do)
+          "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
+          "delete" (api-key/delete-api-key! api-key)
+          "set-users" (api-key/update-api-key! api-key {:users command-args})
+          "allow" (let [[method path] command-args
+                        entry {:method method :path path}
+                        old (:paths (api-key/get-api-key api-key))]
+                    (api-key/update-api-key! api-key {:paths (conj old entry)}))
+          "allow-all" (api-key/update-api-key! api-key {:paths nil})
+          (do (usage)
+              (System/exit 1)))
+        (if api-key
+          (prn (api-key/get-api-key api-key))
+          (mapv prn (api-key/get-api-keys))))
 
-    "grant-role"
-    (let [[_ role user] args]
-      (if (not (and role user))
-        (println "Usage: grant-role <role> <user>")
-        (do (mount/start #'rems.config/env #'rems.db.core/*db*)
-            (roles/add-role! user (keyword role)))))
+      "list-users"
+      (do
+        (mount/start #'rems.config/env #'rems.db.core/*db*)
+        (doseq [u (users/get-all-users)]
+          (-> u
+              (assoc :roles (roles/get-roles (:userid u)))
+              json/generate-string
+              println)))
 
-    "validate"
-    (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (when-not (validate/validate)
-        (System/exit 2)))
+      "grant-role"
+      (let [[_ role user] args]
+        (if (not (and role user))
+          (do (usage)
+              (System/exit 1))
+          (do (mount/start #'rems.config/env #'rems.db.core/*db*)
+              (roles/add-role! user (keyword role)))))
 
-    ;; default
-    (apply start-app args)))
+      "validate"
+      (do
+        (mount/start #'rems.config/env #'rems.db.core/*db*)
+        (when-not (validate/validate)
+          (System/exit 2)))
+
+      ;; default
+      (apply start-app args))))

@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.test-api
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.api-key :as api-key]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
@@ -26,28 +27,76 @@
                        handler)]
           (is (response-is-not-found? resp)))))))
 
-(deftest test-api-key-roles
-  (testing "API key roles"
-    (testing "all available"
-      (let [resp (-> (request :get "/api/forms")
-                     (authenticate "42" "owner")
-                     handler)]
-        (is (= 200 (:status resp)))))
-    (testing "handler and owner roles unavailable"
-      (let [resp (-> (request :get "/api/forms")
-                     (authenticate "43" "owner")
+(deftest test-api-key-security
+  (testing ":api-key role"
+    (testing "available for valid api key"
+      (is (response-is-ok? (-> (request :post "/api/email/send-reminders")
+                               (authenticate "42" "owner")
+                               handler))))
+    (testing "not available when using wrong API key"
+      (let [username "alice"
+            ;; need cookies and csrf to actually get a forbidden instead of "invalid csrf token"
+            ;; TODO check this
+            cookie (login-with-cookies username)
+            csrf (get-csrf-token cookie)
+            resp (-> (request :post "/api/email/send-reminders")
+                     (header "Cookie" cookie)
+                     (header "x-csrf-token" csrf)
+                     (header "x-rems-api-key" "WRONG")
                      handler)]
         (is (response-is-forbidden? resp)))))
-  (testing ":api-key role not available when using wrong API key"
-    (let [username "alice"
-          cookie (login-with-cookies username)
-          csrf (get-csrf-token cookie)
-          resp (-> (request :post "/api/email/send-reminders")
-                   (header "Cookie" cookie)
-                   (header "x-csrf-token" csrf)
-                   (header "x-rems-api-key" "WRONG")
-                   handler)]
-      (is (response-is-forbidden? resp)))))
+  (testing "api key user whitelist"
+    (api-key/add-api-key! "43" {:comment "all users" :users nil})
+    (api-key/add-api-key! "44" {:comment "only alice & malice" :users ["alice" "malice"]})
+    (testing "> api key without whitelist can impersonate any user >"
+      (doseq [user ["owner" "alice" "malice"]]
+        (testing user
+          (is (response-is-ok? (api-response :get "/api/catalogue/" nil
+                                             "43" user))))))
+    (testing "> api key with whitelist can only impersonate given users >"
+      (doseq [user ["alice" "malice"]]
+        (testing user
+          (is (response-is-ok? (api-response :get "/api/catalogue/" nil
+                                             "44" user)))))
+      (is (response-is-unauthorized? (api-response :get "/api/catalogue/" nil
+                                                   "44" "owner")))))
+  (testing "api key path whitelist"
+    (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
+    (api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
+                                                                  :path "/api/applications"}
+                                                                 {:method "any"
+                                                                  :path "/api/my-applications"}]})
+    (api-key/add-api-key! "47" {:comment "regex path" :paths [{:method "any"
+                                                               :path "/api/c.*"}
+                                                              {:method "get"
+                                                               :path "/api/users/.*"}]})
+    (testing "> api key without whitelist can access any path >"
+      (doseq [path ["/api/applications" "/api/my-applications" "/api/catalogue"]]
+        (testing path
+          (is (response-is-ok? (api-response :get path nil
+                                             "45" "owner"))))))
+    (testing "> api key with whitelist can access only given paths >"
+      (doseq [path ["/api/applications" "/api/my-applications"]]
+        (testing path
+          (is (response-is-ok? (api-response :get path nil
+                                             "46" "owner")))))
+      (is (response-is-unauthorized? (api-response :get "/api/catalogue" nil
+                                                   "46" "owner"))))
+    (testing "> api key with whitelist can access only matching paths >"
+      (doseq [path ["/api/catalogue?query=param" "/api/catalogue-items"]]
+        (testing path
+          (is (response-is-ok? (api-response :get path nil
+                                             "47" "owner")))))
+      (is (response-is-unauthorized? (api-response :get "/api/applications" nil
+                                                   "47" "owner"))))
+    (testing "> api key with whitelist can use only matching methods"
+      (is (response-is-ok? (api-response :get "/api/users/active" nil
+                                         "47" "owner")))
+      (is (response-is-unauthorized? (api-response :post "/api/users/create"
+                                                   {:userid "testing"
+                                                    :name nil
+                                                    :email nil}
+                                                   "47" "owner"))))))
 
 (deftest test-health-api
   (let [body (-> (request :get "/api/health")

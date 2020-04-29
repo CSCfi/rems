@@ -15,9 +15,9 @@ Some pointers for common tasks:
 
 - API keys for HTTP API access can be added with the command
 
-        java -Drems.config=path/to/your/rems/config -jar rems.jar add-api-key <key> <optional-list-of-roles>`
+        java -Drems.config=path/to/your/rems/config -jar rems.jar add-api-key <key>
 
-  If no roles are specified, all roles are allowed.
+  See [usingtheapi.md](usingtheapi.md) for more info.
 - Users don't usually need to be added manually as they are automatically created when logging in.
   If you need to add users programmatically, you can use the HTTP API `/api/users/create` as documented in OpenAPI aka Swagger.
 - Roles can be granted with a command like
