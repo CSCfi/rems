@@ -58,6 +58,9 @@
 (defn assert-response-is-server-error? [response]
   (assert (= 500 (:status response))))
 
+(defn response-is-ok? [response]
+  (= 200 (:status response)))
+
 (defn response-is-server-error? [response]
   (= 500 (:status response)))
 
