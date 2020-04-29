@@ -42,10 +42,10 @@
     (is (allowed-by :get "/fizzle/pop" {:method "get" :path "/f[^b]*"}))
     (is (not (allowed-by :get "/fi/b" {:method "get" :path "/f[^b]*"})))))
 
-(defn valid? [key user method path]
+(defn valid? [key userid method path]
   (when-let [key (get-api-key key)]
     (and (or (nil? (:users key))
-             (some? (some #{user} (:users key))))
+             (some? (some #{userid} (:users key))))
          (or (nil? (:paths key))
              (some? (some (partial allowed-by method path) (:paths key)))))))
 
