@@ -271,18 +271,18 @@
 
   Useful while developing and changing e.g. translations."
   []
-  [:button.btn.btn-secondary.btn-sm
-   {:on-click #(do (fetch-translations!)
-                   (fetch-theme!)
-                   (config/fetch-config!))}
-   [:i.fas.fa-redo]])
+  [:div.dev-reload-button
+   [:button.btn.btn-secondary.btn-sm
+    {:on-click #(do (fetch-translations!)
+                    (fetch-theme!)
+                    (config/fetch-config!))}
+    [:i.fas.fa-redo]]])
 
 (defn footer []
   [:footer.footer
    [:div.container
     (when (config/dev-environment?)
-      [:div.dev-reload-button.dev-only
-       [dev-reload-button]])
+      [dev-reload-button])
     [:div.footer-text (text :t/footer)]]])
 
 (defn logo []
