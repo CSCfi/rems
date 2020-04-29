@@ -16,10 +16,8 @@
   (mapv format-api-key (db/get-api-keys {})))
 
 (defn- method= [method pattern]
-  (let [normalized (.toLowerCase (name method))
-        normalized-pattern (.toLowerCase (name pattern))]
-    (or (= normalized-pattern "any")
-        (= normalized-pattern normalized))))
+  (or (= pattern "any")
+      (= pattern (name method))))
 
 (defn- allowed-by [method path pattern]
   (and
@@ -29,7 +27,6 @@
 (deftest test-allowed-by
   (testing "simple pattern"
     (is (allowed-by :get "/foo" {:method "get" :path "/foo"}))
-    (is (allowed-by "GET" "/foo" {:method "get" :path "/foo"}))
     (is (not (allowed-by :get "/foo/" {:method "get" :path "/foo"}))) ;; NB!
     (is (not (allowed-by :put "/foo" {:method "get" :path "/foo"})))
     (is (not (allowed-by :get "/foob" {:method "get" :path "/foo"}))))
@@ -53,7 +50,9 @@
 (defn add-api-key! [key & [{:keys [comment users paths]}]]
   (doseq [entry paths]
     (assert (= [:method :path] (keys entry))
-            (str "Invalid path whitelist entry: " (pr-str entry))))
+            (str "Invalid path whitelist entry: " (pr-str entry)))
+    (assert (contains? #{"get" "put" "post" "patch" "delete" "head" "options" "any"} (:method entry))
+            (str "Invalid method: " (pr-str entry))))
   (db/upsert-api-key! {:apikey key
                        :comment comment
                        :users (when users (json/generate-string users))
