@@ -6,10 +6,15 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.11
+Changes since v2.12
+
+## v2.12 "Merituulentie" 2020-05-04
 
 ### Breaking changes
-- Support for API key roles removed (#2127)
+- API key authorization has been reworked. API keys no longer have a
+  set of roles associated with them, instead each API key can have an
+  optional user and API path whitelists.
+  See [docs/using-the-api.md](docs/using-the-api.md). (#2127)
 
 ### Changes
 - Login component and its texts have changed to a more simplified look. Please, remember to update your extra translations to match.
@@ -28,7 +33,6 @@ Changes since v2.11
 ### Additions
 - Downloading all attachments as a zip file (API `/api/applications/:id/attachments`, button in UI) (#2075)
 - Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
-- API key user and path whitelists added. See [docs/usingtheapi.md](docs/usingtheapi.md). (#2127)
 - Audit log for all API calls in the database. Can be queried via `/api/audit-log` by the `reporter` role. (#2057)
 - `/api/applications/export` is now allowed for the `reporter` role (previously only `owner`)
 
