@@ -14,6 +14,7 @@
 
 (def audit-log-api
   (context "/audit-log" []
+    :tags ["audit log"]
     (GET "/" []
       :summary "Get audit log entries"
       :query-params [{userid :- (describe s/Str "Only show entries for this user") nil}
