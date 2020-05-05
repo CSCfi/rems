@@ -15,8 +15,12 @@
   (:import (java.net SocketException)))
 
 (defonce ^:private test-url (atom "http://localhost:3001/"))
-(defonce ^:dynamic *driver* nil)
+(defonce ^:dynamic *driver* ::driver-not-initialized)
 (defonce ^:private test-mode (atom :test))
+(defonce ^:private test-context (atom {:seed "circle"}))
+
+(defn- get-seed []
+  (:seed @test-context))
 
 (defn- delete-files [dir]
   (doseq [file (.listFiles dir)]
@@ -27,18 +31,34 @@
     (.mkdirs)
     (delete-files)))
 
+(defn- random-seed []
+  (let [t (System/currentTimeMillis)
+        counts ["one" "two" "three" "four" "five" "six" "seven" "eight" "nine" "ten"]
+        count-i (mod (Math/floor (/ t 60000)) (count counts))
+        adjectives ["amusing" "comic" "funny" "laughable" "hilarious" "witty" "jolly" "silly" "ludicrous" "wacky"]
+        animals ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"]]
+    (str/join [(nth counts count-i)
+               " "
+               (nth adjectives (mod (Math/floor (/ t 1000)) (count adjectives)))
+               " "
+               (nth animals (mod t (count animals)))
+               (if (> count-i 0) "s" "") ])))
+
 (defn development-driver
   "Starts the driver for development use.
 
   Opens a regular browser that can be commanded while creating or debugging tests."
   []
-  (when *driver* (quit *driver*))
+  (when (and *driver*
+             (not= ::driver-not-initialized *driver*))
+    (quit *driver*))
   (def *driver* (boot-driver :chrome
                              {:args ["--lang=en-US"]
                               :prefs {"intl.accept_languages" "en-US"}}))
   (delete-cookies *driver*) ; start with a clean slate
   (reset! test-url "http://localhost:3000/")
   (reset! test-mode :development)
+  (reset! test-context {:seed (random-seed)})
   *driver*)
 
 (comment
