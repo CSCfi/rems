@@ -29,8 +29,7 @@
     :dispatch-n [[::workflows]
                  [::resources]
                  [::forms]
-                 (when catalogue-item-id [::catalogue-item])
-                 [:rems.administration.administration/owned-organizations {:owner [(get-in db [:identity :user :userid])]}]]}))
+                 (when catalogue-item-id [::catalogue-item])]}))
 
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
 (rf/reg-sub ::form (fn [db _] (::form db)))
@@ -250,8 +249,7 @@
 (defn create-catalogue-item-page []
   (let [languages @(rf/subscribe [:languages])
         editing? @(rf/subscribe [::editing?])
-        loading? (or @(rf/subscribe [:rems.administration.administration/owned-organizations :fetching?])
-                     @(rf/subscribe [::workflows ::fetching?])
+        loading? (or @(rf/subscribe [::workflows ::fetching?])
                      @(rf/subscribe [::resources ::fetching?])
                      @(rf/subscribe [::forms ::fetching?])
                      @(rf/subscribe [::catalogue-item ::fetching?]))

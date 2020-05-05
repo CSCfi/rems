@@ -24,8 +24,7 @@
                ::editing? (some? workflow-id)
                ::form {:type :workflow/default})
     :dispatch-n [[::actors]
-                 (when workflow-id [::workflow])
-                 [:rems.administration.administration/owned-organizations {:owner [(get-in db [:identity :user :userid])]}]]}))
+                 (when workflow-id [::workflow])]}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
@@ -207,8 +206,7 @@
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
-        loading? (or @(rf/subscribe [:rems.administration.administration/owned-organizations :fetching?])
-                     @(rf/subscribe [::actors :fetching?])
+        loading? (or @(rf/subscribe [::actors :fetching?])
                      @(rf/subscribe [::workflow :fetching?]))
         editing? @(rf/subscribe [::editing?])
         title (if editing?

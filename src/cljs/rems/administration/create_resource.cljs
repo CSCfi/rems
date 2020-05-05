@@ -18,8 +18,7 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (dissoc db ::form)
-    :dispatch-n [[:rems.administration.administration/owned-organizations {:owner (get-in db [:identity :user :userid])}]
-                 [::licenses {:active true}]]}))
+    :dispatch-n [[::licenses {:active true}]]}))
 
 (fetcher/reg-fetcher ::licenses "/api/licenses")
 
@@ -116,8 +115,7 @@
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
-  (let [loading? (or @(rf/subscribe [:rems.administration.administration/owned-organizations :fetching?])
-                     @(rf/subscribe [::licenses :fetching?]))
+  (let [loading? @(rf/subscribe [::licenses :fetching?])
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]

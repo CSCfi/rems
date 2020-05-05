@@ -16,8 +16,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (dissoc db ::form)
-    :dispatch-n [[:rems.administration.administration/owned-organizations {:owner (get-in db [:identity :user :userid])}]]}))
+   {:db (dissoc db ::form)}))
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
 
@@ -217,27 +216,24 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [languages @(rf/subscribe [:languages])
-        loading? (or @(rf/subscribe [:rems.administration.administration/owned-organizations :fetching?]))]
+  (let [languages @(rf/subscribe [:languages])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/create-license)]
      [flash-message/component :top]
-     (if loading?
-       [:div [spinner/big]]
-       [collapsible/component
-        {:id "create-license"
-         :title (text :t.administration/create-license)
-         :always [:div.fields
-                  [license-organization-field]
-                  [license-type-radio-group]
-                  (for [language languages]
-                    [:div {:key language}
-                     [language-heading language]
-                     [license-title-field language]
-                     [license-link-field language]
-                     [license-text-field language]
-                     [license-attachment-field language]])
-                  [:div.col.commands
-                   [cancel-button]
-                   [save-license-button #(rf/dispatch [::create-license %])]]]}])]))
+     [collapsible/component
+      {:id "create-license"
+       :title (text :t.administration/create-license)
+       :always [:div.fields
+                [license-organization-field]
+                [license-type-radio-group]
+                (for [language languages]
+                  [:div {:key language}
+                   [language-heading language]
+                   [license-title-field language]
+                   [license-link-field language]
+                   [license-text-field language]
+                   [license-attachment-field language]])
+                [:div.col.commands
+                 [cancel-button]
+                 [save-license-button #(rf/dispatch [::create-license %])]]]}]]))
