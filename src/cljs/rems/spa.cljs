@@ -292,7 +292,10 @@
 
 
 (defn logo []
-  [:div.logo [:div.container.img]])
+  [:div.logo 
+  [:p "This is a test again"]
+  [:div.container.img]
+  ])
 
 (defn main-content [_page-id _grab-focus?]
   (let [on-update (fn [this]
