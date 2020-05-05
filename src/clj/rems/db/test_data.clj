@@ -1037,39 +1037,39 @@
         organization-owner2 (users :organization-owner2)
 
         ;; Create organizations
-        default (organizations/add-organization! {:organization/id "default"
-                                              :organization/name "The Default Organization"
-                                              :organization/owners [{:userid organization-owner1} {:userid organization-owner2}]
-                                              :organization/review-emails []})
-        perf (organizations/add-organization! {:organization/id "perf"
-                                              :organization/name "Performance Test Organization"
-                                              :organization/owners [{:userid organization-owner1}]
-                                              :organization/review-emails []})
-        hus (organizations/add-organization! {:organization/id "hus"
-                                              :organization/name "HUS"
-                                              :organization/owners [{:userid organization-owner1}]
-                                              :organization/review-emails []})
-        thl (organizations/add-organization! {:organization/id "thl"
-                                              :organization/name "THL"
-                                              :organization/owners [{:userid organization-owner2}]
-                                              :organization/review-emails []})
-        nbn (organizations/add-organization! {:organization/id "nbn"
-                                              :organization/name "NBN"
-                                              :organization/owners [{:userid organization-owner2}]
-                                              :organization/review-emails []})
+        default (organizations/add-organization! owner {:organization/id "default"
+                                                        :organization/name "The Default Organization"
+                                                        :organization/owners [{:userid organization-owner1} {:userid organization-owner2}]
+                                                        :organization/review-emails []})
+        perf (organizations/add-organization! owner {:organization/id "perf"
+                                                     :organization/name "Performance Test Organization"
+                                                     :organization/owners [{:userid organization-owner1}]
+                                                     :organization/review-emails []})
+        hus (organizations/add-organization! owner {:organization/id "hus"
+                                                    :organization/name "HUS"
+                                                    :organization/owners [{:userid organization-owner1}]
+                                                    :organization/review-emails []})
+        thl (organizations/add-organization! owner {:organization/id "thl"
+                                                    :organization/name "THL"
+                                                    :organization/owners [{:userid organization-owner2}]
+                                                    :organization/review-emails []})
+        nbn (organizations/add-organization! owner {:organization/id "nbn"
+                                                    :organization/name "NBN"
+                                                    :organization/owners [{:userid organization-owner2}]
+                                                    :organization/review-emails []})
 
-        csc (organizations/add-organization! {:organization/id "csc"
-                                              :organization/name "CSC – IT CENTER FOR SCIENCE LTD."
-                                              :organization/owners []
-                                              :organization/review-emails []})
-        organization1 (organizations/add-organization! {:organization/id "organization1"
-                                                        :organization/name "Organization 1"
-                                                        :organization/owners [{:userid organization-owner1}]
-                                                        :organization/review-emails []})
-        organization2 (organizations/add-organization! {:organization/id "organization2"
-                                                        :organization/name "Organization 2"
-                                                        :organization/owners [{:userid organization-owner2}]
-                                                        :organization/review-emails []})
+        csc (organizations/add-organization! owner {:organization/id "csc"
+                                                    :organization/name "CSC – IT CENTER FOR SCIENCE LTD."
+                                                    :organization/owners []
+                                                    :organization/review-emails []})
+        organization1 (organizations/add-organization! owner {:organization/id "organization1"
+                                                              :organization/name "Organization 1"
+                                                              :organization/owners [{:userid organization-owner1}]
+                                                              :organization/review-emails []})
+        organization2 (organizations/add-organization! owner {:organization/id "organization2"
+                                                              :organization/name "Organization 2"
+                                                              :organization/owners [{:userid organization-owner2}]
+                                                              :organization/review-emails []})
 
         ;; Create licenses
         license1 (create-license! {:actor owner

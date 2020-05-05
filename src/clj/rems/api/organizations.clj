@@ -31,4 +31,4 @@
       :roles #{:owner}
       :body [command CreateOrganizationCommand]
       :return CreateOrganizationResponse
-      (ok (organizations/add-organization! command)))))
+      (ok (organizations/add-organization! (getx-user-id) command)))))

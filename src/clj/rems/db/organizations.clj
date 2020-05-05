@@ -7,14 +7,18 @@
             [rems.json :as json]
             [rems.context :as context]))
 
-(defn add-organization! [org]
+(defn add-organization! [userid org]
   (db/add-organization! {:id (:organization/id org)
+                         :user userid
                          :data (json/generate-string org)})
   {:success true
    :organization/id (:organization/id org)})
 
 (defn- parse-organization [raw]
-  (json/parse-string (:data raw)))
+  (merge
+   (json/parse-string (:data raw))
+   {:organization/modifier {:userid (:modifieruserid raw)}
+    :organization/last-modified (:modified raw)}))
 
 (defn- apply-user-permissions [userid organizations]
   (let [user-roles (set/union (roles/get-roles userid)
@@ -24,6 +28,8 @@
       (if (or (nil? userid) can-see-all?)
         org
         (dissoc org
+                :organization/last-modified
+                :organization/modifier
                 :organization/review-emails
                 :organization/owners)))))
 

@@ -593,7 +593,7 @@ WHERE 1=1
 ORDER BY time ASC;
 
 -- :name get-organizations :*
-SELECT data::text as data FROM organization;
+SELECT modifierUserId, modified, data::text as data FROM organization;
 
 -- :name add-organization! :!
-INSERT INTO organization(id, data) VALUES (:id, :data::jsonb);
+INSERT INTO organization(id, modifierUserId, data) VALUES (:id, :user, :data::jsonb);

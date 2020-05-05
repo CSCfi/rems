@@ -1,9 +1,17 @@
 (ns ^:integration rems.api.test-organizations
   (:require [clojure.test :refer :all]
+            [medley.core :refer [find-first]]
             [rems.api.testing :refer :all]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all])
+  (:import [org.joda.time DateTimeUtils]))
 
-(use-fixtures :each api-fixture)
+(use-fixtures
+  :once
+  api-fixture
+  (fn [f]
+    (DateTimeUtils/setCurrentMillisFixed 10000)
+    (f)
+    (DateTimeUtils/setCurrentMillisSystem)))
 
 (deftest organizations-api-test
   (let [api-key "42"
@@ -31,7 +39,15 @@
           (let [data (api-call :get (str "/api/organizations")
                                nil
                                api-key org-owner)]
-            (is (contains? (set (map :organization/id data)) "organizations-api-test-org"))))
+            (is (contains? (set (map :organization/id data)) "organizations-api-test-org"))
+            (is (= {:organization/id "organizations-api-test-org"
+                    :organization/name "Organizations API Test ORG"
+                    :organization/owners [{:userid org-owner}]
+                    :organization/last-modified nil
+                    :organization/modifier {:userid org-owner}
+                    :organization/review-emails [{:email "test@organization.test.org"
+                                                  :name "Organizations API Test ORG Reviewers"}]}
+                   (find-first (comp #{"organizations-api-test-org"} :organization/id) data)))))
 
         (testing "organization owner owns it"
           (let [data (api-call :get (str "/api/organizations?owner=" org-owner)
