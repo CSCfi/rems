@@ -491,9 +491,9 @@
     (wait-visible *driver* {:tag :h1 :fn/text "Create license"})
     (select-option "Organization" "nbn")
     (scroll-and-click *driver* :licensetype-link)
-    (fill-form-field "License name" "Test License" {:index 1})
+    (fill-form-field "License name" (:license-name @test-context) {:index 1})
     (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
-    (fill-form-field "License name" "Testilisenssi" {:index 2})
+    (fill-form-field "License name" (str (:license-name @test-context) " FI") {:index 2})
     (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
     (screenshot *driver* (io/file reporting-dir "about-to-create-license.png"))
     (scroll-and-click *driver* :save)
@@ -502,8 +502,8 @@
     (screenshot *driver* (io/file reporting-dir "created-license.png"))
     (is (str/includes? (get-element-text *driver* {:css ".alert-success"}) "Success"))
     (is (= {"Organization" "nbn"
-            "Title (EN)" "Test License"
-            "Title (FI)" "Testilisenssi"
+            "Title (EN)" (:license-name @test-context)
+            "Title (FI)" (str (:license-name @test-context) " FI")
             "Type" "link"
             "External link (EN)" "https://www.csc.fi/home"
             "External link (FI)" "https://www.csc.fi/etusivu"
@@ -516,8 +516,8 @@
     (scroll-and-click *driver* :create-resource)
     (wait-visible *driver* {:tag :h1 :fn/text "Create resource"})
     (select-option "Organization" "nbn")
-    (fill-form-field "Resource identifier" "browser-testing:1")
-    (select-option "License" "Test License")
+    (fill-form-field "Resource identifier" (:resid @test-context))
+    (select-option "License" (:license-name @test-context))
     (screenshot *driver* (io/file reporting-dir "about-to-create-resource.png"))
     (scroll-and-click *driver* :save)
     (wait-visible *driver* {:tag :h1 :fn/text "Resource"})
@@ -525,14 +525,18 @@
     (screenshot *driver* (io/file reporting-dir "created-resource.png"))
     (is (str/includes? (get-element-text *driver* {:css ".alert-success"}) "Success"))
     (is (= {"Organization" "nbn"
-            "Resource" "browser-testing:1"
+            "Resource" (:resid @test-context)
             "Active" ""}
            (slurp-fields :resource)))
-    (is (= "License \"Test License\"" (get-element-text *driver* [:licenses {:class :license-title}])))))
+    (is (= (str "License \"" (:license-name @test-context) "\"")
+           (get-element-text *driver* [:licenses {:class :license-title}])))))
 
 (deftest test-create-catalogue-item
   (with-postmortem *driver* {:dir reporting-dir}
     (login-as "owner")
+    (swap! test-context assoc
+           :license-name (str "Browser Test License " (get-seed))
+           :resid (str "browser.testing.resource/" (get-seed)))
     (testing "create license"
       (test-create-license))
     (testing "create resource"
