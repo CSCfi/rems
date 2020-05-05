@@ -714,10 +714,13 @@
                   :event/actor applicant-user-id
                   :application/id app-id}
                  (ok-command returned submit-command submit-injections)))
-          (testing "fails when catalogue item is disabled"
+          (testing "succeeds even when catalogue item is disabled"
             (let [disabled (assoc-in returned [:application/resources 0 :catalogue-item/enabled] false)]
-              (is (= {:errors [{:type :t.actions.errors/disabled-catalogue-item, :catalogue-item-id 1}]}
-                     (fail-command disabled submit-command submit-injections))))))))))
+              (is (= {:event/type :application.event/submitted
+                      :event/time test-time
+                      :event/actor applicant-user-id
+                      :application/id app-id}
+                     (ok-command disabled submit-command submit-injections))))))))))
 
 
 (deftest test-assign-external-id
