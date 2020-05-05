@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.12
 
+### Changes
+- Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
+
 ## v2.12 "Merituulentie" 2020-05-04
 
 ### Breaking changes
