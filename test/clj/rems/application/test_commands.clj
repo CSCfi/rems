@@ -662,7 +662,7 @@
                                                                                        {:form 2 :field "1" :value "baz"}])])
                    (fail-command submit-command injections))))))
 
-    (testing "cannot submit if catalogue item is disabled"
+    (testing "cannot submit draft if catalogue item is disabled"
       (let [disabled (assoc-in application [:application/resources 1 :catalogue-item/enabled] false)]
         (is (= {:errors [{:type :t.actions.errors/disabled-catalogue-item, :catalogue-item-id 2}]}
                (fail-command disabled submit-command injections)))))
@@ -682,6 +682,43 @@
                                  :event/actor applicant-user-id
                                  :application/id app-id}])
                  (fail-command submit-command injections)))))))
+
+(deftest test-return-resubmit
+  (testing "return"
+    (let [application (apply-events nil
+                                    [(assoc dummy-created-event
+                                            :application/resources [{:catalogue-item/id 1
+                                                                     :resource/ext-id "res1"}])
+                                     {:event/type :application.event/submitted
+                                      :event/time test-time
+                                      :event/actor applicant-user-id
+                                      :application/id app-id}])
+          returned-event (ok-command application
+                                     {:type :application.command/return
+                                      :actor handler-user-id
+                                      :comment "ret"})
+          submit-injections {:validate-fields form-validation/validate-fields
+                             :get-form-template dummy-get-form-template}
+          submit-command {:type :application.command/submit
+                          :actor applicant-user-id}]
+      (is (= {:event/type :application.event/returned
+              :event/time test-time
+              :event/actor handler-user-id
+              :application/id app-id
+              :application/comment "ret"}
+             returned-event))
+      (testing "resubmit"
+        (let [returned (apply-events application [returned-event])]
+          (is (= {:event/type :application.event/submitted
+                  :event/time test-time
+                  :event/actor applicant-user-id
+                  :application/id app-id}
+                 (ok-command returned submit-command submit-injections)))
+          (testing "fails when catalogue item is disabled"
+            (let [disabled (assoc-in returned [:application/resources 0 :catalogue-item/enabled] false)]
+              (is (= {:errors [{:type :t.actions.errors/disabled-catalogue-item, :catalogue-item-id 1}]}
+                     (fail-command disabled submit-command submit-injections))))))))))
+
 
 (deftest test-assign-external-id
   (let [application (apply-events nil
@@ -734,23 +771,6 @@
                          {:type :application.command/reject
                           :actor handler-user-id
                           :comment "bad"}))))))
-
-(deftest test-return
-  (let [application (apply-events nil
-                                  [dummy-created-event
-                                   {:event/type :application.event/submitted
-                                    :event/time test-time
-                                    :event/actor applicant-user-id
-                                    :application/id app-id}])]
-    (is (= {:event/type :application.event/returned
-            :event/time test-time
-            :event/actor handler-user-id
-            :application/id app-id
-            :application/comment "ret"}
-           (ok-command application
-                       {:type :application.command/return
-                        :actor handler-user-id
-                        :comment "ret"})))))
 
 (deftest test-close
   (let [application (apply-events nil
