@@ -23,9 +23,11 @@
       (throw (ex-info "Form template validation failed"
                       {:template template
                        :errors errors})))
-    (when-let [errors (common-form/validate-form-template template (:languages env))]
-      (log/warn "Languages missing from form template" (:form/id template) (pr-str (:form/title template))
-                errors))))
+    (when (and (:enabled template)
+               (not (:archived template)))
+      (when-let [errors (common-form/validate-form-template template (:languages env))]
+        (log/warn "Languages missing from form template" (:form/id template) (pr-str (:form/title template))
+                  errors)))))
 
 (defn- valid-organization? [org]
   (contains? (set (:organizations env)) org))
