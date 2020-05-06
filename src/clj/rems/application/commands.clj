@@ -194,13 +194,15 @@
     (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
 (defn- disabled-catalogue-items-error [application]
-  (let [errors (for [item (:application/resources application)
-                     :when (or (not (getx item :catalogue-item/enabled))
-                               (getx item :catalogue-item/archived)
-                               (getx item :catalogue-item/expired))]
-                 {:type :t.actions.errors/disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
-    (when (not (empty? errors))
-      {:errors (vec errors)})))
+  ;; resubmitting is fine even if catalogue item is disabled
+  (when (= :application.state/draft (getx application :application/state))
+    (let [errors (for [item (:application/resources application)
+                       :when (or (not (getx item :catalogue-item/enabled))
+                                 (getx item :catalogue-item/archived)
+                                 (getx item :catalogue-item/expired))]
+                   {:type :t.actions.errors/disabled-catalogue-item :catalogue-item-id (getx item :catalogue-item/id)})]
+      (when (not (empty? errors))
+        {:errors (vec errors)}))))
 
 (defn- licenses-not-accepted-error [application userid]
   (when-not (application-util/accepted-licenses? application userid)

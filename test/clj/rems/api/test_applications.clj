@@ -678,19 +678,47 @@
 
 (deftest test-application-export
   (let [applicant "alice"
-        owner "owner"
+        handler "handler"
+        reporter "reporter"
         api-key "42"
-        form-id (test-data/create-form! {})
-        cat-id (test-data/create-catalogue-item! {:form-id form-id})
-        app-id (test-data/create-application! {:actor applicant
-                                               :catalogue-item-ids [cat-id]})]
+        wf-id (test-data/create-workflow! {:type :workflow/default
+                                           :handlers [handler]})
+        form-id (test-data/create-form! {:form/fields [{:field/id "fld1"
+                                                        :field/type :text
+                                                        :field/title {:en "Field 1"}
+                                                        :field/optional false}]})
+        form-2-id (test-data/create-form! {:form/fields [{:field/id "fld2"
+                                                          :field/type :text
+                                                          :field/title {:en "HIDDEN"}
+                                                          :field/optional false}]})
+        cat-id (test-data/create-catalogue-item! {:title {:en "Item1"}
+                                                  :workflow-id wf-id
+                                                  :form-id form-id})
+        cat-2-id (test-data/create-catalogue-item! {:title {:en "Item2"}
+                                                    :workflow-id wf-id
+                                                    :form-id form-2-id})
+        app-id (test-data/create-draft! applicant [cat-id] "Answer1")
+        app-2-id (test-data/create-draft! applicant [cat-id cat-2-id] "Answer2")]
     (send-command applicant {:type :application.command/submit
                              :application-id app-id})
-    (let [exported (-> (request :get (str "/api/applications/export?form-id=" form-id))
-                       (authenticate api-key owner)
-                       handler
-                       read-ok-body)]
-      (is (= (count (str/split exported #"\n")) 2)))))
+    (send-command applicant {:type :application.command/submit
+                             :application-id app-2-id})
+    (testing "reporter can export"
+      (let [exported (api-call :get (str "/api/applications/export?form-id=" form-id) nil
+                               api-key reporter)
+            [header & lines] (str/split-lines exported)]
+        (is (str/includes? exported "Field 1")
+            exported)
+        (is (not (str/includes? exported "HIDDEN"))
+            exported)
+        (is (= 2 (count lines)))
+        (is (some #(str/includes? % "\"Item1\",\"Answer1\"") lines)
+            lines)
+        (is (some #(str/includes? % "\"Item1, Item2\",\"Answer2\"") lines)
+            lines)))
+    (testing "handler can't export"
+      (is (response-is-forbidden? (api-response :get (str "/api/applications/export?form-id=" form-id) nil
+                                                api-key handler))))))
 
 (def testfile (io/file "./test-data/test.txt"))
 

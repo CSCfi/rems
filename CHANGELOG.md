@@ -6,10 +6,18 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.11
+Changes since v2.12
+
+### Changes
+- Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
+
+## v2.12 "Merituulentie" 2020-05-04
 
 ### Breaking changes
-- Support for API key roles removed (#2127)
+- API key authorization has been reworked. API keys no longer have a
+  set of roles associated with them, instead each API key can have an
+  optional user and API path whitelists.
+  See [docs/using-the-api.md](docs/using-the-api.md). (#2127)
 
 ### Changes
 - Login component and its texts have changed to a more simplified look. Please, remember to update your extra translations to match.
@@ -23,10 +31,13 @@ Changes since v2.11
 
 ### Fixes
 - Long attachment filenames are now truncated in the UI (#2118)
+- `/api/applications/export` now doesn't blow up when an application has multiple forms. Instead only answers for the requested form are returned. (#2153)
 
 ### Additions
 - Downloading all attachments as a zip file (API `/api/applications/:id/attachments`, button in UI) (#2075)
 - Event notifications over HTTP. See [docs/event-notification.md](docs/event-notification.md) for details. (#2095)
+- Audit log for all API calls in the database. Can be queried via `/api/audit-log` by the `reporter` role. (#2057)
+- `/api/applications/export` is now allowed for the `reporter` role (previously only `owner`)
 
 ## v2.11 "Kotitontuntie" 2020-04-07
 

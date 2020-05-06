@@ -491,18 +491,26 @@ VALUES (:application, :eventdata::jsonb)
 RETURNING id, eventData::TEXT;
 
 -- :name upsert-api-key! :insert
-INSERT INTO api_key (apiKey, comment)
+INSERT INTO api_key (apiKey, comment, users, paths)
 VALUES (
 :apikey,
-:comment
+:comment,
+:users::jsonb,
+:paths::jsonb
 )
 ON CONFLICT (apiKey)
 DO UPDATE
-SET (apiKey, comment) = (:apikey, :comment);
+SET (apiKey, comment, users, paths) = (:apikey, :comment, :users::jsonb, :paths::jsonb);
+
+-- :name delete-api-key! :!
+DELETE FROM api_key WHERE apiKey = :apikey;
 
 -- :name get-api-key :? :1
-SELECT apiKey FROM api_key
+SELECT apiKey, comment, users::TEXT, paths::TEXT FROM api_key
 WHERE apiKey = :apikey;
+
+-- :name get-api-keys :? :*
+SELECT apiKey, comment, users::TEXT, paths::TEXT FROM api_key;
 
 -- :name get-application-by-invitation-token :? :1
 SELECT app.id
@@ -562,3 +570,24 @@ WHERE id = :id;
 -- :name delete-outbox! :!
 DELETE FROM outbox
 WHERE id = :id;
+
+-- :name add-to-audit-log! :!
+INSERT INTO audit_log (time, path, method, apikey, userid, status)
+VALUES (:time, :path, :method, :apikey, :userid, :status);
+
+-- :name get-audit-log
+SELECT * FROM audit_log
+WHERE 1=1
+/*~ (when (:userid params) */
+  AND userid = :userid
+/*~ ) ~*/
+/*~ (when (:after params) */
+  AND time >= :after
+/*~ ) ~*/
+/*~ (when (:before params) */
+  AND time < :before
+/*~ ) ~*/
+/*~ (when (:path params) */
+  AND path LIKE :path
+/*~ ) ~*/
+ORDER BY time ASC;

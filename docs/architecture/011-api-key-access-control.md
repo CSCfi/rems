@@ -90,3 +90,7 @@ for suitable workflows. The API key is limited to the
 `/api/applications/close` POST request, and some additional GET
 requests as needed.
 
+## Implementation & docs
+
+- [Issue #2127](https://github.com/CSCfi/rems/issues/2127)
+- [docs/using-the-api.md](../using-the-api.md)
