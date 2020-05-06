@@ -18,9 +18,8 @@
  ::enter-page
  (fn [{:keys [db]} _]
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
-     {:db (dissoc db ::catalogue ::draft-applications)
-      :dispatch-n [[::fetch-catalogue]
-                   [::fetch-drafts]
+     {:db (dissoc db ::draft-applications)
+      :dispatch-n [[::fetch-drafts]
                    [:rems.table/reset]]}
      (do
        (unauthorized!)
