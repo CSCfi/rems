@@ -71,9 +71,9 @@
               (when (roles/show-admin-pages? roles)
                 [nav-link "/administration" (text :t.navigation/administration)])
               (when-not (:user identity)
-                [nav-link "/" (text :t.navigation/home) :exact])])
-              (when-not (:user identity)
-                [nav-link "/catalogue" (text :t.navigation/catalogue)]
+                [nav-link "/" (text :t.navigation/home) :exact]
+                [nav-link "/catalogue" (text :t.navigation/catalogue) true]
+              )]
              (navbar-extra-pages page-id))
      [language-switcher]]))
 
@@ -100,9 +100,10 @@
      [skip-navigation]
      [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
      [:div.navbar-wrapper.container-fluid
-      [:div "This is a test"]
+
       [navbar-normal page-id identity]
-      [navbar-small page-id identity]]
+      [navbar-small page-id identity]
+      ]
      [:div.navbar-bottom-bar]]))
 
 (defn guide []
