@@ -84,6 +84,7 @@
                    :export-applications "Export applications"
                    :form "Form"
                    :forms "Forms"
+                   :has-errors "Errors"
                    :license "License"
                    :license-field "License \"%1\""
                    :license-name "License name"
