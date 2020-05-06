@@ -1,12 +1,21 @@
 (ns ^:browser rems.test-browser
-  "You need to run these tests in the :test profile to get the right :database-url and :port"
+  "REMS Browser tests.
+
+  For the test database, you need to run these tests in the :test profile to get the right :database-url and :port.
+
+  For development development tests, you can run against a running instance with:
+
+  (init-driver! :chrome \"http://localhost:3000/\" :development)
+
+  NB: While adding more test helpers, please put the `driver` argument as first to match etaoin and enable `doto`."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [select ALL]]
-            [etaoin.api :refer :all]
+            [etaoin.api :as et]
+            [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
             [rems.db.test-data :as test-data]
@@ -14,13 +23,19 @@
             [rems.standalone])
   (:import (java.net SocketException)))
 
-(defonce ^:private test-url (atom "http://localhost:3001/"))
-(defonce ^:dynamic *driver* ::driver-not-initialized)
-(defonce ^:private test-mode (atom :test))
-(defonce ^:private test-context (atom {:seed "circle"}))
+(comment ; convenience for development testing
+  (init-driver! :chrome "http://localhost:3000/" :development))
 
-(defn- get-seed []
-  (:seed @test-context))
+;;; test setup
+
+(defonce test-context
+  (atom {:url "http://localhost:3001/"
+         :mode :test
+         :seed "circle"}))
+
+(defn- get-driver [] (:driver @test-context))
+(defn- get-url [] (:url @test-context))
+(defn- get-seed [] (:seed @test-context))
 
 (defn- delete-files [dir]
   (doseq [file (.listFiles dir)]
@@ -36,66 +51,50 @@
         counts ["one" "two" "three" "four" "five" "six" "seven" "eight" "nine" "ten"]
         count-i (mod (Math/floor (/ t 60000)) (count counts))
         adjectives ["amusing" "comic" "funny" "laughable" "hilarious" "witty" "jolly" "silly" "ludicrous" "wacky"]
-        animals ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"]]
+        adjectives-i (mod (Math/floor (/ t 1000)) (count adjectives))
+        animals ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"]
+        animals-i (mod (/ t 123) (count animals))]
     (str/join [(nth counts count-i)
                " "
-               (nth adjectives (mod (Math/floor (/ t 1000)) (count adjectives)))
+               (nth adjectives adjectives-i)
                " "
-               (nth animals (mod t (count animals)))
-               (if (> count-i 0) "s" "") ])))
+               (nth animals animals-i)
+               (if (> count-i 1) "s" "") ])))
 
-(defn development-driver
-  "Starts the driver for development use.
+(defn init-driver!
+  "Starts and initializes a driver. Also stops an existing driver.
 
-  Opens a regular browser that can be commanded while creating or debugging tests."
-  []
-  (when (and *driver*
-             (not= ::driver-not-initialized *driver*))
-    (quit *driver*))
-  (def *driver* (boot-driver :chrome
-                             {:args ["--lang=en-US"]
-                              :prefs {"intl.accept_languages" "en-US"}}))
-  (delete-cookies *driver*) ; start with a clean slate
-  (reset! test-url "http://localhost:3000/")
-  (reset! test-mode :development)
-  (reset! test-context {:seed (random-seed)})
-  *driver*)
-
-(comment
-  (development-driver))
+  `:browser-id` - You can specify e.g. `:chrome`.
+  `:url`        - Specify a url of the server you want to test against or use default.
+  `:mode`       - Specify `:development` if you wish to keep just one driver running, and not headless."
+  [& [browser-id url mode]]
+  (when (get-driver) (et/quit (get-driver)))
+  (swap! test-context
+         assoc-some
+         :driver (et/boot-driver browser-id
+                                 {:args ["--lang=en-US"]
+                                  :prefs {"intl.accept_languages" "en-US"}
+                                  :headless (not= :development mode)})
+         :url url
+         :mode mode
+         :seed (random-seed))
+  (et/delete-cookies (get-driver))) ; start with a clean slate
 
 (defn fixture-driver
-  "Executes a test running a driver.
-   Bounds a driver with the global *driver* variable."
+  "Executes a test running a fresh driver except when in development."
   [f]
-  (if (= :development @test-mode)
-    (f)
-    ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
-    (let [run #(with-chrome-headless {:args ["--lang=en-US"]
-                                      :prefs {"intl.accept_languages" "en-US"}}
-                 driver
-                 (binding [*driver* driver]
-                   (delete-cookies *driver*) ; start with a clean slate
-                   (f)))]
-      (try
-        (run)
-        (catch SocketException e
-          (log/warn e "WebDriver failed to start, retrying...")
-          (run))))))
-
-(defn fixture-standalone [f]
-  (if (= :development @test-mode)
-    (f)
-    (do
-      (mount/start)
-      (migrations/migrate ["migrate"] (select-keys rems.config/env [:database-url]))
-      (test-data/create-test-data!)
-      (f)
-      (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-      (mount/stop))))
+  (letfn [(run []
+            (when-not (= :development (:mode @test-context))
+              (init-driver! :chrome))
+            (f))]
+    (try
+      (run)
+      (catch SocketException e
+        (log/warn e "WebDriver failed to start, retrying...")
+        (run)))))
 
 (defn smoke-test [f]
-  (let [response (http/get (str @test-url "js/app.js"))]
+  (let [response (http/get (str (get-url) "js/app.js"))]
     (assert (= 200 (:status response))
             (str "Failed to load app.js: " response))
     (f)))
@@ -106,87 +105,110 @@
 
 (use-fixtures
   :once
-  standalone-fixture
+  (fn [f] (if (= :development (:mode @test-context))
+            (f)
+            (standalone-fixture f)))
   smoke-test)
 
-;;; basic navigation
+
+
+;;; etaoin extensions
+
+(defn wait-predicate
+  "The etaoin API is not very consistent, it does not want driver here, so let's wrap it!"
+  [_driver pred]
+  (et/wait-predicate pred))
 
 (defn scroll-and-click
   "Wait a button to become visible, scroll it to middle
   (to make sure it's not hidden under navigation) and click."
   [driver q & [opt]]
   (doto driver
-    (wait-visible q opt)
-    (scroll-query q {"block" "center"})
-    (click q)))
+    (et/wait-visible q opt)
+    (et/scroll-query q {"block" "center"})
+    (et/click q)))
 
-(defn login-as [username]
-  (doto *driver*
-    (set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
-    (go @test-url)
-    (screenshot (io/file reporting-dir "landing-page.png"))
+(defn- wait-page-loaded [driver]
+  (et/wait-invisible driver {:css ".fa-spinner"}))
+
+
+
+;;; common functionality
+
+(defn login-as [driver username]
+  (doto driver
+    (et/set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
+    (et/go (get-url))
+    (et/screenshot (io/file reporting-dir "landing-page.png"))
     (scroll-and-click {:css ".login-btn"})
-    (screenshot (io/file reporting-dir "login-page.png"))
-    (scroll-and-click [{:class "users"} {:tag :a, :fn/text username}])
-    (wait-visible :logout)
-    (screenshot (io/file reporting-dir "logged-in.png"))))
+    (et/screenshot (io/file reporting-dir "login-page.png"))
+    (scroll-and-click [{:class "users"} {:tag :a :fn/text username}])
+    (et/wait-visible :logout)
+    (et/screenshot (io/file reporting-dir "logged-in.png"))))
 
-(defn logout []
-  (scroll-and-click *driver* :logout)
-  (wait-visible *driver* {:css ".login-component"}))
+(defn logout [driver]
+  (doto driver
+    (scroll-and-click :logout)
+    (et/wait-visible {:css ".login-component"})))
 
-(defn- wait-page-loaded []
-  (wait-invisible *driver* {:css ".fa-spinner"}))
+(defn click-navigation-menu [driver link-text]
+  (scroll-and-click driver [:big-navbar {:tag :a :fn/text link-text}]))
 
-(defn click-navigation-menu [link-text]
-  (scroll-and-click *driver* [:big-navbar {:tag :a, :fn/text link-text}]))
+(defn click-administration-menu [driver link-text]
+  (scroll-and-click driver [:administration-menu {:tag :a :fn/text link-text}]))
 
-(defn click-administration-menu [link-text]
-  (scroll-and-click *driver* [:administration-menu {:tag :a, :fn/text link-text}]))
+(defn go-to-catalogue [driver]
+  (doto driver
+    (click-navigation-menu "Catalogue")
+    (et/wait-visible {:tag :h1 :fn/text "Catalogue"})
+    (wait-page-loaded)
+    (et/screenshot (io/file reporting-dir "catalogue-page.png"))))
 
-(defn go-to-catalogue []
-  (click-navigation-menu "Catalogue")
-  (wait-visible *driver* {:tag :h1, :fn/text "Catalogue"})
-  (wait-page-loaded)
-  (screenshot *driver* (io/file reporting-dir "catalogue-page.png")))
+(defn go-to-applications [driver]
+  (doto driver
+    (click-navigation-menu "Applications")
+    (et/wait-visible {:tag :h1 :fn/text "Applications"})
+    (wait-page-loaded)
+    (et/screenshot (io/file reporting-dir "applications-page.png"))))
 
-(defn go-to-applications []
-  (click-navigation-menu "Applications")
-  (wait-visible *driver* {:tag :h1, :fn/text "Applications"})
-  (wait-page-loaded)
-  (screenshot *driver* (io/file reporting-dir "applications-page.png")))
+(defn go-to-admin-licenses [driver]
+  (doto driver
+    (click-administration-menu "Licenses")
+    (et/wait-visible {:tag :h1 :fn/text "Licenses"})
+    (wait-page-loaded)
+    (et/screenshot (io/file reporting-dir "administration-licenses-page.png"))))
 
-(defn go-to-admin-licenses []
-  (click-administration-menu "Licenses")
-  (wait-visible *driver* {:tag :h1, :fn/text "Licenses"})
-  (wait-page-loaded)
-  (screenshot *driver* (io/file reporting-dir "administration-licenses-page.png")))
+(defn go-to-admin-resources [driver]
+  (doto driver
+    (click-administration-menu "Resources")
+    (et/wait-visible {:tag :h1 :fn/text "Resources"})
+    (wait-page-loaded)
+    (et/screenshot (io/file reporting-dir "administration-resources-page.png"))))
 
-(defn go-to-admin-resources []
-  (click-administration-menu "Resources")
-  (wait-visible *driver* {:tag :h1, :fn/text "Resources"})
-  (wait-page-loaded)
-  (screenshot *driver* (io/file reporting-dir "administration-resources-page.png")))
+(defn change-language [driver language]
+  (scroll-and-click driver [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
 
-(defn change-language [language]
-  (scroll-and-click *driver* [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
+
 
 ;;; catalogue page
 
-(defn add-to-cart [resource-name]
-  (scroll-and-click *driver* [{:css "table.catalogue"}
-                              {:fn/text resource-name}
-                              {:xpath "./ancestor::tr"}
-                              {:css ".add-to-cart"}]))
+(defn add-to-cart [driver resource-name]
+  (scroll-and-click driver [{:css "table.catalogue"}
+                            {:fn/text resource-name}
+                            {:xpath "./ancestor::tr"}
+                            {:css ".add-to-cart"}]))
 
-(defn apply-for-resource [resource-name]
-  (scroll-and-click *driver* [{:css "table.cart"}
-                              {:fn/text resource-name}
-                              {:xpath "./ancestor::tr"}
-                              {:css ".apply-for-catalogue-items"}])
-  (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
-  (wait-page-loaded)
-  (screenshot *driver* (io/file reporting-dir "application-page.png")))
+(defn apply-for-resource [driver resource-name]
+  (doto driver
+    (scroll-and-click [{:css "table.cart"}
+                       {:fn/text resource-name}
+                       {:xpath "./ancestor::tr"}
+                       {:css ".apply-for-catalogue-items"}])
+    (et/wait-visible  {:tag :h1 :fn/has-text "Application"})
+    (wait-page-loaded)
+    (et/screenshot  (io/file reporting-dir "application-page.png"))))
+
+
 
 ;;; application page
 
@@ -194,26 +216,26 @@
   "Fills a form field named by `label` with `text`.
 
   Optionally give `:index` when several items match. It starts from 1."
-  [label text & [opts]]
+  [driver label text & [opts]]
   (assert (> (:index opts 1) 0) "indexing starts at 1") ; xpath uses 1, let's keep the convention though we don't use xpath here because it will likely not work
 
-  (let [el (nth (query-all *driver* [{:css ".fields"}
-                                     {:tag :label :fn/has-text label}])
+  (let [el (nth (et/query-all driver [{:css ".fields"}
+                                      {:tag :label :fn/has-text label}])
                 (dec (:index opts 1)))
-        id (get-element-attr-el *driver* el :for)]
+        id (et/get-element-attr-el driver el :for)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
-    (fill-human *driver* {:id id} text)))
+    (et/fill-human driver {:id id} text)))
 
-(defn set-date [label date]
-  (let [id (get-element-attr *driver* [{:css ".fields"}
-                                       {:tag :label, :fn/text label}]
-                             :for)]
+(defn set-date [driver label date]
+  (let [id (et/get-element-attr driver [{:css ".fields"}
+                                        {:tag :label :fn/text label}]
+                                :for)]
     ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
     ;;      so we cannot reliably know the date format to type into the date field and anyways WebDriver
     ;;      support for date fields seems buggy. Changing the field with JavaScript is more reliable.
-    (js-execute *driver*
-                ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
-                "
+    (et/js-execute driver
+                   ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
+                   "
                 function setNativeValue(element, value) {
                     const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
                     const prototype = Object.getPrototypeOf(element)
@@ -231,157 +253,166 @@
                 setNativeValue(field, arguments[1])
                 field.dispatchEvent(new Event('change', {bubbles: true}))
                 "
-                id date)))
+                   id date)))
 
-(defn select-option [label option]
-  (let [id (get-element-attr *driver* [{:css ".fields"}
-                                       {:tag :label, :fn/has-text label}]
-                             :for)]
-    (fill *driver* {:id id} (str option "\n"))))
+(defn select-option [driver label option]
+  (let [id (et/get-element-attr driver [{:css ".fields"}
+                                        {:tag :label :fn/has-text label}]
+                                :for)]
+    (et/fill driver {:id id} (str option "\n"))))
 
-(defn field-visible? [label]
-  (visible? *driver* [{:css ".fields"}
-                      {:tag :label :fn/has-text label}]))
+(defn field-visible? [driver label]
+  (et/visible? driver [{:css ".fields"}
+                       {:tag :label :fn/has-text label}]))
 
-(defn check-box [value]
+(defn check-box [driver value]
   ;; XXX: assumes that the checkbox is unchecked
-  (scroll-and-click *driver* [{:css (str "input[value='" value "']")}]))
+  (scroll-and-click driver [{:css (str "input[value='" value "']")}]))
 
-(defn accept-licenses []
-  (doto *driver*
+(defn accept-licenses [driver]
+  (doto driver
     (scroll-and-click :accept-licenses-button)
-    (wait-visible :has-accepted-licenses)))
+    (et/wait-visible :has-accepted-licenses)))
 
-(defn send-application []
-  (doto *driver*
+(defn send-application [driver]
+  (doto driver
     (scroll-and-click :submit)
-    (wait-visible :status-success)
-    (wait-has-class :apply-phase "completed")))
+    (et/wait-visible :status-success)
+    (et/wait-has-class :apply-phase "completed")))
 
-(defn get-application-id []
-  (last (str/split (get-url *driver*) #"/")))
+(defn get-application-id [driver]
+  (last (str/split (et/get-url driver) #"/")))
 
 (defn get-attachments
-  ([]
-   (get-attachments {:css "a.attachment-link"}))
-  ([selector]
-   (mapv (partial get-element-text-el *driver*) (query-all *driver* selector))))
+  ([driver]
+   (get-attachments driver {:css "a.attachment-link"}))
+  ([driver selector]
+   (mapv (partial et/get-element-text-el driver) (et/query-all driver selector))))
+
+
 
 ;; applications page
 
-(defn get-application-summary [application-id]
-  (let [row (query *driver* [{:css "table.my-applications"}
-                             {:tag :tr, :data-row application-id}])]
+(defn get-application-summary [driver application-id]
+  (let [row (et/query driver [{:css "table.my-applications"}
+                              {:tag :tr :data-row application-id}])]
     {:id application-id
-     :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
-     :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))
-     :state (get-element-text-el *driver* (child *driver* row {:css ".state"}))}))
+     :description (et/get-element-text-el driver (et/child driver row {:css ".description"}))
+     :resource (et/get-element-text-el driver (et/child driver row {:css ".resource"}))
+     :state (et/get-element-text-el driver (et/child driver row {:css ".state"}))}))
 
 ;;; tests
 
 (deftest test-new-application
-  (with-postmortem *driver* {:dir reporting-dir}
-    (login-as "alice")
+  (let [driver (get-driver)]
+    (et/with-postmortem driver {:dir reporting-dir}
+      (login-as driver "alice")
 
-    (testing "create application"
-      (go-to-catalogue)
-      (add-to-cart "Default workflow")
-      (apply-for-resource "Default workflow")
+      (testing "create application"
+        (doto driver
+          (go-to-catalogue)
+          (add-to-cart "Default workflow")
+          (apply-for-resource "Default workflow"))
 
-      (let [application-id (get-application-id)
-            application (:body
-                         (http/get (str +test-url+ "/api/applications/" application-id)
-                                   {:as :json
-                                    :headers {"x-rems-api-key" "42"
-                                              "x-rems-user-id" "handler"}}))
-            form-id (get-in application [:application/forms 0 :form/id])
-            description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
-            description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
-            attachment-field (get-in application [:application/forms 0 :form/fields 7])
-            attachment-field-selector (keyword (str "form-" form-id "-field-" (:field/id attachment-field) "-input"))]
-        (is (= "attachment" (:field/type attachment-field))) ;; sanity check
+        (let [application-id (get-application-id driver)
+              application (:body
+                           (http/get (str (get-url) "/api/applications/" application-id)
+                                     {:as :json
+                                      :headers {"x-rems-api-key" "42"
+                                                "x-rems-user-id" "handler"}}))
+              form-id (get-in application [:application/forms 0 :form/id])
+              description-field-id (get-in application [:application/forms 0 :form/fields 1 :field/id])
+              description-field-selector (keyword (str "form-" form-id "-field-" description-field-id))
+              attachment-field (get-in application [:application/forms 0 :form/fields 7])
+              attachment-field-selector (keyword (str "form-" form-id "-field-" (:field/id attachment-field) "-input"))]
+          (is (= "attachment" (:field/type attachment-field))) ;; sanity check
 
-        (fill-form-field "Application title field" "Test name")
-        (fill-form-field "Text field" "Test")
-        (fill-form-field "Text area" "Test2")
-        (set-date "Date field" "2050-01-02")
-        (fill-form-field "Email field" "user@example.com")
-        (upload-file *driver* attachment-field-selector "test-data/test.txt")
-        (wait-predicate #(= ["test.txt"] (get-attachments)))
+          (doto driver
+            (fill-form-field "Application title field" "Test name")
+            (fill-form-field "Text field" "Test")
+            (fill-form-field "Text area" "Test2")
+            (set-date "Date field" "2050-01-02")
+            (fill-form-field "Email field" "user@example.com")
+            (et/upload-file attachment-field-selector "test-data/test.txt")
+            (wait-predicate #(= ["test.txt"] (get-attachments driver))))
 
-        (is (not (field-visible? "Conditional field"))
-            "Conditional field is not visible before selecting option")
-        (select-option "Option list" "First option")
-        (wait-predicate #(field-visible? "Conditional field"))
-        (fill-form-field "Conditional field" "Conditional")
-        ;; pick two options for the multi-select field:
-        (check-box "Option2")
-        (check-box "Option3")
-        ;; leave "Text field with max length" empty
-        ;; leave "Text are with max length" empty
+          (is (not (field-visible? driver "Conditional field"))
+              "Conditional field is not visible before selecting option")
 
-        (accept-licenses)
-        (send-application)
-        (is (= "Applied" (get-element-text *driver* :application-state)))
+          (doto driver
+            (select-option "Option list" "First option")
+            (wait-predicate #(field-visible? driver "Conditional field"))
+            (fill-form-field "Conditional field" "Conditional")
+            ;; pick two options for the multi-select field:
+            (check-box "Option2")
+            (check-box "Option3")
+            ;; leave "Text field with max length" empty
+            ;; leave "Text are with max length" empty
 
-        (testing "check a field answer"
-          (is (= "Test name" (get-element-text *driver* description-field-selector))))
+            (accept-licenses)
+            (send-application))
 
-        (testing "see application on applications page"
-          (go-to-applications)
-          (let [summary (get-application-summary application-id)]
-            (is (= "Default workflow" (:resource summary)))
-            (is (= "Applied" (:state summary)))
-            ;; don't bother trying to predict the external id:
-            (is (.contains (:description summary) "Test name"))))
+          (is (= "Applied" (et/get-element-text driver :application-state)))
 
-        (testing "fetch application from API"
-          (let [application (:body
-                             (http/get (str +test-url+ "/api/applications/" application-id)
-                                       {:as :json
-                                        :headers {"x-rems-api-key" "42"
-                                                  "x-rems-user-id" "handler"}}))
-                attachment-id (get-in application [:application/attachments 0 :attachment/id])]
-            (testing "attachments"
-              (is (= [{:attachment/id attachment-id
-                       :attachment/filename "test.txt"
-                       :attachment/type "text/plain"}]
-                     (:application/attachments application))))
-            (testing "applicant information"
-              (is (= "alice" (get-in application [:application/applicant :userid])))
-              (is (= (set (map :license/id (:application/licenses application)))
-                     (set (get-in application [:application/accepted-licenses :alice])))))
-            (testing "form fields"
-              (is (= "Test name" (:application/description application)))
-              (is (= [["label" ""]
-                      ["description" "Test name"]
-                      ["text" "Test"]
-                      ["texta" "Test2"]
-                      ["header" ""]
-                      ["date" "2050-01-02"]
-                      ["email" "user@example.com"]
-                      ["attachment" (str attachment-id)]
-                      ["option" "Option1"]
-                      ["text" "Conditional"]
-                      ["multiselect" "Option2 Option3"]
-                      ["label" ""]
-                      ["text" ""]
-                      ["texta" ""]]
-                     (for [field (select [:application/forms ALL :form/fields ALL] application)]
-                       ;; TODO could test other fields here too, e.g. title
-                       [(:field/type field)
-                        (:field/value field)]))))
-            (testing "after navigating to the application view again"
-              (scroll-and-click *driver* [{:css "table.my-applications"}
+          (testing "check a field answer"
+            (is (= "Test name" (et/get-element-text driver description-field-selector))))
+
+          (testing "see application on applications page"
+            (go-to-applications driver)
+            (let [summary (get-application-summary driver application-id)]
+              (is (= "Default workflow" (:resource summary)))
+              (is (= "Applied" (:state summary)))
+              ;; don't bother trying to predict the external id:
+              (is (.contains (:description summary) "Test name"))))
+
+          (testing "fetch application from API"
+            (let [application (:body
+                               (http/get (str (get-url) "/api/applications/" application-id)
+                                         {:as :json
+                                          :headers {"x-rems-api-key" "42"
+                                                    "x-rems-user-id" "handler"}}))
+                  attachment-id (get-in application [:application/attachments 0 :attachment/id])]
+              (testing "attachments"
+                (is (= [{:attachment/id attachment-id
+                         :attachment/filename "test.txt"
+                         :attachment/type "text/plain"}]
+                       (:application/attachments application))))
+              (testing "applicant information"
+                (is (= "alice" (get-in application [:application/applicant :userid])))
+                (is (= (set (map :license/id (:application/licenses application)))
+                       (set (get-in application [:application/accepted-licenses :alice])))))
+              (testing "form fields"
+                (is (= "Test name" (:application/description application)))
+                (is (= [["label" ""]
+                        ["description" "Test name"]
+                        ["text" "Test"]
+                        ["texta" "Test2"]
+                        ["header" ""]
+                        ["date" "2050-01-02"]
+                        ["email" "user@example.com"]
+                        ["attachment" (str attachment-id)]
+                        ["option" "Option1"]
+                        ["text" "Conditional"]
+                        ["multiselect" "Option2 Option3"]
+                        ["label" ""]
+                        ["text" ""]
+                        ["texta" ""]]
+                       (for [field (select [:application/forms ALL :form/fields ALL] application)]
+                         ;; TODO could test other fields here too, e.g. title
+                         [(:field/type field)
+                          (:field/value field)]))))
+              (testing "after navigating to the application view again"
+                (scroll-and-click driver [{:css "table.my-applications"}
                                           {:tag :tr :data-row application-id}
                                           {:css ".btn-primary"}])
-              (wait-visible *driver* {:tag :h1, :fn/has-text "Application"})
-              (wait-page-loaded)
-              (testing "check a field answer"
-                (is (= "Test name" (get-element-text *driver* description-field-selector)))))))))))
+                (et/wait-visible driver {:tag :h1 :fn/has-text "Application"})
+                (wait-page-loaded driver)
+                (testing "check a field answer"
+                  (is (= "Test name" (et/get-element-text driver description-field-selector))))))))))))
 
 (deftest test-handling
-  (let [applicant "alice"
+  (let [driver (get-driver)
+        applicant "alice"
         handler "developer"
         form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus"}
                                                         :field/optional false
@@ -393,154 +424,170 @@
     (test-data/command! {:type :application.command/submit
                          :application-id application-id
                          :actor applicant})
-    (with-postmortem *driver* {:dir reporting-dir}
-      (login-as handler)
+    (et/with-postmortem driver {:dir reporting-dir}
+      (login-as driver handler)
       (testing "handler should see todos on logging in"
-        (wait-visible *driver* :todo-applications))
+        (et/wait-visible driver :todo-applications))
       (testing "handler should see description of application"
-        (wait-visible *driver* {:class :application-description :fn/text "test-handling"}))
+        (et/wait-visible driver {:class :application-description :fn/text "test-handling"}))
       (let [app-button {:tag :a :href (str "/application/" application-id)}]
         (testing "handler should see view button for application"
-          (wait-visible *driver* app-button))
-        (scroll-and-click *driver* app-button))
+          (et/wait-visible driver app-button))
+        (scroll-and-click driver app-button))
       (testing "handler should see application after clicking on View"
-        (wait-visible *driver* {:tag :h1 :fn/has-text "test-handling"}))
+        (et/wait-visible driver {:tag :h1 :fn/has-text "test-handling"}))
       (testing "open the approve form"
-        (scroll-and-click *driver* :approve-reject-action-button))
+        (scroll-and-click driver :approve-reject-action-button))
       (testing "add a comment and two attachments"
-        (wait-visible *driver* :comment-approve-reject)
-        (fill-human *driver* :comment-approve-reject "this is a comment")
-        (upload-file *driver* :upload-approve-reject-input "test-data/test.txt")
-        (wait-visible *driver* [{:css "a.attachment-link"}])
-        (upload-file *driver* :upload-approve-reject-input "test-data/test-fi.txt")
-        (wait-predicate #(= ["test.txt" "test-fi.txt"]
-                            (get-attachments))))
+        (doto driver
+          (et/wait-visible :comment-approve-reject)
+          (et/fill-human :comment-approve-reject "this is a comment")
+          (et/upload-file :upload-approve-reject-input "test-data/test.txt")
+          (et/wait-visible [{:css "a.attachment-link"}])
+          (et/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
+          (wait-predicate #(= ["test.txt" "test-fi.txt"]
+                              (get-attachments driver)))))
       (testing "add and remove a third attachment"
-        (upload-file *driver* :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
-        (wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
-                            (get-attachments)))
-        (let [buttons (query-all *driver* {:css "button.remove-attachment-approve-reject"})]
-          (click-el *driver* (last buttons)))
-        (wait-predicate #(= ["test.txt" "test-fi.txt"]
-                            (get-attachments))))
+        (et/upload-file driver :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
+        (et/wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
+                               (get-attachments driver)))
+        (let [buttons (et/query-all driver {:css "button.remove-attachment-approve-reject"})]
+          (et/click-el driver (last buttons)))
+        (et/wait-predicate #(= ["test.txt" "test-fi.txt"]
+                               (get-attachments driver))))
       (testing "approve"
-        (scroll-and-click *driver* :approve)
-        (wait-predicate #(= "Approved" (get-element-text *driver* :application-state))))
+        (scroll-and-click driver :approve)
+        (et/wait-predicate #(= "Approved" (et/get-element-text driver :application-state))))
       (testing "attachments visible in eventlog"
         (is (= ["test.txt" "test-fi.txt"]
-               (get-attachments {:css "div.event a.attachment-link"})))))))
+               (get-attachments driver {:css "div.event a.attachment-link"})))))))
 
 (deftest test-guide-page
-  (with-postmortem *driver* {:dir reporting-dir}
-    (go *driver* (str @test-url "guide"))
-    (wait-visible *driver* {:tag :h1 :fn/text "Component Guide"})
-    ;; if there is a js exception, nothing renders, so let's check
-    ;; that we have lots of examples in the dom:
-    (is (< 60 (count (query-all *driver* {:class :example}))))))
+  (let [driver (get-driver)]
+    (et/with-postmortem driver {:dir reporting-dir}
+      (et/go driver (str (get-url) "guide"))
+      (et/wait-visible driver {:tag :h1 :fn/text "Component Guide"})
+      ;; if there is a js exception, nothing renders, so let's check
+      ;; that we have lots of examples in the dom:
+      (is (< 60 (count (et/query-all driver {:class :example})))))))
 
 (deftest test-language-change
-  (with-postmortem *driver* {:dir reporting-dir}
-    (testing "default language is English"
-      (go *driver* @test-url)
-      (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
-      (login-as "alice")
-      (wait-visible *driver* {:tag :h1, :fn/text "Catalogue"})
-      (wait-page-loaded))
+  (let [driver (get-driver)]
+    (et/with-postmortem driver {:dir reporting-dir}
+      (testing "default language is English"
+        (doto driver
+          (et/go (get-url))
+          (et/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+          (login-as "alice")
+          (et/wait-visible {:tag :h1 :fn/text "Catalogue"})
+          (wait-page-loaded)))
 
-    (testing "changing language while logged out"
-      (logout)
-      (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
-      (change-language :fi)
-      (wait-visible *driver* {:tag :h1 :fn/text "Tervetuloa REMSiin"}))
+      (testing "changing language while logged out"
+        (doto driver
+          (logout)
+          (et/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+          (change-language :fi)
+          (et/wait-visible {:tag :h1 :fn/text "Tervetuloa REMSiin"})))
 
-    (testing "changed language must persist after login"
-      (login-as "alice")
-      (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"})
-      (wait-page-loaded))
+      (testing "changed language must persist after login"
+        (doto driver
+          (login-as  "alice")
+          (et/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})
+          (wait-page-loaded)))
 
-    (testing "wait for language change to show in the db"
-      (wait-predicate #(= :fi (:language (user-settings/get-user-settings "alice")))))
+      (testing "wait for language change to show in the db"
+        (wait-predicate driver #(= :fi (:language (user-settings/get-user-settings "alice")))))
 
-    (testing "changed language must have been saved for user"
-      (logout)
-      (change-language :en)
-      (wait-visible *driver* {:tag :h1 :fn/text "Welcome to REMS"})
-      (delete-cookies *driver*)
-      (login-as "alice")
-      (wait-visible *driver* {:tag :h1, :fn/text "Aineistoluettelo"}))
+      (testing "changed language must have been saved for user"
+        (doto driver
+          (logout)
+          (change-language :en)
+          (et/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+          (et/delete-cookies)
+          (login-as "alice")
+          (et/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})))
 
-    (testing "changing language while logged in"
-      (change-language :en)
-      (wait-visible *driver* {:tag :h1 :fn/text "Catalogue"}))
-    (is true))) ; avoid no assertions warning
+      (testing "changing language while logged i"
+        (change-language driver :en)
+        (et/wait-visible driver {:tag :h1 :fn/text "Catalogue"}))
+      (is true)))) ; avoid no assertions warning
 
 ;; TODO: driver is passed to scroll-and-click, maybe create higher level overload with shorter name too
 
-(defn slurp-fields [selector]
-  (->> (for [row (query-all *driver* [selector {:fn/has-class :row}])
-             :let [k (get-element-text-el *driver* (child *driver* row {:tag :label}))
-                   v (get-element-text-el *driver* (child *driver* row {:css ".form-control"}))]]
+(defn slurp-fields [driver selector]
+  (->> (for [row (et/query-all driver [selector {:fn/has-class :row}])
+             :let [k (et/get-element-text-el driver (et/child driver row {:tag :label}))
+                   v (et/get-element-text-el driver (et/child driver row {:css ".form-control"}))]]
          [k (str/trim v)])
        (into {})))
 
 
 (defn test-create-license []
-  (with-postmortem *driver* {:dir reporting-dir}
-    (go-to-admin-licenses)
-    (scroll-and-click *driver* :create-license)
-    (wait-visible *driver* {:tag :h1 :fn/text "Create license"})
-    (select-option "Organization" "nbn")
-    (scroll-and-click *driver* :licensetype-link)
-    (fill-form-field "License name" (:license-name @test-context) {:index 1})
-    (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
-    (fill-form-field "License name" (str (:license-name @test-context) " FI") {:index 2})
-    (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
-    (screenshot *driver* (io/file reporting-dir "about-to-create-license.png"))
-    (scroll-and-click *driver* :save)
-    (wait-visible *driver* {:tag :h1 :fn/text "License"})
-    (wait-page-loaded)
-    (screenshot *driver* (io/file reporting-dir "created-license.png"))
-    (is (str/includes? (get-element-text *driver* {:css ".alert-success"}) "Success"))
-    (is (= {"Organization" "nbn"
-            "Title (EN)" (:license-name @test-context)
-            "Title (FI)" (str (:license-name @test-context) " FI")
-            "Type" "link"
-            "External link (EN)" "https://www.csc.fi/home"
-            "External link (FI)" "https://www.csc.fi/etusivu"
-            "Active" ""}
-           (slurp-fields :license)))))
+  (let [driver (get-driver)]
+    (et/with-postmortem driver {:dir reporting-dir}
+      (doto driver
+        (go-to-admin-licenses)
+        (scroll-and-click  :create-license)
+        (et/wait-visible  {:tag :h1 :fn/text "Create license"})
+        (select-option  "Organization" "nbn")
+        (scroll-and-click :licensetype-link)
+        (fill-form-field "License name" (str (:license-name @test-context) " EN") {:index 1})
+        (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
+        (fill-form-field "License name" (str (:license-name @test-context) " FI") {:index 2})
+        (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
+        (fill-form-field "License name" (str (:license-name @test-context) " SV") {:index 3})
+        (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
+        (et/screenshot (io/file reporting-dir "about-to-create-license.png"))
+        (scroll-and-click :save)
+        (et/wait-visible {:tag :h1 :fn/text "License"})
+        (wait-page-loaded)
+        (et/screenshot (io/file reporting-dir "created-license.png")))
+      (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "nbn"
+              "Title (EN)" (str (:license-name @test-context) " EN")
+              "Title (FI)" (str (:license-name @test-context) " FI")
+              "Title (SV)" (str (:license-name @test-context) " SV")
+              "Type" "link"
+              "External link (EN)" "https://www.csc.fi/home"
+              "External link (FI)" "https://www.csc.fi/etusivu"
+              "External link (SV)" "https://www.csc.fi/home"
+              "Active" ""}
+             (slurp-fields driver :license))))))
 
 (defn test-create-resource []
-  (with-postmortem *driver* {:dir reporting-dir}
-    (go-to-admin-resources)
-    (scroll-and-click *driver* :create-resource)
-    (wait-visible *driver* {:tag :h1 :fn/text "Create resource"})
-    (select-option "Organization" "nbn")
-    (fill-form-field "Resource identifier" (:resid @test-context))
-    (select-option "License" (:license-name @test-context))
-    (screenshot *driver* (io/file reporting-dir "about-to-create-resource.png"))
-    (scroll-and-click *driver* :save)
-    (wait-visible *driver* {:tag :h1 :fn/text "Resource"})
-    (wait-page-loaded)
-    (screenshot *driver* (io/file reporting-dir "created-resource.png"))
-    (is (str/includes? (get-element-text *driver* {:css ".alert-success"}) "Success"))
-    (is (= {"Organization" "nbn"
-            "Resource" (:resid @test-context)
-            "Active" ""}
-           (slurp-fields :resource)))
-    (is (= (str "License \"" (:license-name @test-context) "\"")
-           (get-element-text *driver* [:licenses {:class :license-title}])))))
+  (let [driver (get-driver)]
+    (et/with-postmortem driver {:dir reporting-dir}
+      (doto driver
+        (go-to-admin-resources)
+        (scroll-and-click :create-resource)
+        (et/wait-visible {:tag :h1 :fn/text "Create resource"})
+        (select-option "Organization" "nbn")
+        (fill-form-field "Resource identifier" (:resid @test-context))
+        (select-option "License" (str (:license-name @test-context) " EN"))
+        (et/screenshot (io/file reporting-dir "about-to-create-resource.png"))
+        (scroll-and-click :save)
+        (et/wait-visible {:tag :h1 :fn/text "Resource"})
+        (wait-page-loaded)
+        (et/screenshot (io/file reporting-dir "created-resource.png")))
+      (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "nbn"
+              "Resource" (:resid @test-context)
+              "Active" ""}
+             (slurp-fields driver :resource)))
+      (is (= (str "License \"" (:license-name @test-context) " EN\"")
+             (et/get-element-text driver [:licenses {:class :license-title}]))))))
 
 (deftest test-create-catalogue-item
-  (with-postmortem *driver* {:dir reporting-dir}
-    (login-as "owner")
-    (swap! test-context assoc
-           :license-name (str "Browser Test License " (get-seed))
-           :resid (str "browser.testing.resource/" (get-seed)))
-    (testing "create license"
-      (test-create-license))
-    (testing "create resource"
-      (test-create-resource))
-    (testing "create form")
-    (testing "create workflow")
-    (testing "create catalogue item")))
+  (let [driver (get-driver)]
+    (et/with-postmortem driver {:dir reporting-dir}
+      (login-as driver "owner")
+      (swap! test-context assoc
+             :license-name (str "Browser Test License " (get-seed))
+             :resid (str "browser.testing.resource/" (get-seed)))
+      (testing "create license"
+        (test-create-license))
+      (testing "create resource"
+        (test-create-resource))
+      (testing "create form") ; TODO
+      (testing "create workflow") ; TODO
+      (testing "create catalogue item")))) ; TODO
