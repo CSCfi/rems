@@ -553,7 +553,7 @@
                                                 (text-format error (str (text :t.create-form/option-label)
                                                                         " (" (.toUpperCase (name lang)) ")")))))]])))]))
 
-(defn- format-validation-errors [form-errors form lang]
+(defn format-validation-errors [form-errors form lang]
   ;; TODO: deduplicate with field definitions
   (into [:ul
          (when (:form/organization form-errors)
