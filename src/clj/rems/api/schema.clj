@@ -187,6 +187,7 @@
    :form/organization s/Str
    :form/title s/Str
    :form/fields [FieldTemplate]
+   (s/optional-key :form/errors) s/Any
    ;; TODO: rename the following to use :status/ namespace (also in all other entities)
    :enabled s/Bool
    :archived s/Bool})
