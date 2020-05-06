@@ -19,10 +19,13 @@
 (defn validate-forms []
   (doseq [template (form/get-form-templates {})]
     (validate-form-template template)
-    (when-let [errors (common-form/validate-form-template template (:languages env))]
+    (when-let [errors (common-form/validate-form-template template [])] ;; we don't want errors for missing languages
       (throw (ex-info "Form template validation failed"
                       {:template template
-                       :errors errors})))))
+                       :errors errors})))
+    (when-let [errors (common-form/validate-form-template template (:languages env))]
+      (log/warn "Languages missing from form template" (:form/id template) (pr-str (:form/title template))
+                errors))))
 
 (defn- valid-organization? [org]
   (contains? (set (:organizations env)) org))
