@@ -1,4 +1,4 @@
-(ns ^:browser rems.test-browser-util
+(ns ^:browser rems.browser-test-util
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [clojure.string :as str]
