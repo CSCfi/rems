@@ -46,20 +46,16 @@
     (.mkdirs)
     (delete-files)))
 
+(defn- mod-nth [coll i]
+  (nth coll (mod (int i) (count coll))))
+
 (defn- random-seed []
-  (let [t (System/currentTimeMillis)
-        counts ["one" "two" "three" "four" "five" "six" "seven" "eight" "nine" "ten"]
-        count-i (mod (Math/floor (/ t 60000)) (count counts))
-        adjectives ["amusing" "comic" "funny" "laughable" "hilarious" "witty" "jolly" "silly" "ludicrous" "wacky"]
-        adjectives-i (mod (Math/floor (/ t 1000)) (count adjectives))
-        animals ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"]
-        animals-i (mod (/ t 123) (count animals))]
-    (str (nth counts count-i)
+  (let [t (System/currentTimeMillis)]
+    (str (mod-nth ["red" "green" "blue" "magenta" "cyan" "yellow" "white" "black" "brown" "pink"] (/ t 60000))
          " "
-         (nth adjectives adjectives-i)
+         (mod-nth ["amusing" "comic" "funny" "laughable" "hilarious" "witty" "jolly" "silly" "ludicrous" "wacky"] (/ t 1000))
          " "
-         (nth animals animals-i)
-         (if (> count-i 1) "s" ""))))
+         (mod-nth ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"] (mod t 123)))))
 
 (defn init-driver!
   "Starts and initializes a driver. Also stops an existing driver.
