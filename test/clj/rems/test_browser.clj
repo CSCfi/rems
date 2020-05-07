@@ -412,60 +412,58 @@
        (into {})))
 
 
-(defn test-create-license []
-  (let [driver (get-driver)]
-    (et/with-postmortem driver {:dir reporting-dir}
-      (doto driver
-        (go-to-admin-licenses)
-        (scroll-and-click  :create-license)
-        (et/wait-visible  {:tag :h1 :fn/text "Create license"})
-        (select-option  "Organization" "nbn")
-        (scroll-and-click :licensetype-link)
-        (fill-form-field "License name" (str (:license-name @test-context) " EN") {:index 1})
-        (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
-        (fill-form-field "License name" (str (:license-name @test-context) " FI") {:index 2})
-        (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
-        (fill-form-field "License name" (str (:license-name @test-context) " SV") {:index 3})
-        (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
-        (et/screenshot (io/file reporting-dir "about-to-create-license.png"))
-        (scroll-and-click :save)
-        (et/wait-visible {:tag :h1 :fn/text "License"})
-        (wait-page-loaded)
-        (et/screenshot (io/file reporting-dir "created-license.png")))
-      (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" "nbn"
-              "Title (EN)" (str (:license-name @test-context) " EN")
-              "Title (FI)" (str (:license-name @test-context) " FI")
-              "Title (SV)" (str (:license-name @test-context) " SV")
-              "Type" "link"
-              "External link (EN)" "https://www.csc.fi/home"
-              "External link (FI)" "https://www.csc.fi/etusivu"
-              "External link (SV)" "https://www.csc.fi/home"
-              "Active" ""}
-             (slurp-fields driver :license))))))
+(defn create-license [driver]
+  (et/with-postmortem driver {:dir reporting-dir}
+    (doto driver
+      (go-to-admin-licenses)
+      (scroll-and-click  :create-license)
+      (et/wait-visible  {:tag :h1 :fn/text "Create license"})
+      (select-option  "Organization" "nbn")
+      (scroll-and-click :licensetype-link)
+      (fill-form-field "License name" (str (:license-name @test-context) " EN") {:index 1})
+      (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
+      (fill-form-field "License name" (str (:license-name @test-context) " FI") {:index 2})
+      (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
+      (fill-form-field "License name" (str (:license-name @test-context) " SV") {:index 3})
+      (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
+      (et/screenshot (io/file reporting-dir "about-to-create-license.png"))
+      (scroll-and-click :save)
+      (et/wait-visible {:tag :h1 :fn/text "License"})
+      (wait-page-loaded)
+      (et/screenshot (io/file reporting-dir "created-license.png")))
+    (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
+    (is (= {"Organization" "nbn"
+            "Title (EN)" (str (:license-name @test-context) " EN")
+            "Title (FI)" (str (:license-name @test-context) " FI")
+            "Title (SV)" (str (:license-name @test-context) " SV")
+            "Type" "link"
+            "External link (EN)" "https://www.csc.fi/home"
+            "External link (FI)" "https://www.csc.fi/etusivu"
+            "External link (SV)" "https://www.csc.fi/home"
+            "Active" ""}
+           (slurp-fields driver :license)))))
 
-(defn test-create-resource []
-  (let [driver (get-driver)]
-    (et/with-postmortem driver {:dir reporting-dir}
-      (doto driver
-        (go-to-admin-resources)
-        (scroll-and-click :create-resource)
-        (et/wait-visible {:tag :h1 :fn/text "Create resource"})
-        (select-option "Organization" "nbn")
-        (fill-form-field "Resource identifier" (:resid @test-context))
-        (select-option "License" (str (:license-name @test-context) " EN"))
-        (et/screenshot (io/file reporting-dir "about-to-create-resource.png"))
-        (scroll-and-click :save)
-        (et/wait-visible {:tag :h1 :fn/text "Resource"})
-        (wait-page-loaded)
-        (et/screenshot (io/file reporting-dir "created-resource.png")))
-      (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" "nbn"
-              "Resource" (:resid @test-context)
-              "Active" ""}
-             (slurp-fields driver :resource)))
-      (is (= (str "License \"" (:license-name @test-context) " EN\"")
-             (et/get-element-text driver [:licenses {:class :license-title}]))))))
+(defn create-resource [driver]
+  (et/with-postmortem driver {:dir reporting-dir}
+    (doto driver
+      (go-to-admin-resources)
+      (scroll-and-click :create-resource)
+      (et/wait-visible {:tag :h1 :fn/text "Create resource"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Resource identifier" (:resid @test-context))
+      (select-option "License" (str (:license-name @test-context) " EN"))
+      (et/screenshot (io/file reporting-dir "about-to-create-resource.png"))
+      (scroll-and-click :save)
+      (et/wait-visible {:tag :h1 :fn/text "Resource"})
+      (wait-page-loaded)
+      (et/screenshot (io/file reporting-dir "created-resource.png")))
+    (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
+    (is (= {"Organization" "nbn"
+            "Resource" (:resid @test-context)
+            "Active" ""}
+           (slurp-fields driver :resource)))
+    (is (= (str "License \"" (:license-name @test-context) " EN\"")
+           (et/get-element-text driver [:licenses {:class :license-title}])))))
 
 (deftest test-create-catalogue-item
   (let [driver (get-driver)]
@@ -475,9 +473,9 @@
              :license-name (str "Browser Test License " (get-seed))
              :resid (str "browser.testing.resource/" (get-seed)))
       (testing "create license"
-        (test-create-license))
+        (create-license driver))
       (testing "create resource"
-        (test-create-resource))
+        (create-resource driver))
       (testing "create form") ; TODO
       (testing "create workflow") ; TODO
       (testing "create catalogue item")))) ; TODO
