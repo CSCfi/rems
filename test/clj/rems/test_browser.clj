@@ -64,7 +64,7 @@
   `:url`        - Specify a url of the server you want to test against or use default.
   `:mode`       - Specify `:development` if you wish to keep just one driver running, and not headless."
   [& [browser-id url mode]]
-  (when (get-driver) (et/quit (get-driver)))
+  (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
   (swap! test-context
          assoc-some
          :driver (et/boot-driver browser-id
