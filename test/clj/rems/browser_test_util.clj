@@ -1,17 +1,14 @@
 (ns ^:browser rems.browser-test-util
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
-            [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
-            [com.rpl.specter :refer [select ALL]]
             [etaoin.api :as et]
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
-            [rems.db.test-data :as test-data]
-            [rems.db.user-settings :as user-settings]
-            [rems.standalone])
+            [rems.standalone]
+            [rems.browser-test-util :as btu])
   (:import (java.net SocketException)))
 
 ;;; test setup
@@ -22,7 +19,7 @@
          :seed "circle"}))
 
 (defn get-driver [] (:driver @test-context))
-(defn get-url [] (:url @test-context))
+(defn get-server-url [] (:url @test-context))
 (defn get-seed [] (:seed @test-context))
 
 (defn- delete-files [dir]
@@ -78,7 +75,7 @@
         (run)))))
 
 (defn smoke-test [f]
-  (let [response (http/get (str (get-url) "js/app.js"))]
+  (let [response (http/get (str (get-server-url) "js/app.js"))]
     (assert (= 200 (:status response))
             (str "Failed to load app.js: " response))
     (f)))
@@ -91,6 +88,29 @@
                   smoke-test]))
 
 
+
+;;; etaoin exported
+
+(def set-window-size et/set-window-size)
+(def go et/go)
+(def screenshot et/screenshot)
+(def wait-visible et/wait-visible)
+(def query-all et/query-all)
+(def get-element-attr-el et/get-element-attr-el)
+(def fill-human et/fill-human)
+(def get-element-attr et/get-element-attr)
+(def js-execute et/js-execute)
+(def fill et/fill)
+(def wait-has-class et/wait-has-class)
+(def get-element-text-el et/get-element-text-el)
+(def query et/query)
+(def child et/child)
+(defmacro with-postmortem [& args] `(et/with-postmortem ~@args))
+(def upload-file et/upload-file)
+(def get-element-text et/get-element-text)
+(def click-el et/click-el)
+(def delete-cookies et/delete-cookies)
+(def get-url et/get-url)
 
 ;;; etaoin extensions
 

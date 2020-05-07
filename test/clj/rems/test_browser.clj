@@ -13,7 +13,6 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [com.rpl.specter :refer [select ALL]]
-            [etaoin.api :as et]
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.db.user-settings :as user-settings]
@@ -31,19 +30,19 @@
 
 (defn login-as [driver username]
   (doto driver
-    (et/set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
-    (et/go (btu/get-url))
-    (et/screenshot (io/file btu/reporting-dir "landing-page.png"))
+    (btu/set-window-size 1400 7000) ; big enough to show the whole page in the screenshots
+    (btu/go (btu/get-server-url))
+    (btu/screenshot (io/file btu/reporting-dir "landing-page.png"))
     (btu/scroll-and-click {:css ".login-btn"})
-    (et/screenshot (io/file btu/reporting-dir "login-page.png"))
+    (btu/screenshot (io/file btu/reporting-dir "login-page.png"))
     (btu/scroll-and-click [{:class "users"} {:tag :a :fn/text username}])
-    (et/wait-visible :logout)
-    (et/screenshot (io/file btu/reporting-dir "logged-in.png"))))
+    (btu/wait-visible :logout)
+    (btu/screenshot (io/file btu/reporting-dir "logged-in.png"))))
 
 (defn logout [driver]
   (doto driver
     (btu/scroll-and-click :logout)
-    (et/wait-visible {:css ".login-component"})))
+    (btu/wait-visible {:css ".login-component"})))
 
 (defn click-navigation-menu [driver link-text]
   (btu/scroll-and-click driver [:big-navbar {:tag :a :fn/text link-text}]))
@@ -54,30 +53,30 @@
 (defn go-to-catalogue [driver]
   (doto driver
     (click-navigation-menu "Catalogue")
-    (et/wait-visible {:tag :h1 :fn/text "Catalogue"})
+    (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
     (btu/wait-page-loaded)
-    (et/screenshot (io/file btu/reporting-dir "catalogue-page.png"))))
+    (btu/screenshot (io/file btu/reporting-dir "catalogue-page.png"))))
 
 (defn go-to-applications [driver]
   (doto driver
     (click-navigation-menu "Applications")
-    (et/wait-visible {:tag :h1 :fn/text "Applications"})
+    (btu/wait-visible {:tag :h1 :fn/text "Applications"})
     (btu/wait-page-loaded)
-    (et/screenshot (io/file btu/reporting-dir "applications-page.png"))))
+    (btu/screenshot (io/file btu/reporting-dir "applications-page.png"))))
 
 (defn go-to-admin-licenses [driver]
   (doto driver
     (click-administration-menu "Licenses")
-    (et/wait-visible {:tag :h1 :fn/text "Licenses"})
+    (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
     (btu/wait-page-loaded)
-    (et/screenshot (io/file btu/reporting-dir "administration-licenses-page.png"))))
+    (btu/screenshot (io/file btu/reporting-dir "administration-licenses-page.png"))))
 
 (defn go-to-admin-resources [driver]
   (doto driver
     (click-administration-menu "Resources")
-    (et/wait-visible {:tag :h1 :fn/text "Resources"})
+    (btu/wait-visible {:tag :h1 :fn/text "Resources"})
     (btu/wait-page-loaded)
-    (et/screenshot (io/file btu/reporting-dir "administration-resources-page.png"))))
+    (btu/screenshot (io/file btu/reporting-dir "administration-resources-page.png"))))
 
 (defn change-language [driver language]
   (btu/scroll-and-click driver [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}]))
@@ -98,9 +97,9 @@
                        {:fn/text resource-name}
                        {:xpath "./ancestor::tr"}
                        {:css ".apply-for-catalogue-items"}])
-    (et/wait-visible  {:tag :h1 :fn/has-text "Application"})
+    (btu/wait-visible  {:tag :h1 :fn/has-text "Application"})
     (btu/wait-page-loaded)
-    (et/screenshot  (io/file btu/reporting-dir "application-page.png"))))
+    (btu/screenshot  (io/file btu/reporting-dir "application-page.png"))))
 
 
 
@@ -113,21 +112,21 @@
   [driver label text & [opts]]
   (assert (> (:index opts 1) 0) "indexing starts at 1") ; xpath uses 1, let's keep the convention though we don't use xpath here because it will likely not work
 
-  (let [el (nth (et/query-all driver [{:css ".fields"}
+  (let [el (nth (btu/query-all driver [{:css ".fields"}
                                       {:tag :label :fn/has-text label}])
                 (dec (:index opts 1)))
-        id (et/get-element-attr-el driver el :for)]
+        id (btu/get-element-attr-el driver el :for)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
-    (et/fill-human driver {:id id} text)))
+    (btu/fill-human driver {:id id} text)))
 
 (defn set-date [driver label date]
-  (let [id (et/get-element-attr driver [{:css ".fields"}
+  (let [id (btu/get-element-attr driver [{:css ".fields"}
                                         {:tag :label :fn/text label}]
                                 :for)]
     ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
     ;;      so we cannot reliably know the date format to type into the date field and anyways WebDriver
     ;;      support for date fields seems buggy. Changing the field with JavaScript is more reliable.
-    (et/js-execute driver
+    (btu/js-execute driver
                    ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
                    "
                 function setNativeValue(element, value) {
@@ -150,48 +149,48 @@
                    id date)))
 
 (defn select-option [driver label option]
-  (let [id (et/get-element-attr driver [{:css ".fields"}
+  (let [id (btu/get-element-attr driver [{:css ".fields"}
                                         {:tag :label :fn/has-text label}]
                                 :for)]
-    (et/fill driver {:id id} (str option "\n"))))
+    (btu/fill driver {:id id} (str option "\n"))))
 
 (defn accept-licenses [driver]
   (doto driver
     (btu/scroll-and-click :accept-licenses-button)
-    (et/wait-visible :has-accepted-licenses)))
+    (btu/wait-visible :has-accepted-licenses)))
 
 (defn send-application [driver]
   (doto driver
     (btu/scroll-and-click :submit)
-    (et/wait-visible :status-success)
-    (et/wait-has-class :apply-phase "completed")))
+    (btu/wait-visible :status-success)
+    (btu/wait-has-class :apply-phase "completed")))
 
 (defn get-application-id [driver]
-  (last (str/split (et/get-url driver) #"/")))
+  (last (str/split (btu/get-url driver) #"/")))
 
 (defn get-attachments
   ([driver]
    (get-attachments driver {:css "a.attachment-link"}))
   ([driver selector]
-   (mapv (partial et/get-element-text-el driver) (et/query-all driver selector))))
+   (mapv (partial btu/get-element-text-el driver) (btu/query-all driver selector))))
 
 
 
 ;; applications page
 
 (defn get-application-summary [driver application-id]
-  (let [row (et/query driver [{:css "table.my-applications"}
+  (let [row (btu/query driver [{:css "table.my-applications"}
                               {:tag :tr :data-row application-id}])]
     {:id application-id
-     :description (et/get-element-text-el driver (et/child driver row {:css ".description"}))
-     :resource (et/get-element-text-el driver (et/child driver row {:css ".resource"}))
-     :state (et/get-element-text-el driver (et/child driver row {:css ".state"}))}))
+     :description (btu/get-element-text-el driver (btu/child driver row {:css ".description"}))
+     :resource (btu/get-element-text-el driver (btu/child driver row {:css ".resource"}))
+     :state (btu/get-element-text-el driver (btu/child driver row {:css ".state"}))}))
 
 ;;; tests
 
 (deftest test-new-application
   (let [driver (btu/get-driver)]
-    (et/with-postmortem driver {:dir btu/reporting-dir}
+    (btu/with-postmortem driver {:dir btu/reporting-dir}
       (login-as driver "alice")
 
       (testing "create application"
@@ -202,7 +201,7 @@
 
         (let [application-id (get-application-id driver)
               application (:body
-                           (http/get (str (btu/get-url) "/api/applications/" application-id)
+                           (http/get (str (btu/get-server-url) "/api/applications/" application-id)
                                      {:as :json
                                       :headers {"x-rems-api-key" "42"
                                                 "x-rems-user-id" "handler"}}))
@@ -219,7 +218,7 @@
             (fill-form-field "Text area" "Test2")
             (set-date "Date field" "2050-01-02")
             (fill-form-field "Email field" "user@example.com")
-            (et/upload-file attachment-field-selector "test-data/test.txt")
+            (btu/upload-file attachment-field-selector "test-data/test.txt")
             (btu/wait-predicate #(= ["test.txt"] (get-attachments driver))))
 
           (is (not (btu/field-visible? driver "Conditional field"))
@@ -238,10 +237,10 @@
             (accept-licenses)
             (send-application))
 
-          (is (= "Applied" (et/get-element-text driver :application-state)))
+          (is (= "Applied" (btu/get-element-text driver :application-state)))
 
           (testing "check a field answer"
-            (is (= "Test name" (et/get-element-text driver description-field-selector))))
+            (is (= "Test name" (btu/get-element-text driver description-field-selector))))
 
           (testing "see application on applications page"
             (go-to-applications driver)
@@ -253,7 +252,7 @@
 
           (testing "fetch application from API"
             (let [application (:body
-                               (http/get (str (btu/get-url) "/api/applications/" application-id)
+                               (http/get (str (btu/get-server-url) "/api/applications/" application-id)
                                          {:as :json
                                           :headers {"x-rems-api-key" "42"
                                                     "x-rems-user-id" "handler"}}))
@@ -291,10 +290,10 @@
                 (btu/scroll-and-click driver [{:css "table.my-applications"}
                                           {:tag :tr :data-row application-id}
                                           {:css ".btn-primary"}])
-                (et/wait-visible driver {:tag :h1 :fn/has-text "Application"})
+                (btu/wait-visible driver {:tag :h1 :fn/has-text "Application"})
                 (btu/wait-page-loaded driver)
                 (testing "check a field answer"
-                  (is (= "Test name" (et/get-element-text driver description-field-selector))))))))))))
+                  (is (= "Test name" (btu/get-element-text driver description-field-selector))))))))))))
 
 (deftest test-handling
   (let [driver (btu/get-driver)
@@ -310,75 +309,75 @@
     (test-data/command! {:type :application.command/submit
                          :application-id application-id
                          :actor applicant})
-    (et/with-postmortem driver {:dir btu/reporting-dir}
+    (btu/with-postmortem driver {:dir btu/reporting-dir}
       (login-as driver handler)
       (testing "handler should see todos on logging in"
-        (et/wait-visible driver :todo-applications))
+        (btu/wait-visible driver :todo-applications))
       (testing "handler should see description of application"
-        (et/wait-visible driver {:class :application-description :fn/text "test-handling"}))
+        (btu/wait-visible driver {:class :application-description :fn/text "test-handling"}))
       (let [app-button {:tag :a :href (str "/application/" application-id)}]
         (testing "handler should see view button for application"
-          (et/wait-visible driver app-button))
+          (btu/wait-visible driver app-button))
         (btu/scroll-and-click driver app-button))
       (testing "handler should see application after clicking on View"
-        (et/wait-visible driver {:tag :h1 :fn/has-text "test-handling"}))
+        (btu/wait-visible driver {:tag :h1 :fn/has-text "test-handling"}))
       (testing "open the approve form"
         (btu/scroll-and-click driver :approve-reject-action-button))
       (testing "add a comment and two attachments"
         (doto driver
-          (et/wait-visible :comment-approve-reject)
-          (et/fill-human :comment-approve-reject "this is a comment")
-          (et/upload-file :upload-approve-reject-input "test-data/test.txt")
-          (et/wait-visible [{:css "a.attachment-link"}])
-          (et/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
+          (btu/wait-visible :comment-approve-reject)
+          (btu/fill-human :comment-approve-reject "this is a comment")
+          (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
+          (btu/wait-visible [{:css "a.attachment-link"}])
+          (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
           (btu/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                              (get-attachments driver)))))
+                                  (get-attachments driver)))))
       (testing "add and remove a third attachment"
-        (et/upload-file driver :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
-        (et/wait-predicate #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
-                               (get-attachments driver)))
-        (let [buttons (et/query-all driver {:css "button.remove-attachment-approve-reject"})]
-          (et/click-el driver (last buttons)))
-        (et/wait-predicate #(= ["test.txt" "test-fi.txt"]
-                               (get-attachments driver))))
+        (btu/upload-file driver :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
+        (btu/wait-predicate driver #(= ["test.txt" "test-fi.txt" "rems_logo_en.png"]
+                                       (get-attachments driver)))
+        (let [buttons (btu/query-all driver {:css "button.remove-attachment-approve-reject"})]
+          (btu/click-el driver (last buttons)))
+        (btu/wait-predicate driver #(= ["test.txt" "test-fi.txt"]
+                                       (get-attachments driver))))
       (testing "approve"
         (btu/scroll-and-click driver :approve)
-        (et/wait-predicate #(= "Approved" (et/get-element-text driver :application-state))))
+        (btu/wait-predicate driver #(= "Approved" (btu/get-element-text driver :application-state))))
       (testing "attachments visible in eventlog"
         (is (= ["test.txt" "test-fi.txt"]
                (get-attachments driver {:css "div.event a.attachment-link"})))))))
 
 (deftest test-guide-page
   (let [driver (btu/get-driver)]
-    (et/with-postmortem driver {:dir btu/reporting-dir}
-      (et/go driver (str (btu/get-url) "guide"))
-      (et/wait-visible driver {:tag :h1 :fn/text "Component Guide"})
+    (btu/with-postmortem driver {:dir btu/reporting-dir}
+      (btu/go driver (str (btu/get-server-url) "guide"))
+      (btu/wait-visible driver {:tag :h1 :fn/text "Component Guide"})
       ;; if there is a js exception, nothing renders, so let's check
       ;; that we have lots of examples in the dom:
-      (is (< 60 (count (et/query-all driver {:class :example})))))))
+      (is (< 60 (count (btu/query-all driver {:class :example})))))))
 
 (deftest test-language-change
   (let [driver (btu/get-driver)]
-    (et/with-postmortem driver {:dir btu/reporting-dir}
+    (btu/with-postmortem driver {:dir btu/reporting-dir}
       (testing "default language is English"
         (doto driver
-          (et/go (btu/get-url))
-          (et/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+          (btu/go (btu/get-server-url))
+          (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
           (login-as "alice")
-          (et/wait-visible {:tag :h1 :fn/text "Catalogue"})
+          (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
           (btu/wait-page-loaded)))
 
       (testing "changing language while logged out"
         (doto driver
           (logout)
-          (et/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+          (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
           (change-language :fi)
-          (et/wait-visible {:tag :h1 :fn/text "Tervetuloa REMSiin"})))
+          (btu/wait-visible {:tag :h1 :fn/text "Tervetuloa REMSiin"})))
 
       (testing "changed language must persist after login"
         (doto driver
           (login-as "alice")
-          (et/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})
+          (btu/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})
           (btu/wait-page-loaded)))
 
       (testing "wait for language change to show in the db"
@@ -388,32 +387,32 @@
         (doto driver
           (logout)
           (change-language :en)
-          (et/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
-          (et/delete-cookies)
+          (btu/wait-visible {:tag :h1 :fn/text "Welcome to REMS"})
+          (btu/delete-cookies)
           (login-as "alice")
-          (et/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})))
+          (btu/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})))
 
       (testing "changing language while logged i"
         (change-language driver :en)
-        (et/wait-visible driver {:tag :h1 :fn/text "Catalogue"}))
+        (btu/wait-visible driver {:tag :h1 :fn/text "Catalogue"}))
       (is true)))) ; avoid no assertions warning
 
 ;; TODO: driver is passed to scroll-and-click, maybe create higher level overload with shorter name too
 
 (defn slurp-fields [driver selector]
-  (->> (for [row (et/query-all driver [selector {:fn/has-class :row}])
-             :let [k (et/get-element-text-el driver (et/child driver row {:tag :label}))
-                   v (et/get-element-text-el driver (et/child driver row {:css ".form-control"}))]]
+  (->> (for [row (btu/query-all driver [selector {:fn/has-class :row}])
+             :let [k (btu/get-element-text-el driver (btu/child driver row {:tag :label}))
+                   v (btu/get-element-text-el driver (btu/child driver row {:css ".form-control"}))]]
          [k (str/trim v)])
        (into {})))
 
 
 (defn create-license [driver]
-  (et/with-postmortem driver {:dir btu/reporting-dir}
+  (btu/with-postmortem driver {:dir btu/reporting-dir}
     (doto driver
       (go-to-admin-licenses)
       (btu/scroll-and-click  :create-license)
-      (et/wait-visible  {:tag :h1 :fn/text "Create license"})
+      (btu/wait-visible  {:tag :h1 :fn/text "Create license"})
       (select-option  "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
       (fill-form-field "License name" (str (:license-name @btu/test-context) " EN") {:index 1})
@@ -422,12 +421,12 @@
       (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
       (fill-form-field "License name" (str (:license-name @btu/test-context) " SV") {:index 3})
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
-      (et/screenshot (io/file btu/reporting-dir "about-to-create-license.png"))
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-license.png"))
       (btu/scroll-and-click :save)
-      (et/wait-visible {:tag :h1 :fn/text "License"})
+      (btu/wait-visible {:tag :h1 :fn/text "License"})
       (btu/wait-page-loaded)
-      (et/screenshot (io/file btu/reporting-dir "created-license.png")))
-    (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
+      (btu/screenshot (io/file btu/reporting-dir "created-license.png")))
+    (is (str/includes? (btu/get-element-text driver {:css ".alert-success"}) "Success"))
     (is (= {"Organization" "nbn"
             "Title (EN)" (str (:license-name @btu/test-context) " EN")
             "Title (FI)" (str (:license-name @btu/test-context) " FI")
@@ -440,30 +439,30 @@
            (slurp-fields driver :license)))))
 
 (defn create-resource [driver]
-  (et/with-postmortem driver {:dir btu/reporting-dir}
+  (btu/with-postmortem driver {:dir btu/reporting-dir}
     (doto driver
       (go-to-admin-resources)
       (btu/scroll-and-click :create-resource)
-      (et/wait-visible {:tag :h1 :fn/text "Create resource"})
+      (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
       (select-option "Organization" "nbn")
       (fill-form-field "Resource identifier" (:resid @btu/test-context))
       (select-option "License" (str (:license-name @btu/test-context) " EN"))
-      (et/screenshot (io/file btu/reporting-dir "about-to-create-resource.png"))
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-resource.png"))
       (btu/scroll-and-click :save)
-      (et/wait-visible {:tag :h1 :fn/text "Resource"})
+      (btu/wait-visible {:tag :h1 :fn/text "Resource"})
       (btu/wait-page-loaded)
-      (et/screenshot (io/file btu/reporting-dir "created-resource.png")))
-    (is (str/includes? (et/get-element-text driver {:css ".alert-success"}) "Success"))
+      (btu/screenshot (io/file btu/reporting-dir "created-resource.png")))
+    (is (str/includes? (btu/get-element-text driver {:css ".alert-success"}) "Success"))
     (is (= {"Organization" "nbn"
             "Resource" (:resid @btu/test-context)
             "Active" ""}
            (slurp-fields driver :resource)))
     (is (= (str "License \"" (:license-name @btu/test-context) " EN\"")
-           (et/get-element-text driver [:licenses {:class :license-title}])))))
+           (btu/get-element-text driver [:licenses {:class :license-title}])))))
 
 (deftest test-create-catalogue-item
   (let [driver (btu/get-driver)]
-    (et/with-postmortem driver {:dir btu/reporting-dir}
+    (btu/with-postmortem driver {:dir btu/reporting-dir}
       (login-as driver "owner")
       (swap! btu/test-context assoc
              :license-name (str "Browser Test License " (btu/get-seed))
