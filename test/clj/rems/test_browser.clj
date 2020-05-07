@@ -487,7 +487,7 @@
 
       (testing "changed language must persist after login"
         (doto driver
-          (login-as  "alice")
+          (login-as "alice")
           (et/wait-visible {:tag :h1 :fn/text "Aineistoluettelo"})
           (wait-page-loaded)))
 
