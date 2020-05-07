@@ -54,12 +54,12 @@
         adjectives-i (mod (Math/floor (/ t 1000)) (count adjectives))
         animals ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"]
         animals-i (mod (/ t 123) (count animals))]
-    (str/join [(nth counts count-i)
-               " "
-               (nth adjectives adjectives-i)
-               " "
-               (nth animals animals-i)
-               (if (> count-i 1) "s" "") ])))
+    (str (nth counts count-i)
+         " "
+         (nth adjectives adjectives-i)
+         " "
+         (nth animals animals-i)
+         (if (> count-i 1) "s" ""))))
 
 (defn init-driver!
   "Starts and initializes a driver. Also stops an existing driver.
