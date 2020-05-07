@@ -10,6 +10,7 @@ Changes since v2.12
 
 ### Changes
 - Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
+- Automated browser testing has been improved in implementation and also in the coverage of the administration side
 
 ## v2.12 "Merituulentie" 2020-05-04
 
