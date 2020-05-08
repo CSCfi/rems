@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.administration.create-form :refer [form-preview]]
+            [rems.administration.create-form :refer [form-preview format-validation-errors]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
@@ -79,6 +79,10 @@
        [copy-as-new-button id]
        [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
        [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]]])
+   (when-let [errors (:form/errors form)]
+     [:div.alert.alert-danger
+      [text :t.administration/has-errors]
+      [format-validation-errors errors form @(rf/subscribe [:language])]])
    [form-preview form]])
 ;; TODO Do we support form licenses?
 
