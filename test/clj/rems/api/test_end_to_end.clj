@@ -76,9 +76,10 @@
                 (testing "create workflow form"
                   (extract-id
                    (api-call :post "/api/forms/create" {:form/organization "e2e"
-                                                        :form/title "e2e"
-                                                        :form/fields [{:field/type :description
-                                                                       :field/title {:en "description"}
+                                                        :form/title "e2e wf"
+                                                        :form/fields [{:field/id "description"
+                                                                       :field/type :description
+                                                                       :field/title {:en "text field"}
                                                                        :field/optional false}]}
                              api-key owner-id)))
 
@@ -115,6 +116,7 @@
                    (api-call :post "/api/workflows/create" {:organization "e2e"
                                                             :title "e2e workflow"
                                                             :type :workflow/default
+                                                            :forms [{:form/id wf-form-id}]
                                                             :handlers [handler-id]}
                              api-key owner-id)))
 
@@ -150,7 +152,8 @@
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key applicant-id)]
                 (is (= applicant-id (get-in application [:application/applicant :userid])))
-                (is (= [resource-ext-id resource-ext-id2] (mapv :resource/ext-id (:application/resources application))))))
+                (is (= [resource-ext-id resource-ext-id2] (mapv :resource/ext-id (:application/resources application))))
+                (is (= [wf-form-id form-id form-id2] (mapv :form/id (:application/forms application))))))
 
             (testing "check that application is visible"
               (let [applications (api-call :get "/api/my-applications" nil
@@ -160,7 +163,10 @@
             (testing "fill in application"
               (assert-success
                (api-call :post "/api/applications/save-draft" {:application-id application-id
-                                                               :field-values [{:form form-id
+                                                               :field-values [{:form wf-form-id
+                                                                               :field "description"
+                                                                               :value "e2e description"}
+                                                                              {:form form-id
                                                                                :field "fld1"
                                                                                :value "e2e test contents"}
                                                                               {:form form-id2
@@ -202,7 +208,10 @@
                 (is (contains? todos [application-id "new-application"])))
               (let [application (api-call :get (str "/api/applications/" application-id) nil
                                           api-key handler-id)]
-                (is (= "e2e test contents" (get-in application [:application/forms 0 :form/fields 0 :field/value])))
+                (is (= ["e2e description" "e2e test contents" "e2e test contents 2"]
+                       (for [form (:application/forms application)
+                             field (:form/fields form)]
+                         (:field/value field))))
                 (is (= [license-id] (get-in application [:application/accepted-licenses (keyword applicant-id)]))
                     application)))
 
@@ -305,7 +314,7 @@
                          :event/actor applicant-id
                          :application/resources [{:resource/ext-id resource-ext-id :catalogue-item/id catalogue-item-id}
                                                  {:resource/ext-id resource-ext-id2 :catalogue-item/id catalogue-item-id2}]
-                         :application/forms [{:form/id form-id} {:form/id form-id2}]
+                         :application/forms [{:form/id wf-form-id} {:form/id form-id} {:form/id form-id2}]
                          :event/application {:application/id application-id
                                              :application/state "application.state/draft"}}
                         {:application/id application-id
