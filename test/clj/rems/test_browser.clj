@@ -385,55 +385,57 @@
 
 
 (defn create-license []
-  (btu/with-postmortem {:dir btu/reporting-dir}
-    (go-to-admin-licenses)
-    (btu/scroll-and-click :create-license)
-    (btu/wait-visible {:tag :h1 :fn/text "Create license"})
-    (select-option "Organization" "nbn")
-    (btu/scroll-and-click :licensetype-link)
-    (fill-form-field "License name" (str (:license-name @btu/test-context) " EN") {:index 1})
-    (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
-    (fill-form-field "License name" (str (:license-name @btu/test-context) " FI") {:index 2})
-    (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
-    (fill-form-field "License name" (str (:license-name @btu/test-context) " SV") {:index 3})
-    (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
-    (btu/screenshot (io/file btu/reporting-dir "about-to-create-license.png"))
-    (btu/scroll-and-click :save)
-    (btu/wait-visible {:tag :h1 :fn/text "License"})
-    (btu/wait-page-loaded)
-    (btu/screenshot (io/file btu/reporting-dir "created-license.png"))
-    (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-    (is (= {"Organization" "nbn"
-            "Title (EN)" (str (:license-name @btu/test-context) " EN")
-            "Title (FI)" (str (:license-name @btu/test-context) " FI")
-            "Title (SV)" (str (:license-name @btu/test-context) " SV")
-            "Type" "link"
-            "External link (EN)" "https://www.csc.fi/home"
-            "External link (FI)" "https://www.csc.fi/etusivu"
-            "External link (SV)" "https://www.csc.fi/home"
-            "Active" ""}
-           (slurp-fields :license)))))
+  (testing "create license"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin-licenses)
+      (btu/scroll-and-click :create-license)
+      (btu/wait-visible {:tag :h1 :fn/text "Create license"})
+      (select-option "Organization" "nbn")
+      (btu/scroll-and-click :licensetype-link)
+      (fill-form-field "License name" (str (:license-name @btu/test-context) " EN") {:index 1})
+      (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
+      (fill-form-field "License name" (str (:license-name @btu/test-context) " FI") {:index 2})
+      (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
+      (fill-form-field "License name" (str (:license-name @btu/test-context) " SV") {:index 3})
+      (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-license.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "License"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-license.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "nbn"
+              "Title (EN)" (str (:license-name @btu/test-context) " EN")
+              "Title (FI)" (str (:license-name @btu/test-context) " FI")
+              "Title (SV)" (str (:license-name @btu/test-context) " SV")
+              "Type" "link"
+              "External link (EN)" "https://www.csc.fi/home"
+              "External link (FI)" "https://www.csc.fi/etusivu"
+              "External link (SV)" "https://www.csc.fi/home"
+              "Active" ""}
+             (slurp-fields :license))))))
 
 (defn create-resource []
-  (btu/with-postmortem {:dir btu/reporting-dir}
-    (go-to-admin-resources)
-    (btu/scroll-and-click :create-resource)
-    (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
-    (select-option "Organization" "nbn")
-    (fill-form-field "Resource identifier" (:resid @btu/test-context))
-    (select-option "License" (str (:license-name @btu/test-context) " EN"))
-    (btu/screenshot (io/file btu/reporting-dir "about-to-create-resource.png"))
-    (btu/scroll-and-click :save)
-    (btu/wait-visible {:tag :h1 :fn/text "Resource"})
-    (btu/wait-page-loaded)
-    (btu/screenshot (io/file btu/reporting-dir "created-resource.png"))
-    (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-    (is (= {"Organization" "nbn"
-            "Resource" (:resid @btu/test-context)
-            "Active" ""}
-           (slurp-fields :resource)))
-    (is (= (str "License \"" (:license-name @btu/test-context) " EN\"")
-           (btu/get-element-text [:licenses {:class :license-title}])))))
+  (testing "create resource"
+    (btu/with-postmortem {:dir btu/reporting-dir}
+      (go-to-admin-resources)
+      (btu/scroll-and-click :create-resource)
+      (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
+      (select-option "Organization" "nbn")
+      (fill-form-field "Resource identifier" (:resid @btu/test-context))
+      (select-option "License" (str (:license-name @btu/test-context) " EN"))
+      (btu/screenshot (io/file btu/reporting-dir "about-to-create-resource.png"))
+      (btu/scroll-and-click :save)
+      (btu/wait-visible {:tag :h1 :fn/text "Resource"})
+      (btu/wait-page-loaded)
+      (btu/screenshot (io/file btu/reporting-dir "created-resource.png"))
+      (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
+      (is (= {"Organization" "nbn"
+              "Resource" (:resid @btu/test-context)
+              "Active" ""}
+             (slurp-fields :resource)))
+      (is (= (str "License \"" (:license-name @btu/test-context) " EN\"")
+             (btu/get-element-text [:licenses {:class :license-title}]))))))
 
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
@@ -441,10 +443,8 @@
     (swap! btu/test-context assoc
            :license-name (str "Browser Test License " (btu/get-seed))
            :resid (str "browser.testing.resource/" (btu/get-seed)))
-    (testing "create license"
-      (create-license))
-    (testing "create resource"
-      (create-resource))
+    (create-license)
+    (create-resource)
     (testing "create form") ; TODO
     (testing "create workflow") ; TODO
     (testing "create catalogue item"))) ; TODO
