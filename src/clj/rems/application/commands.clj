@@ -312,7 +312,8 @@
       (let [items (map get-catalogue-item catalogue-item-ids)
             form-ids (distinct (map :formid items))
             workflow-id (:wfid (first items))
-            workflow-type (getx-in (get-workflow workflow-id) [:workflow :type])
+            workflow (get-workflow workflow-id)
+            workflow-type (getx-in workflow [:workflow :type])
             ids (allocate-application-ids! time)]
         {:event {:event/type :application.event/created
                  :event/time time
@@ -321,7 +322,8 @@
                  :application/external-id (:application/external-id ids)
                  :application/resources (build-resources-list catalogue-item-ids injections)
                  :application/licenses (build-licenses-list catalogue-item-ids injections)
-                 :application/forms (mapv (fn [form-id] {:form/id form-id}) form-ids)
+                 :application/forms (concat (get-in workflow [:workflow :forms])
+                                            (mapv (fn [form-id] {:form/id form-id}) form-ids))
                  :workflow/id workflow-id
                  :workflow/type workflow-type}})))
 

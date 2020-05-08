@@ -52,7 +52,12 @@
   (getx {1 {:workflow {:type :workflow/default
                        :handlers [{:userid handler-user-id
                                    :name "user"
-                                   :email "user@example.com"}]}}}
+                                   :email "user@example.com"}]}}
+         2 {:workflow {:type :workflow/default
+                       :handlers [{:userid handler-user-id
+                                   :name "user"
+                                   :email "user@example.com"}]
+                       :forms [{:form/id 3} {:form/id 4}]}}}
         id))
 (defn- dummy-get-form-template [id]
   (getx {1 {:form/id 1
@@ -73,7 +78,10 @@
             :form/fields [{:field/id "text"
                            :field/type :text}
                           {:field/id "attachment"
-                           :field/type :attachment}]}}
+                           :field/type :attachment}]}
+         4 {:form/id 4
+            :form/fields [{:field/id "text"
+                           :field/type :text}]}}
         id))
 
 (defn- dummy-get-catalogue-item [id]
@@ -85,6 +93,9 @@
                   3 {:resid "res3"
                      :formid 2}
                   4 {:resid "res4"
+                     :wfid 2}
+                  5 {:resid "res5"
+                     :formid 2
                      :wfid 2}}
                  id))))
 
@@ -93,7 +104,9 @@
          2 [{:id 2}]
          3 [{:id 1}
             {:id 2}
-            {:id 3}]} id))
+            {:id 3}]
+         4 []
+         5 []} id))
 
 (defn- dummy-get-config []
   {})
@@ -239,6 +252,23 @@
            (ok-command nil {:type :application.command/create
                             :actor applicant-user-id
                             :catalogue-item-ids [1 3]}
+                       injections))))
+
+  (testing "workflow form, multiple catalogue items with different forms"
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 4 :resource/ext-id "res4"}
+                                    {:catalogue-item/id 5 :resource/ext-id "res5"}]
+            :application/licenses []
+            :application/forms [{:form/id 3} {:form/id 4} {:form/id 1} {:form/id 2}]
+            :workflow/id 2
+            :workflow/type :workflow/default}
+           (ok-command nil {:type :application.command/create
+                            :actor applicant-user-id
+                            :catalogue-item-ids [4 5]}
                        injections))))
 
   (testing "error: catalogue items with different workflows"

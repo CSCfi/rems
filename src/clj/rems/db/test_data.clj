@@ -198,7 +198,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-workflow! [{:keys [actor organization title type handlers]
+(defn create-workflow! [{:keys [actor organization title type handlers forms]
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
@@ -207,6 +207,7 @@
                    :organization (or organization "default")
                    :title (or title "")
                    :type (or type :workflow/master)
+                   :forms forms
                    :handlers
                    (or handlers
                        (do (create-user! (get +fake-user-data+ "developer"))

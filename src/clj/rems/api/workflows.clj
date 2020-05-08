@@ -12,6 +12,7 @@
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
+   ;; TODO: forms
    :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?
    (s/optional-key :handlers) [UserId]})
 

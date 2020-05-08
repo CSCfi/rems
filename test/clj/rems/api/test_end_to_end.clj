@@ -72,6 +72,16 @@
                                                             :licenses []}
                              api-key owner-id)))
 
+                wf-form-id
+                (testing "create workflow form"
+                  (extract-id
+                   (api-call :post "/api/forms/create" {:form/organization "e2e"
+                                                        :form/title "e2e"
+                                                        :form/fields [{:field/type :description
+                                                                       :field/title {:en "description"}
+                                                                       :field/optional false}]}
+                             api-key owner-id)))
+
                 form-id
                 (testing "create form"
                   (extract-id
@@ -90,7 +100,7 @@
                                                         :form/fields [{:field/id "e2e_fld_2"
                                                                        :field/type :text
                                                                        :field/title {:en "text field 2"}
-                                                                       :field/optional false}]}
+                                                                       :field/optional true}]}
                              api-key owner-id)))
                 license-id
                 (testing "create license"

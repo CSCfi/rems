@@ -21,6 +21,7 @@
   {:organization "organization1"
    :title "workflow title"
    :workflow {:type "workflow/default"
+              :forms []
               :handlers [{:userid "handler" :email "handler@example.com" :name "Hannah Handler"}
                          {:userid "carl" :email "carl@example.com" :name "Carl Reviewer"}]}
    :enabled true
@@ -185,6 +186,7 @@
       (is (= (assoc expected
                     :title "x"
                     :workflow {:type "workflow/default"
+                               :forms []
                                :handlers [{:email "owner@example.com"
                                            :name "Owner"
                                            :userid "owner"}
