@@ -110,7 +110,6 @@
 (def get-element-text-el (wrap-etaoin et/get-element-text-el))
 (def query (wrap-etaoin et/query))
 (def child (wrap-etaoin et/child))
-(defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
 (def upload-file (wrap-etaoin et/upload-file))
 (def get-element-text (wrap-etaoin et/get-element-text))
 (def click-el (wrap-etaoin et/click-el))
@@ -119,8 +118,11 @@
 (def scroll-query (wrap-etaoin et/scroll-query))
 (def click (wrap-etaoin et/click))
 (def visible? (wrap-etaoin et/visible?))
+(defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
 (def wait-predicate et/wait-predicate) ; does not need driver
 ;; TODO add more of etaoin here
+
+
 
 ;;; etaoin extensions
 
