@@ -24,6 +24,8 @@
 (defn get-driver [] (:driver @test-context))
 (defn get-server-url [] (:url @test-context))
 (defn get-seed [] (:seed @test-context))
+(defn context-get [k] (get @test-context k))
+(defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
 
 (defn- delete-files [dir]
   (doseq [file (.listFiles dir)]

@@ -195,10 +195,10 @@
       (add-to-cart "Default workflow")
       (apply-for-resource "Default workflow")
 
-      (swap! btu/test-context assoc :application-id (get-application-id))
+      (btu/context-assoc! :application-id (get-application-id))
 
       (let [application (:body
-                         (http/get (str (btu/get-server-url) "/api/applications/" (:application-id @btu/test-context))
+                         (http/get (str (btu/get-server-url) "/api/applications/" (btu/context-get :application-id))
                                    {:as :json
                                     :headers {"x-rems-api-key" "42"
                                               "x-rems-user-id" "handler"}}))
@@ -238,20 +238,20 @@
           (is (= "Test name" (btu/get-element-text description-field-selector))))
 
         (testing "fetch application from API"
-          (let [application (get-application-from-api (:application-id @btu/test-context))]
-            (swap! btu/test-context assoc :attachment-id (get-in application [:application/attachments 0 :attachment/id]))
+          (let [application (get-application-from-api (btu/context-get :application-id))]
+            (btu/context-assoc! :attachment-id (get-in application [:application/attachments 0 :attachment/id]))
 
             (testing "see application on applications page"
               (go-to-applications)
 
-              (is (= {:id (:application-id @btu/test-context)
+              (is (= {:id (btu/context-get :application-id)
                       :resource "Default workflow"
                       :state "Applied"
                       :description "Test name"}
-                     (get-application-summary (:application-id @btu/test-context)))))
+                     (get-application-summary (btu/context-get :application-id)))))
 
             (testing "attachments"
-              (is (= [{:attachment/id (:attachment-id @btu/test-context)
+              (is (= [{:attachment/id (btu/context-get :attachment-id)
                        :attachment/filename "test.txt"
                        :attachment/type "text/plain"}]
                      (:application/attachments application))))
@@ -268,7 +268,7 @@
                       ["header" ""]
                       ["date" "2050-01-02"]
                       ["email" "user@example.com"]
-                      ["attachment" (str (:attachment-id @btu/test-context))]
+                      ["attachment" (str (btu/context-get :attachment-id))]
                       ["option" "Option1"]
                       ["text" "Conditional"]
                       ["multiselect" "Option2 Option3"]
@@ -281,7 +281,7 @@
                         (:field/value field)]))))
             (testing "after navigating to the application view again"
               (btu/scroll-and-click [{:css "table.my-applications"}
-                                     {:tag :tr :data-row (:application-id @btu/test-context)}
+                                     {:tag :tr :data-row (btu/context-get :application-id)}
                                      {:css ".btn-primary"}])
               (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
               (btu/wait-page-loaded)
@@ -398,11 +398,11 @@
       (btu/wait-visible {:tag :h1 :fn/text "Create license"})
       (select-option "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
-      (fill-form-field "License name" (str (:license-name @btu/test-context) " EN") {:index 1})
+      (fill-form-field "License name" (str (btu/context-get :license-name) " EN") {:index 1})
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 1})
-      (fill-form-field "License name" (str (:license-name @btu/test-context) " FI") {:index 2})
+      (fill-form-field "License name" (str (btu/context-get :license-name) " FI") {:index 2})
       (fill-form-field "License link" "https://www.csc.fi/etusivu" {:index 2})
-      (fill-form-field "License name" (str (:license-name @btu/test-context) " SV") {:index 3})
+      (fill-form-field "License name" (str (btu/context-get :license-name) " SV") {:index 3})
       (fill-form-field "License link" "https://www.csc.fi/home" {:index 3})
       (btu/screenshot (io/file btu/reporting-dir "about-to-create-license.png"))
       (btu/scroll-and-click :save)
@@ -411,9 +411,9 @@
       (btu/screenshot (io/file btu/reporting-dir "created-license.png"))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "nbn"
-              "Title (EN)" (str (:license-name @btu/test-context) " EN")
-              "Title (FI)" (str (:license-name @btu/test-context) " FI")
-              "Title (SV)" (str (:license-name @btu/test-context) " SV")
+              "Title (EN)" (str (btu/context-get :license-name) " EN")
+              "Title (FI)" (str (btu/context-get :license-name) " FI")
+              "Title (SV)" (str (btu/context-get :license-name) " SV")
               "Type" "link"
               "External link (EN)" "https://www.csc.fi/home"
               "External link (FI)" "https://www.csc.fi/etusivu"
@@ -428,8 +428,8 @@
       (btu/scroll-and-click :create-resource)
       (btu/wait-visible {:tag :h1 :fn/text "Create resource"})
       (select-option "Organization" "nbn")
-      (fill-form-field "Resource identifier" (:resid @btu/test-context))
-      (select-option "License" (str (:license-name @btu/test-context) " EN"))
+      (fill-form-field "Resource identifier" (btu/context-get :resid))
+      (select-option "License" (str (btu/context-get :license-name) " EN"))
       (btu/screenshot (io/file btu/reporting-dir "about-to-create-resource.png"))
       (btu/scroll-and-click :save)
       (btu/wait-visible {:tag :h1 :fn/text "Resource"})
@@ -437,18 +437,17 @@
       (btu/screenshot (io/file btu/reporting-dir "created-resource.png"))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (= {"Organization" "nbn"
-              "Resource" (:resid @btu/test-context)
+              "Resource" (btu/context-get :resid)
               "Active" ""}
              (slurp-fields :resource)))
-      (is (= (str "License \"" (:license-name @btu/test-context) " EN\"")
+      (is (= (str "License \"" (btu/context-get :license-name) " EN\"")
              (btu/get-element-text [:licenses {:class :license-title}]))))))
 
 (deftest test-create-catalogue-item
   (btu/with-postmortem {:dir btu/reporting-dir}
     (login-as "owner")
-    (swap! btu/test-context assoc
-           :license-name (str "Browser Test License " (btu/get-seed))
-           :resid (str "browser.testing.resource/" (btu/get-seed)))
+    (btu/context-assoc! :license-name (str "Browser Test License " (btu/get-seed))
+                        :resid (str "browser.testing.resource/" (btu/get-seed)))
     (create-license)
     (create-resource)
     (testing "create form") ; TODO
