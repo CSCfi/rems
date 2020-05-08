@@ -42,6 +42,7 @@
          " "
          (mod-nth ["leopard" "gorilla" "turtle" "orangutan" "elephant" "saola" "vaquita" "tiger" "rhino" "pangolin"] (mod t 123)))))
 
+;; TODO these could use more of our wrapped fns if we reordered
 (defn init-driver!
   "Starts and initializes a driver. Also stops an existing driver.
 
@@ -91,51 +92,54 @@
 
 ;;; etaoin exported
 
-(def set-window-size et/set-window-size)
-(def go et/go)
-(def screenshot et/screenshot)
-(def wait-visible et/wait-visible)
-(def query-all et/query-all)
-(def get-element-attr-el et/get-element-attr-el)
-(def fill-human et/fill-human)
-(def get-element-attr et/get-element-attr)
-(def js-execute et/js-execute)
-(def fill et/fill)
-(def wait-has-class et/wait-has-class)
-(def get-element-text-el et/get-element-text-el)
-(def query et/query)
-(def child et/child)
-(defmacro with-postmortem [& args] `(et/with-postmortem ~@args))
-(def upload-file et/upload-file)
-(def get-element-text et/get-element-text)
-(def click-el et/click-el)
-(def delete-cookies et/delete-cookies)
-(def get-url et/get-url)
+(defn wrap-etaoin [f]
+  (fn [& args] (apply f (get-driver) args)))
+
+(def set-window-size (wrap-etaoin et/set-window-size))
+(def go (wrap-etaoin et/go))
+(def screenshot (wrap-etaoin et/screenshot))
+(def wait-visible (wrap-etaoin et/wait-visible))
+(def wait-invisible (wrap-etaoin et/wait-invisible))
+(def query-all (wrap-etaoin et/query-all))
+(def get-element-attr-el (wrap-etaoin et/get-element-attr-el))
+(def fill-human (wrap-etaoin et/fill-human))
+(def get-element-attr (wrap-etaoin et/get-element-attr))
+(def js-execute (wrap-etaoin et/js-execute))
+(def fill (wrap-etaoin et/fill))
+(def wait-has-class (wrap-etaoin et/wait-has-class))
+(def get-element-text-el (wrap-etaoin et/get-element-text-el))
+(def query (wrap-etaoin et/query))
+(def child (wrap-etaoin et/child))
+(defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
+(def upload-file (wrap-etaoin et/upload-file))
+(def get-element-text (wrap-etaoin et/get-element-text))
+(def click-el (wrap-etaoin et/click-el))
+(def delete-cookies (wrap-etaoin et/delete-cookies))
+(def get-url (wrap-etaoin et/get-url))
+(def scroll-query (wrap-etaoin et/scroll-query))
+(def click (wrap-etaoin et/click))
+(def visible? (wrap-etaoin et/visible?))
+(def wait-predicate et/wait-predicate) ; does not need driver
+;; TODO add more of etaoin here
 
 ;;; etaoin extensions
-
-(defn wait-predicate
-  "The etaoin API is not very consistent, it does not want driver here, so let's wrap it!"
-  [_driver pred]
-  (et/wait-predicate pred))
 
 (defn scroll-and-click
   "Wait a button to become visible, scroll it to middle
   (to make sure it's not hidden under navigation) and click."
-  [driver q & [opt]]
-  (doto driver
-    (et/wait-visible q opt)
-    (et/scroll-query q {"block" "center"})
-    (et/click q)))
+  [q & [opt]]
+  (wait-visible q opt)
+  (scroll-query q {"block" "center"})
+  (click q))
 
-(defn wait-page-loaded [driver]
-  (et/wait-invisible driver {:css ".fa-spinner"}))
+(defn wait-page-loaded []
+  (wait-invisible {:css ".fa-spinner"}))
 
 
-(defn field-visible? [driver label]
-  (et/visible? driver [{:css ".fields"}
-                       {:tag :label :fn/has-text label}]))
+(defn field-visible? [label]
+  (visible? [{:css ".fields"}
+             {:tag :label :fn/has-text label}]))
 
-(defn check-box [driver value]
+(defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked
-  (scroll-and-click driver [{:css (str "input[value='" value "']")}]))
+  (scroll-and-click [{:css (str "input[value='" value "']")}]))
