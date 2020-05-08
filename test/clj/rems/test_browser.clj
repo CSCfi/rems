@@ -177,6 +177,13 @@
      :resource (btu/get-element-text-el (btu/child row {:css ".resource"}))
      :state (btu/get-element-text-el (btu/child row {:css ".state"}))}))
 
+(defn- get-application-from-api [application-id]
+  (:body
+   (http/get (str (btu/get-server-url) "/api/applications/" application-id)
+             {:as :json
+              :headers {"x-rems-api-key" "42"
+                        "x-rems-user-id" "handler"}})))
+
 ;;; tests
 
 (deftest test-new-application
@@ -188,9 +195,10 @@
       (add-to-cart "Default workflow")
       (apply-for-resource "Default workflow")
 
-      (let [application-id (get-application-id)
-            application (:body
-                         (http/get (str (btu/get-server-url) "/api/applications/" application-id)
+      (swap! btu/test-context assoc :application-id (get-application-id))
+
+      (let [application (:body
+                         (http/get (str (btu/get-server-url) "/api/applications/" (:application-id @btu/test-context))
                                    {:as :json
                                     :headers {"x-rems-api-key" "42"
                                               "x-rems-user-id" "handler"}}))
@@ -229,23 +237,21 @@
         (testing "check a field answer"
           (is (= "Test name" (btu/get-element-text description-field-selector))))
 
-        (testing "see application on applications page"
-          (go-to-applications)
-          (let [summary (get-application-summary application-id)]
-            (is (= "Default workflow" (:resource summary)))
-            (is (= "Applied" (:state summary)))
-            ;; don't bother trying to predict the external id:
-            (is (.contains (:description summary) "Test name"))))
-
         (testing "fetch application from API"
-          (let [application (:body
-                             (http/get (str (btu/get-server-url) "/api/applications/" application-id)
-                                       {:as :json
-                                        :headers {"x-rems-api-key" "42"
-                                                  "x-rems-user-id" "handler"}}))
-                attachment-id (get-in application [:application/attachments 0 :attachment/id])]
+          (let [application (get-application-from-api (:application-id @btu/test-context))]
+            (swap! btu/test-context assoc :attachment-id (get-in application [:application/attachments 0 :attachment/id]))
+
+            (testing "see application on applications page"
+              (go-to-applications)
+
+              (is (= {:id (:application-id @btu/test-context)
+                      :resource "Default workflow"
+                      :state "Applied"
+                      :description "Test name"}
+                     (get-application-summary (:application-id @btu/test-context)))))
+
             (testing "attachments"
-              (is (= [{:attachment/id attachment-id
+              (is (= [{:attachment/id (:attachment-id @btu/test-context)
                        :attachment/filename "test.txt"
                        :attachment/type "text/plain"}]
                      (:application/attachments application))))
@@ -262,7 +268,7 @@
                       ["header" ""]
                       ["date" "2050-01-02"]
                       ["email" "user@example.com"]
-                      ["attachment" (str attachment-id)]
+                      ["attachment" (str (:attachment-id @btu/test-context))]
                       ["option" "Option1"]
                       ["text" "Conditional"]
                       ["multiselect" "Option2 Option3"]
@@ -275,7 +281,7 @@
                         (:field/value field)]))))
             (testing "after navigating to the application view again"
               (btu/scroll-and-click [{:css "table.my-applications"}
-                                     {:tag :tr :data-row application-id}
+                                     {:tag :tr :data-row (:application-id @btu/test-context)}
                                      {:css ".btn-primary"}])
               (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
               (btu/wait-page-loaded)
