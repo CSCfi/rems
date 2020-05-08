@@ -7,7 +7,7 @@
 
   (rems.browser-test-util/init-driver! :chrome \"http://localhost:3000/\" :development)
 
-  NB: While adding more test helpers, please put the `driver` argument as first to match etaoin and enable `doto`."
+  NB: Don't use etaoin directly but use it from the `browser-test-util` library that removes the need to pass the driver."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [clojure.string :as str]

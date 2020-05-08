@@ -1,4 +1,7 @@
 (ns ^:browser rems.browser-test-util
+  "Browser test utils.
+
+  NB: Don't use etaoin directly but wrap it to functions that don't need the driver to be passed."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [clojure.test :refer :all]
