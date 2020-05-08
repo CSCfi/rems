@@ -35,11 +35,12 @@
       (select-keys (keys expected))))
 
 (deftest workflows-api-test
-  (let [create-workflow (fn [user-id organization type]
+  (let [create-workflow (fn [user-id organization type forms]
                           (api-call :post "/api/workflows/create"
                                     {:organization organization
                                      :title "workflow title"
                                      :type type
+                                     :forms forms
                                      :handlers ["handler" "carl"]}
                                     "42" user-id))]
     (doseq [user-id ["owner" "organization-owner1"]]
@@ -60,16 +61,16 @@
                                                       "42" user-id)))))
 
         (testing "create default workflow"
-          (let [body (create-workflow user-id "organization1" :workflow/default)
+          (let [body (create-workflow user-id "organization1" :workflow/default [{:form/id 123}])
                 id (:id body)]
             (is (< 0 id))
             (sync-with-database-time)
             (testing "and fetch"
-              (is (= expected
+              (is (= (assoc-in expected [:workflow :forms] [{:form/id 123}])
                      (fetch "42" user-id id))))))
 
         (testing "create decider workflow"
-          (let [body (create-workflow user-id "organization1" :workflow/decider)
+          (let [body (create-workflow user-id "organization1" :workflow/decider [])
                 id (:id body)]
             (is (< 0 id))
             (sync-with-database-time)
