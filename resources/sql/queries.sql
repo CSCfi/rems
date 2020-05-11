@@ -596,4 +596,4 @@ ORDER BY time ASC;
 SELECT modifierUserId, modified, data::text as data FROM organization;
 
 -- :name add-organization! :!
-INSERT INTO organization(id, modifierUserId, data) VALUES (:id, :user, :data::jsonb);
+INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb);

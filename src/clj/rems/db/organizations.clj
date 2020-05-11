@@ -1,18 +1,23 @@
 (ns rems.db.organizations
-  (:require [clojure.string :as str]
-            [clojure.set :as set]
+  (:require [clojure.set :as set]
+            [rems.api.schema :refer [Organization]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.json :as json]
-            [rems.context :as context]))
+            [schema.coerce :as coerce])
+  (:import [org.joda.time DateTime]))
 
 (defn add-organization! [userid org]
   (db/add-organization! {:id (:organization/id org)
                          :user userid
+                         :time (DateTime.)
                          :data (json/generate-string org)})
   {:success true
    :organization/id (:organization/id org)})
+
+(def ^:private coerce-organization
+  (coerce/coercer! Organization json/coercion-matcher))
 
 (defn- parse-organization [raw]
   (merge
@@ -41,6 +46,7 @@
 (defn get-organizations [& [userid owner]]
   (->> (db/get-organizations)
        (map parse-organization)
+       (map coerce-organization)
        (apply-user-permissions userid)
        (filter (partial owner-filter-match? owner))
        (doall)))

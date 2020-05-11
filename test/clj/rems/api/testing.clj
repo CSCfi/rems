@@ -1,12 +1,11 @@
 (ns rems.api.testing
   "Shared code for API testing"
   (:require [cheshire.core :refer [parse-stream]]
+            [clj-time.format :as time-format]
             [clojure.string :as str]
             [clojure.test :refer :all]
-            [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.db.testing :refer [reset-db-fixture rollback-db-fixture test-data-fixture test-db-fixture caches-fixture search-index-fixture]]
-            [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
             [rems.middleware]
             [rems.standalone]
@@ -148,3 +147,11 @@
     (-> request
         (header "Cookie" cookie)
         (header "x-csrf-token" csrf))))
+
+(defn valid-date? [x]
+  (and (string? x)
+       (time-format/parse (time-format/formatters :date-time) x)))
+
+(defn parse-date [x]
+  (when (string? x)
+    (time-format/parse (time-format/formatters :date-time) x)))

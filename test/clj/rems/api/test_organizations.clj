@@ -3,13 +3,15 @@
             [medley.core :refer [find-first]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all])
-  (:import [org.joda.time DateTimeUtils]))
+  (:import [org.joda.time DateTime DateTimeZone DateTimeUtils]))
+
+(def test-time (DateTime. 90000 DateTimeZone/UTC))
 
 (use-fixtures
   :once
   api-fixture
   (fn [f]
-    (DateTimeUtils/setCurrentMillisFixed 10000)
+    (DateTimeUtils/setCurrentMillisFixed (.getMillis test-time))
     (f)
     (DateTimeUtils/setCurrentMillisSystem)))
 
@@ -43,11 +45,12 @@
             (is (= {:organization/id "organizations-api-test-org"
                     :organization/name "Organizations API Test ORG"
                     :organization/owners [{:userid org-owner}]
-                    :organization/last-modified nil
-                    :organization/modifier {:userid org-owner}
+                    :organization/last-modified test-time
+                    :organization/modifier {:userid owner}
                     :organization/review-emails [{:email "test@organization.test.org"
                                                   :name "Organizations API Test ORG Reviewers"}]}
-                   (find-first (comp #{"organizations-api-test-org"} :organization/id) data)))))
+                   (-> (find-first (comp #{"organizations-api-test-org"} :organization/id) data)
+                       (update :organization/last-modified parse-date))))))
 
         (testing "organization owner owns it"
           (let [data (api-call :get (str "/api/organizations?owner=" org-owner)
