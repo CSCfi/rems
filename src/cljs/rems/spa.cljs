@@ -193,7 +193,7 @@
 
 ;;;; Pages
 
-(defn loginIntro []
+(defn login-intro []
   [:div
        [:div.row.justify-content-center
         [flash-message/component :top]]
@@ -215,7 +215,7 @@
       (when-let [redirect-url (-> (js/URLSearchParams. js/window.location.search)
                                   (.get "redirect"))]
         (.setItem js/sessionStorage "rems-redirect-url" redirect-url))
-      [loginIntro])))
+      [login-intro])))
 
 (defn unauthorized-page []
   [:div
