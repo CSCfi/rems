@@ -72,8 +72,8 @@
                 [nav-link "/administration" (text :t.navigation/administration)])
               (when-not (:user identity)
                 [nav-link "/" (text :t.navigation/home) :exact]
-                [nav-link "/catalogue" (text :t.navigation/catalogue)]
               )]
+            ;  ([nav-link "/catalogue" (text :t.navigation/catalogue)])
              (navbar-extra-pages page-id))
      [language-switcher]]))
 
