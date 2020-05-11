@@ -288,8 +288,6 @@
       [dev-reload-button])
     [:div.footer-text (text :t/footer)]]])
 
-
-
 (defn logo []
   [:div.logo [:div.container.img]])
 
