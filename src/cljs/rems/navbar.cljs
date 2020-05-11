@@ -62,18 +62,15 @@
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)]
     [e (into [:div.navbar-nav.mr-auto
-              (when (roles/is-logged-in? roles)
-                [nav-link "/catalogue" (text :t.navigation/catalogue)])
+              (when-not (:user identity)
+               [:<> [nav-link "/" (text :t.navigation/home) :exact] 
+                    [nav-link "/catalogue" (text :t.navigation/catalogue)]])
               (when (roles/show-applications? roles)
                 [nav-link "/applications" (text :t.navigation/applications)])
               (when (roles/show-reviews? roles)
                 [nav-link "/actions" (text :t.navigation/actions)])
               (when (roles/show-admin-pages? roles)
-                [nav-link "/administration" (text :t.navigation/administration)])
-              (when-not (:user identity)
-                [nav-link "/" (text :t.navigation/home) :exact]
-              )]
-            ;  ([nav-link "/catalogue" (text :t.navigation/catalogue)])
+                [nav-link "/administration" (text :t.navigation/administration)])]
              (navbar-extra-pages page-id))
      [language-switcher]]))
 

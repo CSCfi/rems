@@ -17,18 +17,10 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-    (get-in db [:identity :roles]
-      {:db (dissoc db ::catalogue ::draft-applications)
-        :dispatch-n [[::fetch-catalogue]
-                   [::fetch-drafts]
-                   [:rems.table/reset]]})
-    
-    ;  (if (roles/is-logged-in? )
-     
-    ;  (do
-    ;    (unauthorized!)
-    ;  {}))))
-    ))
+   {:db (dissoc db ::catalogue ::draft-applications)
+    :dispatch-n [[::fetch-catalogue]
+                 (when (roles/is-logged-in? (get-in db [:identity :roles])) [::fetch-drafts])
+                 [:rems.table/reset]]}))
 
 ;;;; catalogue
 
