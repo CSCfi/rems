@@ -226,7 +226,7 @@
   (let [form @(rf/subscribe [::form])
         languages @(rf/subscribe [:languages])
         request (build-request form languages)]
-    [:button.btn.btn-primary
+    [:button#save.btn.btn-primary
      {:type :button
       :on-click (fn []
                   (rf/dispatch [:rems.spa/user-triggered-navigation])
@@ -248,7 +248,7 @@
      [collapsible/component
       {:id "create-license"
        :title (text :t.administration/create-license)
-       :always [:div
+       :always [:div.fields
                 [license-organization-field]
                 [license-type-radio-group]
                 (for [language languages]
