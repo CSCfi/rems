@@ -192,52 +192,33 @@
 (deftest form-editable-test
   (let [api-key "42"
         user-id "owner"]
-    ;; TODO use api-call
-    (let [form-id (-> (request :post "/api/forms/create")
-                      (authenticate api-key user-id)
-                      (json-body {:form/organization "organization1"
+    (let [form-id (:id (api-call :post "/api/forms/create"
+                                 {:form/organization "organization1"
                                   :form/title "form editable test"
-                                  :form/fields []})
-                      handler
-                      read-ok-body
-                      :id)]
+                                  :form/fields []}
+                                 api-key user-id))]
       (testing "New form is editable"
         (testing "as owner"
-          (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
-                            (authenticate api-key user-id)
-                            handler
-                            read-ok-body))))
+          (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
+                                  api-key user-id))))
         (testing "as organization owner"
-          (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
-                            (authenticate api-key "organization-owner1")
-                            handler
-                            read-ok-body)))))
-      (let [resid (test-data/create-resource! {:organization "test-organization"})
-            wfid (test-data/create-workflow! {:organization "test-organization"})
-            data (-> (request :post "/api/catalogue-items/create")
-                     (authenticate api-key user-id)
-                     (json-body {:form form-id
-                                 :resid resid
-                                 :wfid wfid
-                                 :archived false
-                                 :organization "test-organization"
-                                 :localizations {}})
-                     handler
-                     read-body)]
-        (is (:success data))
+          (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
+                                  api-key "organization-owner1")))))
+      (let [cat-id (test-data/create-catalogue-item! {:form-id form-id
+                                                     :archived false
+                                                     :organization "test-organization"})]
         (testing "Form is non-editable after in use by a catalogue item"
-          (is (not (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
-                                 (authenticate api-key user-id)
-                                 handler
-                                 read-ok-body)))))))
-    (let [form-id (-> (request :post "/api/forms/create")
-                      (authenticate api-key user-id)
-                      (json-body {:form/organization "organization1"
-                                  :form/title "form editable test"
-                                  :form/fields []})
-                      handler
-                      read-ok-body
-                      :id)]
+          (is (= {:success false
+                  :errors [{:type "t.administration.errors/form-in-use"
+                            :catalogue-items [{:id cat-id :localizations {}}]
+                            :workflows nil}]}
+                 (api-call :get (str "/api/forms/" form-id "/editable") nil
+                           api-key user-id))))))
+    (let [form-id (:id (api-call :post "/api/forms/create"
+                                 {:form/organization "organization1"
+                                  :form/title "form editable test 2"
+                                  :form/fields []}
+                                 api-key user-id))]
       (testing "New form is editable"
         (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
                                 api-key user-id))))
