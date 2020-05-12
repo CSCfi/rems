@@ -156,6 +156,14 @@
       (is (:success (form-archived! form-id true)))
       (is (:success (form-archived! wf-form-id true))))
 
+    (testing "cannot unarchive a catalogue item with dependencies that are archived"
+      (let [resp (catalogue-item-archived! false)]
+        (is (false? (:success resp)))
+        (is (= ["t.administration.errors/form-archived"
+                "t.administration.errors/resource-archived"
+                "t.administration.errors/workflow-archived"]
+               (map :type (:errors resp))))))
+
     (testing "cannot unarchive a workflow with a form that's archived"
       (let [resp (workflow-archived! false)]
         (is (false? (:success resp)))
