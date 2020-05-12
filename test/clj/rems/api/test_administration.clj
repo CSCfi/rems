@@ -156,10 +156,12 @@
       (is (:success (form-archived! form-id true)))
       (is (:success (form-archived! wf-form-id true))))
 
-    #_(testing "cannot unarchive a workflow with a form that's archived"
-        (let [resp (workflow-archived! false)]
-          (is (false? (:success resp)))
-          (is (= [:TODO] (:errors resp)))))
+    (testing "cannot unarchive a workflow with a form that's archived"
+      (let [resp (workflow-archived! false)]
+        (is (false? (:success resp)))
+        (is (= [{:type "t.administration.errors/form-archived"
+                 :forms [{:form/id wf-form-id :form/title "workflow form update test"}]}]
+               (:errors resp)))))
 
     (testing "can archive a license that's not in use"
       (is (= {:success true} (license-archived! true))))

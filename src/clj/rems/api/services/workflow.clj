@@ -3,6 +3,7 @@
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.form :as form]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.json :as json]
@@ -49,28 +50,34 @@
 
 (defn set-workflow-archived! [{:keys [id archived]}]
   (let [workflow (workflow/get-workflow id)
-        archived-licenses (filter :archived (:licenses workflow))
-        catalogue-items
-        (->> (catalogue/get-localized-catalogue-items {:workflow id
+        archived-licenses (seq (filter :archived (:licenses workflow)))
+        archived-forms (->> (get-in workflow [:workflow :forms])
+                            (map (comp form/get-form-template :form/id))
+                            (filter :archived)
+                            (map #(select-keys % [:form/id :form/title]))
+                            seq)
+        catalogue-items (->> (catalogue/get-localized-catalogue-items {:workflow id
                                                        :archived false})
-             (map #(select-keys % [:id :title :localizations])))]
+                             (map #(select-keys % [:id :title :localizations])))]
     (util/check-allowed-organization! (:organization workflow))
-    (cond
-      (and archived (seq catalogue-items))
-      {:success false
-       :errors [{:type :t.administration.errors/workflow-in-use
-                 :catalogue-items catalogue-items}]}
-
-      (and (not archived) (seq archived-licenses))
-      {:success false
-       :errors [{:type :t.administration.errors/license-archived
-                 :licenses archived-licenses}]}
-
-      :else
-      (do
-        (db/set-workflow-archived! {:id id
-                                    :archived archived})
-        {:success true}))))
+    (let [errors (seq
+                  (concat
+                   (when (and archived (seq catalogue-items))
+                     [{:type :t.administration.errors/workflow-in-use
+                       :catalogue-items catalogue-items}])
+                   (when (and (not archived) (seq archived-licenses))
+                     [{:type :t.administration.errors/license-archived
+                       :licenses archived-licenses}])
+                   (when (and (not archived) (seq archived-forms))
+                     [{:type :t.administration.errors/form-archived
+                       :forms archived-forms}])))]
+      (if errors
+        {:success false
+         :errors errors}
+        (do
+          (db/set-workflow-archived! {:id id
+                                      :archived archived})
+          {:success true})))))
 
 (defn get-workflow [id]
   (workflow/get-workflow id))
