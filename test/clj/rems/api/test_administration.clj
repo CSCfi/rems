@@ -22,8 +22,11 @@
                                    api-key user-id))
         form-id (:id (api-call :post "/api/forms/create" {:form/organization "abc" :form/title "form update test" :form/fields []}
                                api-key user-id))
+        wf-form-id (:id (api-call :post "/api/forms/create" {:form/organization "abc" :form/title "workflow form update test" :form/fields []}
+                                  api-key user-id))
         workflow-id (:id (api-call :post "/api/workflows/create"
                                    {:organization "abc" :title "default workflow"
+                                    :forms [{:form/id wf-form-id}]
                                     :type :workflow/default :handlers [user-id]}
                                    api-key user-id))
         catalogue-id (:id (api-call :post "/api/catalogue-items/create"
@@ -55,13 +58,13 @@
                                            api-key user-id)
 
         form-archived! #(api-call :put "/api/forms/archived"
-                                  {:id form-id
-                                   :archived %}
+                                  {:id %1
+                                   :archived %2}
                                   api-key user-id)
 
         form-enabled! #(api-call :put "/api/forms/enabled"
-                                 {:id form-id
-                                  :enabled %}
+                                 {:id %1
+                                  :enabled %2}
                                  api-key user-id)
 
         license-archived! #(api-call :put "/api/licenses/archived"
@@ -103,13 +106,20 @@
                (:errors resp)))))
 
     (testing "can disable a form"
-      (is (:success (form-enabled! false))))
+      (is (:success (form-enabled! form-id false))))
 
     (testing "can't archive a form that's in use"
-      (let [resp (form-archived! true)]
+      (let [resp (form-archived! form-id true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
+                 :catalogue-items [{:id catalogue-id :localizations {}}]
+                 :workflows nil}]
+               (:errors resp))))
+      (let [resp (form-archived! wf-form-id true)]
+        (is (false? (:success resp)))
+        (is (= [{:type "t.administration.errors/form-in-use"
+                 :catalogue-items nil
+                 :workflows [{:id workflow-id :title "default workflow"}]}]
                (:errors resp)))))
 
     (testing "can disable a workflow"
@@ -139,11 +149,17 @@
     (testing "can archive a resource that's not in use"
       (is (:success (resource-archived! true))))
 
-    (testing "can archive a form that's not in use"
-      (is (:success (form-archived! true))))
-
     (testing "can archive a workflow that's not in use"
       (is (:success (workflow-archived! true))))
+
+    (testing "can archive a form that's not in use"
+      (is (:success (form-archived! form-id true)))
+      (is (:success (form-archived! wf-form-id true))))
+
+    #_(testing "cannot unarchive a workflow with a form that's archived"
+        (let [resp (workflow-archived! false)]
+          (is (false? (:success resp)))
+          (is (= [:TODO] (:errors resp)))))
 
     (testing "can archive a license that's not in use"
       (is (= {:success true} (license-archived! true))))

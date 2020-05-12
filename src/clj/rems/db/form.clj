@@ -47,15 +47,16 @@
   (->> (catalogue/get-localized-catalogue-items {:form id :archived include-archived})
        (map #(select-keys % [:id :title :localizations]))))
 
-(defn- workflows-for-form [id]
+(defn- workflows-for-form [id include-archived]
   ;; TODO optimize?
-  (->> (workflow/get-workflows {})
+  (->> (workflow/get-workflows (when-not include-archived
+                                 {:archived false}))
        (filter #(contains? (set (get-in % [:workflow :forms])) {:form/id id}))
        (map #(select-keys % [:id :title]))))
 
-(defn- form-in-use-error [form-id]
-  (let [catalogue-items (seq (catalogue-items-for-form form-id true))
-        workflows (seq (workflows-for-form form-id))]
+(defn- form-in-use-error [form-id include-archived]
+  (let [catalogue-items (seq (catalogue-items-for-form form-id include-archived))
+        workflows (seq (workflows-for-form form-id include-archived))]
     (when (or catalogue-items workflows)
       {:success false
        :errors [{:type :t.administration.errors/form-in-use
@@ -63,7 +64,7 @@
                  :workflows workflows}]})))
 
 (defn form-editable [form-id]
-  (or (form-in-use-error form-id)
+  (or (form-in-use-error form-id true)
       {:success true}))
 
 (defn validate-given-ids
@@ -144,7 +145,7 @@
     ;; need to check both previous and new organization
     (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
-    (or (form-in-use-error form-id)
+    (or (form-in-use-error form-id true)
         (do (db/edit-form-template! {:id form-id
                                      :organization organization
                                      :title (:form/title form)
@@ -160,10 +161,8 @@
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
   (let [catalogue-items (catalogue-items-for-form id false)]
-    (if (and archived (seq catalogue-items))
-      {:success false
-       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
-      (do
-        (db/set-form-template-archived! {:id id
-                                         :archived archived})
-        {:success true}))))
+    (or (and archived (form-in-use-error id false))
+        (do
+          (db/set-form-template-archived! {:id id
+                                           :archived archived})
+          {:success true}))))
