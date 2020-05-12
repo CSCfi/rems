@@ -78,13 +78,21 @@ To run tests that need a database:
 lein kaocha integration
 ```
 
+### Browser tests
+
 To run build the JS bundle and run browser tests (requires chromedriver in $PATH, the alias also builds cljs):
 
 ```
 lein browsertests
 ```
 
-If browser tests fail, screenshots and DOM are written in `browsertest-errors`.
+If browser tests fail, screenshots and DOM are written in the directory `browsertest-errors`.
+
+For fixing or especially the development of the browser tests, you can run a windowed regular browser and see what the tests are doing.
+
+1. Open the `test_browser.clj`.
+2. Use the code `(init-driver! :chrome "http://localhost:3000/" :development)` to open up the controller browser instance
+3. Evaluate any test code in your editor to see the actions happen in the browser.
 
 ### Clojurescript tests
 

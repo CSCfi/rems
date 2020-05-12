@@ -76,6 +76,9 @@
    (str "/administration/forms/create/" (:form/id form))
    (text :t.administration/copy-as-new)])
 
+(defn- errors-symbol []
+  [:i.fa.fa-exclamation-triangle {:aria-label (text :t.administration/has-errors)}])
+
 (rf/reg-sub
  ::forms-table-rows
  (fn [_ _]
@@ -89,6 +92,11 @@
                      {:td [:td.active
                            [readonly-checkbox {:value checked?}]]
                       :sort-value (if checked? 1 2)})
+           :errors (if (empty? (:form/errors form))
+                     {:value ""
+                      :sort-value 1}
+                     {:td [:td [errors-symbol]]
+                      :sort-value 2})
            :commands {:td [:td.commands
                            [to-view-form form]
                            [roles/when roles/show-admin-edit-buttons?
@@ -106,6 +114,9 @@
                                 :title (text :t.administration/title)}
                                {:key :active
                                 :title (text :t.administration/active)
+                                :filterable? false}
+                               {:key :errors
+                                :title (text :t.administration/has-errors)
                                 :filterable? false}
                                {:key :commands
                                 :sortable? false

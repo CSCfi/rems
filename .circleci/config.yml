@@ -67,6 +67,8 @@ jobs:
       - restore_cache:
           keys:
             - v2-dependencies-{{ checksum "project.clj" }}
+      # dl.google.com new apt key isn't trusted by the image
+      - run: curl https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
       # killall is a workaround for apt failing with: Could not get lock /var/lib/apt/lists/lock
       - run: sudo killall -9 apt-get || true; sudo apt update
 

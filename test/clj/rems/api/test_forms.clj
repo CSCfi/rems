@@ -533,6 +533,46 @@
     (is (not-any? :archived filtered))
     (is (< (count filtered) (count unfiltered)))))
 
+(deftest test-form-missing-languages
+  (let [id (test-data/create-form! {:form/title "invalid form"
+                                    :form/fields [{:field/id "fld1"
+                                                   :field/type :text
+                                                   :field/optional true
+                                                   :field/title {:fi "Title in Finnish"}
+                                                   :field/placeholder {:en "Placeholder"}}
+                                                  {:field/id "fld2"
+                                                   :field/type :option
+                                                   :field/optional false
+                                                   :field/title {:fi "fi" :sv "sv" :en "en"}
+                                                   :field/options [{:key "opt"
+                                                                    :label {:sv "Swedish label"}}]}]})]
+    (is (= {:form/id id
+            :form/organization "default"
+            :form/title "invalid form"
+            :form/fields [{:field/placeholder {:en "Placeholder"}
+                           :field/title {:fi "Title in Finnish"}
+                           :field/type "text"
+                           :field/id "fld1"
+                           :field/optional true}
+                          {:field/title {:fi "fi" :en "en" :sv "sv"}
+                           :field/type "option"
+                           :field/id "fld2"
+                           :field/options [{:key "opt" :label {:sv "Swedish label"}}]
+                           :field/optional false}]
+           :form/errors {:form/fields
+                         {:0 {:field/title {:en "t.form.validation/required"
+                                         :sv "t.form.validation/required"}
+                              :field/placeholder {:fi "t.form.validation/required"
+                                                  :sv "t.form.validation/required"}}
+                          :1 {:field/options
+                              {:0
+                               {:label {:en "t.form.validation/required"
+                                        :fi "t.form.validation/required"}}}}}}
+           :enabled true
+           :archived false}
+           (api-call :get (str "/api/forms/" id) nil
+                     "42" "owner")))))
+
 (deftest forms-api-security-test
   (testing "without authentication"
     (testing "list"

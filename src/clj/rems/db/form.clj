@@ -28,15 +28,19 @@
                       :enabled :enabled
                       :archived :archived}))))
 
+(defn- add-validation-errors [template]
+  (assoc template :form/errors (common-form/validate-form-template template (:languages env))))
+
 (defn get-form-templates [filters]
   (->> (db/get-form-templates)
        (map parse-db-row)
-       (db/apply-filters filters)))
+       (db/apply-filters filters)
+       (map add-validation-errors)))
 
 (defn get-form-template [id]
   (let [row (db/get-form-template {:id id})]
     (when row
-      (parse-db-row row))))
+      (add-validation-errors (parse-db-row row)))))
 
 (defn- catalogue-items-for-form [id]
   (->> (catalogue/get-localized-catalogue-items {:form id :archived false})

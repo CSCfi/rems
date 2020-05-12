@@ -84,6 +84,7 @@
                    :export-applications "Vie hakemuksia"
                    :form "Lomake"
                    :forms "Lomakkeet"
+                   :has-errors "Virheet"
                    :license "Lisenssi"
                    :license-field "Lisenssi \"%1\""
                    :license-name "Lisenssin nimi"
