@@ -43,8 +43,8 @@
     (when row
       (add-validation-errors (parse-db-row row)))))
 
-(defn- catalogue-items-for-form [id]
-  (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
+(defn- catalogue-items-for-form [id include-archived]
+  (->> (catalogue/get-localized-catalogue-items {:form id :archived include-archived})
        (map #(select-keys % [:id :title :localizations]))))
 
 (defn- workflows-for-form [id]
@@ -54,7 +54,7 @@
        (map #(select-keys % [:id :title]))))
 
 (defn- form-in-use-error [form-id]
-  (let [catalogue-items (seq (catalogue-items-for-form form-id))
+  (let [catalogue-items (seq (catalogue-items-for-form form-id true))
         workflows (seq (workflows-for-form form-id))]
     (when (or catalogue-items workflows)
       {:success false
@@ -159,7 +159,7 @@
 
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
-  (let [catalogue-items (catalogue-items-for-form id)]
+  (let [catalogue-items (catalogue-items-for-form id false)]
     (if (and archived (seq catalogue-items))
       {:success false
        :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
