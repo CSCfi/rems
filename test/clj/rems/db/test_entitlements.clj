@@ -156,10 +156,10 @@
 
              (entitlements/process-outbox!)
 
-             (testing "db"
+             (testing "entitlements exist in db"
                (is (= #{[applicant "resource1"] [applicant "resource2"]}
                       (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
-             (testing "POST"
+             (testing "entitlements were POSTed to callbacks"
                (let [add-paths (requests-for-paths server "/add")
                      ga4gh-paths (requests-for-paths server "/ga4gh")]
                  (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
@@ -179,11 +179,11 @@
 
            (entitlements/process-outbox!)
 
-           (testing "db"
+           (testing "all entitlements exist in db"
              (is (= #{[applicant "resource1"] [applicant "resource2"]
                       [member "resource1"] [member "resource2"]}
                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
-           (testing "POST"
+           (testing "new entitlements were POSTed to callbacks"
              (let [add-paths (requests-for-paths server "/add")
                    ga4gh-paths (requests-for-paths server "/ga4gh")]
                (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
@@ -204,10 +204,10 @@
 
            (entitlements/process-outbox!)
 
-           (testing "db"
+           (testing "entitlements removed from db"
              (is (= #{[applicant "resource1"] [applicant "resource2"]}
                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
-           (testing "POST"
+           (testing "removed entitlements were POSTed to callback"
              (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
                       {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
                     (set (get-requests server))))))))
@@ -224,10 +224,10 @@
 
            (entitlements/process-outbox!)
 
-           (testing "db"
+           (testing "entitlements changed in db"
              (is (= #{[applicant "resource1"] [applicant "resource3"]}
                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
-           (testing "POST"
+           (testing "entitlement changes POSTed to callbacks"
              (let [add-paths (requests-for-paths server "/add")
                    remove-paths (requests-for-paths server "/remove")
                    ga4gh-paths (requests-for-paths server "/ga4gh")]
@@ -249,9 +249,9 @@
 
            (entitlements/process-outbox!)
 
-           (testing "db"
+           (testing "entitlements ended in db"
              (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
-           (testing "POST"
+           (testing "ended entitlements POSTed to callback"
              (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
                       {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
                     (set (get-requests server)))))))))
@@ -282,8 +282,8 @@
 
            (entitlements/process-outbox!)
 
-           (testing "db"
+           (testing "entitlements ended in db"
              (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
-           (testing "POST"
+           (testing "ended entitlements POSTed to callback"
              (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
                     (get-requests server))))))))))
