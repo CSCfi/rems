@@ -241,7 +241,18 @@
                             :catalogue-items nil
                             :workflows [{:id wfid :title "wf with form"}]}]}
                  (api-call :get (str "/api/forms/" form-id "/editable") nil
-                           api-key user-id))))))))
+                           api-key user-id)))
+          (testing "even if catalogue item is archived & disabled"
+            (api-call :put "/api/workflows/archived" {:id wfid :archived true}
+                      api-key user-id)
+            (api-call :put "/api/workflows/enabled" {:id wfid :enabled false}
+                      api-key user-id)
+            (is (= {:success false
+                    :errors [{:type "t.administration.errors/form-in-use"
+                              :catalogue-items nil
+                              :workflows [{:id wfid :title "wf with form"}]}]}
+                   (api-call :get (str "/api/forms/" form-id "/editable") nil
+                             api-key user-id)))))))))
 
 (deftest form-edit-test
   (let [api-key "42"
