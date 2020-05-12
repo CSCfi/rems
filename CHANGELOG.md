@@ -10,6 +10,10 @@ Changes since v2.12
 
 ### Changes
 - Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
+- Automated browser testing has been improved in implementation and also in the coverage of the administration side
+
+### Additions
+- The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
 
 ## v2.12 "Merituulentie" 2020-05-04
 

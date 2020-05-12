@@ -84,6 +84,7 @@
                    :export-applications "exportera ansökningar"
                    :form "Blankett"
                    :forms "Blanketter"
+                   :has-errors "Fel"
                    :license "Licens"
                    :license-field "Licens \"%1\""
                    :license-name "Licensens namn"

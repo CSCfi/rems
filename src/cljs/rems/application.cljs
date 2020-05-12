@@ -378,7 +378,7 @@
              {:id "application-fields"
               :class "mb-3"
               :title (or (get-in form [:form/title language]) (text :t.form/application))
-              :always (into [:div]
+              :always (into [:div.fields]
                             (for [field (:form/fields form)
                                   :let [field-id (:field/id field)]
                                   :when (and (field-visible? field (get field-values form-id))
