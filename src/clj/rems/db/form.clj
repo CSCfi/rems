@@ -7,6 +7,7 @@
             [rems.api.services.util :as util]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.workflow :as workflow]
             [rems.json :as json]
             [schema.coerce :as coerce]
             [schema.core :as s])
@@ -46,11 +47,20 @@
   (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
        (map #(select-keys % [:id :title :localizations]))))
 
+(defn- workflows-for-form [id]
+  ;; TODO optimize?
+  (->> (workflow/get-workflows {})
+       (filter #(contains? (set (get-in % [:workflow :forms])) {:form/id id}))
+       (map #(select-keys % [:id :title]))))
+
 (defn- form-in-use-error [form-id]
-  (let [catalogue-items (catalogue-items-for-form form-id)]
-    (when (seq catalogue-items)
+  (let [catalogue-items (seq (catalogue-items-for-form form-id))
+        workflows (seq (workflows-for-form form-id))]
+    (when (or catalogue-items workflows)
       {:success false
-       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]})))
+       :errors [{:type :t.administration.errors/form-in-use
+                 :catalogue-items catalogue-items
+                 :workflows workflows}]})))
 
 (defn form-editable [form-id]
   (or (form-in-use-error form-id)
