@@ -34,37 +34,37 @@
 
     (testing "dependencies"
       (is (= {:dependencies
-              {{:resource/id res-1} #{{:license/id shared-license}
-                                      {:license/id shared-resource-license}}
-               {:resource/id res-2} #{{:license/id shared-license}
-                                      {:license/id shared-resource-license}
-                                      {:license/id resource-license}}
-               {:workflow/id wf-1} #{{:form/id shared-form}}
-               {:workflow/id wf-2} #{{:form/id shared-form}
-                                     {:form/id wf-form}
-                                     {:license/id shared-license}}
-               {:catalogue-item/id cat-1} #{{:resource/id res-1}
-                                            {:form/id cat-form}
-                                            {:workflow/id wf-1}}
-               {:catalogue-item/id cat-2} #{{:resource/id res-1}
-                                            {:form/id shared-form}
-                                            {:workflow/id wf-2}}}
+              {{:resource/id res-1} #{{:license/id shared-license :archived false :enabled true}
+                                      {:license/id shared-resource-license :archived false :enabled true}}
+               {:resource/id res-2} #{{:license/id shared-license :archived false :enabled true}
+                                      {:license/id shared-resource-license :archived false :enabled true}
+                                      {:license/id resource-license :archived false :enabled true}}
+               {:workflow/id wf-1} #{{:form/id shared-form :archived false :enabled true}}
+               {:workflow/id wf-2} #{{:form/id shared-form :archived false :enabled true}
+                                     {:form/id wf-form :archived false :enabled true}
+                                     {:license/id shared-license :archived false :enabled true}}
+               {:catalogue-item/id cat-1} #{{:resource/id res-1 :archived false :enabled true}
+                                            {:form/id cat-form :archived false :enabled true}
+                                            {:workflow/id wf-1 :archived false :enabled true}}
+               {:catalogue-item/id cat-2} #{{:resource/id res-1 :archived false :enabled true}
+                                            {:form/id shared-form :archived false :enabled true}
+                                            {:workflow/id wf-2 :archived false :enabled true}}}
               :reverse-dependencies
-              {{:license/id shared-license} #{{:resource/id res-1}
-                                              {:resource/id res-2}
-                                              {:workflow/id wf-2}}
-               {:license/id shared-resource-license} #{{:resource/id res-1}
-                                                       {:resource/id res-2}}
-               {:license/id resource-license} #{{:resource/id res-2}}
-               {:resource/id res-1} #{{:catalogue-item/id cat-1}
-                                      {:catalogue-item/id cat-2}}
-               {:form/id shared-form} #{{:workflow/id wf-1}
-                                        {:workflow/id wf-2}
-                                        {:catalogue-item/id cat-2}}
-               {:form/id cat-form} #{{:catalogue-item/id cat-1}}
-               {:form/id wf-form} #{{:workflow/id wf-2}}
-               {:workflow/id wf-1} #{{:catalogue-item/id cat-1}}
-               {:workflow/id wf-2} #{{:catalogue-item/id cat-2}}}}
+              {{:license/id shared-license} #{{:resource/id res-1 :archived false :enabled true}
+                                              {:resource/id res-2 :archived false :enabled true}
+                                              {:workflow/id wf-2 :archived false :enabled true}}
+               {:license/id shared-resource-license} #{{:resource/id res-1 :archived false :enabled true}
+                                                       {:resource/id res-2 :archived false :enabled true}}
+               {:license/id resource-license} #{{:resource/id res-2 :archived false :enabled true}}
+               {:resource/id res-1} #{{:catalogue-item/id cat-1 :archived false :enabled true}
+                                      {:catalogue-item/id cat-2 :archived false :enabled true}}
+               {:form/id shared-form} #{{:workflow/id wf-1 :archived false :enabled true}
+                                        {:workflow/id wf-2 :archived false :enabled true}
+                                        {:catalogue-item/id cat-2 :archived false :enabled true}}
+               {:form/id cat-form} #{{:catalogue-item/id cat-1 :archived false :enabled true}}
+               {:form/id wf-form} #{{:workflow/id wf-2 :archived false :enabled true}}
+               {:workflow/id wf-1} #{{:catalogue-item/id cat-1 :archived false :enabled true}}
+               {:workflow/id wf-2} #{{:catalogue-item/id cat-2 :archived false :enabled true}}}}
              (dependencies/dependencies))))
 
     (testing "enrich-dependency"
