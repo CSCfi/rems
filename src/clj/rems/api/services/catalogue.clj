@@ -14,6 +14,7 @@
     {:form (form/get-form-template formid)
      :resource (resource/get-resource resource-id)
      :workflow (workflow/get-workflow wfid)
+     ;; TODO: no direct dependency from catalogue item to license!
      :licenses (licenses/get-licenses {:wfid wfid
                                        :items [id]})}))
 
