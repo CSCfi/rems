@@ -32,5 +32,6 @@
    :reverse-dependencies
    (map-vals (comp set (partial map :from)) (group-by :to lst))})
 
+;; TODO memoize
 (defn dependencies []
   (list-to-maps (list-dependencies)))
