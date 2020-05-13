@@ -587,6 +587,15 @@
                                                    {:form form-id2 :field "req2" :value "req"}
                                                    {:form form-id2 :field "optionlist" :value "Option2"}]}))))
 
+    (testing "set non-existing value of option list fails"
+      (is (= {:success false}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "optionlist" :value "foobar"}]}))))
     (testing "can submit with required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
