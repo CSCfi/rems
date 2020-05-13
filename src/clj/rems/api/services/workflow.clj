@@ -1,5 +1,6 @@
 (ns rems.api.services.workflow
-  (:require [rems.api.services.util :as util]
+  (:require [rems.api.services.dependencies :as dependencies]
+            [rems.api.services.util :as util]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
@@ -43,47 +44,28 @@
   (applications/reload-cache!)
   {:success true})
 
+(defn get-workflow [id]
+  (workflow/get-workflow id))
+
+(defn get-workflows [filters]
+  (workflow/get-workflows filters))
+
 (defn set-workflow-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
   (db/set-workflow-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-workflow-archived! [{:keys [id archived]}]
-  (let [workflow (workflow/get-workflow id)
-        archived-licenses (seq (filter :archived (:licenses workflow)))
-        archived-forms (->> (get-in workflow [:workflow :forms])
-                            (map (comp form/get-form-template :form/id))
-                            (filter :archived)
-                            (map #(select-keys % [:form/id :form/title]))
-                            seq)
-        catalogue-items (->> (catalogue/get-localized-catalogue-items {:workflow id
-                                                       :archived false})
-                             (map #(select-keys % [:id :title :localizations])))]
-    (util/check-allowed-organization! (:organization workflow))
-    (let [errors (seq
-                  (concat
-                   (when (and archived (seq catalogue-items))
-                     [{:type :t.administration.errors/workflow-in-use
-                       :catalogue-items catalogue-items}])
-                   (when (and (not archived) (seq archived-licenses))
-                     [{:type :t.administration.errors/license-archived
-                       :licenses archived-licenses}])
-                   (when (and (not archived) (seq archived-forms))
-                     [{:type :t.administration.errors/form-archived
-                       :forms archived-forms}])))]
-      (if errors
-        {:success false
-         :errors errors}
-        (do
-          (db/set-workflow-archived! {:id id
-                                      :archived archived})
-          {:success true})))))
-
-(defn get-workflow [id]
-  (workflow/get-workflow id))
-
-(defn get-workflows [filters]
-  (workflow/get-workflows filters))
+  (util/check-allowed-organization! (:organization (get-workflow id)))
+  (if-let [errors (if archived
+                    (dependencies/archive-errors :t.administration.errors/workflow-in-use {:workflow/id id})
+                    (dependencies/unarchive-errors {:workflow/id id}))]
+    {:success false
+     :errors errors}
+    (do
+      (db/set-workflow-archived! {:id id
+                                  :archived archived})
+      {:success true})))
 
 (defn get-available-actors [] (users/get-users))
 
