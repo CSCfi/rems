@@ -2,6 +2,7 @@
   "Tracking dependencies between catalogue items, resources, forms, workflows and licenses."
   (:require [medley.core :refer [map-vals]]
             [rems.db.catalogue :as catalogue]
+            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
@@ -35,3 +36,12 @@
 ;; TODO memoize
 (defn dependencies []
   (list-to-maps (list-dependencies)))
+
+(defn enrich-dependency [dep]
+  (cond
+    (:license/id dep) (licenses/get-license (:license/id dep))
+    (:resource/id dep) (resource/get-resource (:resource/id dep))
+    (:workflow/id dep) (workflow/get-workflow (:workflow/id dep))
+    (:catalogue-item/id dep) (catalogue/get-localized-catalogue-item (:catalogue-item/id dep))
+    (:form/id dep) (form/get-form-template (:form/id dep))
+    true (assert false dep)))
