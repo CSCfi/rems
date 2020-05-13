@@ -450,6 +450,7 @@
                         :resid (str "browser.testing.resource/" (btu/get-seed)))
     (create-license)
     (create-resource)
-    (testing "create form") ; TODO
-    (testing "create workflow") ; TODO
-    (testing "create catalogue item"))) ; TODO
+    ; (testing "create form") ; TODO
+    ; (testing "create workflow") ; TODO
+    ; (testing "create catalogue item")
+    )) ; TODO

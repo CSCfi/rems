@@ -66,7 +66,8 @@
                [:<> [nav-link "/" (text :t.navigation/home) :exact] 
                     [nav-link "/catalogue" (text :t.navigation/catalogue)]])
               (when (roles/show-applications? roles)
-                [nav-link "/applications" (text :t.navigation/applications)])
+                [:<> [nav-link "/applications" (text :t.navigation/applications)] 
+                    [nav-link "/catalogue" (text :t.navigation/catalogue)]])
               (when (roles/show-reviews? roles)
                 [nav-link "/actions" (text :t.navigation/actions)])
               (when (roles/show-admin-pages? roles)

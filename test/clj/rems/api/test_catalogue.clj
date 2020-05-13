@@ -23,10 +23,11 @@
     (let [response (-> (request :get (str "/api/catalogue"))
                        handler)
           body (read-body response)]
-      (is (response-is-unauthorized? response))
-      (is (= "unauthorized" body))))
+      (is (response-is-forbidden? response))
+      (is (= "forbidden" body))
+      ))
   (testing "listing with wrong API-Key"
-    (is (= "unauthorized"
+    (is (= "forbidden"
            (-> (request :get (str "/api/catalogue"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                handler

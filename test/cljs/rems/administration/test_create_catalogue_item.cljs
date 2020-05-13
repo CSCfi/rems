@@ -24,6 +24,8 @@
               :localizations {:en {:title "en title"
                                    :infourl "hello"}
                               :fi {:title "fi title"
+                                   :infourl nil}
+                              :sv {:title "sv title"
                                    :infourl nil}}}
              (build-request form languages))))
 
@@ -31,6 +33,8 @@
       (is (nil? (build-request (assoc-in form [:title :en] "")
                                languages)))
       (is (nil? (build-request (assoc-in form [:title :fi] "")
+                               languages)))
+      (is (nil? (build-request (assoc-in form [:title :sv] "")
                                languages))))
 
     (testing "missing organization"
