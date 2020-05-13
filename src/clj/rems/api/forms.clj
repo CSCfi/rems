@@ -1,9 +1,9 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.services.form :as form]
             [rems.api.services.util :as services-util]
             [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate SuccessResponse]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
-            [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))

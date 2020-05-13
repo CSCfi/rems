@@ -10,8 +10,7 @@
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
-            [rems.standalone]
-            [rems.browser-test-util :as btu])
+            [rems.standalone])
   (:import (java.net SocketException)))
 
 ;;; test setup

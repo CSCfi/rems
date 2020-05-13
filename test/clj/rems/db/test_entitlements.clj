@@ -28,10 +28,12 @@
 
 (defn run-with-server
   [endpoint-spec callback]
-  (with-open [server (stub/start! {"/entitlements" endpoint-spec
+  (with-open [server (stub/start! {"/add" endpoint-spec
+                                   "/remove" endpoint-spec
                                    "/ga4gh" endpoint-spec})]
     (with-redefs [rems.config/env (assoc rems.config/env
-                                         :entitlements-target {:add (str (:uri server) "/entitlements")
+                                         :entitlements-target {:add (str (:uri server) "/add")
+                                                               :remove (str (:uri server) "/remove")
                                                                :ga4gh (str (:uri server) "/ga4gh")})]
       (callback server))))
 
@@ -72,17 +74,6 @@
       (is (= "failed: exception" (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))))
   (testing "no server configured"
     (is (nil? (#'entitlements/post-entitlements! {:action :add :entitlements +entitlements+})))))
-
-(defmacro with-stub-server [sym & body]  ;;TODO: use only this or run-with-server, not both!
-  `(let [~sym (stub/start! {"/add" {:status 200}
-                            "/remove" {:status 200}
-                            "/ga4gh" {:status 200}
-                            :default {:status 500 :body "Invalid Route" }})]
-     (with-redefs [rems.config/env (assoc rems.config/env
-                                          :entitlements-target {:add (str (:uri ~sym) "/add")
-                                                                :remove (str (:uri ~sym) "/remove")
-                                                                :ga4gh (str (:uri ~sym) "/ga4gh")})]
-       ~@body)))
 
 (defn- get-requests [server]
   (doall
@@ -127,131 +118,143 @@
 
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
       (testing "submitted application should not yet cause entitlements"
-        (with-stub-server server
-          (test-data/command! {:type :application.command/accept-licenses
-                               :application-id app-id
-                               :accepted-licenses [lic-id1 lic-id2]
-                               :actor applicant})
-          (test-data/command! {:type :application.command/submit
-                               :application-id app-id
-                               :actor applicant})
-          (test-data/command! {:type :application.command/add-member
-                               :application-id app-id
-                               :actor admin
-                               :member {:userid member}})
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (test-data/command! {:type :application.command/accept-licenses
+                                :application-id app-id
+                                :accepted-licenses [lic-id1 lic-id2]
+                                :actor applicant})
+           (test-data/command! {:type :application.command/submit
+                                :application-id app-id
+                                :actor applicant})
+           (test-data/command! {:type :application.command/add-member
+                                :application-id app-id
+                                :actor admin
+                                :member {:userid member}})
 
-          (entitlements/process-outbox!)
+           (entitlements/process-outbox!)
 
-          (is (empty? (db/get-entitlements {:application app-id})))
-          (is (empty? (stub/recorded-requests server))))
+           (is (empty? (db/get-entitlements {:application app-id})))
+           (is (empty? (stub/recorded-requests server)))))
 
         (testing "approved application, licenses accepted by one user generates entitlements for that user"
-          (with-stub-server server
-            (test-data/command! {:type :application.command/approve
-                                 :application-id app-id
-                                 :actor admin
-                                 :comment ""})
-            (test-data/command! {:type :application.command/accept-licenses
-                                 :application-id app-id
-                                 :actor member
-                                 :accepted-licenses [lic-id1]}) ; only accept some licenses
-            (is (= {applicant #{lic-id1 lic-id2}
-                    member #{lic-id1}}
-                   (:application/accepted-licenses (applications/get-application app-id))))
+          (run-with-server
+           {:status 200}
+           (fn [server]
+             (test-data/command! {:type :application.command/approve
+                                  :application-id app-id
+                                  :actor admin
+                                  :comment ""})
+             (test-data/command! {:type :application.command/accept-licenses
+                                  :application-id app-id
+                                  :actor member
+                                  :accepted-licenses [lic-id1]}) ; only accept some licenses
+             (is (= {applicant #{lic-id1 lic-id2}
+                     member #{lic-id1}}
+                    (:application/accepted-licenses (applications/get-application app-id))))
 
-            (entitlements/process-outbox!)
+             (entitlements/process-outbox!)
 
-            (testing "db"
-              (is (= #{[applicant "resource1"] [applicant "resource2"]}
-                     (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
-            (testing "POST"
-              (let [add-paths (requests-for-paths server "/add")
-                    ga4gh-paths (requests-for-paths server "/ga4gh")]
-                (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
-                                {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}}
-                       (set add-paths)))
-                (is (= 2 (count ga4gh-paths)))
-                (is (every? is-valid-ga4gh? ga4gh-paths)))))))
+             (testing "entitlements exist in db"
+               (is (= #{[applicant "resource1"] [applicant "resource2"]}
+                      (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
+             (testing "entitlements were POSTed to callbacks"
+               (let [add-paths (requests-for-paths server "/add")
+                     ga4gh-paths (requests-for-paths server "/ga4gh")]
+                 (is (= #{{:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource1" :user "bob"}]}
+                          {:path "/add" :body [{:application app-id :mail "b@o.b" :resource "resource2" :user "bob"}]}}
+                        (set add-paths)))
+                 (is (= 2 (count ga4gh-paths)))
+                 (is (every? is-valid-ga4gh? ga4gh-paths))))))))
 
       (testing "approved application, more accepted licenses generates more entitlements"
-        (with-stub-server server
-          (test-data/command! {:type :application.command/accept-licenses
-                               :application-id app-id
-                               :actor member
-                               :accepted-licenses [lic-id1 lic-id2]}) ; now accept all licenses
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (test-data/command! {:type :application.command/accept-licenses
+                                :application-id app-id
+                                :actor member
+                                :accepted-licenses [lic-id1 lic-id2]}) ; now accept all licenses
 
-          (entitlements/process-outbox!)
+           (entitlements/process-outbox!)
 
-          (testing "db"
-            (is (= #{[applicant "resource1"] [applicant "resource2"]
-                     [member "resource1"] [member "resource2"]}
-                   (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
-          (testing "POST"
-            (let [add-paths (requests-for-paths server "/add")
-                  ga4gh-paths (requests-for-paths server "/ga4gh")]
-              (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                       {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
-                     (set add-paths)))
-              (is (= 2 (count ga4gh-paths)))
-              (is (every? is-valid-ga4gh? ga4gh-paths))))))
+           (testing "all entitlements exist in db"
+             (is (= #{[applicant "resource1"] [applicant "resource2"]
+                      [member "resource1"] [member "resource2"]}
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id}))))))
+           (testing "new entitlements were POSTed to callbacks"
+             (let [add-paths (requests-for-paths server "/add")
+                   ga4gh-paths (requests-for-paths server "/ga4gh")]
+               (is (= #{{:path "/add" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                        {:path "/add" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
+                      (set add-paths)))
+               (is (= 2 (count ga4gh-paths)))
+               (is (every? is-valid-ga4gh? ga4gh-paths)))))))
 
       (testing "removing a member ends entitlements"
-        (with-stub-server server
-          (test-data/command! {:type :application.command/remove-member
-                               :application-id app-id
-                               :actor admin
-                               :member {:userid member}
-                               :comment "Left team"})
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (test-data/command! {:type :application.command/remove-member
+                                :application-id app-id
+                                :actor admin
+                                :member {:userid member}
+                                :comment "Left team"})
 
-          (entitlements/process-outbox!)
+           (entitlements/process-outbox!)
 
-          (testing "db"
-            (is (= #{[applicant "resource1"] [applicant "resource2"]}
-                   (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
-          (testing "POST"
-            (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
-                     {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
-                   (set (get-requests server)))))))
+           (testing "entitlements removed from db"
+             (is (= #{[applicant "resource1"] [applicant "resource2"]}
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
+           (testing "removed entitlements were POSTed to callback"
+             (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "elsa" :mail "e.l@s.a"}]}
+                      {:path "/remove" :body [{:resource "resource2" :application app-id :user "elsa" :mail "e.l@s.a"}]}}
+                    (set (get-requests server))))))))
 
       (testing "changing resources changes entitlements"
-        (with-stub-server server
-          (test-data/command! {:type :application.command/change-resources
-                               :application-id app-id
-                               :actor admin
-                               :catalogue-item-ids [item1 item3]
-                               :comment "Removed second resource, added third resource"})
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (test-data/command! {:type :application.command/change-resources
+                                :application-id app-id
+                                :actor admin
+                                :catalogue-item-ids [item1 item3]
+                                :comment "Removed second resource, added third resource"})
 
-          (entitlements/process-outbox!)
+           (entitlements/process-outbox!)
 
-          (testing "db"
-            (is (= #{[applicant "resource1"] [applicant "resource3"]}
-                   (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
-          (testing "POST"
-            (let [add-paths (requests-for-paths server "/add")
-                  remove-paths (requests-for-paths server "/remove")
-                  ga4gh-paths (requests-for-paths server "/ga4gh")]
-              (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
-                     (set add-paths)))
-              (is (= #{{:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}}
-                     (set remove-paths)))
-              (is (= 1 (count ga4gh-paths)))
-              (is (every? is-valid-ga4gh? ga4gh-paths))))))
+           (testing "entitlements changed in db"
+             (is (= #{[applicant "resource1"] [applicant "resource3"]}
+                    (set (map (juxt :userid :resid) (db/get-entitlements {:application app-id :is-active? true}))))))
+           (testing "entitlement changes POSTed to callbacks"
+             (let [add-paths (requests-for-paths server "/add")
+                   remove-paths (requests-for-paths server "/remove")
+                   ga4gh-paths (requests-for-paths server "/ga4gh")]
+               (is (= #{{:path "/add" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
+                      (set add-paths)))
+               (is (= #{{:path "/remove" :body [{:resource "resource2" :application app-id :user "bob" :mail "b@o.b"}]}}
+                      (set remove-paths)))
+               (is (= 1 (count ga4gh-paths)))
+               (is (every? is-valid-ga4gh? ga4gh-paths)))))))
 
       (testing "closed application should end entitlements"
-        (with-stub-server server
-          (test-data/command! {:type :application.command/close
-                               :application-id app-id
-                               :actor admin
-                               :comment "Finished"})
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (test-data/command! {:type :application.command/close
+                                :application-id app-id
+                                :actor admin
+                                :comment "Finished"})
 
-          (entitlements/process-outbox!)
+           (entitlements/process-outbox!)
 
-          (testing "db"
-            (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
-          (testing "POST"
-            (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
-                     {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
-                   (set (get-requests server))))))))
+           (testing "entitlements ended in db"
+             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
+           (testing "ended entitlements POSTed to callback"
+             (is (= #{{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}
+                      {:path "/remove" :body [{:resource "resource3" :application app-id :user "bob" :mail "b@o.b"}]}}
+                    (set (get-requests server)))))))))
 
     (let [app-id (test-data/create-application! {:actor applicant :catalogue-item-ids [item1]})]
       (test-data/command! {:type :application.command/accept-licenses
@@ -269,16 +272,18 @@
       (entitlements/process-outbox!)
 
       (testing "revoked application should end entitlements"
-        (with-stub-server server
-          (test-data/command! {:type :application.command/revoke
-                               :application-id app-id
-                               :actor admin
-                               :comment "Banned"})
+        (run-with-server
+         {:status 200}
+         (fn [server]
+           (test-data/command! {:type :application.command/revoke
+                                :application-id app-id
+                                :actor admin
+                                :comment "Banned"})
 
-          (entitlements/process-outbox!)
+           (entitlements/process-outbox!)
 
-          (testing "db"
-            (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
-          (testing "POST"
-            (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
-                   (get-requests server)))))))))
+           (testing "entitlements ended in db"
+             (is (= [] (db/get-entitlements {:application app-id :is-active? true}))))
+           (testing "ended entitlements POSTed to callback"
+             (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b"}]}]
+                    (get-requests server))))))))))
