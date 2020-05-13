@@ -23,7 +23,7 @@
           :let [this {:resource/id (:id res)}]
           license (:licenses res)]
       {:from this :to {:license/id (:id license)}})
-    (for [cat (catalogue/get-localized-catalogue-items {})]
+    (for [cat (catalogue/get-localized-catalogue-items {:archived true})]
       (let [this {:catalogue-item/id (:id cat)}]
         (list {:from this :to {:form/id (:formid cat)}}
               {:from this :to {:resource/id (:resource-id cat)}}
