@@ -112,13 +112,11 @@
       (let [resp (form-archived! form-id true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations {}}]
-                 :workflows nil}]
+                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
                (:errors resp))))
       (let [resp (form-archived! wf-form-id true)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use"
-                 :catalogue-items nil
                  :workflows [{:id workflow-id :title "default workflow"}]}]
                (:errors resp)))))
 

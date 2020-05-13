@@ -1,6 +1,7 @@
 (ns rems.api.services.form
   (:require [clojure.test :refer :all]
             [medley.core :refer [filter-vals]]
+            [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
             [rems.api.services.workflow :as workflow]
             [rems.api.schema :refer [FieldTemplate]]
@@ -133,9 +134,11 @@
 
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
-  (let [catalogue-items (catalogue-items-for-form id false)]
-    (or (and archived (form-in-use-error id false))
-        (do
-          (db/set-form-template-archived! {:id id
-                                           :archived archived})
-          {:success true}))))
+  (if-let [errors (when archived
+                    (dependencies/archive-errors :t.administration.errors/form-in-use {:form/id id}))]
+    {:success false
+     :errors errors}
+    (do
+      (db/set-form-template-archived! {:id id
+                                       :archived archived})
+      {:success true})))
