@@ -1,5 +1,6 @@
 (ns rems.api.services.catalogue
-  (:require [rems.api.services.util :as util]
+  (:require [rems.api.services.dependencies :as dependencies]
+            [rems.api.services.util :as util]
             [rems.common.util :refer [index-by]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -8,15 +9,6 @@
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
-
-(defn- dependencies-for-catalogue-item [id]
-  (let [{:keys [formid wfid resource-id]} (catalogue/get-localized-catalogue-item id)]
-    {:form (form/get-form-template formid)
-     :resource (resource/get-resource resource-id)
-     :workflow (workflow/get-workflow wfid)
-     ;; TODO: no direct dependency from catalogue item to license!
-     :licenses (licenses/get-licenses {:wfid wfid
-                                       :items [id]})}))
 
 (defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (util/check-allowed-organization! organization)
@@ -63,26 +55,13 @@
 
 (defn set-catalogue-item-archived! [{:keys [id archived]}]
   (check-allowed-to-edit! id)
-  (let [{:keys [form resource workflow licenses]} (dependencies-for-catalogue-item id)
-        archived-licenses (filter :archived licenses)
-        errors
-        (remove
-         nil?
-         [(when (:archived form)
-            {:type :t.administration.errors/form-archived :forms [form]})
-          (when (:archived resource)
-            {:type :t.administration.errors/resource-archived :resources [resource]})
-          (when (:archived workflow)
-            {:type :t.administration.errors/workflow-archived :workflows [workflow]})
-          (when (not (empty? archived-licenses))
-            {:type :t.administration.errors/license-archived :licenses archived-licenses})])]
-    (if (and (not archived)
-             (not (empty? errors)))
-      {:success false
-       :errors errors}
-      (do (db/set-catalogue-item-archived! {:id id
-                                            :archived archived})
-          {:success true}))))
+  (if-let [errors (when-not archived
+                    (dependencies/unarchive-errors {:catalogue-item/id id}))]
+    {:success false
+     :errors errors}
+    (do (db/set-catalogue-item-archived! {:id id
+                                          :archived archived})
+        {:success true})))
 
 (defn change-form!
   "Changes the form of a catalogue item.

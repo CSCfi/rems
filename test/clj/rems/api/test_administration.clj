@@ -160,10 +160,10 @@
       (let [resp (catalogue-item-archived! false)]
         (is (false? (:success resp)))
         ;; TODO the -archived errors contain too many details
-        (is (= ["t.administration.errors/form-archived"
-                "t.administration.errors/resource-archived"
-                "t.administration.errors/workflow-archived"]
-               (map :type (:errors resp))))))
+        (is (= #{"t.administration.errors/form-archived"
+                 "t.administration.errors/resource-archived"
+                 "t.administration.errors/workflow-archived"}
+               (set (map :type (:errors resp)))))))
 
     (testing "cannot unarchive a workflow with a form that's archived"
       (let [resp (workflow-archived! false)]
