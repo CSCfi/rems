@@ -1,6 +1,7 @@
 (ns rems.api.services.licenses
   "Serving licenses for API."
-  (:require [rems.api.services.util :as util]
+  (:require [rems.api.services.dependencies :as dependencies]
+            [rems.api.services.util :as util]
             [rems.common.util :refer [distinct-by]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
@@ -57,22 +58,6 @@
         (when-let [attachment (get-license-attachment attachment-id)]
           attachment)))))
 
-(defn- get-license-usage [id]
-  ;; these could be db joins
-  (let [resources (->> (db/get-resources-for-license {:id id})
-                       (map :resid)
-                       (map resource/get-resource)
-                       (remove :archived)
-                       (map #(select-keys % [:id :resid])))
-        workflows (->> (db/get-workflows-for-license {:id id})
-                       (map :wfid)
-                       (map workflow/get-workflow)
-                       (remove :archived)
-                       (map #(select-keys % [:id :title])))]
-    (when (or (seq resources) (seq workflows))
-      {:resources resources
-       :workflows workflows})))
-
 (defn set-license-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (licenses/get-license id)))
   (db/set-license-enabled! {:id id :enabled enabled})
@@ -80,15 +65,14 @@
 
 (defn set-license-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (licenses/get-license id)))
-  (let [usage (get-license-usage id)]
-    (if (and archived usage)
-      {:success false
-       :errors [(merge {:type :t.administration.errors/license-in-use}
-                       usage)]}
-      (do
-        (db/set-license-archived! {:id id
-                                   :archived archived})
-        {:success true}))))
+  (if-let [errors (and archived
+                       (dependencies/archive-errors :t.administration.errors/license-in-use {:license/id id}))]
+    {:success false
+     :errors errors}
+    (do
+      (db/set-license-archived! {:id id
+                                 :archived archived})
+      {:success true})))
 
 (defn get-license
   "Get a single license by id"
