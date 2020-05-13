@@ -57,3 +57,56 @@
   (-> (list-dependencies)
       add-status-bits-to-list
       list-to-maps))
+
+;; TODO change format of errors so we can get rid of this conversion
+(defn- format-deps [deps]
+  (apply merge-with concat
+         (for [dep deps]
+           (cond (:license/id dep)
+                 {:licenses [(:license/id dep)]}
+
+                 (:resource/id dep)
+                 {:resources [(:resource/id dep)]}
+
+                 (:workflow/id dep)
+                 {:workflows [(:workflow/id dep)]}
+
+                 (:catalogue-item/id dep)
+                 {:catalogue-items [(select-keys (enrich-dependency dep) [:id :localizations])]}
+
+                 (:form/id dep)
+                 {:forms [(select-keys (enrich-dependency dep) [:form/id :form/title])]}))))
+
+(defn archive-errors
+  "Return errors if given item is depended on by non-archived items"
+  [error-key item]
+  (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
+                        (remove :archived)
+                        seq)]
+    [(merge {:type error-key}
+            (format-deps users))]))
+
+(defn unarchive-errors
+  "Return errors if given item depends on archived items"
+  [item]
+  (when-let [used (->> (get-in (dependencies) [:dependencies item])
+                       (filter :archived)
+                       seq)]
+    (let [{:keys [licenses resources workflows catalogue-items forms]} (format-deps used)]
+      (concat
+       (when licenses
+         [{:type :t.administration.errors/license-archived
+           :licenses licenses}])
+       (when resources
+         [{:type :t.administration.errors/resource-archived
+           :resources resources}])
+       (when workflows
+         [{:type :t.administration.errors/workflow-archived
+           :workflows resources}])
+       (when forms
+         [{:type :t.administration.errors/form-archived
+           :forms forms}])
+       ;; case not possible:
+       (when catalogue-items
+         [{:type :catalogue-items-archived
+           :catalogue-items catalogue-items}])))))
