@@ -63,13 +63,13 @@
   (apply merge-with concat
          (for [dep deps]
            (cond (:license/id dep)
-                 {:licenses [(:license/id dep)]}
+                 {:licenses [(select-keys (enrich-dependency dep) [:id :localizations])]}
 
                  (:resource/id dep)
-                 {:resources [(:resource/id dep)]}
+                 {:resources [(select-keys (enrich-dependency dep) [:id :resid])]}
 
                  (:workflow/id dep)
-                 {:workflows [(:workflow/id dep)]}
+                 {:workflows [(select-keys (enrich-dependency dep) [:id :title])]}
 
                  (:catalogue-item/id dep)
                  {:catalogue-items [(select-keys (enrich-dependency dep) [:id :localizations])]}
@@ -102,7 +102,7 @@
            :resources resources}])
        (when workflows
          [{:type :t.administration.errors/workflow-archived
-           :workflows resources}])
+           :workflows workflows}])
        (when forms
          [{:type :t.administration.errors/form-archived
            :forms forms}])
