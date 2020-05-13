@@ -43,9 +43,9 @@
                                       api-key user-id)
 
         resource-enabled! #(api-call :put "/api/resources/enabled"
-                                      {:id resource-id
-                                       :enabled %}
-                                      api-key user-id)
+                                     {:id resource-id
+                                      :enabled %}
+                                     api-key user-id)
 
         catalogue-item-archived! #(api-call :put "/api/catalogue-items/archived"
                                             {:id catalogue-id
