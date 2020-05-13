@@ -210,8 +210,7 @@
         (testing "Form is non-editable after in use by a catalogue item"
           (is (= {:success false
                   :errors [{:type "t.administration.errors/form-in-use"
-                            :catalogue-items [{:id cat-id :localizations {}}]
-                            :workflows nil}]}
+                            :catalogue-items [{:id cat-id :localizations {}}]}]}
                  (api-call :get (str "/api/forms/" form-id "/editable") nil
                            api-key user-id)))
           (testing "even if catalogue item is archived & disabled"
@@ -220,11 +219,10 @@
             (api-call :put "/api/catalogue-items/enabled" {:id cat-id :enabled false}
                       api-key user-id)
             (is (= {:success false
-                  :errors [{:type "t.administration.errors/form-in-use"
-                            :catalogue-items [{:id cat-id :localizations {}}]
-                            :workflows nil}]}
-                 (api-call :get (str "/api/forms/" form-id "/editable") nil
-                           api-key user-id)))))))
+                    :errors [{:type "t.administration.errors/form-in-use"
+                              :catalogue-items [{:id cat-id :localizations {}}]}]}
+                   (api-call :get (str "/api/forms/" form-id "/editable") nil
+                             api-key user-id)))))))
     (let [form-id (:id (api-call :post "/api/forms/create"
                                  {:form/organization "organization1"
                                   :form/title "form editable test 2"
@@ -238,7 +236,6 @@
                                                 :title "wf with form"})]
           (is (= {:success false
                   :errors [{:type "t.administration.errors/form-in-use"
-                            :catalogue-items nil
                             :workflows [{:id wfid :title "wf with form"}]}]}
                  (api-call :get (str "/api/forms/" form-id "/editable") nil
                            api-key user-id)))
@@ -249,7 +246,6 @@
                       api-key user-id)
             (is (= {:success false
                     :errors [{:type "t.administration.errors/form-in-use"
-                              :catalogue-items nil
                               :workflows [{:id wfid :title "wf with form"}]}]}
                    (api-call :get (str "/api/forms/" form-id "/editable") nil
                              api-key user-id)))))))))

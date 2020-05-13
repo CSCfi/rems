@@ -14,28 +14,13 @@
             [schema.core :as s])
   (:import rems.InvalidRequestException))
 
-(defn- catalogue-items-for-form [id include-archived]
-  (->> (catalogue/get-localized-catalogue-items {:form id :archived include-archived})
-       (map #(select-keys % [:id :title :localizations]))))
-
-(defn- workflows-for-form [id include-archived]
-  ;; TODO optimize?
-  (->> (workflow/get-workflows (when-not include-archived
-                                 {:archived false}))
-       (filter #(contains? (set (get-in % [:workflow :forms])) {:form/id id}))
-       (map #(select-keys % [:id :title]))))
-
-(defn- form-in-use-error [form-id include-archived]
-  (let [catalogue-items (seq (catalogue-items-for-form form-id include-archived))
-        workflows (seq (workflows-for-form form-id include-archived))]
-    (when (or catalogue-items workflows)
-      {:success false
-       :errors [{:type :t.administration.errors/form-in-use
-                 :catalogue-items catalogue-items
-                 :workflows workflows}]})))
+(defn- form-in-use-error [form-id]
+  (when-let [errors (dependencies/in-use-errors :t.administration.errors/form-in-use {:form/id form-id})]
+    {:success false
+     :errors errors}))
 
 (defn form-editable [form-id]
-  (or (form-in-use-error form-id true)
+  (or (form-in-use-error form-id)
       {:success true}))
 
 (defn validate-given-ids
@@ -119,7 +104,7 @@
     ;; need to check both previous and new organization
     (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
-    (or (form-in-use-error form-id true)
+    (or (form-in-use-error form-id)
         (do (db/edit-form-template! {:id form-id
                                      :organization organization
                                      :title (:form/title form)

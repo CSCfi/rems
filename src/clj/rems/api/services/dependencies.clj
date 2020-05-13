@@ -86,6 +86,13 @@
     [(merge {:type error-key}
             (format-deps users))]))
 
+(defn in-use-errors
+  "Returns errors if given item is depended on at all"
+  [error-key item]
+  (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
+    [(merge {:type error-key}
+            (format-deps users))]))
+
 (defn unarchive-errors
   "Return errors if given item depends on archived items"
   [item]
