@@ -99,47 +99,42 @@
       (is (:success (resource-enabled! false))))
 
     (testing "can't archive resource if it is part of an active catalogue item"
-      (let [resp (resource-archived! true)]
-        (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/resource-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
-               (:errors resp)))))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/resource-in-use"
+                        :catalogue-items [{:id catalogue-id :localizations {}}]}]}
+             (resource-archived! true))))
 
     (testing "can disable a form"
       (is (:success (form-enabled! form-id false))))
 
     (testing "can't archive a form that's in use"
-      (let [resp (form-archived! form-id true)]
-        (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/form-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
-               (:errors resp))))
-      (let [resp (form-archived! wf-form-id true)]
-        (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/form-in-use"
-                 :workflows [{:id workflow-id :title "default workflow"}]}]
-               (:errors resp)))))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/form-in-use"
+                        :catalogue-items [{:id catalogue-id :localizations {}}]}]}
+             (form-archived! form-id true)))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/form-in-use"
+                        :workflows [{:id workflow-id :title "default workflow"}]}]}
+             (form-archived! wf-form-id true))))
 
     (testing "can disable a workflow"
       (is (:success (workflow-enabled! false))))
 
     (testing "can't archive a workflow that's in use"
-      (let [resp (workflow-archived! true)]
-        (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/workflow-in-use"
-                 :catalogue-items [{:id catalogue-id :localizations {}}]}]
-               (:errors resp)))))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/workflow-in-use"
+                        :catalogue-items [{:id catalogue-id :localizations {}}]}]}
+             (workflow-archived! true))))
 
     (testing "can disable a license"
       (is (:success (license-enabled! false))))
 
     (testing "can't archive a license that's in use"
-      (let [resp (license-archived! true)]
-        (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/license-in-use"
-                 :resources [{:id resource-id :resid "test"}]
-                 :workflows [{:id workflow-id :title "default workflow"}]}]
-               (:errors resp)))))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/license-in-use"
+                        :resources [{:id resource-id :resid "test"}]
+                        :workflows [{:id workflow-id :title "default workflow"}]}]}
+             (license-archived! true))))
 
     (testing "can archive a catalogue item"
       (is (:success (catalogue-item-archived! true))))
@@ -155,26 +150,26 @@
       (is (:success (form-archived! wf-form-id true))))
 
     (testing "cannot unarchive a catalogue item with dependencies that are archived"
-      (let [resp (catalogue-item-archived! false)]
-        (is (false? (:success resp)))
-        ;; TODO the -archived errors contain too many details
-        (is (= #{"t.administration.errors/form-archived"
-                 "t.administration.errors/resource-archived"
-                 "t.administration.errors/workflow-archived"}
-               (set (map :type (:errors resp)))))))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/resource-archived",
+                        :resources [{:id resource-id, :resid "test"}]}
+                       {:type "t.administration.errors/workflow-archived",
+                        :workflows [{:id workflow-id, :title "default workflow"}]}
+                       {:type "t.administration.errors/form-archived",
+                        :forms [{:form/id form-id, :form/title "form update test"}]}]}
+             (catalogue-item-archived! false))))
 
     (testing "cannot unarchive a workflow with a form that's archived"
-      (let [resp (workflow-archived! false)]
-        (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/form-archived"
-                 :forms [{:form/id wf-form-id :form/title "workflow form update test"}]}]
-               (:errors resp)))))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/form-archived"
+                        :forms [{:form/id wf-form-id :form/title "workflow form update test"}]}]}
+             (workflow-archived! false))))
 
     (testing "can archive a license that's not in use"
       (is (= {:success true} (license-archived! true))))
 
     (testing "cannot unarchive a resource with an archived license"
-      (let [resp (resource-archived! false)]
-        (is (false? (:success resp)))
-        (is (= "t.administration.errors/license-archived"
-               (get-in resp [:errors 0 :type])))))))
+      (is (= {:success false
+              :errors [{:type "t.administration.errors/license-archived"
+                        :licenses [{:id license-id :localizations {}}]}]}
+             (resource-archived! false))))))
