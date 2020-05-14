@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [filter-vals]]
             [rems.api.services.util :as util]
+            [rems.api.services.workflow :as workflow]
             [rems.api.schema :refer [FieldTemplate]]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
@@ -12,18 +13,28 @@
             [schema.core :as s])
   (:import rems.InvalidRequestException))
 
-(defn- catalogue-items-for-form [id]
-  (->> (catalogue/get-localized-catalogue-items {:form id :archived false})
+(defn- catalogue-items-for-form [id include-archived]
+  (->> (catalogue/get-localized-catalogue-items {:form id :archived include-archived})
        (map #(select-keys % [:id :title :localizations]))))
 
-(defn- form-in-use-error [form-id]
-  (let [catalogue-items (catalogue-items-for-form form-id)]
-    (when (seq catalogue-items)
+(defn- workflows-for-form [id include-archived]
+  ;; TODO optimize?
+  (->> (workflow/get-workflows (when-not include-archived
+                                 {:archived false}))
+       (filter #(contains? (set (get-in % [:workflow :forms])) {:form/id id}))
+       (map #(select-keys % [:id :title]))))
+
+(defn- form-in-use-error [form-id include-archived]
+  (let [catalogue-items (seq (catalogue-items-for-form form-id include-archived))
+        workflows (seq (workflows-for-form form-id include-archived))]
+    (when (or catalogue-items workflows)
       {:success false
-       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]})))
+       :errors [{:type :t.administration.errors/form-in-use
+                 :catalogue-items catalogue-items
+                 :workflows workflows}]})))
 
 (defn form-editable [form-id]
-  (or (form-in-use-error form-id)
+  (or (form-in-use-error form-id true)
       {:success true}))
 
 (defn validate-given-ids
@@ -107,7 +118,7 @@
     ;; need to check both previous and new organization
     (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
-    (or (form-in-use-error form-id)
+    (or (form-in-use-error form-id true)
         (do (db/edit-form-template! {:id form-id
                                      :organization organization
                                      :title (:form/title form)
@@ -122,11 +133,9 @@
 
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
-  (let [catalogue-items (catalogue-items-for-form id)]
-    (if (and archived (seq catalogue-items))
-      {:success false
-       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
-      (do
-        (db/set-form-template-archived! {:id id
-                                         :archived archived})
-        {:success true}))))
+  (let [catalogue-items (catalogue-items-for-form id false)]
+    (or (and archived (form-in-use-error id false))
+        (do
+          (db/set-form-template-archived! {:id id
+                                           :archived archived})
+          {:success true}))))

@@ -17,17 +17,19 @@
   (create-users)
 
   (with-user "owner"
-    (testing "default workflow"
+    (testing "default workflow with forms"
       (let [wf-id (test-data/create-workflow! {:organization "org"
                                                :type :workflow/default
                                                :title "the title"
-                                               :handlers ["user1" "user2"]})]
+                                               :handlers ["user1" "user2"]
+                                               :forms [{:form/id 123}]})]
         (is (= {:id wf-id
                 :organization "org"
                 :title "the title"
                 :workflow {:type :workflow/default
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
-                                      {:userid "user2" :name "User 2" :email "user2@example.com"}]}
+                                      {:userid "user2" :name "User 2" :email "user2@example.com"}]
+                           :forms [{:form/id 123}]}
                 :licenses []
                 :owneruserid "owner"
                 :modifieruserid "owner"
@@ -45,7 +47,8 @@
                 :title "the title"
                 :workflow {:type :workflow/decider
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
-                                      {:userid "user2" :name "User 2" :email "user2@example.com"}]}
+                                      {:userid "user2" :name "User 2" :email "user2@example.com"}]
+                           :forms []}
                 :licenses []
                 :owneruserid "owner"
                 :modifieruserid "owner"
@@ -63,7 +66,8 @@
                 :title "the title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
-                                      {:userid "user2" :name "User 2" :email "user2@example.com"}]}
+                                      {:userid "user2" :name "User 2" :email "user2@example.com"}]
+                           :forms []}
                 :licenses []
                 :owneruserid "owner"
                 :modifieruserid "owner"
@@ -85,7 +89,8 @@
         (is (= {:id wf-id
                 :title "changed title"
                 :workflow {:type :workflow/master
-                           :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}]}}
+                           :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}]
+                           :forms []}}
                (-> (workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))
 
@@ -99,7 +104,8 @@
         (is (= {:id wf-id
                 :title "original title"
                 :workflow {:type :workflow/master
-                           :handlers [{:userid "user2" :name "User 2" :email "user2@example.com"}]}}
+                           :handlers [{:userid "user2" :name "User 2" :email "user2@example.com"}]
+                           :forms []}}
                (-> (workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))))
 
