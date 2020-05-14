@@ -33,7 +33,7 @@
     (too-long? field) {:field-id (:field/id field)
                        :type     :t.form.validation/toolong}
     (invalid-option-value? field) {:field-id (:field/id field)
-                                   :type     :t.form.validation/invalid-option}))
+                                   :type     :t.form.validation/invalid-value}))
 
 (defn validate-fields [fields]
   (->> (sort-by :field/id fields)

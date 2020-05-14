@@ -82,7 +82,7 @@
                               :field/value "abcdef"}]))))
 
   (testing "error: field input selected option is invalid"
-    (is (= [{:type :t.form.validation/invalid-option :field-id "1"}]
+    (is (= [{:type :t.form.validation/invalid-value :field-id "1"}]
            (validate-fields [{:field/id       "1"
                               :field/title    {:en "Option list."
                                                :fi "Valintalista."}
