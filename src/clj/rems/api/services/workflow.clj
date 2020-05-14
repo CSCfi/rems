@@ -16,7 +16,7 @@
   (util/check-allowed-organization! organization)
   (let [body {:type type
               :handlers handlers
-              :forms forms} ;; TODO validate forms?
+              :forms forms} ;; TODO missing validation for handlers and forms, see #2182
         id (:id (db/create-workflow! {:organization organization
                                       :owneruserid user-id
                                       :modifieruserid user-id
