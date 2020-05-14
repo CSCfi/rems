@@ -11,13 +11,11 @@
             [rems.api.util :refer [check-roles]]))
 
 (s/defschema GetCatalogueResponse
-  [CatalogueItem]
-)
+  [CatalogueItem])
 
 (def catalogue-api
   (context "/catalogue" []
     :tags ["catalogue"]
-
     (GET "/" []
       :summary "Get the catalogue of items for the UI (does not include archived items)"
       :return GetCatalogueResponse

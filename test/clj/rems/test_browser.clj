@@ -452,5 +452,4 @@
     (create-resource)
     (testing "create form") ; TODO
     (testing "create workflow") ; TODO
-    (testing "create catalogue item")
-    )) ; TODO
+    (testing "create catalogue item"))) ; TODO

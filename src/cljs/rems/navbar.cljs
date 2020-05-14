@@ -98,10 +98,8 @@
      [skip-navigation]
      [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
      [:div.navbar-wrapper.container-fluid
-
       [navbar-normal page-id identity]
-      [navbar-small page-id identity]
-      ]
+      [navbar-small page-id identity]]
      [:div.navbar-bottom-bar]]))
 
 (defn guide []
