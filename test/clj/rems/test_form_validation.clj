@@ -116,6 +116,25 @@
                               :field/visible true
                               :field/value "Option1"}]))))
 
+  (testing "error: field input option can be left empty when optional"
+    (is (= nil
+           (validate-fields [{:field/id       "1"
+                              :field/title    {:en "Option list."
+                                               :fi "Valintalista."}
+                              :field/type     :option
+                              :field/options  [{:key   "Option1"
+                                                :label {:en "First"
+                                                        :fi "Ensimmäinen"}}
+                                               {:key   "Option2"
+                                                :label {:en "Second"
+                                                        :fi "Toinen"}}
+                                               {:key   "Option3"
+                                                :label {:en "Third"
+                                                        :fi "Kolmas "}}]
+                              :field/optional true
+                              :field/visible true
+                              :field/value ""}]))))
+
   (testing "error: field input invalid email address"
     (is (= [{:type :t.form.validation/required :field-id "1"}
             {:type :t.form.validation/invalid-email :field-id "2"}

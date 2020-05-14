@@ -20,7 +20,9 @@
 
 (defn- invalid-option-value? [field]
   (and (= (:field/type field) :option)
-       (not (contains? (set (map :key (:field/options field))) (:field/value field)))))
+       (if (and (:field/optional field) (empty? (:field/value field)))
+         false
+         (not (contains? (set (map :key (:field/options field))) (:field/value field))))))
 
 (defn- validate-field [field]
   (cond
