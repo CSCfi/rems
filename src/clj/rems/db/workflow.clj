@@ -37,7 +37,6 @@
   (-> wf
       (update :workflow #(coerce-workflow-body (json/parse-string %)))
       (assoc :licenses (get-workflow-licenses (:id wf)))
-      ;; TODO get form? maybe not necessary?
       (update-in [:workflow :handlers] #(mapv users/get-user %))))
 
 (defn get-workflow [id]
