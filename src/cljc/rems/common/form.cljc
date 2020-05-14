@@ -248,6 +248,15 @@
                      (assoc-in [:form/fields 0 :field/placeholder :fi] ""))]
         (is (empty? (validate-form-template form languages)))))
 
+    (testing "unused values are not validated"
+      (let [form (assoc form :form/fields
+                        [{:field/title {:en "en" :fi "fi"}
+                          :field/type :header
+                          :field/max-length "-3"
+                          :field/privacy :invalid
+                          :field/options [{:invalid-key :value}]}])]
+        (is (empty? (validate-form-template form languages)))))
+
     (testing "option fields"
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :option)

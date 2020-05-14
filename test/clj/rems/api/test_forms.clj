@@ -422,12 +422,7 @@
         (is (failure-response? (api-response :post "/api/forms/create"
                                             (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)
                                             api-key user-id))
-            "invalid value")
-        ;; TODO fix me
-        #_(is (failure-response? (api-response :post "/api/forms/create"
-                                              (assoc-in command [:form/fields 0 :field/privacy] :private)
-                                              api-key user-id))
-              "privacy not supported"))
+            "invalid value"))
       (testing "valid request"
         (let [form-id (:id (api-call :post "/api/forms/create"
                                      command
