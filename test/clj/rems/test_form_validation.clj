@@ -81,8 +81,40 @@
                               :field/visible true
                               :field/value "abcdef"}]))))
 
-  ;; TODO where are option field validations tested?
-
+  (testing "error: field input selected option is invalid"
+    (is (= [{:type :t.form.validation/invalid-option :field-id "1"}]
+           (validate-fields [{:field/id       "1"
+                              :field/title    {:en "Option list."
+                                               :fi "Valintalista."}
+                              :field/type     :option
+                              :field/options  [{:key   "Option1"
+                                                :label {:en "First"
+                                                        :fi "Ensimmäinen"}}
+                                               {:key   "Option2"
+                                                :label {:en "Second"
+                                                        :fi "Toinen"}}
+                                               {:key   "Option3"
+                                                :label {:en "Third"
+                                                        :fi "Kolmas "}}]
+                              :field/optional true
+                              :field/visible true
+                              :field/value "foobar"}
+                             {:field/id       "2"
+                              :field/title    {:en "Option list."
+                                               :fi "Valintalista."}
+                              :field/type     :option
+                              :field/options  [{:key   "Option1"
+                                                :label {:en "First"
+                                                        :fi "Ensimmäinen"}}
+                                               {:key   "Option2"
+                                                :label {:en "Second"
+                                                        :fi "Toinen"}}
+                                               {:key   "Option3"
+                                                :label {:en "Third"
+                                                        :fi "Kolmas "}}]
+                              :field/optional true
+                              :field/visible true
+                              :field/value "Option1"}]))))
 
   (testing "error: field input invalid email address"
     (is (= [{:type :t.form.validation/required :field-id "1"}

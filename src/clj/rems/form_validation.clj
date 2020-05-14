@@ -18,14 +18,20 @@
        (not (str/blank? (:field/value field)))
        (not (re-matches util/+email-regex+ (:field/value field)))))
 
+(defn- invalid-option-value? [field]
+  (and (= (:field/type field) :option)
+       (not (contains? (set (map :key (:field/options field))) (:field/value field)))))
+
 (defn- validate-field [field]
   (cond
     (invalid-email-address? field) {:field-id (:field/id field)
-                                    :type :t.form.validation/invalid-email}
+                                    :type     :t.form.validation/invalid-email}
     (required? field) {:field-id (:field/id field)
-                       :type :t.form.validation/required}
+                       :type     :t.form.validation/required}
     (too-long? field) {:field-id (:field/id field)
-                       :type :t.form.validation/toolong}))
+                       :type     :t.form.validation/toolong}
+    (invalid-option-value? field) {:field-id (:field/id field)
+                                   :type     :t.form.validation/invalid-option}))
 
 (defn validate-fields [fields]
   (->> (sort-by :field/id fields)
