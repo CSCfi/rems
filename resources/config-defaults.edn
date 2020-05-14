@@ -153,4 +153,7 @@
 
  ;; Options used only for development
  :render-css-file? false
- :test-database-url nil}
+ :test-database-url nil
+ 
+ ;; Options to determine weather catalogue page is going to be visible
+ :catalogue-is-public true}
