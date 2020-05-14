@@ -19,12 +19,14 @@
     (doseq [licid licenses]
       (db/create-resource-license! {:resid id
                                     :licid licid}))
+    (dependencies/reset-cache!)
     {:success true
      :id id}))
 
 (defn set-resource-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (get-resource id)))
   (db/set-resource-enabled! {:id id :enabled enabled})
+  (dependencies/reset-cache!)
   {:success true})
 
 (defn set-resource-archived! [{:keys [id archived]}]
@@ -37,4 +39,5 @@
     (do
       (db/set-resource-archived! {:id id
                                   :archived archived})
+      (dependencies/reset-cache!)
       {:success true})))

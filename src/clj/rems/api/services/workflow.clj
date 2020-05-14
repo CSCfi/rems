@@ -24,6 +24,7 @@
                                       :title title
                                       :workflow (json/generate-string
                                                  (validate-workflow-body body))}))]
+    (dependencies/reset-cache!)
     {:success (not (nil? id))
      :id id}))
 
@@ -42,6 +43,7 @@
                         :title title
                         :workflow (json/generate-string workflow-body)}))
   (applications/reload-cache!)
+  (dependencies/reset-cache!) ;; not strictly necessary since the dependencies don't change, but here for consistency
   {:success true})
 
 (defn get-workflow [id]
@@ -53,6 +55,7 @@
 (defn set-workflow-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
   (db/set-workflow-enabled! {:id id :enabled enabled})
+  (dependencies/reset-cache!)
   {:success true})
 
 (defn set-workflow-archived! [{:keys [id archived]}]
@@ -65,6 +68,7 @@
     (do
       (db/set-workflow-archived! {:id id
                                   :archived archived})
+      (dependencies/reset-cache!)
       {:success true})))
 
 (defn get-available-actors [] (users/get-users))

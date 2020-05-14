@@ -24,6 +24,7 @@
                                         :title (:title localization)
                                         :textcontent (:textcontent localization)
                                         :attachmentId (:attachment-id localization)}))
+    (dependencies/reset-cache!)
     {:success (not (nil? licid))
      :id licid}))
 
@@ -61,6 +62,7 @@
 (defn set-license-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (licenses/get-license id)))
   (db/set-license-enabled! {:id id :enabled enabled})
+  (dependencies/reset-cache!)
   {:success true})
 
 (defn set-license-archived! [{:keys [id archived]}]
@@ -72,6 +74,7 @@
     (do
       (db/set-license-archived! {:id id
                                  :archived archived})
+      (dependencies/reset-cache!)
       {:success true})))
 
 (defn get-license

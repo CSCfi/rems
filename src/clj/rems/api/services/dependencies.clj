@@ -52,11 +52,20 @@
    :reverse-dependencies
    (map-vals (comp set (partial map :from)) (group-by (comp only-id :to) lst))})
 
-;; TODO memoize
-(defn dependencies []
+(defn compute-dependencies []
   (-> (list-dependencies)
       add-status-bits-to-list
       list-to-maps))
+
+(def ^:private dependencies-cache (atom nil))
+
+(defn dependencies []
+  (when-not @dependencies-cache
+    (reset! dependencies-cache (compute-dependencies)))
+  @dependencies-cache)
+
+(defn reset-cache! []
+  (reset! dependencies-cache nil))
 
 ;; TODO change format of errors so we can get rid of this conversion
 (defn- format-deps [deps]

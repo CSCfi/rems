@@ -24,6 +24,7 @@
                                                          :infourl (:infourl localization)}))))]
     ;; Reset cache so that next call to get localizations will get these ones.
     (catalogue/reset-cache!)
+    (dependencies/reset-cache!)
     {:success (not (some nil? (cons id loc-ids)))
      :id id}))
 
@@ -45,12 +46,14 @@
             (select-keys localization [:title :infourl]))))
   ;; Reset cache so that next call to get localizations will get these ones.
   (catalogue/reset-cache!)
+  (dependencies/reset-cache!)
   (applications/reload-cache!)
   {:success true})
 
 (defn set-catalogue-item-enabled! [{:keys [id enabled]}]
   (check-allowed-to-edit! id)
   (db/set-catalogue-item-enabled! {:id id :enabled enabled})
+  (dependencies/reset-cache!)
   {:success true})
 
 (defn set-catalogue-item-archived! [{:keys [id archived]}]
@@ -61,6 +64,7 @@
      :errors errors}
     (do (db/set-catalogue-item-archived! {:id id
                                           :archived archived})
+        (dependencies/reset-cache!)
         {:success true})))
 
 (defn change-form!
@@ -93,5 +97,8 @@
       (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
       (db/set-catalogue-item-archived! {:id (:id item) :archived true})
       (db/set-catalogue-item-endt! {:id (:id item) :end (:start new-item)})
+
+      ;; clear dependencies cache after editing status bits
+      (dependencies/reset-cache!)
 
       {:success true :catalogue-item-id (:id new-item)})))

@@ -92,6 +92,7 @@
                                                 :title (:form/title form)
                                                 :user user-id
                                                 :fields (serialize-fields form)}))]
+      (dependencies/reset-cache!)
       {:success (not (nil? form-id))
        :id form-id})))
 
@@ -110,11 +111,13 @@
                                      :title (:form/title form)
                                      :user user-id
                                      :fields (serialize-fields form)})
+            (dependencies/reset-cache!)
             {:success true}))))
 
 (defn set-form-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
   (db/set-form-template-enabled! {:id id :enabled enabled})
+  (dependencies/reset-cache!)
   {:success true})
 
 (defn set-form-archived! [{:keys [id archived]}]
@@ -126,4 +129,5 @@
     (do
       (db/set-form-template-archived! {:id id
                                        :archived archived})
+      (dependencies/reset-cache!)
       {:success true})))
