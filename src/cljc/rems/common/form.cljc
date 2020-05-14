@@ -157,6 +157,9 @@
       (empty? (:visibility/values visibility))
       {:field/visibility {:visibility/values :t.form.validation/required}}
 
+      (not (apply distinct? (:visibility/values visibility)))
+      {:field/visibility {:visibility/values :t.form.validation/invalid-value}}
+
       (some #(not (contains? (field-option-keys referred-field) %)) (:visibility/values visibility))
       {:field/visibility {:visibility/values :t.form.validation/invalid-value}})))
 
@@ -349,7 +352,10 @@
                                     :visibility/values ["does-not-exist"]})
                  (validate-visible {:visibility/type :only-if
                                     :visibility/field {:field/id "fld1"}
-                                    :visibility/values ["yes" "does-not-exist"]}))))
+                                    :visibility/values ["yes" "does-not-exist"]})
+                 (validate-visible {:visibility/type :only-if
+                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/values ["yes" "yes"]}))))
 
         (testing "correct data"
           (is (empty? (validate-visible {:visibility/type :always})))

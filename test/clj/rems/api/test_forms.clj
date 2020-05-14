@@ -526,11 +526,10 @@
                                              (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "doesnotexist" "d"])
                                              api-key user-id))
             "referred value does not exist")
-        ;; TODO fix me
-        #_(is (failure-response? (api-response :post "/api/forms/create"
-                                               (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "c"])
-                                               api-key user-id))
-              "duplicate value"))
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "c"])
+                                             api-key user-id))
+            "duplicate value"))
       (testing "valid request"
         (let [form-id (:id (api-call :post "/api/forms/create"
                                      command
