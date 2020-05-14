@@ -48,7 +48,8 @@
     (let [form-id (test-data/create-form! {:form/fields [{:field/id "abc"
                                                           :field/type :description
                                                           :field/title {:en "Title"
-                                                                        :fi "Titteli"}
+                                                                        :fi "Titteli"
+                                                                        :sv "Titel"}
                                                           :field/optional false}]})
           cat-id (test-data/create-catalogue-item! {:form-id form-id})
           app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
@@ -66,7 +67,8 @@
     (let [resource (test-data/create-resource! {:resource-ext-id "urn:fi:abcd"})
           cat-id (test-data/create-catalogue-item! {:resource-id resource
                                                     :title {:en "Spam"
-                                                            :fi "Nötkötti"}})
+                                                            :fi "Nötkötti"
+                                                            :sv "Skinka"}})
           app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                  :actor "alice"})]
       (is (= #{app-id} (search/find-applications "Spam")) "en title, any field")
@@ -108,12 +110,14 @@
     (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
                                                           :field/type :text
                                                           :field/title {:en "Text field"
-                                                                        :fi "Tekstikenttä"}
+                                                                        :fi "Tekstikenttä"
+                                                                        :sv "Textfält"}
                                                           :field/optional false}]})
           form-id2 (test-data/create-form! {:form/fields [{:field/id "1"
                                                            :field/type :text
                                                            :field/title {:en "Text field"
-                                                                         :fi "Tekstikenttä"}
+                                                                         :fi "Tekstikenttä"
+                                                                         :sv "Textfält"}
                                                            :field/optional false}]})
           wf-id (test-data/create-workflow! {})
           cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
@@ -138,7 +142,8 @@
     (let [form-id (test-data/create-form! {:form/fields [{:field/id "1"
                                                           :field/type :text
                                                           :field/title {:en "Text field"
-                                                                        :fi "Tekstikenttä"}
+                                                                        :fi "Tekstikenttä"
+                                                                        :sv "Textfält"}
                                                           :field/optional false}]})
           cat-id (test-data/create-catalogue-item! {:form-id form-id})
           app-id (test-data/create-application! {:catalogue-item-ids [cat-id]

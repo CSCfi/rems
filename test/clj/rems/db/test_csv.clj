@@ -73,25 +73,30 @@
   (test-data/create-user! {:eppn applicant :commonName "Alice Applicant" :mail "alice@applicant.com"})
   (let [form-id (test-data/create-form!
                  {:form/fields [{:field/title {:en "Application title"
-                                               :fi "Hakemuksen otsikko"}
+                                               :fi "Hakemuksen otsikko"
+                                               :sv "sv"}
                                  :field/optional false
                                  :field/type :description}
                                 {:field/title {:en "Description"
-                                               :fi "Kuvaus"}
+                                               :fi "Kuvaus"
+                                               :sv "sv"}
                                  :field/optional true
                                  :field/type :description}]})
         other-form-id (test-data/create-form!
                        {:form/fields [{:field/title {:en "SHOULD NOT BE VISIBLE"
-                                                     :fi "SHOULD NOT BE VISIBLE"}
+                                                     :fi "SHOULD NOT BE VISIBLE"
+                                                     :sv "sv"}
                                        :field/optional true
                                        :field/type :text}]})
         wf-id (test-data/create-workflow! {})
         cat-id (test-data/create-catalogue-item! {:title {:en "Test resource"
-                                                          :fi "Testiresurssi"}
+                                                          :fi "Testiresurssi"
+                                                          :sv "sv"}
                                                   :form-id form-id
                                                   :workflow-id wf-id})
         other-cat-id (test-data/create-catalogue-item! {:title {:en "Other resource"
-                                                                :fi "Toinen resurssi"}
+                                                                :fi "Toinen resurssi"
+                                                                :sv "sv"}
                                                         :form-id other-form-id
                                                         :workflow-id wf-id})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id other-cat-id]

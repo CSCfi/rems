@@ -79,7 +79,9 @@
                                                         :form/title "e2e wf"
                                                         :form/fields [{:field/id "description"
                                                                        :field/type :description
-                                                                       :field/title {:en "text field"}
+                                                                       :field/title {:en "text field"
+                                                                                     :fi "text field"
+                                                                                     :sv "text field"}
                                                                        :field/optional false}]}
                              api-key owner-id)))
 
@@ -89,7 +91,9 @@
                    (api-call :post "/api/forms/create" {:form/organization "e2e"
                                                         :form/title "e2e"
                                                         :form/fields [{:field/type :text
-                                                                       :field/title {:en "text field"}
+                                                                       :field/title {:en "text field"
+                                                                                     :fi "text field"
+                                                                                     :sv "text field"}
                                                                        :field/optional false}]}
                              api-key owner-id)))
 
@@ -100,7 +104,9 @@
                                                         :form/title "e2e 2"
                                                         :form/fields [{:field/id "e2e_fld_2"
                                                                        :field/type :text
-                                                                       :field/title {:en "text field 2"}
+                                                                       :field/title {:en "text field 2"
+                                                                                     :fi "text field 2"
+                                                                                     :sv "text field 2"}
                                                                        :field/optional true}]}
                              api-key owner-id)))
                 license-id
@@ -367,7 +373,8 @@
                                                   :form/title "e2e"
                                                   :form/fields [{:field/type :text
                                                                  :field/title {:en "text field"
-                                                                               :fi "tekstikenttä"}
+                                                                               :fi "tekstikenttä"
+                                                                               :sv "textfält"}
                                                                  :field/optional true}]}
                        api-key owner-id)))
           workflow-id
