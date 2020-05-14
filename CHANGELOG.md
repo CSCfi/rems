@@ -11,6 +11,7 @@ Changes since v2.12
 ### Changes
 - Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
 - Automated browser testing has been improved in implementation and also in the coverage of the administration side
+- Form API create & edit requests are validated (#2098). This was meant to be added in 2.7 but the validation wasn't active by mistake.
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
