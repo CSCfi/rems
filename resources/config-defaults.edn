@@ -151,9 +151,9 @@
  ;; enable /api/permissions/:user
  :enable-permissions-api false
 
+ ;; Option to determine wether catalogue page is going to be visible (false as a default)
+ :catalogue-is-public false
+
  ;; Options used only for development
  :render-css-file? false
- :test-database-url nil
- 
- ;; Options to determine weather catalogue page is going to be visible
- :catalogue-is-public true}
+ :test-database-url nil}
