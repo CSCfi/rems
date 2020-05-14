@@ -384,6 +384,11 @@
             (is (= (:form/fields command)
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
+(defn- failure-response? [response]
+  (or (response-is-bad-request? response)
+      (and (response-is-ok? response)
+           (false? (:success (read-body response))))))
+
 (deftest forms-api-privacy-test
   (let [api-key "42"
         user-id "owner"
@@ -406,33 +411,31 @@
                                 :field/privacy :public}]}]
     (testing "creating"
       (testing "invalid request"
-        (letfn [(fail-request [command]
-                  (let [response (-> (request :post "/api/forms/create")
-                                     (authenticate api-key user-id)
-                                     (json-body command)
-                                     handler)
-                        body (read-body response)]
-                    (or (= 400 (:status response))
-                        (and (= 200 (:status response))
-                             (false? (:success body))))))]
-          (is (not (fail-request command))) ;; sanity check
-          (is (fail-request (assoc-in command [:form/fields 1 :field/privacy] nil)) "invalid value")
-          (is (fail-request (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)) "invalid value")
-          ;; TODO fix me
-          #_(is (fail-request (assoc-in command [:form/fields 0 :field/privacy] :private)) "privacy not supported")))
+        (is (not (failure-response? (api-response :post "/api/forms/create"
+                                                 command
+                                                 api-key user-id)))
+            "sanity check for failure-response?")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                            (assoc-in command [:form/fields 1 :field/privacy] nil)
+                                            api-key user-id))
+            "invalid value")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                            (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)
+                                            api-key user-id))
+            "invalid value")
+        ;; TODO fix me
+        #_(is (failure-response? (api-response :post "/api/forms/create"
+                                              (assoc-in command [:form/fields 0 :field/privacy] :private)
+                                              api-key user-id))
+              "privacy not supported"))
       (testing "valid request"
-        (let [form-id (-> (request :post "/api/forms/create")
-                          (authenticate api-key user-id)
-                          (json-body command)
-                          handler
-                          read-ok-body
-                          :id)]
+        (let [form-id (:id (api-call :post "/api/forms/create"
+                                     command
+                                     api-key user-id))]
           (is form-id)
           (testing "and fetching"
-            (let [form (-> (request :get (str "/api/forms/" form-id))
-                           (authenticate api-key user-id)
-                           handler
-                           read-ok-body)]
+            (let [form (api-call :get (str "/api/forms/" form-id) nil
+                                 api-key user-id)]
               (is (= [{:field/id "header"
                        :field/type "header"
                        :field/title localized
@@ -487,40 +490,55 @@
                                                    :visibility/values ["c" "d"]}}]}]
     (testing "creating"
       (testing "invalid request"
-        (letfn [(fail-request [command]
-                  (let [response (-> (request :post "/api/forms/create")
-                                     (authenticate api-key user-id)
-                                     (json-body command)
-                                     handler)
-                        body (read-body response)]
-                    (prn :DBG body)
-                    (or (= 400 (:status response))
-                        (and (= 200 (:status response))
-                             (false? (:success body))))))]
-          (is (not (fail-request command)))
-          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/type] nil)) "missing field")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/type] :doesnotexist)) "invalid type")
-          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/field] nil)) "missing field")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {})) "missing value")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {:field/id "doesnotexist"})) "referred field does not exist")
-          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/values] nil)) "missing value")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] "c")) "invalid value type")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "doesnotexist" "d"])) "referred value does not exist")
-          ;; TODO fix me
-          #_(is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "c"])) "duplicate value")))
+        (is (not (failure-response? (api-response :post "/api/forms/create"
+                                                  command
+                                                  api-key user-id)))
+            "sanity check for failure-response?")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (dissoc-in command [:form/fields 2 :field/visibility :visibility/type] nil)
+                                             api-key user-id))
+            "missing field")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/type] :doesnotexist)
+                                             api-key user-id))
+            "invalid type")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (dissoc-in command [:form/fields 2 :field/visibility :visibility/field] nil)
+                                             api-key user-id))
+            "missing field")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {})
+                                             api-key user-id))
+            "missing value")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {:field/id "doesnotexist"})
+                                             api-key user-id))
+            "referred field does not exist")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (dissoc-in command [:form/fields 2 :field/visibility :visibility/values] nil)
+                                             api-key user-id))
+            "missing value")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/values] "c")
+                                             api-key user-id))
+            "invalid value type")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "doesnotexist" "d"])
+                                             api-key user-id))
+            "referred value does not exist")
+        ;; TODO fix me
+        #_(is (failure-response? (api-response :post "/api/forms/create"
+                                               (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "c"])
+                                               api-key user-id))
+              "duplicate value"))
       (testing "valid request"
-        (let [form-id (-> (request :post "/api/forms/create")
-                          (authenticate api-key user-id)
-                          (json-body command)
-                          handler
-                          read-ok-body
-                          :id)]
+        (let [form-id (:id (api-call :post "/api/forms/create"
+                                     command
+                                     api-key user-id))]
           (is form-id)
           (testing "and fetching"
-            (let [form (-> (request :get (str "/api/forms/" form-id))
-                           (authenticate api-key user-id)
-                           handler
-                           read-ok-body)]
+            (let [form (api-call :get (str "/api/forms/" form-id) nil
+                                 api-key user-id)]
               (is (= (select-keys command [:form/organization :form/title])
                      (select-keys form [:form/organization :form/title])))
               (is (= [{:field/id "fld1"
