@@ -55,6 +55,9 @@
 ;; The :archived and :enabled bits are not stored in the graph because
 ;; that would mean invalidating the whole graph on every status bit
 ;; change, _or_ implementing partial rebuilding.
+;;
+;; TODO: is this caching necessary? Computing the dependencies takes
+;; 500ms with performance test data.
 (def ^:private dependencies-cache (atom nil))
 
 (defn dependencies []
