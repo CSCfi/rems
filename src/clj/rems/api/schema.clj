@@ -6,7 +6,6 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(declare Organization)
 (def UserId s/Str)
 (s/defschema User {:userid UserId})
 (s/defschema OrganizationId {:organization/id s/Str})
