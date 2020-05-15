@@ -6,7 +6,7 @@
   (let [form {:organization {:organization/id "organization1"}
               :resid "resource id"
               :licenses [{:id 123
-                          :organization "organization1"
+                          :organization {:organization/id "organization1"}
                           :unrelated "stuff"}]}]
     (testing "valid form"
       (is (= {:organization {:organization/id "organization1"}

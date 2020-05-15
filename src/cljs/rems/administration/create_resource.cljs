@@ -37,7 +37,7 @@
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
-  (let [request {:organization {:organization/id (get-in form [:data :organization :organization/id])}
+  (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :resid (trim-when-string (:resid form))
                  :licenses (map :id (:licenses form))}]
     (when (valid-request? form request)
@@ -63,9 +63,9 @@
 
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
 
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (defn- resource-organization-field []
   [fields/organization-field {:id "organization-dropdown"
