@@ -80,8 +80,8 @@
                                                         :form/fields [{:field/id "description"
                                                                        :field/type :description
                                                                        :field/title {:en "text field"
-                                                                                     :fi "text field"
-                                                                                     :sv "text field"}
+                                                                                     :fi "tekstikenttä"
+                                                                                     :sv "textfält"}
                                                                        :field/optional false}]}
                              api-key owner-id)))
 
@@ -92,8 +92,8 @@
                                                         :form/title "e2e"
                                                         :form/fields [{:field/type :text
                                                                        :field/title {:en "text field"
-                                                                                     :fi "text field"
-                                                                                     :sv "text field"}
+                                                                                     :fi "tekstikenttä"
+                                                                                     :sv "tekstfält"}
                                                                        :field/optional false}]}
                              api-key owner-id)))
 
@@ -105,8 +105,8 @@
                                                         :form/fields [{:field/id "e2e_fld_2"
                                                                        :field/type :text
                                                                        :field/title {:en "text field 2"
-                                                                                     :fi "text field 2"
-                                                                                     :sv "text field 2"}
+                                                                                     :fi "tekstikenttä 2"
+                                                                                     :sv "textfält 2"}
                                                                        :field/optional true}]}
                              api-key owner-id)))
                 license-id
