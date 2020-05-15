@@ -7,7 +7,7 @@
 (defn- apply-user-permissions [userid organizations]
   (let [user-roles (set/union (roles/get-roles userid)
                               (applications/get-all-application-roles userid))
-        can-see-all? (seq (set/intersection user-roles #{:owner :organization-owner :handler}))]
+        can-see-all? (some? (some #{:owner :organization-owner :handler} user-roles))]
     (for [org organizations]
       (if (or (nil? userid) can-see-all?)
         org
