@@ -17,24 +17,21 @@
     true (assert false dep)))
 
 (defn- list-dependencies []
-  (flatten
-   (list
-    (for [res (resource/get-resources {})
-          :let [this {:resource/id (:id res)}]
-          license (:licenses res)]
-      {:from this :to {:license/id (:id license)}})
-    (for [cat (catalogue/get-localized-catalogue-items {:archived true})]
-      (let [this {:catalogue-item/id (:id cat)}]
-        (list {:from this :to {:form/id (:formid cat)}}
-              {:from this :to {:resource/id (:resource-id cat)}}
-              {:from this :to {:workflow/id (:wfid cat)}})))
-    (for [workflow (workflow/get-workflows {})]
-      (let [this {:workflow/id (:id workflow)}]
-        (list
-         (for [license (:licenses workflow)]
-           {:from this :to {:license/id (:id license)}})
-         (for [form (:forms (:workflow workflow))]
-           {:from this :to {:form/id (:form/id form)}})))))))
+  (concat
+
+   (for [res (resource/get-resources {})
+         license (:licenses res)]
+     {:from {:resource/id (:id res)} :to {:license/id (:id license)}})
+
+   (for [cat (catalogue/get-localized-catalogue-items {:archived true})
+         dep [{:form/id (:formid cat)} {:resource/id (:resource-id cat)} {:workflow/id (:wfid cat)}]]
+     {:from {:catalogue-item/id (:id cat)} :to dep})
+
+   (for [workflow (workflow/get-workflows {})
+         dep (concat
+              (mapv (fn [lic] {:license/id (:id lic)}) (:licenses workflow))
+              (:forms (:workflow workflow)))]
+     {:from {:workflow/id (:id workflow)} :to dep})))
 
 (defn- add-status-bits [dep]
   (merge dep
