@@ -1,4 +1,4 @@
-(ns  ^:integration rems.api.test-api
+(ns ^:integration rems.api.test-audit-log
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
