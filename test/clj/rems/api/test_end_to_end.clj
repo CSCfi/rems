@@ -83,7 +83,7 @@
                 wf-form-id
                 (testing "create workflow form"
                   (extract-id
-                   (api-call :post "/api/forms/create" {:form/organization "e2e"
+                   (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
                                                         :form/title "e2e wf"
                                                         :form/fields [{:field/id "description"
                                                                        :field/type :description
