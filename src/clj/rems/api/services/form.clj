@@ -102,12 +102,13 @@
 (defn create-form! [user-id form]
   (let [organization (:form/organization form)]
     (util/check-allowed-organization! organization)
-    (let [form-id (:id (db/save-form-template! {:organization organization
-                                                :title (:form/title form)
-                                                :user user-id
-                                                :fields (serialize-fields form)}))]
-      {:success (not (nil? form-id))
-       :id form-id})))
+    (or (validation-error form)
+        (let [form-id (:id (db/save-form-template! {:organization organization
+                                                    :title (:form/title form)
+                                                    :user user-id
+                                                    :fields (serialize-fields form)}))]
+          {:success (not (nil? form-id))
+           :id form-id}))))
 
 (def get-form-template form/get-form-template)
 (def get-form-templates form/get-form-templates)
@@ -119,6 +120,7 @@
     (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
     (or (form-in-use-error form-id true)
+        (validation-error form)
         (do (db/edit-form-template! {:id form-id
                                      :organization organization
                                      :title (:form/title form)

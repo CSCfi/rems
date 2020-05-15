@@ -512,22 +512,26 @@
   (let [user-id "alice"
         form-id (test-data/create-form! {:form/fields [{:field/id "req1"
                                                         :field/title {:en "req"
-                                                                      :fi "pak"}
+                                                                      :fi "pak"
+                                                                      :sv "obl"}
                                                         :field/type :text
                                                         :field/optional false}
                                                        {:field/id "opt1"
                                                         :field/title {:en "opt"
-                                                                      :fi "val"}
+                                                                      :fi "val"
+                                                                      :sv "fri"}
                                                         :field/type :text
                                                         :field/optional true}]})
         form-id2 (test-data/create-form! {:form/fields [{:field/id "req2"
                                                          :field/title {:en "req"
-                                                                       :fi "pak"}
+                                                                       :fi "pak"
+                                                                       :sv "obl"}
                                                          :field/type :text
                                                          :field/optional false}
                                                         {:field/id "opt2"
                                                          :field/title {:en "opt"
-                                                                       :fi "val"}
+                                                                       :fi "val"
+                                                                       :sv "fri"}
                                                          :field/type :text
                                                          :field/optional true}]})
         wf-id (test-data/create-workflow! {})
@@ -685,11 +689,11 @@
                                            :handlers [handler]})
         form-id (test-data/create-form! {:form/fields [{:field/id "fld1"
                                                         :field/type :text
-                                                        :field/title {:en "Field 1"}
+                                                        :field/title {:en "Field 1" :fi "Field 1" :sv "Field 1"}
                                                         :field/optional false}]})
         form-2-id (test-data/create-form! {:form/fields [{:field/id "fld2"
                                                           :field/type :text
-                                                          :field/title {:en "HIDDEN"}
+                                                          :field/title {:en "HIDDEN" :fi "HIDDEN" :sv "HIDDEN"}
                                                           :field/optional false}]})
         cat-id (test-data/create-catalogue-item! {:title {:en "Item1"}
                                                   :workflow-id wf-id
@@ -740,7 +744,8 @@
         handler-id "developer" ;; developer is the default handler in test-data
         form-id (test-data/create-form! {:form/fields [{:field/id "attach"
                                                         :field/title {:en "some attachment"
-                                                                      :fi "joku liite"}
+                                                                      :fi "joku liite"
+                                                                      :sv "bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
         cat-id (test-data/create-catalogue-item! {:form-id form-id})
@@ -1026,12 +1031,14 @@
         workflow-id (test-data/create-workflow! {:handlers [handler-id]})
         form-id (test-data/create-form! {:form/fields [{:field/id "attach1"
                                                         :field/title {:en "some attachment"
-                                                                      :fi "joku liite"}
+                                                                      :fi "joku liite"
+                                                                      :sv "bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}
                                                        {:field/id "attach2"
                                                         :field/title {:en "another attachment"
-                                                                      :fi "toinen liite"}
+                                                                      :fi "toinen liite"
+                                                                      :sv "annan bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
         cat-id (test-data/create-catalogue-item! {:workflow-id workflow-id
@@ -1372,7 +1379,9 @@
         form-id (test-data/create-form! {:form/title "notifications"
                                          :form/fields [{:field/type :text
                                                         :field/id "field-1"
-                                                        :field/title {:en "text field"}
+                                                        :field/title {:en "text field"
+                                                                      :fi "text field"
+                                                                      :sv "text field"}
                                                         :field/optional false}]})
         workflow-id (test-data/create-workflow! {:title "wf"
                                                  :handlers [handler]
@@ -1436,7 +1445,9 @@
               :application/accepted-licenses {:alice []}
               :application/forms [{:form/fields [{:field/value "raw test"
                                                   :field/type "text"
-                                                  :field/title {:en "text field"}
+                                                  :field/title {:en "text field"
+                                                                :fi "text field"
+                                                                :sv "text field"}
                                                   :field/id "field-1"
                                                   :field/optional false
                                                   :field/visible true

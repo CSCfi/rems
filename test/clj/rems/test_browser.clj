@@ -291,7 +291,7 @@
 (deftest test-handling
   (let [applicant "alice"
         handler "developer"
-        form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus"}
+        form-id (test-data/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                         :field/optional false
                                                         :field/type :description}]})
         catalogue-id (test-data/create-catalogue-item! {:form-id form-id})
