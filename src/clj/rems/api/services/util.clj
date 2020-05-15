@@ -4,10 +4,10 @@
             [rems.context :as context]))
 
 (defn- forbidden-organization? [organization]
-  (let [user-organization (map :organization/id (:organizations context/*user*))
+  (let [user-organizations (map :organization/id (:organizations context/*user*))
         not-owner? (not (contains? context/*roles* :owner))
         not-handler? (not (contains? context/*roles* :handler))
-        incorrect-organization? (not (contains? (set user-organization) (:organization/id organization)))]
+        incorrect-organization? (not (contains? (set user-organizations) (:organization/id organization)))]
     (and not-owner?
          not-handler? ;; TODO: keeping old behaviour where handlers can see everything for now
          (or incorrect-organization?
@@ -15,7 +15,7 @@
              ;;   no organizations defined from creating or accessing items with
              ;;   no organization defined. Consider disallowing undefined
              ;;   organizations to be able to remove this.
-             (and (nil? (:organization/id organization)) (empty? user-organization))))))
+             (and (nil? (:organization/id organization)) (empty? user-organizations))))))
 
 (defn check-allowed-organization! [organization]
   (assert (:organization/id organization) {:error "invalid organization"
