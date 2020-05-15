@@ -9,10 +9,9 @@
             [rems.fields :as fields]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
-            [rems.util :refer [navigate! fetch post! trim-when-string]]))
+            [rems.util :refer [navigate! post! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page

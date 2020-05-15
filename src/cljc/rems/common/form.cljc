@@ -5,7 +5,7 @@
   (:require  [clojure.string :as str]
              [clojure.test :refer [deftest is testing]]
              [medley.core :refer [find-first]]
-             [rems.common.util :refer [getx-in parse-int remove-empty-keys]]))
+             [rems.common.util :refer [parse-int remove-empty-keys]]))
 
 (defn supports-optional? [field]
   (not (contains? #{:label :header} (:field/type field))))

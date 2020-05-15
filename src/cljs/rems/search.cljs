@@ -1,8 +1,6 @@
 (ns rems.search
-  (:require [re-frame.core :as rf]
-            [reagent.core :as r]
+  (:require [reagent.core :as r]
             [rems.atoms :refer [close-symbol]]
-            [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [fetch focus-when-collapse-opened]]))

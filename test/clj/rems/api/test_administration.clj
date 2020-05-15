@@ -2,7 +2,6 @@
   "Tests for invariants across administration APIs."
   (:require [clojure.test :refer :all]
             [rems.db.core :as db]
-            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]))
 
 (use-fixtures

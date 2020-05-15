@@ -1,6 +1,5 @@
 (ns rems.api.services.catalogue
-  (:require [com.rpl.specter :refer [ALL transform]]
-            [rems.api.services.util :as util]
+  (:require [rems.api.services.util :as util]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]

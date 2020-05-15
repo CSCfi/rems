@@ -8,7 +8,6 @@
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [rems.json]
