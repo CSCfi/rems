@@ -341,9 +341,10 @@
                         [event]))))))
 
 (defmethod command-handler :application.command/save-draft
-  [cmd _application _injections]
-  (ok {:event/type :application.event/draft-saved
-       :application/field-values (:field-values cmd)}))
+  [cmd application injections]
+  (or (merge-with concat (validation-error application injections))
+      (ok {:event/type :application.event/draft-saved
+           :application/field-values (:field-values cmd)})))
 
 (defmethod command-handler :application.command/accept-licenses
   [cmd _application _injections]
