@@ -161,7 +161,14 @@
       (is (= {:success true} (send-command user-id
                                            {:type :application.command/accept-licenses
                                             :application-id application-id
-                                            :accepted-licenses [license-id1 license-id2]}))))
+                                            :accepted-licenses [license-id1 license-id2]})))
+      (testing "with invalid application id"
+        (is (= {:success false
+                :errors [{:type "application-not-found"}]}
+               (send-command user-id
+                             {:type :application.command/accept-licenses
+                              :application-id 9999999999
+                              :accepted-licenses [license-id1 license-id2]})))))
 
     (testing "save draft"
       (is (= {:success true} (send-command user-id
