@@ -40,23 +40,24 @@
   (merge dep
          (select-keys (enrich-dependency dep) [:archived :enabled])))
 
-(defn- add-status-bits-to-list [lst]
-  (mapv (partial map-vals add-status-bits) lst))
-
 (defn- only-id [item]
   (select-keys item [:resource/id :license/id :catalogue-item/id :form/id :workflow/id]))
 
 (defn- list-to-maps [lst]
   {:dependencies
-   (map-vals (comp set (partial map :to)) (group-by (comp only-id :from) lst))
+   (map-vals (comp set (partial map :to)) (group-by :from lst))
    :reverse-dependencies
-   (map-vals (comp set (partial map :from)) (group-by (comp only-id :to) lst))})
+   (map-vals (comp set (partial map :from)) (group-by :to lst))})
 
 (defn compute-dependencies []
   (-> (list-dependencies)
-      add-status-bits-to-list
       list-to-maps))
 
+;; A note about caching: It makes sense to cache the dependency graph
+;; since we only need to rebuild it when a new item is created.
+;; The :archived and :enabled bits are not stored in the graph because
+;; that would mean invalidating the whole graph on every status bit
+;; change, _or_ implementing partial rebuilding.
 (def ^:private dependencies-cache (atom nil))
 
 (defn dependencies []
@@ -90,6 +91,7 @@
   "Return errors if given item is depended on by non-archived items"
   [error-key item]
   (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
+                        (mapv add-status-bits)
                         (remove :archived)
                         seq)]
     [(merge {:type error-key}
@@ -106,6 +108,7 @@
   "Return errors if given item depends on archived items"
   [item]
   (when-let [used (->> (get-in (dependencies) [:dependencies item])
+                       (mapv add-status-bits)
                        (filter :archived)
                        seq)]
     (let [{:keys [licenses resources workflows catalogue-items forms]} (format-deps used)]
