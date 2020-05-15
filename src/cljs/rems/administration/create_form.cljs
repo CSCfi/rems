@@ -158,7 +158,7 @@
                                              [:visibility/type :visibility/field :visibility/values])}))))
 
 (defn build-request [form languages]
-  {:form/organization (:form/organization form)
+  {:form/organization {:organization/id (get-in form [:form/organization :organization/id])}
    :form/title (trim-when-string (:form/title form))
    :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
@@ -236,11 +236,7 @@
    :get-form-errors ::form-errors
    :update-form ::set-form-field})
 
-(rf/reg-sub
- ::selected-organization
- (fn [db _]
-   (let [organization-id (get-in db [::form :data :form/organization])]
-     (get-in db [:organizations-by-id organization-id]))))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :form/organization])))
 
 (rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
 

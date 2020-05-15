@@ -46,7 +46,7 @@
     {:id "catalogue-item"
      :title [:span (get-localized-title catalogue-item language)]
      :always (into [:div
-                    [inline-info-field (text :t.administration/organization) (:organization catalogue-item)]]
+                    [inline-info-field (text :t.administration/organization) (get-in catalogue-item [:organization :organization/name])]]
                    (concat
                     (for [[langcode localization] (:localizations catalogue-item)]
                       (let [suffix (str " (" (str/upper-case (name langcode)) ")")]

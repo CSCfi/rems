@@ -33,11 +33,11 @@
 ;; form submit
 
 (defn- valid-request? [form request]
-  (and (not (str/blank? (:organization request)))
+  (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
-  (let [request {:organization (get-in form [:organization :organization/id])
+  (let [request {:organization {:organization/id (get-in form [:data :organization :organization/id])}
                  :resid (trim-when-string (:resid form))
                  :licenses (map :id (:licenses form))}]
     (when (valid-request? form request)
@@ -63,13 +63,9 @@
 
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
-(rf/reg-sub
- ::selected-organization
- (fn [db _]
-   (let [organization-id (get-in db [::form :form/organization])]
-     (get-in db [:organizations-by-id organization-id]))))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
 
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
 
 (defn- resource-organization-field []
   [fields/organization-field {:id "organization-dropdown"
@@ -93,7 +89,7 @@
        :item-key :id
        :item-label #(str (get-localized-title % language)
                          " (org: "
-                         (:organization %)
+                         (get-in % [:organization :organization/name])
                          ")")
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true

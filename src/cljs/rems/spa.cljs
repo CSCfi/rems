@@ -99,19 +99,19 @@
 (rf/reg-sub
  :organizations
  (fn [db _]
-   (sort-by :organization/name (:organizations db))))
+   (sort-by :organization/name (vals (:organizations-by-id db)))))
 
 (rf/reg-sub
  :organizations-by-id
  (fn [db _]
-   (index-by [:organization/id] (:organizations db))))
+   (:organizations-by-id db)))
 
 (rf/reg-sub
  :owned-organizations
  (fn [db _]
    (let [roles (get-in db [:identity :roles])
          userid (get-in db [:identity :user :userid])]
-     (for [org (:organizations db)
+     (for [org (vals (:organizations-by-id db))
            :let [owners (set (map :userid (:organization/owners org)))]
            :when (or (contains? roles :owner)
                      (contains? owners userid))]
@@ -154,7 +154,7 @@
 (rf/reg-event-db
  :loaded-organizations
  (fn [db [_ organizations]]
-   (assoc db :organizations organizations)))
+   (assoc db :organizations-by-id (index-by [:organization/id] organizations))))
 
 (rf/reg-event-fx
  :unauthorized!

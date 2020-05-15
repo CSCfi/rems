@@ -89,6 +89,12 @@
   (when (str/blank? (get m key))
     {key :t.form.validation/required}))
 
+(defn- validate-organization-field [m key]
+  (let [organization (get m key)]
+    (when (or (nil? organization)
+              (str/blank? (:organization/id organization)))
+      {key :t.form.validation/required})))
+
 (def field-types #{:attachment :date :description :email :header :label :multiselect :option :text :texta})
 
 (defn- validate-field-type [m]
@@ -202,14 +208,14 @@
     m))
 
 (defn validate-form-template [form languages]
-  (-> (merge (validate-text-field form :form/organization)
+  (-> (merge (validate-organization-field form :form/organization)
              (validate-text-field form :form/title)
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
 
 (deftest validate-form-template-test
-  (let [form {:form/organization "abc"
+  (let [form {:form/organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
@@ -226,6 +232,7 @@
 
     (testing "missing organization"
       (is (= (:form/organization (validate-form-template (assoc-in form [:form/organization] "") languages))
+             (:form/organization (validate-form-template (assoc-in form [:form/organization :organization/id] "") languages))
              :t.form.validation/required)))
 
     (testing "missing title"

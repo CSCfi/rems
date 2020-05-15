@@ -1,12 +1,15 @@
 (ns rems.db.organizations
-  (:require [clojure.set :as set]
-            [rems.api.schema :refer [Organization]]
-            [rems.db.applications :as applications]
+  (:require [clojure.core.memoize :as memo]
+            [medley.core :refer [update-existing]]
+            [rems.api.schema :refer [OrganizationFull OrganizationOverview]]
+            [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.json :as json]
             [schema.coerce :as coerce])
   (:import [org.joda.time DateTime]))
+
+(def ^:private +organizations-cache-time-ms+ (* 5 60 1000))
 
 (defn add-organization! [userid org]
   (db/add-organization! {:id (:organization/id org)
@@ -16,8 +19,11 @@
   {:success true
    :organization/id (:organization/id org)})
 
-(def ^:private coerce-organization
-  (coerce/coercer! Organization json/coercion-matcher))
+(def ^:private coerce-organization-overview
+  (coerce/coercer! OrganizationOverview json/coercion-matcher))
+
+(def ^:private coerce-organization-full
+  (coerce/coercer! OrganizationFull json/coercion-matcher))
 
 (defn- parse-organization [raw]
   (merge
@@ -25,39 +31,29 @@
    {:organization/modifier {:userid (:modifieruserid raw)}
     :organization/last-modified (:modified raw)}))
 
-(defn- apply-user-permissions [userid organizations]
-  (let [user-roles (set/union (roles/get-roles userid)
-                              (applications/get-all-application-roles userid))
-        can-see-all? (seq (set/intersection user-roles #{:owner :organization-owner :handler}))]
-    (for [org organizations]
-      (if (or (nil? userid) can-see-all?)
-        org
-        (dissoc org
-                :organization/last-modified
-                :organization/modifier
-                :organization/review-emails
-                :organization/owners)))))
-
-(defn- owner-filter-match? [owner org]
-  (or (nil? owner) ; return all when not specified
-      (contains? (roles/get-roles owner) :owner) ; implicitly owns all
-      (contains? (set (map :userid (:organization/owners org))) owner)))
-
-(defn get-organizations [& [userid owner]]
+(defn get-organizations-raw []
   (->> (db/get-organizations)
        (map parse-organization)
-       (map coerce-organization)
-       (apply-user-permissions userid)
-       (filter (partial owner-filter-match? owner))
-       (doall)))
+       (map coerce-organization-full)))
 
-(comment
-  (get-organizations "owner")
-  (get-organizations "owner" "organization-owner1")
-  (get-organizations "owner" "alice")
-  (get-organizations "alice")
+;; TODO unify caching behavior and location https://github.com/CSCfi/rems/issues/2179
+(def ^:private organizations-by-id-cache (memo/ttl #(index-by [:organization/id] (get-organizations-raw)) :ttl/threshold +organizations-cache-time-ms+))
 
+(defn get-organization-by-id-cached [id]
+  (get (organizations-by-id-cache) id))
 
-  (set/intersection (set/union (roles/get-roles "alice")
-                               (applications/get-all-application-roles "alice"))
-                    #{:owner :organization-owner :handler}))
+(defn join-full-organization [x]
+  (update-existing x :organization (fn [id] (get-organization-by-id-cached id))))
+
+(defn join-organization [x]
+  ;; TODO alternatively we could pass in the organization key
+  ;; TODO alternatively we could decide which layer transforms db string into {:organization/id "string"} and which layer joins the rest https://github.com/CSCfi/rems/issues/2179
+  (let [organization (or (:form/organization x)
+                         (:organization x))
+        organization-id (if (string? organization) organization (:organization/id organization))
+        organization-overview (-> organization-id
+                                  get-organization-by-id-cached
+                                  (select-keys [:organization/id :organization/name]))]
+    (-> x
+        (update-existing :organization (fn [_] organization-overview))
+        (update-existing :form/organization (fn [_] organization-overview)))))

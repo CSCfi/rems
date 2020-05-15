@@ -46,7 +46,7 @@
        (not (str/blank? (:textcontent data)))))
 
 (defn- valid-request? [request languages]
-  (and (not (str/blank? (:organization request)))
+  (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:licensetype request)))
        (= (set languages)
           (set (keys (:localizations request))))
@@ -55,7 +55,7 @@
 (defn build-request [form languages]
   (let [license-type (:licensetype form)
         request {:licensetype license-type
-                 :organization (get-in form [:organization :organization/id])
+                 :organization {:organization/id (get-in form [:organization :organization/id])}
                  :localizations (into {} (map (fn [[lang data]]
                                                 [lang (build-localization data license-type)])
                                               (:localizations form)))}]
@@ -112,13 +112,9 @@
 (defn- language-heading [language]
   [:h3 (str/upper-case (name language))])
 
-(rf/reg-sub
- ::selected-organization
- (fn [db _]
-   (let [organization-id (get-in db [::form :form/organization])]
-     (get-in db [:organizations-by-id organization-id]))))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
 
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (defn- license-organization-field []
   [fields/organization-field {:id "organization-dropdown"
@@ -227,9 +223,9 @@
        :always [:div.fields
                 [license-organization-field]
                 [license-type-radio-group]
-                (for [language languages]
-                  [:div {:key language}
-                   [language-heading language]
+                (for [language languages] ; TODO only show when there is license type selected
+                  [:div {:key language} ; TODO use .dashed-group in these
+                   [language-heading language] ; TODO check if should do in label or some other grouping
                    [license-title-field language]
                    [license-link-field language]
                    [license-text-field language]

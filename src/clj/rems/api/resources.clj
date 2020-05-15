@@ -13,7 +13,7 @@
   {:id s/Int
    :owneruserid s/Str
    :modifieruserid s/Str
-   :organization s/Str
+   :organization OrganizationOverview
    :resid s/Str
    :enabled s/Bool
    :archived s/Bool
@@ -24,7 +24,7 @@
 
 (s/defschema CreateResourceCommand
   {:resid s/Str
-   :organization s/Str
+   :organization OrganizationId
    :licenses [s/Int]})
 
 (s/defschema CreateResourceResponse

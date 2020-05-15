@@ -14,7 +14,7 @@
   {:userid UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
-   (s/optional-key :organizations) [s/Str]})
+   (s/optional-key :organizations) [OrganizationId]})
 
 (defn create-user [user-data]
   (users/add-user! (:userid user-data) (users/unformat-user user-data)))

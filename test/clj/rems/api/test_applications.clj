@@ -1151,6 +1151,7 @@
         license-id (-> (request :post "/api/licenses/create")
                        (authenticate api-key owner)
                        (json-body {:licensetype "attachment"
+                                   :organization {:organization/id "abc"}
                                    ;; TODO different content for different languages
                                    :localizations {:en {:title "en title"
                                                         :textcontent "en text"

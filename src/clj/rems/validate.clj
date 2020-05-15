@@ -32,7 +32,7 @@
 
 (defn validate-organizations []
   ;; only warning for now
-  (let [organizations (->> (organizations/get-organizations) (map :organization/id) set)
+  (let [organizations (->> (organizations/get-organizations-raw) (map :organization/id) set)
         valid-organization? (fn [id] (contains? organizations id))]
     (doseq [form (form/get-form-templates {})]
       (when-not (valid-organization? (:form/organization form))

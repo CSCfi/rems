@@ -618,7 +618,7 @@
                        (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])
                        (when-let [organizations (:organizations attributes)]
-                         [info-field (text :t.applicant-info/organization) (str/join ", " organizations) {:inline? true}])]
+                         [info-field (text :t.applicant-info/organization) (str/join ", " (map :organization/name organizations)) {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
       :footer (let [element-id (str element-id "-remove-member")]
@@ -837,7 +837,7 @@
                                        :email "developer@uu.id"
                                        :name "Deve Loper"
                                        :notification-email "notification@example.com"
-                                       :organizations ["Testers" "Users"]
+                                       :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}

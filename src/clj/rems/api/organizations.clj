@@ -2,13 +2,13 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util] ; required for route :roles
-            [rems.db.organizations :as organizations]
+            [rems.api.services.organizations :as organizations]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
 (s/defschema CreateOrganizationCommand
-  Organization)
+  OrganizationFull)
 
 (s/defschema CreateOrganizationResponse
   {:success s/Bool
@@ -23,7 +23,7 @@
       :summary "Get organizations. Returns more information for owners and handlers."
       :roles #{:logged-in}
       :query-params [{owner :- (describe s/Str "return only organizations that are owned by owner") nil}]
-      :return [Organization]
+      :return [OrganizationFull]
       (ok (organizations/get-organizations (getx-user-id) owner)))
 
     (POST "/create" []

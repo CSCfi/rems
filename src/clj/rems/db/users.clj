@@ -27,8 +27,8 @@
     (is (= api-user (format-user db-user)))
     (is (= db-user (unformat-user api-user)))
     (is (= api-user (format-user (unformat-user api-user)))))
-  (let [api-user {:userid "foo" :name "bar" :email "a@b" :organizations ["org1" "org2"]}
-        db-user {:eppn "foo" :commonName "bar" :mail "a@b" :organizations ["org1" "org2"]}]
+  (let [api-user {:userid "foo" :name "bar" :email "a@b" :organizations [{:organization/id "org1"} {:organization/id "org2"}]}
+        db-user {:eppn "foo" :commonName "bar" :mail "a@b" :organizations [{:organization/id "org1"} {:organization/id "org2"}]}]
     (is (= api-user (format-user db-user)))
     (is (= db-user (unformat-user api-user)))
     (is (= api-user (format-user (unformat-user api-user))))))

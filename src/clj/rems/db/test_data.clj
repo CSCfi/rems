@@ -3,7 +3,6 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
-            [medley.core :refer [map-vals]]
             [rems.api.schema :as schema]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.command :as command]
@@ -19,8 +18,7 @@
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
-            [rems.testing-util :refer [with-user]]
-            [ring.util.http-response :refer [bad-request!]])
+            [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
@@ -54,9 +52,9 @@
    "handler" {:eppn "handler" :mail "handler@example.com" :commonName "Hannah Handler"}
    "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
    "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
-   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organizations ["frank"]}
-   "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1" :organizations ["organization1"]}
-   "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organizations ["organization2"]}
+   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless" :organizations [{:organization/id "frank"}]}
+   "organization-owner1" {:eppn "organization-owner1" :mail "organization-owner1@example.com" :commonName "Organization Owner 1" :organizations [{:organization/id "organization1"}]}
+   "organization-owner2" {:eppn "organization-owner2" :mail "organization-owner2@example.com" :commonName "Organization Owner 2" :organizations [{:organization/id "organization2"}]}
    "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}
    "reporter" {:eppn "reporter" :mail "reporter@example.com" :commonName "Reporter"}})
 
@@ -78,8 +76,8 @@
    "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
    "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
    "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}
-   "RDorganizationowner1@funet.fi" {:eppn "RDorganizationowner1@funet.fi" :mail "RDorganizationowner1.test@test_example.org" :commonName "RDorganizationowner1 REMSDEMO" :organizations ["organization1"]}
-   "RDorganizationowner2@funet.fi" {:eppn "RDorganizationowner2@funet.fi" :mail "RDorganizationowner2.test@test_example.org" :commonName "RDorganizationowner2 REMSDEMO" :organizations ["organization2"]}
+   "RDorganizationowner1@funet.fi" {:eppn "RDorganizationowner1@funet.fi" :mail "RDorganizationowner1.test@test_example.org" :commonName "RDorganizationowner1 REMSDEMO" :organizations [{:organization/id "organization1"}]}
+   "RDorganizationowner2@funet.fi" {:eppn "RDorganizationowner2@funet.fi" :mail "RDorganizationowner2.test@test_example.org" :commonName "RDorganizationowner2 REMSDEMO" :organizations [{:organization/id "organization2"}]}
    "RDdomainreporter@funet.fi" {:eppn "RDdomainreporter@funet.fi" :mail "RDdomainreporter.test@test_example.org" :commonName "RDdomainreporter REMSDEMO"}})
 
 (def +oidc-users+
@@ -149,7 +147,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (licenses/create-license! {:licensetype (name (or type :text))
-                                            :organization (or organization "default")
+                                            :organization (or organization {:organization/id "default"})
                                             :localizations
                                             (transpose-localizations {:title title
                                                                       :textcontent (merge link text)
@@ -182,7 +180,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:form/organization (or organization "default")
+                                    {:form/organization (or organization {:organization/id "default"})
                                      :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
@@ -193,7 +191,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization "default")
+                                             :organization (or organization {:organization/id "default"})
                                              :licenses (or license-ids [])}
                                             actor))]
     (assert (:success result) {:command command :result result})
@@ -205,7 +203,7 @@
         result (with-user actor
                  (workflow/create-workflow!
                   {:user-id actor
-                   :organization (or organization "default")
+                   :organization (or organization {:organization/id "default"})
                    :title (or title "")
                    :type (or type :workflow/master)
                    :forms forms
@@ -227,7 +225,7 @@
                  (catalogue/create-catalogue-item!
                   {:resid (or resource-id (create-resource! {:organization organization}))
                    :form (or form-id (create-form! {:form/organization organization}))
-                   :organization (or organization "default")
+                   :organization (or organization {:organization/id "default"})
                    :wfid (or workflow-id (create-workflow! {:organization organization}))
                    :localizations (or localizations {})}))]
     (assert (:success result) {:command command :result result})
@@ -306,7 +304,7 @@
 (defn- create-archived-form! [actor]
   (with-user actor
     (let [id (create-form! {:actor actor
-                            :form/organization "nbn"
+                            :form/organization {:organization/id "nbn"}
                             :form/title "Archived form, should not be seen by applicants"})]
       (form/set-form-archived! {:id id :archived true}))))
 
@@ -462,7 +460,7 @@
   [users]
   (create-form!
    {:actor (users :owner)
-    :form/organization "thl"
+    :form/organization {:organization/id "thl"}
     :form/title "THL form"
     :form/fields [{:field/title {:en "Application title"
                                  :fi "Hakemuksen otsikko"
@@ -724,26 +722,26 @@
         organization-owner1 (users :organization-owner1)
         handlers [approver1 approver2 rejecter-bot]
         default (create-workflow! {:actor owner
-                                   :organization "nbn"
+                                   :organization {:organization/id "nbn"}
                                    :title "Default workflow"
                                    :type :workflow/default
                                    :handlers handlers})
         decider (create-workflow! {:actor owner
-                                   :organization "nbn"
+                                   :organization {:organization/id "nbn"}
                                    :title "Decider workflow"
                                    :type :workflow/decider
                                    :handlers handlers})
         master (create-workflow! {:actor owner
-                                  :organization "nbn"
+                                  :organization {:organization/id "nbn"}
                                   :title "Master workflow"
                                   :type :workflow/master
                                   :handlers handlers})
         auto-approve (create-workflow! {:actor owner
-                                        :organization "nbn"
+                                        :organization {:organization/id "nbn"}
                                         :title "Auto-approve workflow"
                                         :handlers [approver-bot rejecter-bot]})
         organization-owner (create-workflow! {:actor organization-owner1
-                                              :organization "organization1"
+                                              :organization {:organization/id "organization1"}
                                               :title "Owned by organization owner"
                                               :type :workflow/default
                                               :handlers handlers})]
@@ -751,7 +749,7 @@
     ;; attach both kinds of licenses to all workflows created by owner
     (let [link (create-license! {:actor owner
                                  :license/type :link
-                                 :license/organization "nbn"
+                                 :license/organization {:organization/id "nbn"}
                                  :license/title {:en "CC Attribution 4.0"
                                                  :fi "CC Nimeä 4.0"
                                                  :sv "CC Erkännande 4.0"}
@@ -760,7 +758,7 @@
                                                 :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
           text (create-license! {:actor owner
                                  :license/type :text
-                                 :license/organization "nbn"
+                                 :license/organization {:organization/id "nbn"}
                                  :license/title {:en "General Terms of Use"
                                                  :fi "Yleiset käyttöehdot"
                                                  :sv "Allmänna villkor"}
@@ -935,12 +933,12 @@
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
         workflow-id (create-workflow! {:actor owner
-                                       :organization "perf"
+                                       :organization {:organization/id "perf"}
                                        :title "Performance tests"
                                        :handlers handlers})
         form-id (create-form!
                  {:actor owner
-                  :form/organization "perf"
+                  :form/organization {:organization/id "perf"}
                   :form/title "Performance tests"
                   :form/fields [{:field/title {:en "Project name"
                                                :fi "Projektin nimi"
@@ -962,7 +960,7 @@
         form (form/get-form-template form-id)
         license-id (create-license! {:actor owner
                                      :license/type :text
-                                     :license/organization "perf"
+                                     :license/organization {:organization/id "perf"}
                                      :license/title {:en "Performance License"
                                                      :fi "Suorituskykylisenssi"
                                                      :sv "Licens för prestand"}
@@ -972,7 +970,7 @@
         cat-item-ids (vec (in-parallel
                            (for [n (range-1 resource-count)]
                              (fn []
-                               (let [resource-id (create-resource! {:organization "perf"
+                               (let [resource-id (create-resource! {:organization {:organization/id "perf"}
                                                                     :license-ids [license-id]})]
                                  (create-catalogue-item! {:actor owner
                                                           :title {:en (str "Performance test resource " n)
@@ -980,7 +978,7 @@
                                                                   :sv (str "Licens för prestand " n)}
                                                           :resource-id resource-id
                                                           :form-id form-id
-                                                          :organization "perf"
+                                                          :organization {:organization/id "perf"}
                                                           :workflow-id workflow-id}))))))
         user-ids (vec (in-parallel
                        (for [n (range-1 user-count)]
@@ -1057,7 +1055,10 @@
                                                     :organization/name "NBN"
                                                     :organization/owners [{:userid organization-owner2}]
                                                     :organization/review-emails []})
-
+        abc (organizations/add-organization! owner {:organization/id "abc"
+                                                    :organization/name "ABC"
+                                                    :organization/owners []
+                                                    :organization/review-emails []})
         csc (organizations/add-organization! owner {:organization/id "csc"
                                                     :organization/name "CSC – IT CENTER FOR SCIENCE LTD."
                                                     :organization/owners []
@@ -1071,10 +1072,11 @@
                                                               :organization/owners [{:userid organization-owner2}]
                                                               :organization/review-emails []})
 
+
         ;; Create licenses
         license1 (create-license! {:actor owner
                                    :license/type :link
-                                   :license/organization "nbn"
+                                   :license/organization {:organization/id "nbn"}
                                    :license/title {:en "Demo license"
                                                    :fi "Demolisenssi"
                                                    :sv "Demolicens"}
@@ -1083,7 +1085,7 @@
                                                   :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         extra-license (create-license! {:actor owner
                                         :license/type :link
-                                        :license/organization "nbn"
+                                        :license/organization {:organization/id "nbn"}
                                         :license/title {:en "Extra license"
                                                         :fi "Ylimääräinen lisenssi"
                                                         :sv "Extra licens"}
@@ -1092,7 +1094,7 @@
                                                        :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         license-organization-owner (create-license! {:actor organization-owner1
                                                      :license/type :link
-                                                     :license/organization "organization1"
+                                                     :license/organization {:organization/id "organization1"}
                                                      :license/title {:en "License owned by organization owner"
                                                                      :fi "Lisenssi, jonka omistaa organisaatio-omistaja"
                                                                      :sv "Licens som ägs av organisationägare"}
@@ -1100,28 +1102,28 @@
                                                                     :fi "https://www.apache.org/licenses/LICENSE-2.0"
                                                                     :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
         _ (create-disabled-license! {:actor owner
-                                     :license/organization "nbn"})
+                                     :license/organization {:organization/id "nbn"}})
         attachment-license (create-attachment-license! {:actor owner
-                                                        :license/organization "nbn"})
+                                                        :license/organization {:organization/id "nbn"}})
 
         ;; Create resources
         res1 (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403262"
-                                :organization "nbn"
+                                :organization {:organization/id "nbn"}
                                 :actor owner})
         res2 (create-resource! {:resource-ext-id "Extra Data"
-                                :organization "nbn"
+                                :organization {:organization/id "nbn"}
                                 :actor owner
                                 :license-ids [license1]})
         res3 (create-resource! {:resource-ext-id "something else"
-                                :organization "hus"
+                                :organization {:organization/id "hus"}
                                 :actor owner
                                 :license-ids [license1 extra-license attachment-license]})
         res-organization-owner (create-resource! {:resource-ext-id "Owned by organization owner"
-                                                  :organization "organization1"
+                                                  :organization {:organization/id "organization1"}
                                                   :actor organization-owner1
                                                   :license-ids [license-organization-owner]})
         res-with-extra-license (create-resource! {:resource-ext-id "urn:nbn:fi:lb-201403263"
-                                                  :organization "nbn"
+                                                  :organization {:organization/id "nbn"}
                                                   :actor owner
                                                   :license-ids [extra-license attachment-license]})
 
@@ -1129,9 +1131,9 @@
         _ (db/create-workflow-license! {:wfid (:organization-owner workflows)
                                         :licid license-organization-owner})
 
-        form (create-all-field-types-example-form! owner "nbn" "Example form with all field types")
+        form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types")
         form-private-thl (create-form! {:actor owner
-                                        :form/organization "thl"
+                                        :form/organization {:organization/id "thl"}
                                         :form/title "Simple form"
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"
@@ -1141,7 +1143,7 @@
                                                        :field/max-length 100
                                                        :field/privacy :private}]})
         form-private-hus (create-form! {:actor owner
-                                        :form/organization "hus"
+                                        :form/organization {:organization/id "hus"}
                                         :form/title "Simple form"
                                         :form/fields [{:field/title {:en "Simple text field"
                                                                      :fi "Yksinkertainen tekstikenttä"
@@ -1150,7 +1152,7 @@
                                                        :field/type :text
                                                        :field/max-length 100
                                                        :field/privacy :private}]})
-        form-organization-owner (create-all-field-types-example-form! organization-owner1 "organization1" "Owned by organization owner")]
+        form-organization-owner (create-all-field-types-example-form! organization-owner1 {:organization/id "organization1"} "Owned by organization owner")]
     (create-archived-form! owner)
 
     ;; Create catalogue items
@@ -1163,7 +1165,7 @@
                                        :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
-                             :organization "nbn"
+                             :organization {:organization/id "nbn"}
                              :workflow-id (:master workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Decider workflow"
@@ -1174,7 +1176,7 @@
                                        :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
-                             :organization "nbn"
+                             :organization {:organization/id "nbn"}
                              :workflow-id (:decider workflows)})
     (let [catid (create-catalogue-item! {:actor owner
                                          :title {:en "Default workflow"
@@ -1185,7 +1187,7 @@
                                                    :sv "http://www.google.se"}
                                          :resource-id res1
                                          :form-id form
-                                         :organization "nbn"
+                                         :organization {:organization/id "nbn"}
                                          :workflow-id (:default workflows)})]
       (create-applications! catid users))
     (create-catalogue-item! {:actor owner
@@ -1194,7 +1196,7 @@
                                      :sv "Standard arbetsflöde 2"}
                              :resource-id res2
                              :form-id form-private-thl
-                             :organization "csc"
+                             :organization {:organization/id "csc"}
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow 3"
@@ -1202,7 +1204,7 @@
                                      :sv "Standard arbetsflöde 3"}
                              :resource-id res3
                              :form-id form-private-hus
-                             :organization "hus"
+                             :organization {:organization/id "hus"}
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:actor owner
                              :title {:en "Default workflow with extra license"
@@ -1210,7 +1212,7 @@
                                      :sv "Arbetsflöde med extra licens"}
                              :resource-id res-with-extra-license
                              :form-id form
-                             :organization "nbn"
+                             :organization {:organization/id "nbn"}
                              :workflow-id (:default workflows)})
     (create-catalogue-item! {:title {:en "Auto-approve workflow"
                                      :fi "Työvuo automaattisella hyväksynnällä"
@@ -1220,14 +1222,14 @@
                                        :sv "http://www.google.se"}
                              :resource-id res1
                              :form-id form
-                             :organization "nbn"
+                             :organization {:organization/id "nbn"}
                              :workflow-id (:auto-approve workflows)})
     (let [thl-res (create-resource! {:resource-ext-id "thl"
-                                     :organization "thl"
+                                     :organization {:organization/id "thl"}
                                      :actor owner})
           thlform (create-thl-demo-form! users)
           thl-wf (create-workflow! {:actor owner
-                                    :organization "thl"
+                                    :organization {:organization/id "thl"}
                                     :title "THL workflow"
                                     :type :workflow/default
                                     :handlers [(:approver1 users) (:approver2 users)]})
@@ -1237,7 +1239,7 @@
                                                      :sv "THL katalogartikel"}
                                              :resource-id thl-res
                                              :form-id thlform
-                                             :organization "thl"
+                                             :organization {:organization/id "thl"}
                                              :workflow-id thl-wf})]
       (create-member-applications! thl-catid (users :applicant1) (users :approver1) [{:userid (users :applicant2)}]))
     (let [default-disabled (create-catalogue-item! {:actor owner
@@ -1246,7 +1248,7 @@
                                                             :sv "Standard arbetsflöde (avaktiverat)"}
                                                     :resource-id res1
                                                     :form-id form
-                                                    :organization "nbn"
+                                                    :organization {:organization/id "nbn"}
                                                     :workflow-id (:default workflows)})]
       (create-disabled-applications! default-disabled
                                      (users :applicant2)
@@ -1258,7 +1260,7 @@
                                                            :sv "Standard arbetsflöde (utgånget)"}
                                                    :resource-id res1
                                                    :form-id form
-                                                   :organization "nbn"
+                                                   :organization {:organization/id "nbn"}
                                                    :workflow-id (:default workflows)})]
       (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
     (create-catalogue-item! {:actor organization-owner1
@@ -1267,7 +1269,7 @@
                                      :sv "Ägas av organisationägare"}
                              :resource-id res-organization-owner
                              :form-id form-organization-owner
-                             :organization "organization1"
+                             :organization {:organization/id "organization1"}
                              :workflow-id (:organization-owner workflows)})))
 
 (defn create-test-data! []
@@ -1286,3 +1288,8 @@
     (create-users-and-roles! users user-data)
     (create-bots!)
     (create-items! users)))
+
+(comment
+  (do ; you can manually re-create test data (useful sometimes when debugging)
+    (luminus-migrations.core/migrate ["reset"] (select-keys rems.config/env [:database-url]))
+    (create-test-data!)))

@@ -66,9 +66,9 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
-     :title [:span (andstr (:form/organization form) "/") (:form/title form)]
+     :title [:span (andstr (get-in form [:form/organization :organization/name]) "/") (:form/title form)]
      :always [:div
-              [inline-info-field (text :t.administration/organization) (:form/organization form)]
+              [inline-info-field (text :t.administration/organization) (get-in form [:form/organization :organization/name])]
               [inline-info-field (text :t.administration/title) (:form/title form)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? form)}]]]}]
    (let [id (:form/id form)]

@@ -36,6 +36,7 @@
 (defn- enrich-and-format-workflow [wf]
   (-> wf
       (update :workflow #(coerce-workflow-body (json/parse-string %)))
+      (update :organization (fn [id] {:organization/id id}))
       (assoc :licenses (get-workflow-licenses (:id wf)))
       (update-in [:workflow :handlers] #(mapv users/get-user %))))
 
@@ -47,3 +48,6 @@
   (->> (db/get-workflows)
        (map enrich-and-format-workflow)
        (db/apply-filters filters)))
+
+(defn join-workflow-licenses [workflow]
+  (assoc workflow :licenses (get-workflow-licenses (:id workflow))))

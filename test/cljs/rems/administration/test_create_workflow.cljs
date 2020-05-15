@@ -24,7 +24,7 @@
                 :type :workflow/default
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
-        (is (= {:organization "abc"
+        (is (= {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/default
                 :handlers ["bob" "carl"]}
@@ -38,7 +38,7 @@
                 :type :workflow/decider
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
-        (is (= {:organization "abc"
+        (is (= {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/decider
                 :handlers ["bob" "carl"]}
@@ -52,7 +52,7 @@
                 :type :workflow/master
                 :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
-        (is (= {:organization "abc"
+        (is (= {:organization {:organization/id "abc"}
                 :title "workflow title"
                 :type :workflow/master
                 :handlers ["bob" "carl"]}

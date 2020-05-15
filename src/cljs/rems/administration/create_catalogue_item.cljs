@@ -48,7 +48,7 @@
   (not (str/blank? (:title localization))))
 
 (defn- valid-request? [form request languages]
-  (and (string? (:organization request))
+  (and (not (str/blank? (get-in request [:organization :organization/id])))
        (number? (:wfid request))
        (number? (:resid request))
        (number? (:form request))
@@ -64,7 +64,7 @@
   (let [request {:wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
                  :form (get-in form [:form :form/id])
-                 :organization (:organization form)
+                 :organization {:organization/id (get-in form [:organization :organization/id])}
                  :localizations (into {}
                                       (for [lang languages]
                                         [lang {:title (trim-when-string (get-in form [:title lang]))
@@ -139,11 +139,7 @@
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
 
-(rf/reg-sub
- ::selected-organization
- (fn [db _]
-   (let [organization-id (get-in db [::form :form/organization])]
-     (get-in db [:organizations-by-id organization-id]))))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
 (rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (defn- catalogue-item-organization-field []
@@ -180,7 +176,7 @@
          :item-key :id
          :item-label #(str (:title %)
                            " (org: "
-                           (:organization %)
+                           (get-in % [:organization :organization/name])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
@@ -202,7 +198,7 @@
          :item-key :id
          :item-label #(str (:resid %)
                            " (org: "
-                           (:organization %)
+                           (get-in % [:organization :organization/name])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-resource %])}])]))
@@ -224,7 +220,7 @@
          :item-key :form/id
          :item-label #(str (:form/title %)
                            " (org: "
-                           (:form/organization %)
+                           (get-in % [:form/organization :organization/name])
                            ")")
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-form %])}])]))

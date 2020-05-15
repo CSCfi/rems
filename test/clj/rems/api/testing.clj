@@ -9,7 +9,8 @@
             [rems.handler :refer :all]
             [rems.middleware]
             [rems.standalone]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all]
+            [rems.json :as json]))
 
 (def ^{:doc "Run a full REMS HTTP server."} standalone-fixture
   (join-fixtures [test-db-fixture
@@ -44,8 +45,26 @@
       (assoc-in [:headers "x-rems-api-key"] api-key)
       (assoc-in [:headers "x-rems-user-id"] user-id)))
 
+(defn assert-schema-errors
+  "Try more advanced parsing for nicer schema errors."
+  [response]
+  (when (= 500 (:status response))
+    (when-let [body (:body response)]
+      (let [body (json/parse-string (slurp body))]
+        (assert (and (not (:schema body))
+                     (not (:errors body)))
+                (pr-str {:status (:status response)
+                         :fail (let [errors (:errors body)]
+                                 (if (map? errors)
+                                   (set (keys errors))
+                                   (set (mapcat keys errors))))
+                         :body body}))))))
+
+
+
 (defn assert-response-is-ok [response]
   (assert response)
+  (assert-schema-errors response)
   (assert (= 200 (:status response))
           (pr-str {:status (:status response)
                    :body (when-let [body (:body response)]
@@ -55,27 +74,35 @@
   response)
 
 (defn assert-response-is-server-error? [response]
+  (assert-schema-errors response)
   (assert (= 500 (:status response))))
 
 (defn response-is-ok? [response]
+  (assert-schema-errors response)
   (= 200 (:status response)))
 
 (defn response-is-server-error? [response]
+  (assert-schema-errors response)
   (= 500 (:status response)))
 
 (defn response-is-bad-request? [response]
+  (assert-schema-errors response)
   (= 400 (:status response)))
 
 (defn response-is-unauthorized? [response]
+  (assert-schema-errors response)
   (= 401 (:status response)))
 
 (defn response-is-forbidden? [response]
+  (assert-schema-errors response)
   (= 403 (:status response)))
 
 (defn response-is-not-found? [response]
+  (assert-schema-errors response)
   (= 404 (:status response)))
 
 (defn response-is-unsupported-media-type? [response]
+  (assert-schema-errors response)
   (= 415 (:status response)))
 
 (defn logged-in? [response]

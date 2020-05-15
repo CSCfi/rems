@@ -15,14 +15,12 @@
 (defn get-resource [id]
   (-> {:id id}
       db/get-resource
-      format-resource
-      (assoc :licenses (licenses/get-resource-licenses id))))
+      format-resource))
 
 (defn get-resources [filters]
   (->> (db/get-resources)
        (db/apply-filters filters)
-       (map format-resource)
-       (map #(assoc % :licenses (licenses/get-resource-licenses (:id %))))))
+       (map format-resource)))
 
 (defn ext-id-exists? [ext-id]
   (some? (db/get-resource {:resid ext-id})))

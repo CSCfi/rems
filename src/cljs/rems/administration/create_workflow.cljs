@@ -57,12 +57,12 @@
    (if (needs-handlers? (:type request))
      (seq (:handlers request))
      true)
-   (not (str/blank? (:organization request)))
+   (not (str/blank? (get-in request [:organization :organization/id])))
    (not (str/blank? (:title request)))))
 
 (defn build-create-request [form]
   (let [request (merge
-                 {:organization (get-in form [:organization :organization/id])
+                 {:organization {:organization/id (get-in form [:organization :organization/id])}
                   :title (trim-when-string (:title form))
                   :type (:type form)}
                  (when (needs-handlers? (:type form))
@@ -116,13 +116,9 @@
 
 (def ^:private handlers-dropdown-id "handlers-dropdown")
 
-(rf/reg-sub
- ::selected-organization
- (fn [db _]
-   (let [organization-id (get-in db [::form :form/organization])]
-     (get-in db [:organizations-by-id organization-id]))))
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
 
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
 
 (defn- workflow-organization-field []
   [fields/organization-field {:id "organization-dropdown"

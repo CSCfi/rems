@@ -1,18 +1,31 @@
 (ns rems.api.services.resource
-  (:require [rems.api.services.util :as util]
+  (:require [com.rpl.specter :refer [ALL transform]]
+            [rems.api.services.util :as util]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
+            [rems.db.organizations :as organizations]
             [rems.db.resource :as resource])
   (:import (org.postgresql.util PSQLException)))
 
-(defn get-resource [id] (resource/get-resource id))
-(defn get-resources [filters] (resource/get-resources filters))
+(defn- join-dependencies [resource]
+  (->> resource
+       organizations/join-organization
+       licenses/join-resource-licenses
+       (transform [:licenses ALL] organizations/join-organization)))
+
+(defn get-resource [id]
+  (->> (resource/get-resource id)
+       join-dependencies))
+
+(defn get-resources [filters]
+  (->> (resource/get-resources filters)
+       (mapv join-dependencies)))
 
 (defn create-resource! [{:keys [resid organization licenses] :as command} user-id]
   (util/check-allowed-organization! organization)
   (let [id (:id (db/create-resource! {:resid resid
-                                      :organization organization
+                                      :organization (:organization/id organization)
                                       :owneruserid user-id
                                       :modifieruserid user-id}))]
     (doseq [licid licenses]

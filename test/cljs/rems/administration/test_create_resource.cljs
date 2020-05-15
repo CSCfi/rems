@@ -9,13 +9,13 @@
                           :organization "organization1"
                           :unrelated "stuff"}]}]
     (testing "valid form"
-      (is (= {:organization "organization1"
+      (is (= {:organization {:organization/id "organization1"}
               :resid "resource id"
               :licenses [123]}
              (build-request form))))
 
     (testing "selecting a license is optional"
-      (is (= {:organization "organization1"
+      (is (= {:organization {:organization/id "organization1"}
               :resid "resource id"
               :licenses []}
              (build-request (assoc form :licenses [])))))
