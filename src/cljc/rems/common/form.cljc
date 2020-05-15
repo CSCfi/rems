@@ -89,8 +89,8 @@
   (when (str/blank? (get m key))
     {key :t.form.validation/required}))
 
-(defn- validate-organization-field [m key]
-  (let [organization (get m key)]
+(defn- validate-organization-field [m]
+  (let [organization (:form/organization m)]
     (when (or (nil? organization)
               (str/blank? (:organization/id organization)))
       {key :t.form.validation/required})))
@@ -208,7 +208,7 @@
     m))
 
 (defn validate-form-template [form languages]
-  (-> (merge (validate-organization-field form :form/organization)
+  (-> (merge (validate-organization-field form)
              (validate-text-field form :form/title)
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
