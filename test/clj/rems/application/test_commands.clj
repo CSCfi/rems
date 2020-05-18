@@ -290,7 +290,8 @@
       (is (false? @allocated-new-ids?) "should not allocate new IDs"))))
 
 (deftest test-save-draft
-  (let [application (apply-events nil [dummy-created-event])]
+  (let [injections (assoc injections :validate-fields form-validation/validate-fields)
+        application (apply-events nil [dummy-created-event])]
     (testing "saves a draft"
       (is (= {:event/type :application.event/draft-saved
               :event/time test-time
@@ -302,7 +303,7 @@
                          {:type :application.command/save-draft
                           :actor applicant-user-id
                           :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}))))
+                                         {:form 1 :field "2" :value "bar"}]} injections))))
     (testing "saves a draft"
       (is (= {:event/type :application.event/draft-saved
               :event/time test-time
@@ -314,19 +315,19 @@
                          {:type :application.command/save-draft
                           :actor applicant-user-id
                           :field-values [{:form 1 :field "1" :value "foo"}
-                                         {:form 1 :field "2" :value "bar"}]}))))
+                                         {:form 1 :field "2" :value "bar"}]} injections))))
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/save-draft
                             :actor "non-applicant"
                             :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]})
+                                           {:form 1 :field "2" :value "bar"}]} injections)
              (fail-command application
                            {:type :application.command/save-draft
                             :actor handler-user-id
                             :field-values [{:form 1 :field "1" :value "foo"}
-                                           {:form 1 :field "2" :value "bar"}]}))))
+                                           {:form 1 :field "2" :value "bar"}]} injections))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -337,7 +338,7 @@
                (fail-command application
                              {:type :application.command/save-draft
                               :actor applicant-user-id
-                              :field-values [{:form 1 :field "1" :value "updated"}]})))))
+                              :field-values [{:form 1 :field "1" :value "updated"}]} injections)))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -357,7 +358,7 @@
                (ok-command application
                            {:type :application.command/save-draft
                             :actor applicant-user-id
-                            :field-values [{:form 1 :field "1" :value "updated"}]})))))))
+                            :field-values [{:form 1 :field "1" :value "updated"}]} injections)))))))
 
 (deftest test-accept-licenses
   (let [application (apply-events nil [dummy-created-event])]
