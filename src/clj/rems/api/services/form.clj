@@ -113,8 +113,9 @@
            :id form-id}))))
 
 (defn- join-dependencies [form]
-  (->> form
-       organizations/join-organization))
+  (when form
+    (->> form
+         organizations/join-organization)))
 
 (defn get-form-template [id]
   (->> (form/get-form-template id)

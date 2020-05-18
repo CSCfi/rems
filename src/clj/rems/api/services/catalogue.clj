@@ -33,12 +33,13 @@
     {:success (not (some nil? (cons id loc-ids)))
      :id id}))
 
-(defn- join-dependencies [resource]
-  (->> resource
-       organizations/join-organization
-       ;; not used at the moment
-       #_licenses/join-catalogue-item-licenses
-       #_(transform [:licenses ALL] organizations/join-organization)))
+(defn- join-dependencies [item]
+  (when item
+    (->> item
+         organizations/join-organization
+         ;; not used at the moment
+         #_licenses/join-catalogue-item-licenses
+         #_(transform [:licenses ALL] organizations/join-organization))))
 
 (defn get-localized-catalogue-items [& [query-params]]
   (->> (catalogue/get-localized-catalogue-items (or query-params {}))

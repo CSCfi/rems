@@ -9,10 +9,11 @@
   (:import (org.postgresql.util PSQLException)))
 
 (defn- join-dependencies [resource]
-  (->> resource
-       organizations/join-organization
-       licenses/join-resource-licenses
-       (transform [:licenses ALL] organizations/join-organization)))
+  (when resource
+    (->> resource
+         organizations/join-organization
+         licenses/join-resource-licenses
+         (transform [:licenses ALL] organizations/join-organization))))
 
 (defn get-resource [id]
   (->> (resource/get-resource id)
