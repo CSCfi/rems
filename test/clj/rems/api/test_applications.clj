@@ -536,17 +536,21 @@
                                                          :field/optional true}
                                                         {:field/id "optionlist"
                                                          :field/title {:en "Option list."
-                                                                       :fi "Valintalista."}
+                                                                       :fi "Valintalista."
+                                                                       :sv "Välj"}
                                                          :field/type :option
                                                          :field/options [{:key "Option1"
                                                                           :label {:en "First"
-                                                                                  :fi "Ensimmäinen"}}
+                                                                                  :fi "Ensimmäinen"
+                                                                                  :sv "Först"}}
                                                                          {:key "Option2"
                                                                           :label {:en "Second"
-                                                                                  :fi "Toinen"}}
+                                                                                  :fi "Toinen"
+                                                                                  :sv "Den andra"}}
                                                                          {:key "Option3"
                                                                           :label {:en "Third"
-                                                                                  :fi "Kolmas "}}]
+                                                                                  :fi "Kolmas"
+                                                                                  :sv "Tredje"}}]
                                                          :field/optional true}]})
         wf-id (test-data/create-workflow! {})
         cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
