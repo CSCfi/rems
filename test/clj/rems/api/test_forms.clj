@@ -33,11 +33,13 @@
         command {:form/organization "organization1"
                  :form/title (str "form title " (UUID/randomUUID))
                  :form/fields [{:field/title {:en "en title"
-                                              :fi "fi title"}
+                                              :fi "fi title"
+                                              :sv "sv title"}
                                 :field/optional true
                                 :field/type :text
                                 :field/placeholder {:en "en placeholder"
-                                                    :fi "fi placeholder"}}]}]
+                                                    :fi "fi placeholder"
+                                                    :sv "sv placeholder"}}]}]
 
     (doseq [user-id [owner org-owner]]
       (testing user-id
@@ -70,18 +72,22 @@
                                                        :form/title (str "form title " (UUID/randomUUID))
                                                        :form/fields [{:field/id "abc"
                                                                       :field/title {:en "en title"
-                                                                                    :fi "fi title"}
+                                                                                    :fi "fi title"
+                                                                                    :sv "sv title"}
                                                                       :field/optional true
                                                                       :field/type :text
                                                                       :field/placeholder {:en "en placeholder"
-                                                                                          :fi "fi placeholder"}}
+                                                                                          :fi "fi placeholder"
+                                                                                          :sv "sv placeholder"}}
                                                                      {:field/id "abc"
                                                                       :field/title {:en "en title"
-                                                                                    :fi "fi title"}
+                                                                                    :fi "fi title"
+                                                                                    :sv "sv title"}
                                                                       :field/optional true
                                                                       :field/type :text
                                                                       :field/placeholder {:en "en placeholder"
-                                                                                          :fi "fi placeholder"}}]}]
+                                                                                          :fi "fi placeholder"
+                                                                                          :sv "sv placeholder"}}]}]
                 (is (response-is-bad-request? (api-response :post "/api/forms/create"
                                                             command-with-duplicated-field-ids
                                                             api-key user-id))))))
@@ -125,7 +131,7 @@
 (deftest forms-api-all-field-types-test
   (let [api-key "42"
         user-id "owner"
-        localized {:en "en" :fi "fi"}
+        localized {:en "en" :fi "fi" :sv "sv"}
         form-spec {:form/organization "test-organization"
                    :form/title "all field types test"
                    :form/fields [{:field/type :text
@@ -191,44 +197,68 @@
 
 (deftest form-editable-test
   (let [api-key "42"
-        user-id "owner"
-        form-id (-> (request :post "/api/forms/create")
-                    (authenticate api-key user-id)
-                    (json-body {:form/organization "organization1"
-                                :form/title "form editable test"
-                                :form/fields []})
-                    handler
-                    read-ok-body
-                    :id)]
-    (testing "New form is editable"
-      (testing "as owner"
-        (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
-                          (authenticate api-key user-id)
-                          handler
-                          read-ok-body))))
-      (testing "as organization owner"
-        (is (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
-                          (authenticate api-key "organization-owner1")
-                          handler
-                          read-ok-body)))))
-    (let [resid (test-data/create-resource! {:organization "test-organization"})
-          wfid (test-data/create-workflow! {:organization "test-organization"})
-          data (-> (request :post "/api/catalogue-items/create")
-                   (authenticate api-key user-id)
-                   (json-body {:form form-id
-                               :resid resid
-                               :wfid wfid
-                               :archived false
-                               :organization "test-organization"
-                               :localizations {}})
-                   handler
-                   read-body)]
-      (is (:success data))
-      (testing "Form is non-editable after in use by a catalogue item"
-        (is (not (:success (-> (request :get (str "/api/forms/" form-id "/editable"))
-                               (authenticate api-key user-id)
-                               handler
-                               read-ok-body))))))))
+        user-id "owner"]
+    (let [form-id (:id (api-call :post "/api/forms/create"
+                                 {:form/organization "organization1"
+                                  :form/title "form editable test"
+                                  :form/fields []}
+                                 api-key user-id))]
+      (testing "New form is editable"
+        (testing "as owner"
+          (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
+                                  api-key user-id))))
+        (testing "as organization owner"
+          (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
+                                  api-key "organization-owner1")))))
+      (let [cat-id (test-data/create-catalogue-item! {:form-id form-id
+                                                      :archived false
+                                                      :organization "test-organization"})]
+        (testing "Form is non-editable after in use by a catalogue item"
+          (is (= {:success false
+                  :errors [{:type "t.administration.errors/form-in-use"
+                            :catalogue-items [{:id cat-id :localizations {}}]
+                            :workflows nil}]}
+                 (api-call :get (str "/api/forms/" form-id "/editable") nil
+                           api-key user-id)))
+          (testing "even if catalogue item is archived & disabled"
+            (api-call :put "/api/catalogue-items/archived" {:id cat-id :archived true}
+                      api-key user-id)
+            (api-call :put "/api/catalogue-items/enabled" {:id cat-id :enabled false}
+                      api-key user-id)
+            (is (= {:success false
+                  :errors [{:type "t.administration.errors/form-in-use"
+                            :catalogue-items [{:id cat-id :localizations {}}]
+                            :workflows nil}]}
+                 (api-call :get (str "/api/forms/" form-id "/editable") nil
+                           api-key user-id)))))))
+    (let [form-id (:id (api-call :post "/api/forms/create"
+                                 {:form/organization "organization1"
+                                  :form/title "form editable test 2"
+                                  :form/fields []}
+                                 api-key user-id))]
+      (testing "New form is editable"
+        (is (:success (api-call :get (str "/api/forms/" form-id "/editable") nil
+                                api-key user-id))))
+      (testing "Form is non-editable after in use by a workflow"
+        (let [wfid (test-data/create-workflow! {:forms [{:form/id form-id}]
+                                                :title "wf with form"})]
+          (is (= {:success false
+                  :errors [{:type "t.administration.errors/form-in-use"
+                            :catalogue-items nil
+                            :workflows [{:id wfid :title "wf with form"}]}]}
+                 (api-call :get (str "/api/forms/" form-id "/editable") nil
+                           api-key user-id)))
+          (testing "even if catalogue item is archived & disabled"
+            (api-call :put "/api/workflows/archived" {:id wfid :archived true}
+                      api-key user-id)
+            (api-call :put "/api/workflows/enabled" {:id wfid :enabled false}
+                      api-key user-id)
+            (is (= {:success false
+                    :errors [{:type "t.administration.errors/form-in-use"
+                              :catalogue-items nil
+                              :workflows [{:id wfid :title "wf with form"}]}]}
+                   (api-call :get (str "/api/forms/" form-id "/editable") nil
+                             api-key user-id)))))))))
 
 (deftest form-edit-test
   (let [api-key "42"
@@ -327,15 +357,18 @@
       (let [command {:form/organization "test-organization"
                      :form/title (str "form title " (UUID/randomUUID))
                      :form/fields [{:field/title {:en "en title"
-                                                  :fi "fi title"}
+                                                  :fi "fi title"
+                                                  :sv "sv title"}
                                     :field/optional true
                                     :field/type :option
                                     :field/options [{:key "yes"
                                                      :label {:en "Yes"
-                                                             :fi "Kyllä"}}
+                                                             :fi "Kyllä"
+                                                             :sv "Ja"}}
                                                     {:key "no"
                                                      :label {:en "No"
-                                                             :fi "Ei"}}]}]}
+                                                             :fi "Ei"
+                                                             :sv "Nej"}}]}]}
             id (-> (request :post "/api/forms/create")
                    (authenticate api-key user-id)
                    (json-body command)
@@ -351,10 +384,15 @@
             (is (= (:form/fields command)
                    (mapv fixup-field-to-match-command (:form/fields form))))))))))
 
+(defn- failure-response? [response]
+  (or (response-is-bad-request? response)
+      (and (response-is-ok? response)
+           (false? (:success (read-body response))))))
+
 (deftest forms-api-privacy-test
   (let [api-key "42"
         user-id "owner"
-        localized {:en "en" :fi "fi"}
+        localized {:en "en" :fi "fi" :sv "sv"}
         command {:form/organization "abc"
                  :form/title "form fields with privacy"
                  :form/fields [{:field/id "header"
@@ -373,29 +411,30 @@
                                 :field/privacy :public}]}]
     (testing "creating"
       (testing "invalid request"
-        (letfn [(fail-request [command]
-                  (let [response (-> (request :post "/api/forms/create")
-                                     (authenticate api-key user-id)
-                                     (json-body command)
-                                     handler)]
-                    (or (= 400 (:status response))
-                        (not (get-in response [:body :success])))))]
-          (is (fail-request (assoc-in command [:form/fields 1 :field/privacy] nil)) "invalid value")
-          (is (fail-request (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)) "invalid value")
-          (is (fail-request (assoc-in command [:form/fields 0 :field/privacy] :private)) "privacy not supported")))
+        (is (not (failure-response? (api-response :post "/api/forms/create"
+                                                 command
+                                                 api-key user-id)))
+            "sanity check for failure-response?")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                            (assoc-in command [:form/fields 1 :field/privacy] nil)
+                                            api-key user-id))
+            "invalid value")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                            (assoc-in command [:form/fields 1 :field/privacy] :does-not-exist)
+                                            api-key user-id))
+            "invalid value")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                              (assoc-in command [:form/fields 0 :field/privacy] :private)
+                                              api-key user-id))
+            "privacy not supported"))
       (testing "valid request"
-        (let [form-id (-> (request :post "/api/forms/create")
-                          (authenticate api-key user-id)
-                          (json-body command)
-                          handler
-                          read-ok-body
-                          :id)]
+        (let [form-id (:id (api-call :post "/api/forms/create"
+                                     command
+                                     api-key user-id))]
           (is form-id)
           (testing "and fetching"
-            (let [form (-> (request :get (str "/api/forms/" form-id))
-                           (authenticate api-key user-id)
-                           handler
-                           read-ok-body)]
+            (let [form (api-call :get (str "/api/forms/" form-id) nil
+                                 api-key user-id)]
               (is (= [{:field/id "header"
                        :field/type "header"
                        :field/title localized
@@ -414,7 +453,7 @@
 (deftest forms-api-visible-test
   (let [api-key "42"
         user-id "owner"
-        localized {:en "en" :fi "fi"}
+        localized {:en "en" :fi "fi" :sv "sv"}
         command {:form/organization "abc"
                  :form/title "text fields that depend on a field"
                  :form/fields [{:field/id "fld1"
@@ -450,66 +489,85 @@
                                                    :visibility/values ["c" "d"]}}]}]
     (testing "creating"
       (testing "invalid request"
-        (letfn [(fail-request [command]
-                  (let [response (-> (request :post "/api/forms/create")
-                                     (authenticate api-key user-id)
-                                     (json-body command)
-                                     handler)]
-                    (or (= 400 (:status response))
-                        (not (get-in response [:body :success])))))]
-          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/type] nil)) "missing field")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/type] :doesnotexist)) "invalid type")
-          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/field] nil)) "missing field")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {})) "missing value")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {:field/id "doesnotexist"})) "referred field does not exist")
-          (is (fail-request (dissoc-in command [:form/fields 2 :field/visibility :visibility/values] nil)) "missing value")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] "c")) "invalid value type")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "doesnotexist" "d"])) "referred value does not exist")
-          (is (fail-request (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "c"])) "duplicate value")))
+        (is (not (failure-response? (api-response :post "/api/forms/create"
+                                                  command
+                                                  api-key user-id)))
+            "sanity check for failure-response?")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (dissoc-in command [:form/fields 2 :field/visibility :visibility/type] nil)
+                                             api-key user-id))
+            "missing field")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/type] :doesnotexist)
+                                             api-key user-id))
+            "invalid type")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (dissoc-in command [:form/fields 2 :field/visibility :visibility/field] nil)
+                                             api-key user-id))
+            "missing field")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {})
+                                             api-key user-id))
+            "missing value")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/field] {:field/id "doesnotexist"})
+                                             api-key user-id))
+            "referred field does not exist")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (dissoc-in command [:form/fields 2 :field/visibility :visibility/values] nil)
+                                             api-key user-id))
+            "missing value")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/values] "c")
+                                             api-key user-id))
+            "invalid value type")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "doesnotexist" "d"])
+                                             api-key user-id))
+            "referred value does not exist")
+        (is (failure-response? (api-response :post "/api/forms/create"
+                                             (assoc-in command [:form/fields 2 :field/visibility :visibility/values] ["c" "c"])
+                                             api-key user-id))
+            "duplicate value"))
       (testing "valid request"
-        (let [form-id (-> (request :post "/api/forms/create")
-                          (authenticate api-key user-id)
-                          (json-body command)
-                          handler
-                          read-ok-body
-                          :id)]
+        (let [form-id (:id (api-call :post "/api/forms/create"
+                                     command
+                                     api-key user-id))]
           (is form-id)
           (testing "and fetching"
-            (let [form (-> (request :get (str "/api/forms/" form-id))
-                           (authenticate api-key user-id)
-                           handler
-                           read-ok-body)]
+            (let [form (api-call :get (str "/api/forms/" form-id) nil
+                                 api-key user-id)]
               (is (= (select-keys command [:form/organization :form/title])
                      (select-keys form [:form/organization :form/title])))
               (is (= [{:field/id "fld1"
                        :field/type "option"
-                       :field/title {:fi "fi" :en "en"}
+                       :field/title localized
                        :field/optional false
-                       :field/options [{:key "a" :label {:fi "fi" :en "en"}}
-                                       {:key "b" :label {:fi "fi" :en "en"}}
-                                       {:key "c" :label {:fi "fi" :en "en"}}]}
+                       :field/options [{:key "a" :label localized}
+                                       {:key "b" :label localized}
+                                       {:key "c" :label localized}]}
                       {:field/id "fld4"
                        :field/type "text"
-                       :field/title {:fi "fi" :en "en"}
+                       :field/title localized
                        :field/optional false}
                       {:field/id "fld5"
                        :field/type "text"
-                       :field/title {:fi "fi" :en "en"}
+                       :field/title localized
                        :field/optional false
                        :field/visibility {:visibility/type "only-if"
                                           :visibility/field {:field/id "fld1"}
                                           :visibility/values ["c"]}}
                       {:field/id "fld3"
                        :field/type "multiselect"
-                       :field/title {:fi "fi" :en "en"}
+                       :field/title localized
                        :field/optional false
-                       :field/options [{:key "a" :label {:fi "fi" :en "en"}}
-                                       {:key "b" :label {:fi "fi" :en "en"}}
-                                       {:key "c" :label {:fi "fi" :en "en"}}
-                                       {:key "d" :label {:fi "fi" :en "en"}}]}
+                       :field/options [{:key "a" :label localized}
+                                       {:key "b" :label localized}
+                                       {:key "c" :label localized}
+                                       {:key "d" :label localized}]}
                       {:field/id "fld7"
                        :field/type "text"
-                       :field/title {:fi "fi" :en "en"}
+                       :field/title localized
                        :field/optional false
                        :field/visibility {:visibility/type "only-if"
                                           :visibility/field {:field/id "fld3"}
@@ -534,18 +592,19 @@
     (is (< (count filtered) (count unfiltered)))))
 
 (deftest test-form-missing-languages
-  (let [id (test-data/create-form! {:form/title "invalid form"
-                                    :form/fields [{:field/id "fld1"
-                                                   :field/type :text
-                                                   :field/optional true
-                                                   :field/title {:fi "Title in Finnish"}
-                                                   :field/placeholder {:en "Placeholder"}}
-                                                  {:field/id "fld2"
-                                                   :field/type :option
-                                                   :field/optional false
-                                                   :field/title {:fi "fi" :sv "sv" :en "en"}
-                                                   :field/options [{:key "opt"
-                                                                    :label {:sv "Swedish label"}}]}]})]
+  (let [id (with-redefs [rems.api.services.form/validation-error (constantly nil)] ;; disable validation
+             (test-data/create-form! {:form/title "invalid form"
+                                      :form/fields [{:field/id "fld1"
+                                                     :field/type :text
+                                                     :field/optional true
+                                                     :field/title {:fi "Title in Finnish"}
+                                                     :field/placeholder {:en "Placeholder"}}
+                                                    {:field/id "fld2"
+                                                     :field/type :option
+                                                     :field/optional false
+                                                     :field/title {:fi "fi" :sv "sv" :en "en"}
+                                                     :field/options [{:key "opt"
+                                                                      :label {:sv "Swedish label"}}]}]}))]
     (is (= {:form/id id
             :form/organization "default"
             :form/title "invalid form"

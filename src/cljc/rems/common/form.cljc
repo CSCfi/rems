@@ -157,6 +157,9 @@
       (empty? (:visibility/values visibility))
       {:field/visibility {:visibility/values :t.form.validation/required}}
 
+      (not (apply distinct? (:visibility/values visibility)))
+      {:field/visibility {:visibility/values :t.form.validation/invalid-value}}
+
       (some #(not (contains? (field-option-keys referred-field) %)) (:visibility/values visibility))
       {:field/visibility {:visibility/values :t.form.validation/invalid-value}})))
 
@@ -168,20 +171,30 @@
       nil {:field/visibility {:visibility/type :t.form.validation/required}}
       {:field/visibility {:visibility/type :t.form.validation/invalid-value}})))
 
+(defn- validate-not-present [field key]
+  (when (contains? field key)
+    {key :unsupported}))
+
 (defn- validate-fields [fields languages]
   (letfn [(validate-field [index field]
-            {index (merge (validate-field-type field)
-                          (validate-localized-text-field field :field/title languages)
-                          (when (supports-placeholder? field)
-                            (validate-optional-localized-field field :field/placeholder languages))
-                          (when (supports-max-length? field)
-                            (validate-max-length (:field/max-length field)))
-                          (when (supports-options? field)
-                            (validate-options (:field/options field) languages))
-                          (when (supports-privacy? field)
-                            (validate-privacy field fields))
-                          (when (supports-visibility? field)
-                            (validate-visibility field fields)))})]
+            {index (or (validate-field-type field)
+                       (merge
+                        (validate-localized-text-field field :field/title languages)
+                        (if (supports-placeholder? field)
+                          (validate-optional-localized-field field :field/placeholder languages)
+                          (validate-not-present field :field/placeholder))
+                        (if (supports-max-length? field)
+                          (validate-max-length (:field/max-length field))
+                          (validate-not-present field :field/max-length))
+                        (if (supports-options? field)
+                          (validate-options (:field/options field) languages)
+                          (validate-not-present field :field/options))
+                        (if (supports-privacy? field)
+                          (validate-privacy field fields)
+                          (validate-not-present field :field/privacy))
+                        (if (supports-visibility? field)
+                          (validate-visibility field fields)
+                          (validate-not-present field :field/visibility))))})]
     (apply merge (map-indexed validate-field fields))))
 
 (defn- nil-if-empty [m]
@@ -239,21 +252,35 @@
              (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder" :fi ""}) languages)
              (validate-form-template (assoc-in form [:form/fields 0 :field/placeholder] {:en "en placeholder"}) languages))))
 
-    (testing "placeholder is not validated if it is not used"
+    (testing "placeholder & max-length shouldn't be present if they are not applicable"
       (let [form (-> form
                      (assoc-in [:form/fields 0 :field/type] :label)
                      (assoc-in [:form/fields 0 :field/placeholder :fi] ""))]
-        (is (empty? (validate-form-template form languages)))))
+        (is (= {:form/fields {0 {:field/placeholder :unsupported
+                                 :field/max-length :unsupported}}}
+               (validate-form-template form languages)))))
+
+    (testing "privacy, & options shouldn't be present if they are not applicable"
+      (let [form (assoc form :form/fields
+                        [{:field/title {:en "en" :fi "fi"}
+                          :field/type :header
+                          :field/privacy :invalid
+                          :field/options [{:invalid-key :value}]}])]
+        (is (= {:form/fields {0 {:field/privacy :unsupported
+                                 :field/options :unsupported}}}
+               (validate-form-template form languages)))))
 
     (testing "option fields"
-      (let [form (-> form
-                     (assoc-in [:form/fields 0 :field/type] :option)
-                     (assoc-in [:form/fields 0 :field/options] [{:key "yes"
-                                                                 :label {:en "en yes"
-                                                                         :fi "fi yes"}}
-                                                                {:key "no"
-                                                                 :label {:en "en no"
-                                                                         :fi "fi no"}}]))]
+      (let [form (assoc form :form/fields
+                        [{:field/title {:en "en" :fi "fi"}
+                          :field/type :option
+                          :field/optional true
+                          :field/options [{:key "yes"
+                                           :label {:en "en yes"
+                                                   :fi "fi yes"}}
+                                          {:key "no"
+                                           :label {:en "en no"
+                                                   :fi "fi no"}}]}])]
         (testing "valid form"
           (is (empty? (validate-form-template form languages))))
 
@@ -261,12 +288,6 @@
           (is (= {:form/fields {0 {:field/options {0 {:key :t.form.validation/required}}}}}
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] "") languages)
                  (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :key] nil) languages))))
-
-        (testing "... are not validated when options are not used"
-          (let [form (-> form
-                         (assoc-in [:form/fields 0 :field/options 0 :key] "")
-                         (assoc-in [:form/fields 0 :field/type] :texta))]
-            (is (empty? (validate-form-template form languages)))))
 
         (testing "missing option label"
           (let [empty-label (validate-form-template (assoc-in form [:form/fields 0 :field/options 0 :label] {:en "" :fi ""}) languages)
@@ -277,14 +298,16 @@
                    nil-label))))))
 
     (testing "multiselect fields"
-      (let [form (-> form
-                     (assoc-in [:form/fields 0 :field/type] :multiselect)
-                     (assoc-in [:form/fields 0 :field/options] [{:key "egg"
-                                                                 :label {:en "Egg"
-                                                                         :fi "Munaa"}}
-                                                                {:key "bacon"
-                                                                 :label {:en "Bacon"
-                                                                         :fi "Pekonia"}}]))]
+      (let [form (assoc form :form/fields
+                        [{:field/type :multiselect
+                          :field/title {:en "en" :fi "fi"}
+                          :field/optional false
+                          :field/options [{:key "egg"
+                                           :label {:en "Egg"
+                                                   :fi "Munaa"}}
+                                          {:key "bacon"
+                                           :label {:en "Bacon"
+                                                   :fi "Pekonia"}}]}])]
         (testing "valid form"
           (is (empty? (validate-form-template form languages))))
 
@@ -302,23 +325,24 @@
                    nil-label))))))
 
     (testing "visible"
-      (let [form (-> form
-                     (assoc-in [:form/fields 0 :field/id] "fld1")
-                     (assoc-in [:form/fields 0 :field/type] :option)
-                     (assoc-in [:form/fields 0 :field/options] [{:key "yes"
-                                                                 :label {:en "en yes"
-                                                                         :fi "fi yes"}}
-                                                                {:key "no"
-                                                                 :label {:en "en no"
-                                                                         :fi "fi no"}}])
-                     (assoc-in [:form/fields 1] {:field/id "fld2"
-                                                 :field/title {:en "en title additional"
-                                                               :fi "fi title additional"}
-                                                 :field/optional false
-                                                 :field/type :text
-                                                 :field/max-length "12"
-                                                 :field/placeholder {:en "en placeholder"
-                                                                     :fi "fi placeholder"}}))
+      (let [form (assoc form :form/fields
+                        [{:field/id "fld1"
+                          :field/title {:en "en" :fi "fi"}
+                          :field/type :option
+                          :field/options [{:key "yes"
+                                           :label {:en "en yes"
+                                                   :fi "fi yes"}}
+                                          {:key "no"
+                                           :label {:en "en no"
+                                                   :fi "fi no"}}]}
+                         {:field/id "fld2"
+                          :field/title {:en "en title additional"
+                                        :fi "fi title additional"}
+                          :field/optional false
+                          :field/type :text
+                          :field/max-length "12"
+                          :field/placeholder {:en "en placeholder"
+                                              :fi "fi placeholder"}}])
             validate-visible (fn [visible]
                                (validate-form-template (assoc-in form [:form/fields 1 :field/visibility] visible) languages))]
 
@@ -349,7 +373,10 @@
                                     :visibility/values ["does-not-exist"]})
                  (validate-visible {:visibility/type :only-if
                                     :visibility/field {:field/id "fld1"}
-                                    :visibility/values ["yes" "does-not-exist"]}))))
+                                    :visibility/values ["yes" "does-not-exist"]})
+                 (validate-visible {:visibility/type :only-if
+                                    :visibility/field {:field/id "fld1"}
+                                    :visibility/values ["yes" "yes"]}))))
 
         (testing "correct data"
           (is (empty? (validate-visible {:visibility/type :always})))

@@ -7,6 +7,7 @@
             [rems.api.schema :as schema]
             [rems.api.services.catalogue :as catalogue]
             [rems.api.services.command :as command]
+            [rems.api.services.form :as form]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]
             [rems.api.services.workflow :as workflow]
@@ -15,7 +16,6 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.testing-util :refer [with-user]]
@@ -198,7 +198,7 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-workflow! [{:keys [actor organization title type handlers]
+(defn create-workflow! [{:keys [actor organization title type handlers forms]
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
@@ -207,6 +207,7 @@
                    :organization (or organization "default")
                    :title (or title "")
                    :type (or type :workflow/master)
+                   :forms forms
                    :handlers
                    (or handlers
                        (do (create-user! (get +fake-user-data+ "developer"))

@@ -10,7 +10,8 @@
 
 (s/defschema WorkflowBody
   {:type (apply s/enum events/workflow-types)
-   :handlers [s/Str]})
+   :handlers [s/Str]
+   (s/optional-key :forms) [{:form/id s/Num}]})
 
 (def ^:private coerce-workflow-body
   (coerce/coercer! WorkflowBody coerce/string-coercion-matcher))
