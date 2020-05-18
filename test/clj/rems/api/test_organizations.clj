@@ -4,13 +4,14 @@
             [rems.api.testing :refer :all]
             [rems.testing-util :refer [fixed-time-fixture]]
             [ring.mock.request :refer :all])
-  (:import [org.joda.time DateTime DateTimeZone DateTimeUtils]))
+  (:import [org.joda.time DateTime DateTimeZone]))
 
 (def test-time (DateTime. 90000 DateTimeZone/UTC))
 
 (use-fixtures
   :once
-  (join-fixtures [api-fixture (fixed-time-fixture test-time)]))
+  api-fixture
+  (fixed-time-fixture test-time))
 
 (deftest organizations-api-test
   (let [api-key "42"
