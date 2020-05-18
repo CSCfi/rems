@@ -141,13 +141,34 @@
   (create-user! (get +fake-user-data+ "owner") :owner)
   "owner")
 
+(defn create-organization! [{:keys [actor users]
+                             :organization/keys [id name owners review-emails]
+                             :as command}]
+  (let [actor (or actor (create-owner!))
+        result (with-user actor
+                 (organizations/add-organization! actor
+                                                  {:organization/id (or id "default")
+                                                   :organization/name (or name "The Default Organization")
+                                                   :organization/owners (or owners
+                                                                            (if users
+                                                                              [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
+                                                                              []))
+                                                   :organization/review-emails (or review-emails [])}))]
+    (assert (:success result) {:command command :result result})
+    (:organization/id result)))
+
+(defn- default-organization []
+  {:organization/id (if-let [existing-default-organization (db/get-organization-by-id {:id "default"})]
+                      (:id existing-default-organization)
+                      (create-organization! {}))})
+
 (defn create-license! [{:keys [actor]
                         :license/keys [type title link organization text attachment-id]
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (licenses/create-license! {:licensetype (name (or type :text))
-                                            :organization (or organization {:organization/id "default"})
+                                            :organization (or organization (default-organization))
                                             :localizations
                                             (transpose-localizations {:title title
                                                                       :textcontent (merge link text)
@@ -169,7 +190,7 @@
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
-                        :license/organization organization
+                        :license/organization (or organization (default-organization))
                         :license/title {:fi "Liitelisenssi" :en "Attachment license"}
                         :license/text {:fi "fi" :en "en"}
                         :license/attachment-id {:fi fi-attachment :en en-attachment}}))))
@@ -180,7 +201,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (form/create-form! actor
-                                    {:form/organization (or organization {:organization/id "default"})
+                                    {:form/organization (or organization (default-organization))
                                      :form/title (or title "FORM")
                                      :form/fields (or fields [])}))]
     (assert (:success result) {:command command :result result})
@@ -191,7 +212,7 @@
   (let [actor (or actor (create-owner!))
         result (with-user actor
                  (resource/create-resource! {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
-                                             :organization (or organization {:organization/id "default"})
+                                             :organization (or organization (default-organization))
                                              :licenses (or license-ids [])}
                                             actor))]
     (assert (:success result) {:command command :result result})
@@ -1035,10 +1056,7 @@
         organization-owner2 (users :organization-owner2)
 
         ;; Create organizations
-        default (organizations/add-organization! owner {:organization/id "default"
-                                                        :organization/name "The Default Organization"
-                                                        :organization/owners [{:userid organization-owner1} {:userid organization-owner2}]
-                                                        :organization/review-emails []})
+        default (create-organization! {:actor owner :users users})
         perf (organizations/add-organization! owner {:organization/id "perf"
                                                      :organization/name "Performance Test Organization"
                                                      :organization/owners [{:userid organization-owner1}]

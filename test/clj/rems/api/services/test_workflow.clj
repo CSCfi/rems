@@ -17,6 +17,7 @@
   (create-users)
 
   (with-user "owner"
+    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
     (testing "default workflow with forms"
       (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/default
@@ -79,6 +80,7 @@
   (create-users)
 
   (with-user "owner"
+    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
     (testing "change title"
       (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/master
@@ -95,7 +97,7 @@
                    (select-keys [:id :title :workflow]))))))
 
     (testing "change handlers"
-      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "ABC"}
+      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/master
                                                :title "original title"
                                                :handlers ["user1"]})]
@@ -120,13 +122,11 @@
   (create-users)
   (with-user "owner"
     (let [simplify #(map :userid %)
-          wf1 (test-data/create-workflow! {:organization {:organization/id ""}
-                                           :type :workflow/default
+          wf1 (test-data/create-workflow! {:type :workflow/default
                                            :title "workflow2"
                                            :handlers ["handler1"
                                                       "handler2"]})
-          wf2 (test-data/create-workflow! {:organization {:organization/id ""}
-                                           :type :workflow/default
+          wf2 (test-data/create-workflow! {:type :workflow/default
                                            :title "workflow2"
                                            :handlers ["handler2"
                                                       "handler3"]})]
