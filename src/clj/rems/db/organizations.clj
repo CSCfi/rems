@@ -1,10 +1,7 @@
 (ns rems.db.organizations
-  (:require [clojure.core.memoize :as memo]
-            [medley.core :refer [update-existing]]
+  (:require [medley.core :refer [update-existing]]
             [rems.api.schema :refer [OrganizationFull OrganizationOverview]]
-            [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
-            [rems.db.roles :as roles]
             [rems.json :as json]
             [schema.coerce :as coerce])
   (:import [org.joda.time DateTime]))
@@ -15,7 +12,7 @@
   (db/add-organization! {:id (:organization/id org)
                          :user userid
                          :time (DateTime.)
-                         :data (json/generate-string org)})
+                         :data (json/generate-string (dissoc org :organization/id))})
   {:success true
    :organization/id (:organization/id org)})
 
@@ -28,7 +25,8 @@
 (defn- parse-organization [raw]
   (merge
    (json/parse-string (:data raw))
-   {:organization/modifier {:userid (:modifieruserid raw)}
+   {:organization/id (:id raw)
+    :organization/modifier {:userid (:modifieruserid raw)}
     :organization/last-modified (:modified raw)}))
 
 (defn get-organizations-raw []
@@ -36,14 +34,11 @@
        (map parse-organization)
        (map coerce-organization-full)))
 
-;; TODO unify caching behavior and location https://github.com/CSCfi/rems/issues/2179
-(def ^:private organizations-by-id-cache (memo/ttl #(index-by [:organization/id] (get-organizations-raw)) :ttl/threshold +organizations-cache-time-ms+))
-
-(defn get-organization-by-id-cached [id]
-  (get (organizations-by-id-cache) id))
-
-(defn join-full-organization [x]
-  (update-existing x :organization (fn [id] (get-organization-by-id-cached id))))
+(defn- getx-organization-by-id [id]
+  (assert id)
+  (let [organization (-> (db/get-organization-by-id {:id id}) parse-organization)]
+    (assert (:organization/id organization) {:error "organization does not exist" :organization/id id :found organization})
+    (coerce-organization-full organization)))
 
 (defn join-organization [x]
   ;; TODO alternatively we could pass in the organization key
@@ -52,7 +47,7 @@
                          (:organization x))
         organization-id (if (string? organization) organization (:organization/id organization))
         organization-overview (-> organization-id
-                                  get-organization-by-id-cached
+                                  getx-organization-by-id
                                   (select-keys [:organization/id :organization/name]))]
     (-> x
         (update-existing :organization (fn [_] organization-overview))
