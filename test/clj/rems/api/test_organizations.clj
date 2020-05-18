@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [find-first]]
             [rems.api.testing :refer :all]
+            [rems.testing-util :refer [fixed-time-fixture]]
             [ring.mock.request :refer :all])
   (:import [org.joda.time DateTime DateTimeZone DateTimeUtils]))
 
@@ -9,11 +10,7 @@
 
 (use-fixtures
   :once
-  api-fixture
-  (fn [f]
-    (DateTimeUtils/setCurrentMillisFixed (.getMillis test-time))
-    (f)
-    (DateTimeUtils/setCurrentMillisSystem)))
+  (join-fixtures [api-fixture (fixed-time-fixture test-time)]))
 
 (deftest organizations-api-test
   (let [api-key "42"
