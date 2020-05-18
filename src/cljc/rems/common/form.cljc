@@ -93,7 +93,7 @@
   (let [organization (:form/organization m)]
     (when (or (nil? organization)
               (str/blank? (:organization/id organization)))
-      {key :t.form.validation/required})))
+      {:form/organization :t.form.validation/required})))
 
 (def field-types #{:attachment :date :description :email :header :label :multiselect :option :text :texta})
 
@@ -231,13 +231,13 @@
       (is (empty? (validate-form-template form languages))))
 
     (testing "missing organization"
-      (is (= (:form/organization (validate-form-template (assoc-in form [:form/organization] "") languages))
-             (:form/organization (validate-form-template (assoc-in form [:form/organization :organization/id] "") languages))
-             :t.form.validation/required)))
+      (is (= :t.form.validation/required
+             (:form/organization (validate-form-template (assoc-in form [:form/organization] nil) languages))
+             (:form/organization (validate-form-template (assoc-in form [:form/organization :organization/id] "") languages)))))
 
     (testing "missing title"
-      (is (= (:form/title (validate-form-template (assoc-in form [:form/title] "") languages))
-             :t.form.validation/required)))
+      (is (= :t.form.validation/required
+             (:form/title (validate-form-template (assoc-in form [:form/title] "") languages)))))
 
     (testing "zero fields is ok"
       (is (empty? (validate-form-template (assoc-in form [:form/fields] []) languages))))
