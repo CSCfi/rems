@@ -18,10 +18,6 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (dissoc db ::catalogue ::draft-applications)
-    :dispatch-n [[::fetch-catalogue]
-                 (when (roles/is-logged-in? (get-in db [:identity :roles])) [::fetch-drafts])
-                 [:rems.table/reset]]}
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
      {:db (dissoc db ::catalogue ::draft-applications)
       :dispatch-n [[::full-catalogue]
