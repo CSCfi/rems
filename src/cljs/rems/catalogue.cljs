@@ -18,14 +18,10 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   (if (roles/is-logged-in? (get-in db [:identity :roles]))
      {:db (dissoc db ::catalogue ::draft-applications)
       :dispatch-n [[::full-catalogue]
-                   [::draft-applications]
-                   [:rems.table/reset]]}
-     (do
-       (unauthorized!)
-       {}))))
+                   (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
+                   [:rems.table/reset]]}))
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
 
