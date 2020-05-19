@@ -389,6 +389,32 @@
          [k (str/trim v)])
        (into {})))
 
+(defn slurp-rows [& selectors]
+  (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
+    (->> (for [td (btu/children row {:css "td"})
+               :let [k (str/trim (btu/get-element-attr-el td "class"))
+                     v (btu/get-element-text-el td)]]
+           [k (str/trim v)])
+         (into {}))))
+
+(defn find-rows [table-selectors child-selector]
+  (for [row (btu/query-all (vec (concat table-selectors [{:css "tr"}])))
+        :when (seq (btu/children row child-selector))]
+    row))
+
+(defn click-row-action [table-selectors child-selector button-selector]
+  (let [rows (seq (find-rows table-selectors child-selector))]
+    (is (= 1 (count rows)))
+    (btu/scroll-and-click-el
+     (btu/child (first rows)
+                button-selector))))
+
+(defn- select-button-by-label [label]
+  {:css ".btn" :fn/text label})
+
+(comment
+  (find-rows [:licenses]
+             {:fn/text (str (btu/context-get :license-name) " EN")}))
 
 (defn create-license []
   (testing "create license"
@@ -410,7 +436,29 @@
       (btu/wait-page-loaded)
       (btu/screenshot (io/file btu/reporting-dir "created-license.png"))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" "nbn"
+      (is (= {"Organization" "NBN"
+              "Title (EN)" (str (btu/context-get :license-name) " EN")
+              "Title (FI)" (str (btu/context-get :license-name) " FI")
+              "Title (SV)" (str (btu/context-get :license-name) " SV")
+              "Type" "link"
+              "External link (EN)" "https://www.csc.fi/home"
+              "External link (FI)" "https://www.csc.fi/etusivu"
+              "External link (SV)" "https://www.csc.fi/home"
+              "Active" ""}
+             (slurp-fields :license)))
+      (go-to-admin-licenses)
+      (btu/wait-visible {:tag :h1 :fn/text "Licenses"})
+      (is (some #{{"organization" "NBN"
+                   "title" (str (btu/context-get :license-name) " EN")
+                   "type" "link"
+                   "active" ""
+                   "commands" "ViewDisableArchive"}}
+                (slurp-rows :licenses)))
+      (click-row-action [:licenses]
+                        {:fn/text (str (btu/context-get :license-name) " EN")}
+                        (select-button-by-label "View"))
+      (btu/wait-visible :license)
+      (is (= {"Organization" "NBN"
               "Title (EN)" (str (btu/context-get :license-name) " EN")
               "Title (FI)" (str (btu/context-get :license-name) " FI")
               "Title (SV)" (str (btu/context-get :license-name) " SV")
@@ -436,7 +484,7 @@
       (btu/wait-page-loaded)
       (btu/screenshot (io/file btu/reporting-dir "created-resource.png"))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (is (= {"Organization" "nbn"
+      (is (= {"Organization" "NBN"
               "Resource" (btu/context-get :resid)
               "Active" ""}
              (slurp-fields :resource)))

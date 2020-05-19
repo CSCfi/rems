@@ -7,15 +7,27 @@
   (:import (org.joda.time DateTime)))
 
 (def UserId s/Str)
-
 (s/defschema User {:userid UserId})
+(s/defschema OrganizationId {:organization/id s/Str})
 
 (s/defschema UserWithAttributes
   {:userid UserId
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)
-   (s/optional-key :organization) (s/maybe s/Str)
+   (s/optional-key :organizations) [OrganizationId]
    (s/optional-key :notification-email) (s/maybe s/Str)})
+
+(s/defschema OrganizationOverview
+  (merge OrganizationId
+         {:organization/name s/Str}))
+
+(s/defschema OrganizationFull
+  (merge OrganizationOverview
+         {(s/optional-key :organization/modifier) User
+          (s/optional-key :organization/last-modified) DateTime
+          (s/optional-key :organization/owners) [User]
+          (s/optional-key :organization/review-emails) [{:name s/Str
+                                                         :email s/Str}]}))
 
 (s/defschema CatalogueItemLocalizations
   {s/Keyword {;; TODO :id (it's the catalogue item id) and :langcode
@@ -35,7 +47,7 @@
    (s/optional-key :form-name) s/Str
    :resid s/Str
    :resource-id s/Int
-   :organization s/Str
+   :organization OrganizationOverview
    (s/optional-key :resource-name) s/Str
    :start DateTime
    :end (s/maybe DateTime)
@@ -47,7 +59,7 @@
 (s/defschema License
   {:id s/Int
    :licensetype (s/enum "text" "link" "attachment")
-   :organization s/Str
+   :organization OrganizationOverview
    :enabled s/Bool
    :archived s/Bool
    :localizations {s/Keyword {:title s/Str
@@ -138,7 +150,7 @@
 
 (s/defschema Workflow
   {:id s/Int
-   :organization s/Str
+   :organization OrganizationOverview
    :owneruserid UserId
    :modifieruserid UserId
    :title s/Str
@@ -184,7 +196,7 @@
 
 (s/defschema FormTemplate
   {:form/id s/Int
-   :form/organization s/Str
+   :form/organization OrganizationOverview
    :form/title s/Str
    :form/fields [FieldTemplate]
    (s/optional-key :form/errors) (s/maybe {(s/optional-key :form/organization) s/Any

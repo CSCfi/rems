@@ -13,3 +13,4 @@
  :catalogue-is-public true
  ;; list all organizations used in test-data
  :organizations ["default" "perf" "thl" "nbn" "organization1" "organization2"]}
+

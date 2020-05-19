@@ -374,7 +374,8 @@
                (filter ::display-row? rows)
                rows)]
     [:div.table-border
-     [:table.rems-table {:class (:id table)}
+     [:table.rems-table {:id (name (:id table))
+                         :class (:id table)}
       [:thead
        [table-header table]]
       [:tbody {:key language} ; performance optimization: rebuild instead of update existing components

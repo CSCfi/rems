@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.services.form :as form]
             [rems.api.services.util :as services-util]
-            [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate SuccessResponse]]
+            [rems.api.schema :refer [ArchivedCommand EnabledCommand FormTemplate FormTemplateOverview NewFieldTemplate OrganizationId SuccessResponse]]
             [rems.api.util :refer [not-found-json-response]] ; required for route :roles
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -14,7 +14,7 @@
      (select-keys form [:form/id :form/organization :form/title :form/errors :enabled :archived]))))
 
 (s/defschema CreateFormCommand
-  {:form/organization s/Str
+  {:form/organization OrganizationId
    :form/title s/Str
    :form/fields [NewFieldTemplate]})
 

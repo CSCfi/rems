@@ -5,6 +5,7 @@
             [rems.atoms :refer [external-link document-title document-title]]
             [rems.cart :as cart]
             [rems.common.catalogue-util :refer [urn-catalogue-item-link]]
+            [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.guide-functions]
             [rems.roles :as roles]
@@ -20,27 +21,17 @@
    {:db (dissoc db ::catalogue ::draft-applications)
     :dispatch-n [[::fetch-catalogue]
                  (when (roles/is-logged-in? (get-in db [:identity :roles])) [::fetch-drafts])
-                 [:rems.table/reset]]}))
+                 [:rems.table/reset]]}
+   (if (roles/is-logged-in? (get-in db [:identity :roles]))
+     {:db (dissoc db ::catalogue ::draft-applications)
+      :dispatch-n [[::full-catalogue]
+                   [::draft-applications]
+                   [:rems.table/reset]]}
+     (do
+       (unauthorized!)
+       {}))))
 
-;;;; catalogue
-
-(rf/reg-event-fx
- ::fetch-catalogue
- (fn [{:keys [db]} _]
-   ;; TODO: better error handler, don't show spinner if request has failed
-   (fetch "/api/catalogue"
-          {:handler #(rf/dispatch [::fetch-catalogue-result %])
-           :error-handler (flash-message/default-error-handler :top "Fetch catalogue")})
-   {:db (assoc db ::loading-catalogue? true)}))
-
-(rf/reg-event-db
- ::fetch-catalogue-result
- (fn [db [_ catalogue]]
-   (-> db
-       (assoc ::catalogue catalogue)
-       (dissoc ::loading-catalogue?))))
-
-(rf/reg-sub ::full-catalogue (fn [db _] (::catalogue db)))
+(fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
 
 (rf/reg-sub
  ::catalogue
@@ -51,28 +42,10 @@
         (filter :enabled)
         (remove :expired))))
 
-(rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
+(defn- filter-drafts-only [applications]
+  (filter form-fields-editable? applications))
 
-;;;; draft applications
-
-(rf/reg-event-fx
- ::fetch-drafts
- (fn [{:keys [db]} _]
-   ;; TODO: better error handler, don't show spinner if request has failed
-   (fetch "/api/my-applications"
-          {:handler #(rf/dispatch [::fetch-drafts-result %])
-           :error-handler (flash-message/default-error-handler :top "Fetch drafts")})
-   {:db (assoc db ::loading-drafts? true)}))
-
-(rf/reg-event-db
- ::fetch-drafts-result
- (fn [db [_ applications]]
-   (-> db
-       (assoc ::draft-applications (filter form-fields-editable? applications))
-       (dissoc ::loading-drafts?))))
-
-(rf/reg-sub ::draft-applications (fn [db _] (::draft-applications db)))
-(rf/reg-sub ::loading-drafts? (fn [db _] (::loading-drafts? db)))
+(fetcher/reg-fetcher ::draft-applications "/api/my-applications" {:result filter-drafts-only})
 
 ;;;; UI
 
@@ -133,16 +106,15 @@
      [table/table catalogue]]))
 
 (defn catalogue-page []
-  (let [loading-catalogue? @(rf/subscribe [::loading-catalogue?])
-        loading-drafts? @(rf/subscribe [::loading-drafts?])]
-    [:div
-     [document-title (text :t.catalogue/catalogue)]
-     [flash-message/component :top]
-     (text :t.catalogue/intro)
-     (if (or loading-catalogue? loading-drafts?)
-       [spinner/big]
-       [:div
-        [draft-application-list]
-        [:h2 (text :t.catalogue/apply-resources)]
-        [cart/cart-list-container]
-        [catalogue-table]])]))
+  [:div
+   [document-title (text :t.catalogue/catalogue)]
+   [flash-message/component :top]
+   (text :t.catalogue/intro)
+   (if (or @(rf/subscribe [::full-catalogue ::fetching?])
+           @(rf/subscribe [::draft-applications ::fetching?]))
+     [spinner/big]
+     [:div
+      [draft-application-list]
+      [:h2 (text :t.catalogue/apply-resources)]
+      [cart/cart-list-container]
+      [catalogue-table]])])

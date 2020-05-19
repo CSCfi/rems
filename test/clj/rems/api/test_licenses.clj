@@ -23,7 +23,7 @@
     (testing "can't create license as organization owner with incorrect organization"
       (is (response-is-forbidden? (api-response :post "/api/licenses/create"
                                                 {:licensetype "link"
-                                                 :organization "organization2"
+                                                 :organization {:organization/id "organization2"}
                                                  :localizations {:en {:title "en title"
                                                                       :textcontent "http://example.com/license/en"}
                                                                  :fi {:title "fi title"
@@ -44,7 +44,7 @@
 
         (testing "create link license"
           (let [command {:licensetype "link"
-                         :organization "organization1"
+                         :organization {:organization/id "organization1"}
                          :localizations {:en {:title "en title"
                                               :textcontent "http://example.com/license/en"
                                               :attachment-id nil}
@@ -53,16 +53,27 @@
                                               :attachment-id nil}}}
                 id (:id (api-call :post "/api/licenses/create" command
                                   api-key user))]
-              (is id)
-              (testing "and fetch"
-                (let [license (api-call :get (str "/api/licenses/" id) nil
-                                        api-key user)]
-                  (is license)
-                  (is (= command (select-keys license (keys command))))))))
+            (is id)
+            (testing "and fetch"
+              (let [license (api-call :get (str "/api/licenses/" id) nil
+                                      api-key user)]
+                (is (= {:id id
+                        :licensetype "link"
+                        :organization {:organization/id "organization1"
+                                       :organization/name "Organization 1"}
+                        :localizations {:en {:title "en title"
+                                             :textcontent "http://example.com/license/en"
+                                             :attachment-id nil}
+                                        :fi {:title "fi title"
+                                             :textcontent "http://example.com/license/fi"
+                                             :attachment-id nil}}
+                        :enabled true
+                        :archived false}
+                       license))))))
 
         (testing "create inline license"
           (let [command {:licensetype "text"
-                         :organization "organization1"
+                         :organization {:organization/id "organization1"}
                          :localizations {:en {:title "en title"
                                               :textcontent "en text"
                                               :attachment-id nil}
@@ -76,9 +87,21 @@
             (is (:success body))
             (testing "and fetch"
               (let [license (api-call :get (str "/api/licenses/" id) nil
-                                        api-key user)]
+                                      api-key user)]
                 (is license)
-                (is (= command (select-keys license (keys command))))))))
+                (is (= {:id id
+                        :licensetype "text"
+                        :organization {:organization/id "organization1"
+                                       :organization/name "Organization 1"}
+                        :localizations {:en {:title "en title"
+                                             :textcontent "en text"
+                                             :attachment-id nil}
+                                        :fi {:title "fi title"
+                                             :textcontent "fi text"
+                                             :attachment-id nil}}
+                        :enabled true
+                        :archived false}
+                       license))))))
 
         (testing "Upload an attachment"
           (let [response (-> (request :post (str "/api/licenses/add_attachment"))
@@ -117,7 +140,7 @@
                                   read-ok-body
                                   :id)
                 command {:licensetype "text"
-                         :organization "organization1"
+                         :organization {:organization/id "organization1"}
                          :localizations {:en {:title "en title"
                                               :textcontent "en text"
                                               :attachment-id attachment-id}
@@ -131,7 +154,19 @@
               (let [license (api-call :get (str "/api/licenses/" license-id) nil
                                       api-key user)]
                 (is license)
-                (is (= command (select-keys license (keys command))))))
+                (is (= {:id license-id
+                        :licensetype "text"
+                        :organization {:organization/id "organization1"
+                                       :organization/name "Organization 1"}
+                        :localizations {:en {:title "en title"
+                                             :textcontent "en text"
+                                             :attachment-id attachment-id}
+                                        :fi {:title "fi title"
+                                             :textcontent "fi text"
+                                             :attachment-id attachment-id}}
+                        :enabled true
+                        :archived false}
+                       license))))
 
             ;; this test case invalidates the transaction, so we only run it very last
             (when (= user owner)
@@ -145,7 +180,7 @@
   (let [api-key "42"
         id (:id (api-call :post "/api/licenses/create"
                           {:licensetype "text"
-                           :organization "organization1"
+                           :organization {:organization/id "organization1"}
                            :localizations {:en {:title "en title"
                                                 :textcontent "en text"
                                                 :attachment-id nil}
@@ -215,7 +250,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/licenses/create")
                          (json-body {:licensetype "text"
-                                     :organization "test-organization"
+                                     :organization {:organization/id "test-organization"}
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]
@@ -233,7 +268,7 @@
       (let [response (-> (request :post "/api/licenses/create")
                          (authenticate "42" "alice")
                          (json-body {:licensetype "text"
-                                     :organization "test-organization"
+                                     :organization {:organization/id "test-organization"}
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          handler)]

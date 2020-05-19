@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [document-title]]
             [rems.flash-message :as flash-message]
+            [rems.fetcher :as fetcher]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [fetch put!]])
@@ -11,19 +12,15 @@
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (dissoc db ::form)
-    :dispatch [::fetch-user-settings]}))
+    :dispatch [::user-settings]}))
 
-(rf/reg-event-fx
- ::fetch-user-settings
- (fn [{:keys [db]} _]
-   (fetch "/api/user-settings"
-          {:handler #(do
-                       ;; select only the keys that can be edited on this page
-                       (rf/dispatch [::set-form (select-keys % [:notification-email])])
-                       ;; update user settings in SPA state after user has changed them
-                       (rf/dispatch [:loaded-user-settings %]))
-           :error-handler (flash-message/default-error-handler :top "Fetch user settings")})
-   {:db (assoc db ::form ::loading)}))
+(defn- fetch-user-settings-success [result]
+  ;; select only the keys that can be edited on this page
+  (rf/dispatch [::set-form (select-keys result [:notification-email])])
+  ;; update user settings in SPA state after user has changed them
+  (rf/dispatch [:loaded-user-settings result]))
+
+(fetcher/reg-fetcher ::user-settings "/api/user-settings" {:on-success fetch-user-settings-success})
 
 (rf/reg-sub
  ::form
@@ -41,7 +38,7 @@
      (put! "/api/user-settings"
            {:params (::form db)
             :handler (flash-message/default-success-handler :top description
-                                                            #(rf/dispatch [::fetch-user-settings]))
+                                                            #(rf/dispatch [::user-settings]))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
@@ -69,7 +66,7 @@
     [:<>
      [document-title (text :t.navigation/settings)]
      [flash-message/component :top]
-     (if (= ::loading form)
+     (if @(rf/subscribe [::user-settings :fetching?])
        [spinner/big]
        [:form
         {:on-submit (fn [event]

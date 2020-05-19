@@ -1,9 +1,11 @@
 (ns rems.api.services.workflow
-  (:require [rems.api.services.util :as util]
+  (:require [com.rpl.specter :refer [ALL transform]]
+            [rems.api.services.util :as util]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
+            [rems.db.organizations :as organizations]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.json :as json]
@@ -17,7 +19,7 @@
   (let [body {:type type
               :handlers handlers
               :forms forms} ;; TODO missing validation for handlers and forms, see #2182
-        id (:id (db/create-workflow! {:organization organization
+        id (:id (db/create-workflow! {:organization (:organization/id organization)
                                       :owneruserid user-id
                                       :modifieruserid user-id
                                       :title title
@@ -79,11 +81,20 @@
                                       :archived archived})
           {:success true})))))
 
+(defn- join-dependencies [workflow]
+  (when workflow
+    (->> workflow
+         organizations/join-organization
+         workflow/join-workflow-licenses
+         (transform [:licenses ALL] organizations/join-organization))))
+
 (defn get-workflow [id]
-  (workflow/get-workflow id))
+  (->> (workflow/get-workflow id)
+       join-dependencies))
 
 (defn get-workflows [filters]
-  (workflow/get-workflows filters))
+  (->> (workflow/get-workflows filters)
+       (mapv join-dependencies)))
 
 (defn get-available-actors [] (users/get-users))
 

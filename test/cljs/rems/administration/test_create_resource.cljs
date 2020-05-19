@@ -3,19 +3,19 @@
             [rems.administration.create-resource :refer [build-request]]))
 
 (deftest build-request-test
-  (let [form {:organization "organization1"
+  (let [form {:organization {:organization/id "organization1"}
               :resid "resource id"
               :licenses [{:id 123
-                          :organization "organization1"
+                          :organization {:organization/id "organization1"}
                           :unrelated "stuff"}]}]
     (testing "valid form"
-      (is (= {:organization "organization1"
+      (is (= {:organization {:organization/id "organization1"}
               :resid "resource id"
               :licenses [123]}
              (build-request form))))
 
     (testing "selecting a license is optional"
-      (is (= {:organization "organization1"
+      (is (= {:organization {:organization/id "organization1"}
               :resid "resource id"
               :licenses []}
              (build-request (assoc form :licenses [])))))

@@ -266,7 +266,7 @@
  (fn [db [_ field-id]]
    (update-in db [::edit-application :show-diff field-id] not)))
 
-(search/reg-fetcher ::previous-applications "/api/applications")
+(fetcher/reg-fetcher ::previous-applications "/api/applications")
 
 (rf/reg-sub
  ::previous-applications-except-current
@@ -597,7 +597,7 @@
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
-        other-attributes (dissoc attributes :name :userid :email :organization :notification-email)
+        other-attributes (dissoc attributes :name :userid :email :organizations :notification-email)
         title (cond (= (:userid (:application/applicant application)) user-id) (text :t.applicant-info/applicant)
                     (:userid attributes) (text :t.applicant-info/member)
                     :else (text :t.applicant-info/invited-member))]
@@ -617,8 +617,8 @@
                          [info-field (text :t.applicant-info/notification-email) mail {:inline? true}])
                        (when-let [mail (:email attributes)]
                          [info-field (text :t.applicant-info/email) mail {:inline? true}])
-                       (when-let [organization (:organization attributes)]
-                         [info-field (text :t.applicant-info/organization) organization {:inline? true}])]
+                       (when-let [organizations (:organizations attributes)]
+                         [info-field (text :t.applicant-info/organization) (str/join ", " (map :organization/name organizations)) {:inline? true}])]
                       (for [[k v] other-attributes]
                         [info-field k v {:inline? true}]))
       :footer (let [element-id (str element-id "-remove-member")]
@@ -837,7 +837,7 @@
                                        :email "developer@uu.id"
                                        :name "Deve Loper"
                                        :notification-email "notification@example.com"
-                                       :organization "Testers"
+                                       :organizations [{:organization/id "Testers"} {:organization/id "Users"}]
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}

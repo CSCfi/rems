@@ -15,7 +15,7 @@
 
 (deftest add-form-field-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "adds fields"
       (reset-form)
       (is (= {:form/fields []}
@@ -45,7 +45,7 @@
 
 (deftest remove-form-field-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "removes fields"
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
@@ -82,7 +82,7 @@
 
 (deftest move-form-field-up-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields up"
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
@@ -124,7 +124,7 @@
 
 (deftest move-form-field-down-test
   (set-roles! [:owner])
-  (let [form (rf/subscribe [:rems.administration.create-form/form])]
+  (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields down"
       (reset-form)
       (rf/dispatch-sync [:rems.administration.create-form/add-form-field])
@@ -165,7 +165,7 @@
             "after move 3")))))
 
 (deftest build-request-test
-  (let [form {:form/organization "abc"
+  (let [form {:form/organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/index 0
@@ -179,7 +179,7 @@
         languages [:en :fi]]
 
     (testing "basic form"
-      (is (= {:form/organization "abc"
+      (is (= {:form/organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
@@ -192,7 +192,7 @@
              (build-request form languages))))
 
     (testing "trim strings"
-      (is (= {:form/organization "abc"
+      (is (= {:form/organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
@@ -205,14 +205,14 @@
              (build-request (assoc form :form/title " the title\t\n") languages))))
 
     (testing "zero fields"
-      (is (= {:form/organization "abc"
+      (is (= {:form/organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields []}
              (build-request (assoc-in form [:form/fields] []) languages))))
 
     (testing "date fields"
       (let [form (assoc-in form [:form/fields 0 :field/type] :date)]
-        (is (= {:form/organization "abc"
+        (is (= {:form/organization {:organization/id "abc"}
                 :form/title "the title"
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
@@ -249,7 +249,7 @@
                                                                 {:key "no"
                                                                  :label {:en "en no"
                                                                          :fi "fi no"}}]))]
-        (is (= {:form/organization "abc"
+        (is (= {:form/organization {:organization/id "abc"}
                 :form/title "the title"
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"
@@ -273,7 +273,7 @@
                                                                 {:key "bacon"
                                                                  :label {:en "Bacon"
                                                                          :fi "Pekonia"}}]))]
-        (is (= {:form/organization "abc"
+        (is (= {:form/organization {:organization/id "abc"}
                 :form/title "the title"
                 :form/fields [{:field/id "fld1"
                                :field/title {:en "en title"

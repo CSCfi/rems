@@ -5,6 +5,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.roles :as roles]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.api.services.catalogue :as catalogue]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
             [rems.config :refer [env]]
