@@ -192,17 +192,16 @@
    {}))
 
 ;;;; Pages
-
 (defn login-intro []
   [:div
-    [:div.row.justify-content-center
-      [flash-message/component :top]]
-    [:div.row.justify-content-center
+   [:div.row.justify-content-center
+    [flash-message/component :top]]
+   [:div.row.justify-content-center
     [:div.col-md-6.row
-      (text :t.login/intro)]]
-    [:div.row.justify-content-center
+     (text :t.login/intro)]]
+   [:div.row.justify-content-center
     [:div.col-md-6.row
-      [auth/login-component]]]])
+     [auth/login-component]]]])
 
 (defn home-page []
   (if @(rf/subscribe [:user])

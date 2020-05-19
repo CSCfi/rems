@@ -63,15 +63,15 @@
   (let [roles (:roles identity)]
     [e (into [:div.navbar-nav.mr-auto
               (when-not (:user identity)
-               [:<> [nav-link "/" (text :t.navigation/home) :exact] 
-                    [nav-link "/catalogue" (text :t.navigation/catalogue)]])
+               [:<> [nav-link "/" (text :t.navigation/home) :exact]
+                [nav-link "/catalogue" (text :t.navigation/catalogue)]])
               (when (roles/show-applications? roles)
-                [:<> [nav-link "/applications" (text :t.navigation/applications)] 
-                    [nav-link "/catalogue" (text :t.navigation/catalogue)]])
+               [:<> [nav-link "/applications" (text :t.navigation/applications)]
+                [nav-link "/catalogue" (text :t.navigation/catalogue)]])
               (when (roles/show-reviews? roles)
-                [nav-link "/actions" (text :t.navigation/actions)])
+               [nav-link "/actions" (text :t.navigation/actions)])
               (when (roles/show-admin-pages? roles)
-                [nav-link "/administration" (text :t.navigation/administration)])]
+               [nav-link "/administration" (text :t.navigation/administration)])]
              (navbar-extra-pages page-id))
      [language-switcher]]))
 

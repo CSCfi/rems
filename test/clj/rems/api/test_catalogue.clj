@@ -38,7 +38,7 @@
                            handler)]
           (is (response-is-ok? response))))))
   (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public false)]
-    (testing "catalogue-is-public false should return forbidden without authemtification"
+    (testing "catalogue-is-public false should return forbidden without authentification"
       (let [response (-> (request :get "/api/catalogue")
                          handler)]
         (is (= "forbidden" (read-body response)))))
