@@ -1,75 +1,60 @@
 (ns rems.migrations.multiple-organizations
-  (:require [hugsql.core :as hugsql]
-            [medley.core :refer [map-keys]]
+  (:require [clojure.test :refer [deftest is]]
+            [hugsql.core :as hugsql]
             [rems.json :as json]
-            [rems.util :refer [getx update-present]]))
+            [rems.db.core :as db]))
 
 (hugsql/def-db-fns-from-string
   "
--- :name get-form-templates :? :*
+-- :name get-users :? :*
 SELECT
-  id,
-  organization,
-  title,
-  fields::TEXT,
-  enabled,
-  archived
-FROM form_template;
+  userId,
+  userAttrs::TEXT
+FROM users
 
--- :name update-organization! :!
-UPDATE form_template SET organization :organization WHERE id = :id;
+-- :name set-user-attributes! :!
+UPDATE users SET userAttrs = :userattrs::jsonb WHERE userid = :userid;
 ")
 
-#_(defn- get-application-forms [conn]
-  (->> (get-application-events conn)
-       (map #(json/parse-string (:eventdata %)))
-       (filter #(and (= "application.event/created" (:event/type %)) (:form/id %)))
-       (map (juxt :application/id :form/id))
-       (into {})))
+(defn- migrate-user-organizations [{:keys [userid userattrs]}]
+  (let [existing-organizations (if (:organization userattrs)
+                                 [{:organization/id (:organization userattrs)}]
+                                 [])]
+    {:userid userid
+     :userattrs (-> userattrs
+                    (assoc :organizations existing-organizations)
+                    (dissoc :organization))}))
 
-#_(defmulti migrate-event (fn [id event application-forms] (:event/type event)))
+(deftest test-migrate-user-organizations
+  (is (= {:userid "alice" :userattrs {:something 42
+                                      :organizations []}}
+         (migrate-user-organizations {:userid "alice"
+                                      :userattrs {:something 42}}))
+      "adds organizations even if empty")
+  (is (= {:userid "alice" :userattrs {:something 42
+                                      :organizations [{:organization/id "default"}]}}
+         (migrate-user-organizations {:userid "alice"
+                                      :userattrs {:something 42
+                                                  :organization "default"}}))))
 
-#_(defmethod migrate-event :default [id event application-forms]
-  nil)
-
-#_(defmethod migrate-event "application.event/draft-saved"
-  [id event application-forms]
-  (when (map? (:application/field-values event))
-    (let [form-id (getx application-forms (:application/id event))]
-      (update event
-              :application/field-values
-              (fn [m]
-                (vec (for [[field-id field-value] m]
-                       {:form form-id :field field-id :value field-value})))))))
-
-#_(defmethod migrate-event "application.event/created"
-  [id event _application-forms]
-  (when (:form/id event)
-    (-> event
-        (dissoc :form/id)
-        (assoc :application/forms [{:form/id (:form/id event)}]))))
-
-#_(defmethod migrate-event "application.event/resources-changed"
-  [id event application-forms]
-  (when-not (:application/forms event)
-    (let [form-id (getx application-forms (:application/id event))]
-      (assoc event :application/forms [{:form/id form-id}]))))
-
-#_(defn- migrate-events [conn application-forms]
-  (doseq [{:keys [id eventdata]} (get-application-events conn)]
-    (let [event (json/parse-string eventdata)
-          new-event (migrate-event id event application-forms)]
-      (when new-event
-        (set-event! conn {:id id :eventdata (json/generate-string new-event)})))))
-
-
-(defn migrate-form-templates [conn templates]
-  (doseq [template templates]
-    (when (string? (:organization template))
-      (update-organization! (:id template) {:organization/id (:organization template)}))))
+(defn migrate-user-organizations! [conn users]
+  (doseq [{:keys [userattrs] :as user} users
+          :let [userattrs (json/parse-string userattrs)
+                user (assoc user :userattrs userattrs)]
+          :when (not (:organizations userattrs))]
+    (set-user-attributes! conn
+                          (update (migrate-user-organizations user)
+                                  :userattrs
+                                  json/generate-string))))
 
 (defn migrate-up [{:keys [conn]}]
-  (migrate-form-templates conn (get-form-templates conn)))
+  (migrate-user-organizations! conn (get-users conn)))
 
 (comment
-  (migrate-up {:conn rems.db.core/*db*}))
+  (migrate-up {:conn rems.db.core/*db*})
+  (db/add-user! rems.db.core/*db*
+                {:user "alice"
+                 :userattrs (json/generate-string {:eppn "alice"
+                                                   :mail "alice@example.com"
+                                                   :commonName "Alice Applicant"
+                                                   :organization "default"})}))
