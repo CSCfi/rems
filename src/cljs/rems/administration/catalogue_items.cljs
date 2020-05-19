@@ -99,7 +99,7 @@
  (fn [[catalogue language] _]
    (map (fn [item]
           {:key (:id item)
-           :organization {:value (:organization item)}
+           :organization {:value (get-in item [:organization :organization/name])}
            :name {:value (get-localized-title item language)
                   :sort-value [(get-localized-title item language)
                                (- (time-coerce/to-long (:start item)))]} ; secondary sort by created, reverse

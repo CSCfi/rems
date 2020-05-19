@@ -8,6 +8,10 @@ have notable changes.
 
 Changes since v2.12
 
+### Breaking changes
+- Multiple organization support for users #2035
+- Organizations are maintained in the database and not config #2039
+
 ### Changes
 - Returned applications can now be resubmitted even if some catalogue items have been disabled. (#2145)
 - Automated browser testing has been improved in implementation and also in the coverage of the administration side
@@ -15,6 +19,7 @@ Changes since v2.12
 
 ### Additions
 - The form administration pages now flag forms that have missing localizations. REMS also logs a warning on startup for these forms. (#2098)
+- There is now an API for querying and creating organizations #2039
 
 ## v2.12 "Merituulentie" 2020-05-04
 

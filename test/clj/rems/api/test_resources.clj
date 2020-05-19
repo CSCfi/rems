@@ -35,14 +35,14 @@
   (let [api-key "42"
         owner "owner"
         org-owner "organization-owner1"
-        licid-org1 (test-data/create-license! {:license/organization "organization1"})
-        licid-org2 (test-data/create-license! {:license/organization "organization2"})
+        licid-org1 (test-data/create-license! {:license/organization {:organization/id "organization1"}})
+        licid-org2 (test-data/create-license! {:license/organization {:organization/id "organization2"}})
         resid "resource-api-test"]
 
     (doseq [user-id [owner org-owner]]
       (testing "create"
         (let [result (api-call :post "/api/resources/create"
-                               {:resid resid :organization "organization1" :licenses [licid-org1]}
+                               {:resid resid :organization {:organization/id "organization1"} :licenses [licid-org1]}
                                api-key user-id)
               id (:id result)]
           (is (true? (:success result)))
@@ -57,24 +57,24 @@
           (testing "duplicate resource ID is allowed between organizations"
             ;; need to create as owner to have access to other org
             (let [result (api-call :post "/api/resources/create"
-                                   {:resid resid :organization "test-organization2" :licenses []}
+                                   {:resid resid :organization {:organization/id "test-organization2"} :licenses []}
                                    api-key owner)]
               (is (true? (:success result)))))
 
           (testing "duplicate resource ID is allowed within one organization"
             (let [result (api-call :post "/api/resources/create"
-                                   {:resid resid :organization "organization1" :licenses []}
+                                   {:resid resid :organization {:organization/id "organization1"} :licenses []}
                                    api-key user-id)]
               (is (true? (:success result))))))
         (testing "with mismatched organizations"
           (let [result (api-call :post "/api/resources/create"
-                                 {:resid resid :organization "organization1" :licenses [licid-org1 licid-org2]}
+                                 {:resid resid :organization {:organization/id "organization1"} :licenses [licid-org1 licid-org2]}
                                  api-key user-id)]
             (is (true? (:success result)))))))
 
     (testing "create as organization-owner with incorrect organization"
       (let [response (api-response :post "/api/resources/create"
-                                   {:resid resid :organization "organization2" :licenses [licid-org1 licid-org2]}
+                                   {:resid resid :organization {:organization/id "organization2"} :licenses [licid-org1 licid-org2]}
                                    api-key "organization-owner1")]
         (is (response-is-forbidden? response))
         (is (= "no access to organization \"organization2\"" (read-body response)))))))
@@ -82,7 +82,7 @@
 (deftest resources-api-enable-archive-test
   (let [api-key "42"
         id (:id (create-resource! {:resid "enable-archive-test"
-                                   :organization "organization1"
+                                   :organization {:organization/id "organization1"}
                                    :licenses []}
                                   api-key "owner"))]
     (is (number? id))
@@ -126,7 +126,7 @@
   (let [api-key "42"
         user-id "owner"
         enabled-id (:id (create-resource! {:resid "enabled"
-                                           :organization "abc"
+                                           :organization {:organization/id "abc"}
                                            :licenses []}
                                           api-key user-id))
         _ (resource-enabled! {:id enabled-id :enabled true}
@@ -134,7 +134,7 @@
         _ (resource-archived! {:id enabled-id :archived false}
                               api-key user-id)
         disabled-id (:id (create-resource! {:resid "disabled"
-                                            :organization "abc"
+                                            :organization {:organization/id "abc"}
                                             :licenses []}
                                            api-key user-id))
         _ (resource-enabled! {:id disabled-id :enabled false}
@@ -142,7 +142,7 @@
         _ (resource-archived! {:id disabled-id :archived false}
                               api-key user-id)
         archived-id (:id (create-resource! {:resid "archived"
-                                            :organization "abc"
+                                            :organization {:organization/id "abc"}
                                             :licenses []}
                                            api-key user-id))
         _ (resource-enabled! {:id archived-id :enabled true}
@@ -187,7 +187,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/resources/create")
                          (json-body {:resid "r"
-                                     :organization "o"
+                                     :organization {:organization/id "o"}
                                      :licenses []})
                          handler)]
         (is (response-is-unauthorized? response))
@@ -206,7 +206,7 @@
         (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
                            (json-body {:resid "r"
-                                       :organization "o"
+                                       :organization {:organization/id "o"}
                                        :licenses []})
                            handler)]
           (is (response-is-unauthorized? response))
@@ -225,7 +225,7 @@
         (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
                            (json-body {:resid "r"
-                                       :organization "o"
+                                       :organization {:organization/id "o"}
                                        :licenses []})
                            handler)]
           (is (response-is-forbidden? response))

@@ -165,7 +165,7 @@
 
 (defn component
   "An application list which shows a spinner on initial page load (meant to be
-  used with rems.search/reg-fetcher) and a message if there are no applications."
+  used with rems.fetcher/reg-fetcher) and a message if there are no applications."
   [{:keys [applications hidden-columns] :as opts}]
   (cond
     (not @(rf/subscribe [applications :initialized?]))

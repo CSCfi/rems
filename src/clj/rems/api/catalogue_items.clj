@@ -32,8 +32,7 @@
   {:form s/Int
    :resid s/Int
    :wfid s/Int
-   ;; TODO make unoptional for consistency with other endpoints?
-   (s/optional-key :organization) s/Str
+   :organization OrganizationId
    :localizations WriteCatalogueItemLocalizations
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool})

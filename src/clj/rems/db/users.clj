@@ -11,7 +11,7 @@
           :name (or (:commonName u)
                     (:displayName u)) ;; some shibboleth idps don't send commonName
           :email (:mail u)}
-         (select-keys u [:organization :notification-email])))
+         (select-keys u [:organizations :notification-email])))
 
 (defn unformat-user
   "Inverse of format-user: take in API-style attributes and output db-style attributes"
@@ -19,7 +19,7 @@
   (merge {:eppn (:userid u)
           :commonName (:name u)
           :mail (:email u)}
-         (select-keys u [:organization])))
+         (select-keys u [:organizations])))
 
 (deftest test-format-unformat
   (let [api-user {:userid "foo" :name "bar" :email "a@b"}
@@ -27,8 +27,8 @@
     (is (= api-user (format-user db-user)))
     (is (= db-user (unformat-user api-user)))
     (is (= api-user (format-user (unformat-user api-user)))))
-  (let [api-user {:userid "foo" :name "bar" :email "a@b" :organization "org"}
-        db-user {:eppn "foo" :commonName "bar" :mail "a@b" :organization "org"}]
+  (let [api-user {:userid "foo" :name "bar" :email "a@b" :organizations [{:organization/id "org1"} {:organization/id "org2"}]}
+        db-user {:eppn "foo" :commonName "bar" :mail "a@b" :organizations [{:organization/id "org1"} {:organization/id "org2"}]}]
     (is (= api-user (format-user db-user)))
     (is (= db-user (unformat-user api-user)))
     (is (= api-user (format-user (unformat-user api-user))))))

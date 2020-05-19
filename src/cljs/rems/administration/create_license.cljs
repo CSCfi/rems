@@ -9,40 +9,21 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
+            [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [navigate! post! trim-when-string]]))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::enter-page
- (fn [db _]
-   (let [roles (get-in db [:identity :roles])
-         user-organization (get-in db [:identity :user :organization])
-         all-organizations (get-in db [:config :organizations])
-         organization (cond
-                        (roles/disallow-setting-organization? roles)
-                        user-organization
-
-                        (= (count all-organizations) 1)
-                        (first all-organizations)
-
-                        :else
-                        nil)]
-     (assoc db
-            ::form (when organization
-                     {:organization organization})
-            ::organization-read-only? (not (nil? organization))))))
+ (fn [{:keys [db]} _]
+   {:db (dissoc db ::form)}))
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
-(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 
 (rf/reg-event-db
  ::set-form-field
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
-
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
-
 
 (def license-type-link "link")
 (def license-type-text "text")
@@ -65,7 +46,7 @@
        (not (str/blank? (:textcontent data)))))
 
 (defn- valid-request? [request languages]
-  (and (not (str/blank? (:organization request)))
+  (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:licensetype request)))
        (= (set languages)
           (set (keys (:localizations request))))
@@ -74,7 +55,7 @@
 (defn build-request [form languages]
   (let [license-type (:licensetype form)
         request {:licensetype license-type
-                 :organization (:organization form)
+                 :organization {:organization/id (get-in form [:organization :organization/id])}
                  :localizations (into {} (map (fn [[lang data]]
                                                 [lang (build-localization data license-type)])
                                               (:localizations form)))}]
@@ -128,26 +109,17 @@
 (def ^:private context {:get-form ::form
                         :update-form ::set-form-field})
 
-(def ^:private organization-dropdown-id "organization-dropdown")
-
 (defn- language-heading [language]
   [:h3 (str/upper-case (name language))])
 
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
+
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
+
 (defn- license-organization-field []
-  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
-        selected-organization @(rf/subscribe [::selected-organization])
-        item-selected? #(= % selected-organization)
-        readonly @(rf/subscribe [::organization-read-only?])]
-    [:div.form-group
-     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
-     (if readonly
-       [fields/readonly-field {:id organization-dropdown-id
-                               :value selected-organization}]
-       [dropdown/dropdown
-        {:id organization-dropdown-id
-         :items organizations
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
+  [fields/organization-field {:id "organization-dropdown"
+                              :value @(rf/subscribe [::selected-organization])
+                              :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- license-title-field [language]
   [text-field context {:keys [:localizations language :title]
@@ -251,9 +223,9 @@
        :always [:div.fields
                 [license-organization-field]
                 [license-type-radio-group]
-                (for [language languages]
-                  [:div {:key language}
-                   [language-heading language]
+                (for [language languages] ; TODO only show when there is license type selected
+                  [:div {:key language} ; TODO use .dashed-group in these
+                   [language-heading language] ; TODO check if should do in label or some other grouping
                    [license-title-field language]
                    [license-link-field language]
                    [license-text-field language]

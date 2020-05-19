@@ -5,7 +5,7 @@
   (:require  [clojure.string :as str]
              [clojure.test :refer [deftest is testing]]
              [medley.core :refer [find-first]]
-             [rems.common.util :refer [getx-in parse-int remove-empty-keys]]))
+             [rems.common.util :refer [parse-int remove-empty-keys]]))
 
 (defn supports-optional? [field]
   (not (contains? #{:label :header} (:field/type field))))
@@ -88,6 +88,12 @@
 (defn- validate-text-field [m key]
   (when (str/blank? (get m key))
     {key :t.form.validation/required}))
+
+(defn- validate-organization-field [m]
+  (let [organization (:form/organization m)]
+    (when (or (nil? organization)
+              (str/blank? (:organization/id organization)))
+      {:form/organization :t.form.validation/required})))
 
 (def field-types #{:attachment :date :description :email :header :label :multiselect :option :text :texta})
 
@@ -202,14 +208,14 @@
     m))
 
 (defn validate-form-template [form languages]
-  (-> (merge (validate-text-field form :form/organization)
+  (-> (merge (validate-organization-field form)
              (validate-text-field form :form/title)
              {:form/fields (validate-fields (:form/fields form) languages)})
       remove-empty-keys
       nil-if-empty))
 
 (deftest validate-form-template-test
-  (let [form {:form/organization "abc"
+  (let [form {:form/organization {:organization/id "abc"}
               :form/title "the title"
               :form/fields [{:field/id "fld1"
                              :field/title {:en "en title"
@@ -225,12 +231,13 @@
       (is (empty? (validate-form-template form languages))))
 
     (testing "missing organization"
-      (is (= (:form/organization (validate-form-template (assoc-in form [:form/organization] "") languages))
-             :t.form.validation/required)))
+      (is (= :t.form.validation/required
+             (:form/organization (validate-form-template (assoc-in form [:form/organization] nil) languages))
+             (:form/organization (validate-form-template (assoc-in form [:form/organization :organization/id] "") languages)))))
 
     (testing "missing title"
-      (is (= (:form/title (validate-form-template (assoc-in form [:form/title] "") languages))
-             :t.form.validation/required)))
+      (is (= :t.form.validation/required
+             (:form/title (validate-form-template (assoc-in form [:form/title] "") languages)))))
 
     (testing "zero fields is ok"
       (is (empty? (validate-form-template (assoc-in form [:form/fields] []) languages))))

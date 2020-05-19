@@ -648,6 +648,8 @@
    ;; custom checkbox
    [:.readonly-checkbox {:background-color "#ccc"}]
 
+   [:.dashed-group dashed-form-group]
+
    ;; workflow editor
    [:.workflow-round dashed-form-group
     [:h2 {:font-weight 400

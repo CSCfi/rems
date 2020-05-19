@@ -22,7 +22,8 @@
                       :title :form/title
                       :fields :form/fields
                       :enabled :enabled
-                      :archived :archived}))))
+                      :archived :archived}))
+      (update :form/organization (fn [o] {:organization/id o}))))
 
 (defn- add-validation-errors [template]
   (assoc template :form/errors (common-form/validate-form-template template (:languages env))))

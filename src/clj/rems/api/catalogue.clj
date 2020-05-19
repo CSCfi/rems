@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util] ; required for route :roles
-            [rems.db.catalogue :as catalogue]
+            [rems.api.services.catalogue :as catalogue]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 

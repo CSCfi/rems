@@ -1,7 +1,8 @@
 (ns rems.db.licenses
   "querying localized licenses"
   (:require [rems.common.util :refer [distinct-by]]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.db.organizations :as organizations]))
 
 (defn- format-license [license]
   {:id (:id license)
@@ -61,3 +62,12 @@
        (format-licenses)
        (localize-licenses)
        (distinct-by :id)))
+
+(defn join-resource-licenses [x]
+  (assoc x :licenses (get-resource-licenses (:id x))))
+
+(defn join-catalogue-item-licenses [item]
+  (assoc item
+         :licenses
+         (get-licenses {:wfid (:wfid item)
+                        :items [(:id item)]})))

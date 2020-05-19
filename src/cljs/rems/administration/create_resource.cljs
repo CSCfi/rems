@@ -7,45 +7,24 @@
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
+            [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
-            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.text :refer [text get-localized-title]]
-            [rems.util :refer [navigate! fetch post! trim-when-string]]))
+            [rems.util :refer [navigate! post! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   (let [roles (get-in db [:identity :roles])
-         user-organization (get-in db [:identity :user :organization])
-         all-organizations (get-in db [:config :organizations])
-         organization (cond
-                        (roles/disallow-setting-organization? roles)
-                        user-organization
+   {:db (dissoc db ::form)
+    :dispatch-n [[::licenses {:active true}]]}))
 
-                        (= (count all-organizations) 1)
-                        (first all-organizations)
-
-                        :else
-                        nil)]
-     {:db (assoc db
-                 ::form (merge {:licenses []}
-                               (when organization
-                                 {:organization organization}))
-                 ::organization-read-only? (not (nil? organization))
-                 ::loading? true)
-      ::fetch-licenses nil})))
-
-(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
-(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
+(fetcher/reg-fetcher ::licenses "/api/licenses")
 
 ;; form state
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
-
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
 
 (rf/reg-sub ::selected-licenses (fn [db _] (get-in db [::form :licenses])))
 (rf/reg-event-db ::set-licenses (fn [db [_ licenses]] (assoc-in db [::form :licenses] (sort-by :id licenses))))
@@ -53,11 +32,11 @@
 ;; form submit
 
 (defn- valid-request? [form request]
-  (and (not (str/blank? (:organization request)))
+  (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
-  (let [request {:organization (:organization form)
+  (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
                  :resid (trim-when-string (:resid form))
                  :licenses (map :id (:licenses form))}]
     (when (valid-request? form request)
@@ -75,50 +54,22 @@
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
-;; available licenses
-
-(defn- fetch-licenses []
-  (fetch "/api/licenses"
-         {:url-params {:active true}
-          :handler #(rf/dispatch [::fetch-licenses-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch licenses")}))
-
-(rf/reg-fx ::fetch-licenses (fn [_] (fetch-licenses)))
-
-(rf/reg-event-db
- ::fetch-licenses-result
- (fn [db [_ licenses]]
-   (-> db
-       (assoc ::licenses licenses)
-       (dissoc ::loading?))))
-
-(rf/reg-sub ::licenses (fn [db _] (::licenses db)))
-
-
 ;;;; UI
 
 (def ^:private context
   {:get-form ::form
    :update-form ::set-form-field})
 
-(def ^:private organization-dropdown-id "organization-dropdown")
 (def ^:private licenses-dropdown-id "licenses-dropdown")
 
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
+
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
+
 (defn- resource-organization-field []
-  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
-        selected-organization @(rf/subscribe [::selected-organization])
-        item-selected? #(= % selected-organization)
-        readonly @(rf/subscribe [::organization-read-only?])]
-    [:div.form-group
-     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
-     (if readonly
-       [fields/readonly-field {:id organization-dropdown-id
-                               :value selected-organization}]
-       [dropdown/dropdown
-        {:id organization-dropdown-id
-         :items organizations
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
+  [fields/organization-field {:id "organization-dropdown"
+                              :value @(rf/subscribe [::selected-organization])
+                              :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- resource-id-field []
   [text-field context {:keys [:resid]
@@ -137,7 +88,7 @@
        :item-key :id
        :item-label #(str (get-localized-title % language)
                          " (org: "
-                         (:organization %)
+                         (get-in % [:organization :organization/name])
                          ")")
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
@@ -159,7 +110,7 @@
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
-  (let [loading? @(rf/subscribe [::loading?])
+  (let [loading? @(rf/subscribe [::licenses :fetching?])
         form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]

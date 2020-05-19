@@ -591,3 +591,12 @@ WHERE 1=1
   AND path LIKE :path
 /*~ ) ~*/
 ORDER BY time ASC;
+
+-- :name get-organizations :*
+SELECT id, modifierUserId, modified, data::text as data FROM organization;
+
+-- :name get-organization-by-id :? :1
+SELECT id, modifierUserId, modified, data::text as data FROM organization WHERE id = :id;
+
+-- :name add-organization! :!
+INSERT INTO organization(id, modifierUserId, modified, data) VALUES (:id, :user, :time, :data::jsonb);

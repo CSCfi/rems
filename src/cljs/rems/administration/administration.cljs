@@ -1,6 +1,7 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
+            [rems.fetcher :as fetcher]
             [rems.navbar :as navbar]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))

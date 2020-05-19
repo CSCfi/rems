@@ -1,6 +1,5 @@
 (ns ^:integration rems.api.test-entitlements
-  (:require [clj-time.format :as time-format]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.users :as users]
             [rems.handler :refer [handler]]
@@ -9,10 +8,6 @@
 (use-fixtures
   :once
   api-fixture)
-
-(defn- valid-date? [x]
-  (and (string? x)
-       (time-format/parse (time-format/formatters :date-time) x)))
 
 (deftest entitlements-test
   ;; TODO: create applications inside the test

@@ -114,6 +114,7 @@
 (def get-element-text-el (wrap-etaoin et/get-element-text-el))
 (def query (wrap-etaoin et/query))
 (def child (wrap-etaoin et/child))
+(def children (wrap-etaoin et/children))
 (def upload-file (wrap-etaoin et/upload-file))
 (def get-element-text (wrap-etaoin et/get-element-text))
 (def click-el (wrap-etaoin et/click-el))
@@ -122,6 +123,7 @@
 (def scroll-query (wrap-etaoin et/scroll-query))
 (def click (wrap-etaoin et/click))
 (def visible? (wrap-etaoin et/visible?))
+(def displayed-el? (wrap-etaoin et/displayed-el?))
 (defmacro with-postmortem [& args] `(et/with-postmortem (get-driver) ~@args))
 (def wait-predicate et/wait-predicate) ; does not need driver
 ;; TODO add more of etaoin here
@@ -130,6 +132,30 @@
 
 ;;; etaoin extensions
 
+(defn visible-el?
+  "Checks whether an element is visible on the page."
+  [el]
+  (displayed-el? el))
+
+(defn wait-visible-el [el & [opt]]
+  (let [message (format "Wait for %s element is visible" el)]
+    (wait-predicate #(visible-el? el)
+                    (assoc opt :message message))))
+
+(defn scroll-query-el
+  "Scrolls to the element.
+
+  Invokes element's `.scrollIntoView()` method. Accepts extra `param`
+  argument that might be either boolean or object for more control.
+
+  See this page for details:
+  https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView
+  "
+  ([el]
+   (js-execute "arguments[0].scrollIntoView();" (et/el->ref el)))
+  ([el param]
+   (js-execute "arguments[0].scrollIntoView(arguments[1]);" (et/el->ref el) param)))
+
 (defn scroll-and-click
   "Wait a button to become visible, scroll it to middle
   (to make sure it's not hidden under navigation) and click."
@@ -137,6 +163,14 @@
   (wait-visible q opt)
   (scroll-query q {"block" "center"})
   (click q))
+
+(defn scroll-and-click-el
+  "Wait a button to become visible, scroll it to middle
+  (to make sure it's not hidden under navigation) and click."
+  [el & [opt]]
+  (wait-visible-el el opt)
+  (scroll-query-el el {"block" "center"})
+  (click-el el))
 
 (defn wait-page-loaded []
   (wait-invisible {:css ".fa-spinner"}))

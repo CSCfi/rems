@@ -50,6 +50,14 @@
               applicant-attributes {:userid applicant-id
                                     :name "E2E Applicant"
                                     :email "applicant@example.com"}]
+
+          (testing "create organization"
+            (api-call :post "/api/organizations/create"
+                      {:organization/id "e2e"
+                       :organization/name "End-to-end"
+                       :organization/owners []
+                       :organization/review-emails []}
+                      api-key owner-id))
           (testing "create users"
             (api-call :post "/api/users/create" handler-attributes api-key owner-id)
             (api-call :post "/api/users/create" applicant-attributes api-key owner-id))
@@ -59,7 +67,7 @@
                 (testing "create resource"
                   (extract-id
                    (api-call :post "/api/resources/create" {:resid resource-ext-id
-                                                            :organization "e2e"
+                                                            :organization {:organization/id "e2e"}
                                                             :licenses []}
                              api-key owner-id)))
 
@@ -68,14 +76,14 @@
                 (testing "create resource 2"
                   (extract-id
                    (api-call :post "/api/resources/create" {:resid resource-ext-id2
-                                                            :organization "e2e"
+                                                            :organization {:organization/id "e2e"}
                                                             :licenses []}
                              api-key owner-id)))
 
                 wf-form-id
                 (testing "create workflow form"
                   (extract-id
-                   (api-call :post "/api/forms/create" {:form/organization "e2e"
+                   (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
                                                         :form/title "e2e wf"
                                                         :form/fields [{:field/id "description"
                                                                        :field/type :description
@@ -88,7 +96,7 @@
                 form-id
                 (testing "create form"
                   (extract-id
-                   (api-call :post "/api/forms/create" {:form/organization "e2e"
+                   (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
                                                         :form/title "e2e"
                                                         :form/fields [{:field/type :text
                                                                        :field/title {:en "text field"
@@ -100,7 +108,7 @@
                 form-id2
                 (testing "create form 2"
                   (extract-id
-                   (api-call :post "/api/forms/create" {:form/organization "e2e"
+                   (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
                                                         :form/title "e2e 2"
                                                         :form/fields [{:field/id "e2e_fld_2"
                                                                        :field/type :text
@@ -113,13 +121,14 @@
                 (testing "create license"
                   (extract-id
                    (api-call :post "/api/licenses/create" {:licensetype "link"
+                                                           :organization {:organization/id "e2e"}
                                                            :localizations {:en {:title "e2e license" :textcontent "http://example.com"}}}
                              api-key owner-id)))
 
                 workflow-id
                 (testing "create workflow"
                   (extract-id
-                   (api-call :post "/api/workflows/create" {:organization "e2e"
+                   (api-call :post "/api/workflows/create" {:organization {:organization/id "e2e"}
                                                             :title "e2e workflow"
                                                             :type :workflow/default
                                                             :forms [{:form/id wf-form-id}]
@@ -132,7 +141,7 @@
                    (api-call :post "/api/catalogue-items/create" {:resid resource-id
                                                                   :form form-id
                                                                   :wfid workflow-id
-                                                                  :organization "e2e"
+                                                                  :organization {:organization/id "e2e"}
                                                                   :localizations {:en {:title "e2e catalogue item"}}}
                              api-key owner-id)))
 
@@ -142,7 +151,7 @@
                    (api-call :post "/api/catalogue-items/create" {:resid resource-id2
                                                                   :form form-id2
                                                                   :wfid workflow-id
-                                                                  :organization "e2e"
+                                                                  :organization {:organization/id "e2e"}
                                                                   :localizations {:en {:title "e2e catalogue item 2"}}}
                              api-key owner-id)))
 
@@ -363,13 +372,13 @@
           (testing "create resource"
             (extract-id
              (api-call :post "/api/resources/create" {:resid resource-ext-id
-                                                      :organization "e2e"
+                                                      :organization {:organization/id "e2e"}
                                                       :licenses []}
                        api-key owner-id)))
           form-id
           (testing "create form"
             (extract-id
-             (api-call :post "/api/forms/create" {:form/organization "e2e"
+             (api-call :post "/api/forms/create" {:form/organization {:organization/id "e2e"}
                                                   :form/title "e2e"
                                                   :form/fields [{:field/type :text
                                                                  :field/title {:en "text field"
@@ -380,7 +389,7 @@
           workflow-id
           (testing "create workflow"
             (extract-id
-             (api-call :post "/api/workflows/create" {:organization "e2e"
+             (api-call :post "/api/workflows/create" {:organization {:organization/id "e2e"}
                                                       :title "e2e workflow"
                                                       :type :workflow/default
                                                       :handlers [handler-id
@@ -390,7 +399,7 @@
           catalogue-item-id
           (testing "create catalogue item"
             (extract-id
-             (api-call :post "/api/catalogue-items/create" {:organization "e2e"
+             (api-call :post "/api/catalogue-items/create" {:organization {:organization/id "e2e"}
                                                             :resid resource-id
                                                             :form form-id
                                                             :wfid workflow-id

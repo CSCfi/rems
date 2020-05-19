@@ -76,7 +76,7 @@
  (fn [[resources] _]
    (map (fn [resource]
           {:key (:id resource)
-           :organization {:value (:organization resource)}
+           :organization {:value (get-in resource [:organization :organization/name])}
            :title {:value (:resid resource)}
            :active (let [checked? (status-flags/active? resource)]
                      {:td [:td.active

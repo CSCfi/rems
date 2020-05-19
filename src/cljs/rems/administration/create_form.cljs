@@ -22,7 +22,7 @@
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
             [rems.common.util :refer [parse-int]]
-            [rems.dropdown :as dropdown]
+            [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
@@ -34,43 +34,14 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ form-id edit-form?]]
-   (let [roles (get-in db [:identity :roles])
-         user-organization (get-in db [:identity :user :organization])
-         all-organizations (get-in db [:config :organizations])
-         organization (cond
-                        (roles/disallow-setting-organization? roles)
-                        user-organization
+   {:db (assoc db
+               ::form nil
+               ::form-errors nil
+               ::form-id form-id
+               ::edit-form? edit-form?)
+    :dispatch-n [(when form-id [::form form-id])]}))
 
-                        (= (count all-organizations) 1)
-                        (first all-organizations)
-
-                        :else
-                        nil)]
-     {:db (assoc db
-                 ::form (merge {:form/fields []}
-                               (when organization
-                                 {:form/organization organization}))
-                 ::form-errors nil
-                 ::form-id form-id
-                 ::edit-form? edit-form?
-                 ::organization-read-only? (not (nil? organization)))
-      :dispatch-n [[::fetch-form form-id]]})))
-
-(rf/reg-event-fx
- ::fetch-form
- (fn [{:keys [db]} [_ form-id]]
-   (when form-id
-     (fetch (str "/api/forms/" form-id)
-            {:handler #(rf/dispatch [::fetch-form-result %])
-             :error-handler (flash-message/default-error-handler :top "Fetch form")})
-     {:db (assoc db ::loading-form? true)})))
-
-(rf/reg-event-db
- ::fetch-form-result
- (fn [db [_ form]]
-   (-> db
-       (assoc ::form form)
-       (dissoc ::loading-form?))))
+(fetcher/reg-fetcher ::form "/api/forms/:id" {:path-params (fn [db] {:id (::form-id db)})})
 
 ;;;; form state
 
@@ -97,66 +68,62 @@
                                (focus/scroll-to-top element)
                                (.focus (.querySelector element selector))))))
 
-(rf/reg-sub ::form (fn [db _]
-                     (-> (::form db)
-                         (update :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/index i)) %))))))
-(rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
-(rf/reg-sub ::loading-form? (fn [db _] (::loading-form? db)))
-(rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
-(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
-(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
+(defn- assign-field-index [form]
+  (update form :form/fields #(vec (map-indexed (fn [i field] (assoc field :field/index i)) %))))
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :form/organization])))
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :form/organization] organization)))
+(rf/reg-sub ::form-data (fn [db] (assign-field-index (get-in db [::form :data]))))
+(rf/reg-sub ::form-errors (fn [db _] (::form-errors db)))
+(rf/reg-sub ::edit-form? (fn [db _] (::edit-form? db)))
+(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form :data] keys) value)))
 
 (rf/reg-event-db
  ::add-form-field
  (fn [db [_ & [index]]]
-   (let [new-item (merge (generate-field-id (get-in db [::form :form/fields]))
+   (let [new-item (merge (generate-field-id (get-in db [::form :data :form/fields]))
                          {:field/type :text})]
      (focus-field-editor! (:field/id new-item))
-     (update-in db [::form :form/fields] items/add new-item index))))
+     (update-in db [::form :data :form/fields] items/add new-item index))))
 
 (rf/reg-event-db
  ::remove-form-field
  (fn [db [_ field-index]]
-   (update-in db [::form :form/fields] items/remove field-index)))
+   (update-in db [::form :data :form/fields] items/remove field-index)))
 
 (rf/reg-event-db
  ::move-form-field-up
  (fn [db [_ field-index]]
-   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/id])
+   (track-moved-field-editor! (get-in db [::form :data :form/fields field-index :field/id])
                               (dec field-index)
                               ".move-up")
-   (update-in db [::form :form/fields] items/move-up field-index)))
+   (update-in db [::form :data :form/fields] items/move-up field-index)))
 
 (rf/reg-event-db
  ::move-form-field-down
  (fn [db [_ field-index]]
-   (track-moved-field-editor! (get-in db [::form :form/fields field-index :field/id])
+   (track-moved-field-editor! (get-in db [::form :data :form/fields field-index :field/id])
                               (inc field-index)
                               ".move-down")
-   (update-in db [::form :form/fields] items/move-down field-index)))
+   (update-in db [::form :data :form/fields] items/move-down field-index)))
 
 (rf/reg-event-db
  ::add-form-field-option
  (fn [db [_ field-index]]
-   (update-in db [::form :form/fields field-index :field/options] items/add {})))
+   (update-in db [::form :data :form/fields field-index :field/options] items/add {})))
 
 (rf/reg-event-db
  ::remove-form-field-option
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :form/fields field-index :field/options] items/remove option-index)))
+   (update-in db [::form :data :form/fields field-index :field/options] items/remove option-index)))
 
 (rf/reg-event-db
  ::move-form-field-option-up
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :form/fields field-index :field/options] items/move-up option-index)))
+   (update-in db [::form :data :form/fields field-index :field/options] items/move-up option-index)))
 
 (rf/reg-event-db
  ::move-form-field-option-down
  (fn [db [_ field-index option-index]]
-   (update-in db [::form :form/fields field-index :field/options] items/move-down option-index)))
+   (update-in db [::form :data :form/fields field-index :field/options] items/move-down option-index)))
 
 ;;;; form submit
 
@@ -191,7 +158,7 @@
                                              [:visibility/type :visibility/field :visibility/values])}))))
 
 (defn build-request [form languages]
-  {:form/organization (:form/organization form)
+  {:form/organization {:organization/id (get-in form [:form/organization :organization/id])}
    :form/title (trim-when-string (:form/title form))
    :form/fields (mapv #(build-request-field % languages) (:form/fields form))})
 
@@ -206,13 +173,13 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         form-errors (validate-form-template (::form db) (:languages db))
+         form-errors (validate-form-template (get-in db [::form :data]) (:languages db))
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"
                                        "create"))
          description [page-title edit?]
-         request (merge (build-request (::form db) (:languages db))
+         request (merge (build-request (get-in db [::form :data]) (:languages db))
                         (when edit?
                           {:form/id (::form-id db)}))]
      (when-not form-errors
@@ -265,27 +232,18 @@
 ;;;; UI
 
 (def ^:private context
-  {:get-form ::form
+  {:get-form ::form-data
    :get-form-errors ::form-errors
    :update-form ::set-form-field})
 
- (def ^:private organization-dropdown-id "organization-dropdown")
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :form/organization])))
+
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :form/organization] organization)))
 
 (defn- form-organization-field []
-  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
-        selected-organization @(rf/subscribe [::selected-organization])
-        item-selected? #(= % selected-organization)
-        readonly @(rf/subscribe [::organization-read-only?])]
-    [:div.form-group
-     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
-     (if readonly
-       [fields/readonly-field {:id organization-dropdown-id
-                               :value selected-organization}]
-       [dropdown/dropdown
-        {:id organization-dropdown-id
-         :items organizations
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
+  [fields/organization-field {:id "organization-dropdown"
+                              :value @(rf/subscribe [::selected-organization])
+                              :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- form-title-field []
   [text-field context {:keys [:form/title]
@@ -334,7 +292,7 @@
                                   :label (text :t.create-form/option-label)}]])
 
 (defn- form-field-option-fields [field-index]
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form-data])]
     (into (into [:div]
                 (for [option-index (range (count (get-in form [:form/fields field-index :field/options])))]
                   [form-field-option-field field-index option-index]))
@@ -357,22 +315,22 @@
 (rf/reg-event-db
  ::form-field-visibility-type
  (fn [db [_ field-index visibility-type]]
-   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/type] visibility-type)))
+   (assoc-in db [::form :data :form/fields field-index :field/visibility :visibility/type] visibility-type)))
 
 (rf/reg-event-db
  ::form-field-visibility-field
  (fn [db [_ field-index visibility-field]]
-   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/field] visibility-field)))
+   (assoc-in db [::form :data :form/fields field-index :field/visibility :visibility/field] visibility-field)))
 
 (rf/reg-event-db
  ::form-field-visibility-value
  (fn [db [_ field-index visibility-value]]
-   (assoc-in db [::form :form/fields field-index :field/visibility :visibility/values] visibility-value)))
+   (assoc-in db [::form :data :form/fields field-index :field/visibility :visibility/values] visibility-value)))
 
 (defn- form-field-visibility
   "Component for specifying form field visibility rules"
   [field-index]
-  (let [form @(rf/subscribe [::form])
+  (let [form @(rf/subscribe [::form-data])
         form-errors @(rf/subscribe [::form-errors])
         error-type (get-in form-errors [:form/fields field-index :field/visibility :visibility/type])
         error-field (get-in form-errors [:form/fields field-index :field/visibility :visibility/field])
@@ -437,14 +395,14 @@
 (rf/reg-event-db
  ::form-field-privacy
  (fn [db [_ field-index privacy]]
-   (assoc-in db [::form :form/fields field-index :field/privacy] privacy)))
+   (assoc-in db [::form :data :form/fields field-index :field/privacy] privacy)))
 
 (defn- form-field-privacy
   "Component for specifying form field privacy rules.
 
   Privacy concerns the reviewers as they can see only public fields."
   [field-index]
-  (let [form @(rf/subscribe [::form])
+  (let [form @(rf/subscribe [::form-data])
         form-errors @(rf/subscribe [::form-errors])
         error (get-in form-errors [:form/fields field-index :field/privacy])
         lang @(rf/subscribe [:language])
@@ -569,7 +527,7 @@
             [format-field-validation field field-errors lang]))))
 
 (defn- validation-errors-summary []
-  (let [form @(rf/subscribe [::form])
+  (let [form @(rf/subscribe [::form-data])
         errors @(rf/subscribe [::form-errors])
         lang @(rf/subscribe [:language])]
     (when errors
@@ -652,14 +610,14 @@
 
 (defn create-form-page []
   (enable-autoscroll!)
-  (let [form @(rf/subscribe [::form])
+  (let [form @(rf/subscribe [::form-data])
         edit-form? @(rf/subscribe [::edit-form?])
-        loading-form? @(rf/subscribe [::loading-form?])]
+        loading? @(rf/subscribe [::form :fetching?])]
     [:div
      [administration/navigator]
      [document-title (page-title edit-form?)]
      [flash-message/component :top]
-     (if loading-form?
+     (if loading?
        [:div [spinner/big]]
        [:div.container-fluid
         [validation-errors-summary]

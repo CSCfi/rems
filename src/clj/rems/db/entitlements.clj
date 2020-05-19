@@ -40,17 +40,17 @@
 
 (defn- entitlement-to-permissions-api [{:keys [resid catappid start end mail userid approvedby]}]
   (let [start-datetime (DateTime. start)]
-    (jwt/sign {:type     "ControlledAccessGrants"
-               :value    (str resid)
-               :source   "https://ga4gh.org/duri/no_org"
-               :by       (str approvedby)
+    (jwt/sign {:type "ControlledAccessGrants"
+               :value (str resid)
+               :source "https://ga4gh.org/duri/no_org"
+               :by (str approvedby)
                :asserted (.getMillis start-datetime)} "secret"))) ;;TODO use key/real secret here
 
 (defn get-entitlements-for-permissions-api [user resource-or-nil expired?]
   {:ga4gh_visa_v1 (mapv entitlement-to-permissions-api
-                        (db/get-entitlements {:user            user
+                        (db/get-entitlements {:user user
                                               :resource-ext-id resource-or-nil
-                                              :is-active?      (not expired?)}))})
+                                              :is-active? (not expired?)}))})
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
