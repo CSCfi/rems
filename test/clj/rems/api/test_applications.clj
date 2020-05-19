@@ -533,6 +533,24 @@
                                                                        :fi "val"
                                                                        :sv "fri"}
                                                          :field/type :text
+                                                         :field/optional true}
+                                                        {:field/id "optionlist"
+                                                         :field/title {:en "Option list."
+                                                                       :fi "Valintalista."
+                                                                       :sv "Välj"}
+                                                         :field/type :option
+                                                         :field/options [{:key "Option1"
+                                                                          :label {:en "First"
+                                                                                  :fi "Ensimmäinen"
+                                                                                  :sv "Först"}}
+                                                                         {:key "Option2"
+                                                                          :label {:en "Second"
+                                                                                  :fi "Toinen"
+                                                                                  :sv "Den andra"}}
+                                                                         {:key "Option3"
+                                                                          :label {:en "Third"
+                                                                                  :fi "Kolmas"
+                                                                                  :sv "Tredje"}}]
                                                          :field/optional true}]})
         wf-id (test-data/create-workflow! {})
         cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
@@ -562,6 +580,33 @@
                                                    {:form form-id :field "req1" :value "req"}
                                                    {:form form-id2 :field "opt2" :value "opt"}
                                                    {:form form-id2 :field "req2" :value "req"}]}))))
+
+    (testing "set non-existing value of option list goes through on save-draft"
+      (is (= {:success true}
+             (send-command user-id {:type           :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values   [{:form form-id :field "opt1" :value "opt"}
+                                                     {:form form-id :field "req1" :value "req"}
+                                                     {:form form-id2 :field "opt2" :value "opt"}
+                                                     {:form form-id2 :field "req2" :value "req"}
+                                                     {:form form-id2 :field "optionlist" :value "foobar"}]}))))
+
+    (testing "submit fails with non-existing value of option list"
+      (is (= {:success false
+              :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
+
+    (testing "set existing value of option list"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "optionlist" :value "Option2"}]}))))
+
     (testing "can submit with required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit

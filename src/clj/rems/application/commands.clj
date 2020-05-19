@@ -236,9 +236,9 @@
   (when-not (application-util/is-handler? application actor)
     (unbundlable-catalogue-items catalogue-item-ids injections)))
 
-(defn- validation-error [application {:keys [validate-fields]}]
+(defn- validation-error [application injections]
   (let [errors (for [form (:application/forms application)
-                     error (validate-fields (:form/fields form))]
+                     error ((getx injections :validate-fields) (:form/fields form))]
                  (assoc error :form-id (:form/id form)))]
     (when (seq errors)
       {:errors errors})))
