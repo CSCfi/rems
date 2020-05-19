@@ -96,6 +96,8 @@
             [lein-uberwar "0.2.1"]
             [migratus-lein "0.5.7"]]
 
+  :cljfmt {:remove-consecutive-blank-lines? false} ;; too many changes for now
+
   :clean-targets ["target"]
 
   :figwheel {:http-server-root "public"
