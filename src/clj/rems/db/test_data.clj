@@ -145,15 +145,14 @@
                              :organization/keys [id name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
-        result (with-user actor
-                 (organizations/add-organization! actor
-                                                  {:organization/id (or id "default")
-                                                   :organization/name (or name "The Default Organization")
-                                                   :organization/owners (or owners
-                                                                            (if users
-                                                                              [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
-                                                                              []))
-                                                   :organization/review-emails (or review-emails [])}))]
+        result (organizations/add-organization! actor
+                                                {:organization/id (or id "default")
+                                                 :organization/name (or name "The Default Organization")
+                                                 :organization/owners (or owners
+                                                                          (if users
+                                                                            [{:userid (users :organization-owner1)} {:userid (users :organization-owner2)}]
+                                                                            []))
+                                                 :organization/review-emails (or review-emails [])})]
     (assert (:success result) {:command command :result result})
     (:organization/id result)))
 
