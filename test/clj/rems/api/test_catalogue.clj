@@ -19,49 +19,49 @@
       (is (some #(str/starts-with? (:resid %) "urn:") data)))))
 
 (deftest catalogue-api-security-test
- (testing "catalogue-is-public true"
-  (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public true)]
-   (testing "with no authentification"
-    (let [response (-> (request :get "/api/catalogue")
-                        handler)]
-     (is (response-is-ok? response))))
-    (let [api-key "42"]
-     (testing "with authentification by api key"
-      (let [response (-> (request :get "/api/catalogue")
-                         (authenticate api-key "handler")
-                          handler)]
-       (is (response-is-ok? response)))))
-    (let [api-key "42"
-          user-id "alice"]
-     (testing "with authentification by api key and username"
-      (let [response (-> (request :get "/api/catalogue")
-                         (authenticate api-key user-id)
-                          handler)]
-       (is (response-is-ok? response)))))))
+  (testing "catalogue-is-public true"
+    (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public true)]
+      (testing "with no authentification"
+        (let [response (-> (request :get "/api/catalogue")
+                           handler)]
+          (is (response-is-ok? response))))
+      (let [api-key "42"]
+        (testing "with authentification by api key"
+          (let [response (-> (request :get "/api/catalogue")
+                             (authenticate api-key "handler")
+                             handler)]
+            (is (response-is-ok? response)))))
+      (let [api-key "42"
+            user-id "alice"]
+        (testing "with authentification by api key and username"
+          (let [response (-> (request :get "/api/catalogue")
+                             (authenticate api-key user-id)
+                             handler)]
+            (is (response-is-ok? response)))))))
   (testing "catalogue-is-public false"
-   (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public false)]
-    (testing "should return forbidden without authentification"
-     (let [response (-> (request :get "/api/catalogue")
-                        handler)]
-        (is (= "forbidden" (read-body response)))))
-     (let [api-key "42"]
-    (testing "with authentification should return catalogue pt.1"
-     (let [response (-> (request :get "/api/catalogue")
-                        (authenticate api-key "handler")
-                         handler)]
-        (is (response-is-ok? response)))))
-     (let [api-key "42"
-          user-id "alice"]
-    (testing "with authentification should return catalogue pt.2"
-     (let [response (-> (request :get "/api/catalogue")
-                        (authenticate api-key user-id)
-                         handler)]
-        (is (response-is-ok? response)))))
-    (testing "with wrong api key should return forbidden"
-     (let [response (-> (request :get (str "/api/catalogue"))
-                         (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-                          handler)]
-        (is (= "forbidden" (read-body response))))))))
+    (with-redefs [rems.config/env (assoc rems.config/env :catalogue-is-public false)]
+      (testing "should return forbidden without authentification"
+        (let [response (-> (request :get "/api/catalogue")
+                           handler)]
+          (is (= "forbidden" (read-body response)))))
+      (let [api-key "42"]
+        (testing "with authentification should return catalogue pt.1"
+          (let [response (-> (request :get "/api/catalogue")
+                             (authenticate api-key "handler")
+                             handler)]
+            (is (response-is-ok? response)))))
+      (let [api-key "42"
+            user-id "alice"]
+        (testing "with authentification should return catalogue pt.2"
+          (let [response (-> (request :get "/api/catalogue")
+                             (authenticate api-key user-id)
+                             handler)]
+            (is (response-is-ok? response)))))
+      (testing "with wrong api key should return forbidden"
+        (let [response (-> (request :get (str "/api/catalogue"))
+                           (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                           handler)]
+          (is (= "forbidden" (read-body response))))))))
 
 
 

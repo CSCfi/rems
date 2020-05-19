@@ -52,16 +52,14 @@
       (doseq [user ["owner" "alice" "malice"]]
         (testing user
           (is (response-is-ok? (api-response :get "/api/catalogue/" nil
-                                             "43" user)))
-                                             ))))
-    (testing "> api key with whitelist can only impersonate given users >"
-      (doseq [user ["alice" "malice"]]
-        (testing user
-          (is (response-is-ok? (api-response :get "/api/my-applications/" nil
-                                             "44" user)))                                
-          (is (response-is-unauthorized? (api-response :get "/api/my-applications/" nil
-                                                   "44" "owner")))
-    )))
+                                             "43" user)))))))
+  (testing "> api key with whitelist can only impersonate given users >"
+    (doseq [user ["alice" "malice"]]
+      (testing user
+        (is (response-is-ok? (api-response :get "/api/my-applications/" nil
+                                           "44" user)))
+        (is (response-is-unauthorized? (api-response :get "/api/my-applications/" nil
+                                                     "44" "owner"))))))
   (testing "api key path whitelist"
     (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
     (api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
@@ -72,25 +70,25 @@
                                                                :path "/api/c.*"}
                                                               {:method "get"
                                                                :path "/api/users/.*"}]})
-  
-  (testing "> api key without whitelist can access any path >"
-    (doseq [path ["/api/applications" "/api/my-applications"]]
-      (testing path
-        (is (response-is-ok? (api-response :get path nil
-                                          "45" "owner"))))))
-  (testing "> api key with whitelist can access only given paths >"
+
+    (testing "> api key without whitelist can access any path >"
       (doseq [path ["/api/applications" "/api/my-applications"]]
         (testing path
           (is (response-is-ok? (api-response :get path nil
-                                              "46" "owner"))))))
-  (testing "> api key with whitelist can access only matching paths >"
+                                             "45" "owner"))))))
+    (testing "> api key with whitelist can access only given paths >"
+      (doseq [path ["/api/applications" "/api/my-applications"]]
+        (testing path
+          (is (response-is-ok? (api-response :get path nil
+                                             "46" "owner"))))))
+    (testing "> api key with whitelist can access only matching paths >"
       (doseq [path ["/api/catalogue?query=param" "/api/catalogue-items"]]
         (testing path
           (is (response-is-ok? (api-response :get path nil
                                              "47" "owner")))))
       (is (response-is-unauthorized? (api-response :get "/api/applications" nil
                                                    "47" "owner"))))
-  (testing "> api key with whitelist can use only matching methods"
+    (testing "> api key with whitelist can use only matching methods"
       (is (response-is-ok? (api-response :get "/api/users/active" nil
                                          "47" "owner")))
       (is (response-is-unauthorized? (api-response :post "/api/users/create"

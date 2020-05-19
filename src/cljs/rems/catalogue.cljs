@@ -18,10 +18,10 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-     {:db (dissoc db ::catalogue ::draft-applications)
-      :dispatch-n [[::full-catalogue]
-                   (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
-                   [:rems.table/reset]]}))
+   {:db (dissoc db ::catalogue ::draft-applications)
+    :dispatch-n [[::full-catalogue]
+                 (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
+                 [:rems.table/reset]]}))
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
 
@@ -55,7 +55,7 @@
                          (get-localized-title item language)
                          ", "
                          (text :t.link/opens-in-new-window))}
-        [external-link] " " (text :t.catalogue/more-info)])))
+       [external-link] " " (text :t.catalogue/more-info)])))
 
 (rf/reg-sub
  ::catalogue-table-rows

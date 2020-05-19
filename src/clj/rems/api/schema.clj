@@ -179,8 +179,7 @@
                                        {:visibility/type (s/enum :always :only-if)
                                         (s/optional-key :visibility/field) {:field/id FieldId}
                                         (s/optional-key :visibility/values) [s/Str]}
-                                       {:description "Always visible by default"})
-   })
+                                       {:description "Always visible by default"})})
 
 (s/defschema NewFieldTemplate
   (-> FieldTemplate
