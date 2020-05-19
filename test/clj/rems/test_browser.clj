@@ -457,6 +457,7 @@
       (click-row-action [:licenses]
                         {:fn/text (str (btu/context-get :license-name) " EN")}
                         (select-button-by-label "View"))
+      (btu/wait-visible :license)
       (is (= {"Organization" "NBN"
               "Title (EN)" (str (btu/context-get :license-name) " EN")
               "Title (FI)" (str (btu/context-get :license-name) " FI")
