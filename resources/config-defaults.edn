@@ -151,7 +151,7 @@
  ;; enable /api/permissions/:user
  :enable-permissions-api false
 
- ;; Option to determine wether catalogue page is going to be visible (false as a default)
+ ;; Should the catalogue be public and visible to everyone, i.e. also to not logged-in users.
  :catalogue-is-public false
 
  ;; Options used only for development
