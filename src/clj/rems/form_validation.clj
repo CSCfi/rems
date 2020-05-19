@@ -26,7 +26,7 @@
   (and (= (:field/type field) :option)
        (not (option-value-valid? field))))
 
-(defn- validate-field [field]
+(defn- validate-field-on-submit [field]
   (cond
     (invalid-email-address? field) {:field-id (:field/id field)
                                     :type     :t.form.validation/invalid-email}
@@ -37,9 +37,9 @@
     (invalid-option-value? field) {:field-id (:field/id field)
                                    :type     :t.form.validation/invalid-value}))
 
-(defn validate-fields [fields]
+(defn validate-fields-on-submit [fields]
   (->> (sort-by :field/id fields)
        (filter :field/visible)
-       (map validate-field)
+       (map validate-field-on-submit)
        (remove nil?)
        (seq)))
