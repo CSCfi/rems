@@ -148,7 +148,7 @@
  :enable-permissions-api false
 
  ;; Should the catalogue be public and visible to everyone, i.e. also to not logged-in users.
- :catalogue-is-public false
+ :catalogue-is-public true
 
  ;; Options used only for development
  :render-css-file? false
