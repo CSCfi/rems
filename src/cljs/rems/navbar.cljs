@@ -60,14 +60,16 @@
 
 (defn navbar-items [e page-id identity]
   ;;TODO: get navigation options from subscription
-  (let [roles (:roles identity)]
+  (let [roles (:roles identity) 
+        config @(rf/subscribe [:rems.config/config])
+        catalogue-is-public (when config (config :catalogue-is-public))]
     [e (into [:div.navbar-nav.mr-auto
               (when-not (:user identity)
-               [:<> [nav-link "/" (text :t.navigation/home) :exact]
-                [nav-link "/catalogue" (text :t.navigation/catalogue)]])
+               [nav-link "/" (text :t.navigation/home) :exact])
+              (when (or (roles/is-logged-in? roles) catalogue-is-public)
+               [nav-link "/catalogue" (text :t.navigation/catalogue)])
               (when (roles/show-applications? roles)
-               [:<> [nav-link "/applications" (text :t.navigation/applications)]
-                [nav-link "/catalogue" (text :t.navigation/catalogue)]])
+                [nav-link "/applications" (text :t.navigation/applications)])
               (when (roles/show-reviews? roles)
                [nav-link "/actions" (text :t.navigation/actions)])
               (when (roles/show-admin-pages? roles)
