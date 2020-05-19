@@ -238,7 +238,7 @@
 
 (defn- validation-error [application]
   (let [errors (for [form (:application/forms application)
-                     error (form-validation/validate-fields-on-submit (:form/fields form))]
+                     error (form-validation/validate-fields-for-submit (:form/fields form))]
                  (assoc error :form-id (:form/id form)))]
     (when (seq errors)
       {:errors errors})))
