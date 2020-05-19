@@ -26,20 +26,34 @@
   (and (= (:field/type field) :option)
        (not (option-value-valid? field))))
 
-(defn- validate-field-on-submit [field]
+(defn- validate-field-content [field]
   (cond
     (invalid-email-address? field) {:field-id (:field/id field)
                                     :type     :t.form.validation/invalid-email}
-    (required? field) {:field-id (:field/id field)
-                       :type     :t.form.validation/required}
     (too-long? field) {:field-id (:field/id field)
                        :type     :t.form.validation/toolong}
     (invalid-option-value? field) {:field-id (:field/id field)
                                    :type     :t.form.validation/invalid-value}))
 
-(defn validate-fields-on-submit [fields]
+(defn- validate-field-submit [field]
+  (if (required? field)
+    {:field-id (:field/id field)
+     :type     :t.form.validation/required}
+    (validate-field-content field)))
+
+(defn- validate-draft-field [field]
+  (validate-field-content field))
+
+(defn validate-fields-for-draft [fields]
   (->> (sort-by :field/id fields)
        (filter :field/visible)
-       (map validate-field-on-submit)
+       (map validate-draft-field)
+       (remove nil?)
+       (seq)))
+
+(defn validate-fields-for-submit [fields]
+  (->> (sort-by :field/id fields)
+       (filter :field/visible)
+       (map validate-field-submit)
        (remove nil?)
        (seq)))
