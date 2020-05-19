@@ -53,12 +53,13 @@
       (let [body (json/parse-string (slurp body))]
         (assert (and (not (:schema body))
                      (not (:errors body)))
-                (pr-str {:status (:status response)
-                         :fail (let [errors (:errors body)]
-                                 (if (map? errors)
-                                   (set (keys errors))
-                                   (set (mapcat keys errors))))
-                         :body body}))))))
+                (let [errors (:errors body)]
+                  (pr-str {:status (:status response)
+                           :failed (vec (if (map? errors)
+                                          (set (keys errors))
+                                          (set (mapcat keys errors))))
+                           :errors errors
+                           :body body})))))))
 
 
 
