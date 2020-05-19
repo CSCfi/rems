@@ -22,7 +22,7 @@
       (let [data (api-call :get "/api/organizations"
                            nil
                            api-key owner)]
-        (is (= #{"default" "abc" "perf" "hus" "thl" "csc" "nbn" "organization1" "organization2"}
+        (is (= #{"default" "abc" "hus" "thl" "csc" "nbn" "organization1" "organization2"}
                (set (map :organization/id data))))))
 
     (testing "create organization"
