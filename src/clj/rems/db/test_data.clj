@@ -953,6 +953,10 @@
         handlers [(+fake-users+ :approver1)
                   (+fake-users+ :approver2)]
         owner (+fake-users+ :owner)
+        _perf (organizations/add-organization! owner {:organization/id "perf"
+                                                      :organization/name "Performance Test Organization"
+                                                      :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
+                                                      :organization/review-emails []})
         workflow-id (create-workflow! {:actor owner
                                        :organization {:organization/id "perf"}
                                        :title "Performance tests"
@@ -1057,10 +1061,6 @@
 
         ;; Create organizations
         default (create-organization! {:actor owner :users users})
-        perf (organizations/add-organization! owner {:organization/id "perf"
-                                                     :organization/name "Performance Test Organization"
-                                                     :organization/owners [{:userid organization-owner1}]
-                                                     :organization/review-emails []})
         hus (organizations/add-organization! owner {:organization/id "hus"
                                                     :organization/name "HUS"
                                                     :organization/owners [{:userid organization-owner1}]
