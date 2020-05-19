@@ -18,11 +18,13 @@
        (not (str/blank? (:field/value field)))
        (not (re-matches util/+email-regex+ (:field/value field)))))
 
+(defn- option-value-valid? [field]
+  (let [allowed-values (set (conj (map :key (:field/options field)) ""))]
+    (contains? allowed-values (:field/value field))))
+
 (defn- invalid-option-value? [field]
   (and (= (:field/type field) :option)
-       (if (and (:field/optional field) (empty? (:field/value field)))
-         false
-         (not (contains? (set (map :key (:field/options field))) (:field/value field))))))
+       (not (option-value-valid? field))))
 
 (defn- validate-field [field]
   (cond
