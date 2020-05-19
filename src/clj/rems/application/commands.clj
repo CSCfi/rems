@@ -561,6 +561,10 @@
   (update-present result :events (fn [events]
                                    (mapv #(add-common-event-fields-from-command % cmd) events))))
 
+(defn- application-not-found-error [application cmd]
+  (when (and (:application-id cmd) (not application))
+    {:errors [{:type :application-not-found}]}))
+
 (defn- forbidden-error [application cmd]
   (let [permissions (if application
                       (permissions/user-permissions application (:actor cmd))
@@ -570,9 +574,10 @@
 
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
-  (let [result (-> cmd
-                   (command-handler application injections)
-                   (finalize-events cmd))]
-    (or (when (:errors result) result) ;; prefer more specific errors
-        (forbidden-error application cmd)
-        result)))
+  (or (application-not-found-error application cmd)
+      (let [result (-> cmd
+                       (command-handler application injections)
+                       (finalize-events cmd))]
+        (or (when (:errors result) result) ;; prefer more specific errors
+            (forbidden-error application cmd)
+            result))))
