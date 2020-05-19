@@ -20,6 +20,6 @@
       :summary "Get the catalogue of items for the UI (does not include archived items)"
       :return GetCatalogueResponse
       (if (or (:catalogue-is-public env)
-          (roles/has-roles? :logged-in))
-        (ok (catalogue/get-localized-catalogue-items {:archived false}))
-        (throw-forbidden)))))
+       (roles/has-roles? :logged-in))
+       (ok (catalogue/get-localized-catalogue-items {:archived false}))
+       (throw-forbidden)))))
