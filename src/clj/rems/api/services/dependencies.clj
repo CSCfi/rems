@@ -14,7 +14,7 @@
     (:workflow/id dep) (workflow/get-workflow (:workflow/id dep))
     (:catalogue-item/id dep) (catalogue/get-localized-catalogue-item (:catalogue-item/id dep))
     (:form/id dep) (form/get-form-template (:form/id dep))
-    true (assert false dep)))
+    :else (assert false dep)))
 
 (defn- list-dependencies []
   (concat
