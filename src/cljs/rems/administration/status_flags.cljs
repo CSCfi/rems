@@ -4,22 +4,27 @@
             [rems.text :refer [text get-localized-title]]))
 
 ;; TODO this should be in some util namespace
-(defn- get-localized-title-for-anything [item language]
-  (or (:resid item)
-      (:form/title item)
-      (get-localized-title item language)
-      (:title item)))
+(defn- get-localized-title-for-anything
+  ([item]
+   (get-localized-title-for-anything item @(rf/subscribe [:language])))
+  ([item language]
+   (or (get-localized-title item language)
+       (:resid item)
+       (:form/title item)
+       (:title item))))
 
 (defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :enabled false) [text :t.administration/disable])}
+    :on-click #(on-change (assoc item :enabled false) [:span [text :t.administration/disable]
+                                                       " \"" [get-localized-title-for-anything item] "\""])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :enabled true) [text :t.administration/enable])}
+    :on-click #(on-change (assoc item :enabled true) [:span [text :t.administration/enable]
+                                                      " \""  [get-localized-title-for-anything item] "\""])}
    (text :t.administration/enable)])
 
 ; TODO consider naming enabled-toggle-button
@@ -32,13 +37,15 @@
 (defn- archive-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :archived true) [text :t.administration/archive])}
+    :on-click #(on-change (assoc item :archived true) [:span [text :t.administration/archive]
+                                                       " \"" [get-localized-title-for-anything item] "\""])}
    (text :t.administration/archive)])
 
 (defn- unarchive-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type :button
-    :on-click #(on-change (assoc item :archived false) [text :t.administration/unarchive])}
+    :on-click #(on-change (assoc item :archived false) [:span [text :t.administration/unarchive]
+                                                        " \"" [get-localized-title-for-anything item] "\""])}
    (text :t.administration/unarchive)])
 
 ;; TODO consider naming archived-toggle-button
