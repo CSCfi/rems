@@ -7,7 +7,7 @@
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
 
-(defn- enrich-dependency [dep]
+(defn enrich-dependency [dep]
   (cond
     (:license/id dep) (licenses/get-license (:license/id dep))
     (:resource/id dep) (resource/get-resource (:resource/id dep))
