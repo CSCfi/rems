@@ -16,13 +16,8 @@
             [schema.core :as s])
   (:import rems.InvalidRequestException))
 
-(defn- form-in-use-error [form-id]
-  (when-let [errors (dependencies/in-use-errors :t.administration.errors/form-in-use {:form/id form-id})]
-    {:success false
-     :errors errors}))
-
 (defn form-editable [form-id]
-  (or (form-in-use-error form-id)
+  (or (dependencies/in-use-error {:form/id form-id})
       {:success true}))
 
 (defn validate-given-ids
@@ -119,7 +114,7 @@
     ;; need to check both previous and new organization
     (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
-    (or (form-in-use-error form-id)
+    (or (dependencies/in-use-error {:form/id form-id})
         (validation-error form)
         (do (db/edit-form-template! {:id form-id
                                      :organization (:organization/id organization)
@@ -135,11 +130,8 @@
 
 (defn set-form-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:form/organization (get-form-template id)))
-  (if-let [errors (when archived
-                    (dependencies/archive-errors :t.administration.errors/form-in-use {:form/id id}))]
-    {:success false
-     :errors errors}
-    (do
-      (db/set-form-template-archived! {:id id
-                                       :archived archived})
-      {:success true})))
+  (or (dependencies/change-archive-status-error archived {:form/id id})
+      (do
+        (db/set-form-template-archived! {:id id
+                                         :archived archived})
+        {:success true})))

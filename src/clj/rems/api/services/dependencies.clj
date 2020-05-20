@@ -7,7 +7,7 @@
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
 
-(defn enrich-dependency [dep]
+(defn- enrich-dependency [dep]
   (cond
     (:license/id dep) (licenses/get-license (:license/id dep))
     (:resource/id dep) (resource/get-resource (:resource/id dep))
@@ -44,7 +44,7 @@
   {:dependencies (build-index {:keys [:from] :value-fn :to :collect-fn set} lst)
    :reverse-dependencies (build-index {:keys [:to] :value-fn :from :collect-fn set} lst)})
 
-(defn compute-dependencies []
+(defn- compute-dependencies []
   (-> (list-dependencies)
       list-to-maps))
 
@@ -58,7 +58,8 @@
 ;; 500ms with performance test data.
 (def ^:private dependencies-cache (atom nil))
 
-(defn dependencies []
+;; For now, all public uses are via the error helpers below
+(defn- dependencies []
   (when-not @dependencies-cache
     (reset! dependencies-cache (compute-dependencies)))
   @dependencies-cache)
@@ -85,45 +86,41 @@
                  (:form/id dep)
                  {:forms [(select-keys (enrich-dependency dep) [:form/id :form/title])]}))))
 
-(defn archive-errors
+(defn- archive-errors
   "Return errors if given item is depended on by non-archived items"
-  [error-key item]
+  [item]
   (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
                         (mapv add-status-bits)
                         (remove :archived)
                         seq)]
-    [(merge {:type error-key}
-            (format-deps-for-errors users))]))
+    {:success false
+     :errors [(merge {:type :t.administration.errors/in-use-by}
+                     (format-deps-for-errors users))]}))
 
-(defn in-use-errors
-  "Returns errors if given item is depended on at all"
-  [error-key item]
-  (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
-    [(merge {:type error-key}
-            (format-deps-for-errors users))]))
-
-(defn unarchive-errors
+(defn- unarchive-errors
   "Return errors if given item depends on archived items"
   [item]
   (when-let [used (->> (get-in (dependencies) [:dependencies item])
                        (mapv add-status-bits)
                        (filter :archived)
                        seq)]
-    (let [{:keys [licenses resources workflows catalogue-items forms]} (format-deps-for-errors used)]
-      (concat
-       (when licenses
-         [{:type :t.administration.errors/license-archived
-           :licenses licenses}])
-       (when resources
-         [{:type :t.administration.errors/resource-archived
-           :resources resources}])
-       (when workflows
-         [{:type :t.administration.errors/workflow-archived
-           :workflows workflows}])
-       (when forms
-         [{:type :t.administration.errors/form-archived
-           :forms forms}])
-       ;; case not possible:
-       (when catalogue-items
-         [{:type :catalogue-items-archived
-           :catalogue-items catalogue-items}])))))
+    {:success false
+     :errors [(merge {:type :t.administration.errors/dependencies-archived}
+                     (format-deps-for-errors used))]}))
+
+(defn change-archive-status-error
+  "Returns an error structure {:success false :errors [...]} if
+    - archived is true and item is used by non-archived items
+    - archived is false and item uses archived items"
+  [archived item]
+  (if archived
+    (archive-errors item)
+    (unarchive-errors item)))
+
+(defn in-use-error
+  "Returns an error structure {:success false :errors [...]} if given item is depended on by anything"
+  [item]
+  (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
+    {:success false
+     :errors [(merge {:type :t.administration.errors/in-use-by}
+                     (format-deps-for-errors users))]}))

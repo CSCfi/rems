@@ -45,12 +45,8 @@
 
 (defn set-resource-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (get-resource id)))
-  (if-let [errors (if archived
-                    (dependencies/archive-errors :t.administration.errors/resource-in-use {:resource/id id})
-                    (dependencies/unarchive-errors {:resource/id id}))]
-    {:success false
-     :errors errors}
-    (do
-      (db/set-resource-archived! {:id id
-                                  :archived archived})
-      {:success true})))
+  (or (dependencies/change-archive-status-error archived {:resource/id id})
+      (do
+        (db/set-resource-archived! {:id id
+                                    :archived archived})
+        {:success true})))

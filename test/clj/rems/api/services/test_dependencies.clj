@@ -65,21 +65,21 @@
                {:form/id wf-form} #{{:workflow/id wf-2}}
                {:workflow/id wf-1} #{{:catalogue-item/id cat-1}}
                {:workflow/id wf-2} #{{:catalogue-item/id cat-2}}}}
-             (dependencies/dependencies))))
+             (#'dependencies/dependencies))))
 
     (testing "enrich-dependency"
       (is (= {:id cat-1 :enabled true :archived false}
-             (select-keys (dependencies/enrich-dependency {:catalogue-item/id cat-1})
+             (select-keys (#'dependencies/enrich-dependency {:catalogue-item/id cat-1})
                           [:id :enabled :archived])))
       (is (= {:id shared-license :enabled true :archived false}
-             (select-keys (dependencies/enrich-dependency {:license/id shared-license})
+             (select-keys (#'dependencies/enrich-dependency {:license/id shared-license})
                           [:id :enabled :archived])))
       (is (= {:id res-1 :enabled true :archived false}
-             (select-keys (dependencies/enrich-dependency {:resource/id res-1})
+             (select-keys (#'dependencies/enrich-dependency {:resource/id res-1})
                           [:id :enabled :archived])))
       (is (= {:form/id shared-form :enabled true :archived false}
-             (select-keys (dependencies/enrich-dependency {:form/id shared-form})
+             (select-keys (#'dependencies/enrich-dependency {:form/id shared-form})
                           [:form/id :enabled :archived])))
       (is (= {:id wf-1 :enabled true :archived false}
-             (select-keys (dependencies/enrich-dependency {:workflow/id wf-1})
+             (select-keys (#'dependencies/enrich-dependency {:workflow/id wf-1})
                           [:id :enabled :archived]))))))
