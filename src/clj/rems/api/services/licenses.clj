@@ -8,14 +8,15 @@
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
-            [rems.db.workflow :as workflow])
+            [rems.db.workflow :as workflow]
+            [rems.db.organizations :as organizations])
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
 (defn create-license! [{:keys [licensetype organization localizations]} user-id]
   (util/check-allowed-organization! organization)
   (let [license (db/create-license! {:owneruserid user-id
                                      :modifieruserid user-id
-                                     :organization (or organization "")
+                                     :organization (:organization/id organization)
                                      :type licensetype})
         licid (:id license)]
     (doseq [[langcode localization] localizations]
@@ -60,13 +61,19 @@
         (when-let [attachment (get-license-attachment attachment-id)]
           attachment)))))
 
+(defn get-license
+  "Get a single license by id"
+  [id]
+  (->> (licenses/get-license id)
+       organizations/join-organization))
+
 (defn set-license-enabled! [{:keys [id enabled]}]
-  (util/check-allowed-organization! (:organization (licenses/get-license id)))
+  (util/check-allowed-organization! (:organization (get-license id)))
   (db/set-license-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-license-archived! [{:keys [id archived]}]
-  (util/check-allowed-organization! (:organization (licenses/get-license id)))
+  (util/check-allowed-organization! (:organization (get-license id)))
   (if-let [errors (and archived
                        (dependencies/archive-errors :t.administration.errors/license-in-use {:license/id id}))]
     {:success false
@@ -76,14 +83,10 @@
                                  :archived archived})
       {:success true})))
 
-(defn get-license
-  "Get a single license by id"
-  [id]
-  (licenses/get-license id))
-
 (defn get-all-licenses
   "Get all licenses.
 
    filters is a map of key-value pairs that must be present in the licenses"
   [filters]
-  (licenses/get-all-licenses filters))
+  (->> (licenses/get-all-licenses filters)
+       (mapv organizations/join-organization)))

@@ -61,7 +61,9 @@
             form-id (test-data/create-form! {:form/title "notifications"
                                              :form/fields [{:field/type :text
                                                             :field/id "field-1"
-                                                            :field/title {:en "text field"}
+                                                            :field/title {:en "text field"
+                                                                          :fi "tekstikenttä"
+                                                                          :sv "textfält"}
                                                             :field/optional false}]})
             handler "handler"
             workflow-id (test-data/create-workflow! {:title "wf"
@@ -132,7 +134,9 @@
             form-id (test-data/create-form! {:form/title "notifications"
                                              :form/fields [{:field/type :text
                                                             :field/id "field-1"
-                                                            :field/title {:en "text field"}
+                                                            :field/title {:en "text field"
+                                                                          :fi "tekstikenttä"
+                                                                          :sv "textfält"}
                                                             :field/optional false}]})
             cat-id (test-data/create-catalogue-item! {:form-id form-id})
             applicant "alice"

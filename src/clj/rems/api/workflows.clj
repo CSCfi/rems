@@ -1,6 +1,6 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer [SuccessResponse ArchivedCommand EnabledCommand UserId UserWithAttributes Workflow]]
+            [rems.api.schema :refer [ArchivedCommand EnabledCommand OrganizationId SuccessResponse UserId UserWithAttributes Workflow]]
             [rems.api.services.workflow :as workflow]
             [rems.api.util :as api-util]
             [rems.api.util] ; required for route :roles
@@ -10,7 +10,7 @@
             [schema.core :as s]))
 
 (s/defschema CreateWorkflowCommand
-  {:organization s/Str
+  {:organization OrganizationId
    :title s/Str
    (s/optional-key :forms) [{:form/id s/Int}]
    :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?

@@ -7,6 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.config :as config]
             [rems.dropdown :as dropdown]
+            [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.roles :as roles]
@@ -17,36 +18,16 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} [_ workflow-id]]
-   (let [editing? (not (nil? workflow-id))
-         roles (get-in db [:identity :roles])
-         user-organization (get-in db [:identity :user :organization])
-         all-organizations (get-in db [:config :organizations])
-         organization (cond
-                        (roles/disallow-setting-organization? roles)
-                        user-organization
-
-                        (= (count all-organizations) 1)
-                        (first all-organizations)
-
-                        :else
-                        nil)]
-     {:db (assoc db
-                 ::workflow-id workflow-id
-                 ::loading-workflow? (not (nil? workflow-id))
-                 ::actors nil
-                 ::editing? editing?
-                 ::form (merge {:type :workflow/default}
-                               (when organization
-                                 {:organization organization}))
-                 ::organization-read-only? (or editing?
-                                               (not (nil? organization))))
-      ::fetch-actors nil
-      ::fetch-workflow workflow-id})))
+   {:db (assoc db
+               ::workflow-id workflow-id
+               ::actors nil
+               ::editing? (some? workflow-id)
+               ::form {:type :workflow/default})
+    :dispatch-n [[::actors]
+                 (when workflow-id [::workflow])]}))
 
 (rf/reg-sub ::workflow-id (fn [db _] (::workflow-id db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
-(rf/reg-sub ::loading? (fn [db _] (or (::loading-workflow? db) (nil? (::actors db)))))
-(rf/reg-sub ::organization-read-only? (fn [db _] (::organization-read-only? db)))
 
 ;;; form state
 
@@ -54,29 +35,14 @@
 
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :organization])))
-(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :organization] organization)))
+(defn- fetch-workflow-success [db [_ {:keys [title organization workflow]}]]
+  (update db ::form merge {:title title
+                           :organization organization
+                           :type (:type workflow)
+                           :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}))
 
-;;; fetching workflow
-
-(rf/reg-fx
- ::fetch-workflow
- (fn [workflow-id]
-   (when workflow-id
-     (fetch (str "/api/workflows/" workflow-id)
-            {:handler #(rf/dispatch [::fetch-workflow-result %])
-             :error-handler (flash-message/default-error-handler :top "Fetch workflow")}))))
-
-(rf/reg-event-db
- ::fetch-workflow-result
- (fn [db [_ workflow]]
-   (let [new-stuff {:title (:title workflow)
-                    :organization (:organization workflow)
-                    :type (:type (:workflow workflow))
-                    :handlers (mapv enrich-user (get-in workflow [:workflow :handlers]))}]
-     (-> db
-         (update ::form merge new-stuff)
-         (dissoc ::loading-workflow?)))))
+(fetcher/reg-fetcher ::workflow "/api/workflows/:id" {:path-params (fn [db] {:id (::workflow-id db)})
+                                                      :on-success fetch-workflow-success})
 
 ;;; form submit
 
@@ -91,12 +57,12 @@
    (if (needs-handlers? (:type request))
      (seq (:handlers request))
      true)
-   (not (str/blank? (:organization request)))
+   (not (str/blank? (get-in request [:organization :organization/id])))
    (not (str/blank? (:title request)))))
 
 (defn build-create-request [form]
   (let [request (merge
-                 {:organization (:organization form)
+                 {:organization {:organization/id (get-in form [:organization :organization/id])}
                   :title (trim-when-string (:title form))
                   :type (:type form)}
                  (when (needs-handlers? (:type form))
@@ -140,22 +106,7 @@
 
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
 
-(defn- fetch-actors []
-  (fetch "/api/workflows/actors"
-         {:handler #(rf/dispatch [::fetch-actors-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch actors")}))
-
-(rf/reg-fx ::fetch-actors fetch-actors)
-
-(rf/reg-event-db
- ::fetch-actors-result
- (fn [db [_ actors]]
-   (-> db
-       (assoc ::actors (map enrich-user actors))
-       (dissoc ::loading?))))
-
-(rf/reg-sub ::actors (fn [db _] (::actors db)))
-
+(fetcher/reg-fetcher ::actors "/api/workflows/actors" {:result (partial mapv enrich-user)})
 
 ;;;; UI
 
@@ -164,23 +115,15 @@
    :update-form ::set-form-field})
 
 (def ^:private handlers-dropdown-id "handlers-dropdown")
-(def ^:private organization-dropdown-id "organization-dropdown")
+
+(rf/reg-sub ::selected-organization (fn [db _] (get-in db [::form :data :organization])))
+
+(rf/reg-event-db ::set-selected-organization (fn [db [_ organization]] (assoc-in db [::form :data :organization] organization)))
 
 (defn- workflow-organization-field []
-  (let [organizations (:organizations @(rf/subscribe [:rems.config/config]))
-        selected-organization @(rf/subscribe [::selected-organization])
-        item-selected? #(= % selected-organization)
-        readonly @(rf/subscribe [::organization-read-only?])]
-    [:div.form-group
-     [:label {:for organization-dropdown-id} (text :t.administration/organization)]
-     (if readonly
-       [fields/readonly-field {:id organization-dropdown-id
-                               :value selected-organization}]
-       [dropdown/dropdown
-        {:id organization-dropdown-id
-         :items organizations
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-organization %])}])]))
+  [fields/organization-field {:id "organization-dropdown"
+                              :value @(rf/subscribe [::selected-organization])
+                              :on-change #(rf/dispatch [::set-selected-organization %])}])
 
 (defn- workflow-title-field []
   [text-field context {:keys [:title]
@@ -259,7 +202,8 @@
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
-        loading? @(rf/subscribe [::loading?])
+        loading? (or @(rf/subscribe [::actors :fetching?])
+                     @(rf/subscribe [::workflow :fetching?]))
         editing? @(rf/subscribe [::editing?])
         title (if editing?
                 (text :t.administration/edit-workflow)

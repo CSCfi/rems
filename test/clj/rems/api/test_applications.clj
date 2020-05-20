@@ -8,7 +8,6 @@
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.db.test-data :as test-data]
             [rems.handler :refer [handler]]
             [rems.json]
@@ -161,7 +160,14 @@
       (is (= {:success true} (send-command user-id
                                            {:type :application.command/accept-licenses
                                             :application-id application-id
-                                            :accepted-licenses [license-id1 license-id2]}))))
+                                            :accepted-licenses [license-id1 license-id2]})))
+      (testing "with invalid application id"
+        (is (= {:success false
+                :errors [{:type "application-not-found"}]}
+               (send-command user-id
+                             {:type :application.command/accept-licenses
+                              :application-id 9999999999
+                              :accepted-licenses [license-id1 license-id2]})))))
 
     (testing "save draft"
       (is (= {:success true} (send-command user-id
@@ -512,23 +518,45 @@
   (let [user-id "alice"
         form-id (test-data/create-form! {:form/fields [{:field/id "req1"
                                                         :field/title {:en "req"
-                                                                      :fi "pak"}
+                                                                      :fi "pak"
+                                                                      :sv "obl"}
                                                         :field/type :text
                                                         :field/optional false}
                                                        {:field/id "opt1"
                                                         :field/title {:en "opt"
-                                                                      :fi "val"}
+                                                                      :fi "val"
+                                                                      :sv "fri"}
                                                         :field/type :text
                                                         :field/optional true}]})
         form-id2 (test-data/create-form! {:form/fields [{:field/id "req2"
                                                          :field/title {:en "req"
-                                                                       :fi "pak"}
+                                                                       :fi "pak"
+                                                                       :sv "obl"}
                                                          :field/type :text
                                                          :field/optional false}
                                                         {:field/id "opt2"
                                                          :field/title {:en "opt"
-                                                                       :fi "val"}
+                                                                       :fi "val"
+                                                                       :sv "fri"}
                                                          :field/type :text
+                                                         :field/optional true}
+                                                        {:field/id "optionlist"
+                                                         :field/title {:en "Option list."
+                                                                       :fi "Valintalista."
+                                                                       :sv "Välj"}
+                                                         :field/type :option
+                                                         :field/options [{:key "Option1"
+                                                                          :label {:en "First"
+                                                                                  :fi "Ensimmäinen"
+                                                                                  :sv "Först"}}
+                                                                         {:key "Option2"
+                                                                          :label {:en "Second"
+                                                                                  :fi "Toinen"
+                                                                                  :sv "Den andra"}}
+                                                                         {:key "Option3"
+                                                                          :label {:en "Third"
+                                                                                  :fi "Kolmas"
+                                                                                  :sv "Tredje"}}]
                                                          :field/optional true}]})
         wf-id (test-data/create-workflow! {})
         cat-id (test-data/create-catalogue-item! {:form-id form-id :workflow-id wf-id})
@@ -558,6 +586,33 @@
                                                    {:form form-id :field "req1" :value "req"}
                                                    {:form form-id2 :field "opt2" :value "opt"}
                                                    {:form form-id2 :field "req2" :value "req"}]}))))
+
+    (testing "set non-existing value of option list goes through on save-draft"
+      (is (= {:success true}
+             (send-command user-id {:type           :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values   [{:form form-id :field "opt1" :value "opt"}
+                                                     {:form form-id :field "req1" :value "req"}
+                                                     {:form form-id2 :field "opt2" :value "opt"}
+                                                     {:form form-id2 :field "req2" :value "req"}
+                                                     {:form form-id2 :field "optionlist" :value "foobar"}]}))))
+
+    (testing "submit fails with non-existing value of option list"
+      (is (= {:success false
+              :errors [{:field-id "optionlist", :form-id form-id2, :type "t.form.validation/invalid-value"}]}
+             (send-command user-id {:type :application.command/submit
+                                    :application-id app-id}))))
+
+    (testing "set existing value of option list"
+      (is (= {:success true}
+             (send-command user-id {:type :application.command/save-draft
+                                    :application-id app-id
+                                    :field-values [{:form form-id :field "opt1" :value "opt"}
+                                                   {:form form-id :field "req1" :value "req"}
+                                                   {:form form-id2 :field "opt2" :value "opt"}
+                                                   {:form form-id2 :field "req2" :value "req"}
+                                                   {:form form-id2 :field "optionlist" :value "Option2"}]}))))
+
     (testing "can submit with required field"
       (is (= {:success true}
              (send-command user-id {:type :application.command/submit
@@ -685,11 +740,11 @@
                                            :handlers [handler]})
         form-id (test-data/create-form! {:form/fields [{:field/id "fld1"
                                                         :field/type :text
-                                                        :field/title {:en "Field 1"}
+                                                        :field/title {:en "Field 1" :fi "Field 1" :sv "Field 1"}
                                                         :field/optional false}]})
         form-2-id (test-data/create-form! {:form/fields [{:field/id "fld2"
                                                           :field/type :text
-                                                          :field/title {:en "HIDDEN"}
+                                                          :field/title {:en "HIDDEN" :fi "HIDDEN" :sv "HIDDEN"}
                                                           :field/optional false}]})
         cat-id (test-data/create-catalogue-item! {:title {:en "Item1"}
                                                   :workflow-id wf-id
@@ -740,7 +795,8 @@
         handler-id "developer" ;; developer is the default handler in test-data
         form-id (test-data/create-form! {:form/fields [{:field/id "attach"
                                                         :field/title {:en "some attachment"
-                                                                      :fi "joku liite"}
+                                                                      :fi "joku liite"
+                                                                      :sv "bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
         cat-id (test-data/create-catalogue-item! {:form-id form-id})
@@ -1026,12 +1082,14 @@
         workflow-id (test-data/create-workflow! {:handlers [handler-id]})
         form-id (test-data/create-form! {:form/fields [{:field/id "attach1"
                                                         :field/title {:en "some attachment"
-                                                                      :fi "joku liite"}
+                                                                      :fi "joku liite"
+                                                                      :sv "bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}
                                                        {:field/id "attach2"
                                                         :field/title {:en "another attachment"
-                                                                      :fi "toinen liite"}
+                                                                      :fi "toinen liite"
+                                                                      :sv "annan bilaga"}
                                                         :field/type :attachment
                                                         :field/optional true}]})
         cat-id (test-data/create-catalogue-item! {:workflow-id workflow-id
@@ -1144,6 +1202,7 @@
         license-id (-> (request :post "/api/licenses/create")
                        (authenticate api-key owner)
                        (json-body {:licensetype "attachment"
+                                   :organization {:organization/id "abc"}
                                    ;; TODO different content for different languages
                                    :localizations {:en {:title "en title"
                                                         :textcontent "en text"
@@ -1372,7 +1431,9 @@
         form-id (test-data/create-form! {:form/title "notifications"
                                          :form/fields [{:field/type :text
                                                         :field/id "field-1"
-                                                        :field/title {:en "text field"}
+                                                        :field/title {:en "text field"
+                                                                      :fi "text field"
+                                                                      :sv "text field"}
                                                         :field/optional false}]})
         workflow-id (test-data/create-workflow! {:title "wf"
                                                  :handlers [handler]
@@ -1436,7 +1497,9 @@
               :application/accepted-licenses {:alice []}
               :application/forms [{:form/fields [{:field/value "raw test"
                                                   :field/type "text"
-                                                  :field/title {:en "text field"}
+                                                  :field/title {:en "text field"
+                                                                :fi "text field"
+                                                                :sv "text field"}
                                                   :field/id "field-1"
                                                   :field/optional false
                                                   :field/visible true

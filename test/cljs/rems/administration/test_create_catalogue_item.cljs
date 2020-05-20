@@ -7,20 +7,20 @@
                       :fi "fi title"}
               :infourl {:en "hello"
                         :fi ""}
-              :organization "organization1"
+              :organization {:organization/id "organization1"}
               :workflow {:id 123
-                         :organization "organization1"}
+                         :organization {:organization/id "organization1"}}
               :resource {:id 456
-                         :organization "organization1"}
+                         :organization {:organization/id "organization1"}}
               :form {:form/id 789
-                     :form/organization "organization1"}}
+                     :form/organization {:organization/id "organization1"}}}
         languages [:en :fi]]
 
     (testing "valid form"
       (is (= {:wfid 123
               :resid 456
               :form 789
-              :organization "organization1"
+              :organization {:organization/id "organization1"}
               :localizations {:en {:title "en title"
                                    :infourl "hello"}
                               :fi {:title "fi title"

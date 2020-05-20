@@ -2,7 +2,6 @@
   "Tests for invariants across administration APIs."
   (:require [clojure.test :refer :all]
             [rems.db.core :as db]
-            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]))
 
 (use-fixtures
@@ -16,16 +15,16 @@
 (deftest test-archiving-disabling
   (let [api-key "42"
         user-id "owner"
-        license-id (:id (api-call :post "/api/licenses/create" {:licensetype "text" :organization "abc" :localizations {}}
+        license-id (:id (api-call :post "/api/licenses/create" {:licensetype "text" :organization {:organization/id "abc"} :localizations {}}
                                   api-key user-id))
-        resource-id (:id (api-call :post "/api/resources/create" {:resid "test" :organization "abc" :licenses [license-id]}
+        resource-id (:id (api-call :post "/api/resources/create" {:resid "test" :organization {:organization/id "abc"} :licenses [license-id]}
                                    api-key user-id))
-        form-id (:id (api-call :post "/api/forms/create" {:form/organization "abc" :form/title "form update test" :form/fields []}
+        form-id (:id (api-call :post "/api/forms/create" {:form/organization {:organization/id "abc"} :form/title "form update test" :form/fields []}
                                api-key user-id))
-        wf-form-id (:id (api-call :post "/api/forms/create" {:form/organization "abc" :form/title "workflow form update test" :form/fields []}
+        wf-form-id (:id (api-call :post "/api/forms/create" {:form/organization {:organization/id "abc"} :form/title "workflow form update test" :form/fields []}
                                   api-key user-id))
         workflow-id (:id (api-call :post "/api/workflows/create"
-                                   {:organization "abc" :title "default workflow"
+                                   {:organization {:organization/id "abc"} :title "default workflow"
                                     :forms [{:form/id wf-form-id}]
                                     :type :workflow/default :handlers [user-id]}
                                    api-key user-id))
@@ -33,7 +32,7 @@
                                     {:form form-id
                                      :resid resource-id
                                      :wfid workflow-id
-                                     :organization "abc"
+                                     :organization {:organization/id "abc"}
                                      :localizations {}}
                                     api-key user-id))
 

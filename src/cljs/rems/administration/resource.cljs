@@ -53,7 +53,7 @@
     {:id "resource"
      :title [:span (andstr (:domain resource) "/") (:resid resource)]
      :always [:div
-              [inline-info-field (text :t.administration/organization) (:organization resource)]
+              [inline-info-field (text :t.administration/organization) (get-in resource [:organization :organization/name])]
               [inline-info-field (text :t.administration/resource) (:resid resource)]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? resource)}]]]}]
    [licenses-view (:licenses resource) language]

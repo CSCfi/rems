@@ -4,6 +4,7 @@
             [rems.application-list :as application-list]
             [rems.atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
+            [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.guide-functions]
             [rems.search :as search]
@@ -18,8 +19,8 @@
     :dispatch-n [[::todo-applications]
                  [:rems.table/reset]]}))
 
-(search/reg-fetcher ::todo-applications "/api/applications/todo")
-(search/reg-fetcher ::handled-applications "/api/applications/handled")
+(fetcher/reg-fetcher ::todo-applications "/api/applications/todo")
+(fetcher/reg-fetcher ::handled-applications "/api/applications/handled")
 
 ;;;; UI
 
@@ -61,7 +62,7 @@
       :title (text :t.actions/todo-applications)
       :collapse [:<>
                  [search/application-search-field {:id "todo-search"
-                                                   :on-search #(rf/dispatch [::todo-applications %])
+                                                   :on-search #(rf/dispatch [::todo-applications {:query %}])
                                                    :searching? @(rf/subscribe [::todo-applications :searching?])}]
                  [application-list/component {:applications ::todo-applications
                                               :hidden-columns #{:state :created}
@@ -73,7 +74,7 @@
       :title (text :t.actions/handled-applications)
       :collapse [:<>
                  [search/application-search-field {:id "handled-search"
-                                                   :on-search #(rf/dispatch [::handled-applications %])
+                                                   :on-search #(rf/dispatch [::handled-applications {:query %}])
                                                    :searching? @(rf/subscribe [::handled-applications :searching?])}]
                  [application-list/component {:applications ::handled-applications
                                               :hidden-columns #{:todo :created :submitted}

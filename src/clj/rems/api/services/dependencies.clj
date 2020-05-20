@@ -20,7 +20,7 @@
   (concat
 
    (for [res (resource/get-resources {})
-         license (:licenses res)]
+         license (licenses/get-resource-licenses (:id res))]
      {:from {:resource/id (:id res)} :to {:license/id (:id license)}})
 
    (for [cat (catalogue/get-localized-catalogue-items {:archived true})

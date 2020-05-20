@@ -17,14 +17,15 @@
   (create-users)
 
   (with-user "owner"
+    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
     (testing "default workflow with forms"
-      (let [wf-id (test-data/create-workflow! {:organization "org"
+      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/default
                                                :title "the title"
                                                :handlers ["user1" "user2"]
                                                :forms [{:form/id 123}]})]
         (is (= {:id wf-id
-                :organization "org"
+                :organization {:organization/id "abc" :organization/name "ABC"}
                 :title "the title"
                 :workflow {:type :workflow/default
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -38,12 +39,12 @@
                (workflow/get-workflow wf-id)))))
 
     (testing "decider workflow"
-      (let [wf-id (test-data/create-workflow! {:organization "org"
+      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/decider
                                                :title "the title"
                                                :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
-                :organization "org"
+                :organization {:organization/id "abc" :organization/name "ABC"}
                 :title "the title"
                 :workflow {:type :workflow/decider
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -57,12 +58,12 @@
                (workflow/get-workflow wf-id)))))
 
     (testing "master workflow"
-      (let [wf-id (test-data/create-workflow! {:organization "org"
+      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/master
                                                :title "the title"
                                                :handlers ["user1" "user2"]})]
         (is (= {:id wf-id
-                :organization "org"
+                :organization {:organization/id "abc" :organization/name "ABC"}
                 :title "the title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}
@@ -79,8 +80,9 @@
   (create-users)
 
   (with-user "owner"
+    (test-data/create-organization! {:organization/id "abc" :organization/name "ABC"})
     (testing "change title"
-      (let [wf-id (test-data/create-workflow! {:organization "org"
+      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/master
                                                :title "original title"
                                                :handlers ["user1"]})]
@@ -95,7 +97,7 @@
                    (select-keys [:id :title :workflow]))))))
 
     (testing "change handlers"
-      (let [wf-id (test-data/create-workflow! {:organization "org"
+      (let [wf-id (test-data/create-workflow! {:organization {:organization/id "abc"}
                                                :type :workflow/master
                                                :title "original title"
                                                :handlers ["user1"]})]
@@ -120,13 +122,11 @@
   (create-users)
   (with-user "owner"
     (let [simplify #(map :userid %)
-          wf1 (test-data/create-workflow! {:organization ""
-                                           :type :workflow/default
+          wf1 (test-data/create-workflow! {:type :workflow/default
                                            :title "workflow2"
                                            :handlers ["handler1"
                                                       "handler2"]})
-          wf2 (test-data/create-workflow! {:organization ""
-                                           :type :workflow/default
+          wf2 (test-data/create-workflow! {:type :workflow/default
                                            :title "workflow2"
                                            :handlers ["handler2"
                                                       "handler3"]})]

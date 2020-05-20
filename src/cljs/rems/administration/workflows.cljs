@@ -76,7 +76,7 @@
  (fn [[workflows] _]
    (map (fn [workflow]
           {:key (:id workflow)
-           :organization {:value (:organization workflow)}
+           :organization {:value (get-in workflow [:organization :organization/name])}
            :title {:value (:title workflow)}
            :active (let [checked? (status-flags/active? workflow)]
                      {:td [:td.active

@@ -21,10 +21,10 @@
 
 (deftest test-get-all-licenses
   (with-redefs [db/get-license-localizations (constantly [])
-                db/get-all-licenses (fn [] [{:id :normal :enabled true :archived false}
+                db/get-all-licenses (fn [] [{:id :normal :organization "nbn" :enabled true :archived false}
                                             {:id :normal2 :enabled true :archived false}
                                             {:id :disabled :enabled false :archived false}
-                                            {:id :archived :enabled true :archived true}])]
+                                            {:id :archived :organization "hus" :enabled true :archived true}])]
     (testing "filters"
       (is (= [:normal :normal2 :disabled :archived]
              (map :id (get-all-licenses {}))))

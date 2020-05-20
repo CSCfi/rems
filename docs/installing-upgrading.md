@@ -26,6 +26,7 @@ Some pointers for common tasks:
 
   Typically you need to grant at least the `owner` role manually to someone to do administrative tasks through the UI.
 - More info about roles can be found in [glossary.md](glossary.md)
+- If you wish to use multiple organizations, you should create them with the owner user with the API or UI. See [organizations.md](organizations.md)
 
 # Upgrading REMS
 

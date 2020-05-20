@@ -1,5 +1,6 @@
 (ns rems.api.services.form
   (:require [clojure.test :refer :all]
+            [com.rpl.specter :refer [ALL transform]]
             [medley.core :refer [filter-vals]]
             [rems.api.services.dependencies :as dependencies]
             [rems.api.services.util :as util]
@@ -10,6 +11,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
+            [rems.db.organizations :as organizations]
             [rems.json :as json]
             [schema.core :as s])
   (:import rems.InvalidRequestException))
@@ -88,17 +90,28 @@
 (defn create-form! [user-id form]
   (let [organization (:form/organization form)]
     (util/check-allowed-organization! organization)
-    (let [form-id (:id (db/save-form-template! {:organization organization
-                                                :title (:form/title form)
-                                                :user user-id
-                                                :fields (serialize-fields form)}))]
-      ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
-      (dependencies/reset-cache!)
-      {:success (not (nil? form-id))
-       :id form-id})))
+    (or (validation-error form)
+        (let [form-id (:id (db/save-form-template! {:organization (:organization/id organization)
+                                                    :title (:form/title form)
+                                                    :user user-id
+                                                    :fields (serialize-fields form)}))]
+          ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
+          (dependencies/reset-cache!)
+          {:success (not (nil? form-id))
+           :id form-id}))))
 
-(def get-form-template form/get-form-template)
-(def get-form-templates form/get-form-templates)
+(defn- join-dependencies [form]
+  (when form
+    (->> form
+         organizations/join-organization)))
+
+(defn get-form-template [id]
+  (->> (form/get-form-template id)
+       join-dependencies))
+
+(defn get-form-templates [filters]
+  (->> (form/get-form-templates filters)
+       (mapv join-dependencies)))
 
 (defn edit-form! [user-id form]
   (let [form-id (:form/id form)
@@ -107,8 +120,9 @@
     (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
     (or (form-in-use-error form-id)
+        (validation-error form)
         (do (db/edit-form-template! {:id form-id
-                                     :organization organization
+                                     :organization (:organization/id organization)
                                      :title (:form/title form)
                                      :user user-id
                                      :fields (serialize-fields form)})

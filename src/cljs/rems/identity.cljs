@@ -35,7 +35,7 @@
    {:user {:userid \"developer\"
            :email \"developer@e.mail\"
            :name \"deve loper\"
-           :organization \"Foocorp\"
+           :organizations [{:organization/id [\"Foocorp\"]}]
            ...}
     :roles [\"applicant\" \"approver\"]}
     Roles are converted to clojure keywords inside the function before dispatching"

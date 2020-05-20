@@ -1,7 +1,6 @@
 (ns ^:integration rems.api.services.test-catalogue
   (:require [clojure.test :refer :all]
             [rems.api.services.catalogue :as catalogue]
-            [rems.db.core :as db]
             [rems.api.services.form :as form]
             [rems.api.services.licenses :as licenses]
             [rems.api.services.resource :as resource]

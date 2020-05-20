@@ -3,7 +3,6 @@
             [rems.api.services.licenses :as licenses]
             [rems.api.services.workflow :as workflow]
             [rems.api.testing :refer :all]
-            [rems.common.util :refer [index-by]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
@@ -18,7 +17,7 @@
 
 ;; this is a subset of what we expect to get from the api
 (def ^:private expected
-  {:organization "organization1"
+  {:organization {:organization/id "organization1" :organization/name "Organization 1"}
    :title "workflow title"
    :workflow {:type "workflow/default"
               :forms []
@@ -37,7 +36,7 @@
 (deftest workflows-api-test
   (let [create-workflow (fn [user-id organization type forms]
                           (api-call :post "/api/workflows/create"
-                                    {:organization organization
+                                    {:organization {:organization/id organization}
                                      :title "workflow title"
                                      :type type
                                      :forms forms
@@ -81,7 +80,7 @@
 
     (testing "create as organization-owner with incorrect organization"
       (let [response (api-response :post "/api/workflows/create"
-                                   {:organization "organization2"
+                                   {:organization {:organization/id "organization2"}
                                     :title "workflow title"
                                     :type :workflow/default
                                     :handlers ["handler" "carl"]}
@@ -92,12 +91,12 @@
 (deftest workflows-enabled-archived-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-workflow! {:organization "organization1"
+        wfid (test-data/create-workflow! {:organization {:organization/id "organization1"}
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
-        lic-id (test-data/create-license! {})
-        _ (db/create-workflow-license! {:wfid wfid :licid lic-id})
+        lic-id (test-data/create-license! {:organization {:organization/id "organization1"}})
+        _ (db/create-workflow-license! {:wfid wfid :licid lic-id :organization "organization1"})
 
         fetch #(fetch api-key user-id wfid)
         archive-license! #(with-user user-id
@@ -155,12 +154,12 @@
 (deftest workflows-edit-test
   (let [api-key "42"
         user-id "owner"
-        wfid (test-data/create-workflow! {:organization "organization1"
+        wfid (test-data/create-workflow! {:organization {:organization/id "organization1"}
                                           :title "workflow title"
                                           :type :workflow/default
                                           :handlers ["handler" "carl"]})
 
-        cat-id (test-data/create-catalogue-item! {:organization "organization1"
+        cat-id (test-data/create-catalogue-item! {:organization {:organization/id "organization1"}
                                                   :workflow-id wfid})
         app-id (test-data/create-application! {:catalogue-item-ids [cat-id]
                                                :actor "tester"})
@@ -244,7 +243,7 @@
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:organization "test-organization"
+                         (json-body {:organization {:organization/id "test-organization"}
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval
@@ -262,7 +261,7 @@
         (is (= "forbidden" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:organization "test-organization"
+                         (json-body {:organization {:organization/id "test-organization"}
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval

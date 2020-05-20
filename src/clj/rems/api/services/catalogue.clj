@@ -7,14 +7,14 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
+            [rems.db.organizations :as organizations]
             [rems.db.resource :as resource]
             [rems.db.workflow :as workflow]))
 
 (defn create-catalogue-item! [{:keys [localizations organization] :as command}]
   (util/check-allowed-organization! organization)
-  ;; TODO make :organization unoptional?
-  (let [id (:id (db/create-catalogue-item! (merge {:organization ""}
-                                                  (select-keys command [:form :resid :wfid :enabled :archived :organization]))))
+  (let [id (:id (db/create-catalogue-item! (merge {:organization (:organization/id organization "default")}
+                                                  (select-keys command [:form :resid :wfid :enabled :archived]))))
         loc-ids
         (doall
          (for [[langcode localization] localizations]
@@ -29,8 +29,21 @@
     {:success (not (some nil? (cons id loc-ids)))
      :id id}))
 
-(def get-localized-catalogue-items catalogue/get-localized-catalogue-items)
-(def get-localized-catalogue-item catalogue/get-localized-catalogue-item)
+(defn- join-dependencies [item]
+  (when item
+    (->> item
+         organizations/join-organization
+         ;; not used at the moment
+         #_licenses/join-catalogue-item-licenses
+         #_(transform [:licenses ALL] organizations/join-organization))))
+
+(defn get-localized-catalogue-items [& [query-params]]
+  (->> (catalogue/get-localized-catalogue-items (or query-params {}))
+       (mapv join-dependencies)))
+
+(defn get-localized-catalogue-item [id]
+  (->> (catalogue/get-localized-catalogue-item id)
+       join-dependencies))
 
 (defn- check-allowed-to-edit! [id]
   (-> id
@@ -78,7 +91,7 @@
     (let [new-item (db/create-catalogue-item! {:enabled true
                                                :archived false
                                                :form form-id
-                                               :organization (:organization item)
+                                               :organization (get-in item [:organization :organization/id])
                                                :resid (:resource-id item)
                                                :wfid (:wfid item)})]
 
