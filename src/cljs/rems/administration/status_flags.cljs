@@ -3,6 +3,13 @@
             [rems.atoms :refer [checkbox]]
             [rems.text :refer [text get-localized-title]]))
 
+;; TODO this should be in some util namespace
+(defn- get-localized-title-for-anything [item language]
+  (or (:resid item)
+      (:form/title item)
+      (get-localized-title item language)
+      (:title item)))
+
 (defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type :button
@@ -82,33 +89,35 @@
               (text :t.administration/catalogue-item) ": "
               [:a {:target :_blank
                    :href (str "/administration/catalogue-items/" (:id ci))}
-               (get-localized-title ci language)]]))
+               (get-localized-title-for-anything ci language)]]))
      (into [:ul]
            (for [f forms]
              [:li
               (text :t.administration/form) ": "
               [:a {:target :_blank
                    :href (str "/administration/forms/" (:id f))}
-               (:form/title f)]]))
+               (get-localized-title-for-anything f language)]]))
      (into [:ul]
            (for [lic licenses]
              [:li
               (text :t.administration/license) ": "
               [:a {:target :_blank
                    :href (str "/administration/licenses/" (:id lic))}
-               (get-localized-title lic language)]]))
+               (get-localized-title-for-anything lic language)]]))
      (into [:ul]
            (for [r resources]
              [:li
               (text :t.administration/resource) ": "
               [:a {:target :_blank
-                   :href (str "/administration/resources/" (:id r))} (:resid r)]]))
+                   :href (str "/administration/resources/" (:id r))}
+               (get-localized-title-for-anything r language)]]))
      (into [:ul]
            (for [w workflows]
              [:li
               (text :t.administration/workflow) ": "
               [:a {:target :_blank
-                   :href (str "/administration/workflows/" (:id w))} (:title w)]]))]))
+                   :href (str "/administration/workflows/" (:id w))}
+               (get-localized-title-for-anything w language)]]))]))
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]
