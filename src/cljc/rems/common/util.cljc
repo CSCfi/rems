@@ -39,24 +39,30 @@
   In case of non-unique keys, `build-index` picks the first value, e.g.
 
     (build-index [:a] identity [{:a 1 :b \"x\"} {:a 1 :b \"y\"}])
-      ==> {1 {:a 1 :b \"x\"}}"
-  [ks f coll]
+      ==> {1 {:a 1 :b \"x\"}}
+
+  You can override this behaviour by passing in a `collect-fn`, which
+  is applied to the sequence of values. The default `collect-fn` is
+  `first`."
+  [ks f coll & [collect-fn]]
   (if-let [[k & ks] (seq ks)]
     (->> coll
          (group-by k)
-         (map-vals #(build-index ks f %)))
-    (f (first coll))))
+         (map-vals #(build-index ks f % collect-fn)))
+    ((or collect-fn first) (map f coll))))
 
 (deftest test-build-index
-  (is (= {:a 1} (build-index [] identity [{:a 1} {:b 2}])))
-  (is (= {1 {"x" :a "y" :b}}
-         (build-index [:a :b] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}])))
-  (is (= {1 {:a 1 :b "x" :c :a}}
-         (build-index [:a] identity [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}]))))
-
-(comment
-  (if-let [[k & ks] []]
-    (list k ks)))
+  (testing "unique keys"
+    (is (= {1 {"x" :a "y" :b}}
+           (build-index [:a :b] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}])))
+    (is (= {"x" {1 :a} "y" {1 :b}}
+           (build-index [:b :a] :c [{:a 1 :b "x" :c :a} {:a 1 :b "y" :c :b}]))))
+  (testing "non-unique keys"
+    (is (= {:a 1} (build-index [] identity [{:a 1} {:b 2}])))
+    (is (= {:b 2} (build-index [] identity [{:a 1} {:b 2}] second)))
+    (is (= #{{:a 1} {:b 2}} (build-index [] identity [{:a 1} {:b 2}] set)))
+    (is (= {1 #{10 11} 2 #{10}}
+           (build-index [:a] :c [{:a 1 :c 10} {:a 1 :c 11} {:a 2 :c 10}] set)))))
 
 (defn index-by
   "Index the collection coll with given keys `ks`.
