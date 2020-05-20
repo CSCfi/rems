@@ -109,21 +109,5 @@
                        (mapv add-status-bits)
                        (filter :archived)
                        seq)]
-    (let [{:keys [licenses resources workflows catalogue-items forms]} (format-deps-for-errors used)]
-      (concat
-       (when licenses
-         [{:type :t.administration.errors/license-archived
-           :licenses licenses}])
-       (when resources
-         [{:type :t.administration.errors/resource-archived
-           :resources resources}])
-       (when workflows
-         [{:type :t.administration.errors/workflow-archived
-           :workflows workflows}])
-       (when forms
-         [{:type :t.administration.errors/form-archived
-           :forms forms}])
-       ;; case not possible:
-       (when catalogue-items
-         [{:type :catalogue-items-archived
-           :catalogue-items catalogue-items}])))))
+    [(merge {:type :t.administration.errors/dependencies-archived}
+            (format-deps-for-errors used))]))

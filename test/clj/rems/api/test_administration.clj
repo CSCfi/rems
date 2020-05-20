@@ -150,17 +150,15 @@
 
     (testing "cannot unarchive a catalogue item with dependencies that are archived"
       (is (= {:success false
-              :errors [{:type "t.administration.errors/resource-archived",
-                        :resources [{:id resource-id, :resid "test"}]}
-                       {:type "t.administration.errors/workflow-archived",
-                        :workflows [{:id workflow-id, :title "default workflow"}]}
-                       {:type "t.administration.errors/form-archived",
+              :errors [{:type "t.administration.errors/dependencies-archived",
+                        :resources [{:id resource-id, :resid "test"}]
+                        :workflows [{:id workflow-id, :title "default workflow"}]
                         :forms [{:form/id form-id, :form/title "form update test"}]}]}
              (catalogue-item-archived! false))))
 
     (testing "cannot unarchive a workflow with a form that's archived"
       (is (= {:success false
-              :errors [{:type "t.administration.errors/form-archived"
+              :errors [{:type "t.administration.errors/dependencies-archived"
                         :forms [{:form/id wf-form-id :form/title "workflow form update test"}]}]}
              (workflow-archived! false))))
 
@@ -169,6 +167,6 @@
 
     (testing "cannot unarchive a resource with an archived license"
       (is (= {:success false
-              :errors [{:type "t.administration.errors/license-archived"
+              :errors [{:type "t.administration.errors/dependencies-archived"
                         :licenses [{:id license-id :localizations {}}]}]}
              (resource-archived! false))))))
