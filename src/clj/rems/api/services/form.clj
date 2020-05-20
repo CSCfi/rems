@@ -16,14 +16,8 @@
             [schema.core :as s])
   (:import rems.InvalidRequestException))
 
-;; TODO get rid of this wrapper
-(defn- form-in-use-error [form-id]
-  (when-let [errors (dependencies/in-use-errors {:form/id form-id})]
-    {:success false
-     :errors errors}))
-
 (defn form-editable [form-id]
-  (or (form-in-use-error form-id)
+  (or (dependencies/in-use-error {:form/id form-id})
       {:success true}))
 
 (defn validate-given-ids
@@ -120,7 +114,7 @@
     ;; need to check both previous and new organization
     (util/check-allowed-organization! (:form/organization (get-form-template form-id)))
     (util/check-allowed-organization! organization)
-    (or (form-in-use-error form-id)
+    (or (dependencies/in-use-error {:form/id form-id})
         (validation-error form)
         (do (db/edit-form-template! {:id form-id
                                      :organization (:organization/id organization)

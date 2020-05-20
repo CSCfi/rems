@@ -116,9 +116,10 @@
     (archive-errors item)
     (unarchive-errors item)))
 
-(defn in-use-errors
-  "Returns errors if given item is depended on at all"
+(defn in-use-error
+  "Returns an error structure {:success false :errors [...]} if given item is depended on by anything"
   [item]
   (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
-    [(merge {:type :t.administration.errors/in-use-by}
-            (format-deps-for-errors users))]))
+    {:success false
+     :errors [(merge {:type :t.administration.errors/in-use-by}
+                     (format-deps-for-errors users))]}))
