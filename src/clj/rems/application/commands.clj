@@ -1,7 +1,6 @@
 (ns rems.application.commands
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [assoc-some]]
-            [rems.common.util :refer [build-index]]
             [rems.common.application-util :as application-util]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex getx getx-in try-catch-ex update-present]]
