@@ -67,7 +67,7 @@
                        (:workflow-name catalogue-item)]]
                      [inline-info-field (text :t.administration/form)
                       [atoms/link nil
-                       (str "/administration/workflows/" (:formid catalogue-item))
+                       (str "/administration/forms/" (:formid catalogue-item))
                        (:form-name catalogue-item)]]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
