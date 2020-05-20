@@ -63,11 +63,11 @@
                                                                          (map :display)
                                                                          (str/join ", "))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]
-              ;; we don't support multi-from workflows fully in the UI, but let's at least try rendering them
               [inline-info-field (text :t.administration/form)
-               (into [:<>]
+               (into [:ul.list-group]
                      (for [form (get-in workflow [:workflow :forms])]
-                       [atoms/link nil (str "/administration/forms/" (:form/id form)) (:form/title form)]))]]}]
+                       [:li.list-group-item [atoms/link nil (str "/administration/forms/" (:form/id form)) (:form/title form)]]))
+               {:box? false}]]}]
    [licenses-view (:licenses workflow) language]
    (let [id (:id workflow)]
      [:div.col.commands

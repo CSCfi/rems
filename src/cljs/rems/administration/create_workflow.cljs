@@ -202,10 +202,9 @@
        :item-key :form/id
        :item-label :form/title ;; TODO render org like in create-catalogue-item
        :item-selected? #(contains? selected-form-ids (:form/id %))
-       ;; TODO support selecting (& ordering!) multiple forms
-       :multi? false
-       :clearable? true
-       :on-change #(rf/dispatch [::set-forms (when % [%])])}]]))
+       ;; TODO support ordering multiple forms
+       :multi? true
+       :on-change #(rf/dispatch [::set-forms %])}]]))
 
 (defn default-workflow-form []
   [:div
